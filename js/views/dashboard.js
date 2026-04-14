@@ -324,7 +324,7 @@ export const renderDashboard = (container, user, onLogout) => {
                    <td style="font-weight:600; color:var(--text-main);">${d['UBICACIONES']}</td>
                    <td style="font-size:0.8rem; color:var(--text-muted);">${d['LPN']}</td>
                    <td>${d['SKU']}</td>
-                   <td>${d['QTY ACTIVO']}%</td>
+                   <td>${d['QTY ACTIVO']}</td>
                    <td>${d['QTY RESERVA']}</td>
                    <td style="font-weight: 700; color: var(--warning);">${d['QTY BUFFER']}</td>
                    <td>${d['ARTICULO']}</td>

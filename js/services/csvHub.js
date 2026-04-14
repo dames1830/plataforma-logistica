@@ -168,7 +168,19 @@ export const calculateBufferPallets = () => {
         }
     });
 
-    // 2. Acumuladores de Cascada (Waterfall)
+    // 2. Extracción y Consolidación de Pedidos
+    let demandaConsolidada = {};
+    pedidos.forEach(filaP => {
+        let skuP = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
+        let cantPedida = parseFloat(filaP['Cantidad solicitada']) || 0;
+        let cantAsignada = parseFloat(filaP['Cantidad asignada']) || 0;
+        let faltanteLocal = cantPedida - cantAsignada;
+        
+        if (faltanteLocal <= 0 || !skuP) return;
+        demandaConsolidada[skuP] = (demandaConsolidada[skuP] || 0) + faltanteLocal;
+    });
+
+    // 3. Acumuladores de Cascada (Waterfall)
     let globalRQ = 0;
     let atdBaja = 0;
     let atdAlto = 0;
@@ -185,36 +197,35 @@ export const calculateBufferPallets = () => {
         return uA.localeCompare(uB);
     });
 
-    // 3. Simulación de ruta por SKUs Pedidos
-    pedidos.forEach(filaP => {
-        let skuP = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
-        let cantPedida = parseFloat(filaP['Cantidad solicitada']) || 0;
-        let cantAsignada = parseFloat(filaP['Cantidad asignada']) || 0;
-        
-        let faltanteLocal = cantPedida - cantAsignada;
-        if (faltanteLocal <= 0 || !skuP) return;
-
-        globalRQ += faltanteLocal;
+    // 4. Simulación de ruta CRUZANDO LA DEMANDA CONSOLIDADA VS STOCK FÍSICO
+    Object.keys(demandaConsolidada).forEach(skuP => {
+        let faltanteTotalSinergia = demandaConsolidada[skuP];
+        globalRQ += faltanteTotalSinergia;
 
         // Cascada 1: Zonas Bajas
-        let p1 = Math.min(faltanteLocal, stBaja[skuP] || 0);
+        let p1 = Math.min(faltanteTotalSinergia, stBaja[skuP] || 0);
         atdBaja += p1;
-        faltanteLocal -= p1;
+        faltanteTotalSinergia -= p1;
 
         // Cascada 2: Alta (Rastreo Físico de Paletas)
-        if (faltanteLocal > 0) {
-            let cuotaAlto = Math.min(faltanteLocal, stAlto[skuP] || 0);
+        if (faltanteTotalSinergia > 0) {
+            let cuotaAlto = Math.min(faltanteTotalSinergia, stAlto[skuP] || 0);
             let needed = cuotaAlto;
             
             for (let r of reservaRuta) {
                 if (needed <= 0) break;
+                // NOTA: Para simulación robusta restamos del array dinámico también para casos repetidos de extracción.
                 let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
                 let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['Articulo'] || '').trim();
                 let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || 0) || 0;
+                let pickeadoMismaPaleta = r['_usado'] || 0;
+                let available = qtyR - pickeadoMismaPaleta;
                 
-                if (nivelR === 'ALTO' && skuR === skuP && qtyR > 0) {
-                    let pick = Math.min(needed, qtyR);
+                if (nivelR === 'ALTO' && skuR === skuP && available > 0) {
+                    let pick = Math.min(needed, available);
                     needed -= pick;
+                    r['_usado'] = pickeadoMismaPaleta + pick;
+                    
                     detallePallets.push({
                         'UBICACIONES': String(r['UBICACION'] || '').trim(),
                         'LPN': String(r['LPN'] || '').trim(),
@@ -227,46 +238,50 @@ export const calculateBufferPallets = () => {
                 }
             }
             atdAlto += cuotaAlto;
-            faltanteLocal -= cuotaAlto;
+            faltanteTotalSinergia -= cuotaAlto;
         }
 
         // Cascada 3: Pisos
-        let p3 = Math.min(faltanteLocal, stPiso[skuP] || 0);
+        let p3 = Math.min(faltanteTotalSinergia, stPiso[skuP] || 0);
         atdPiso += p3;
-        faltanteLocal -= p3;
+        faltanteTotalSinergia -= p3;
 
         // Cascada 4: Aereo (Rastreo Físico Secundaria)
-        if (faltanteLocal > 0) {
-            let cuotaAereo = Math.min(faltanteLocal, stAereo[skuP] || 0);
+        if (faltanteTotalSinergia > 0) {
+            let cuotaAereo = Math.min(faltanteTotalSinergia, stAereo[skuP] || 0);
             let neededAe = cuotaAereo;
             for (let r of reservaRuta) {
                 if (neededAe <= 0) break;
                 let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
                 let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['Articulo'] || '').trim();
                 let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || 0) || 0;
+                let pickeadoMismaPaleta = r['_usado'] || 0;
+                let availableAe = qtyR - pickeadoMismaPaleta;
                 
-                if (nivelR === 'AEREO' && skuR === skuP && qtyR > 0) {
-                    let pick = Math.min(neededAe, qtyR);
-                    neededAe -= pick;
+                if (nivelR === 'AEREO' && skuR === skuP && availableAe > 0) {
+                    let pickAe = Math.min(neededAe, availableAe);
+                    neededAe -= pickAe;
+                    r['_usado'] = pickeadoMismaPaleta + pickAe;
+                    
                     detallePallets.push({
                         'UBICACIONES': String(r['UBICACION'] || '').trim(),
                         'LPN': String(r['LPN'] || '').trim(),
                         'SKU': skuP,
                         'QTY ACTIVO': Math.floor(stBaja[skuP] || 0),
                         'QTY RESERVA': qtyR,
-                        'QTY BUFFER': pick,
+                        'QTY BUFFER': pickAe,
                         'ARTICULO': skuP.split('-')[0]
                     });
                 }
             }
             atdAereo += cuotaAereo;
-            faltanteLocal -= cuotaAereo;
+            faltanteTotalSinergia -= cuotaAereo;
         }
 
         // Cascada 5: Logico
-        let p5 = Math.min(faltanteLocal, stLogico[skuP] || 0);
+        let p5 = Math.min(faltanteTotalSinergia, stLogico[skuP] || 0);
         atdLogico += p5;
-        faltanteLocal -= p5;
+        faltanteTotalSinergia -= p5;
     });
 
     // Mapeo Final de la Cascada para la vista Web
