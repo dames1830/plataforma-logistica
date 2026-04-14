@@ -1,0 +1,11 @@
+# Python Base
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# Base de Datos (Prevención de sobreescritura accidental de tu tabla maestra por subirse vacía)
+backend/*.db
+backend/*.sqlite
+
+# SO
+.DS_Store
