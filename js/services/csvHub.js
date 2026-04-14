@@ -12,10 +12,11 @@ export const dataStore = {
 };
 
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
-// Al estar en local:
-const API_URL = "http://127.0.0.1:8000/api/logistics";
-// Cuando lo subas a Render.com y te den un link, cambiarás esta variable por ej:
-// const API_URL = "https://tu-logistica.onrender.com/api/logistics";
+// Al estar en local tu computadora solía conectarse con:
+// const API_URL = "http://127.0.0.1:8000/api/logistics";
+
+// Producción Mundial - Servidor Nube:
+const API_URL = "https://logistics-backend-tsw6.onrender.com/api/logistics";
 
 export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
@@ -123,50 +124,89 @@ export const generateKPIs = (data, area) => {
 export const calculateBufferPallets = () => {
     let activo = dataStore.stockActivo;
     let reserva = dataStore.stockReserva;
+    let pedidos = dataStore.buffer; 
     
-    if(!activo || !reserva) return null;
+    if(!activo || !reserva || !pedidos) return null;
 
-    let totalPalletsABajar = 0;
-    let listadoPallets = [];
-
-    const forbiddenAreas = ['DIS', 'MATE', 'PISO'];
-
-    activo.forEach(filaActivo => {
-        let areaVal = String(filaActivo['Ãrea'] || filaActivo['Área'] || filaActivo['Area'] || '').trim().toUpperCase();
-        if (forbiddenAreas.includes(areaVal)) return;
-
-        let valAsignada = parseFloat(filaActivo['Cantidad asignada']) || 0;
-        let valActual = parseFloat(filaActivo['Cantidad actual']) || 0;
+    // 1. Acumulador de Stock Activo (Ignorando áreas basuras)
+    const forbiddenAreas = ['DIS', 'MATE', 'PISO', 'dis', 'mate', 'piso'];
+    let stockActivoPorSKU = {};
+    activo.forEach(filaA => {
+        let areaVal = String(filaA['Ãrea'] || filaA['Área'] || filaA['Area'] || '').trim().toUpperCase();
+        if (forbiddenAreas.includes(areaVal)) return; // Ignora zonas muertas
         
-        if (valAsignada > valActual) {
-            let cantFaltante = valAsignada - valActual;
-            let artId = filaActivo['ArtÃculo'] || filaActivo['Artículo'] || filaActivo['Articulo'];
-            
-            let lpnsReserva = reserva.filter(r => {
-                let rNivel = String(r['NIVEL']).trim().toUpperCase();
-                let rArt = String(r['ARTICULO']).trim();
-                let aArt = String(artId).trim();
-                return (rArt === aArt) && (rNivel === 'ALTO');
-            });
+        // Formateo de SKU y cantidad
+        let sku = String(filaA['ArtÃculo'] || filaA['Artículo'] || filaA['Articulo'] || '').trim();
+        let qty = parseFloat(filaA['Cantidad actual']) || 0;
+        
+        if(!stockActivoPorSKU[sku]) stockActivoPorSKU[sku] = 0;
+        stockActivoPorSKU[sku] += qty;
+    });
 
-            let acumulado = 0;
-            let lpnsUsados = 0;
-
-            for(let lpn of lpnsReserva) {
-                if(acumulado >= cantFaltante) break;
-                let lpnQ = parseFloat(lpn['CANTIDAD']) || 0;
-                if(lpnQ > 0) {
-                   acumulado += lpnQ;
-                   lpnsUsados++;
-                   listadoPallets.push(lpn);
-                }
+    // 2. Extracción de Pedidos Pendientes
+    let quiebresDeStock = {};
+    pedidos.forEach(filaP => {
+        let skuPedidos = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
+        let cantPedida = parseFloat(filaP['Cantidad solicitada']) || 0;
+        let cantDada = parseFloat(filaP['Cantidad asignada']) || 0;
+        
+        let pedidoPendiente = cantPedida - cantDada;
+        
+        if (pedidoPendiente > 0) {
+            let cantEnPiso = stockActivoPorSKU[skuPedidos] || 0;
+            // Si el piso no me alcanza para cubrir el pedido
+            if (pedidoPendiente > cantEnPiso) {
+                let faltanteReal = pedidoPendiente - cantEnPiso;
+                if(!quiebresDeStock[skuPedidos]) quiebresDeStock[skuPedidos] = 0;
+                quiebresDeStock[skuPedidos] += faltanteReal;
             }
-            totalPalletsABajar += lpnsUsados;
         }
     });
 
+    // 3. Algoritmo de Búsqueda y Bajada en Reserva Alta
+    // Filtrar solo NIVEL ALTO
+    let dbAlta = reserva.filter(r => String(r['NIVEL']).trim().toUpperCase() === 'ALTO');
+    
+    // Ordenar todas las locaciones ASCENDENTEMENTE por UBICACION para la ruta del montacargas
+    dbAlta.sort((a, b) => {
+        let ubiA = String(a['UBICACION'] || '').trim();
+        let ubiB = String(b['UBICACION'] || '').trim();
+        return ubiA.localeCompare(ubiB);
+    });
+
+    let palletsABajar = [];
+    let ubicacionesBloqueadas = new Set();
+
+    // Recorremos cada zapato que nos falta para buscarlo en la ruta
+    for (let skuRoto in quiebresDeStock) {
+        let cantidadQueNecesitoAun = quiebresDeStock[skuRoto];
+
+        for (let pallet of dbAlta) {
+            if (cantidadQueNecesitoAun <= 0) break; // Ya encontré suficientes de este SKU
+
+            let ubi = String(pallet['UBICACION']).trim();
+            if (ubicacionesBloqueadas.has(ubi)) continue; // Si ya mandamos a bajar esta tarima, saltamos
+            
+            let palletSku = String(pallet['ARTICULO'] || '').trim();
+            let palletQty = parseFloat(pallet['CANTIDAD']) || 0;
+
+            if (palletSku === skuRoto && palletQty > 0) {
+                // ENCONTRADO: Descontamos lo que encontramos de nuestro faltante
+                cantidadQueNecesitoAun -= palletQty;
+                
+                // MÁXIMA REGLA: Extraemos y sumamos TODA la ubicación, bajamos todo el bloque físico
+                ubicacionesBloqueadas.add(ubi);
+                // Buscar todo lo que exista en esa posición exacta en toda la reserva general
+                let filasMismaUbicacion = reserva.filter(rr => String(rr['UBICACION']).trim() === ubi);
+                
+                filasMismaUbicacion.forEach(f => palletsABajar.push(f));
+            }
+        }
+    }
+
     return {
-        totalPallets: totalPalletsABajar,
-        detalle: listadoPallets
+        totalUbicaciones: ubicacionesBloqueadas.size,
+        totalSkusColaterales: palletsABajar.length,
+        detalle: palletsABajar
     };
 };

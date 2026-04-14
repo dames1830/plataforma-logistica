@@ -239,12 +239,12 @@ export const renderDashboard = (container, user, onLogout) => {
      const bufferKPIObj = calculateBufferPallets(); 
 
      let kpiExtraHTML = '';
-     if (bufferKPIObj && bufferKPIObj.totalPallets >= 0) {
+     if (bufferKPIObj && bufferKPIObj.totalUbicaciones !== undefined) {
          kpiExtraHTML = `
            <div class="kpi-card" style="border: 2px solid var(--primary); background:rgba(79, 70, 229, 0.2);">
-             <div class="kpi-title" style="color:var(--text-main)">ESTIBAS (LPN) A REPOner</div>
-             <div class="kpi-value">${bufferKPIObj.totalPallets}</div>
-             <div class="kpi-subtitle" style="color:var(--text-main)">Listas para descender (Revisa en Descargar Reporte)</div>
+             <div class="kpi-title" style="color:var(--text-main)">UBICACIONES (PALLETS) A DESCENDER</div>
+             <div class="kpi-value">${bufferKPIObj.totalUbicaciones}</div>
+             <div class="kpi-subtitle" style="color:var(--text-main)">${bufferKPIObj.totalSkusColaterales} Ítems a bajar (Ver Reporte)</div>
            </div>
          `;
      } else {
