@@ -293,12 +293,60 @@ export const renderDashboard = (container, user, onLogout) => {
          });
 
          html += `</tbody></table></div>`;
+         
+         // ==== RENDER TABLA DETALLE (ORDEN DE EXTRACTOR) ====
+         if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
+            html += `
+              <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
+                 <button class="btn" id="export_pallets" style="width: auto; background: var(--success); color: white; padding: 0.8rem 2rem; font-size: 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
+                     ↓ Descargar Orden de Extracción Excel (Montacargas / Picker)
+                 </button>
+              </div>
+              
+              <div class="data-table-container" style="margin-top: 1rem; max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>UBICACIONES</th>
+                      <th>LPN</th>
+                      <th>SKU</th>
+                      <th>QTY ACTIVO</th>
+                      <th>QTY RESERVA</th>
+                      <th>QTY BUFFER</th>
+                      <th>ARTICULO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
+            
+            bufferKPIObj.detalle.forEach(d => {
+                html += `<tr>
+                   <td style="font-weight:600; color:var(--text-main);">${d['UBICACIONES']}</td>
+                   <td style="font-size:0.8rem; color:var(--text-muted);">${d['LPN']}</td>
+                   <td>${d['SKU']}</td>
+                   <td>${d['QTY ACTIVO']}%</td>
+                   <td>${d['QTY RESERVA']}</td>
+                   <td style="font-weight: 700; color: var(--warning);">${d['QTY BUFFER']}</td>
+                   <td>${d['ARTICULO']}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+         }
+         
      } else {
          html += `<div style="color: var(--danger)">Las reglas maestras (Stock Activo / Stock Reserva) no se encuentran en la Base de Datos todavía.</div>`;
      }
 
      contentArea.innerHTML = html;
      attachUploadEvent('update_buffer', 'buffer', '.csv');
+     
+     if (bufferKPIObj && bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
+         setTimeout(() => {
+             document.getElementById('export_pallets')?.addEventListener('click', () => {
+                 exportToExcel(bufferKPIObj.detalle, 'Orden_Extraccion_Paletas');
+             });
+         }, 100);
+     }
   };
 
   const renderUploadArea = () => {

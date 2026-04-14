@@ -176,6 +176,15 @@ export const calculateBufferPallets = () => {
     let atdAereo = 0;
     let atdLogico = 0;
 
+    let detallePallets = [];
+    
+    // Pre-ordenar Reserva para ruta de montacargas progresiva
+    let reservaRuta = [...reserva].sort((a,b) => {
+        let uA = String(a['UBICACION'] || '').trim();
+        let uB = String(b['UBICACION'] || '').trim();
+        return uA.localeCompare(uB);
+    });
+
     // 3. Simulación de ruta por SKUs Pedidos
     pedidos.forEach(filaP => {
         let skuP = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
@@ -192,20 +201,67 @@ export const calculateBufferPallets = () => {
         atdBaja += p1;
         faltanteLocal -= p1;
 
-        // Cascada 2: Alta
-        let p2 = Math.min(faltanteLocal, stAlto[skuP] || 0);
-        atdAlto += p2;
-        faltanteLocal -= p2;
+        // Cascada 2: Alta (Rastreo Físico de Paletas)
+        if (faltanteLocal > 0) {
+            let cuotaAlto = Math.min(faltanteLocal, stAlto[skuP] || 0);
+            let needed = cuotaAlto;
+            
+            for (let r of reservaRuta) {
+                if (needed <= 0) break;
+                let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
+                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['Articulo'] || '').trim();
+                let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || 0) || 0;
+                
+                if (nivelR === 'ALTO' && skuR === skuP && qtyR > 0) {
+                    let pick = Math.min(needed, qtyR);
+                    needed -= pick;
+                    detallePallets.push({
+                        'UBICACIONES': String(r['UBICACION'] || '').trim(),
+                        'LPN': String(r['LPN'] || '').trim(),
+                        'SKU': skuP,
+                        'QTY ACTIVO': Math.floor(stBaja[skuP] || 0),
+                        'QTY RESERVA': qtyR,
+                        'QTY BUFFER': pick,
+                        'ARTICULO': skuP.split('-')[0]
+                    });
+                }
+            }
+            atdAlto += cuotaAlto;
+            faltanteLocal -= cuotaAlto;
+        }
 
         // Cascada 3: Pisos
         let p3 = Math.min(faltanteLocal, stPiso[skuP] || 0);
         atdPiso += p3;
         faltanteLocal -= p3;
 
-        // Cascada 4: Aereo
-        let p4 = Math.min(faltanteLocal, stAereo[skuP] || 0);
-        atdAereo += p4;
-        faltanteLocal -= p4;
+        // Cascada 4: Aereo (Rastreo Físico Secundaria)
+        if (faltanteLocal > 0) {
+            let cuotaAereo = Math.min(faltanteLocal, stAereo[skuP] || 0);
+            let neededAe = cuotaAereo;
+            for (let r of reservaRuta) {
+                if (neededAe <= 0) break;
+                let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
+                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['Articulo'] || '').trim();
+                let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || 0) || 0;
+                
+                if (nivelR === 'AEREO' && skuR === skuP && qtyR > 0) {
+                    let pick = Math.min(neededAe, qtyR);
+                    neededAe -= pick;
+                    detallePallets.push({
+                        'UBICACIONES': String(r['UBICACION'] || '').trim(),
+                        'LPN': String(r['LPN'] || '').trim(),
+                        'SKU': skuP,
+                        'QTY ACTIVO': Math.floor(stBaja[skuP] || 0),
+                        'QTY RESERVA': qtyR,
+                        'QTY BUFFER': pick,
+                        'ARTICULO': skuP.split('-')[0]
+                    });
+                }
+            }
+            atdAereo += cuotaAereo;
+            faltanteLocal -= cuotaAereo;
+        }
 
         // Cascada 5: Logico
         let p5 = Math.min(faltanteLocal, stLogico[skuP] || 0);
@@ -236,6 +292,6 @@ export const calculateBufferPallets = () => {
 
     return {
         waterfall: waterfallArray,
-        detalle: null // Pendiente a programar más adelante cuando lo definas
+        detalle: detallePallets
     };
 };
