@@ -197,6 +197,9 @@ export const calculateBufferPallets = () => {
         return uA.localeCompare(uB);
     });
 
+    let ubicacionesEnElPiso = new Set();
+    let cuotasPicking = {};
+
     // 4. Simulación de ruta CRUZANDO LA DEMANDA CONSOLIDADA VS STOCK FÍSICO
     Object.keys(demandaConsolidada).forEach(skuP => {
         let faltanteTotalSinergia = demandaConsolidada[skuP];
@@ -226,15 +229,10 @@ export const calculateBufferPallets = () => {
                     needed -= pick;
                     r['_usado'] = pickeadoMismaPaleta + pick;
                     
-                    detallePallets.push({
-                        'UBICACIONES': String(r['UBICACION'] || '').trim(),
-                        'LPN': String(r['LPN'] || '').trim(),
-                        'SKU': skuP,
-                        'QTY ACTIVO': Math.floor(stBaja[skuP] || 0),
-                        'QTY RESERVA': qtyR,
-                        'QTY BUFFER': pick,
-                        'ARTICULO': skuP.split('-')[0]
-                    });
+                    let ubiRaw = String(r['UBICACION'] || '').trim();
+                    ubicacionesEnElPiso.add(ubiRaw);
+                    if (!cuotasPicking[ubiRaw]) cuotasPicking[ubiRaw] = {};
+                    cuotasPicking[ubiRaw][skuP] = (cuotasPicking[ubiRaw][skuP] || 0) + pick;
                 }
             }
             atdAlto += cuotaAlto;
@@ -263,15 +261,10 @@ export const calculateBufferPallets = () => {
                     neededAe -= pickAe;
                     r['_usado'] = pickeadoMismaPaleta + pickAe;
                     
-                    detallePallets.push({
-                        'UBICACIONES': String(r['UBICACION'] || '').trim(),
-                        'LPN': String(r['LPN'] || '').trim(),
-                        'SKU': skuP,
-                        'QTY ACTIVO': Math.floor(stBaja[skuP] || 0),
-                        'QTY RESERVA': qtyR,
-                        'QTY BUFFER': pickAe,
-                        'ARTICULO': skuP.split('-')[0]
-                    });
+                    let ubiRawAe = String(r['UBICACION'] || '').trim();
+                    ubicacionesEnElPiso.add(ubiRawAe);
+                    if (!cuotasPicking[ubiRawAe]) cuotasPicking[ubiRawAe] = {};
+                    cuotasPicking[ubiRawAe][skuP] = (cuotasPicking[ubiRawAe][skuP] || 0) + pickAe;
                 }
             }
             atdAereo += cuotaAereo;
@@ -282,6 +275,36 @@ export const calculateBufferPallets = () => {
         let p5 = Math.min(faltanteTotalSinergia, stLogico[skuP] || 0);
         atdLogico += p5;
         faltanteTotalSinergia -= p5;
+    });
+
+    // 5. Construcción del Reporte Físico (Desplegando Contenido Íntegro de las Paletas)
+    let arrayUbicacionesActivas = Array.from(ubicacionesEnElPiso);
+    arrayUbicacionesActivas.forEach(ubi => {
+        // Traemos todas las filas (SKUs) que viven orgánicamente en esa locación de Reserva
+        let inquilinosMadera = reserva.filter(f => String(f['UBICACION'] || '').trim() === ubi);
+        
+        inquilinosMadera.forEach(inquilino => {
+            let colSku = String(inquilino['PRODUCTO'] || inquilino['Producto'] || inquilino['ARTICULO'] || inquilino['Articulo'] || '').trim();
+            let colQty = parseFloat(inquilino['CANTIDAD'] || inquilino['Cantidad actual'] || inquilino['Cantidad'] || 0) || 0;
+            let colLpn = String(inquilino['LPN'] || '').trim();
+            
+            // ¿A este inquilino le toca picking en esta bajada?
+            let bufferPick = 0;
+            if (cuotasPicking[ubi] && cuotasPicking[ubi][colSku]) {
+                bufferPick = cuotasPicking[ubi][colSku];
+                cuotasPicking[ubi][colSku] = 0; // Se apaga para que no dublique si hubiera filas repetidas del mismo SKU en la misma madera
+            }
+
+            detallePallets.push({
+                'UBICACIONES': ubi,
+                'LPN': colLpn,
+                'SKU': colSku,
+                'QTY ACTIVO': Math.floor(stBaja[colSku] || 0),
+                'QTY RESERVA': colQty,
+                'QTY BUFFER': bufferPick,
+                'ARTICULO': colSku.split('-')[0]
+            });
+        });
     });
 
     // Mapeo Final de la Cascada para la vista Web

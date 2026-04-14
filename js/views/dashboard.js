@@ -266,7 +266,7 @@ export const renderDashboard = (container, user, onLogout) => {
          html += `
            <div class="data-table-container" style="max-width: 800px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
-               <h3 style="color: var(--text-main); font-weight: 600;">ALGORITMO EN CASCADA (PRIORIZADOR DE EXTRACCIÓN)</h3>
+               <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS BUFFER</h3>
              </div>
              <table class="data-table" style="text-align: center;">
                <thead>
