@@ -281,7 +281,7 @@ export const renderDashboard = (container, user, onLogout) => {
        </div>
      `; if (bufferKPIObj && bufferKPIObj.waterfall) {
          html += `
-           <div class="data-table-container" style="max-width: 800px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
+           <div class="data-table-container" style="max-width: 750px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
                <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS BUFFER ZONAS</h3>
              </div>
@@ -350,7 +350,7 @@ export const renderDashboard = (container, user, onLogout) => {
             });
 
             html += `
-              <div class="data-table-container" style="max-width: 800px; margin: 2rem auto; border: 2px solid var(--warning); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
+              <div class="data-table-container" style="max-width: 750px; margin: 2rem auto; border: 2px solid var(--warning); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
                  <div style="padding: 1rem; background: rgba(245, 158, 11, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
                    <h3 style="color: var(--warning); font-weight: 600;">ANÁLISIS BUFFER SKU</h3>
                  </div>
