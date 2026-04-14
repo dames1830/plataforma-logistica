@@ -2,6 +2,7 @@ services:
   - type: web
     name: logistics-backend
     env: python
+    rootDir: backend
     region: ohio
     plan: starter # Plan mensual $7 de Render
     buildCommand: "pip install -r requirements.txt"
