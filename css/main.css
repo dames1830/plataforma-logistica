@@ -71,6 +71,7 @@ body {
 .topbar {
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
   padding: 1rem 2rem; background: var(--bg-card); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 .topbar-brand h2 { font-size: 1.25rem; color: white; margin: 0; }
 .user-profile { display: flex; align-items: center; gap: 1rem; }
@@ -89,6 +90,7 @@ body {
 .top-nav-links {
   display: flex; overflow-x: auto; background: var(--bg-card); border-bottom: 1px solid var(--border);
   padding: 0 1.5rem; gap: 0.5rem;
+  flex-shrink: 0;
   /* hide scrollbar for elegance */
   -ms-overflow-style: none; scrollbar-width: none;
 }
