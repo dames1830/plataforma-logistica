@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, getAreaData, generateKPIs, calculateBufferPallets, dataStore } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, dataStore } from '../services/csvHub.js';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer'] },
@@ -207,27 +207,43 @@ export const renderDashboard = (container, user, onLogout) => {
     }
   };
 
-  const attachUploadEvent = (domId, areaKey, ext) => {
-      setTimeout(() => {
-          const input = document.getElementById(domId);
-          const err = document.getElementById(domId.replace('input_', 'err_').replace('update_','err_')); // fallback
-          if(!input) return;
-          input.addEventListener('change', async (e) => {
-              const file = e.target.files[0];
-              if(!file || !file.name.endsWith(ext)) {
-                  if(err) err.innerText = `Requerido formato ${ext}`; return;
+  const attachUploadEvent = (inputId, targetType, acceptType) => {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.accept = acceptType;
+      
+      const lbl = input.parentElement;
+      
+      input.addEventListener('change', async (e) => {
+          const files = Array.from(e.target.files);
+          if (!files || files.length === 0) return;
+          
+          const ogText = lbl.innerHTML;
+          lbl.style.opacity = '0.5';
+          lbl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+          
+          try {
+              if (targetType === 'buffer') {
+                  await parseBufferFiles(files);
+              } else {
+                  await parseFile(files[0], targetType);
               }
-              if(err) { err.style.color = "var(--text-main)"; err.innerText = "Subiendo a Base de Datos..."; }
-              try {
-                  await parseFile(file, areaKey);
-                  // Refresh via state load
-                  renderTabContent();
-              } catch(error) {
-                  if(err) { err.style.color = "var(--danger)"; err.innerText = `Error DB: ${error.message || 'Corrupto'}`; }
-                  else alert("Error analizando el archivo: Formato incorrecto.");
+              
+              if (TABS.find(t => t.id === 'inicio').roles.includes('admin')) { 
+                 if(targetType === 'buffer') {
+                     renderBufferTab();
+                 } else {
+                     renderTab('inicio');
+                 }
               }
-          });
-      }, 50);
+          } catch(err) {
+              console.error(err);
+              alert('Error procesando archivo CSV. Revisa el formato.');
+          } finally {
+              lbl.style.opacity = '1';
+              lbl.innerHTML = ogText;
+          }
+      });
   };
 
   // VISTA BUFFER (CASCADA WATERFALL)
@@ -255,14 +271,14 @@ export const renderDashboard = (container, user, onLogout) => {
      }
 
      // Si hay Data, Dibujamos la vista de Business Intelligence de Consolidado
-     let html = `<div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-        <label class="btn" style="width: auto; background: rgba(255,255,255,0.1); border:1px solid var(--border); font-size:0.8rem; cursor:pointer; padding:0.5rem 1rem;">
-          ↻ Re-subir Archivo Pedidos
-          <input type="file" id="update_buffer" accept=".csv" style="display:none;">
-        </label>
-     </div>`;
-
-     if (bufferKPIObj && bufferKPIObj.waterfall) {
+     let html = `
+       <div class="header-actions">
+          <label class="btn btn-primary" style="position: relative; overflow: hidden; cursor: pointer;">
+             <i class="fas fa-upload"></i> Subir Pedidos
+             <input type="file" id="update_buffer" style="position: absolute; opacity: 0; right: 0; top: 0;" multiple />
+          </label>
+       </div>
+     `; if (bufferKPIObj && bufferKPIObj.waterfall) {
          html += `
            <div class="data-table-container" style="max-width: 800px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
@@ -335,32 +351,32 @@ export const renderDashboard = (container, user, onLogout) => {
             html += `
               <div class="data-table-container" style="max-width: 800px; margin: 2rem auto; border: 2px solid var(--warning); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
                  <div style="padding: 1rem; background: rgba(245, 158, 11, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
-                   <h3 style="color: var(--warning); font-weight: 600;">ANÁLISIS BUFFER NIVEL PALETAS</h3>
+                   <h3 style="color: var(--warning); font-weight: 600;">ANÁLISIS BUFFER SKU</h3>
                  </div>
                  <table class="data-table" style="text-align: center;">
                    <thead>
                      <tr>
                        <th style="text-align: left; padding-left: 1.5rem;">TIPO DE EMPAQUE</th>
                        <th>Paletas a Bajar</th>
-                       <th>SKUs a Extraer</th>
-                       <th>Unidades a Separar</th>
+                       <th>SKUs</th>
+                       <th>PAR/CAJA</th>
                      </tr>
                    </thead>
                    <tbody>
                      <tr>
-                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--success);">SolidPack (12d)</td>
+                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--success);">SolidPack</td>
                        <td>${setPaletasSP.size}</td>
                        <td>${skusReqSP.size}</td>
                        <td>${unidadesSP}</td>
                      </tr>
                      <tr>
-                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--danger);">PreePack (15d)</td>
+                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--danger);">PreePack</td>
                        <td>${setPaletasPP.size}</td>
                        <td>${skusReqPP.size}</td>
                        <td>${unidadesPP}</td>
                      </tr>
                      <tr style="font-weight: 700; font-size: 1.1rem; background: rgba(245, 158, 11, 0.1);">
-                       <td style="text-align: left; padding-left: 1.5rem; color: var(--text-main);">TOTAL GLOBAL</td>
+                       <td style="text-align: left; padding-left: 1.5rem; color: var(--text-main);">TOTAL</td>
                        <td style="color: var(--text-main);">${totalPaletas.size}</td>
                        <td style="color: var(--primary);">${totalSkus.size}</td>
                        <td style="color: var(--warning);">${totalUnidadesFisicas}</td>

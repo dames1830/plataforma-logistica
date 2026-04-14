@@ -61,6 +61,29 @@ export const parseFile = (file, area) => {
   });
 };
 
+export const parseBufferFiles = async (files) => {
+    let combinedData = [];
+    
+    // Parseamos cada archivo manualmente
+    for (let file of files) {
+        if (!file.name.endsWith('.csv')) continue;
+        let res = await new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => resolve(results.data),
+                error: (err) => reject(err)
+            });
+        });
+        combinedData = combinedData.concat(res);
+    }
+    
+    // Subimos la carga ensamblada al servidor como un solo paquete
+    await persistToDatabase('buffer', combinedData);
+    dataStore['buffer'] = combinedData;
+    return combinedData;
+};
+
 // Función Interna: Enviar data fuerte al Servidor Python SQL
 const persistToDatabase = async (area, payload) => {
     try {
