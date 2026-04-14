@@ -287,12 +287,12 @@ export const renderDashboard = (container, user, onLogout) => {
              </div>
              <table class="data-table" style="text-align: center;">
                <thead>
-                 <tr>
-                   <th style="text-align: left; padding-left: 2rem;">NIVEL/AREA</th>
-                   <th>RQ</th>
-                   <th>ATD RQ</th>
-                   <th>% ATD</th>
-                 </tr>
+                  <tr>
+                    <th style="text-align: left; padding: 0.6rem 0.6rem 0.6rem 2rem;">NIVEL/AREA</th>
+                    <th style="text-align: center; padding: 0.6rem;">RQ</th>
+                    <th style="text-align: center; padding: 0.6rem;">ATD RQ</th>
+                    <th style="text-align: center; padding: 0.6rem;">% ATD</th>
+                  </tr>
                </thead>
                <tbody>
          `;
@@ -300,12 +300,12 @@ export const renderDashboard = (container, user, onLogout) => {
          bufferKPIObj.waterfall.forEach(row => {
              let isTotal = row.nivel === 'Total';
              html += `
-                <tr style="${isTotal ? 'font-weight: 700; background: rgba(34, 197, 94, 0.1);' : ''}">
-                  <td style="text-align: left; padding-left: 2rem;">${row.nivel}</td>
-                  <td>${row.rq}</td>
-                  <td style="color: ${isTotal ? 'var(--success)' : 'inherit'};">${row.atd}</td>
-                  <td style="color: ${isTotal ? 'var(--success)' : 'inherit'};">${row.pct}</td>
-                </tr>
+                 <tr style="${isTotal ? 'font-weight: 700; background: rgba(34, 197, 94, 0.1);' : ''}">
+                  <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 2rem;">${row.nivel}</td>
+                  <td style="text-align: center; padding: 0.4rem;">${row.rq}</td>
+                  <td style="text-align: center; color: ${isTotal ? 'var(--success)' : 'inherit'}; padding: 0.4rem;">${row.atd}</td>
+                  <td style="text-align: center; color: ${isTotal ? 'var(--success)' : 'inherit'}; padding: 0.4rem;">${row.pct}</td>
+                 </tr>
              `;
          });
 
@@ -357,30 +357,30 @@ export const renderDashboard = (container, user, onLogout) => {
                  <table class="data-table" style="text-align: center;">
                    <thead>
                      <tr>
-                       <th style="text-align: left; padding-left: 1.5rem;">TIPO DE EMPAQUE</th>
-                       <th>Paletas a Bajar</th>
-                       <th>SKUs</th>
-                       <th>PAR/CAJA</th>
+                       <th style="text-align: left; padding: 0.6rem 0.6rem 0.6rem 1.5rem;">TIPO DE EMPAQUE</th>
+                       <th style="text-align: center; padding: 0.6rem;">Paletas a Bajar</th>
+                       <th style="text-align: center; padding: 0.6rem;">SKUs</th>
+                       <th style="text-align: center; padding: 0.6rem;">PAR/CAJA</th>
                      </tr>
                    </thead>
                    <tbody>
                      <tr>
-                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--success);">SolidPack</td>
-                       <td>${setPaletasSP.size}</td>
-                       <td>${skusReqSP.size}</td>
-                       <td>${unidadesSP}</td>
+                       <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 1.5rem; font-weight: 600; color: var(--success);">SolidPack</td>
+                       <td style="text-align: center; padding: 0.4rem;">${setPaletasSP.size}</td>
+                       <td style="text-align: center; padding: 0.4rem;">${skusReqSP.size}</td>
+                       <td style="text-align: center; padding: 0.4rem;">${unidadesSP}</td>
                      </tr>
                      <tr>
-                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--danger);">PreePack</td>
-                       <td>${setPaletasPP.size}</td>
-                       <td>${skusReqPP.size}</td>
-                       <td>${unidadesPP}</td>
+                       <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 1.5rem; font-weight: 600; color: var(--warning);">PreePack</td>
+                       <td style="text-align: center; padding: 0.4rem;">${setPaletasPP.size}</td>
+                       <td style="text-align: center; padding: 0.4rem;">${skusReqPP.size}</td>
+                       <td style="text-align: center; padding: 0.4rem;">${unidadesPP}</td>
                      </tr>
-                     <tr style="font-weight: 700; font-size: 1.1rem; background: rgba(245, 158, 11, 0.1);">
-                       <td style="text-align: left; padding-left: 1.5rem; color: var(--text-main);">TOTAL</td>
-                       <td style="color: var(--text-main);">${totalPaletas.size}</td>
-                       <td style="color: var(--primary);">${totalSkus.size}</td>
-                       <td style="color: var(--warning);">${totalUnidadesFisicas}</td>
+                     <tr style="background: rgba(255,255,255,0.05); font-weight: bold;">
+                       <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 1.5rem; color: var(--text-main);">TOTAL</td>
+                       <td style="text-align: center; padding: 0.4rem;">${totalPaletas.size}</td>
+                       <td style="text-align: center; padding: 0.4rem;">${totalSkus.size}</td>
+                       <td style="text-align: center; padding: 0.4rem; color: var(--success);">${totalUnidadesFisicas}</td>
                      </tr>
                    </tbody>
                  </table>

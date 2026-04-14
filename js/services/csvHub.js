@@ -169,12 +169,12 @@ export const calculateBufferPallets = () => {
         
         if(!sku || qty <= 0) return;
         
-        if (areaRaw === 'PISO') {
+        if (areaRaw === 'PISO' || areaRaw === 'CROSS') {
             stPiso[sku] = (stPiso[sku] || 0) + qty;
-        } else if (areaRaw === 'DIS' || areaRaw === 'MATE') {
+        } else if (areaRaw === 'DIS') {
             stLogico[sku] = (stLogico[sku] || 0) + qty;
         } else if (areaRaw === 'AEREO') {
-            // Un probable caso de fallback si estuviera en Activo, pero el user dijo Reserva
+            // Fallback reservado
         } else {
             // Zonas Bajas (Cualquier área regular)
             stBaja[sku] = (stBaja[sku] || 0) + qty;
@@ -183,6 +183,7 @@ export const calculateBufferPallets = () => {
 
     reserva.forEach(filaVal => {
         let nivelRaw = String(filaVal['NIVEL'] || filaVal['Nivel'] || '').trim().toUpperCase();
+        let nroAnd = String(filaVal['NRO AND'] || filaVal['Nro And'] || filaVal['nro and'] || '').trim().toUpperCase();
         let sku = String(filaVal['PRODUCTO'] || filaVal['Producto'] || filaVal['ARTICULO'] || filaVal['ArtÃculo'] || filaVal['Artículo'] || filaVal['Articulo'] || '').trim();
         let qty = parseFloat(filaVal['CANTIDAD'] || filaVal['Cantidad actual'] || filaVal['Cantidad'] || filaVal['cantidad']) || 0;
 
@@ -192,7 +193,9 @@ export const calculateBufferPallets = () => {
             stAlto[sku] = (stAlto[sku] || 0) + qty;
         } else if (nivelRaw === 'AEREO') {
             stAereo[sku] = (stAereo[sku] || 0) + qty;
-        } else if (nivelRaw === 'VER' || nivelRaw === 'CROSS') {
+        } else if (nivelRaw === 'CROSS') {
+            stPiso[sku] = (stPiso[sku] || 0) + qty;
+        } else if (nivelRaw === 'VER' && nroAnd === 'MZM-TR') {
             stLogico[sku] = (stLogico[sku] || 0) + qty;
         }
     });
