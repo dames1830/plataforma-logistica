@@ -230,45 +230,75 @@ export const renderDashboard = (container, user, onLogout) => {
       }, 50);
   };
 
-  // VISTA BUFFER
+  // VISTA BUFFER (CASCADA WATERFALL)
   const renderBufferTab = async () => {
      const bufferData = await getAreaData('buffer');
-     await getAreaData('stockActivo'); // Forzar hidratar antes
-     await getAreaData('stockReserva'); // Forzar hidratar antes
+     await getAreaData('stockActivo'); // Hidratar DB
+     await getAreaData('stockReserva'); // Hidratar DB
      
      const bufferKPIObj = calculateBufferPallets(); 
-
-     let kpiExtraHTML = '';
-     if (bufferKPIObj && bufferKPIObj.totalUbicaciones !== undefined) {
-         kpiExtraHTML = `
-           <div class="kpi-card" style="border: 2px solid var(--primary); background:rgba(79, 70, 229, 0.2);">
-             <div class="kpi-title" style="color:var(--text-main)">UBICACIONES (PALLETS) A DESCENDER</div>
-             <div class="kpi-value">${bufferKPIObj.totalUbicaciones}</div>
-             <div class="kpi-subtitle" style="color:var(--text-main)">${bufferKPIObj.totalSkusColaterales} Ítems a bajar (Ver Reporte)</div>
-           </div>
-         `;
-     } else {
-         kpiExtraHTML = `
-           <div class="kpi-card" style="border: 1px dashed var(--warning)">
-             <div class="kpi-title">MÉTRICA RELACIONAL NO DISPONIBLE</div>
-             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem">Sube Stock Activo y Reserva en la pestaña "Stock" para calcular.</div>
-           </div>
-         `;
-     }
-
+     
      if (!bufferData) {
          contentArea.innerHTML = `
-           <div style="margin-bottom:2rem">${kpiExtraHTML}</div>
+           <div class="kpi-card" style="border: 1px dashed var(--warning); margin-bottom:2rem;">
+             <div class="kpi-title">MÉTRICA RELACIONAL DE PEDIDOS NO DISPONIBLE</div>
+             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem">Sube Stock Activo y Reserva en la pestaña "Stock" primero si no lo has hecho.</div>
+           </div>
            <div class="upload-area" id="drop_buffer">
-             <h3>Aquí sube tu archivo de pedidos (.csv)</h3>
+             <h3>Aquí sube tu archivo de Pedidos a Evaluar (.csv)</h3>
              <label class="upload-btn">Cargar CSV<input type="file" id="input_buffer" accept=".csv" style="display:none;"></label>
              <div id="err_buffer" style="color:var(--danger); margin-top:1rem;"></div>
            </div>
          `;
          attachUploadEvent('input_buffer', 'buffer', '.csv');
-     } else {
-         renderDashboardView(bufferData, kpiExtraHTML, bufferKPIObj?.detalle);
+         return;
      }
+
+     // Si hay Data, Dibujamos la vista de Business Intelligence de Consolidado
+     let html = `<div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <label class="btn" style="width: auto; background: rgba(255,255,255,0.1); border:1px solid var(--border); font-size:0.8rem; cursor:pointer; padding:0.5rem 1rem;">
+          ↻ Re-subir Archivo Pedidos
+          <input type="file" id="update_buffer" accept=".csv" style="display:none;">
+        </label>
+     </div>`;
+
+     if (bufferKPIObj && bufferKPIObj.waterfall) {
+         html += `
+           <div class="data-table-container" style="max-width: 800px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
+             <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
+               <h3 style="color: var(--text-main); font-weight: 600;">ALGORITMO EN CASCADA (PRIORIZADOR DE EXTRACCIÓN)</h3>
+             </div>
+             <table class="data-table" style="text-align: center;">
+               <thead>
+                 <tr>
+                   <th style="text-align: left; padding-left: 2rem;">NIVEL/AREA</th>
+                   <th>RQ</th>
+                   <th>ATD RQ</th>
+                   <th>% ATD</th>
+                 </tr>
+               </thead>
+               <tbody>
+         `;
+
+         bufferKPIObj.waterfall.forEach(row => {
+             let isTotal = row.nivel === 'Total';
+             html += `
+                <tr style="${isTotal ? 'font-weight: 700; background: rgba(34, 197, 94, 0.1);' : ''}">
+                  <td style="text-align: left; padding-left: 2rem;">${row.nivel}</td>
+                  <td>${row.rq}</td>
+                  <td style="color: ${isTotal ? 'var(--success)' : 'inherit'};">${row.atd}</td>
+                  <td style="color: ${isTotal ? 'var(--success)' : 'inherit'};">${row.pct}</td>
+                </tr>
+             `;
+         });
+
+         html += `</tbody></table></div>`;
+     } else {
+         html += `<div style="color: var(--danger)">Las reglas maestras (Stock Activo / Stock Reserva) no se encuentran en la Base de Datos todavía.</div>`;
+     }
+
+     contentArea.innerHTML = html;
+     attachUploadEvent('update_buffer', 'buffer', '.csv');
   };
 
   const renderUploadArea = () => {

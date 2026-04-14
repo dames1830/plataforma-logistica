@@ -128,85 +128,105 @@ export const calculateBufferPallets = () => {
     
     if(!activo || !reserva || !pedidos) return null;
 
-    // 1. Acumulador de Stock Activo (Ignorando áreas basuras)
-    const forbiddenAreas = ['DIS', 'MATE', 'PISO', 'dis', 'mate', 'piso'];
-    let stockActivoPorSKU = {};
-    activo.forEach(filaA => {
-        let areaVal = String(filaA['Ãrea'] || filaA['Área'] || filaA['Area'] || '').trim().toUpperCase();
-        if (forbiddenAreas.includes(areaVal)) return; // Ignora zonas muertas
+    // 1. Indexación del Almacén Físico Global
+    let stBaja = {};
+    let stPiso = {};
+    let stLogico = {};
+    let stAlto = {};
+    let stAereo = {};
+
+    activo.forEach(filaVal => {
+        let areaRaw = String(filaVal['Ãrea'] || filaVal['Área'] || filaVal['Area'] || '').trim().toUpperCase();
+        let sku = String(filaVal['ArtÃculo'] || filaVal['Artículo'] || filaVal['Articulo'] || '').trim();
+        let qty = parseFloat(filaVal['Cantidad actual']) || 0;
         
-        // Formateo de SKU y cantidad
-        let sku = String(filaA['ArtÃculo'] || filaA['Artículo'] || filaA['Articulo'] || '').trim();
-        let qty = parseFloat(filaA['Cantidad actual']) || 0;
+        if(!sku || qty <= 0) return;
         
-        if(!stockActivoPorSKU[sku]) stockActivoPorSKU[sku] = 0;
-        stockActivoPorSKU[sku] += qty;
+        if (areaRaw === 'PISO') {
+            stPiso[sku] = (stPiso[sku] || 0) + qty;
+        } else if (areaRaw === 'DIS' || areaRaw === 'MATE') {
+            stLogico[sku] = (stLogico[sku] || 0) + qty;
+        } else if (areaRaw === 'AEREO') {
+            // Un probable caso de fallback si estuviera en Activo, pero el user dijo Reserva
+        } else {
+            // Zonas Bajas (Cualquier área regular)
+            stBaja[sku] = (stBaja[sku] || 0) + qty;
+        }
     });
 
-    // 2. Extracción de Pedidos Pendientes
-    let quiebresDeStock = {};
+    reserva.forEach(filaVal => {
+        let nivelRaw = String(filaVal['NIVEL'] || '').trim().toUpperCase();
+        let sku = String(filaVal['ARTICULO'] || '').trim();
+        let qty = parseFloat(filaVal['CANTIDAD']) || 0;
+
+        if(!sku || qty <= 0) return;
+
+        if (nivelRaw === 'ALTO') {
+            stAlto[sku] = (stAlto[sku] || 0) + qty;
+        } else if (nivelRaw === 'AEREO') {
+            stAereo[sku] = (stAereo[sku] || 0) + qty;
+        }
+    });
+
+    // 2. Acumuladores de Cascada (Waterfall)
+    let globalRQ = 0;
+    let atdBaja = 0;
+    let atdAlto = 0;
+    let atdPiso = 0;
+    let atdAereo = 0;
+    let atdLogico = 0;
+
+    // 3. Simulación de ruta por SKUs Pedidos
     pedidos.forEach(filaP => {
-        let skuPedidos = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
+        let skuP = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
         let cantPedida = parseFloat(filaP['Cantidad solicitada']) || 0;
-        let cantDada = parseFloat(filaP['Cantidad asignada']) || 0;
+        let cantAsignada = parseFloat(filaP['Cantidad asignada']) || 0;
         
-        let pedidoPendiente = cantPedida - cantDada;
-        
-        if (pedidoPendiente > 0) {
-            let cantEnPiso = stockActivoPorSKU[skuPedidos] || 0;
-            // Si el piso no me alcanza para cubrir el pedido
-            if (pedidoPendiente > cantEnPiso) {
-                let faltanteReal = pedidoPendiente - cantEnPiso;
-                if(!quiebresDeStock[skuPedidos]) quiebresDeStock[skuPedidos] = 0;
-                quiebresDeStock[skuPedidos] += faltanteReal;
-            }
-        }
+        let faltanteLocal = cantPedida - cantAsignada;
+        if (faltanteLocal <= 0 || !skuP) return;
+
+        globalRQ += faltanteLocal;
+
+        // Cascada 1: Zonas Bajas
+        let p1 = Math.min(faltanteLocal, stBaja[skuP] || 0);
+        atdBaja += p1;
+        faltanteLocal -= p1;
+
+        // Cascada 2: Alta
+        let p2 = Math.min(faltanteLocal, stAlto[skuP] || 0);
+        atdAlto += p2;
+        faltanteLocal -= p2;
+
+        // Cascada 3: Pisos
+        let p3 = Math.min(faltanteLocal, stPiso[skuP] || 0);
+        atdPiso += p3;
+        faltanteLocal -= p3;
+
+        // Cascada 4: Aereo
+        let p4 = Math.min(faltanteLocal, stAereo[skuP] || 0);
+        atdAereo += p4;
+        faltanteLocal -= p4;
+
+        // Cascada 5: Logico
+        let p5 = Math.min(faltanteLocal, stLogico[skuP] || 0);
+        atdLogico += p5;
+        faltanteLocal -= p5;
     });
 
-    // 3. Algoritmo de Búsqueda y Bajada en Reserva Alta
-    // Filtrar solo NIVEL ALTO
-    let dbAlta = reserva.filter(r => String(r['NIVEL']).trim().toUpperCase() === 'ALTO');
+    // Mapeo Final de la Cascada para la vista Web
+    const calcPct = (atd, total) => total > 0 ? ((atd / total) * 100).toFixed(0) + '%' : '0%';
     
-    // Ordenar todas las locaciones ASCENDENTEMENTE por UBICACION para la ruta del montacargas
-    dbAlta.sort((a, b) => {
-        let ubiA = String(a['UBICACION'] || '').trim();
-        let ubiB = String(b['UBICACION'] || '').trim();
-        return ubiA.localeCompare(ubiB);
-    });
-
-    let palletsABajar = [];
-    let ubicacionesBloqueadas = new Set();
-
-    // Recorremos cada zapato que nos falta para buscarlo en la ruta
-    for (let skuRoto in quiebresDeStock) {
-        let cantidadQueNecesitoAun = quiebresDeStock[skuRoto];
-
-        for (let pallet of dbAlta) {
-            if (cantidadQueNecesitoAun <= 0) break; // Ya encontré suficientes de este SKU
-
-            let ubi = String(pallet['UBICACION']).trim();
-            if (ubicacionesBloqueadas.has(ubi)) continue; // Si ya mandamos a bajar esta tarima, saltamos
-            
-            let palletSku = String(pallet['ARTICULO'] || '').trim();
-            let palletQty = parseFloat(pallet['CANTIDAD']) || 0;
-
-            if (palletSku === skuRoto && palletQty > 0) {
-                // ENCONTRADO: Descontamos lo que encontramos de nuestro faltante
-                cantidadQueNecesitoAun -= palletQty;
-                
-                // MÁXIMA REGLA: Extraemos y sumamos TODA la ubicación, bajamos todo el bloque físico
-                ubicacionesBloqueadas.add(ubi);
-                // Buscar todo lo que exista en esa posición exacta en toda la reserva general
-                let filasMismaUbicacion = reserva.filter(rr => String(rr['UBICACION']).trim() === ubi);
-                
-                filasMismaUbicacion.forEach(f => palletsABajar.push(f));
-            }
-        }
-    }
+    let waterfallArray = [
+        { nivel: '1. Zonas Bajas', rq: globalRQ, atd: atdBaja, pct: calcPct(atdBaja, globalRQ) },
+        { nivel: '2. Alto', rq: globalRQ, atd: atdAlto, pct: calcPct(atdAlto, globalRQ) },
+        { nivel: '3. Pisos', rq: globalRQ, atd: atdPiso, pct: calcPct(atdPiso, globalRQ) },
+        { nivel: '4. Aereo', rq: globalRQ, atd: atdAereo, pct: calcPct(atdAereo, globalRQ) },
+        { nivel: '5. Lógicos', rq: globalRQ, atd: atdLogico, pct: calcPct(atdLogico, globalRQ) },
+        { nivel: 'Total', rq: globalRQ, atd: (atdBaja + atdAlto + atdPiso + atdAereo + atdLogico), pct: calcPct((atdBaja + atdAlto + atdPiso + atdAereo + atdLogico), globalRQ) }
+    ];
 
     return {
-        totalUbicaciones: ubicacionesBloqueadas.size,
-        totalSkusColaterales: palletsABajar.length,
-        detalle: palletsABajar
+        waterfall: waterfallArray,
+        detalle: null // Pendiente a programar más adelante cuando lo definas
     };
 };
