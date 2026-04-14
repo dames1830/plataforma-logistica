@@ -233,7 +233,7 @@ export const renderDashboard = (container, user, onLogout) => {
                  if(targetType === 'buffer') {
                      renderBufferTab();
                  } else {
-                     renderTab('inicio');
+                     renderTabContent();
                  }
               }
           } catch(err) {
