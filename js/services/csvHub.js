@@ -360,7 +360,7 @@ export const calculateBufferPallets = () => {
     let rqAereo = rqPiso - atdPiso;
     let rqLogico = rqAereo - atdAereo;
     
-    let sumRQ = rqBaja + rqAlto + rqPiso + rqAereo + rqLogico;
+    let sumRQ = rqBaja; // Mantenemos el RQ inicial global como Total de Demanda
     let sumATD = atdBaja + atdAlto + atdPiso + atdAereo + atdLogico;
 
     let waterfallArray = [
