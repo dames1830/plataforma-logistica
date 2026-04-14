@@ -266,7 +266,7 @@ export const renderDashboard = (container, user, onLogout) => {
          html += `
            <div class="data-table-container" style="max-width: 800px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
-               <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS BUFFER</h3>
+               <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS BUFFER ZONAS</h3>
              </div>
              <table class="data-table" style="text-align: center;">
                <thead>
@@ -296,26 +296,38 @@ export const renderDashboard = (container, user, onLogout) => {
          
          // ==== RENDER ANALISIS BUFFER NIVEL PALETAS ====
          if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
-            let setPaletas = new Set();
-            let skusRequeridos = new Set();
-            let totalUnidadesBajar = 0;
-            let unidadesSolidPack = 0;
-            let unidadesPreePack = 0;
+            let totalPaletas = new Set();
+            let totalSkus = new Set();
+            let totalUnidadesFisicas = 0;
+            
+            let setPaletasSP = new Set();
+            let skusReqSP = new Set();
+            let unidadesSP = 0;
+            
+            let setPaletasPP = new Set();
+            let skusReqPP = new Set();
+            let unidadesPP = 0;
             
             bufferKPIObj.detalle.forEach(d => {
                 let pPick = parseFloat(d['QTY BUFFER']) || 0;
-                setPaletas.add(d['UBICACIONES']);
+                let ubi = d['UBICACIONES'];
+                let skuStr = String(d['SKU'] || '').trim();
                 
                 if (pPick > 0) {
-                    skusRequeridos.add(d['SKU']);
-                    totalUnidadesBajar += pPick;
-                    let skuStr = String(d['SKU'] || '').trim();
                     let charLen = skuStr.length;
                     
-                    if (charLen === 12) {
-                        unidadesSolidPack += pPick;
-                    } else if (charLen === 15) {
-                        unidadesPreePack += pPick;
+                    totalPaletas.add(ubi);
+                    totalSkus.add(skuStr);
+                    totalUnidadesFisicas += pPick;
+                    
+                    if (charLen <= 13) { // SolidPack (normalmente 12)
+                        setPaletasSP.add(ubi);
+                        skusReqSP.add(skuStr);
+                        unidadesSP += pPick;
+                    } else { // PreePack (normalmente 15)
+                        setPaletasPP.add(ubi);
+                        skusReqPP.add(skuStr);
+                        unidadesPP += pPick;
                     }
                 }
             });
@@ -328,20 +340,30 @@ export const renderDashboard = (container, user, onLogout) => {
                  <table class="data-table" style="text-align: center;">
                    <thead>
                      <tr>
-                       <th>Total Paletas a Bajar</th>
-                       <th>Total SKUs a Extraer</th>
-                       <th>Total Unid. a Separar</th>
-                       <th>Unid. SolidPack (12d)</th>
-                       <th>Unid. PreePack (15d)</th>
+                       <th style="text-align: left; padding-left: 1.5rem;">TIPO DE EMPAQUE</th>
+                       <th>Paletas a Bajar</th>
+                       <th>SKUs a Extraer</th>
+                       <th>Unidades a Separar</th>
                      </tr>
                    </thead>
                    <tbody>
-                     <tr style="font-weight: 700; font-size: 1.1rem;">
-                       <td style="color: var(--text-main);">${setPaletas.size}</td>
-                       <td style="color: var(--primary);">${skusRequeridos.size}</td>
-                       <td style="color: var(--warning);">${totalUnidadesBajar}</td>
-                       <td style="color: var(--success);">${unidadesSolidPack}</td>
-                       <td style="color: var(--danger);">${unidadesPreePack}</td>
+                     <tr>
+                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--success);">SolidPack (12d)</td>
+                       <td>${setPaletasSP.size}</td>
+                       <td>${skusReqSP.size}</td>
+                       <td>${unidadesSP}</td>
+                     </tr>
+                     <tr>
+                       <td style="text-align: left; padding-left: 1.5rem; font-weight: 600; color: var(--danger);">PreePack (15d)</td>
+                       <td>${setPaletasPP.size}</td>
+                       <td>${skusReqPP.size}</td>
+                       <td>${unidadesPP}</td>
+                     </tr>
+                     <tr style="font-weight: 700; font-size: 1.1rem; background: rgba(245, 158, 11, 0.1);">
+                       <td style="text-align: left; padding-left: 1.5rem; color: var(--text-main);">TOTAL GLOBAL</td>
+                       <td style="color: var(--text-main);">${totalPaletas.size}</td>
+                       <td style="color: var(--primary);">${totalSkus.size}</td>
+                       <td style="color: var(--warning);">${totalUnidadesFisicas}</td>
                      </tr>
                    </tbody>
                  </table>
