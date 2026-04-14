@@ -294,6 +294,61 @@ export const renderDashboard = (container, user, onLogout) => {
 
          html += `</tbody></table></div>`;
          
+         // ==== RENDER ANALISIS BUFFER NIVEL PALETAS ====
+         if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
+            let setPaletas = new Set();
+            let skusRequeridos = new Set();
+            let totalUnidadesBajar = 0;
+            let unidadesSolidPack = 0;
+            let unidadesPreePack = 0;
+            
+            bufferKPIObj.detalle.forEach(d => {
+                let pPick = parseFloat(d['QTY BUFFER']) || 0;
+                setPaletas.add(d['UBICACIONES']);
+                
+                if (pPick > 0) {
+                    skusRequeridos.add(d['SKU']);
+                    totalUnidadesBajar += pPick;
+                    let skuStr = String(d['SKU'] || '').trim();
+                    let charLen = skuStr.length;
+                    
+                    if (charLen === 12) {
+                        unidadesSolidPack += pPick;
+                    } else if (charLen === 15) {
+                        unidadesPreePack += pPick;
+                    }
+                }
+            });
+
+            html += `
+              <div class="data-table-container" style="max-width: 800px; margin: 2rem auto; border: 2px solid var(--warning); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
+                 <div style="padding: 1rem; background: rgba(245, 158, 11, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
+                   <h3 style="color: var(--warning); font-weight: 600;">ANÁLISIS BUFFER NIVEL PALETAS</h3>
+                 </div>
+                 <table class="data-table" style="text-align: center;">
+                   <thead>
+                     <tr>
+                       <th>Total Paletas a Bajar</th>
+                       <th>Total SKUs a Extraer</th>
+                       <th>Total Unid. a Separar</th>
+                       <th>Unid. SolidPack (12d)</th>
+                       <th>Unid. PreePack (15d)</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     <tr style="font-weight: 700; font-size: 1.1rem;">
+                       <td style="color: var(--text-main);">${setPaletas.size}</td>
+                       <td style="color: var(--primary);">${skusRequeridos.size}</td>
+                       <td style="color: var(--warning);">${totalUnidadesBajar}</td>
+                       <td style="color: var(--success);">${unidadesSolidPack}</td>
+                       <td style="color: var(--danger);">${unidadesPreePack}</td>
+                     </tr>
+                   </tbody>
+                 </table>
+              </div>
+            `;
+         }
+         
          // ==== RENDER TABLA DETALLE (ORDEN DE EXTRACTOR) ====
          if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
             html += `
