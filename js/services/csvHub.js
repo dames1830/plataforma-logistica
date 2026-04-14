@@ -283,24 +283,36 @@ export const calculateBufferPallets = () => {
         // Traemos todas las filas (SKUs) que viven orgánicamente en esa locación de Reserva
         let inquilinosMadera = reserva.filter(f => String(f['UBICACION'] || '').trim() === ubi);
         
+        // Consolidación de SKUs idénticos en la misma madera (paleta)
+        let skusEnEstaMadera = {};
         inquilinosMadera.forEach(inquilino => {
             let colSku = String(inquilino['PRODUCTO'] || inquilino['Producto'] || inquilino['ARTICULO'] || inquilino['Articulo'] || '').trim();
             let colQty = parseFloat(inquilino['CANTIDAD'] || inquilino['Cantidad actual'] || inquilino['Cantidad'] || 0) || 0;
             let colLpn = String(inquilino['LPN'] || '').trim();
             
-            // ¿A este inquilino le toca picking en esta bajada?
+            if (!skusEnEstaMadera[colSku]) {
+                skusEnEstaMadera[colSku] = { qty: 0, lpn: colLpn };
+            }
+            skusEnEstaMadera[colSku].qty += colQty;
+        });
+
+        // Generar las filas finales del reporte por cada SKU único en la paleta
+        Object.keys(skusEnEstaMadera).forEach(colSku => {
+            let dataG = skusEnEstaMadera[colSku];
             let bufferPick = 0;
+            
+            // ¿A este zapato le toca picking en esta bajada?
             if (cuotasPicking[ubi] && cuotasPicking[ubi][colSku]) {
                 bufferPick = cuotasPicking[ubi][colSku];
-                cuotasPicking[ubi][colSku] = 0; // Se apaga para que no dublique si hubiera filas repetidas del mismo SKU en la misma madera
+                cuotasPicking[ubi][colSku] = 0; // Se apaga la cuota por seguridad
             }
 
             detallePallets.push({
                 'UBICACIONES': ubi,
-                'LPN': colLpn,
+                'LPN': dataG.lpn,
                 'SKU': colSku,
                 'QTY ACTIVO': Math.floor(stBaja[colSku] || 0),
-                'QTY RESERVA': colQty,
+                'QTY RESERVA': dataG.qty,
                 'QTY BUFFER': bufferPick,
                 'ARTICULO': colSku.split('-')[0]
             });
