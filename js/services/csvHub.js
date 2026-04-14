@@ -214,15 +214,24 @@ export const calculateBufferPallets = () => {
     });
 
     // Mapeo Final de la Cascada para la vista Web
-    const calcPct = (atd, total) => total > 0 ? ((atd / total) * 100).toFixed(0) + '%' : '0%';
+    const calcPct = (atd, total) => total > 0 ? ((atd / total) * 100).toFixed(2) + '%' : '0.00%';
     
+    let rqBaja = globalRQ;
+    let rqAlto = rqBaja - atdBaja;
+    let rqPiso = rqAlto - atdAlto;
+    let rqAereo = rqPiso - atdPiso;
+    let rqLogico = rqAereo - atdAereo;
+    
+    let sumRQ = rqBaja + rqAlto + rqPiso + rqAereo + rqLogico;
+    let sumATD = atdBaja + atdAlto + atdPiso + atdAereo + atdLogico;
+
     let waterfallArray = [
-        { nivel: '1. Zonas Bajas', rq: globalRQ, atd: atdBaja, pct: calcPct(atdBaja, globalRQ) },
-        { nivel: '2. Alto', rq: globalRQ, atd: atdAlto, pct: calcPct(atdAlto, globalRQ) },
-        { nivel: '3. Pisos', rq: globalRQ, atd: atdPiso, pct: calcPct(atdPiso, globalRQ) },
-        { nivel: '4. Aereo', rq: globalRQ, atd: atdAereo, pct: calcPct(atdAereo, globalRQ) },
-        { nivel: '5. Lógicos', rq: globalRQ, atd: atdLogico, pct: calcPct(atdLogico, globalRQ) },
-        { nivel: 'Total', rq: globalRQ, atd: (atdBaja + atdAlto + atdPiso + atdAereo + atdLogico), pct: calcPct((atdBaja + atdAlto + atdPiso + atdAereo + atdLogico), globalRQ) }
+        { nivel: '1. Zonas Bajas', rq: rqBaja, atd: atdBaja, pct: calcPct(atdBaja, rqBaja) },
+        { nivel: '2. Alto', rq: rqAlto, atd: atdAlto, pct: calcPct(atdAlto, rqAlto) },
+        { nivel: '3. Pisos', rq: rqPiso, atd: atdPiso, pct: calcPct(atdPiso, rqPiso) },
+        { nivel: '4. Aereo', rq: rqAereo, atd: atdAereo, pct: calcPct(atdAereo, rqAereo) },
+        { nivel: '5. Lógicos', rq: rqLogico, atd: atdLogico, pct: calcPct(atdLogico, rqLogico) },
+        { nivel: 'Total', rq: sumRQ, atd: sumATD, pct: calcPct(sumATD, sumRQ) }
     ];
 
     return {
