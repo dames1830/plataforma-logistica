@@ -192,6 +192,8 @@ export const calculateBufferPallets = () => {
             stAlto[sku] = (stAlto[sku] || 0) + qty;
         } else if (nivelRaw === 'AEREO') {
             stAereo[sku] = (stAereo[sku] || 0) + qty;
+        } else if (nivelRaw === 'VER' || nivelRaw === 'CROSS') {
+            stLogico[sku] = (stLogico[sku] || 0) + qty;
         }
     });
 
@@ -363,7 +365,7 @@ export const calculateBufferPallets = () => {
         { nivel: '2. Alto', rq: rqAlto, atd: atdAlto, pct: calcPct(atdAlto, rqAlto) },
         { nivel: '3. Pisos', rq: rqPiso, atd: atdPiso, pct: calcPct(atdPiso, rqPiso) },
         { nivel: '4. Aereo', rq: rqAereo, atd: atdAereo, pct: calcPct(atdAereo, rqAereo) },
-        { nivel: '5. Lógicos', rq: rqLogico, atd: atdLogico, pct: calcPct(atdLogico, rqLogico) },
+        { nivel: '5. Lógicas', rq: rqLogico, atd: atdLogico, pct: calcPct(atdLogico, rqLogico) },
         { nivel: 'Total', rq: sumRQ, atd: sumATD, pct: calcPct(sumATD, sumRQ) }
     ];
 
