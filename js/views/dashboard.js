@@ -238,7 +238,8 @@ export const renderDashboard = (container, user, onLogout) => {
               }
           } catch(err) {
               console.error(err);
-              alert('Error procesando archivo CSV. Revisa el formato.');
+              const errMsg = (err && err.message) ? err.message : String(err);
+              alert('Error procesando archivo: ' + errMsg);
           } finally {
               lbl.style.opacity = '1';
               lbl.innerHTML = ogText;

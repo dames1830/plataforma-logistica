@@ -24,20 +24,24 @@ export const parseFile = (file, area) => {
     
     dataStore[area] = null;
 
-    if (file.name.endsWith('.csv')) {
+    if (file.name.toLowerCase().endsWith('.csv')) {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: async function(results) {
           if(results.errors.length && !results.data.length) reject(results.errors);
           else {
-             await persistToDatabase(area, results.data);
-             resolve(results.data);
+             try {
+                 await persistToDatabase(area, results.data);
+                 resolve(results.data);
+             } catch(dbErr) {
+                 reject('Error Servidor: ' + dbErr.message);
+             }
           }
         },
-        error: function(err) { reject(err); }
+        error: function(err) { reject('PapaParse Error: ' + err); }
       });
-    } else if (file.name.endsWith('.xlsx')) {
+    } else if (file.name.toLowerCase().endsWith('.xlsx')) {
       const reader = new FileReader();
       reader.onload = async function(e) {
         try {
@@ -66,7 +70,7 @@ export const parseBufferFiles = async (files) => {
     
     // Parseamos cada archivo manualmente
     for (let file of files) {
-        if (!file.name.endsWith('.csv')) continue;
+        if (!file.name.toLowerCase().endsWith('.csv')) continue;
         let res = await new Promise((resolve, reject) => {
             Papa.parse(file, {
                 header: true,
