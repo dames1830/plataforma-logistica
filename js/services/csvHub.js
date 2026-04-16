@@ -110,18 +110,25 @@ const persistToDatabase = async (area, payload) => {
 
 // Función Asíncrona: Preguntar a la BD maestra por los datos, si no tiene, usa nulo
 export const getAreaData = async (area) => {
+  // Si la data del área ya fue descargada y alojada en la memoria caché RAM, usar esa
+  // ¡Esto evita descargar Megabytes redundantes por HTTP cada vez que cambias de pestaña!
+  if (dataStore[area] !== null) {
+      return dataStore[area];
+  }
+
   try {
      const response = await fetch(`${API_URL}/${area}`);
-     if(response.ok) {
+     if (response.ok) {
          const serverResponse = await response.json();
-         if(serverResponse.data) {
+         if (serverResponse.data) {
              dataStore[area] = serverResponse.data;
              return dataStore[area];
          }
      }
   } catch (err) {
-      console.warn("Servidor Backend Inactivo. Usando memoria caché.");
+      console.warn("Servidor Backend Inactivo o lento. Usando caché nula segura.");
   }
+  
   return dataStore[area];
 };
 
