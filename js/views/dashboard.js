@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, dataStore } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer'] },
@@ -36,6 +36,10 @@ export const renderDashboard = (container, user, onLogout) => {
         <h2>Panel Logístico Elite</h2>
       </div>
       <div class="user-profile">
+        <div class="date-filter-container" style="margin-right: 1.5rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.8rem; border-radius: 8px; border: 1px solid var(--border);">
+          <i class="fas fa-calendar-alt" style="color: var(--primary);"></i>
+          <input type="date" id="globalDatePicker" title="Viajar a una fecha pasada" style="background: transparent; border: none; color: var(--text-main); color-scheme: dark; font-family: inherit; font-size: 0.85rem; outline: none; cursor: pointer;">
+        </div>
         <div class="user-details">
           <span class="user-name">${user.name}</span>
           <span class="user-role">${user.role.toUpperCase()} Área</span>
@@ -65,6 +69,17 @@ export const renderDashboard = (container, user, onLogout) => {
   const contentTitle = document.getElementById('contentTitle');
   const contentSubtitle = document.getElementById('contentSubtitle');
   const contentArea = document.getElementById('contentArea');
+  const datePicker = document.getElementById('globalDatePicker');
+  
+  if (currentDateFilter) {
+      datePicker.value = currentDateFilter;
+  }
+  
+  datePicker.addEventListener('change', (e) => {
+      const selected = e.target.value;
+      setDateFilter(selected || null); // null if cleared
+      renderTabContent();
+  });
 
   const renderNav = () => {
     navContainer.innerHTML = allowedTabs.map(tab => `
@@ -97,6 +112,10 @@ export const renderDashboard = (container, user, onLogout) => {
          <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--success);">Infraestructura Nivel Producción</p>
       </div>
     `;
+
+    // Si hay una fecha seleccionada, anclamos el indicador visual!
+    const dateTitleTag = currentDateFilter ? `<span style="font-size:0.75rem; background: var(--warning); color:#000; padding:2px 8px; border-radius:12px; margin-left:10px; vertical-align:middle;">⏳ Snapshot: ${currentDateFilter}</span>` : '';
+    contentTitle.innerHTML = activeTabObj.label + dateTitleTag;
 
     if (currentTab === 'inicio') {
       contentSubtitle.textContent = "Control Maestro de Operaciones";
@@ -151,8 +170,8 @@ export const renderDashboard = (container, user, onLogout) => {
     if (totalCargas === 0) {
         html += `
           <div class="kpi-card" style="grid-column: 1 / -1; text-align:center; padding: 3rem;">
-             La Base de Datos está vacía. 
-             <br><br>Ve a las pestañas individuales y sube tus Excel/CSV para ver las analíticas globales aquí.
+             No hay datos registrados en el servidor ${currentDateFilter ? `para la fecha ${currentDateFilter}` : 'actualmente'}.
+             <br><br>Ve a las pestañas individuales y sube tus Excel/CSV para registrar datos en el día de hoy.
           </div>
         `;
     }

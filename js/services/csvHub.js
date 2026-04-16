@@ -11,6 +11,29 @@ export const dataStore = {
   buffer: null
 };
 
+// Control Trazabilidad: Fecha seleccionada (null = Fecha Actual/Más reciente)
+export let currentDateFilter = null;
+
+export const setDateFilter = (newDateStr) => {
+    if (currentDateFilter !== newDateStr) {
+        currentDateFilter = newDateStr;
+        // Limpiamos la memoria caché al viajar por el tiempo
+        Object.keys(dataStore).forEach(k => dataStore[k] = null);
+    }
+};
+
+// Traer las fechas históricas disponibles en el servidor
+export const fetchAvailableDates = async () => {
+    try {
+        const response = await fetch(`${API_URL}/dates`);
+        if (response.ok) {
+            const data = await response.json();
+            return data.dates || [];
+        }
+    } catch (e) { console.warn("No se pudo obtener el historial de fechas", e); }
+    return [];
+};
+
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 // Al estar en local tu computadora solía conectarse con:
 // const API_URL = "http://127.0.0.1:8000/api/logistics";
@@ -22,6 +45,8 @@ export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
     if (!file) return reject('Archivo inválido');
     
+    // Al subir nueva data, forzamos regresar al día "Actual" para verla
+    setDateFilter(null);
     dataStore[area] = null;
 
     if (file.name.toLowerCase().endsWith('.csv')) {
@@ -67,6 +92,8 @@ export const parseFile = (file, area) => {
 
 export const parseBufferFiles = async (files) => {
     let combinedData = [];
+    
+    setDateFilter(null); // Al subir forzamos regresar a la fecha más reciente
     
     // Parseamos cada archivo manualmente
     for (let file of files) {
@@ -117,7 +144,12 @@ export const getAreaData = async (area) => {
   }
 
   try {
-     const response = await fetch(`${API_URL}/${area}`);
+     let queryURL = `${API_URL}/${area}`;
+     if (currentDateFilter) {
+         queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
+     }
+     
+     const response = await fetch(queryURL);
      if (response.ok) {
          const serverResponse = await response.json();
          if (serverResponse.data) {
