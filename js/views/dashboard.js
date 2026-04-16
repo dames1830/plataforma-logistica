@@ -89,12 +89,12 @@ export const renderDashboard = (container, user, onLogout) => {
     
     if(currentChart) { currentChart.destroy(); currentChart = null; }
 
-    // Indicador UI para encendido en frío del servidor
+    // Indicador UI para carga de datos
     contentArea.innerHTML = `
       <div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.8;">
          <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
-         <h3 style="color: var(--text-main); font-weight: 500;">Conectando con la Nube...</h3>
-         <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--warning);">Si es la primera conexión, el servidor (Free Tier) tarda unos ~50 segundos en despertar.</p>
+         <h3 style="color: var(--text-main); font-weight: 500;">Sincronizando con Servidor Elite...</h3>
+         <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--success);">Infraestructura Nivel Producción ($7 Starter)</p>
       </div>
     `;
 
@@ -129,9 +129,12 @@ export const renderDashboard = (container, user, onLogout) => {
     const areasValidas = ['stockActivo', 'stockReserva', 'inventario', 'picking', 'packing', 'despacho', 'recepcion'];
     
     let totalCargas = 0;
-    // Debemos recorrer con for...of para permitir await
-    for (let a of areasValidas) {
-        const rows = await getAreaData(a);
+    
+    // OPTIMIZACIÓN ELITE: Disparar todas las consultas a la Base de Datos a la vez (Multi-hilo / Paralelo)
+    const datas = await Promise.all(areasValidas.map(a => getAreaData(a)));
+    
+    areasValidas.forEach((a, index) => {
+        const rows = datas[index];
         if(rows && rows.length > 0) {
            totalCargas++;
            const titleName = a === 'stockActivo'? 'Stock Activo': a === 'stockReserva'? 'Stock Reserva': a.toUpperCase();
@@ -143,7 +146,7 @@ export const renderDashboard = (container, user, onLogout) => {
              </div>
            `;
         }
-    }
+    });
 
     if (totalCargas === 0) {
         html += `
@@ -160,8 +163,11 @@ export const renderDashboard = (container, user, onLogout) => {
 
   // VISTA STOCK CARGA
   const renderStockUploads = async () => {
-    const actData = await getAreaData('stockActivo');
-    const resData = await getAreaData('stockReserva');
+    // Optimización Elite: Carga múltiple en una fracción del tiempo
+    const [actData, resData] = await Promise.all([
+       getAreaData('stockActivo'),
+       getAreaData('stockReserva')
+    ]);
 
     contentArea.innerHTML = ''; 
     htmlStockUpload(`Stock Activo (.csv)`, 'stockActivo', actData, '.csv');
@@ -259,9 +265,12 @@ export const renderDashboard = (container, user, onLogout) => {
 
   // VISTA BUFFER (CASCADA WATERFALL)
   const renderBufferTab = async () => {
-     const bufferData = await getAreaData('buffer');
-     await getAreaData('stockActivo'); // Hidratar DB
-     await getAreaData('stockReserva'); // Hidratar DB
+     // Multi-hilo para arrancar en un microsegundo
+     const [bufferData] = await Promise.all([
+         getAreaData('buffer'),
+         getAreaData('stockActivo'),
+         getAreaData('stockReserva')
+     ]);
      
      const bufferKPIObj = calculateBufferPallets(); 
      
