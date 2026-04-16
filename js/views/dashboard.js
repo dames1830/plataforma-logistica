@@ -94,7 +94,7 @@ export const renderDashboard = (container, user, onLogout) => {
       <div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.8;">
          <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
          <h3 style="color: var(--text-main); font-weight: 500;">Sincronizando con Servidor Elite...</h3>
-         <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--success);">Infraestructura Nivel Producción ($7 Starter)</p>
+         <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--success);">Infraestructura Nivel Producción</p>
       </div>
     `;
 
