@@ -16,7 +16,7 @@ export const dataStore = {
 // const API_URL = "http://127.0.0.1:8000/api/logistics";
 
 // Producción Mundial - Servidor Nube:
-const API_URL = "https://motor-logistico-bd.onrender.com/api/logistics";
+const API_URL = "https://logistics-backend-wv0x.onrender.com/api/logistics";
 
 export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
