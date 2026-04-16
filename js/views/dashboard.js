@@ -89,9 +89,19 @@ export const renderDashboard = (container, user, onLogout) => {
     
     if(currentChart) { currentChart.destroy(); currentChart = null; }
 
+    // Indicador UI para encendido en frío del servidor
+    contentArea.innerHTML = `
+      <div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.8;">
+         <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
+         <h3 style="color: var(--text-main); font-weight: 500;">Conectando con la Nube...</h3>
+         <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--warning);">Si es la primera conexión, el servidor (Free Tier) tarda unos ~50 segundos en despertar.</p>
+      </div>
+    `;
+
     if (currentTab === 'inicio') {
       contentSubtitle.textContent = "Control Maestro de Operaciones";
-      renderHomeTab(); // Will await inside
+      await renderHomeTab();
+
     } else if (currentTab === 'stock') {
       contentSubtitle.textContent = "Centro de Carga Maestro (Kardex)";
       await renderStockUploads();
