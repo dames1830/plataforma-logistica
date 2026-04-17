@@ -513,13 +513,13 @@ export const calculateBufferPallets = (configOverride = null) => {
         const ubicacion = String(row['UBICACIONES'] || '').trim();
         const qtyBuffer = Number(row['QTY BUFFER']) || 0;
 
-        // REGLA DEFINITIVA: 12 dígitos = SolidPack | 15 dígitos = PreePack
-        const digitos = sku.replace(/\D/g, '').length; // solo cuenta los dígitos numéricos
+        // REGLA DEFINITIVA: largo total del SKU — 12 caracteres = SolidPack | 15 caracteres = PreePack
+        const largoSKU = sku.length; // largo total (letras + dígitos)
         let tipo;
-        if (digitos === 15) {
+        if (largoSKU === 15) {
             tipo = 'PreePack';
         } else {
-            tipo = 'SolidPack'; // 12 dígitos u otro = SolidPack
+            tipo = 'SolidPack'; // 12 caracteres u otro = SolidPack
         }
 
         if (!acumPaletas[tipo]) {

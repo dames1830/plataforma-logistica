@@ -400,27 +400,32 @@ export const renderDashboard = async (container, user, onLogout) => {
             return;
           }
 
-          // Dos cuadros en paralelo: ZONAS  y  SKU
-          rhtml = `<div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-start;">`;
+          // Dos cuadros compactos lado a lado
+          rhtml = `<div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start;">`;
 
-          // ── CUADRO 1: ANÁLISIS BUFFER ZONAS ──
+          // ── CUADRO 1: ANÁLISIS BUFFER ZONAS (compacto) ──
           rhtml += `
-            <div class="data-table-container" style="flex:1; min-width:300px; border:2px solid var(--primary); box-shadow:0 4px 24px rgba(79,70,229,0.25);">
-              <div style="padding:1rem; background:rgba(79,70,229,0.14); border-bottom:1px solid var(--border); text-align:center;">
-                <h3 style="color:#fff; font-weight:700; letter-spacing:1px; font-size:0.95rem;">ANÁLISIS BUFFER ZONAS</h3>
+            <div style="flex:0 0 auto; width:440px; border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(79,70,229,0.25);">
+              <div style="padding:0.6rem 1rem; background:rgba(79,70,229,0.14); border-bottom:1px solid var(--border); text-align:center;">
+                <h3 style="color:#fff; font-weight:700; letter-spacing:1px; font-size:0.88rem;">ANÁLISIS BUFFER ZONAS</h3>
               </div>
-              <table class="data-table" style="text-align:center;">
-                <thead><tr>
-                  <th style="text-align:left;">NIVEL/AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th>
-                </tr></thead>
+              <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                <thead>
+                  <tr style="background:rgba(15,23,42,0.6);">
+                    <th style="padding:0.4rem 0.8rem; text-align:left; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:40%;">NIVEL/AREA</th>
+                    <th style="padding:0.4rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">RQ</th>
+                    <th style="padding:0.4rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">ATD RQ</th>
+                    <th style="padding:0.4rem 0.8rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">% ATD</th>
+                  </tr>
+                </thead>
                 <tbody>
                   ${bufferKPIObj.waterfall.map(row => {
                     const isTotal = row.nivel === 'Total';
-                    return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.12);' : ''}">
-                      <td style="text-align:left; padding:0.5rem 1rem;">${row.nivel}</td>
-                      <td>${Number(row.rq).toLocaleString()}</td>
-                      <td style="${isTotal ? 'color:#22c55e;' : ''}">${Number(row.atd).toLocaleString()}</td>
-                      <td style="${isTotal ? 'color:#22c55e;' : ''}">${row.pct}</td>
+                    return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.1);' : 'border-bottom:1px solid var(--border);'}">
+                      <td style="padding:0.45rem 0.8rem; text-align:left;">${row.nivel}</td>
+                      <td style="padding:0.45rem 0.5rem; text-align:center;">${Number(row.rq).toLocaleString()}</td>
+                      <td style="padding:0.45rem 0.5rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${Number(row.atd).toLocaleString()}</td>
+                      <td style="padding:0.45rem 0.8rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${row.pct}</td>
                     </tr>`;
                   }).join('')}
                 </tbody>
