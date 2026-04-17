@@ -5,6 +5,7 @@ import json
 import os
 from datetime import datetime
 from typing import Optional
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -44,12 +45,39 @@ def init_db():
         )
     ''')
     
+    # TABLA DE USUARIOS Y PRIVILEGIOS
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            active INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Seed: Insertar usuarios por defecto si la tabla está vacía
+    cursor.execute("SELECT COUNT(*) FROM users")
+    if cursor.fetchone()[0] == 0:
+        default_users = [
+            ('admin', '123', 'Administrador', 'admin'),
+            ('inventario', '123', 'Encargado Inventario', 'inventario'),
+            ('picking', '123', 'Picker 1', 'picking'),
+            ('packing', '123', 'Empacador Principal', 'packing'),
+            ('despacho', '123', 'Logística Despacho', 'despacho'),
+            ('recepcion', '123', 'Recepcionista Bodega', 'recepcion'),
+            ('almacenaje', '123', 'Almacenista', 'almacenaje'),
+            ('buffer', '123', 'Gestor de Buffer', 'buffer')
+        ]
+        cursor.executemany("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", default_users)
+    
     # Migración: Pasar datos antiguos al nuevo formato
     cursor.execute("SELECT area_id, data_json, updated_at FROM logistics_data")
     rows = cursor.fetchall()
     for row in rows:
         a_id, d_json, u_at = row[0], row[1], row[2]
-        # Extraer dia YYYY-MM-DD
         snap_date = u_at.split(' ')[0] if ' ' in u_at else datetime.now().strftime("%Y-%m-%d")
         try:
             cursor.execute("""
@@ -125,3 +153,89 @@ async def save_area_data(area: str, request: Request):
     conn.close()
     
     return {"status": "success", "message": f"Data for {area} updated securely in SQLite.", "rows": len(payload_data)}
+
+# =============================================
+# API DE USUARIOS Y PRIVILEGIOS
+# =============================================
+
+class UserPayload(BaseModel):
+    username: str
+    password: str
+    name: str
+    role: str
+
+@app.post("/api/auth/login")
+async def api_login(request: Request):
+    body = await request.json()
+    username = body.get("username", "")
+    password = body.get("password", "")
+    
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, name, role FROM users WHERE username = ? AND password = ? AND active = 1", (username, password))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return {"success": True, "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
+    return {"success": False, "message": "Credenciales inválidas"}
+
+@app.get("/api/users")
+def list_users():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, name, role, active, created_at FROM users ORDER BY id")
+    rows = cursor.fetchall()
+    conn.close()
+    return {"users": [{"id": r[0], "username": r[1], "name": r[2], "role": r[3], "active": r[4], "created_at": r[5]} for r in rows]}
+
+@app.post("/api/users")
+async def create_user(payload: UserPayload):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)",
+                       (payload.username, payload.password, payload.name, payload.role))
+        conn.commit()
+        new_id = cursor.lastrowid
+        conn.close()
+        return {"status": "success", "id": new_id}
+    except sqlite3.IntegrityError:
+        conn.close()
+        return {"status": "error", "message": "El nombre de usuario ya existe."}
+
+@app.put("/api/users/{user_id}")
+async def update_user(user_id: int, request: Request):
+    body = await request.json()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    fields = []
+    values = []
+    for key in ['username', 'password', 'name', 'role', 'active']:
+        if key in body:
+            fields.append(f"{key} = ?")
+            values.append(body[key])
+    
+    if not fields:
+        conn.close()
+        return {"status": "error", "message": "No hay campos para actualizar."}
+    
+    values.append(user_id)
+    try:
+        cursor.execute(f"UPDATE users SET {', '.join(fields)} WHERE id = ?", values)
+        conn.commit()
+        conn.close()
+        return {"status": "success"}
+    except sqlite3.IntegrityError:
+        conn.close()
+        return {"status": "error", "message": "El nombre de usuario ya está en uso."}
+
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: int):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "success"}

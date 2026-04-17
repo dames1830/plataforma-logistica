@@ -1,22 +1,37 @@
-const USERS = [
-  { id: 1, username: 'admin', password: '123', role: 'admin', name: 'Administrador' },
-  { id: 2, username: 'inventario', password: '123', role: 'inventario', name: 'Encargado Inventario' },
-  { id: 3, username: 'picking', password: '123', role: 'picking', name: 'Picker 1' },
-  { id: 4, username: 'packing', password: '123', role: 'packing', name: 'Empacador Principal' },
-  { id: 5, username: 'despacho', password: '123', role: 'despacho', name: 'Logística Despacho' },
-  { id: 6, username: 'recepcion', password: '123', role: 'recepcion', name: 'Recepcionista Bodega' },
-  { id: 7, username: 'almacenaje', password: '123', role: 'almacenaje', name: 'Almacenista' },
-  { id: 8, username: 'buffer', password: '123', role: 'buffer', name: 'Gestor de Buffer' }
+// URL del servidor backend para autenticación
+const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
+
+// Fallback local en caso de que el servidor esté caído
+const FALLBACK_USERS = [
+  { id: 1, username: 'admin', password: '123', role: 'admin', name: 'Administrador' }
 ];
 
 export const login = async (username, password) => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-
-  const user = USERS.find(u => u.username === username && u.password === password);
-  if (user) {
-    const sessionData = { id: user.id, username: user.username, role: user.role, name: user.name };
-    localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-    return { success: true, user: sessionData };
+  try {
+    const response = await fetch(`${AUTH_API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
+        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+        return { success: true, user: sessionData };
+      }
+      return { success: false, message: result.message || 'Credenciales inválidas' };
+    }
+  } catch (err) {
+    console.warn("Servidor no disponible, intentando login local de emergencia...");
+    // Fallback: login local solo para admin de emergencia
+    const user = FALLBACK_USERS.find(u => u.username === username && u.password === password);
+    if (user) {
+      const sessionData = { id: user.id, username: user.username, role: user.role, name: user.name };
+      localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+      return { success: true, user: sessionData };
+    }
   }
   return { success: false, message: 'Credenciales inválidas' };
 };
