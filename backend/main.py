@@ -111,6 +111,13 @@ def init_db():
         except Exception:
             pass
             
+    # MIGRACIÓN ELITE: Renombrar roles antiguos a nuevos rangos
+    # Si existen roles viejos, los mapeamos a 'encargado' por defecto
+    old_roles = ['inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer']
+    for old in old_roles:
+        cursor.execute("UPDATE users SET role = 'encargado' WHERE role = ?", (old,))
+        cursor.execute("UPDATE role_permissions SET role = 'encargado' WHERE role = ?", (old,))
+            
     conn.commit()
     conn.close()
 
