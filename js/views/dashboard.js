@@ -401,9 +401,12 @@ export const renderDashboard = async (container, user, onLogout) => {
               </div>
             </div>
           `;
-          ['pedidos', 'solicitud', 'articulos', 'tallas'].forEach(id => {
-            attachUploadEvent(`up_${id}`, 'buffer', '.csv'); // Todos mapean a buffer por ahora o podríamos crear áreas separadas
-          });
+          // Solo PEDIDOS va a 'buffer' (que es lo que usa calculateBufferPallets)
+          // Los demás archivos van a sus propias claves para uso futuro
+          attachUploadEvent('up_pedidos', 'buffer', '.csv');
+          attachUploadEvent('up_solicitud', 'solicitud', '.csv');
+          attachUploadEvent('up_articulos', 'articulos', '.csv');
+          attachUploadEvent('up_tallas', 'tallas', '.csv');
 
       } else if (activeBufferSubTab === 'reportes') {
           let rhtml = '';
