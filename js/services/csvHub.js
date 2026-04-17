@@ -11,6 +11,44 @@ export const dataStore = {
   buffer: null
 };
 
+// =============================================
+// OPTIMIZACIÓN: CACHÉ PERSISTENTE EN localStorage
+// Evita re-descargar datos al refrescar la página
+// =============================================
+const LS_PREFIX = 'logistics_cache_';
+const LS_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de validez
+
+const saveToLS = (area, data) => {
+    try {
+        localStorage.setItem(LS_PREFIX + area, JSON.stringify({ ts: Date.now(), data }));
+    } catch(e) { /* cuota llena, ignorar */ }
+};
+
+const loadFromLS = (area) => {
+    try {
+        const raw = localStorage.getItem(LS_PREFIX + area);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (Date.now() - parsed.ts > LS_TTL_MS) {
+            localStorage.removeItem(LS_PREFIX + area);
+            return null;
+        }
+        return parsed.data;
+    } catch(e) { return null; }
+};
+
+const clearLS = () => {
+    Object.keys(dataStore).forEach(k => localStorage.removeItem(LS_PREFIX + k));
+};
+
+// Inicializar dataStore desde localStorage al cargar la app
+(() => {
+    Object.keys(dataStore).forEach(area => {
+        const cached = loadFromLS(area);
+        if (cached) dataStore[area] = cached;
+    });
+})();
+
 // Control Trazabilidad: Fecha seleccionada (null = Fecha Actual/Más reciente)
 export let currentDateFilter = null;
 
@@ -19,7 +57,14 @@ export const setDateFilter = (newDateStr) => {
         currentDateFilter = newDateStr;
         // Limpiamos la memoria caché al viajar por el tiempo
         Object.keys(dataStore).forEach(k => dataStore[k] = null);
+        clearLS();
     }
+};
+
+// PING al servidor en background para despertarlo antes de que el usuario lo necesite
+export const pingServer = () => {
+    fetch('https://logistics-backend-wv0x.onrender.com/api/health', { method: 'GET' })
+        .catch(() => { /* Servidor dormido, despertando... */ });
 };
 
 // Traer las fechas históricas disponibles en el servidor
@@ -126,15 +171,19 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
             body: JSON.stringify(payload)
         });
         if(response.ok) {
-           dataStore[area] = payload; // Guarda en caché solo si la BD lo aceptó
+           dataStore[area] = payload;
+           saveToLS(area, payload); // Persistir en localStorage
            await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
         } else {
            console.error("Fallo guardando en servidor DB.");
+           // Guardar igual localmente como fallback
+           dataStore[area] = payload;
+           saveToLS(area, payload);
         }
     } catch (err) {
-        console.error("Error de Red, el servidor Python está apagado?", err);
-        // Fallback local: si Python muere, se sigue usando local en RAM
+        console.error("Error de Red, guardando solo localmente.", err);
         dataStore[area] = payload;
+        saveToLS(area, payload);
     }
 };
 
@@ -162,18 +211,24 @@ export const getAreaData = async (area) => {
          queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
      }
      
-     const response = await fetch(queryURL);
+     const response = await fetch(queryURL, { signal: AbortSignal.timeout(8000) });
      if (response.ok) {
          const serverResponse = await response.json();
-         if (serverResponse.data) {
+         if (serverResponse.data && serverResponse.data.length > 0) {
              dataStore[area] = serverResponse.data;
+             saveToLS(area, serverResponse.data); // Persistir para próxima vez
              return dataStore[area];
          }
      }
   } catch (err) {
-      console.warn("Servidor Backend Inactivo o lento. Usando caché nula segura.");
+      console.warn(`Backend lento o inactivo para '${area}'. Usando caché local.`);
   }
   
+  // Último recurso: buscar en localStorage aunque no esté en RAM
+  if (!dataStore[area]) {
+      const lsData = loadFromLS(area);
+      if (lsData) dataStore[area] = lsData;
+  }
   return dataStore[area];
 };
 

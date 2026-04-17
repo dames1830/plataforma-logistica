@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -29,6 +29,9 @@ const exportToExcel = (data, filename) => {
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
+  // Despertar el servidor en background inmediatamente
+  pingServer();
+
   container.className = 'dashboard-layout animate-fade-in';
 
   // OBTENER PERMISOS DINÁMICOS DESDE EL BACKEND
@@ -212,20 +215,21 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentArea.innerHTML = html;
   };
 
-  // VISTA STOCK CARGA
-  const renderStockUploads = async () => {
-    // Optimización Elite: Carga múltiple en una fracción del tiempo
+  // VISTA STOCK CARGA - acepta un contenedor opcional (para sub-tabs)
+  const renderStockUploads = async (targetContainer = null) => {
+    const container = targetContainer || contentArea;
+    // Optimización: Carga múltiple en paralelo
     const [actData, resData] = await Promise.all([
        getAreaData('stockActivo'),
        getAreaData('stockReserva')
     ]);
-
-    contentArea.innerHTML = ''; 
-    htmlStockUpload(`Stock Activo (.csv)`, 'stockActivo', actData, '.csv');
-    htmlStockUpload(`Stock Reserva (.xlsx)`, 'stockReserva', resData, '.xlsx');
+    container.innerHTML = '';
+    htmlStockUpload(`Stock Activo (.csv)`, 'stockActivo', actData, '.csv', container);
+    htmlStockUpload(`Stock Reserva (.xlsx)`, 'stockReserva', resData, '.xlsx', container);
   };
 
-  const htmlStockUpload = (title, areaKey, hasData, ext) => {
+  const htmlStockUpload = (title, areaKey, hasData, ext, targetContainer = null) => {
+    const container = targetContainer || contentArea;
     let div = document.createElement('div');
     div.style.marginBottom = '2rem';
     
@@ -261,8 +265,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       `;
     }
 
-    contentArea.appendChild(div);
-
+    container.appendChild(div);
     attachUploadEvent(hasData ? `update_${areaKey}` : `input_${areaKey}`, areaKey, ext);
 
     if (hasData) {
@@ -383,53 +386,69 @@ export const renderDashboard = async (container, user, onLogout) => {
           });
 
       } else if (activeBufferSubTab === 'reportes') {
-          if (!bufferKPIObj) {
-            subContent.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);">Sube los archivos maestros para generar el reporte.</div>`;
-            return;
-          }
-          let rhtml = `
-            <div class="data-table-container" style="max-width: 600px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
-              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
-                 <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS CONSOLIDADO ZONAS</h3>
-              </div>
-              <table class="data-table" style="text-align: center;">
-                <thead>
-                   <tr><th>NIVEL/AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th></tr>
-                </thead>
-                <tbody>
-          `;
-          bufferKPIObj.waterfall.forEach(row => {
-            let isTotal = row.nivel === 'Total';
-            rhtml += `<tr style="${isTotal ? 'font-weight: 700; background: rgba(34, 197, 94, 0.1);' : ''}">
-              <td style="text-align: left; padding: 0.4rem 2rem;">${row.nivel}</td><td>${row.rq}</td><td>${row.atd}</td><td>${row.pct}</td>
-            </tr>`;
-          });
-          rhtml += `</tbody></table></div>`;
+          // Siempre mostramos la estructura del reporte
+          let rhtml = '';
           
-          if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
-            rhtml += `
-               <div style="text-align: center; margin-top: 2rem;">
-                  <button class="btn" id="export_pallets" style="width: auto; background: var(--success); color: white; padding: 0.8rem 2rem; font-size: 1rem; border-radius: 8px;">
-                      ↓ Descargar Orden de Extracción Excel
-                  </button>
-               </div>
-               <div class="data-table-container" style="margin-top: 1.5rem; max-height: 500px; overflow-y: auto; border: 1px solid var(--border);">
-                 <div style="padding: 1rem; background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid var(--border); text-align: center;">
-                    <h3 style="color: var(--warning); font-weight: 600;">Análisis Buffer SKU</h3>
-                 </div>
-                 <table class="data-table">
-                   <thead><tr><th>UBICACIONES</th><th>LPN</th><th>SKU</th><th>QTY ACTIVO</th><th>QTY RESERVA</th><th>QTY BUFFER</th><th>ARTICULO</th></tr></thead>
-                   <tbody>${bufferKPIObj.detalle.map(d => `<tr>
-                     <td style="font-weight:600;">${d['UBICACIONES']}</td><td>${d['LPN']}</td><td>${d['SKU']}</td><td>${d['QTY ACTIVO']}</td><td>${d['QTY RESERVA']}</td><td style="color:var(--warning); font-weight:700;">${d['QTY BUFFER']}</td><td>${d['ARTICULO']}</td>
-                   </tr>`).join('')}</tbody>
-                 </table>
-               </div>
+          if (!bufferKPIObj) {
+            rhtml = `
+              <div style="text-align:center; padding:2rem; background:rgba(255,165,0,0.06); border:1px solid var(--warning); border-radius:12px; margin-bottom:1.5rem;">
+                <i class="fas fa-exclamation-triangle fa-2x" style="color:var(--warning); margin-bottom:0.7rem;"></i>
+                <h4 style="color:var(--warning);">Sin datos suficientes para el análisis</h4>
+                <p style="color:var(--text-muted); font-size:0.85rem;">Ve a <strong>Archivos Maestros</strong> y sube: Stock Activo, Stock Reserva y Pedidos.</p>
+              </div>
             `;
+          } else {
+            rhtml = `
+              <div class="data-table-container" style="max-width:620px; margin:0 auto; border:2px solid var(--primary); box-shadow:0 4px 20px rgba(79,70,229,0.2); margin-bottom:1.5rem;">
+                <div style="padding:1rem; background:rgba(79,70,229,0.12); border-bottom:1px solid var(--border); text-align:center;">
+                  <h3 style="color:var(--text-main); font-weight:700; letter-spacing:1px;">ANÁLISIS CONSOLIDADO ZONAS</h3>
+                </div>
+                <table class="data-table" style="text-align:center;">
+                  <thead><tr><th>NIVEL / AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th></tr></thead>
+                  <tbody>
+            `;
+            bufferKPIObj.waterfall.forEach(row => {
+              const isTotal = row.nivel === 'Total';
+              rhtml += `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.12);' : ''}">
+                <td style="text-align:left; padding:0.4rem 2rem;">${row.nivel}</td>
+                <td>${row.rq}</td><td>${row.atd}</td><td>${row.pct}</td>
+              </tr>`;
+            });
+            rhtml += `</tbody></table></div>`;
           }
+
+          // Tabla Analisis Buffer SKU - siempre mostrar el cuadro
+          const detalleRows = bufferKPIObj?.detalle || [];
+          rhtml += `
+            <div class="data-table-container" style="margin-top:1.5rem; border:2px solid var(--warning); box-shadow:0 4px 20px rgba(234,179,8,0.15);">
+              <div style="padding:1rem; background:rgba(234,179,8,0.08); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="color:var(--warning); font-weight:700; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3>
+                ${detalleRows.length > 0 ? `<button class="btn" id="export_pallets" style="width:auto; background:var(--success); color:#fff; padding:0.5rem 1.5rem; font-size:0.85rem;">↓ Descargar Excel</button>` : ''}
+              </div>
+              ${detalleRows.length === 0
+                ? `<div style="text-align:center; padding:3rem; color:var(--text-muted);">Sin datos de SKU. Sube los archivos maestros primero.</div>`
+                : `<div style="max-height:450px; overflow-y:auto;">
+                    <table class="data-table">
+                      <thead><tr><th>UBICACIONES</th><th>LPN</th><th>SKU</th><th>QTY ACTIVO</th><th>QTY RESERVA</th><th>QTY BUFFER</th><th>ARTICULO</th></tr></thead>
+                      <tbody>${detalleRows.map(d => `<tr>
+                        <td style="font-weight:600;">${d['UBICACIONES']||''}</td>
+                        <td>${d['LPN']||''}</td>
+                        <td>${d['SKU']||''}</td>
+                        <td>${d['QTY ACTIVO']||''}</td>
+                        <td>${d['QTY RESERVA']||''}</td>
+                        <td style="color:var(--warning);font-weight:700;">${d['QTY BUFFER']||''}</td>
+                        <td>${d['ARTICULO']||''}</td>
+                      </tr>`).join('')}</tbody>
+                    </table>
+                  </div>`
+              }
+            </div>
+          `;
           subContent.innerHTML = rhtml;
           setTimeout(() => {
-            document.getElementById('export_pallets')?.addEventListener('click', () => exportToExcel(bufferKPIObj.detalle, 'Orden_Extraccion_Paletas'));
+            document.getElementById('export_pallets')?.addEventListener('click', () => exportToExcel(detalleRows, 'Orden_Extraccion_Paletas'));
           }, 100);
+
 
       } else if (activeBufferSubTab === 'dashboard') {
           subContent.innerHTML = `<div style="text-align:center; padding:5rem; color:var(--text-muted);"><i class="fas fa-chart-line fa-3x" style="margin-bottom:1rem;"></i><br>Dashboard de desempeño Buffer (Próximamente)</div>`;
@@ -554,27 +573,25 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
-  // --- SUB-TABS GENERICAS PARA MÓDULOS ---
+  // --- SUB-TABS STOCK GENERAL ---
   let activeStockSubTab = 'stock_dia';
   const renderStockTab = async () => {
     contentArea.innerHTML = `
-      <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
-        <a class="sub-nav-item ${activeStockSubTab === 'stock_dia' ? 'active' : ''}" data-sub="stock_dia" style="cursor:pointer; padding:0.5rem 1rem; color:${activeStockSubTab === 'stock_dia' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeStockSubTab === 'stock_dia' ? 'var(--primary)' : 'transparent'}">📊 Stock Día</a>
-        <a class="sub-nav-item ${activeStockSubTab === 'stock_kpi' ? 'active' : ''}" data-sub="stock_kpi" style="cursor:pointer; padding:0.5rem 1rem; color:${activeStockSubTab === 'stock_kpi' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeStockSubTab === 'stock_kpi' ? 'var(--primary)' : 'transparent'}">📈 KPI Stock</a>
+      <nav style="display:flex; gap:0; margin-bottom:1.5rem; border-bottom:2px solid var(--border);">
+        <button class="stock-sub-btn" data-sub="stock_dia" style="padding:0.7rem 1.5rem; background:${activeStockSubTab === 'stock_dia' ? 'var(--primary)' : 'transparent'}; color:${activeStockSubTab === 'stock_dia' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${activeStockSubTab === 'stock_dia' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500;">📊 Stock Día</button>
+        <button class="stock-sub-btn" data-sub="stock_kpi" style="padding:0.7rem 1.5rem; background:${activeStockSubTab === 'stock_kpi' ? 'var(--primary)' : 'transparent'}; color:${activeStockSubTab === 'stock_kpi' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${activeStockSubTab === 'stock_kpi' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500;">📈 KPI Stock</button>
       </nav>
       <div id="stockSubContent"></div>
     `;
-    document.querySelectorAll('.sub-nav-item').forEach(item => { item.addEventListener('click', (e) => { activeStockSubTab = e.target.dataset.sub; renderStockTab(); }); });
+    document.querySelectorAll('.stock-sub-btn').forEach(btn => {
+      btn.addEventListener('click', () => { activeStockSubTab = btn.dataset.sub; renderStockTab(); });
+    });
     const sub = document.getElementById('stockSubContent');
     if (activeStockSubTab === 'stock_dia') {
-      await renderStockUploads(); // Esto ya maneja su propio innerHTML en contentArea si no se tiene cuidado
-      // Re-organizamos para que entre en sub
-      const currentHTML = contentArea.innerHTML;
-      const navHTML = currentHTML.split('<div id="stockSubContent"></div>')[0];
-      const contentPart = currentHTML.split('<div id="stockSubContent"></div>')[1] || '';
-      sub.innerHTML = contentPart;
+      // Renderiza directamente dentro del sub-contenedor
+      await renderStockUploads(sub);
     } else {
-      sub.innerHTML = '<div style="padding:4rem; text-align:center; color:var(--text-muted);">Módulo KPI Stock en desarrollo.</div>';
+      sub.innerHTML = '<div style="padding:4rem; text-align:center; color:var(--text-muted);"><i class="fas fa-chart-bar fa-3x" style="margin-bottom:1rem;"></i><br>Módulo KPI Stock en desarrollo.</div>';
     }
   };
 

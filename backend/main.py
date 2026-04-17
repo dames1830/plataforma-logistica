@@ -9,6 +9,11 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+
 # Permitir conexiones del Front-End en localhost o prod
 app.add_middleware(
     CORSMiddleware,
