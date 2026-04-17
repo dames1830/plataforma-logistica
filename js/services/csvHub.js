@@ -63,8 +63,10 @@ export const setDateFilter = (newDateStr) => {
 
 // PING al servidor en background para despertarlo antes de que el usuario lo necesite
 export const pingServer = () => {
-    fetch('https://logistics-backend-wv0x.onrender.com/api/health', { method: 'GET' })
-        .catch(() => { /* Servidor dormido, despertando... */ });
+    // Usamos /api/docs que siempre existe en FastAPI para despertar el servidor
+    fetch('https://logistics-backend-wv0x.onrender.com/api/logs?username=_ping', { method: 'GET' })
+        .then(() => console.log('✅ Servidor backend activo.'))
+        .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
 
 // Traer las fechas históricas disponibles en el servidor
