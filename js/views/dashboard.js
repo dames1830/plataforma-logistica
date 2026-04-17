@@ -431,29 +431,33 @@ export const renderDashboard = async (container, user, onLogout) => {
           // ── CUADRO 2: ANÁLISIS BUFFER SKU ──
           const resumen = bufferKPIObj.resumenSKU || [];
           rhtml += `
-            <div class="data-table-container" style="flex:1; min-width:280px; border:2px solid var(--warning); box-shadow:0 4px 24px rgba(234,179,8,0.22);">
-              <div style="padding:1rem; background:rgba(234,179,8,0.1); border-bottom:1px solid var(--border); text-align:center;">
-                <h3 style="color:var(--warning); font-weight:700; letter-spacing:1px; font-size:0.95rem;">ANÁLISIS BUFFER SKU</h3>
+            <div style="flex:0 0 auto; width:380px; border:2px solid var(--warning); border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(234,179,8,0.22);">
+              <div style="padding:0.7rem 1rem; background:rgba(234,179,8,0.1); border-bottom:1px solid var(--border); text-align:center;">
+                <h3 style="color:var(--warning); font-weight:700; letter-spacing:1px; font-size:0.9rem;">ANÁLISIS BUFFER SKU</h3>
               </div>
-              <table class="data-table" style="text-align:center;">
-                <thead><tr>
-                  <th style="text-align:left;">TIPO DE EMPAQUE</th><th>PALETAS A BAJAR</th><th>SKUS</th><th>PAR/CAJA</th>
-                </tr></thead>
+              <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                <thead>
+                  <tr style="background:rgba(15,23,42,0.6);">
+                    <th style="padding:0.45rem 0.8rem; text-align:left; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:38%;">TIPO DE EMPAQUE</th>
+                    <th style="padding:0.45rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:22%;">PALETAS</th>
+                    <th style="padding:0.45rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:18%;">SKUS</th>
+                    <th style="padding:0.45rem 0.8rem; text-align:center; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:22%;">PAR/CAJA</th>
+                  </tr>
+                </thead>
                 <tbody>
                   ${resumen.length > 0
                     ? resumen.map(row => {
                         const isTotal = row.tipo === 'TOTAL';
-                        const colorTipo = !isTotal
-                          ? (row.tipo.toLowerCase().includes('pp') || row.tipo.toLowerCase().includes('pree') ? 'color:var(--warning);' : 'color:#22c55e;')
-                          : '';
-                        return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.12);' : ''}">
-                          <td style="text-align:left; padding:0.5rem 1rem; font-weight:600; ${colorTipo}">${row.tipo}</td>
-                          <td>${row.paletas}</td>
-                          <td>${row.skus}</td>
-                          <td style="${isTotal ? 'color:#22c55e;' : ''}">${row.parcaja}</td>
+                        const isPree  = row.tipo.toLowerCase().includes('pree') || row.tipo.toLowerCase().includes('pp');
+                        const colorTipo = isTotal ? '' : (isPree ? 'color:var(--warning);' : 'color:#22c55e;');
+                        return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.1);' : 'border-bottom:1px solid var(--border);'}">
+                          <td style="padding:0.5rem 0.8rem; font-weight:600; ${colorTipo}">${row.tipo}</td>
+                          <td style="padding:0.5rem 0.5rem; text-align:center;">${row.paletas}</td>
+                          <td style="padding:0.5rem 0.5rem; text-align:center;">${row.skus}</td>
+                          <td style="padding:0.5rem 0.8rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${row.parcaja}</td>
                         </tr>`;
                       }).join('')
-                    : `<tr><td colspan="4" style="padding:2rem; color:var(--text-muted); font-size:0.85rem;">Sin datos de empaque. Asegúrate que los pedidos incluyen la columna TIPO DE EMPAQUE.</td></tr>`
+                    : `<tr><td colspan="4" style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">Procesando datos de empaque...</td></tr>`
                   }
                 </tbody>
               </table>

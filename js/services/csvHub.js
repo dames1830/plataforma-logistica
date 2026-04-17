@@ -509,11 +509,11 @@ export const calculateBufferPallets = (configOverride = null) => {
     const acumParcaja = {}; // tipo -> suma QTY BUFFER
 
     detallePallets.forEach(row => {
-        const sku      = String(row['SKU'] || '').trim();
+        const sku       = String(row['SKU'] || '').trim();
         const ubicacion = String(row['UBICACIONES'] || '').trim();
         const qtyBuffer = Number(row['QTY BUFFER']) || 0;
 
-        // 1. Buscar columna TIPO DE EMPAQUE en los pedidos originales
+        // 1. Buscar en pedidos originales: primero por columna específica, luego escanea todos los valores
         let tipo = '';
         const pedMatch = pedidos.find(p => {
             const skuP = String(
@@ -522,17 +522,37 @@ export const calculateBufferPallets = (configOverride = null) => {
             ).trim();
             return skuP === sku;
         });
+
         if (pedMatch) {
-            tipo = String(
+            // Buscar en columnas específicas primero
+            const colValue = String(
                 pedMatch['TIPO DE EMPAQUE'] || pedMatch['Tipo de empaque'] ||
                 pedMatch['EMPAQUE']         || pedMatch['Empaque']         ||
                 pedMatch['TIPO']            || pedMatch['Tipo']            || ''
             ).trim();
+
+            if (colValue) {
+                tipo = colValue;
+            } else {
+                // Si no hay columna específica, escanear TODOS los valores del pedido
+                // buscando la palabra SolidPack o PreePack en cualquier campo
+                const allVals = Object.values(pedMatch).join(' ').toLowerCase();
+                if (allVals.includes('preepack') || allVals.includes('pree pack') || allVals.includes('pre pack') || allVals.includes('prepack')) {
+                    tipo = 'PreePack';
+                } else if (allVals.includes('solidpack') || allVals.includes('solid pack')) {
+                    tipo = 'SolidPack';
+                }
+            }
         }
 
-        // 2. Heurística por código SKU si no encontró columna
+        // 2. Heurística final si no se encontró nada: buscar en el SKU variantes 'PRE', 'PP', 'PREE'
         if (!tipo) {
-            tipo = (sku.toUpperCase().includes('PP')) ? 'PreePack' : 'SolidPack';
+            const skuUp = sku.toUpperCase();
+            if (skuUp.includes('PP') || skuUp.startsWith('PRE') || skuUp.includes('PREE')) {
+                tipo = 'PreePack';
+            } else {
+                tipo = 'SolidPack';
+            }
         }
 
         if (!acumPaletas[tipo]) {
