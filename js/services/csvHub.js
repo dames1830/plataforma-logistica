@@ -57,7 +57,8 @@ export const parseFile = (file, area) => {
           if(results.errors.length && !results.data.length) reject(results.errors);
           else {
              try {
-                 await persistToDatabase(area, results.data);
+                 const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+                 await persistToDatabase(area, results.data, session.username);
                  resolve(results.data);
              } catch(dbErr) {
                  reject('Error Servidor: ' + dbErr.message);
@@ -110,13 +111,14 @@ export const parseBufferFiles = async (files) => {
     }
     
     // Subimos la carga ensamblada al servidor como un solo paquete
-    await persistToDatabase('buffer', combinedData);
+    const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+    await persistToDatabase('buffer', combinedData, session.username);
     dataStore['buffer'] = combinedData;
     return combinedData;
 };
 
 // Función Interna: Enviar data fuerte al Servidor Python SQL
-const persistToDatabase = async (area, payload) => {
+const persistToDatabase = async (area, payload, username = 'sistema') => {
     try {
         const response = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
@@ -125,6 +127,7 @@ const persistToDatabase = async (area, payload) => {
         });
         if(response.ok) {
            dataStore[area] = payload; // Guarda en caché solo si la BD lo aceptó
+           await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
         } else {
            console.error("Fallo guardando en servidor DB.");
         }
@@ -133,6 +136,16 @@ const persistToDatabase = async (area, payload) => {
         // Fallback local: si Python muere, se sigue usando local en RAM
         dataStore[area] = payload;
     }
+};
+
+export const logSystemAction = async (username, action, details) => {
+    try {
+        await fetch(`${API_URL.replace('/logistics', '/logs')}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, action, details })
+        });
+    } catch (e) { console.error("Error al loguear acción:", e); }
 };
 
 // Función Asíncrona: Preguntar a la BD maestra por los datos, si no tiene, usa nulo

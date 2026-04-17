@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -11,6 +11,7 @@ const TABS = [
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
@@ -143,13 +144,18 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') {
       contentSubtitle.textContent = "Control Maestro de Operaciones";
       await renderHomeTab();
-
     } else if (currentTab === 'stock') {
-      contentSubtitle.textContent = "Centro de Carga Maestro (Kardex)";
-      await renderStockUploads();
+      contentSubtitle.textContent = "Control de Inventario y Disponibilidad";
+      await renderStockTab();
+    } else if (currentTab === 'almacenaje') {
+      contentSubtitle.textContent = "Gestión de Ubicaciones y Tareas";
+      await renderAlmacenajeTab();
     } else if (currentTab === 'buffer') {
       contentSubtitle.textContent = "Zona Transicional y Reposición";
       await renderBufferTab();
+    } else if (currentTab === 'admin_pers') {
+      contentSubtitle.textContent = "Administración de Personal y Recursos";
+      await renderAdminPersTab();
     } else if (currentTab === 'config') {
       contentSubtitle.textContent = "Panel de Administración del Sistema";
       await renderConfigTab();
@@ -383,6 +389,9 @@ export const renderDashboard = async (container, user, onLogout) => {
           }
           let rhtml = `
             <div class="data-table-container" style="max-width: 600px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
+              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
+                 <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS CONSOLIDADO ZONAS</h3>
+              </div>
               <table class="data-table" style="text-align: center;">
                 <thead>
                    <tr><th>NIVEL/AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th></tr>
@@ -404,7 +413,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                       ↓ Descargar Orden de Extracción Excel
                   </button>
                </div>
-               <div class="data-table-container" style="margin-top: 1rem; max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
+               <div class="data-table-container" style="margin-top: 1.5rem; max-height: 500px; overflow-y: auto; border: 1px solid var(--border);">
+                 <div style="padding: 1rem; background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid var(--border); text-align: center;">
+                    <h3 style="color: var(--warning); font-weight: 600;">Análisis Buffer SKU</h3>
+                 </div>
                  <table class="data-table">
                    <thead><tr><th>UBICACIONES</th><th>LPN</th><th>SKU</th><th>QTY ACTIVO</th><th>QTY RESERVA</th><th>QTY BUFFER</th><th>ARTICULO</th></tr></thead>
                    <tbody>${bufferKPIObj.detalle.map(d => `<tr>
@@ -455,25 +467,186 @@ export const renderDashboard = async (container, user, onLogout) => {
                    headers: { 'Content-Type': 'application/json' },
                    body: JSON.stringify(newConfig)
                 });
-                if(res.ok) alert('Configuración guardada. El análisis se actualizará automáticamente.');
+                if(res.ok) {
+                   await logSystemAction(user.username, 'CONFIG_BUFFER', `Actualizada lógica de análisis buffer`);
+                   alert('Configuración guardada. El análisis se actualizará automáticamente.');
+                }
                 renderBufferTab();
              } catch(e) { alert('Error al guardar.'); }
           });
       }
   };
 
-  const renderUploadArea = () => {
+  // ---- SUB-PESTAÑA: LOGS DE AUDITORÍA (AUDIT) ----
+  let logUserFilter = '';
+  let logDateFilter = '';
+
+  const renderLogsSubTab = async (container) => {
+    container.innerHTML = `
+      <div style="background:var(--bg-main); padding:1.5rem; border-radius:12px; border:1px solid var(--border); margin-bottom:1.5rem;">
+        <h4 style="margin-bottom:1rem; color:var(--primary);">Filtrar Registros</h4>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+          <input type="text" id="logUserFilter" placeholder="Usuario (ej: dames)" value="${logUserFilter}" style="padding:0.6rem; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; color:#fff; font-family:inherit; flex:1; min-width:150px;">
+          <input type="date" id="logDateFilter" value="${logDateFilter}" style="padding:0.6rem; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; color:#fff; font-family:inherit; flex:1; min-width:150px; color-scheme:dark;">
+          <button id="btnFilterLogs" class="btn" style="width: auto; padding:0 2rem;">🔍 Buscar</button>
+          <button id="btnClearLogs" class="btn" style="width: auto; padding:0 1.5rem; background:var(--border);">🧹 Limpiar</button>
+        </div>
+      </div>
+      <div id="logsTableArea"></div>
+    `;
+
+    const tableArea = document.getElementById('logsTableArea');
+    const fetchLogs = async () => {
+      tableArea.innerHTML = '<div style="text-align:center; padding:2rem;"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>';
+      try {
+        let url = `${API_BASE}/logs?`;
+        if (logUserFilter) url += `username=${logUserFilter}&`;
+        if (logDateFilter) url += `date=${logDateFilter}&`;
+        
+        const res = await fetch(url);
+        const logs = await res.json();
+        
+        if (!logs.length) {
+          tableArea.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted);">No se encontraron registros con los filtros aplicados.</div>';
+          return;
+        }
+
+        tableArea.innerHTML = `
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>FECHA/HORA</th>
+                  <th>USUARIO</th>
+                  <th>ACCIÓN</th>
+                  <th>DETALLES</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${logs.map(l => `
+                  <tr>
+                    <td style="font-size:0.8rem; color:var(--text-muted);">${new Date(l.created_at).toLocaleString()}</td>
+                    <td style="font-weight:600; color:var(--primary);">${l.username}</td>
+                    <td><span style="padding:2px 8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:0.75rem;">${l.action}</span></td>
+                    <td style="font-size:0.85rem;">${l.details}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } catch (e) { tableArea.innerHTML = '<div style="color:var(--danger);">Error cargando logs.</div>'; }
+    };
+
+    fetchLogs();
+
+    document.getElementById('btnFilterLogs').addEventListener('click', () => {
+      logUserFilter = document.getElementById('logUserFilter').value;
+      logDateFilter = document.getElementById('logDateFilter').value;
+      fetchLogs();
+    });
+    document.getElementById('btnClearLogs').addEventListener('click', () => {
+      logUserFilter = '';
+      logDateFilter = '';
+      document.getElementById('logUserFilter').value = '';
+      document.getElementById('logDateFilter').value = '';
+      fetchLogs();
+    });
+  };
+
+  // --- SUB-TABS GENERICAS PARA MÓDULOS ---
+  let activeStockSubTab = 'stock_dia';
+  const renderStockTab = async () => {
     contentArea.innerHTML = `
+      <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
+        <a class="sub-nav-item ${activeStockSubTab === 'stock_dia' ? 'active' : ''}" data-sub="stock_dia" style="cursor:pointer; padding:0.5rem 1rem; color:${activeStockSubTab === 'stock_dia' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeStockSubTab === 'stock_dia' ? 'var(--primary)' : 'transparent'}">📊 Stock Día</a>
+        <a class="sub-nav-item ${activeStockSubTab === 'stock_kpi' ? 'active' : ''}" data-sub="stock_kpi" style="cursor:pointer; padding:0.5rem 1rem; color:${activeStockSubTab === 'stock_kpi' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeStockSubTab === 'stock_kpi' ? 'var(--primary)' : 'transparent'}">📈 KPI Stock</a>
+      </nav>
+      <div id="stockSubContent"></div>
+    `;
+    document.querySelectorAll('.sub-nav-item').forEach(item => { item.addEventListener('click', (e) => { activeStockSubTab = e.target.dataset.sub; renderStockTab(); }); });
+    const sub = document.getElementById('stockSubContent');
+    if (activeStockSubTab === 'stock_dia') {
+      await renderStockUploads(); // Esto ya maneja su propio innerHTML en contentArea si no se tiene cuidado
+      // Re-organizamos para que entre en sub
+      const currentHTML = contentArea.innerHTML;
+      const navHTML = currentHTML.split('<div id="stockSubContent"></div>')[0];
+      const contentPart = currentHTML.split('<div id="stockSubContent"></div>')[1] || '';
+      sub.innerHTML = contentPart;
+    } else {
+      sub.innerHTML = '<div style="padding:4rem; text-align:center; color:var(--text-muted);">Módulo KPI Stock en desarrollo.</div>';
+    }
+  };
+
+  let activeAlmacenSubTab = 'tareas';
+  const renderAlmacenajeTab = async () => {
+    contentArea.innerHTML = `
+      <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
+        <a class="sub-nav-item ${activeAlmacenSubTab === 'tareas' ? 'active' : ''}" data-sub="tareas" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAlmacenSubTab === 'tareas' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAlmacenSubTab === 'tareas' ? 'var(--primary)' : 'transparent'}">📝 Tareas</a>
+        <a class="sub-nav-item ${activeAlmacenSubTab === 'detalle' ? 'active' : ''}" data-sub="detalle" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAlmacenSubTab === 'detalle' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAlmacenSubTab === 'detalle' ? 'var(--primary)' : 'transparent'}">🔍 Detalle Tareas</a>
+        <a class="sub-nav-item ${activeAlmacenSubTab === 'kpi' ? 'active' : ''}" data-sub="kpi" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAlmacenSubTab === 'kpi' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAlmacenSubTab === 'kpi' ? 'var(--primary)' : 'transparent'}">📈 KPI Almacenaje</a>
+      </nav>
+      <div id="almacenSubContent"></div>
+    `;
+    document.querySelectorAll('.sub-nav-item').forEach(item => { item.addEventListener('click', (e) => { activeAlmacenSubTab = e.target.dataset.sub; renderAlmacenajeTab(); }); });
+    const sub = document.getElementById('almacenSubContent');
+    if (activeAlmacenSubTab === 'tareas') {
+      const data = await getAreaData('almacenaje');
+      if (!data) {
+        sub.innerHTML = '<div id="localUploadArea"></div>';
+        const localArea = document.getElementById('localUploadArea');
+        renderUploadAreaInto(localArea, 'almacenaje');
+      } else {
+        renderDashboardViewInto(sub, data, 'almacenaje');
+      }
+    } else {
+      sub.innerHTML = `<div style="padding:4rem; text-align:center; color:var(--text-muted);">Módulo ${activeAlmacenSubTab.toUpperCase()} en desarrollo.</div>`;
+    }
+  };
+
+  // Ayudantes para renderizar dentro de contenedores específicos
+  const renderUploadAreaInto = (target, area) => {
+    target.innerHTML = `
       <div class="upload-area">
-        <h3>Sube tu archivo CSV de ${currentTab.toUpperCase()}</h3>
-        <label class="upload-btn">
-          Seleccionar Archivo
-          <input type="file" id="input_${currentTab}" accept=".csv" style="display:none;">
-        </label>
-        <div id="err_${currentTab}" style="color:var(--danger); margin-top:1rem;"></div>
+        <h3>Sube tu archivo CSV de ${area.toUpperCase()}</h3>
+        <label class="upload-btn">Seleccionar Archivo<input type="file" id="input_${area}" accept=".csv" style="display:none;"></label>
+        <div id="err_${area}" style="color:var(--danger); margin-top:1rem;"></div>
       </div>
     `;
-    attachUploadEvent(`input_${currentTab}`, currentTab, '.csv');
+    attachUploadEvent(`input_${area}`, area, '.csv');
+  };
+
+  const renderDashboardViewInto = (target, data, area) => {
+    const kpis = generateKPIs(data, area);
+    target.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-title">Registros Locales</div><div class="kpi-value">${kpis.totalRecords}</div></div>
+        <div class="kpi-card"><div class="kpi-title">Administrar</div><label class="btn" style="cursor:pointer; margin-top:0.5rem;">↻ Re-subir CSV<input type="file" id="update_${area}" accept=".csv" style="display:none;"></label></div>
+      </div>
+      <div class="data-table-container" style="margin-top:2rem;">
+        <table class="data-table">
+          <thead><tr>${Object.keys(data[0] || {}).slice(0, 5).map(k => `<th>${k}</th>`).join('')}</tr></thead>
+          <tbody>${data.slice(0, 10).map(row => `<tr>${Object.values(row).slice(0, 5).map(v => `<td>${v}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+    `;
+    attachUploadEvent(`update_${area}`, area, '.csv');
+  };
+
+  let activeAdminSubTab = 'perf';
+  const renderAdminPersTab = async () => {
+    contentArea.innerHTML = `
+      <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
+        <a class="sub-nav-item ${activeAdminSubTab === 'perf' ? 'active' : ''}" data-sub="perf" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAdminSubTab === 'perf' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAdminSubTab === 'perf' ? 'var(--primary)' : 'transparent'}">⚡ Performance Personal</a>
+        <a class="sub-nav-item ${activeAdminSubTab === 'asist' ? 'active' : ''}" data-sub="asist" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAdminSubTab === 'asist' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAdminSubTab === 'asist' ? 'var(--primary)' : 'transparent'}">🆔 Asistencia</a>
+        <a class="sub-nav-item ${activeAdminSubTab === 'kpi' ? 'active' : ''}" data-sub="kpi" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAdminSubTab === 'kpi' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAdminSubTab === 'kpi' ? 'var(--primary)' : 'transparent'}">📈 KPI Personal</a>
+        <a class="sub-nav-item ${activeAdminSubTab === 'rf' ? 'active' : ''}" data-sub="rf" style="cursor:pointer; padding:0.5rem 1rem; color:${activeAdminSubTab === 'rf' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeAdminSubTab === 'rf' ? 'var(--primary)' : 'transparent'}">📟 Asignación RF´s</a>
+      </nav>
+      <div id="adminSubContent"></div>
+    `;
+    document.querySelectorAll('.sub-nav-item').forEach(item => { item.addEventListener('click', (e) => { activeAdminSubTab = e.target.dataset.sub; renderAdminPersTab(); }); });
+    const sub = document.getElementById('adminSubContent');
+    sub.innerHTML = `<div style="text-align:center; padding:5rem; color:var(--text-muted);"><i class="fas fa-users-cog fa-3x" style="margin-bottom:1rem;"></i><br>Módulo ${activeAdminSubTab.toUpperCase()} (Vista informativa - Sin carga de archivos)</div>`;
   };
 
   const renderDashboardView = (data, customCardHTML = '', detailsBufferData = null) => {
@@ -600,7 +773,10 @@ export const renderDashboard = async (container, user, onLogout) => {
           👥 Usuarios
         </button>
         <button class="config-sub-btn ${configSubTab === 'permisos' ? 'active' : ''}" data-sub="permisos" style="padding:0.7rem 1.5rem; background:${configSubTab === 'permisos' ? 'var(--primary)' : 'transparent'}; color:${configSubTab === 'permisos' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${configSubTab === 'permisos' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500; transition: all 0.2s;">
-          🛡️ Zona de Permisos
+          🛡️ Permisos
+        </button>
+        <button class="config-sub-btn ${configSubTab === 'logs' ? 'active' : ''}" data-sub="logs" style="padding:0.7rem 1.5rem; background:${configSubTab === 'logs' ? 'var(--primary)' : 'transparent'}; color:${configSubTab === 'logs' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${configSubTab === 'logs' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500; transition: all 0.2s;">
+          📋 LOG de Auditoría
         </button>
       </div>
       <div id="configContent"></div>
@@ -616,8 +792,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     const configContent = document.getElementById('configContent');
     if (configSubTab === 'usuarios') {
       await renderUsersSubTab(configContent);
-    } else {
+    } else if (configSubTab === 'permisos') {
       await renderPermissionsSubTab(configContent);
+    } else {
+      await renderLogsSubTab(configContent);
     }
   };
 
@@ -686,9 +864,9 @@ export const renderDashboard = async (container, user, onLogout) => {
       btn.addEventListener('click', () => showUserForm({ id: btn.dataset.id, username: btn.dataset.username, name: btn.dataset.name, role: btn.dataset.role }, container));
     });
     document.querySelectorAll('.btn-toggle-user').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        try {
-          await fetch(`${API_BASE}/users/${btn.dataset.id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ active: btn.dataset.active === '1' ? 0 : 1 }) });
+          const newActive = btn.dataset.active === '1' ? 0 : 1;
+          await fetch(`${API_BASE}/users/${btn.dataset.id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ active: newActive }) });
+          await logSystemAction(user.username, 'USUARIO_ESTADO', `${newActive ? 'Activado' : 'Desactivado'} usuario ID: ${btn.dataset.id}`);
           await renderUsersSubTab(container);
         } catch(e) { alert('Error al cambiar estado.'); }
       });
@@ -698,6 +876,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (!confirm(`¿Eliminar permanentemente al usuario "${btn.dataset.name}"?`)) return;
         try {
           await fetch(`${API_BASE}/users/${btn.dataset.id}`, { method: 'DELETE' });
+          await logSystemAction(user.username, 'USUARIO_ELIMINAR', `Eliminado usuario: ${btn.dataset.name}`);
           await renderUsersSubTab(container);
         } catch(e) { alert('Error al eliminar.'); }
       });
@@ -789,6 +968,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
         const result = await res.json();
         if (result.status === 'error') { errDiv.textContent = result.message; return; }
+        await logSystemAction(user.username, isEdit ? 'USUARIO_EDITAR' : 'USUARIO_CREAR', `Usuario: ${username}`);
         formArea.style.display = 'none'; formArea.innerHTML = '';
         await renderUsersSubTab(container);
       } catch (e) { errDiv.textContent = 'Error de red al guardar.'; }

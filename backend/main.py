@@ -117,6 +117,17 @@ def init_db():
                     default_perms.append((role, mod, 0))
         cursor.executemany("INSERT INTO role_permissions (role, module, allowed) VALUES (?, ?, ?)", default_perms)
     
+    # TABLA DE LOGS DE AUDITORÍA
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     # Migración: Pasar datos antiguos al nuevo formato
     cursor.execute("SELECT area_id, data_json, updated_at FROM logistics_data")
     rows = cursor.fetchall()
@@ -340,8 +351,42 @@ async def update_role_permissions(role: str, request: Request):
     conn.close()
     return {"status": "success"}
 # =============================================
-# API DE CONFIGURACIÓN DE BUFFER
+# API DE LOGS DE AUDITORÍA
 # =============================================
+
+@app.get("/api/logs")
+def get_logs(username: Optional[str] = None, date: Optional[str] = None):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    query = "SELECT username, action, details, created_at FROM audit_logs WHERE 1=1"
+    params = []
+    
+    if username:
+        query += " AND username = ?"
+        params.append(username)
+    if date:
+        # Asumiendo formato YYYY-MM-DD
+        query += " AND date(created_at) = ?"
+        params.append(date)
+        
+    query += " ORDER BY created_at DESC LIMIT 500"
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"username": r[0], "action": r[1], "details": r[2], "created_at": r[3]} for r in rows]
+
+@app.post("/api/logs")
+async def add_log(request: Request):
+    body = await request.json()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO audit_logs (username, action, details)
+        VALUES (?, ?, ?)
+    """, (body.get("username"), body.get("action"), body.get("details")))
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
 
 @app.get("/api/buffer/config")
 def get_buffer_config():
