@@ -63,7 +63,7 @@ export const setDateFilter = (newDateStr) => {
 
 // PING al servidor en background para despertarlo antes de que el usuario lo necesite
 export const pingServer = () => {
-    fetch('https://logistics-backend-wv0x.onrender.com/api/logs?username=_ping', { method: 'GET' })
+    fetch('https://logistics-backend-wv0x.onrender.com/api/health', { method: 'GET' })
         .then(() => console.log('✅ Servidor backend activo.'))
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
@@ -114,11 +114,8 @@ export const fetchAvailableDates = async () => {
 };
 
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
-// Al estar en local tu computadora solía conectarse con:
-// const API_URL = "http://127.0.0.1:8000/api/logistics";
-
-// Producción Mundial - Servidor Nube:
-const API_URL = "https://logistics-backend-wv0x.onrender.com/api/logistics";
+const API_BASE = "https://logistics-backend-wv0x.onrender.com/api";
+const API_URL  = `${API_BASE}/logistics`;
 
 export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
@@ -223,7 +220,7 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
 
 export const logSystemAction = async (username, action, details) => {
     try {
-        await fetch(`${API_URL.replace('/logistics', '/logs')}`, {
+        await fetch(`${API_BASE}/logs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, action, details })
@@ -291,7 +288,7 @@ export const generateKPIs = (data, area) => {
 
 export const fetchBufferConfig = async () => {
     try {
-        const response = await fetch(`${API_URL.replace('/logistics', '/buffer/config')}`);
+        const response = await fetch(`${API_BASE}/buffer/config`);
         if (response.ok) return await response.json();
     } catch (e) { console.warn("No se pudo obtener la configuración del buffer", e); }
     return {
