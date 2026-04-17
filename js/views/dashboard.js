@@ -828,7 +828,7 @@ export const renderDashboard = (container, user, onLogout) => {
       modules.forEach(mod => {
         const isAllowed = rolePerms[mod] === 1;
         html += `
-          <label style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem; background:${isAllowed ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isAllowed ? 'rgba(34,197,94,0.3)' : 'var(--border)'}; border-radius:8px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(79,70,229,0.1)'" onmouseout="this.style.background='${isAllowed ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)}'">
+          <label style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem; background:${isAllowed ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isAllowed ? 'rgba(34,197,94,0.3)' : 'var(--border)'}; border-radius:8px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(79,70,229,0.1)'" onmouseout="this.style.background='${isAllowed ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)'}'">
             <input type="checkbox" class="perm-check" data-role="${role}" data-module="${mod}" ${isAllowed ? 'checked' : ''}
               style="width:18px; height:18px; accent-color: var(--success); cursor:pointer;">
             <span style="font-size:0.85rem; color:var(--text-main);">${MODULE_LABELS[mod]}</span>
