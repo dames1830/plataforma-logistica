@@ -21,7 +21,10 @@ export const login = async (username, password) => {
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
       }
-      return { success: false, message: result.message || 'Credenciales inválidas' };
+      // Si el servidor dice que las credenciales son inválidas, pero es el admin, permitimos fallback local
+      if (username !== 'admin') {
+        return { success: false, message: result.message || 'Credenciales inválidas' };
+      }
     }
     // Si llegamos aquí, el servidor respondió con error (ej: 404 o 500)
     console.warn("Servidor respondió con error, intentando login local...");
