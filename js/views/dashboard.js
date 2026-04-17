@@ -27,10 +27,30 @@ const exportToExcel = (data, filename) => {
     XLSX.writeFile(wb, `${filename}_${new Date().getTime()}.xlsx`);
 };
 
-export const renderDashboard = (container, user, onLogout) => {
+export const renderDashboard = async (container, user, onLogout) => {
   container.className = 'dashboard-layout animate-fade-in';
 
-  const allowedTabs = TABS.filter(tab => tab.roles.includes(user.role) || tab.roles.includes('admin') && user.role === 'admin');
+  // OBTENER PERMISOS DINÁMICOS DESDE EL BACKEND
+  let rolePermissions = {};
+  if (user.role !== 'admin') {
+    try {
+      const res = await fetch(`${API_BASE}/permissions/${user.role}`);
+      if (res.ok) {
+        const data = await res.json();
+        rolePermissions = data.modules || {};
+      }
+    } catch (e) {
+      console.error("Error cargando permisos:", e);
+    }
+  }
+
+  // FILTRAR PESTAÑAS: Solo 'inicio' es fijo, el resto depende de la BD (o ser admin)
+  const allowedTabs = TABS.filter(tab => {
+    if (user.role === 'admin') return true;
+    if (tab.id === 'inicio') return true;
+    return rolePermissions[tab.id] === 1;
+  });
+
   let currentTab = allowedTabs[0]?.id;
 
   container.innerHTML = `
@@ -737,6 +757,17 @@ export const renderDashboard = (container, user, onLogout) => {
     const roleOptions = AVAILABLE_ROLES.map(r => `<option value="${r}" ${isEdit && editUser.role === r ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('');
 
     formArea.style.display = 'block';
+    
+    let selectedRole = isEdit ? editUser.role : 'asistente';
+
+    const updateCustomSelect = () => {
+      const trigger = document.getElementById('customRoleTrigger');
+      if (trigger) trigger.textContent = selectedRole.toUpperCase();
+      document.querySelectorAll('.custom-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === selectedRole);
+      });
+    };
+
     formArea.innerHTML = `
       <div style="background: var(--bg-card); border: 1px solid var(--primary); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(79,70,229,0.15);">
         <h3 style="color:var(--primary); margin-bottom:1rem;">${title}</h3>
@@ -744,7 +775,18 @@ export const renderDashboard = (container, user, onLogout) => {
           <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Usuario (login)</label><input type="text" id="formUsername" value="${isEdit ? editUser.username : ''}" placeholder="ej: picker2" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
           <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Nombre Completo</label><input type="text" id="formName" value="${isEdit ? editUser.name : ''}" placeholder="ej: Juan Pérez" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
           <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Contraseña ${isEdit ? '(vacío = no cambiar)' : ''}</label><input type="text" id="formPassword" placeholder="${isEdit ? '••••••' : 'Contraseña'}" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
-          <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Rol / Privilegio</label><select id="formRole" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;">${roleOptions}</select></div>
+          
+          <div class="input-group">
+            <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Rol / Privilegio</label>
+            <div class="custom-select-container" id="roleSelector">
+              <div class="custom-select-trigger" id="customRoleTrigger">${selectedRole.toUpperCase()}</div>
+              <div class="custom-select-options">
+                ${AVAILABLE_ROLES.map(r => `
+                  <div class="custom-option ${r === selectedRole ? 'selected' : ''}" data-value="${r}">${r.toUpperCase()}</div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
         </div>
         <div style="margin-top:1rem; display:flex; gap:0.7rem;">
           <button id="btnSubmitUser" class="btn" style="width:auto; padding:0.5rem 1.5rem; background:var(--success); font-size:0.85rem;">💾 Guardar</button>
@@ -754,12 +796,30 @@ export const renderDashboard = (container, user, onLogout) => {
       </div>
     `;
 
+    // Lógica del Custom Select
+    const selector = document.getElementById('roleSelector');
+    selector.addEventListener('click', (e) => {
+      selector.classList.toggle('open');
+      e.stopPropagation();
+    });
+
+    document.querySelectorAll('.custom-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        selectedRole = e.target.dataset.value;
+        updateCustomSelect();
+        selector.classList.remove('open');
+        e.stopPropagation();
+      });
+    });
+
+    window.addEventListener('click', () => selector.classList.remove('open'));
+
     document.getElementById('btnCancelUser').addEventListener('click', () => { formArea.style.display = 'none'; formArea.innerHTML = ''; });
     document.getElementById('btnSubmitUser').addEventListener('click', async () => {
       const username = document.getElementById('formUsername').value.trim();
       const name = document.getElementById('formName').value.trim();
       const password = document.getElementById('formPassword').value.trim();
-      const role = document.getElementById('formRole').value;
+      const role = selectedRole;
       const errDiv = document.getElementById('formError');
       if (!username || !name) { errDiv.textContent = 'Usuario y Nombre son obligatorios.'; return; }
       if (!isEdit && !password) { errDiv.textContent = 'La contraseña es obligatoria para nuevos.'; return; }

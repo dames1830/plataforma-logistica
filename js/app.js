@@ -12,12 +12,12 @@ class App {
     this.navigate();
   }
 
-  navigate() {
+  async navigate() {
     const user = getSession();
     this.root.innerHTML = ''; // Clear current view
 
     if (user) {
-      renderDashboard(this.root, user, () => this.navigate());
+      await renderDashboard(this.root, user, () => this.navigate());
     } else {
       renderLogin(this.root, () => this.navigate());
     }
