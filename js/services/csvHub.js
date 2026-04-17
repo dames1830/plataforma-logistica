@@ -305,7 +305,20 @@ export const calculateBufferPallets = (configOverride = null) => {
     let reserva = dataStore.stockReserva;
     let pedidos = dataStore.buffer; 
     
-    if(!activo || !reserva || !pedidos) return null;
+    // Validar que EXISTAN y tengan datos ([] es truthy en JS!)
+    if(!activo || !activo.length || !reserva || !reserva.length || !pedidos || !pedidos.length) {
+        console.warn('⚠️ calculateBufferPallets: Datos insuficientes →', {
+            activo: activo ? activo.length : 'null',
+            reserva: reserva ? reserva.length : 'null',
+            pedidos: pedidos ? pedidos.length : 'null'
+        });
+        return null;
+    }
+
+    // DIAGNÓSTICO: Mostrar las columnas de cada fuente para detectar desajustes
+    console.log('🔍 Columnas Stock Activo:', Object.keys(activo[0]));
+    console.log('🔍 Columnas Stock Reserva:', Object.keys(reserva[0]));
+    console.log('🔍 Columnas Pedidos:', Object.keys(pedidos[0]));
 
     // Configuración por defecto si no se pasa nada
     const config = configOverride || {
