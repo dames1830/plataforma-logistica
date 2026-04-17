@@ -23,15 +23,18 @@ export const login = async (username, password) => {
       }
       return { success: false, message: result.message || 'Credenciales inválidas' };
     }
+    // Si llegamos aquí, el servidor respondió con error (ej: 404 o 500)
+    console.warn("Servidor respondió con error, intentando login local...");
   } catch (err) {
-    console.warn("Servidor no disponible, intentando login local de emergencia...");
-    // Fallback: login local solo para admin de emergencia
-    const user = FALLBACK_USERS.find(u => u.username === username && u.password === password);
-    if (user) {
-      const sessionData = { id: user.id, username: user.username, role: user.role, name: user.name };
-      localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-      return { success: true, user: sessionData };
-    }
+    console.warn("Error de conexión al servidor, intentando login local...");
+  }
+
+  // Fallback: login local solo para admin de emergencia
+  const user = FALLBACK_USERS.find(u => u.username === username && u.password === password);
+  if (user) {
+    const sessionData = { id: user.id, username: user.username, role: user.role, name: user.name };
+    localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+    return { success: true, user: sessionData };
   }
   return { success: false, message: 'Credenciales inválidas' };
 };
