@@ -73,6 +73,33 @@ def init_db():
         ]
         cursor.executemany("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", default_users)
     
+    # TABLA DE PERMISOS POR ROL
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS role_permissions (
+            role TEXT NOT NULL,
+            module TEXT NOT NULL,
+            allowed INTEGER DEFAULT 1,
+            PRIMARY KEY (role, module)
+        )
+    ''')
+    
+    # Seed: Permisos por defecto si la tabla está vacía
+    cursor.execute("SELECT COUNT(*) FROM role_permissions")
+    if cursor.fetchone()[0] == 0:
+        all_modules = ['stock', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer']
+        all_roles = ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer']
+        default_perms = []
+        for role in all_roles:
+            for mod in all_modules:
+                # Admin ve todo; otros solo su módulo + stock
+                if role == 'admin':
+                    default_perms.append((role, mod, 1))
+                elif mod == role or mod == 'stock':
+                    default_perms.append((role, mod, 1))
+                else:
+                    default_perms.append((role, mod, 0))
+        cursor.executemany("INSERT INTO role_permissions (role, module, allowed) VALUES (?, ?, ?)", default_perms)
+    
     # Migración: Pasar datos antiguos al nuevo formato
     cursor.execute("SELECT area_id, data_json, updated_at FROM logistics_data")
     rows = cursor.fetchall()
@@ -236,6 +263,55 @@ def delete_user(user_id: int):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
+
+# =============================================
+# API DE PERMISOS POR ROL
+# =============================================
+
+@app.get("/api/permissions")
+def get_all_permissions():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT role, module, allowed FROM role_permissions ORDER BY role, module")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    # Agrupar por rol
+    perms = {}
+    for r in rows:
+        role, module, allowed = r[0], r[1], r[2]
+        if role not in perms:
+            perms[role] = {}
+        perms[role][module] = allowed
+    return {"permissions": perms}
+
+@app.get("/api/permissions/{role}")
+def get_role_permissions(role: str):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT module, allowed FROM role_permissions WHERE role = ?", (role,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {"role": role, "modules": {r[0]: r[1] for r in rows}}
+
+@app.put("/api/permissions/{role}")
+async def update_role_permissions(role: str, request: Request):
+    body = await request.json()
+    modules = body.get("modules", {})
+    
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    for module, allowed in modules.items():
+        cursor.execute("""
+            INSERT INTO role_permissions (role, module, allowed)
+            VALUES (?, ?, ?)
+            ON CONFLICT(role, module) DO UPDATE SET allowed=excluded.allowed
+        """, (role, module, int(allowed)))
+    
     conn.commit()
     conn.close()
     return {"status": "success"}

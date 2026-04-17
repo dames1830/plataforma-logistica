@@ -11,7 +11,7 @@ const TABS = [
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'recepcion'] },
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'almacenaje'] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'buffer'] },
-  { id: 'usuarios', label: 'Usuarios', icon: '👥', roles: ['admin'] }
+  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -130,9 +130,9 @@ export const renderDashboard = (container, user, onLogout) => {
     } else if (currentTab === 'buffer') {
       contentSubtitle.textContent = "Zona Transicional y Reposición";
       await renderBufferTab();
-    } else if (currentTab === 'usuarios') {
-      contentSubtitle.textContent = "Gestión de Accesos y Privilegios";
-      await renderUsersTab();
+    } else if (currentTab === 'config') {
+      contentSubtitle.textContent = "Panel de Administración del Sistema";
+      await renderConfigTab();
     } else {
       contentSubtitle.textContent = "Vista Analítica Operativa";
       const savedData = await getAreaData(currentTab);
@@ -602,12 +602,53 @@ export const renderDashboard = (container, user, onLogout) => {
   };
 
   // =============================================
-  // VISTA USUARIOS Y PRIVILEGIOS (Solo Admin)
+  // VISTA CONFIGURACIÓN (Solo Admin) - Sub-Pestañas
   // =============================================
   const AVAILABLE_ROLES = ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer'];
+  const MODULE_LABELS = {
+    stock: '🏦 Stock General',
+    inventario: '📋 Inventario (Ciclo)',
+    picking: '🛒 Picking',
+    packing: '📦 Packing',
+    despacho: '🚚 Despacho',
+    recepcion: '📥 Recepción',
+    almacenaje: '🏭 Almacenaje',
+    buffer: '⏳ Zona Buffer'
+  };
 
-  const renderUsersTab = async () => {
+  let configSubTab = 'usuarios';
+
+  const renderConfigTab = async () => {
     contentArea.innerHTML = `
+      <div style="margin-bottom:1.5rem; display:flex; gap:0; border-bottom: 2px solid var(--border);">
+        <button class="config-sub-btn ${configSubTab === 'usuarios' ? 'active' : ''}" data-sub="usuarios" style="padding:0.7rem 1.5rem; background:${configSubTab === 'usuarios' ? 'var(--primary)' : 'transparent'}; color:${configSubTab === 'usuarios' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${configSubTab === 'usuarios' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500; transition: all 0.2s;">
+          👥 Usuarios
+        </button>
+        <button class="config-sub-btn ${configSubTab === 'permisos' ? 'active' : ''}" data-sub="permisos" style="padding:0.7rem 1.5rem; background:${configSubTab === 'permisos' ? 'var(--primary)' : 'transparent'}; color:${configSubTab === 'permisos' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${configSubTab === 'permisos' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500; transition: all 0.2s;">
+          🛡️ Zona de Permisos
+        </button>
+      </div>
+      <div id="configContent"></div>
+    `;
+
+    document.querySelectorAll('.config-sub-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        configSubTab = btn.dataset.sub;
+        renderConfigTab();
+      });
+    });
+
+    const configContent = document.getElementById('configContent');
+    if (configSubTab === 'usuarios') {
+      await renderUsersSubTab(configContent);
+    } else {
+      await renderPermissionsSubTab(configContent);
+    }
+  };
+
+  // ---- SUB-PESTAÑA: USUARIOS ----
+  const renderUsersSubTab = async (container) => {
+    container.innerHTML = `
       <div style="text-align:center; padding: 2rem; color: var(--text-muted);">
         <i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--primary);"></i>
         <p style="margin-top:1rem;">Cargando usuarios desde el servidor...</p>
@@ -622,35 +663,19 @@ export const renderDashboard = (container, user, onLogout) => {
         users = data.users || [];
       }
     } catch (e) {
-      contentArea.innerHTML = '<div style="color:var(--danger); padding:2rem; text-align:center;">⚠️ No se pudo conectar al servidor para cargar usuarios.</div>';
+      container.innerHTML = '<div style="color:var(--danger); padding:2rem; text-align:center;">⚠️ No se pudo conectar al servidor.</div>';
       return;
     }
 
     let html = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
-        <div>
-          <span style="color:var(--text-muted); font-size:0.9rem;">Total: <strong style="color:var(--text-main)">${users.length}</strong> usuarios registrados</span>
-        </div>
-        <button id="btnAddUser" class="btn" style="width:auto; padding:0.5rem 1.2rem; background: var(--success); font-size:0.85rem;">
-          ➕ Crear Nuevo Usuario
-        </button>
+        <span style="color:var(--text-muted); font-size:0.9rem;">Total: <strong style="color:var(--text-main)">${users.length}</strong> usuarios registrados</span>
+        <button id="btnAddUser" class="btn" style="width:auto; padding:0.5rem 1.2rem; background: var(--success); font-size:0.85rem;">➕ Crear Nuevo Usuario</button>
       </div>
-
       <div id="userFormArea" style="display:none; margin-bottom:1.5rem;"></div>
-
       <div class="data-table-container" style="border: 1px solid var(--border);">
         <table class="data-table" id="usersTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Usuario</th>
-              <th>Nombre</th>
-              <th>Rol (Privilegio)</th>
-              <th>Estado</th>
-              <th>Creado</th>
-              <th style="text-align:center;">Acciones</th>
-            </tr>
-          </thead>
+          <thead><tr><th>ID</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Creado</th><th style="text-align:center;">Acciones</th></tr></thead>
           <tbody>
     `;
 
@@ -659,114 +684,67 @@ export const renderDashboard = (container, user, onLogout) => {
       const statusColor = isActive ? 'var(--success)' : 'var(--danger)';
       const statusText = isActive ? '✅ Activo' : '🚫 Inactivo';
       const isAdmin = u.role === 'admin';
-
       html += `
         <tr style="${!isActive ? 'opacity: 0.5;' : ''}">
           <td style="color:var(--text-muted); font-size:0.8rem;">${u.id}</td>
           <td style="font-weight:600; color:var(--primary);">${u.username}</td>
           <td>${u.name}</td>
-          <td>
-            <span style="background:${isAdmin ? 'rgba(239,68,68,0.2)' : 'rgba(79,70,229,0.2)'}; color:${isAdmin ? 'var(--danger)' : 'var(--primary)'}; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:500;">
-              ${u.role.toUpperCase()}
-            </span>
-          </td>
+          <td><span style="background:${isAdmin ? 'rgba(239,68,68,0.2)' : 'rgba(79,70,229,0.2)'}; color:${isAdmin ? 'var(--danger)' : 'var(--primary)'}; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:500;">${u.role.toUpperCase()}</span></td>
           <td style="color:${statusColor}; font-size:0.85rem;">${statusText}</td>
           <td style="font-size:0.8rem; color:var(--text-muted);">${u.created_at ? u.created_at.split(' ')[0] : '-'}</td>
           <td style="text-align:center;">
             <div style="display:flex; gap:0.4rem; justify-content:center; flex-wrap:wrap;">
               <button class="btn btn-edit-user" data-id="${u.id}" data-username="${u.username}" data-name="${u.name}" data-role="${u.role}" style="width:auto; padding:0.25rem 0.6rem; font-size:0.75rem; background:var(--primary);">✏️ Editar</button>
-              <button class="btn btn-toggle-user" data-id="${u.id}" data-active="${u.active}" style="width:auto; padding:0.25rem 0.6rem; font-size:0.75rem; background:${isActive ? 'var(--warning)' : 'var(--success)'}; color: ${isActive ? '#000' : '#fff'};">${isActive ? '⏸ Desactivar' : '▶ Activar'}</button>
+              <button class="btn btn-toggle-user" data-id="${u.id}" data-active="${u.active}" style="width:auto; padding:0.25rem 0.6rem; font-size:0.75rem; background:${isActive ? 'var(--warning)' : 'var(--success)'}; color:${isActive ? '#000' : '#fff'};">${isActive ? '⏸ Desactivar' : '▶ Activar'}</button>
               ${!isAdmin ? `<button class="btn btn-delete-user" data-id="${u.id}" data-name="${u.name}" style="width:auto; padding:0.25rem 0.6rem; font-size:0.75rem; background:var(--danger);">🗑️</button>` : ''}
             </div>
           </td>
         </tr>
       `;
     });
-
     html += '</tbody></table></div>';
-    contentArea.innerHTML = html;
+    container.innerHTML = html;
 
-    // Wiring: Crear usuario
-    document.getElementById('btnAddUser')?.addEventListener('click', () => {
-      showUserForm(null);
-    });
-
-    // Wiring: Editar usuario
+    // Wiring
+    document.getElementById('btnAddUser')?.addEventListener('click', () => showUserForm(null, container));
     document.querySelectorAll('.btn-edit-user').forEach(btn => {
-      btn.addEventListener('click', () => {
-        showUserForm({
-          id: btn.dataset.id,
-          username: btn.dataset.username,
-          name: btn.dataset.name,
-          role: btn.dataset.role
-        });
-      });
+      btn.addEventListener('click', () => showUserForm({ id: btn.dataset.id, username: btn.dataset.username, name: btn.dataset.name, role: btn.dataset.role }, container));
     });
-
-    // Wiring: Toggle activar/desactivar
     document.querySelectorAll('.btn-toggle-user').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const uid = btn.dataset.id;
-        const newActive = btn.dataset.active === '1' ? 0 : 1;
         try {
-          await fetch(`${API_BASE}/users/${uid}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ active: newActive })
-          });
-          await renderUsersTab();
-        } catch(e) { alert('Error al cambiar estado del usuario.'); }
+          await fetch(`${API_BASE}/users/${btn.dataset.id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ active: btn.dataset.active === '1' ? 0 : 1 }) });
+          await renderUsersSubTab(container);
+        } catch(e) { alert('Error al cambiar estado.'); }
       });
     });
-
-    // Wiring: Eliminar usuario
     document.querySelectorAll('.btn-delete-user').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const uid = btn.dataset.id;
-        const nombre = btn.dataset.name;
-        if (!confirm(`¿Estás seguro de ELIMINAR permanentemente al usuario "${nombre}"? Esta acción no se puede deshacer.`)) return;
+        if (!confirm(`¿Eliminar permanentemente al usuario "${btn.dataset.name}"?`)) return;
         try {
-          await fetch(`${API_BASE}/users/${uid}`, { method: 'DELETE' });
-          await renderUsersTab();
-        } catch(e) { alert('Error al eliminar el usuario.'); }
+          await fetch(`${API_BASE}/users/${btn.dataset.id}`, { method: 'DELETE' });
+          await renderUsersSubTab(container);
+        } catch(e) { alert('Error al eliminar.'); }
       });
     });
   };
 
-  const showUserForm = (editUser) => {
+  const showUserForm = (editUser, container) => {
     const formArea = document.getElementById('userFormArea');
     if (!formArea) return;
-    
     const isEdit = editUser && editUser.id;
     const title = isEdit ? '✏️ Editar Usuario' : '➕ Nuevo Usuario';
-
-    const roleOptions = AVAILABLE_ROLES.map(r =>
-      `<option value="${r}" ${isEdit && editUser.role === r ? 'selected' : ''}>${r.toUpperCase()}</option>`
-    ).join('');
+    const roleOptions = AVAILABLE_ROLES.map(r => `<option value="${r}" ${isEdit && editUser.role === r ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('');
 
     formArea.style.display = 'block';
     formArea.innerHTML = `
       <div style="background: var(--bg-card); border: 1px solid var(--primary); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(79,70,229,0.15);">
         <h3 style="color:var(--primary); margin-bottom:1rem;">${title}</h3>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-          <div>
-            <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Usuario (login)</label>
-            <input type="text" id="formUsername" value="${isEdit ? editUser.username : ''}" placeholder="ej: picker2" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;">
-          </div>
-          <div>
-            <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Nombre Completo</label>
-            <input type="text" id="formName" value="${isEdit ? editUser.name : ''}" placeholder="ej: Juan Pérez" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;">
-          </div>
-          <div>
-            <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Contraseña ${isEdit ? '(dejar vacío para no cambiar)' : ''}</label>
-            <input type="text" id="formPassword" placeholder="${isEdit ? '••••••' : 'Contraseña'}" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;">
-          </div>
-          <div>
-            <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Rol / Privilegio</label>
-            <select id="formRole" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;">
-              ${roleOptions}
-            </select>
-          </div>
+          <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Usuario (login)</label><input type="text" id="formUsername" value="${isEdit ? editUser.username : ''}" placeholder="ej: picker2" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
+          <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Nombre Completo</label><input type="text" id="formName" value="${isEdit ? editUser.name : ''}" placeholder="ej: Juan Pérez" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
+          <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Contraseña ${isEdit ? '(vacío = no cambiar)' : ''}</label><input type="text" id="formPassword" placeholder="${isEdit ? '••••••' : 'Contraseña'}" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
+          <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Rol / Privilegio</label><select id="formRole" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;">${roleOptions}</select></div>
         </div>
         <div style="margin-top:1rem; display:flex; gap:0.7rem;">
           <button id="btnSubmitUser" class="btn" style="width:auto; padding:0.5rem 1.5rem; background:var(--success); font-size:0.85rem;">💾 Guardar</button>
@@ -776,58 +754,132 @@ export const renderDashboard = (container, user, onLogout) => {
       </div>
     `;
 
-    document.getElementById('btnCancelUser').addEventListener('click', () => {
-      formArea.style.display = 'none';
-      formArea.innerHTML = '';
-    });
-
+    document.getElementById('btnCancelUser').addEventListener('click', () => { formArea.style.display = 'none'; formArea.innerHTML = ''; });
     document.getElementById('btnSubmitUser').addEventListener('click', async () => {
       const username = document.getElementById('formUsername').value.trim();
       const name = document.getElementById('formName').value.trim();
       const password = document.getElementById('formPassword').value.trim();
       const role = document.getElementById('formRole').value;
       const errDiv = document.getElementById('formError');
-
-      if (!username || !name) {
-        errDiv.textContent = 'Usuario y Nombre son obligatorios.';
-        return;
-      }
-
-      if (!isEdit && !password) {
-        errDiv.textContent = 'La contraseña es obligatoria para usuarios nuevos.';
-        return;
-      }
-
+      if (!username || !name) { errDiv.textContent = 'Usuario y Nombre son obligatorios.'; return; }
+      if (!isEdit && !password) { errDiv.textContent = 'La contraseña es obligatoria para nuevos.'; return; }
       try {
         let res;
         if (isEdit) {
           const body = { username, name, role };
           if (password) body.password = password;
-          res = await fetch(`${API_BASE}/users/${editUser.id}`, {
+          res = await fetch(`${API_BASE}/users/${editUser.id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        } else {
+          res = await fetch(`${API_BASE}/users`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username, password, name, role }) });
+        }
+        const result = await res.json();
+        if (result.status === 'error') { errDiv.textContent = result.message; return; }
+        formArea.style.display = 'none'; formArea.innerHTML = '';
+        await renderUsersSubTab(container);
+      } catch (e) { errDiv.textContent = 'Error de red al guardar.'; }
+    });
+  };
+
+  // ---- SUB-PESTAÑA: ZONA DE PERMISOS ----
+  const renderPermissionsSubTab = async (container) => {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 2rem; color: var(--text-muted);">
+        <i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--primary);"></i>
+        <p style="margin-top:1rem;">Cargando matriz de permisos...</p>
+      </div>
+    `;
+
+    let permissions = {};
+    try {
+      const res = await fetch(`${API_BASE}/permissions`);
+      if (res.ok) {
+        const data = await res.json();
+        permissions = data.permissions || {};
+      }
+    } catch (e) {
+      container.innerHTML = '<div style="color:var(--danger); padding:2rem; text-align:center;">⚠️ No se pudo conectar al servidor.</div>';
+      return;
+    }
+
+    const modules = Object.keys(MODULE_LABELS);
+    const roles = AVAILABLE_ROLES.filter(r => r !== 'admin'); // Admin siempre ve todo
+
+    let html = `
+      <div style="margin-bottom:1.5rem;">
+        <p style="color:var(--text-muted); font-size:0.9rem;">
+          🛡️ Controla qué módulos puede ver cada rol. El rol <strong style="color:var(--danger)">ADMIN</strong> siempre tiene acceso completo.
+        </p>
+      </div>
+      <div id="permSaveStatus" style="display:none; margin-bottom:1rem;"></div>
+    `;
+
+    // Crear una tarjeta por cada rol
+    roles.forEach(role => {
+      const rolePerms = permissions[role] || {};
+      html += `
+        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; transition: box-shadow 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
+            <h3 style="margin:0; font-size:1rem; color:var(--primary); font-weight:600;">👤 ${role.toUpperCase()}</h3>
+            <button class="btn btn-save-perms" data-role="${role}" style="width:auto; padding:0.3rem 1rem; font-size:0.8rem; background:var(--primary);">💾 Guardar Cambios</button>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:0.6rem;">
+      `;
+
+      modules.forEach(mod => {
+        const isAllowed = rolePerms[mod] === 1;
+        html += `
+          <label style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem; background:${isAllowed ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isAllowed ? 'rgba(34,197,94,0.3)' : 'var(--border)'}; border-radius:8px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(79,70,229,0.1)'" onmouseout="this.style.background='${isAllowed ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)}'">
+            <input type="checkbox" class="perm-check" data-role="${role}" data-module="${mod}" ${isAllowed ? 'checked' : ''}
+              style="width:18px; height:18px; accent-color: var(--success); cursor:pointer;">
+            <span style="font-size:0.85rem; color:var(--text-main);">${MODULE_LABELS[mod]}</span>
+          </label>
+        `;
+      });
+
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+
+    // Wiring: Guardar permisos por rol
+    document.querySelectorAll('.btn-save-perms').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const role = btn.dataset.role;
+        const checkboxes = document.querySelectorAll(`.perm-check[data-role="${role}"]`);
+        const modulesPayload = {};
+        checkboxes.forEach(cb => {
+          modulesPayload[cb.dataset.module] = cb.checked ? 1 : 0;
+        });
+
+        btn.textContent = '⏳ Guardando...';
+        btn.style.opacity = '0.6';
+
+        try {
+          const res = await fetch(`${API_BASE}/permissions/${role}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
+            body: JSON.stringify({ modules: modulesPayload })
           });
-        } else {
-          res = await fetch(`${API_BASE}/users`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password, name, role })
-          });
+          const result = await res.json();
+          if (result.status === 'success') {
+            btn.textContent = '✅ Guardado!';
+            btn.style.background = 'var(--success)';
+            setTimeout(() => {
+              btn.textContent = '💾 Guardar Cambios';
+              btn.style.background = 'var(--primary)';
+              btn.style.opacity = '1';
+            }, 2000);
+          }
+        } catch (e) {
+          btn.textContent = '❌ Error';
+          btn.style.background = 'var(--danger)';
+          setTimeout(() => {
+            btn.textContent = '💾 Guardar Cambios';
+            btn.style.background = 'var(--primary)';
+            btn.style.opacity = '1';
+          }, 2000);
         }
-
-        const result = await res.json();
-        if (result.status === 'error') {
-          errDiv.textContent = result.message;
-          return;
-        }
-
-        formArea.style.display = 'none';
-        formArea.innerHTML = '';
-        await renderUsersTab();
-      } catch (e) {
-        errDiv.textContent = 'Error de red al guardar el usuario.';
-      }
+      });
     });
   };
 
