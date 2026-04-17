@@ -498,8 +498,78 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: 'Total', rq: sumRQ, atd: sumATD, pct: calcPct(sumATD, sumRQ) }
     ];
 
+    // RESUMEN POR TIPO DE EMPAQUE (SolidPack / PreePack)
+    // Determina el tipo buscando la columna TIPO o EMPAQUE en pedidos
+    const gruposEmpaque = {};
+    detallePallets.forEach(row => {
+        // Buscar tipo de empaque desde los pedidos originales usando el SKU
+        const skuKey = row['SKU'];
+        let tipoEmpaque = 'SolidPack'; // Valor por defecto
+
+        // Buscar en pedidos el tipo de empaque del SKU
+        const pedidoMatch = pedidos.find(p => {
+            const skuP = String(p['Código de artículo'] || p['CÃ³digo de artÃculo'] || '').trim();
+            return skuP === skuKey;
+        });
+
+        if (pedidoMatch) {
+            const rawTipo = String(
+                pedidoMatch['TIPO DE EMPAQUE'] || pedidoMatch['Tipo de empaque'] ||
+                pedidoMatch['EMPAQUE'] || pedidoMatch['Empaque'] || 'SolidPack'
+            ).trim();
+            tipoEmpaque = rawTipo || 'SolidPack';
+        }
+
+        if (!gruposEmpaque[tipoEmpaque]) {
+            gruposEmpaque[tipoEmpaque] = { paletas: 0, skus: new Set(), parcaja: 0 };
+        }
+        // Cada fila de detalle = 1 paleta (ubicación única)
+        gruposEmpaque[tipoEmpaque].paletas += 1;
+        gruposEmpaque[tipoEmpaque].skus.add(skuKey);
+        gruposEmpaque[tipoEmpaque].parcaja += (row['QTY BUFFER'] || 0);
+    });
+
+    // Si no hay columna TIPO DE EMPAQUE, separar por heurística: si el SKU contiene 'PP' es PreePack
+    const tiposUsados = Object.keys(gruposEmpaque);
+    if (tiposUsados.length <= 1 && tiposUsados[0] === 'SolidPack') {
+        // Re-agrupar usando heurística de SKU
+        const gruposHeuristica = { SolidPack: { paletas: 0, skus: new Set(), parcaja: 0 }, PreePack: { paletas: 0, skus: new Set(), parcaja: 0 } };
+        detallePallets.forEach(row => {
+            const sku = row['SKU'] || '';
+            const tipo = sku.includes('PP') ? 'PreePack' : 'SolidPack';
+            gruposHeuristica[tipo].paletas += 1;
+            gruposHeuristica[tipo].skus.add(sku);
+            gruposHeuristica[tipo].parcaja += (row['QTY BUFFER'] || 0);
+        });
+        // Solo incluir grupos que tengan datos
+        Object.keys(gruposHeuristica).forEach(k => {
+            if (gruposHeuristica[k].paletas === 0) delete gruposHeuristica[k];
+        });
+        if (Object.keys(gruposHeuristica).length > 0) {
+            Object.assign(gruposEmpaque, gruposHeuristica);
+        }
+    }
+
+    const resumenSKU = Object.entries(gruposEmpaque).map(([tipo, vals]) => ({
+        tipo,
+        paletas: vals.paletas,
+        skus: vals.skus.size,
+        parcaja: vals.parcaja
+    }));
+    // Fila total
+    if (resumenSKU.length > 0) {
+        resumenSKU.push({
+            tipo: 'TOTAL',
+            paletas: resumenSKU.reduce((s, r) => s + r.paletas, 0),
+            skus: resumenSKU.reduce((s, r) => s + r.skus, 0),
+            parcaja: resumenSKU.reduce((s, r) => s + r.parcaja, 0)
+        });
+    }
+
     return {
         waterfall: waterfallArray,
-        detalle: detallePallets
+        detalle: detallePallets,
+        resumenSKU
     };
 };
+

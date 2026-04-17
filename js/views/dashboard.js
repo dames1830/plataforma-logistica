@@ -386,9 +386,8 @@ export const renderDashboard = async (container, user, onLogout) => {
           });
 
       } else if (activeBufferSubTab === 'reportes') {
-          // Siempre mostramos la estructura del reporte
           let rhtml = '';
-          
+
           if (!bufferKPIObj) {
             rhtml = `
               <div style="text-align:center; padding:2rem; background:rgba(255,165,0,0.06); border:1px solid var(--warning); border-radius:12px; margin-bottom:1.5rem;">
@@ -397,58 +396,89 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="color:var(--text-muted); font-size:0.85rem;">Ve a <strong>Archivos Maestros</strong> y sube: Stock Activo, Stock Reserva y Pedidos.</p>
               </div>
             `;
-          } else {
-            rhtml = `
-              <div class="data-table-container" style="max-width:620px; margin:0 auto; border:2px solid var(--primary); box-shadow:0 4px 20px rgba(79,70,229,0.2); margin-bottom:1.5rem;">
-                <div style="padding:1rem; background:rgba(79,70,229,0.12); border-bottom:1px solid var(--border); text-align:center;">
-                  <h3 style="color:var(--text-main); font-weight:700; letter-spacing:1px;">ANÁLISIS CONSOLIDADO ZONAS</h3>
-                </div>
-                <table class="data-table" style="text-align:center;">
-                  <thead><tr><th>NIVEL / AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th></tr></thead>
-                  <tbody>
-            `;
-            bufferKPIObj.waterfall.forEach(row => {
-              const isTotal = row.nivel === 'Total';
-              rhtml += `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.12);' : ''}">
-                <td style="text-align:left; padding:0.4rem 2rem;">${row.nivel}</td>
-                <td>${row.rq}</td><td>${row.atd}</td><td>${row.pct}</td>
-              </tr>`;
-            });
-            rhtml += `</tbody></table></div>`;
+            subContent.innerHTML = rhtml;
+            return;
           }
 
-          // Tabla Analisis Buffer SKU - siempre mostrar el cuadro
-          const detalleRows = bufferKPIObj?.detalle || [];
+          // Dos cuadros en paralelo: ZONAS  y  SKU
+          rhtml = `<div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-start;">`;
+
+          // ── CUADRO 1: ANÁLISIS BUFFER ZONAS ──
           rhtml += `
-            <div class="data-table-container" style="margin-top:1.5rem; border:2px solid var(--warning); box-shadow:0 4px 20px rgba(234,179,8,0.15);">
-              <div style="padding:1rem; background:rgba(234,179,8,0.08); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="color:var(--warning); font-weight:700; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3>
-                ${detalleRows.length > 0 ? `<button class="btn" id="export_pallets" style="width:auto; background:var(--success); color:#fff; padding:0.5rem 1.5rem; font-size:0.85rem;">↓ Descargar Excel</button>` : ''}
+            <div class="data-table-container" style="flex:1; min-width:300px; border:2px solid var(--primary); box-shadow:0 4px 24px rgba(79,70,229,0.25);">
+              <div style="padding:1rem; background:rgba(79,70,229,0.14); border-bottom:1px solid var(--border); text-align:center;">
+                <h3 style="color:#fff; font-weight:700; letter-spacing:1px; font-size:0.95rem;">ANÁLISIS BUFFER ZONAS</h3>
               </div>
-              ${detalleRows.length === 0
-                ? `<div style="text-align:center; padding:3rem; color:var(--text-muted);">Sin datos de SKU. Sube los archivos maestros primero.</div>`
-                : `<div style="max-height:450px; overflow-y:auto;">
-                    <table class="data-table">
-                      <thead><tr><th>UBICACIONES</th><th>LPN</th><th>SKU</th><th>QTY ACTIVO</th><th>QTY RESERVA</th><th>QTY BUFFER</th><th>ARTICULO</th></tr></thead>
-                      <tbody>${detalleRows.map(d => `<tr>
-                        <td style="font-weight:600;">${d['UBICACIONES']||''}</td>
-                        <td>${d['LPN']||''}</td>
-                        <td>${d['SKU']||''}</td>
-                        <td>${d['QTY ACTIVO']||''}</td>
-                        <td>${d['QTY RESERVA']||''}</td>
-                        <td style="color:var(--warning);font-weight:700;">${d['QTY BUFFER']||''}</td>
-                        <td>${d['ARTICULO']||''}</td>
-                      </tr>`).join('')}</tbody>
-                    </table>
-                  </div>`
-              }
+              <table class="data-table" style="text-align:center;">
+                <thead><tr>
+                  <th style="text-align:left;">NIVEL/AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th>
+                </tr></thead>
+                <tbody>
+                  ${bufferKPIObj.waterfall.map(row => {
+                    const isTotal = row.nivel === 'Total';
+                    return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.12);' : ''}">
+                      <td style="text-align:left; padding:0.5rem 1rem;">${row.nivel}</td>
+                      <td>${Number(row.rq).toLocaleString()}</td>
+                      <td style="${isTotal ? 'color:#22c55e;' : ''}">${Number(row.atd).toLocaleString()}</td>
+                      <td style="${isTotal ? 'color:#22c55e;' : ''}">${row.pct}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
             </div>
           `;
+
+          // ── CUADRO 2: ANÁLISIS BUFFER SKU ──
+          const resumen = bufferKPIObj.resumenSKU || [];
+          rhtml += `
+            <div class="data-table-container" style="flex:1; min-width:280px; border:2px solid var(--warning); box-shadow:0 4px 24px rgba(234,179,8,0.22);">
+              <div style="padding:1rem; background:rgba(234,179,8,0.1); border-bottom:1px solid var(--border); text-align:center;">
+                <h3 style="color:var(--warning); font-weight:700; letter-spacing:1px; font-size:0.95rem;">ANÁLISIS BUFFER SKU</h3>
+              </div>
+              <table class="data-table" style="text-align:center;">
+                <thead><tr>
+                  <th style="text-align:left;">TIPO DE EMPAQUE</th><th>PALETAS A BAJAR</th><th>SKUS</th><th>PAR/CAJA</th>
+                </tr></thead>
+                <tbody>
+                  ${resumen.length > 0
+                    ? resumen.map(row => {
+                        const isTotal = row.tipo === 'TOTAL';
+                        const colorTipo = !isTotal
+                          ? (row.tipo.toLowerCase().includes('pp') || row.tipo.toLowerCase().includes('pree') ? 'color:var(--warning);' : 'color:#22c55e;')
+                          : '';
+                        return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.12);' : ''}">
+                          <td style="text-align:left; padding:0.5rem 1rem; font-weight:600; ${colorTipo}">${row.tipo}</td>
+                          <td>${row.paletas}</td>
+                          <td>${row.skus}</td>
+                          <td style="${isTotal ? 'color:#22c55e;' : ''}">${row.parcaja}</td>
+                        </tr>`;
+                      }).join('')
+                    : `<tr><td colspan="4" style="padding:2rem; color:var(--text-muted); font-size:0.85rem;">Sin datos de empaque. Asegúrate que los pedidos incluyen la columna TIPO DE EMPAQUE.</td></tr>`
+                  }
+                </tbody>
+              </table>
+            </div>
+          `;
+
+          rhtml += `</div>`;
+
+          // Botón para bajar detalle completo (paleta por paleta)
+          if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
+            rhtml += `
+              <div style="text-align:center; margin-top:1.5rem;">
+                <button class="btn" id="export_pallets" style="width:auto; background:var(--success); color:#fff; padding:0.7rem 2rem;">
+                  ↓ Descargar Orden de Extracción (Detalle Completo por Paleta)
+                </button>
+              </div>
+            `;
+          }
+
           subContent.innerHTML = rhtml;
           setTimeout(() => {
-            document.getElementById('export_pallets')?.addEventListener('click', () => exportToExcel(detalleRows, 'Orden_Extraccion_Paletas'));
+            document.getElementById('export_pallets')?.addEventListener('click', () =>
+              exportToExcel(bufferKPIObj.detalle, 'Orden_Extraccion_Paletas')
+            );
           }, 100);
-
 
       } else if (activeBufferSubTab === 'dashboard') {
           subContent.innerHTML = `<div style="text-align:center; padding:5rem; color:var(--text-muted);"><i class="fas fa-chart-line fa-3x" style="margin-bottom:1rem;"></i><br>Dashboard de desempeño Buffer (Próximamente)</div>`;
