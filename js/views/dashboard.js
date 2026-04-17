@@ -2,15 +2,15 @@ import { logout } from '../services/auth.js';
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
 
 const TABS = [
-  { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer'] },
-  { id: 'stock', label: 'Stock General', icon: '🏦', roles: ['admin', 'inventario'] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'inventario'] },
-  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'picking'] },
-  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'packing'] },
-  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'despacho'] },
-  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'recepcion'] },
-  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'almacenaje'] },
-  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'buffer'] },
+  { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
+  { id: 'stock', label: 'Stock General', icon: '🏦', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
+  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'] },
+  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
@@ -604,7 +604,7 @@ export const renderDashboard = (container, user, onLogout) => {
   // =============================================
   // VISTA CONFIGURACIÓN (Solo Admin) - Sub-Pestañas
   // =============================================
-  const AVAILABLE_ROLES = ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer'];
+  const AVAILABLE_ROLES = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'];
   const MODULE_LABELS = {
     stock: '🏦 Stock General',
     inventario: '📋 Inventario (Ciclo)',

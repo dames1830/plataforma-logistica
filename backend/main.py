@@ -62,14 +62,11 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         default_users = [
-            ('admin', '123', 'Administrador', 'admin'),
-            ('inventario', '123', 'Encargado Inventario', 'inventario'),
-            ('picking', '123', 'Picker 1', 'picking'),
-            ('packing', '123', 'Empacador Principal', 'packing'),
-            ('despacho', '123', 'Logística Despacho', 'despacho'),
-            ('recepcion', '123', 'Recepcionista Bodega', 'recepcion'),
-            ('almacenaje', '123', 'Almacenista', 'almacenaje'),
-            ('buffer', '123', 'Gestor de Buffer', 'buffer')
+            ('admin', '123', 'Administrador Global', 'admin'),
+            ('jefe', '123', 'Jefe de Operaciones', 'jefe'),
+            ('supervisor', '123', 'Supervisor de Turno', 'supervisor'),
+            ('encargado', '123', 'Encargado de Área', 'encargado'),
+            ('asistente', '123', 'Asistente de Bodega', 'asistente')
         ]
         cursor.executemany("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", default_users)
     
@@ -87,14 +84,14 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM role_permissions")
     if cursor.fetchone()[0] == 0:
         all_modules = ['stock', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer']
-        all_roles = ['admin', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'buffer']
+        all_roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente']
         default_perms = []
         for role in all_roles:
             for mod in all_modules:
-                # Admin ve todo; otros solo su módulo + stock
-                if role == 'admin':
+                # Admin ve todo; Jefe/Supervisor ven todo; otros solo stock por defecto
+                if role in ['admin', 'jefe', 'supervisor']:
                     default_perms.append((role, mod, 1))
-                elif mod == role or mod == 'stock':
+                elif mod == 'stock':
                     default_perms.append((role, mod, 1))
                 else:
                     default_perms.append((role, mod, 0))
