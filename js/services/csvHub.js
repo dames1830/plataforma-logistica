@@ -498,78 +498,74 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: 'Total', rq: sumRQ, atd: sumATD, pct: calcPct(sumATD, sumRQ) }
     ];
 
-    // RESUMEN POR TIPO DE EMPAQUE (SolidPack / PreePack)
-    // Determina el tipo buscando la columna TIPO o EMPAQUE en pedidos
-    const gruposEmpaque = {};
+    // ==================================================
+    // RESUMEN BUFFER SKU — Agrupa por TIPO DE EMPAQUE
+    // PALETAS  = ubicaciones únicas por tipo
+    // SKUS     = códigos SKU únicos por tipo
+    // PAR/CAJA = suma de QTY BUFFER por tipo
+    // ==================================================
+    const acumPaletas = {}; // tipo -> Set de UBICACIONES
+    const acumSkus    = {}; // tipo -> Set de SKU
+    const acumParcaja = {}; // tipo -> suma QTY BUFFER
+
     detallePallets.forEach(row => {
-        // Buscar tipo de empaque desde los pedidos originales usando el SKU
-        const skuKey = row['SKU'];
-        let tipoEmpaque = 'SolidPack'; // Valor por defecto
+        const sku      = String(row['SKU'] || '').trim();
+        const ubicacion = String(row['UBICACIONES'] || '').trim();
+        const qtyBuffer = Number(row['QTY BUFFER']) || 0;
 
-        // Buscar en pedidos el tipo de empaque del SKU
-        const pedidoMatch = pedidos.find(p => {
-            const skuP = String(p['Código de artículo'] || p['CÃ³digo de artÃculo'] || '').trim();
-            return skuP === skuKey;
-        });
-
-        if (pedidoMatch) {
-            const rawTipo = String(
-                pedidoMatch['TIPO DE EMPAQUE'] || pedidoMatch['Tipo de empaque'] ||
-                pedidoMatch['EMPAQUE'] || pedidoMatch['Empaque'] || 'SolidPack'
+        // 1. Buscar columna TIPO DE EMPAQUE en los pedidos originales
+        let tipo = '';
+        const pedMatch = pedidos.find(p => {
+            const skuP = String(
+                p['Código de artículo'] || p['CÃ³digo de artÃculo'] ||
+                p['Codigo de articulo'] || p['CODIGO'] || p['SKU'] || ''
             ).trim();
-            tipoEmpaque = rawTipo || 'SolidPack';
+            return skuP === sku;
+        });
+        if (pedMatch) {
+            tipo = String(
+                pedMatch['TIPO DE EMPAQUE'] || pedMatch['Tipo de empaque'] ||
+                pedMatch['EMPAQUE']         || pedMatch['Empaque']         ||
+                pedMatch['TIPO']            || pedMatch['Tipo']            || ''
+            ).trim();
         }
 
-        if (!gruposEmpaque[tipoEmpaque]) {
-            gruposEmpaque[tipoEmpaque] = { paletas: 0, skus: new Set(), parcaja: 0 };
+        // 2. Heurística por código SKU si no encontró columna
+        if (!tipo) {
+            tipo = (sku.toUpperCase().includes('PP')) ? 'PreePack' : 'SolidPack';
         }
-        // Cada fila de detalle = 1 paleta (ubicación única)
-        gruposEmpaque[tipoEmpaque].paletas += 1;
-        gruposEmpaque[tipoEmpaque].skus.add(skuKey);
-        gruposEmpaque[tipoEmpaque].parcaja += (row['QTY BUFFER'] || 0);
+
+        if (!acumPaletas[tipo]) {
+            acumPaletas[tipo] = new Set();
+            acumSkus[tipo]    = new Set();
+            acumParcaja[tipo] = 0;
+        }
+        acumPaletas[tipo].add(ubicacion);
+        acumSkus[tipo].add(sku);
+        acumParcaja[tipo] += qtyBuffer;
     });
 
-    // Si no hay columna TIPO DE EMPAQUE, separar por heurística: si el SKU contiene 'PP' es PreePack
-    const tiposUsados = Object.keys(gruposEmpaque);
-    if (tiposUsados.length <= 1 && tiposUsados[0] === 'SolidPack') {
-        // Re-agrupar usando heurística de SKU
-        const gruposHeuristica = { SolidPack: { paletas: 0, skus: new Set(), parcaja: 0 }, PreePack: { paletas: 0, skus: new Set(), parcaja: 0 } };
-        detallePallets.forEach(row => {
-            const sku = row['SKU'] || '';
-            const tipo = sku.includes('PP') ? 'PreePack' : 'SolidPack';
-            gruposHeuristica[tipo].paletas += 1;
-            gruposHeuristica[tipo].skus.add(sku);
-            gruposHeuristica[tipo].parcaja += (row['QTY BUFFER'] || 0);
-        });
-        // Solo incluir grupos que tengan datos
-        Object.keys(gruposHeuristica).forEach(k => {
-            if (gruposHeuristica[k].paletas === 0) delete gruposHeuristica[k];
-        });
-        if (Object.keys(gruposHeuristica).length > 0) {
-            Object.assign(gruposEmpaque, gruposHeuristica);
-        }
-    }
-
-    const resumenSKU = Object.entries(gruposEmpaque).map(([tipo, vals]) => ({
+    const resumenSKU = Object.keys(acumPaletas).map(tipo => ({
         tipo,
-        paletas: vals.paletas,
-        skus: vals.skus.size,
-        parcaja: vals.parcaja
+        paletas: acumPaletas[tipo].size,
+        skus:    acumSkus[tipo].size,
+        parcaja: acumParcaja[tipo]
     }));
-    // Fila total
+
     if (resumenSKU.length > 0) {
         resumenSKU.push({
-            tipo: 'TOTAL',
+            tipo:    'TOTAL',
             paletas: resumenSKU.reduce((s, r) => s + r.paletas, 0),
-            skus: resumenSKU.reduce((s, r) => s + r.skus, 0),
+            skus:    new Set(detallePallets.map(r => r['SKU'])).size,
             parcaja: resumenSKU.reduce((s, r) => s + r.parcaja, 0)
         });
     }
 
     return {
         waterfall: waterfallArray,
-        detalle: detallePallets,
+        detalle:   detallePallets,
         resumenSKU
     };
 };
+
 
