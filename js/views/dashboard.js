@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -56,7 +56,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2>Panel Logístico Elite</h2>
+        <h2>Logística Dames1830</h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="margin-right: 1.5rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.8rem; border-radius: 8px; border: 1px solid var(--border);">
@@ -308,203 +308,158 @@ export const renderDashboard = async (container, user, onLogout) => {
       });
   };
 
-  // VISTA BUFFER (CASCADA WATERFALL)
+  let activeBufferSubTab = 'maestros';
+
   const renderBufferTab = async () => {
-     // Multi-hilo para arrancar en un microsegundo
-     const [bufferData] = await Promise.all([
-         getAreaData('buffer'),
-         getAreaData('stockActivo'),
-         getAreaData('stockReserva')
-     ]);
-     
-     const bufferKPIObj = calculateBufferPallets(); 
-     
-     if (!bufferData) {
-         contentArea.innerHTML = `
-           <div class="kpi-card" style="border: 1px dashed var(--warning); margin-bottom:2rem;">
-             <div class="kpi-title">MÉTRICA RELACIONAL DE PEDIDOS NO DISPONIBLE</div>
-             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem">Sube Stock Activo y Reserva en la pestaña "Stock" primero si no lo has hecho.</div>
-           </div>
-           <div class="upload-area" id="drop_buffer">
-             <h3>Aquí sube tu archivo de Pedidos a Evaluar (.csv)</h3>
-             <label class="upload-btn">Cargar CSV<input type="file" id="input_buffer" accept=".csv" style="display:none;"></label>
-             <div id="err_buffer" style="color:var(--danger); margin-top:1rem;"></div>
-           </div>
-         `;
-         attachUploadEvent('input_buffer', 'buffer', '.csv');
-         return;
-     }
+      // 1. Obtener Configuración y Data en paralelo
+      const [bufferConfig, bufferData, stockActivo, stockReserva] = await Promise.all([
+          fetchBufferConfig(),
+          getAreaData('buffer'),
+          getAreaData('stockActivo'),
+          getAreaData('stockReserva')
+      ]);
 
-     // Si hay Data, Dibujamos la vista de Business Intelligence de Consolidado
-     let html = `
-       <div class="header-actions">
-          <label class="btn btn-primary" style="position: relative; overflow: hidden; cursor: pointer;">
-             <i class="fas fa-upload"></i> Subir Pedidos
-             <input type="file" id="update_buffer" style="position: absolute; opacity: 0; right: 0; top: 0;" multiple />
-          </label>
-       </div>
-     `; if (bufferKPIObj && bufferKPIObj.waterfall) {
-         html += `
-           <div class="data-table-container" style="max-width: 550px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
-             <div style="padding: 1rem; background: rgba(79, 70, 229, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
-               <h3 style="color: var(--text-main); font-weight: 600;">ANÁLISIS BUFFER ZONAS</h3>
-             </div>
-             <table class="data-table" style="text-align: center;">
-               <thead>
-                  <tr>
-                    <th style="text-align: left; padding: 0.6rem 0.6rem 0.6rem 2rem;">NIVEL/AREA</th>
-                    <th style="text-align: center; padding: 0.6rem;">RQ</th>
-                    <th style="text-align: center; padding: 0.6rem;">ATD RQ</th>
-                    <th style="text-align: center; padding: 0.6rem;">% ATD</th>
-                  </tr>
-               </thead>
-               <tbody>
-         `;
+      const bufferKPIObj = calculateBufferPallets(bufferConfig);
+      
+      let html = `
+        <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
+          <a class="sub-nav-item ${activeBufferSubTab === 'maestros' ? 'active' : ''}" data-sub="maestros" style="cursor:pointer; padding:0.5rem 1rem; color:${activeBufferSubTab === 'maestros' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeBufferSubTab === 'maestros' ? 'var(--primary)' : 'transparent'}">📚 Archivos Maestros</a>
+          <a class="sub-nav-item ${activeBufferSubTab === 'reportes' ? 'active' : ''}" data-sub="reportes" style="cursor:pointer; padding:0.5rem 1rem; color:${activeBufferSubTab === 'reportes' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeBufferSubTab === 'reportes' ? 'var(--primary)' : 'transparent'}">📊 Reportes</a>
+          <a class="sub-nav-item ${activeBufferSubTab === 'dashboard' ? 'active' : ''}" data-sub="dashboard" style="cursor:pointer; padding:0.5rem 1rem; color:${activeBufferSubTab === 'dashboard' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeBufferSubTab === 'dashboard' ? 'var(--primary)' : 'transparent'}">📈 Dashboard</a>
+          <a class="sub-nav-item ${activeBufferSubTab === 'config' ? 'active' : ''}" data-sub="config" style="cursor:pointer; padding:0.5rem 1rem; color:${activeBufferSubTab === 'config' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeBufferSubTab === 'config' ? 'var(--primary)' : 'transparent'}">⚙️ Configuración</a>
+        </nav>
+        <div id="bufferSubContent"></div>
+      `;
 
-         bufferKPIObj.waterfall.forEach(row => {
-             let isTotal = row.nivel === 'Total';
-             html += `
-                 <tr style="${isTotal ? 'font-weight: 700; background: rgba(34, 197, 94, 0.1);' : ''}">
-                  <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 2rem;">${row.nivel}</td>
-                  <td style="text-align: center; padding: 0.4rem;">${row.rq}</td>
-                  <td style="text-align: center; color: ${isTotal ? 'var(--success)' : 'inherit'}; padding: 0.4rem;">${row.atd}</td>
-                  <td style="text-align: center; color: ${isTotal ? 'var(--success)' : 'inherit'}; padding: 0.4rem;">${row.pct}</td>
-                 </tr>
-             `;
-         });
+      contentArea.innerHTML = html;
 
-         html += `</tbody></table></div>`;
-         
-         // ==== RENDER ANALISIS BUFFER NIVEL PALETAS ====
-         if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
-            let totalPaletas = new Set();
-            let totalSkus = new Set();
-            let totalUnidadesFisicas = 0;
-            
-            let setPaletasSP = new Set();
-            let skusReqSP = new Set();
-            let unidadesSP = 0;
-            
-            let setPaletasPP = new Set();
-            let skusReqPP = new Set();
-            let unidadesPP = 0;
-            
-            bufferKPIObj.detalle.forEach(d => {
-                let pPick = parseFloat(d['QTY BUFFER']) || 0;
-                let ubi = d['UBICACIONES'];
-                let skuStr = String(d['SKU'] || '').trim();
-                
-                if (pPick > 0) {
-                    let charLen = skuStr.length;
-                    
-                    totalPaletas.add(ubi);
-                    totalSkus.add(skuStr);
-                    totalUnidadesFisicas += pPick;
-                    
-                    if (charLen <= 13) { // SolidPack (normalmente 12)
-                        setPaletasSP.add(ubi);
-                        skusReqSP.add(skuStr);
-                        unidadesSP += pPick;
-                    } else { // PreePack (normalmente 15)
-                        setPaletasPP.add(ubi);
-                        skusReqPP.add(skuStr);
-                        unidadesPP += pPick;
-                    }
-                }
-            });
+      const subContent = document.getElementById('bufferSubContent');
 
-            html += `
-              <div class="data-table-container" style="max-width: 550px; margin: 2rem auto; border: 2px solid var(--warning); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
-                 <div style="padding: 1rem; background: rgba(245, 158, 11, 0.1); border-bottom: 1px solid var(--border); text-align: center;">
-                   <h3 style="color: var(--warning); font-weight: 600;">ANÁLISIS BUFFER SKU</h3>
-                 </div>
-                 <table class="data-table" style="text-align: center;">
-                   <thead>
-                     <tr>
-                       <th style="text-align: left; padding: 0.6rem 0.6rem 0.6rem 1.5rem;">TIPO DE EMPAQUE</th>
-                       <th style="text-align: center; padding: 0.6rem;">Paletas a Bajar</th>
-                       <th style="text-align: center; padding: 0.6rem;">SKUs</th>
-                       <th style="text-align: center; padding: 0.6rem;">PAR/CAJA</th>
-                     </tr>
-                   </thead>
-                   <tbody>
-                     <tr>
-                       <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 1.5rem; font-weight: 600; color: var(--success);">SolidPack</td>
-                       <td style="text-align: center; padding: 0.4rem;">${setPaletasSP.size}</td>
-                       <td style="text-align: center; padding: 0.4rem;">${skusReqSP.size}</td>
-                       <td style="text-align: center; padding: 0.4rem;">${unidadesSP}</td>
-                     </tr>
-                     <tr>
-                       <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 1.5rem; font-weight: 600; color: var(--warning);">PreePack</td>
-                       <td style="text-align: center; padding: 0.4rem;">${setPaletasPP.size}</td>
-                       <td style="text-align: center; padding: 0.4rem;">${skusReqPP.size}</td>
-                       <td style="text-align: center; padding: 0.4rem;">${unidadesPP}</td>
-                     </tr>
-                     <tr style="background: rgba(255,255,255,0.05); font-weight: bold;">
-                       <td style="text-align: left; padding: 0.4rem 0.4rem 0.4rem 1.5rem; color: var(--text-main);">TOTAL</td>
-                       <td style="text-align: center; padding: 0.4rem;">${totalPaletas.size}</td>
-                       <td style="text-align: center; padding: 0.4rem;">${totalSkus.size}</td>
-                       <td style="text-align: center; padding: 0.4rem; color: var(--success);">${totalUnidadesFisicas}</td>
-                     </tr>
-                   </tbody>
+      // ACCIÓN: Cambio de Sub-Pestaña
+      document.querySelectorAll('.sub-nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          activeBufferSubTab = e.target.dataset.sub;
+          renderBufferTab();
+        });
+      });
+
+      if (activeBufferSubTab === 'maestros') {
+          subContent.innerHTML = `
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1.5rem;">
+              <div class="kpi-card" style="text-align:center; padding:2rem; border:1px dashed var(--border);">
+                 <i class="fas fa-file-invoice-dollar fa-2x" style="color:var(--primary); margin-bottom:1rem;"></i>
+                 <h4>Pedidos</h4>
+                 <p style="font-size:0.75rem; color:var(--text-muted); margin:0.5rem 0 1rem;">Archivo de demanda por SKU</p>
+                 <label class="btn" style="padding:0.4rem; font-size:0.8rem;">Cargar Pedidos <input type="file" id="up_pedidos" accept=".csv" style="display:none;"></label>
+              </div>
+              <div class="kpi-card" style="text-align:center; padding:2rem; border:1px dashed var(--border);">
+                 <i class="fas fa-clipboard-list fa-2x" style="color:var(--warning); margin-bottom:1rem;"></i>
+                 <h4>Solicitud</h4>
+                 <p style="font-size:0.75rem; color:var(--text-muted); margin:0.5rem 0 1rem;">Consolidado de reposición</p>
+                 <label class="btn" style="padding:0.4rem; font-size:0.8rem; background:var(--warning); color:black;">Cargar Solicitud <input type="file" id="up_solicitud" accept=".csv" style="display:none;"></label>
+              </div>
+              <div class="kpi-card" style="text-align:center; padding:2rem; border:1px dashed var(--border);">
+                 <i class="fas fa-boxes fa-2x" style="color:var(--success); margin-bottom:1rem;"></i>
+                 <h4>Maestro Artículos</h4>
+                 <p style="font-size:0.75rem; color:var(--text-muted); margin:0.5rem 0 1rem;">Data maestra (reemplaza anterior)</p>
+                 <label class="btn" style="padding:0.4rem; font-size:0.8rem; background:var(--success);">Cargar Maestro <input type="file" id="up_articulos" accept=".csv" style="display:none;"></label>
+              </div>
+              <div class="kpi-card" style="text-align:center; padding:2rem; border:1px dashed var(--border);">
+                 <i class="fas fa-ruler fa-2x" style="color:var(--danger); margin-bottom:1rem;"></i>
+                 <h4>Tallas</h4>
+                 <p style="font-size:0.75rem; color:var(--text-muted); margin:0.5rem 0 1rem;">Relación Códigos / Tallas</p>
+                 <label class="btn" style="padding:0.4rem; font-size:0.8rem; background:var(--danger);">Cargar Tallas <input type="file" id="up_tallas" accept=".csv" style="display:none;"></label>
+              </div>
+            </div>
+          `;
+          ['pedidos', 'solicitud', 'articulos', 'tallas'].forEach(id => {
+            attachUploadEvent(`up_${id}`, 'buffer', '.csv'); // Todos mapean a buffer por ahora o podríamos crear áreas separadas
+          });
+
+      } else if (activeBufferSubTab === 'reportes') {
+          if (!bufferKPIObj) {
+            subContent.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);">Sube los archivos maestros para generar el reporte.</div>`;
+            return;
+          }
+          let rhtml = `
+            <div class="data-table-container" style="max-width: 600px; margin: 0 auto; border: 2px solid var(--primary); box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);">
+              <table class="data-table" style="text-align: center;">
+                <thead>
+                   <tr><th>NIVEL/AREA</th><th>RQ</th><th>ATD RQ</th><th>% ATD</th></tr>
+                </thead>
+                <tbody>
+          `;
+          bufferKPIObj.waterfall.forEach(row => {
+            let isTotal = row.nivel === 'Total';
+            rhtml += `<tr style="${isTotal ? 'font-weight: 700; background: rgba(34, 197, 94, 0.1);' : ''}">
+              <td style="text-align: left; padding: 0.4rem 2rem;">${row.nivel}</td><td>${row.rq}</td><td>${row.atd}</td><td>${row.pct}</td>
+            </tr>`;
+          });
+          rhtml += `</tbody></table></div>`;
+          
+          if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
+            rhtml += `
+               <div style="text-align: center; margin-top: 2rem;">
+                  <button class="btn" id="export_pallets" style="width: auto; background: var(--success); color: white; padding: 0.8rem 2rem; font-size: 1rem; border-radius: 8px;">
+                      ↓ Descargar Orden de Extracción Excel
+                  </button>
+               </div>
+               <div class="data-table-container" style="margin-top: 1rem; max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
+                 <table class="data-table">
+                   <thead><tr><th>UBICACIONES</th><th>LPN</th><th>SKU</th><th>QTY ACTIVO</th><th>QTY RESERVA</th><th>QTY BUFFER</th><th>ARTICULO</th></tr></thead>
+                   <tbody>${bufferKPIObj.detalle.map(d => `<tr>
+                     <td style="font-weight:600;">${d['UBICACIONES']}</td><td>${d['LPN']}</td><td>${d['SKU']}</td><td>${d['QTY ACTIVO']}</td><td>${d['QTY RESERVA']}</td><td style="color:var(--warning); font-weight:700;">${d['QTY BUFFER']}</td><td>${d['ARTICULO']}</td>
+                   </tr>`).join('')}</tbody>
                  </table>
-              </div>
+               </div>
             `;
-         }
-         
-         // ==== RENDER TABLA DETALLE (ORDEN DE EXTRACTOR) ====
-         if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
-            html += `
-              <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
-                 <button class="btn" id="export_pallets" style="width: auto; background: var(--success); color: white; padding: 0.8rem 2rem; font-size: 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
-                     ↓ Descargar Orden de Extracción Excel (Montacargas / Picker)
-                 </button>
-              </div>
-              
-              <div class="data-table-container" style="margin-top: 1rem; max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>UBICACIONES</th>
-                      <th>LPN</th>
-                      <th>SKU</th>
-                      <th>QTY ACTIVO</th>
-                      <th>QTY RESERVA</th>
-                      <th>QTY BUFFER</th>
-                      <th>ARTICULO</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-            `;
-            
-            bufferKPIObj.detalle.forEach(d => {
-                html += `<tr>
-                   <td style="font-weight:600; color:var(--text-main);">${d['UBICACIONES']}</td>
-                   <td style="font-size:0.8rem; color:var(--text-muted);">${d['LPN']}</td>
-                   <td>${d['SKU']}</td>
-                   <td>${d['QTY ACTIVO']}</td>
-                   <td>${d['QTY RESERVA']}</td>
-                   <td style="font-weight: 700; color: var(--warning);">${d['QTY BUFFER']}</td>
-                   <td>${d['ARTICULO']}</td>
-                </tr>`;
-            });
-            html += `</tbody></table></div>`;
-         }
-         
-     } else {
-         html += `<div style="color: var(--danger)">Las reglas maestras (Stock Activo / Stock Reserva) no se encuentran en la Base de Datos todavía.</div>`;
-     }
+          }
+          subContent.innerHTML = rhtml;
+          setTimeout(() => {
+            document.getElementById('export_pallets')?.addEventListener('click', () => exportToExcel(bufferKPIObj.detalle, 'Orden_Extraccion_Paletas'));
+          }, 100);
 
-     contentArea.innerHTML = html;
-     attachUploadEvent('update_buffer', 'buffer', '.csv');
-     
-     if (bufferKPIObj && bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
-         setTimeout(() => {
-             document.getElementById('export_pallets')?.addEventListener('click', () => {
-                 exportToExcel(bufferKPIObj.detalle, 'Orden_Extraccion_Paletas');
+      } else if (activeBufferSubTab === 'dashboard') {
+          subContent.innerHTML = `<div style="text-align:center; padding:5rem; color:var(--text-muted);"><i class="fas fa-chart-line fa-3x" style="margin-bottom:1rem;"></i><br>Dashboard de desempeño Buffer (Próximamente)</div>`;
+
+      } else if (activeBufferSubTab === 'config') {
+          subContent.innerHTML = `
+            <div class="glass-panel" style="max-width:500px; margin:0 auto; padding:2rem;">
+              <h3 style="color:var(--primary); margin-bottom:1.5rem;">Lógica de Análisis Buffer</h3>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">Activa o desactiva las zonas de stock que deben considerarse al calcular el buffer.</p>
+              <div style="display:flex; flex-direction:column; gap:1rem;">
+                ${Object.entries({
+                  include_reserva: 'Incluir Stock Reserva (Zonas Bajas)',
+                  include_alto: 'Incluir Nivel ALTO (Paletas)',
+                  include_piso: 'Incluir Stock en PISO / CROSS',
+                  include_aereo: 'Incluir Stock AEREO',
+                  include_logico: 'Incluir Stock Lógico (DIS / MZM-TR)'
+                }).map(([key, label]) => `
+                  <label style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; cursor:pointer; border:1px solid ${bufferConfig[key] === '1' ? 'var(--primary)' : 'var(--border)'}">
+                    <span style="font-size:0.9rem;">${label}</span>
+                    <input type="checkbox" class="buffer-toggle" data-key="${key}" ${bufferConfig[key] === '1' ? 'checked' : ''} style="width:20px; height:20px; accent-color:var(--primary);">
+                  </label>
+                `).join('')}
+              </div>
+              <button id="saveBufferConfig" class="btn" style="margin-top:2rem; background:var(--success);">💾 Guardar Cambios</button>
+            </div>
+          `;
+          document.getElementById('saveBufferConfig').addEventListener('click', async () => {
+             const newConfig = {};
+             document.querySelectorAll('.buffer-toggle').forEach(chk => {
+               newConfig[chk.dataset.key] = chk.checked ? '1' : '0';
              });
-         }, 100);
-     }
+             try {
+                const res = await fetch(`${API_BASE.replace('/api', '/api/buffer/config')}`, {
+                   method: 'PUT',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify(newConfig)
+                });
+                if(res.ok) alert('Configuración guardada. El análisis se actualizará automáticamente.');
+                renderBufferTab();
+             } catch(e) { alert('Error al guardar.'); }
+          });
+      }
   };
 
   const renderUploadArea = () => {
@@ -776,10 +731,10 @@ export const renderDashboard = async (container, user, onLogout) => {
           <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Nombre Completo</label><input type="text" id="formName" value="${isEdit ? editUser.name : ''}" placeholder="ej: Juan Pérez" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
           <div><label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Contraseña ${isEdit ? '(vacío = no cambiar)' : ''}</label><input type="text" id="formPassword" placeholder="${isEdit ? '••••••' : 'Contraseña'}" style="width:100%; padding:0.5rem; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); border-radius:8px; font-family:inherit;"></div>
           
-          <div class="input-group">
+          <div>
             <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Rol / Privilegio</label>
-            <div class="custom-select-container" id="roleSelector">
-              <div class="custom-select-trigger" id="customRoleTrigger">${selectedRole.toUpperCase()}</div>
+            <div class="custom-select-container" id="roleSelector" style="width:100%;">
+              <div class="custom-select-trigger" id="customRoleTrigger" style="padding:0.5rem; background:var(--bg-main); border-radius:8px;">${selectedRole.toUpperCase()}</div>
               <div class="custom-select-options">
                 ${AVAILABLE_ROLES.map(r => `
                   <div class="custom-option ${r === selectedRole ? 'selected' : ''}" data-value="${r}">${r.toUpperCase()}</div>

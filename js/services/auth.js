@@ -3,7 +3,7 @@ const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
 
 // Fallback local en caso de que el servidor esté caído
 const FALLBACK_USERS = [
-  { id: 1, username: 'admin', password: '123', role: 'admin', name: 'Administrador' }
+  { id: 1, username: 'dames', password: 'Bata1830', role: 'admin', name: 'Gerente Logística (Dames)' }
 ];
 
 export const login = async (username, password) => {

@@ -62,13 +62,33 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         default_users = [
-            ('admin', '123', 'Administrador Global', 'admin'),
+            ('dames', 'Bata1830', 'Gerente Logística (Dames)', 'admin'),
             ('jefe', '123', 'Jefe de Operaciones', 'jefe'),
             ('supervisor', '123', 'Supervisor de Turno', 'supervisor'),
             ('encargado', '123', 'Encargado de Área', 'encargado'),
             ('asistente', '123', 'Asistente de Bodega', 'asistente')
         ]
         cursor.executemany("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", default_users)
+    
+    # TABLA DE CONFIGURACIÓN DE BUFFER
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS buffer_config (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    ''')
+    
+    # Seed Configuración Buffer por defecto
+    cursor.execute("SELECT COUNT(*) FROM buffer_config")
+    if cursor.fetchone()[0] == 0:
+        default_config = [
+            ('include_reserva', '1'),
+            ('include_alto', '1'),
+            ('include_piso', '1'),
+            ('include_aereo', '1'),
+            ('include_logico', '1')
+        ]
+        cursor.executemany("INSERT INTO buffer_config (key, value) VALUES (?, ?)", default_config)
     
     # TABLA DE PERMISOS POR ROL
     cursor.execute('''
@@ -316,6 +336,33 @@ async def update_role_permissions(role: str, request: Request):
             ON CONFLICT(role, module) DO UPDATE SET allowed=excluded.allowed
         """, (role, module, int(allowed)))
     
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
+# =============================================
+# API DE CONFIGURACIÓN DE BUFFER
+# =============================================
+
+@app.get("/api/buffer/config")
+def get_buffer_config():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT key, value FROM buffer_config")
+    rows = cursor.fetchall()
+    conn.close()
+    return {r[0]: r[1] for r in rows}
+
+@app.put("/api/buffer/config")
+async def update_buffer_config(request: Request):
+    body = await request.json()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    for key, value in body.items():
+        cursor.execute("""
+            INSERT INTO buffer_config (key, value)
+            VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value
+        """, (key, str(value)))
     conn.commit()
     conn.close()
     return {"status": "success"}

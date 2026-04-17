@@ -187,12 +187,29 @@ export const generateKPIs = (data, area) => {
   };
 };
 
-export const calculateBufferPallets = () => {
+export const fetchBufferConfig = async () => {
+    try {
+        const response = await fetch(`${API_URL.replace('/logistics', '/buffer/config')}`);
+        if (response.ok) return await response.json();
+    } catch (e) { console.warn("No se pudo obtener la configuración del buffer", e); }
+    return {
+        include_reserva: '1', include_alto: '1', include_piso: '1', 
+        include_aereo: '1', include_logico: '1'
+    };
+};
+
+export const calculateBufferPallets = (configOverride = null) => {
     let activo = dataStore.stockActivo;
     let reserva = dataStore.stockReserva;
     let pedidos = dataStore.buffer; 
     
     if(!activo || !reserva || !pedidos) return null;
+
+    // Configuración por defecto si no se pasa nada
+    const config = configOverride || {
+        include_reserva: '1', include_alto: '1', include_piso: '1', 
+        include_aereo: '1', include_logico: '1'
+    };
 
     // 1. Indexación del Almacén Físico Global
     let stBaja = {};
@@ -208,15 +225,15 @@ export const calculateBufferPallets = () => {
         
         if(!sku || qty <= 0) return;
         
-        if (areaRaw === 'PISO' || areaRaw === 'CROSS') {
+        if (config.include_piso === '1' && (areaRaw === 'PISO' || areaRaw === 'CROSS')) {
             stPiso[sku] = (stPiso[sku] || 0) + qty;
-        } else if (areaRaw === 'DIS') {
+        } else if (config.include_logico === '1' && areaRaw === 'DIS') {
             stLogico[sku] = (stLogico[sku] || 0) + qty;
-        } else if (areaRaw === 'AEREO') {
-            // Fallback reservado
         } else {
             // Zonas Bajas (Cualquier área regular)
-            stBaja[sku] = (stBaja[sku] || 0) + qty;
+            if (config.include_reserva === '1') {
+                stBaja[sku] = (stBaja[sku] || 0) + qty;
+            }
         }
     });
 
@@ -228,13 +245,13 @@ export const calculateBufferPallets = () => {
 
         if(!sku || qty <= 0) return;
 
-        if (nivelRaw === 'ALTO') {
+        if (config.include_alto === '1' && nivelRaw === 'ALTO') {
             stAlto[sku] = (stAlto[sku] || 0) + qty;
-        } else if (nivelRaw === 'AEREO') {
+        } else if (config.include_aereo === '1' && nivelRaw === 'AEREO') {
             stAereo[sku] = (stAereo[sku] || 0) + qty;
-        } else if (nivelRaw === 'CROSS') {
+        } else if (config.include_piso === '1' && nivelRaw === 'CROSS') {
             stPiso[sku] = (stPiso[sku] || 0) + qty;
-        } else if (nivelRaw === 'VER' && nroAnd === 'MZM-TR') {
+        } else if (config.include_logico === '1' && nivelRaw === 'VER' && nroAnd === 'MZM-TR') {
             stLogico[sku] = (stLogico[sku] || 0) + qty;
         }
     });
