@@ -513,46 +513,13 @@ export const calculateBufferPallets = (configOverride = null) => {
         const ubicacion = String(row['UBICACIONES'] || '').trim();
         const qtyBuffer = Number(row['QTY BUFFER']) || 0;
 
-        // 1. Buscar en pedidos originales: primero por columna específica, luego escanea todos los valores
-        let tipo = '';
-        const pedMatch = pedidos.find(p => {
-            const skuP = String(
-                p['Código de artículo'] || p['CÃ³digo de artÃculo'] ||
-                p['Codigo de articulo'] || p['CODIGO'] || p['SKU'] || ''
-            ).trim();
-            return skuP === sku;
-        });
-
-        if (pedMatch) {
-            // Buscar en columnas específicas primero
-            const colValue = String(
-                pedMatch['TIPO DE EMPAQUE'] || pedMatch['Tipo de empaque'] ||
-                pedMatch['EMPAQUE']         || pedMatch['Empaque']         ||
-                pedMatch['TIPO']            || pedMatch['Tipo']            || ''
-            ).trim();
-
-            if (colValue) {
-                tipo = colValue;
-            } else {
-                // Si no hay columna específica, escanear TODOS los valores del pedido
-                // buscando la palabra SolidPack o PreePack en cualquier campo
-                const allVals = Object.values(pedMatch).join(' ').toLowerCase();
-                if (allVals.includes('preepack') || allVals.includes('pree pack') || allVals.includes('pre pack') || allVals.includes('prepack')) {
-                    tipo = 'PreePack';
-                } else if (allVals.includes('solidpack') || allVals.includes('solid pack')) {
-                    tipo = 'SolidPack';
-                }
-            }
-        }
-
-        // 2. Heurística final si no se encontró nada: buscar en el SKU variantes 'PRE', 'PP', 'PREE'
-        if (!tipo) {
-            const skuUp = sku.toUpperCase();
-            if (skuUp.includes('PP') || skuUp.startsWith('PRE') || skuUp.includes('PREE')) {
-                tipo = 'PreePack';
-            } else {
-                tipo = 'SolidPack';
-            }
+        // REGLA DEFINITIVA: 12 dígitos = SolidPack | 15 dígitos = PreePack
+        const digitos = sku.replace(/\D/g, '').length; // solo cuenta los dígitos numéricos
+        let tipo;
+        if (digitos === 15) {
+            tipo = 'PreePack';
+        } else {
+            tipo = 'SolidPack'; // 12 dígitos u otro = SolidPack
         }
 
         if (!acumPaletas[tipo]) {
