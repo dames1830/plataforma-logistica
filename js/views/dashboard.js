@@ -864,6 +864,8 @@ export const renderDashboard = async (container, user, onLogout) => {
       btn.addEventListener('click', () => showUserForm({ id: btn.dataset.id, username: btn.dataset.username, name: btn.dataset.name, role: btn.dataset.role }, container));
     });
     document.querySelectorAll('.btn-toggle-user').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
           const newActive = btn.dataset.active === '1' ? 0 : 1;
           await fetch(`${API_BASE}/users/${btn.dataset.id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ active: newActive }) });
           await logSystemAction(user.username, 'USUARIO_ESTADO', `${newActive ? 'Activado' : 'Desactivado'} usuario ID: ${btn.dataset.id}`);
