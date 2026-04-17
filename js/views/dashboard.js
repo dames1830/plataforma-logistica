@@ -328,10 +328,16 @@ export const renderDashboard = async (container, user, onLogout) => {
           getAreaData('stockReserva')
       ]);
 
+      // DIAGNÓSTICO: Mostrar estado de cada fuente de datos
+      console.log('📦 Estado datos Buffer:', {
+          stockActivo: dataStore.stockActivo ? `✅ ${dataStore.stockActivo.length} registros` : '❌ NULL',
+          stockReserva: dataStore.stockReserva ? `✅ ${dataStore.stockReserva.length} registros` : '❌ NULL',
+          pedidos: dataStore.buffer ? `✅ ${dataStore.buffer.length} registros` : '❌ NULL'
+      });
+
       let bufferKPIObj = calculateBufferPallets(bufferConfig);
 
       // ── SINCRONIZACIÓN ENTRE PCs ──
-      // Si se calculó un reporte → guardarlo en el servidor para que otras PCs lo vean
       if (bufferKPIObj) {
           const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
           saveBufferReport(bufferKPIObj, currentUser.username || 'system');
@@ -403,16 +409,37 @@ export const renderDashboard = async (container, user, onLogout) => {
           let rhtml = '';
 
           if (!bufferKPIObj) {
+            // Diagnosticar exactamente qué falta
+            const hasActivo  = dataStore.stockActivo && dataStore.stockActivo.length > 0;
+            const hasReserva = dataStore.stockReserva && dataStore.stockReserva.length > 0;
+            const hasPedidos = dataStore.buffer && dataStore.buffer.length > 0;
+
+            const mkStatus = (ok, name) => `<div style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0;">
+              <span style="font-size:1.2rem;">${ok ? '✅' : '❌'}</span>
+              <span style="color:${ok ? 'var(--success)' : 'var(--danger)'}; font-weight:600;">${name}</span>
+              <span style="color:var(--text-muted); font-size:0.8rem;">${ok ? '— Cargado' : '— Falta subir'}</span>
+            </div>`;
+
             rhtml = `
-              <div style="text-align:center; padding:2rem; background:rgba(255,165,0,0.06); border:1px solid var(--warning); border-radius:12px; margin-bottom:1.5rem;">
-                <i class="fas fa-exclamation-triangle fa-2x" style="color:var(--warning); margin-bottom:0.7rem;"></i>
-                <h4 style="color:var(--warning);">Sin datos suficientes para el análisis</h4>
-                <p style="color:var(--text-muted); font-size:0.85rem;">Ve a <strong>Archivos Maestros</strong> y sube: Stock Activo, Stock Reserva y Pedidos.</p>
+              <div style="text-align:left; padding:2rem; background:rgba(255,165,0,0.06); border:1px solid var(--warning); border-radius:12px; margin-bottom:1.5rem; max-width:500px;">
+                <div style="text-align:center; margin-bottom:1rem;">
+                  <i class="fas fa-exclamation-triangle fa-2x" style="color:var(--warning); margin-bottom:0.7rem;"></i>
+                  <h4 style="color:var(--warning);">Sin datos suficientes para el análisis</h4>
+                </div>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Se necesitan estos 3 archivos para generar el reporte:</p>
+                ${mkStatus(hasActivo, 'Stock Activo (.csv)')}
+                ${mkStatus(hasReserva, 'Stock Reserva (.xlsx)')}
+                ${mkStatus(hasPedidos, 'Pedidos (.csv)')}
+                <p style="color:var(--text-muted); font-size:0.8rem; margin-top:1rem; border-top:1px solid var(--border); padding-top:0.8rem;">
+                  📌 Sube <strong>Stock Activo</strong> y <strong>Stock Reserva</strong> en la pestaña <strong>Stock General</strong>.<br>
+                  📌 Sube <strong>Pedidos</strong> en <strong>Zona Buffer → Archivos Maestros</strong>.
+                </p>
               </div>
             `;
             subContent.innerHTML = rhtml;
             return;
           }
+
 
           // Dos cuadros compactos lado a lado
           rhtml = `<div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start;">`;
