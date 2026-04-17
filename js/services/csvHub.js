@@ -63,10 +63,42 @@ export const setDateFilter = (newDateStr) => {
 
 // PING al servidor en background para despertarlo antes de que el usuario lo necesite
 export const pingServer = () => {
-    // Usamos /api/docs que siempre existe en FastAPI para despertar el servidor
     fetch('https://logistics-backend-wv0x.onrender.com/api/logs?username=_ping', { method: 'GET' })
         .then(() => console.log('✅ Servidor backend activo.'))
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
+};
+
+const SHARED_API = 'https://logistics-backend-wv0x.onrender.com/api/shared';
+
+// ── Guardar reporte Buffer en el servidor (para sincronizar entre PCs) ──
+export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
+    try {
+        // Serializamos: los Sets ya están convertidos a arrays en resumenSKU
+        await fetch(`${SHARED_API}/buffer_report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: bufferKPIObj, updated_by: username })
+        });
+        console.log('✅ Reporte Buffer guardado en servidor.');
+    } catch (e) {
+        console.warn('⚠️ No se pudo guardar el reporte en servidor:', e);
+    }
+};
+
+// ── Cargar reporte Buffer desde el servidor ──
+export const loadBufferReport = async () => {
+    try {
+        const res = await fetch(`${SHARED_API}/buffer_report`);
+        if (!res.ok) return null;
+        const json = await res.json();
+        if (json.status === 'ok' && json.data) {
+            console.log(`✅ Reporte Buffer cargado del servidor (subido por ${json.updated_by} el ${json.updated_at}).`);
+            return json.data;
+        }
+    } catch (e) {
+        console.warn('⚠️ No se pudo cargar el reporte del servidor:', e);
+    }
+    return null;
 };
 
 // Traer las fechas históricas disponibles en el servidor

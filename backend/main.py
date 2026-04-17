@@ -132,6 +132,17 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # TABLA DE DATOS COMPARTIDOS (para sincronizar reportes entre PCs)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS shared_data (
+            key TEXT PRIMARY KEY,
+            value_json TEXT NOT NULL,
+            updated_by TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     
     # Migración: Pasar datos antiguos al nuevo formato
     cursor.execute("SELECT area_id, data_json, updated_at FROM logistics_data")
@@ -413,6 +424,35 @@ async def update_buffer_config(request: Request):
             VALUES (?, ?)
             ON CONFLICT(key) DO UPDATE SET value=excluded.value
         """, (key, str(value)))
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
+
+# ── DATOS COMPARTIDOS (sincronización entre PCs) ──
+@app.get("/api/shared/{key}")
+def get_shared_data(key: str):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT value_json, updated_by, updated_at FROM shared_data WHERE key = ?", (key,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return {"status": "empty", "data": None}
+    return {"status": "ok", "data": json.loads(row[0]), "updated_by": row[1], "updated_at": row[2]}
+
+@app.post("/api/shared/{key}")
+async def save_shared_data(key: str, request: Request):
+    body = await request.json()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO shared_data (key, value_json, updated_by, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET
+            value_json = excluded.value_json,
+            updated_by = excluded.updated_by,
+            updated_at = excluded.updated_at
+    """, (key, json.dumps(body.get("data")), body.get("updated_by", "system"), datetime.now().isoformat()))
     conn.commit()
     conn.close()
     return {"status": "success"}

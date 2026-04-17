@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -328,7 +328,21 @@ export const renderDashboard = async (container, user, onLogout) => {
           getAreaData('stockReserva')
       ]);
 
-      const bufferKPIObj = calculateBufferPallets(bufferConfig);
+      let bufferKPIObj = calculateBufferPallets(bufferConfig);
+
+      // ── SINCRONIZACIÓN ENTRE PCs ──
+      // Si se calculó un reporte → guardarlo en el servidor para que otras PCs lo vean
+      if (bufferKPIObj) {
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          saveBufferReport(bufferKPIObj, currentUser.username || 'system');
+      } else {
+          // Si NO hay datos locales → intentar cargar del servidor
+          const serverReport = await loadBufferReport();
+          if (serverReport) {
+              bufferKPIObj = serverReport;
+          }
+      }
+
       
       let html = `
         <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
