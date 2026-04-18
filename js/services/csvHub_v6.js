@@ -52,23 +52,18 @@ const clearLS = () => {
 // Control Trazabilidad: Fecha seleccionada (null = Fecha Actual/Más reciente)
 export let currentDateFilter = null;
 
-export const setDateFilter = (newDateStr) => {
-    if (currentDateFilter !== newDateStr) {
-        currentDateFilter = newDateStr;
-        // Limpiamos la memoria caché al viajar por el tiempo
-        Object.keys(dataStore).forEach(k => dataStore[k] = null);
-        clearLS();
-    }
-};
+// URL MAESTRA DEL SERVIDOR (Punto de conexión)
+const API_BASE   = "https://logistics-backend-wv0x.onrender.com/api";
+const API_URL    = `${API_BASE}/logistics`;
+const SHARED_API = `${API_BASE}/shared`;
 
-// PING al servidor en background para despertarlo antes de que el usuario lo necesite
 export const pingServer = () => {
-    fetch('https://logistics-backend-wv0x.onrender.com/api/health', { method: 'GET' })
+    fetch(`${API_BASE}/health`, { method: 'GET' })
         .then(() => console.log('✅ Servidor backend activo.'))
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
 
-const SHARED_API = 'https://logistics-backend-wv0x.onrender.com/api/shared';
+export const setDateFilter = (newDateStr) => {
 
 // ── Guardar reporte Buffer en el servidor (para sincronizar entre PCs) ──
 export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
@@ -113,11 +108,7 @@ export const fetchAvailableDates = async () => {
     return [];
 };
 
-// URL MAESTRA DEL SERVIDOR (Punto de conexión)
-const API_BASE = "https://logistics-backend-wv0x.onrender.com/api";
-const API_URL  = `${API_BASE}/logistics`;
-
-// Helper para extraer columnas de forma robusta (ignora mayúsculas/minúsculas, acentos y espacios)
+// Helper para extraer columnas de forma robusta...
 const getCol = (row, possibleNames) => {
     if (!row) return null;
     const keys = Object.keys(row);
@@ -239,11 +230,8 @@ export const logSystemAction = async (username, action, details) => {
     } catch (e) { console.error("Error al loguear acción:", e); }
 };
 
-export const pingServer = async () => {
-    try {
-        await fetch(`${API_BASE}/ping`, { method: 'GET', signal: AbortSignal.timeout(3000) });
-    } catch (e) { /* silent ping */ }
-};
+// Sincronización Matemática (Ya no hay pingServer aquí duplicado)
+
 
 
 // Función Asíncrona: Preguntar a la BD maestra por los datos
