@@ -379,6 +379,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         demandaConsolidada[skuP] = (demandaConsolidada[skuP] || 0) + faltanteLocal;
     });
 
+    let resumenSKU = []; // <-- AGREGADO: Declaración faltante
+
     // 3. Acumuladores de Cascada (Waterfall)
     let globalRQ = 0;
     let atdBaja = 0;
@@ -482,11 +484,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         resumenSKU.push({ sku: skuP, total: demandaConsolidada[skuP], baja: p1, alto: actuallyPickedAlto, piso: p3, aereo: actuallyPickedAereo, logico: p5, faltante: faltanteTotalSinergia });
     });
 
-    let atdBaja = resumenSKU.reduce((sum, r) => sum + r.baja, 0);
-    let atdAlto = resumenSKU.reduce((sum, r) => sum + r.alto, 0);
-    let atdPiso = resumenSKU.reduce((sum, r) => sum + r.piso, 0);
-    let atdAereo = resumenSKU.reduce((sum, r) => sum + r.aereo, 0);
-    let atdLogico = resumenSKU.reduce((sum, r) => sum + r.logico, 0);
+    atdBaja = resumenSKU.reduce((sum, r) => sum + r.baja, 0);
+    atdAlto = resumenSKU.reduce((sum, r) => sum + r.alto, 0);
+    atdPiso = resumenSKU.reduce((sum, r) => sum + r.piso, 0);
+    atdAereo = resumenSKU.reduce((sum, r) => sum + r.aereo, 0);
+    atdLogico = resumenSKU.reduce((sum, r) => sum + r.logico, 0);
     let totalRQ_Global = Object.values(demandaConsolidada).reduce((a, b) => a + b, 0);
     let totalATD_Global = atdBaja + atdAlto + atdPiso + atdAereo + atdLogico;
 
