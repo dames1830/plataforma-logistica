@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.6';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.7';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -46,7 +46,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.6</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.7</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -172,7 +172,7 @@ export const renderDashboard = async (container, user, onLogout) => {
               <h4 style="color:var(--text-muted); font-weight:600; font-size:0.8rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
               <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.85rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
-            <div id="resultsArea" style="display:flex; flex-direction:column; align-items:center; gap:1.5rem;"></div>
+            <div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:1.5rem; margin-left:1rem;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
@@ -190,8 +190,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     container.innerHTML = `
-        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(79,70,229,0.4); border-radius:10px; overflow:hidden; width:fit-content; max-width:100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            <div style="padding:0.6rem; background:rgba(79,70,229,0.08); border-bottom:1px solid rgba(79,70,229,0.2); text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS POR ZONAS</h3></div>
+        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(79,70,229,0.4); border-radius:10px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="padding:0.6rem; background:rgba(79,70,229,0.08); border-bottom:1px solid rgba(79,70,229,0.2); text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS DE ZONAS</h3></div>
             <table style="border-collapse:collapse; width:100%; font-size:0.82rem;">
                 <thead style="background:rgba(0,0,0,0.4);"><tr style="color:var(--text-muted);"><th style="padding:0.6rem 1.2rem; text-align:left; font-weight:600; font-size:0.75rem;">NIVEL/AREA</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">RQ</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">ATD</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">% ATD</th></tr></thead>
                 <tbody>${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.05); font-weight:800;':''}">
@@ -202,7 +202,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(245,158,11,0.3); border-radius:10px; overflow:hidden; width:fit-content; max-width:100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(245,158,11,0.3); border-radius:10px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
             <div style="padding:0.6rem; background:rgba(245,158,11,0.05); border-bottom:1px solid rgba(245,158,11,0.15); text-align:center;"><h3 style="color:#f59e0b; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS POR SKU</h3></div>
             <table style="border-collapse:collapse; width:100%; font-size:0.82rem;">
                 <thead style="background:rgba(0,0,0,0.4);"><tr style="color:var(--text-muted);"><th style="padding:0.6rem 1.2rem; text-align:left; font-weight:600; font-size:0.75rem;">TIPO</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">PALETAS</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">SKUS</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">P/C</th></tr></thead>
@@ -216,7 +216,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.8rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO</button>
     `;
-    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V76'));
+    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V77'));
   };
 
   let activeAdminSub = 'usuarios';
