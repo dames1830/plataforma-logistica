@@ -10,7 +10,7 @@ import {
   setDateFilter, 
   currentDateFilter, 
   pingServer 
-} from '../services/csvHub_v6.js?v=10.4-beta';
+} from '../services/csvHub_v6.js?v=10.5-beta';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -47,7 +47,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
       <header class="topbar">
         <div class="topbar-brand">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.4 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.5 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
         </div>
         <div class="user-profile">
           <div class="user-details" style="text-align:right;">
@@ -125,7 +125,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let lastBufferKPI = null;
 
   const renderBufferTab = async (container, subtitle) => {
-    subtitle.textContent = "Análisis de Reposición (V10.4 Refined)";
+    subtitle.textContent = "Análisis de Reposición (V10.5 Precision)";
     if (!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
 
     container.innerHTML = `
@@ -150,10 +150,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1.2rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.4 (Compact)</h4>
+              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.5 (Precision Layout)</h4>
               <button id="btn_calc" class="btn" style="width:auto; padding:0.5rem 1.5rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
-            <div id="resultsArea" style="display:flex; flex-wrap:wrap; gap:1.2rem; justify-content:flex-start;"></div>
+            <div id="resultsArea"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
@@ -216,14 +216,19 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
+    // V10.5: 2-Column Vertical Layout (Zonas/SKU on left, Gender/Marca on right)
     container.innerHTML = `
-        <div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">
-            ${renderTable('ANÁLISIS BUFFER ZONAS', ['AREA', 'RQ', 'ATD', '%'], data.waterfall, '#6366f1')}
-            ${renderSKUTable(data.resumenSKU)}
-            ${renderTable('DISCREPANCIAS GENDER (Zones 3,4,5)', ['GENDER', 'RQ', 'ATD', '%'], data.resumenGender, '#ec4899')}
-            ${renderTable('DISCREPANCIAS MARCAS (Zones 3,4,5)', ['MARCA', 'RQ', 'ATD', '%'], data.resumenMarca, '#06b6d4')}
+        <div style="display:flex; gap:1.2rem; justify-content:center;">
+            <div style="display:flex; flex-direction:column; gap:1.2rem;">
+                ${renderTable('ANÁLISIS BUFFER ZONAS', ['AREA', 'RQ', 'ATD', '%'], data.waterfall, '#6366f1')}
+                ${renderSKUTable(data.resumenSKU)}
+            </div>
+            <div style="display:flex; flex-direction:column; gap:1.2rem;">
+                ${renderTable('DISCREPANCIAS GENDER (Zones 3,4,5)', ['GENDER', 'RQ', 'ATD', '%'], data.resumenGender, '#ec4899')}
+                ${renderTable('DISCREPANCIAS MARCAS (Zones 3,4,5)', ['MARCA', 'RQ', 'ATD', '%'], data.resumenMarca, '#06b6d4')}
+            </div>
         </div>
-        <div style="display:flex; gap:1.5rem; width:100%; margin-top:1.2rem; justify-content:center;">
+        <div style="display:flex; gap:1.5rem; width:100%; margin-top:2rem; justify-content:center;">
             <button id="btn_exp_zonas" class="btn" style="width:auto; min-width:180px; background:#4f46e5;">📊 REPORT ZONAL</button>
             <button id="btn_exp_sku" class="btn" style="width:auto; min-width:180px; background:var(--success);">📥 EXCEL SKU FORENSE</button>
         </div>`;
@@ -237,8 +242,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         <table style="width:100%; border-collapse:collapse; font-size:0.7rem;">
             <thead style="background:rgba(0,0,0,0.2);"><tr style="border-bottom:1px solid ${color}22;">${cols.map(c=>`<th style="padding:0.4rem; text-align:center; color:var(--text-muted);">${c}</th>`).join('')}</tr></thead>
             <tbody>${rows.map(r => `
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.02); ${(r.nivel && r.nivel.includes('Total')) || r.key==='Total'?'background:'+color+'11; font-weight:bold;':''}">
-                    ${Object.values(r).map((v,idx) => `<td style="padding:0.35rem; text-align:center; color:${idx===Object.values(r).length-1?'#22c55e':(r.nivel==='Total'?'#22c55e':'#fff')};">${typeof v==='number'?v.toLocaleString():v}</td>`).join('')}
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.02); ${(r.nivel && r.nivel.includes('Total')) || r.key==='TOTAL' || r.key==='Total'?'background:'+color+'11; font-weight:bold;':''}">
+                    ${Object.values(r).map((v,idx) => `<td style="padding:0.35rem; text-align:center; color:${idx===Object.values(r).length-1?'#22c55e':((r.key==='TOTAL' || r.nivel==='Total')?'#22c55e':'#fff')};">${typeof v==='number'?v.toLocaleString():v}</td>`).join('')}
                 </tr>`).join('')}</tbody>
         </table>
     </div>`;

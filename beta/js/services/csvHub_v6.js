@@ -347,7 +347,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'RQ': (pending === demanda[sku]) ? pending : 0, 'ATD RQ': pick
                 });
 
-                // V10.4: Filtrado estricto por zonas solicitadas (Pisos, Aereo y Logico)
+                // V10.5 PRECISION: Filtrar agregación para Gender/Marca (Solo Pisos, Aereo y Logico)
                 const isForensicZone = nivelLabel === 'Pisos' || nivelLabel === 'Aereo' || nivelLabel === 'Lógica';
                 if (isForensicZone) {
                     if (!aggGender[meta.gender]) aggGender[meta.gender] = { rq: 0, atd: 0 };
@@ -433,7 +433,16 @@ export const calculateBufferPallets = (configOverride = null) => {
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
     const resGender = Object.keys(aggGender).sort().map(k => ({ key: k, rq: aggGender[k].rq, atd: aggGender[k].atd, pct: calcPct(aggGender[k].atd, aggGender[k].rq) }));
+    if (resGender.length > 0) {
+        const tGRQ = resGender.reduce((s,i)=>s+i.rq, 0); const tGATD = resGender.reduce((s,i)=>s+i.atd, 0);
+        resGender.push({ key: 'TOTAL', rq: tGRQ, atd: tGATD, pct: calcPct(tGATD, tGRQ) });
+    }
+
     const resMarca = Object.keys(aggMarca).sort().map(k => ({ key: k, rq: aggMarca[k].rq, atd: aggMarca[k].atd, pct: calcPct(aggMarca[k].atd, aggMarca[k].rq) }));
+    if (resMarca.length > 0) {
+        const tMRQ = resMarca.reduce((s,i)=>s+i.rq, 0); const tMATD = resMarca.reduce((s,i)=>s+i.atd, 0);
+        resMarca.push({ key: 'TOTAL', rq: tMRQ, atd: tMATD, pct: calcPct(tMATD, tMRQ) });
+    }
 
     return { waterfall, detalle: detallePallets, detalleZonas, resumenSKU: resEmp, resumenGender: resGender, resumenMarca: resMarca };
 };
