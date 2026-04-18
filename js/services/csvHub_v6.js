@@ -15,7 +15,7 @@ export const dataStore = {
 };
 
 // =============================================
-// OPTIMIZACIÓN: CACHÉ PERSISTENTE EN localStorage
+// OPTIMIZACIÓN: CACHÉ PERSISTENTE En localStorage
 // =============================================
 const LS_PREFIX = 'logistics_cache_';
 const LS_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de validez
@@ -168,11 +168,9 @@ export const parseFile = (file, area) => {
           let jsonData = [];
           if (area === 'stockReserva') {
               // MODO QUIRÚRGICO: Salto fila 1 (Título) y 2 (Blanco). Fila 3 cabeceras.
-              // Convertimos a array de arrays para usar índices exactos de columna
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const deepClean = (s) => String(s || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
               
-              // Empezamos en i=3 (Fila 4 de Excel)
               for (let i = 3; i < rows.length; i++) {
                   const row = rows[i];
                   if (!row || row.length < 2) continue;
@@ -180,7 +178,7 @@ export const parseFile = (file, area) => {
                       'NIVEL': deepClean(row[1]),     // Columna B (index 1)
                       'PRODUCTO': deepClean(row[8]),  // Columna I (index 8)
                       'CANTIDAD': parseFloat(row[10]) || 0, // Columna K (index 10)
-                      'UBICACION': deepClean(row[4]), // Columna E (index 4) para el detalle
+                      'UBICACION': deepClean(row[4]), // Columna E (index 4)
                       'LPN': deepClean(row[5]),       // Columna F (index 5)
                       'NRO AND': deepClean(row[2])    // Columna C (index 2)
                   });
@@ -294,24 +292,31 @@ export const fetchBufferConfig = async () => {
 };
 
 export const calculateBufferPallets = (configOverride = null) => {
-    let activo = dataStore.stockActivo;
-    let reserva = dataStore.stockReserva;
-    let pedidos = dataStore.buffer; 
+    const activo = dataStore.stockActivo;
+    const reserva = dataStore.stockReserva;
+    const pedidos = dataStore.buffer; 
     
     if(!activo || !reserva || !pedidos) return null;
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
+    const getArticulo = (sku) => String(sku || '').substring(0, 7);
 
-    let stBaja = {}, stPiso = {}, stLogico = {}, stAlto = {}, stAereo = {};
+    // Mapeo detallado de stock por SKU para cada nivel
+    let stBajas = {}, stPisos = {}, stLogicos = {}, stAltos = {}, stAereos = {};
+    const registerStock = (map, sku, qty, row) => {
+        if (!map[sku]) map[sku] = [];
+        map[sku].push({ qty, row });
+    };
 
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
-        if (config.include_piso === '1' && (area === 'PISO' || area === 'CROSS')) stPiso[sku] = (stPiso[sku] || 0) + qty;
-        else if (config.include_logico === '1' && area === 'DIS') stLogico[sku] = (stLogico[sku] || 0) + qty;
-        else if (config.include_reserva === '1') stBaja[sku] = (stBaja[sku] || 0) + qty;
+        
+        if (config.include_piso === '1' && (area === 'PISO' || area === 'CROSS')) registerStock(stPisos, sku, qty, f);
+        else if (config.include_logico === '1' && area === 'DIS') registerStock(stLogicos, sku, qty, f);
+        else if (config.include_reserva === '1') registerStock(stBajas, sku, qty, f);
     });
 
     reserva.forEach(f => {
@@ -320,90 +325,83 @@ export const calculateBufferPallets = (configOverride = null) => {
         let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
         if(!sku || qty <= 0) return;
-        if (config.include_alto === '1' && nivel === 'ALTO') stAlto[sku] = (stAlto[sku] || 0) + qty;
-        else if (config.include_aereo === '1' && nivel === 'AEREO') stAereo[sku] = (stAereo[sku] || 0) + qty;
-        else if (config.include_piso === '1' && nivel === 'CROSS') stPiso[sku] = (stPiso[sku] || 0) + qty;
-        else if (config.include_logico === '1' && nivel === 'VER' && nroAnd === 'MZM-TR') stLogico[sku] = (stLogico[sku] || 0) + qty;
+        
+        if (config.include_alto === '1' && nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
+        else if (config.include_aereo === '1' && nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
+        else if (config.include_piso === '1' && nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
+        else if (config.include_logico === '1' && nivel === 'VER' && nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
     });
 
     let demanda = {};
     pedidos.forEach(f => {
-        let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo']) || '').trim();
-        let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada'])) || 0;
-        let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada'])) || 0;
+        let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
+        let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
+        let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
         let diff = cant - asig;
         if (diff > 0 && sku) demanda[sku] = (demanda[sku] || 0) + diff;
     });
 
-    const reservaPorSku = {};
-    reserva.forEach(r => {
-        let skuR = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto']) || '').trim();
-        if (!reservaPorSku[skuR]) reservaPorSku[skuR] = [];
-        reservaPorSku[skuR].push(r);
-    });
-
     let globalRQ = 0, atdBaja = 0, atdAlto = 0, atdPiso = 0, atdAereo = 0, atdLogico = 0;
-    let resumenSKU = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
+    let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
+
+    const satisfyDemand = (sku, pending, stockMap, nivelLabel, counterRef) => {
+        if (!stockMap[sku] || pending <= 0) return pending;
+        for (let item of stockMap[sku]) {
+            if (pending <= 0) break;
+            let id = item.row._id || `${getCol(item.row, ['LPN']) || ''}_${sku}_${getCol(item.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || ''}`;
+            let uses = stockUsadoMap.get(id) || 0;
+            let avail = item.qty - uses;
+            if (avail > 0) {
+                let pick = Math.min(pending, avail);
+                let ubi = String(getCol(item.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || 'S/U').trim();
+                
+                detalleZonas.push({
+                    'NIVEL/AREA': nivelLabel,
+                    'UBICACION': ubi,
+                    'ARTÍCULO': getArticulo(sku),
+                    'SKU': sku,
+                    'RQ': (pending === demanda[sku]) ? pending : 0,
+                    'ATD RQ': pick
+                });
+
+                if (nivelLabel === 'Alto' || nivelLabel === 'Aereo') {
+                    ubicacionesEnElPiso.add(ubi);
+                    if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
+                    cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
+                }
+
+                stockUsadoMap.set(id, uses + pick);
+                counterRef.val += pick;
+                pending -= pick;
+            }
+        }
+        return pending;
+    };
 
     Object.keys(demanda).sort().forEach(sku => {
-        let pending = demanda[sku];
-        globalRQ += pending;
+        let initialRQ = demanda[sku];
+        let pending = initialRQ;
+        globalRQ += initialRQ;
 
-        let pickedBaja = Math.min(pending, stBaja[sku] || 0);
-        atdBaja += pickedBaja;
-        pending -= pickedBaja;
+        let wrapBaja = { val: 0 };
+        pending = satisfyDemand(sku, pending, stBajas, 'Zonas Bajas', wrapBaja);
+        atdBaja += wrapBaja.val;
 
-        if (pending > 0 && reservaPorSku[sku]) {
-            for (let r of reservaPorSku[sku]) {
-                if (pending <= 0) break;
-                let nivel = String(getCol(r, ['NIVEL', 'Nivel']) || '').trim().toUpperCase();
-                if (nivel !== 'ALTO') continue;
-                let q = parseFloat(getCol(r, ['CANTIDAD', 'Cantidad'])) || 0;
-                let id = r._id || `${getCol(r, ['LPN']) || ''}_${sku}_${getCol(r, ['UBICACION', 'Ubicación']) || ''}`;
-                let uses = stockUsadoMap.get(id) || 0;
-                let avail = q - uses;
-                if (avail > 0) {
-                    let pick = Math.min(pending, avail);
-                    pending -= pick;
-                    atdAlto += pick;
-                    stockUsadoMap.set(id, uses + pick);
-                    let ubi = String(getCol(r, ['UBICACION', 'Ubicación']) || '').trim();
-                    ubicacionesEnElPiso.add(ubi);
-                    if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
-                    cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
-                }
-            }
-        }
+        let wrapAlto = { val: 0 };
+        pending = satisfyDemand(sku, pending, stAltos, 'Alto', wrapAlto);
+        atdAlto += wrapAlto.val;
 
-        let pickedPiso = Math.min(pending, stPiso[sku] || 0);
-        atdPiso += pickedPiso;
-        pending -= pickedPiso;
+        let wrapPiso = { val: 0 };
+        pending = satisfyDemand(sku, pending, stPisos, 'Pisos', wrapPiso);
+        atdPiso += wrapPiso.val;
 
-        if (pending > 0 && reservaPorSku[sku]) {
-            for (let r of reservaPorSku[sku]) {
-                if (pending <= 0) break;
-                let nivel = String(getCol(r, ['NIVEL', 'Nivel']) || '').trim().toUpperCase();
-                if (nivel !== 'AEREO') continue;
-                let q = parseFloat(getCol(r, ['CANTIDAD', 'Cantidad'])) || 0;
-                let id = r._id || `${getCol(r, ['LPN']) || ''}_${sku}_${getCol(r, ['UBICACION', 'Ubicación']) || ''}`;
-                let uses = stockUsadoMap.get(id) || 0;
-                let avail = q - uses;
-                if (avail > 0) {
-                    let pick = Math.min(pending, avail);
-                    pending -= pick;
-                    atdAereo += pick;
-                    stockUsadoMap.set(id, uses + pick);
-                    let ubi = String(getCol(r, ['UBICACION', 'Ubicación']) || '').trim();
-                    ubicacionesEnElPiso.add(ubi);
-                    if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
-                    cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
-                }
-            }
-        }
+        let wrapAereo = { val: 0 };
+        pending = satisfyDemand(sku, pending, stAereos, 'Aereo', wrapAereo);
+        atdAereo += wrapAereo.val;
 
-        let pickedLogico = Math.min(pending, stLogico[sku] || 0);
-        atdLogico += pickedLogico;
-        pending -= pickedLogico;
+        let wrapLogico = { val: 0 };
+        pending = satisfyDemand(sku, pending, stLogicos, 'Lógica', wrapLogico);
+        atdLogico += wrapLogico.val;
     });
 
     let detallePallets = [];
@@ -413,7 +411,9 @@ export const calculateBufferPallets = (configOverride = null) => {
             let sku = String(getCol(item, ['PRODUCTO', 'Articulo', 'Producto']) || '').trim();
             let qty = parseFloat(item['CANTIDAD'] || 0);
             let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
-            detallePallets.push({ 'UBICACIONES': ubi, 'LPN': item['LPN'], 'SKU': sku, 'QTY ACTIVO': 0, 'QTY RESERVA': qty, 'QTY BUFFER': pick });
+            if (pick > 0) {
+                detallePallets.push({ 'UBICACIONES': ubi, 'LPN': item['LPN'], 'SKU': sku, 'QTY ACTIVO': 0, 'QTY RESERVA': qty, 'QTY BUFFER': pick });
+            }
         });
     });
 
@@ -427,10 +427,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
     ];
 
-    const empaque = {
-        'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 },
-        'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 }
-    };
+    const empaque = { 'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 }, 'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 } };
     detallePallets.forEach(r => {
         const tipo = r.SKU.length >= 14 ? 'PreePack' : 'SolidPack';
         empaque[tipo].paletas.add(r.UBICACIONES);
@@ -441,5 +438,5 @@ export const calculateBufferPallets = (configOverride = null) => {
     const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
-    return { waterfall, detalle: detallePallets, resumenSKU: resEmp };
+    return { waterfall, detalle: detallePallets, detalleZonas, resumenSKU: resEmp };
 };
