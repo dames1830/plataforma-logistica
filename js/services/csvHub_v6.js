@@ -261,7 +261,6 @@ export const getAreaData = async (area) => {
   
   return null;
 };
-};
 
 export const generateKPIs = (data, area) => {
   if(!data || !data.length) return null;
