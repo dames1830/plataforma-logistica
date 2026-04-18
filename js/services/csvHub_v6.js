@@ -168,7 +168,6 @@ export const parseFile = (file, area) => {
                   });
               }
           } else if (area === 'articulos') {
-              // COL B = Articulo(7), COL D = Gender RIMS, COL N = Marca
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               for (let i = 1; i < rows.length; i++) {
                   const r = rows[i];
@@ -176,7 +175,6 @@ export const parseFile = (file, area) => {
                   jsonData.push({ 'ARTICULO': String(r[1]).trim(), 'GENDER_RIMS': String(r[3]).trim(), 'MARCA': String(r[13]).trim() });
               }
           } else if (area === 'tallas') {
-              // COL A = SKU, COL B = Talla
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               for (let i = 1; i < rows.length; i++) {
                   const r = rows[i];
@@ -282,13 +280,11 @@ export const calculateBufferPallets = (configOverride = null) => {
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo7 = (sku) => String(sku || '').substring(0, 7);
 
-    // Mapas de búsqueda rápida O(1)
     const artMap = new Map();
     articulosMaster.forEach(a => artMap.set(String(a.ARTICULO), { gender: a.GENDER_RIMS, marca: a.MARCA }));
     const tallasMap = new Map();
     tallasMaster.forEach(t => tallasMap.set(String(t.SKU), t.TALLA));
 
-    // Registro de Stock
     let stBajas = {}, stPisos = {}, stLogicos = {}, stAltos = {}, stAereos = {};
     const registerStock = (map, sku, qty, row) => {
         if (!map[sku]) map[sku] = [];
@@ -329,7 +325,6 @@ export const calculateBufferPallets = (configOverride = null) => {
     let globalRQ = 0, atdBaja = 0, atdAlto = 0, atdPiso = 0, atdAereo = 0, atdLogico = 0;
     let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
     
-    // Aggregators
     let aggGender = {}, aggMarca = {};
 
     const satisfyDemand = (sku, pending, stockMap, nivelLabel, counterRef) => {
@@ -352,13 +347,17 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'RQ': (pending === demanda[sku]) ? pending : 0, 'ATD RQ': pick
                 });
 
-                if (!aggGender[meta.gender]) aggGender[meta.gender] = { rq: 0, atd: 0 };
-                aggGender[meta.gender].rq += (pending === demanda[sku]) ? pending : 0;
-                aggGender[meta.gender].atd += pick;
+                // V10.4: Filtrado estricto por zonas solicitadas (Pisos, Aereo y Logico)
+                const isForensicZone = nivelLabel === 'Pisos' || nivelLabel === 'Aereo' || nivelLabel === 'Lógica';
+                if (isForensicZone) {
+                    if (!aggGender[meta.gender]) aggGender[meta.gender] = { rq: 0, atd: 0 };
+                    aggGender[meta.gender].rq += (pending === demanda[sku]) ? pending : 0;
+                    aggGender[meta.gender].atd += pick;
 
-                if (!aggMarca[meta.marca]) aggMarca[meta.marca] = { rq: 0, atd: 0 };
-                aggMarca[meta.marca].rq += (pending === demanda[sku]) ? pending : 0;
-                aggMarca[meta.marca].atd += pick;
+                    if (!aggMarca[meta.marca]) aggMarca[meta.marca] = { rq: 0, atd: 0 };
+                    aggMarca[meta.marca].rq += (pending === demanda[sku]) ? pending : 0;
+                    aggMarca[meta.marca].atd += pick;
+                }
 
                 if (nivelLabel === 'Alto' || nivelLabel === 'Aereo') {
                     ubicacionesEnElPiso.add(ubi);
@@ -417,6 +416,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: '1. Zonas Bajas', rq: globalRQ, atd: atdBaja, pct: calcPct(atdBaja, globalRQ) },
         { nivel: '2. Alto', rq: globalRQ - atdBaja, atd: atdAlto, pct: calcPct(atdAlto, globalRQ - atdBaja) },
         { nivel: '3. Pisos', rq: globalRQ - atdBaja - atdAlto, atd: atdPiso, pct: calcPct(atdPiso, globalRQ - atdBaja - atdAlto) },
+        { nivel: '4. Aereo', rq: globalRQ - atdBaja - atdAlto - atdPiso, atd: atdAereo, pct: calcPct(atdAereo, globalRQ - atdBaja - atdAlto - atdPiso) },
+        { nivel: '5. Lógica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja+atdAlto+atdPiso+atdAereo+atdLogico, globalRQ) }
     ];
 
@@ -431,8 +432,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
-    const resGender = Object.keys(aggGender).map(k => ({ key: k, rq: aggGender[k].rq, atd: aggGender[k].atd, pct: calcPct(aggGender[k].atd, aggGender[k].rq) }));
-    const resMarca = Object.keys(aggMarca).map(k => ({ key: k, rq: aggMarca[k].rq, atd: aggMarca[k].atd, pct: calcPct(aggMarca[k].atd, aggMarca[k].rq) }));
+    const resGender = Object.keys(aggGender).sort().map(k => ({ key: k, rq: aggGender[k].rq, atd: aggGender[k].atd, pct: calcPct(aggGender[k].atd, aggGender[k].rq) }));
+    const resMarca = Object.keys(aggMarca).sort().map(k => ({ key: k, rq: aggMarca[k].rq, atd: aggMarca[k].atd, pct: calcPct(aggMarca[k].atd, aggMarca[k].rq) }));
 
     return { waterfall, detalle: detallePallets, detalleZonas, resumenSKU: resEmp, resumenGender: resGender, resumenMarca: resMarca };
 };
