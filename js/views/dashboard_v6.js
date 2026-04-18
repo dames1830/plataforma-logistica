@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub.js';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=6.0';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -18,6 +18,8 @@ const TABS = [
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 
 let currentChart = null;
+let lastBufferKPI = null;
+let bufferConfigCached = null;
 
 // UTIL: Exportador XLSX universal
 const exportToExcel = (data, filename) => {
@@ -131,14 +133,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     if(currentChart) { currentChart.destroy(); currentChart = null; }
 
-    // Indicador UI para carga de datos
-    contentArea.innerHTML = `
-      <div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.8;">
-         <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
-         <h3 style="color: var(--text-main); font-weight: 500;">Sincronizando con Servidor Elite...</h3>
-         <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--success);">Infraestructura Nivel Producción</p>
-      </div>
-    `;
+    // Indicador UI para carga de datos (Solo si es la primera vez o forzamos recarga)
+    if (currentTab !== 'inicio') {
+        contentArea.innerHTML = `
+          <div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.8;">
+             <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
+             <h3 style="color: var(--text-main); font-weight: 500;">Sincronizando con Servidor Elite...</h3>
+             <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--success);">Infraestructura Nivel Producción</p>
+          </div>
+        `;
+    }
 
     // Si hay una fecha seleccionada, anclamos el indicador visual!
     const dateTitleTag = currentDateFilter ? `<span style="font-size:0.75rem; background: var(--warning); color:#000; padding:2px 8px; border-radius:12px; margin-left:10px; vertical-align:middle;">⏳ Snapshot: ${currentDateFilter}</span>` : '';
@@ -170,49 +174,54 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  // VISTA INICIO: MACRO DASHBOARD
+  // VISTA INICIO: MACRO DASHBOARD (Optimización Asíncrona)
   const renderHomeTab = async () => {
     let html = `
       <div style="text-align:center; padding-bottom: 2rem;">
          <h2 style="font-weight:400;">Bienvenido, ${user.name}</h2>
          <p style="color:var(--text-muted); font-size:0.9rem;">Visión global de memorias maestras alojadas en Base de Datos</p>
       </div>
-      <div class="kpi-grid">
+      <div class="kpi-grid" id="homeKpiGrid">
     `;
 
     const areasValidas = ['stockActivo', 'stockReserva', 'inventario', 'picking', 'packing', 'despacho', 'recepcion'];
     
-    let totalCargas = 0;
-    
-    // OPTIMIZACIÓN ELITE: Disparar todas las consultas a la Base de Datos a la vez (Multi-hilo / Paralelo)
-    const datas = await Promise.all(areasValidas.map(a => getAreaData(a)));
-    
-    areasValidas.forEach((a, index) => {
-        const rows = datas[index];
-        if(rows && rows.length > 0) {
-           totalCargas++;
-           const titleName = a === 'stockActivo'? 'Stock Activo': a === 'stockReserva'? 'Stock Reserva': a.toUpperCase();
-           html += `
-             <div class="kpi-card" style="border-left: 4px solid var(--primary);">
-                <div class="kpi-title">${titleName}</div>
-                <div class="kpi-value">${rows.length}</div>
-                <div class="kpi-subtitle" style="color:var(--text-muted)">Registros en DB</div>
-             </div>
-           `;
-        }
-    });
-
-    if (totalCargas === 0) {
+    areasValidas.forEach((a) => {
+        const titleName = a === 'stockActivo'? 'Stock Activo': a === 'stockReserva'? 'Stock Reserva': a.toUpperCase();
         html += `
-          <div class="kpi-card" style="grid-column: 1 / -1; text-align:center; padding: 3rem;">
-             No hay datos registrados en el servidor ${currentDateFilter ? `para la fecha ${currentDateFilter}` : 'actualmente'}.
-             <br><br>Ve a las pestañas individuales y sube tus Excel/CSV para registrar datos en el día de hoy.
-          </div>
+             <div class="kpi-card" id="card_${a}" style="border-left: 4px solid var(--primary); min-height:120px; transition: all 0.3s ease;">
+                <div class="kpi-title">${titleName}</div>
+                <div class="kpi-value" id="val_${a}"><i class="fas fa-spinner fa-spin" style="font-size:1.2rem; opacity:0.3;"></i></div>
+                <div class="kpi-subtitle" style="color:var(--text-muted)">Consultando...</div>
+             </div>
         `;
-    }
+    });
     
     html += `</div>`;
     contentArea.innerHTML = html;
+
+    // Disparo asíncrono e independiente para cada una (No bloquea la página!)
+    areasValidas.forEach(a => {
+        getAreaData(a).then(rows => {
+            const valEl = document.getElementById(`val_${a}`);
+            const cardEl = document.getElementById(`card_${a}`);
+            if (valEl && rows) {
+                valEl.textContent = rows.length.toLocaleString();
+                valEl.style.color = 'var(--primary)';
+                const subEl = valEl.nextElementSibling;
+                if(subEl) subEl.textContent = 'Registros en DB';
+                if(cardEl) cardEl.style.background = 'rgba(79, 70, 229, 0.03)';
+            } else if (valEl) {
+                valEl.textContent = '0';
+                valEl.style.opacity = '0.5';
+                const subEl = valEl.nextElementSibling;
+                if(subEl) subEl.textContent = 'Sin datos';
+            }
+        }).catch(err => {
+            const valEl = document.getElementById(`val_${a}`);
+            if(valEl) valEl.innerHTML = '<span style="color:var(--danger); font-size:0.8rem;">Error</span>';
+        });
+    });
   };
 
   // VISTA STOCK CARGA - acepta un contenedor opcional (para sub-tabs)
@@ -318,38 +327,50 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   let activeBufferSubTab = 'maestros';
+  const renderBufferTab = async (forceReload = false) => {
+      // 1. Solo esperamos si necesitamos descargar algo que no esté en memoria cache
+      if (!bufferConfigCached || forceReload) {
+          if (!forceReload && (!dataStore.stockActivo || !dataStore.stockReserva)) {
+              contentArea.innerHTML = `
+                <div style="text-align:center; padding:5rem; color:var(--primary);">
+                  <i class="fas fa-spinner fa-spin fa-3x" style="margin-bottom:1.5rem;"></i>
+                  <h3 style="color:#fff;">Sincronizando con el servidor...</h3>
+                  <p style="color:var(--text-muted); font-size:0.9rem;">Esto solo ocurrirá la primera vez que entres a esta zona.</p>
+                </div>
+              `;
+          }
 
-  const renderBufferTab = async () => {
-      // 1. Obtener Configuración y Data en paralelo
-      const [bufferConfig, bufferData, stockActivo, stockReserva] = await Promise.all([
-          fetchBufferConfig(),
-          getAreaData('buffer'),
-          getAreaData('stockActivo'),
-          getAreaData('stockReserva')
-      ]);
+          const [bConfig] = await Promise.all([
+              fetchBufferConfig(),
+              getAreaData('buffer'),
+              getAreaData('stockActivo'),
+              getAreaData('stockReserva')
+          ]);
+          bufferConfigCached = bConfig;
+      }
 
-      // DIAGNÓSTICO: Mostrar estado de cada fuente de datos
-      console.log('📦 Estado datos Buffer:', {
-          stockActivo: dataStore.stockActivo ? `✅ ${dataStore.stockActivo.length} registros` : '❌ NULL',
-          stockReserva: dataStore.stockReserva ? `✅ ${dataStore.stockReserva.length} registros` : '❌ NULL',
-          pedidos: dataStore.buffer ? `✅ ${dataStore.buffer.length} registros` : '❌ NULL'
-      });
-
-      let bufferKPIObj = calculateBufferPallets(bufferConfig);
-
-      // ── SINCRONIZACIÓN ENTRE PCs ──
-      if (bufferKPIObj) {
-          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-          saveBufferReport(bufferKPIObj, currentUser.username || 'system');
-      } else {
-          // Si NO hay datos locales → intentar cargar del servidor
-          const serverReport = await loadBufferReport();
-          if (serverReport) {
-              bufferKPIObj = serverReport;
+      // Intentar recuperar de localStorage si la memoria RAM está vacía
+      if (!lastBufferKPI) {
+          const localStored = localStorage.getItem('lastBufferKPI');
+          if (localStored) {
+              try {
+                  lastBufferKPI = JSON.parse(localStored);
+                  console.log('📦 Reporte Buffer recuperado de memoria local.');
+              } catch(e) { /* corrupto, ignorar */ }
           }
       }
 
-      
+      let bufferKPIObj = lastBufferKPI;
+
+      // ── SINCRONIZACIÓN ENTRE PCs (Carga inicial si está vacío) ──
+      if (!bufferKPIObj) {
+          const serverReport = await loadBufferReport();
+          if (serverReport) {
+              bufferKPIObj = serverReport;
+              lastBufferKPI = serverReport;
+          }
+      }
+
       let html = `
         <nav class="sub-nav" style="display:flex; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
           <a class="sub-nav-item ${activeBufferSubTab === 'maestros' ? 'active' : ''}" data-sub="maestros" style="cursor:pointer; padding:0.5rem 1rem; color:${activeBufferSubTab === 'maestros' ? 'var(--primary)' : 'var(--text-muted)'}; border-bottom: 2px solid ${activeBufferSubTab === 'maestros' ? 'var(--primary)' : 'transparent'}">📚 Archivos Maestros</a>
@@ -373,6 +394,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       });
 
       if (activeBufferSubTab === 'maestros') {
+          // ... (keep existing maestros UI)
           subContent.innerHTML = `
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1.5rem;">
               <div class="kpi-card" style="text-align:center; padding:2rem; border:1px dashed var(--border);">
@@ -401,18 +423,28 @@ export const renderDashboard = async (container, user, onLogout) => {
               </div>
             </div>
           `;
-          // Solo PEDIDOS va a 'buffer' (que es lo que usa calculateBufferPallets)
-          // Los demás archivos van a sus propias claves para uso futuro
           attachUploadEvent('up_pedidos', 'buffer', '.csv');
           attachUploadEvent('up_solicitud', 'solicitud', '.csv');
           attachUploadEvent('up_articulos', 'articulos', '.csv');
           attachUploadEvent('up_tallas', 'tallas', '.csv');
 
       } else if (activeBufferSubTab === 'reportes') {
-          let rhtml = '';
+          let rhtml = `
+            <div style="background:rgba(219,39,119,0.1); padding:1.5rem; border-radius:12px; border:3px solid #db2777; margin-bottom:2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; box-shadow:0 0 20px rgba(219,39,119,0.2);">
+              <div>
+                <div style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.3rem;">
+                  <h4 style="color:#db2777; margin:0; font-weight:800;">Análisis Stock (NUCLEAR FIX V6)</h4>
+                  <span style="background:#db2777; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">FORZADO FINAL</span>
+                </div>
+                <p style="font-size:0.8rem; color:#fff; margin:0; opacity:0.9;">¡Atención! Si ves este borde FUCSIA, los cambios se cargaron correctamente.</p>
+              </div>
+              <button id="btn_procesar_buffer" class="btn" style="width:auto; padding:0.8rem 2.5rem; background:#db2777; color:#fff; font-weight:800; font-size:1rem; box-shadow:0 4px 15px rgba(219,39,119,0.4); border:none;">
+                ⚡ PROCESAR CON NUEVA LÓGICA
+              </button>
+            </div>
+          `;
 
           if (!bufferKPIObj) {
-            // Diagnosticar exactamente qué falta
             const hasActivo  = dataStore.stockActivo && dataStore.stockActivo.length > 0;
             const hasReserva = dataStore.stockReserva && dataStore.stockReserva.length > 0;
             const hasPedidos = dataStore.buffer && dataStore.buffer.length > 0;
@@ -423,115 +455,169 @@ export const renderDashboard = async (container, user, onLogout) => {
               <span style="color:var(--text-muted); font-size:0.8rem;">${ok ? '— Cargado' : '— Falta subir'}</span>
             </div>`;
 
-            rhtml = `
+            rhtml += `
               <div style="text-align:left; padding:2rem; background:rgba(255,165,0,0.06); border:1px solid var(--warning); border-radius:12px; margin-bottom:1.5rem; max-width:500px;">
                 <div style="text-align:center; margin-bottom:1rem;">
                   <i class="fas fa-exclamation-triangle fa-2x" style="color:var(--warning); margin-bottom:0.7rem;"></i>
-                  <h4 style="color:var(--warning);">Sin datos suficientes para el análisis</h4>
+                  <h4 style="color:var(--warning);">Preparado para el análisis</h4>
                 </div>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Se necesitan estos 3 archivos para generar el reporte:</p>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Asegúrate de tener estos archivos cargados:</p>
                 ${mkStatus(hasActivo, 'Stock Activo (.csv)')}
                 ${mkStatus(hasReserva, 'Stock Reserva (.xlsx)')}
                 ${mkStatus(hasPedidos, 'Pedidos (.csv)')}
-                <p style="color:var(--text-muted); font-size:0.8rem; margin-top:1rem; border-top:1px solid var(--border); padding-top:0.8rem;">
-                  📌 Sube <strong>Stock Activo</strong> y <strong>Stock Reserva</strong> en la pestaña <strong>Stock General</strong>.<br>
-                  📌 Sube <strong>Pedidos</strong> en <strong>Zona Buffer → Archivos Maestros</strong>.
-                </p>
               </div>
             `;
-            subContent.innerHTML = rhtml;
-            return;
-          }
+            // IMPORTANTE: we don't return here anymore, we continue to attach the listener at the end
+          } else {
+            // Si el reporte existe, procedemos con las tablas pero de forma segura
+            try {
+              // FORZADO DE DISEÑO V3 - BLOQUE VERTICAL PURO
+              rhtml += `<div style="display:block !important; width:100% !important; border:0 !important; background:transparent !important;">`;
+              
+              const containerStyle = `display:block !important; width:100% !important; max-width:100% !important; border-radius:12px; overflow:hidden; margin-bottom:2.5rem; box-shadow:0 8px 32px rgba(0,0,0,0.3); clear:both;`;
 
+              // ── CUADRO 1: ANÁLISIS BUFFER ZONAS ──
+              if (bufferKPIObj.waterfall) {
+                rhtml += `
+                  <div style="${containerStyle} border:2px solid var(--primary);">
+                    <div style="padding:0.8rem 1rem; background:rgba(79,70,229,0.14); border-bottom:1px solid var(--border); text-align:center;">
+                      <h3 style="color:#fff; font-weight:700; letter-spacing:1px; font-size:1rem;">ANÁLISIS BUFFER ZONAS</h3>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                      <thead>
+                        <tr style="background:rgba(15,23,42,0.6);">
+                          <th style="padding:0.4rem 0.8rem; text-align:left; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:40%;">NIVEL/AREA</th>
+                          <th style="padding:0.4rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">RQ</th>
+                          <th style="padding:0.4rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">ATD RQ</th>
+                          <th style="padding:0.4rem 0.8rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">% ATD</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${bufferKPIObj.waterfall.map(row => {
+                          const isTotal = row.nivel === 'Total';
+                          return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.1);' : 'border-bottom:1px solid var(--border);'}">
+                            <td style="padding:0.45rem 0.8rem; text-align:left;">${row.nivel}</td>
+                            <td style="padding:0.45rem 0.5rem; text-align:center;">${Number(row.rq).toLocaleString()}</td>
+                            <td style="padding:0.45rem 0.5rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${Number(row.atd).toLocaleString()}</td>
+                            <td style="padding:0.45rem 0.8rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${row.pct}</td>
+                          </tr>`;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `;
+              }
 
-          // Dos cuadros compactos lado a lado
-          rhtml = `<div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start;">`;
+              // ── CUADRO 2: ANÁLISIS BUFFER SKU ──
+              const resumen = bufferKPIObj.resumenSKU || [];
+              rhtml += `
+                <div style="${containerStyle} border:4px solid #db2777; background:rgba(0,0,0,0.4);">
+                  <div style="padding:1.2rem; background:#db2777; border-bottom:1px solid #db2777; text-align:center;">
+                    <h2 style="color:#fff; font-weight:900; letter-spacing:3px; font-size:1.3rem; margin:0; text-transform:uppercase;">ANÁLISIS BUFFER SKU (VERSIÓN 6.0)</h2>
+                  </div>
+                  <table style="width:100%; border-collapse:collapse; font-size:1.1rem; background:rgba(15,23,42,0.6);">
+                    <thead>
+                      <tr style="background:rgba(15,23,42,0.9); height:4rem;">
+                        <th style="padding:0 1.2rem; text-align:left; color:#fff; font-size:0.85rem; text-transform:uppercase; border-bottom:2px solid #db2777;">TIPO DE EMPAQUE</th>
+                        <th style="padding:0; text-align:center; color:#fff; font-size:0.85rem; text-transform:uppercase; border-bottom:2px solid #db2777;">PALETAS</th>
+                        <th style="padding:0; text-align:center; color:#fff; font-size:0.85rem; text-transform:uppercase; border-bottom:2px solid #db2777;">SKUS</th>
+                        <th style="padding:0; text-align:center; color:#fff; font-size:0.85rem; text-transform:uppercase; border-bottom:2px solid #db2777;">PAR/CAJA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${resumen.map(r => `
+                        <tr style="border-bottom:1px solid #db2777; height:4.5rem;">
+                          <td style="padding:0 1.2rem; font-weight:900; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}; font-size:1.1rem; border-right:1px solid rgba(219,39,119,0.2);">${r.tipo}</td>
+                          <td style="padding:0; text-align:center; font-size:1.1rem; color:#fff; border-right:1px solid rgba(219,39,119,0.2);">${r.paletas}</td>
+                          <td style="padding:0; text-align:center; font-size:1.1rem; color:#fff; border-right:1px solid rgba(219,39,119,0.2);">${r.skus}</td>
+                          <td style="padding:0; text-align:center; font-weight:900; color:${r.tipo==='TOTAL'?'#22c55e':'#db2777'}; font-size:1.4rem;">
+                            ${Number(r.parcaja).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+                </div> <!-- CIERRE NUCLEAR V6 -->
+              `;
 
-          // ── CUADRO 1: ANÁLISIS BUFFER ZONAS (compacto) ──
-          rhtml += `
-            <div style="flex:0 0 auto; width:440px; border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(79,70,229,0.25);">
-              <div style="padding:0.6rem 1rem; background:rgba(79,70,229,0.14); border-bottom:1px solid var(--border); text-align:center;">
-                <h3 style="color:#fff; font-weight:700; letter-spacing:1px; font-size:0.88rem;">ANÁLISIS BUFFER ZONAS</h3>
-              </div>
-              <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
-                <thead>
-                  <tr style="background:rgba(15,23,42,0.6);">
-                    <th style="padding:0.4rem 0.8rem; text-align:left; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:40%;">NIVEL/AREA</th>
-                    <th style="padding:0.4rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">RQ</th>
-                    <th style="padding:0.4rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">ATD RQ</th>
-                    <th style="padding:0.4rem 0.8rem; text-align:center; color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:20%;">% ATD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${bufferKPIObj.waterfall.map(row => {
-                    const isTotal = row.nivel === 'Total';
-                    return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.1);' : 'border-bottom:1px solid var(--border);'}">
-                      <td style="padding:0.45rem 0.8rem; text-align:left;">${row.nivel}</td>
-                      <td style="padding:0.45rem 0.5rem; text-align:center;">${Number(row.rq).toLocaleString()}</td>
-                      <td style="padding:0.45rem 0.5rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${Number(row.atd).toLocaleString()}</td>
-                      <td style="padding:0.45rem 0.8rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${row.pct}</td>
-                    </tr>`;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          `;
+              // ── CUADRO 3: DETALLE REPOSICIÓN MUESTRA (Tabla Detalle) ──
+              const detalleArr = bufferKPIObj.detalle || [];
+              if (detalleArr.length > 0) {
+                rhtml += `
+                  <div style="margin-top:2rem; background:var(--bg-card); border-radius:12px; border:1px solid var(--border); overflow:hidden;">
+                    <div style="padding:1rem; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center;">
+                      <h4 style="margin:0; color:#fff;">Detalle del Análisis (SKU/Ubicaciones)</h4>
+                      <span style="font-size:0.75rem; color:var(--text-muted);">Mostrando ${Math.min(detalleArr.length, 100)} de ${detalleArr.length} registros</span>
+                    </div>
+                    <div class="data-table-container" style="max-height:400px; overflow-y:auto;">
+                      <table class="data-table">
+                        <thead>
+                          <tr>
+                            <th>UBICACIÓN</th>
+                            <th>LPN</th>
+                            <th>SKU</th>
+                            <th style="text-align:center;">STOCK ACT.</th>
+                            <th style="text-align:center;">STOCK RES.</th>
+                            <th style="text-align:center; color:var(--primary);">QTY BUFFER</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${detalleArr.slice(0, 100).map(row => `
+                            <tr>
+                              <td style="font-weight:600; color:var(--primary);">${row.UBICACIONES}</td>
+                              <td style="font-size:0.8rem;">${row.LPN}</td>
+                              <td>${row.SKU}</td>
+                              <td style="text-align:center; color:var(--text-muted);">${row['QTY ACTIVO']}</td>
+                              <td style="text-align:center; color:var(--text-muted);">${row['QTY RESERVA']}</td>
+                              <td style="text-align:center; font-weight:700; color:var(--primary);">${Number(row['QTY BUFFER']).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
 
-          // ── CUADRO 2: ANÁLISIS BUFFER SKU ──
-          const resumen = bufferKPIObj.resumenSKU || [];
-          rhtml += `
-            <div style="flex:0 0 auto; width:380px; border:2px solid var(--warning); border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(234,179,8,0.22);">
-              <div style="padding:0.7rem 1rem; background:rgba(234,179,8,0.1); border-bottom:1px solid var(--border); text-align:center;">
-                <h3 style="color:var(--warning); font-weight:700; letter-spacing:1px; font-size:0.9rem;">ANÁLISIS BUFFER SKU</h3>
-              </div>
-              <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
-                <thead>
-                  <tr style="background:rgba(15,23,42,0.6);">
-                    <th style="padding:0.45rem 0.8rem; text-align:left; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:38%;">TIPO DE EMPAQUE</th>
-                    <th style="padding:0.45rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:22%;">PALETAS</th>
-                    <th style="padding:0.45rem 0.5rem; text-align:center; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:18%;">SKUS</th>
-                    <th style="padding:0.45rem 0.8rem; text-align:center; color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border); width:22%;">PAR/CAJA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${resumen.length > 0
-                    ? resumen.map(row => {
-                        const isTotal = row.tipo === 'TOTAL';
-                        const isPree  = row.tipo.toLowerCase().includes('pree') || row.tipo.toLowerCase().includes('pp');
-                        const colorTipo = isTotal ? '' : (isPree ? 'color:var(--warning);' : 'color:#22c55e;');
-                        return `<tr style="${isTotal ? 'font-weight:700; background:rgba(34,197,94,0.1);' : 'border-bottom:1px solid var(--border);'}">
-                          <td style="padding:0.5rem 0.8rem; font-weight:600; ${colorTipo}">${row.tipo}</td>
-                          <td style="padding:0.5rem 0.5rem; text-align:center;">${row.paletas}</td>
-                          <td style="padding:0.5rem 0.5rem; text-align:center;">${row.skus}</td>
-                          <td style="padding:0.5rem 0.8rem; text-align:center; ${isTotal ? 'color:#22c55e;' : ''}">${row.parcaja}</td>
-                        </tr>`;
-                      }).join('')
-                    : `<tr><td colspan="4" style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">Procesando datos de empaque...</td></tr>`
-                  }
-                </tbody>
-              </table>
-            </div>
-          `;
-
-          rhtml += `</div>`;
-
-          // Botón para bajar detalle completo (paleta por paleta)
-          if (bufferKPIObj.detalle && bufferKPIObj.detalle.length > 0) {
-            rhtml += `
-              <div style="text-align:center; margin-top:1.5rem;">
-                <button class="btn" id="export_pallets" style="width:auto; background:var(--success); color:#fff; padding:0.7rem 2rem;">
-                  ↓ Descargar Orden de Extracción (Detalle Completo por Paleta)
-                </button>
-              </div>
-            `;
+                  <div style="text-align:center; margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
+                    <button class="btn" id="export_pallets" style="width:auto; background:var(--success); color:#fff; padding:0.75rem 2rem;">
+                      <i class="fas fa-file-excel" style="margin-right:0.5rem;"></i> Descargar Orden de Extracción (.xlsx)
+                    </button>
+                  </div>
+                `;
+              }
+            } catch (err) {
+              console.error("Error renderizando tablas de buffer:", err);
+              rhtml += `<div style="padding:1.5rem; background:rgba(239,68,68,0.1); color:var(--danger); border-radius:8px; border:1px dashed var(--danger); margin-top:1rem;">
+                ⚠️ El reporte guardado tiene un formato incompatible. Por favor, pulsa el botón superior para recalcularlo.
+              </div>`;
+            }
           }
 
           subContent.innerHTML = rhtml;
-          setTimeout(() => {
-            document.getElementById('export_pallets')?.addEventListener('click', () =>
-              exportToExcel(bufferKPIObj.detalle, 'Orden_Extraccion_Paletas')
-            );
-          }, 100);
+
+          // Listeners
+          document.getElementById('btn_procesar_buffer').addEventListener('click', async () => {
+              const btn = document.getElementById('btn_procesar_buffer');
+              btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+              btn.disabled = true;
+
+              setTimeout(async () => {
+                  const config = await fetchBufferConfig();
+                  lastBufferKPI = calculateBufferPallets(config);
+                  if (lastBufferKPI) {
+                      localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferKPI));
+                      await logSystemAction(user.username, 'PROCESAR_BUFFER', 'Análisis manual ejecutado');
+                      saveBufferReport(lastBufferKPI, user.username);
+                  }
+                  renderBufferTab();
+              }, 100);
+          });
+
+          if (document.getElementById('export_pallets')) {
+              document.getElementById('export_pallets').addEventListener('click', () => 
+                exportToExcel(bufferKPIObj.detalle, 'Detalle_Buffer_Completo')
+              );
+          }
 
       } else if (activeBufferSubTab === 'dashboard') {
           subContent.innerHTML = `<div style="text-align:center; padding:5rem; color:var(--text-muted);"><i class="fas fa-chart-line fa-3x" style="margin-bottom:1rem;"></i><br>Dashboard de desempeño Buffer (Próximamente)</div>`;
@@ -608,6 +694,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         const res = await fetch(url);
         const logs = await res.json();
         
+        // El backend ya los ordena por fecha descendente, pero nos aseguramos aquí también
+        logs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
         if (!logs.length) {
           tableArea.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted);">No se encontraron registros con los filtros aplicados.</div>';
           return;
@@ -878,6 +967,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         <button class="config-sub-btn ${configSubTab === 'logs' ? 'active' : ''}" data-sub="logs" style="padding:0.7rem 1.5rem; background:${configSubTab === 'logs' ? 'var(--primary)' : 'transparent'}; color:${configSubTab === 'logs' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${configSubTab === 'logs' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500; transition: all 0.2s;">
           📋 LOG de Auditoría
         </button>
+        <button class="config-sub-btn ${configSubTab === 'mantenimiento' ? 'active' : ''}" data-sub="mantenimiento" style="padding:0.7rem 1.5rem; background:${configSubTab === 'mantenimiento' ? 'var(--primary)' : 'transparent'}; color:${configSubTab === 'mantenimiento' ? '#fff' : 'var(--text-muted)'}; border:none; border-bottom:${configSubTab === 'mantenimiento' ? '3px solid var(--primary)' : 'none'}; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:500; transition: all 0.2s;">
+          🛠️ Mantenimiento
+        </button>
       </div>
       <div id="configContent"></div>
     `;
@@ -894,9 +986,51 @@ export const renderDashboard = async (container, user, onLogout) => {
       await renderUsersSubTab(configContent);
     } else if (configSubTab === 'permisos') {
       await renderPermissionsSubTab(configContent);
-    } else {
+    } else if (configSubTab === 'logs') {
       await renderLogsSubTab(configContent);
+    } else {
+      renderMaintenanceSubTab(configContent);
     }
+  };
+
+  // ---- SUB-PESTAÑA: MANTENIMIENTO ----
+  const renderMaintenanceSubTab = (container) => {
+    container.innerHTML = `
+      <div class="glass-panel" style="max-width:600px; margin:2rem auto; padding:2rem; border:1px solid var(--border);">
+        <h3 style="color:var(--primary); margin-bottom:1.2rem; display:flex; align-items:center; gap:0.5rem;">
+           <i class="fas fa-tools"></i> Mantenimiento del Sistema
+        </h3>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
+          <h4 style="color:#fff; margin-bottom:0.5rem;">Limpieza de Navegador (Caché)</h4>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">
+            Esto borrará todos los archivos temporales y datos de stock guardados localmente en este equipo. 
+            Útil si la página se siente pesada o si los datos no se actualizan correctamente.
+          </p>
+          <button id="btn_clear_cache" class="btn" style="background:var(--danger); width:auto; padding:0.6rem 1.5rem;">
+            🗑️ BORRAR CACHÉ Y REINICIAR
+          </button>
+        </div>
+
+        <div style="background:rgba(34,197,94,0.05); border:1px solid var(--success); border-radius:12px; padding:1.5rem;">
+          <h4 style="color:var(--success); margin-bottom:0.5rem;">Refresco Forzado (Código Nuevo)</h4>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem;">
+            Para asegurar que estás usando la versión más reciente del sistema con todas las optimizaciones, presiona:
+          </p>
+          <div style="background:var(--bg-main); padding:0.8rem; border-radius:8px; text-align:center; font-family:monospace; border:1px solid var(--border); font-weight:700; color:var(--primary); font-size:1.2rem; letter-spacing:2px;">
+            CTRL + SHIFT + R
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.8rem; text-align:center;">(O mantén presionado CTRL mientras haces clic en el botón de Recargar del navegador)</p>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn_clear_cache').addEventListener('click', () => {
+      if (confirm('¿Estás seguro de borrar toda la caché local? Deberás volver a iniciar sesión.')) {
+        localStorage.clear();
+        window.location.reload();
+      }
+    });
   };
 
   // ---- SUB-PESTAÑA: USUARIOS ----
@@ -1159,6 +1293,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           });
           const result = await res.json();
           if (result.status === 'success') {
+            await logSystemAction(user.username, 'PERMISOS_GUARDAR', `Actualizados permisos para el rol: ${role.toUpperCase()}`);
             btn.textContent = '✅ Guardado!';
             btn.style.background = 'var(--success)';
             setTimeout(() => {

@@ -133,8 +133,8 @@ export const parseFile = (file, area) => {
           if(results.errors.length && !results.data.length) reject(results.errors);
           else {
              try {
-                 const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-                 await persistToDatabase(area, results.data, session.username);
+                 const user = JSON.parse(localStorage.getItem('user') || '{}');
+                 await persistToDatabase(area, results.data, user.username || 'sistema');
                  resolve(results.data);
              } catch(dbErr) {
                  reject('Error Servidor: ' + dbErr.message);
@@ -153,7 +153,8 @@ export const parseFile = (file, area) => {
           const worksheet = workbook.Sheets[firstSheetName];
           const json = XLSX.utils.sheet_to_json(worksheet, { range: 2, defval: "" });
           
-          await persistToDatabase(area, json);
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          await persistToDatabase(area, json, user.username || 'sistema');
           resolve(json);
         } catch(err) {
           reject(err);
@@ -187,8 +188,8 @@ export const parseBufferFiles = async (files) => {
     }
     
     // Subimos la carga ensamblada al servidor como un solo paquete
-    const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-    await persistToDatabase('buffer', combinedData, session.username);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    await persistToDatabase('buffer', combinedData, user.username || 'sistema');
     dataStore['buffer'] = combinedData;
     return combinedData;
 };
@@ -228,39 +229,38 @@ export const logSystemAction = async (username, action, details) => {
     } catch (e) { console.error("Error al loguear acción:", e); }
 };
 
-// Función Asíncrona: Preguntar a la BD maestra por los datos, si no tiene, usa nulo
+// Función Asíncrona: Preguntar a la BD maestra por los datos
 export const getAreaData = async (area) => {
-  // Si la data del área ya fue descargada y alojada en la memoria caché RAM, usar esa
-  // ¡Esto evita descargar Megabytes redundantes por HTTP cada vez que cambias de pestaña!
-  if (dataStore[area] !== null) {
-      return dataStore[area];
+  // 1. Prioridad: Memoria RAM
+  if (dataStore[area] !== null) return dataStore[area];
+
+  // 2. Prioridad: LocalStorage
+  const lsData = loadFromLS(area);
+  if (lsData) {
+      dataStore[area] = lsData;
+      return lsData;
   }
 
+  // 3. Prioridad: Servidor
   try {
      let queryURL = `${API_URL}/${area}`;
-     if (currentDateFilter) {
-         queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
-     }
+     if (currentDateFilter) queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
      
-     const response = await fetch(queryURL, { signal: AbortSignal.timeout(8000) });
+     const response = await fetch(queryURL, { signal: AbortSignal.timeout(6000) });
      if (response.ok) {
          const serverResponse = await response.json();
          if (serverResponse.data && serverResponse.data.length > 0) {
              dataStore[area] = serverResponse.data;
-             saveToLS(area, serverResponse.data); // Persistir para próxima vez
+             saveToLS(area, serverResponse.data);
              return dataStore[area];
          }
      }
   } catch (err) {
-      console.warn(`Backend lento o inactivo para '${area}'. Usando caché local.`);
+      console.warn(`Backend lento o inactivo para '${area}'.`);
   }
   
-  // Último recurso: buscar en localStorage aunque no esté en RAM
-  if (!dataStore[area]) {
-      const lsData = loadFromLS(area);
-      if (lsData) dataStore[area] = lsData;
-  }
-  return dataStore[area];
+  return null;
+};
 };
 
 export const generateKPIs = (data, area) => {
@@ -390,18 +390,25 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     let detallePallets = [];
     
-    // Pre-ordenar Reserva para ruta de montacargas progresiva
-    let reservaRuta = [...reserva].sort((a,b) => {
+    // Pre-ordenar Reserva para ruta de montacargas determinista (Ubicación -> SKU -> LPN)
+    let reservaRuta = [...reserva].sort((a, b) => {
         let uA = String(a['UBICACION'] || '').trim();
         let uB = String(b['UBICACION'] || '').trim();
-        return uA.localeCompare(uB);
+        if (uA !== uB) return uA.localeCompare(uB);
+        
+        let sA = String(a['PRODUCTO'] || a['ARTICULO'] || '').trim();
+        let sB = String(b['PRODUCTO'] || b['ARTICULO'] || '').trim();
+        if (sA !== sB) return sA.localeCompare(sB);
+        
+        return String(a['LPN'] || '').localeCompare(String(b['LPN'] || ''));
     });
 
     let ubicacionesEnElPiso = new Set();
-    let cuotasPicking = {};
+    let cuotasPicking = {}; // Mapa para órdenes de extracción
+    let stockUsadoMap = new Map(); // Mapa local para evitar efectos secundarios en dataStore
 
-    // 4. Simulación de ruta CRUZANDO LA DEMANDA CONSOLIDADA VS STOCK FÍSICO
-    Object.keys(demandaConsolidada).forEach(skuP => {
+    // 4. Simulación de ruta CRUZANDO LA DEMANDA CONSOLIDADA VS STOCK FÍSICO (Ordenado para determinismo)
+    Object.keys(demandaConsolidada).sort().forEach(skuP => {
         let faltanteTotalSinergia = demandaConsolidada[skuP];
         globalRQ += faltanteTotalSinergia;
 
@@ -412,188 +419,164 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         // Cascada 2: Alta (Rastreo Físico de Paletas)
         if (faltanteTotalSinergia > 0) {
-            let cuotaAlto = Math.min(faltanteTotalSinergia, stAlto[skuP] || 0);
-            let needed = cuotaAlto;
+            let cuotaAltoTeorico = Math.min(faltanteTotalSinergia, stAlto[skuP] || 0);
+            let needed = cuotaAltoTeorico;
+            let actuallyPickedAlto = 0;
             
             for (let r of reservaRuta) {
                 if (needed <= 0) break;
-                // NOTA: Para simulación robusta restamos del array dinámico también para casos repetidos de extracción.
+                
                 let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
-                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['Articulo'] || '').trim();
-                let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || 0) || 0;
-                let pickeadoMismaPaleta = r['_usado'] || 0;
+                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['ArtÃculo'] || r['Artículo'] || r['Articulo'] || '').trim();
+                let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || r['cantidad']) || 0;
+                
+                // Usamos el ID de la fila o LPN+SKU+UBI para rastrear uso local
+                let rowId = r._id || `${r.LPN || ''}_${skuR}_${r.UBICACION || ''}`;
+                let pickeadoMismaPaleta = stockUsadoMap.get(rowId) || 0;
                 let available = qtyR - pickeadoMismaPaleta;
                 
                 if (nivelR === 'ALTO' && skuR === skuP && available > 0) {
                     let pick = Math.min(needed, available);
                     needed -= pick;
-                    r['_usado'] = pickeadoMismaPaleta + pick;
-                    
+                    actuallyPickedAlto += pick;
+                    stockUsadoMap.set(rowId, pickeadoMismaPaleta + pick);
                     let ubiRaw = String(r['UBICACION'] || '').trim();
                     ubicacionesEnElPiso.add(ubiRaw);
                     if (!cuotasPicking[ubiRaw]) cuotasPicking[ubiRaw] = {};
                     cuotasPicking[ubiRaw][skuP] = (cuotasPicking[ubiRaw][skuP] || 0) + pick;
                 }
             }
-            atdAlto += cuotaAlto;
-            faltanteTotalSinergia -= cuotaAlto;
+            faltanteTotalSinergia -= actuallyPickedAlto;
         }
 
-        // Cascada 3: Pisos
         let p3 = Math.min(faltanteTotalSinergia, stPiso[skuP] || 0);
-        atdPiso += p3;
         faltanteTotalSinergia -= p3;
 
-        // Cascada 4: Aereo (Rastreo Físico Secundaria)
+        let actuallyPickedAereo = 0;
         if (faltanteTotalSinergia > 0) {
-            let cuotaAereo = Math.min(faltanteTotalSinergia, stAereo[skuP] || 0);
-            let neededAe = cuotaAereo;
+            let neededAe = Math.min(faltanteTotalSinergia, stAereo[skuP] || 0);
             for (let r of reservaRuta) {
                 if (neededAe <= 0) break;
                 let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
-                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['Articulo'] || '').trim();
-                let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || 0) || 0;
-                let pickeadoMismaPaleta = r['_usado'] || 0;
-                let availableAe = qtyR - pickeadoMismaPaleta;
-                
+                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['ArtÃculo'] || r['Artículo'] || r['Articulo'] || '').trim();
+                let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || r['cantidad']) || 0;
+                let rowIdAe = r._id || `${r.LPN || ''}_${skuR}_${r.UBICACION || ''}`;
+                let pickeadoMismaPaletaAe = stockUsadoMap.get(rowIdAe) || 0;
+                let availableAe = qtyR - pickeadoMismaPaletaAe;
                 if (nivelR === 'AEREO' && skuR === skuP && availableAe > 0) {
                     let pickAe = Math.min(neededAe, availableAe);
                     neededAe -= pickAe;
-                    r['_usado'] = pickeadoMismaPaleta + pickAe;
-                    
+                    actuallyPickedAereo += pickAe;
+                    stockUsadoMap.set(rowIdAe, pickeadoMismaPaletaAe + pickAe);
                     let ubiRawAe = String(r['UBICACION'] || '').trim();
                     ubicacionesEnElPiso.add(ubiRawAe);
                     if (!cuotasPicking[ubiRawAe]) cuotasPicking[ubiRawAe] = {};
                     cuotasPicking[ubiRawAe][skuP] = (cuotasPicking[ubiRawAe][skuP] || 0) + pickAe;
                 }
             }
-            atdAereo += cuotaAereo;
-            faltanteTotalSinergia -= cuotaAereo;
+            faltanteTotalSinergia -= actuallyPickedAereo;
         }
 
-        // Cascada 5: Logico
         let p5 = Math.min(faltanteTotalSinergia, stLogico[skuP] || 0);
-        atdLogico += p5;
         faltanteTotalSinergia -= p5;
+
+        resumenSKU.push({ sku: skuP, total: demandaConsolidada[skuP], baja: p1, alto: actuallyPickedAlto, piso: p3, aereo: actuallyPickedAereo, logico: p5, faltante: faltanteTotalSinergia });
     });
 
-    // 5. Construcción del Reporte Físico (Desplegando Contenido Íntegro de las Paletas)
-    let arrayUbicacionesActivas = Array.from(ubicacionesEnElPiso);
-    arrayUbicacionesActivas.forEach(ubi => {
-        // Traemos todas las filas (SKUs) que viven orgánicamente en esa locación de Reserva
-        let inquilinosMadera = reserva.filter(f => String(f['UBICACION'] || '').trim() === ubi);
-        
-        // Consolidación de SKUs idénticos en la misma madera (paleta)
+    let atdBaja = resumenSKU.reduce((sum, r) => sum + r.baja, 0);
+    let atdAlto = resumenSKU.reduce((sum, r) => sum + r.alto, 0);
+    let atdPiso = resumenSKU.reduce((sum, r) => sum + r.piso, 0);
+    let atdAereo = resumenSKU.reduce((sum, r) => sum + r.aereo, 0);
+    let atdLogico = resumenSKU.reduce((sum, r) => sum + r.logico, 0);
+    let totalRQ_Global = Object.values(demandaConsolidada).reduce((a, b) => a + b, 0);
+    let totalATD_Global = atdBaja + atdAlto + atdPiso + atdAereo + atdLogico;
+
+    const reservaMapByUbi = {};
+    reserva.forEach(f => {
+        const u = String(f['UBICACION'] || '').trim();
+        if (!reservaMapByUbi[u]) reservaMapByUbi[u] = [];
+        reservaMapByUbi[u].push(f);
+    });
+
+    let detallePallets = [];
+    Array.from(ubicacionesEnElPiso).forEach(ubi => {
+        let inquilinosMadera = reservaMapByUbi[ubi] || [];
         let skusEnEstaMadera = {};
         inquilinosMadera.forEach(inquilino => {
-            let colSku = String(inquilino['PRODUCTO'] || inquilino['Producto'] || inquilino['ARTICULO'] || inquilino['Articulo'] || '').trim();
-            let colQty = parseFloat(inquilino['CANTIDAD'] || inquilino['Cantidad actual'] || inquilino['Cantidad'] || 0) || 0;
+            let colSku = String(inquilino['PRODUCTO'] || inquilino['Producto'] || inquilino['ARTICULO'] || inquilino['ArtÃculo'] || inquilino['Artículo'] || inquilino['Articulo'] || '').trim();
+            let colQty = parseFloat(inquilino['CANTIDAD'] || inquilino['Cantidad actual'] || inquilino['Cantidad'] || inquilino['cantidad']) || 0;
             let colLpn = String(inquilino['LPN'] || '').trim();
-            
-            if (!skusEnEstaMadera[colSku]) {
-                skusEnEstaMadera[colSku] = { qty: 0, lpn: colLpn };
-            }
+            if (!skusEnEstaMadera[colSku]) skusEnEstaMadera[colSku] = { qty: 0, lpn: colLpn };
             skusEnEstaMadera[colSku].qty += colQty;
         });
-
-        // Generar las filas finales del reporte por cada SKU único en la paleta
         Object.keys(skusEnEstaMadera).forEach(colSku => {
             let dataG = skusEnEstaMadera[colSku];
-            let bufferPick = 0;
-            
-            // ¿A este zapato le toca picking en esta bajada?
-            if (cuotasPicking[ubi] && cuotasPicking[ubi][colSku]) {
-                bufferPick = cuotasPicking[ubi][colSku];
-                cuotasPicking[ubi][colSku] = 0; // Se apaga la cuota por seguridad
-            }
-
-            detallePallets.push({
-                'UBICACIONES': ubi,
-                'LPN': dataG.lpn,
-                'SKU': colSku,
-                'QTY ACTIVO': Math.floor(stBaja[colSku] || 0),
-                'QTY RESERVA': dataG.qty,
-                'QTY BUFFER': bufferPick,
-                'ARTICULO': colSku.split('-')[0]
-            });
+            let bufferPick = (cuotasPicking[ubi] && cuotasPicking[ubi][colSku]) ? cuotasPicking[ubi][colSku] : 0;
+            detallePallets.push({ 'UBICACIONES': ubi, 'LPN': dataG.lpn, 'SKU': colSku, 'QTY ACTIVO': Math.floor(stBaja[colSku] || 0), 'QTY RESERVA': dataG.qty, 'QTY BUFFER': bufferPick, 'ARTICULO': colSku.split('-')[0] });
         });
     });
 
-    // Mapeo Final de la Cascada para la vista Web
-    const calcPct = (atd, total) => total > 0 ? ((atd / total) * 100).toFixed(2) + '%' : '0.00%';
-    
-    let rqBaja = globalRQ;
-    let rqAlto = rqBaja - atdBaja;
-    let rqPiso = rqAlto - atdAlto;
-    let rqAereo = rqPiso - atdPiso;
-    let rqLogico = rqAereo - atdAereo;
-    
-    let sumRQ = rqBaja; // Mantenemos el RQ inicial global como Total de Demanda
-    let sumATD = atdBaja + atdAlto + atdPiso + atdAereo + atdLogico;
+    // Sincronización Matemática (V3)
+    const atd_Alto_Total = detallePallets.reduce((acc, r) => {
+        // Encontrar nivel de la ubicación original
+        const u = String(r['UBICACIONES']).toUpperCase();
+        const niv = (reserva.find(f => String(f['UBICACION']).toUpperCase() === u) || {})['NIVEL'] || '';
+        return (niv.toUpperCase() === 'ALTO') ? acc + Number(r['QTY BUFFER']) : acc;
+    }, 0);
 
-    let waterfallArray = [
-        { nivel: '1. Zonas Bajas', rq: rqBaja, atd: atdBaja, pct: calcPct(atdBaja, rqBaja) },
-        { nivel: '2. Alto', rq: rqAlto, atd: atdAlto, pct: calcPct(atdAlto, rqAlto) },
-        { nivel: '3. Pisos', rq: rqPiso, atd: atdPiso, pct: calcPct(atdPiso, rqPiso) },
-        { nivel: '4. Aereo', rq: rqAereo, atd: atdAereo, pct: calcPct(atdAereo, rqAereo) },
-        { nivel: '5. Lógicas', rq: rqLogico, atd: atdLogico, pct: calcPct(atdLogico, rqLogico) },
-        { nivel: 'Total', rq: sumRQ, atd: sumATD, pct: calcPct(sumATD, sumRQ) }
+    const atd_Aereo_Total = detallePallets.reduce((acc, r) => {
+        const u = String(r['UBICACIONES']).toUpperCase();
+        const niv = (reserva.find(f => String(f['UBICACION']).toUpperCase() === u) || {})['NIVEL'] || '';
+        return (niv.toUpperCase() === 'AEREO') ? acc + Number(r['QTY BUFFER']) : acc;
+    }, 0);
+
+    const atd_Baja_X = resumenSKU.reduce((s, r) => s + (r.baja || 0), 0);
+    const atd_Piso_X = resumenSKU.reduce((s, r) => s + (r.piso || 0), 0);
+    const atd_Logico_X = resumenSKU.reduce((s, r) => s + (r.logico || 0), 0);
+
+    const total_atd_fisico = atd_Baja_X + atd_Alto_Total + atd_Piso_X + atd_Aereo_Total + atd_Logico_X;
+    const calcPctVal = (a, b) => b > 0 ? ((a / b) * 100).toFixed(2) + '%' : '0.00%';
+
+    let waterfallV3 = [
+        { nivel: '1. Zonas Bajas', rq: totalRQ_Global, atd: atd_Baja_X, pct: calcPctVal(atd_Baja_X, totalRQ_Global) },
+        { nivel: '2. Alto', rq: totalRQ_Global - atd_Baja_X, atd: atd_Alto_Total, pct: calcPctVal(atd_Alto_Total, totalRQ_Global - atd_Baja_X) },
+        { nivel: '3. Pisos', rq: totalRQ_Global - atd_Baja_X - atd_Alto_Total, atd: atd_Piso_X, pct: calcPctVal(atd_Piso_X, totalRQ_Global - atd_Baja_X - atd_Alto_Total) },
+        { nivel: '4. Aereo', rq: totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X, atd: atd_Aereo_Total, pct: calcPctVal(atd_Aereo_Total, totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X) },
+        { nivel: '5. Lógicas', rq: totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X - atd_Aereo_Total, atd: atd_Logico_X, pct: calcPctVal(atd_Logico_X, totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X - atd_Aereo_Total) },
+        { nivel: 'Total', rq: totalRQ_Global, atd: total_atd_fisico, pct: calcPctVal(total_atd_fisico, totalRQ_Global) }
     ];
 
-    // ==================================================
-    // RESUMEN BUFFER SKU — Agrupa por TIPO DE EMPAQUE
-    // PALETAS  = ubicaciones únicas por tipo
-    // SKUS     = códigos SKU únicos por tipo
-    // PAR/CAJA = suma de QTY BUFFER por tipo
-    // ==================================================
-    const acumPaletas = {}; // tipo -> Set de UBICACIONES
-    const acumSkus    = {}; // tipo -> Set de SKU
-    const acumParcaja = {}; // tipo -> suma QTY BUFFER
-
+    // Resumen por Empaque (Tabla 2) - Forzar cuadre con detalle
+    const empaqueData = {};
     detallePallets.forEach(row => {
-        const sku       = String(row['SKU'] || '').trim();
-        const ubicacion = String(row['UBICACIONES'] || '').trim();
-        const qtyBuffer = Number(row['QTY BUFFER']) || 0;
-
-        // REGLA DEFINITIVA: largo total del SKU — 12 caracteres = SolidPack | 15 caracteres = PreePack
-        const largoSKU = sku.length; // largo total (letras + dígitos)
-        let tipo;
-        if (largoSKU === 15) {
-            tipo = 'PreePack';
-        } else {
-            tipo = 'SolidPack'; // 12 caracteres u otro = SolidPack
-        }
-
-        if (!acumPaletas[tipo]) {
-            acumPaletas[tipo] = new Set();
-            acumSkus[tipo]    = new Set();
-            acumParcaja[tipo] = 0;
-        }
-        acumPaletas[tipo].add(ubicacion);
-        acumSkus[tipo].add(sku);
-        acumParcaja[tipo] += qtyBuffer;
+        const sku = String(row['SKU']).trim();
+        const tipo = (sku.length >= 14 || sku.includes('-')) ? 'PreePack' : 'SolidPack';
+        if (!empaqueData[tipo]) empaqueData[tipo] = { paletas: new Set(), skus: new Set(), parcaja: 0 };
+        empaqueData[tipo].paletas.add(String(row['UBICACIONES']));
+        empaqueData[tipo].skus.add(sku);
+        empaqueData[tipo].parcaja += Number(row['QTY BUFFER']);
     });
 
-    const resumenSKU = Object.keys(acumPaletas).map(tipo => ({
-        tipo,
-        paletas: acumPaletas[tipo].size,
-        skus:    acumSkus[tipo].size,
-        parcaja: acumParcaja[tipo]
+    const resumenEmpaque = Object.keys(empaqueData).map(t => ({
+        tipo: t,
+        paletas: empaqueData[t].paletas.size,
+        skus: empaqueData[t].skus.size,
+        parcaja: empaqueData[t].parcaja
     }));
 
-    if (resumenSKU.length > 0) {
-        resumenSKU.push({
-            tipo:    'TOTAL',
-            paletas: resumenSKU.reduce((s, r) => s + r.paletas, 0),
-            skus:    new Set(detallePallets.map(r => r['SKU'])).size,
-            parcaja: resumenSKU.reduce((s, r) => s + r.parcaja, 0)
+    if (resumenEmpaque.length > 0) {
+        resumenEmpaque.push({
+            tipo: 'TOTAL',
+            paletas: new Set(detallePallets.map(r => r['UBICACIONES'])).size,
+            skus: new Set(detallePallets.map(r => r['SKU'])).size,
+            parcaja: resumenEmpaque.reduce((a, b) => a + b.parcaja, 0)
         });
     }
 
     return {
-        waterfall: waterfallArray,
+        waterfall: waterfallV3,
         detalle:   detallePallets,
-        resumenSKU
+        resumenSKU: resumenEmpaque
     };
 };
 
