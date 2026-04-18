@@ -377,7 +377,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // 3. Pre-agrupar Reserva por SKU para Velocidad O(N)
     const reservaPorSku = {};
-    reservaRuta.forEach(r => {
+    reserva.forEach(r => {
         let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['ArtÃculo'] || r['Artículo'] || r['Articulo'] || '').trim();
         if (!reservaPorSku[skuR]) reservaPorSku[skuR] = [];
         reservaPorSku[skuR].push(r);
@@ -527,12 +527,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     const calcPctVal = (a, b) => b > 0 ? ((a / b) * 100).toFixed(2) + '%' : '0.00%';
 
     let waterfallV3 = [
-        { nivel: '1. Zonas Bajas', rq: totalRQ_Global, atd: atd_Baja_X, pct: calcPctVal(atd_Baja_X, totalRQ_Global) },
-        { nivel: '2. Alto', rq: totalRQ_Global - atd_Baja_X, atd: atd_Alto_Total, pct: calcPctVal(atd_Alto_Total, totalRQ_Global - atd_Baja_X) },
-        { nivel: '3. Pisos', rq: totalRQ_Global - atd_Baja_X - atd_Alto_Total, atd: atd_Piso_X, pct: calcPctVal(atd_Piso_X, totalRQ_Global - atd_Baja_X - atd_Alto_Total) },
-        { nivel: '4. Aereo', rq: totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X, atd: atd_Aereo_Total, pct: calcPctVal(atd_Aereo_Total, totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X) },
-        { nivel: '5. Lógicas', rq: totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X - atd_Aereo_Total, atd: atd_Logico_X, pct: calcPctVal(atd_Logico_X, totalRQ_Global - atd_Baja_X - atd_Alto_Total - atd_Piso_X - atd_Aereo_Total) },
-        { nivel: 'Total', rq: totalRQ_Global, atd: total_atd_fisico, pct: calcPctVal(total_atd_fisico, totalRQ_Global) }
+        { nivel: '1. Zonas Bajas', rq: globalRQ, atd: atd_Baja_X, pct: calcPctVal(atd_Baja_X, globalRQ) },
+        { nivel: '2. Alto', rq: globalRQ - atd_Baja_X, atd: atd_Alto_Total, pct: calcPctVal(atd_Alto_Total, globalRQ - atd_Baja_X) },
+        { nivel: '3. Pisos', rq: globalRQ - atd_Baja_X - atd_Alto_Total, atd: atd_Piso_X, pct: calcPctVal(atd_Piso_X, globalRQ - atd_Baja_X - atd_Alto_Total) },
+        { nivel: '4. Aereo', rq: globalRQ - atd_Baja_X - atd_Alto_Total - atd_Piso_X, atd: atd_Aereo_Total, pct: calcPctVal(atd_Aereo_Total, globalRQ - atd_Baja_X - atd_Alto_Total - atd_Piso_X) },
+        { nivel: '5. Lógicas', rq: globalRQ - atd_Baja_X - atd_Alto_Total - atd_Piso_X - atd_Aereo_Total, atd: atd_Logico_X, pct: calcPctVal(atd_Logico_X, globalRQ - atd_Baja_X - atd_Alto_Total - atd_Piso_X - atd_Aereo_Total) },
+        { nivel: 'Total', rq: globalRQ, atd: total_atd_fisico, pct: calcPctVal(total_atd_fisico, globalRQ) }
     ];
 
     // Resumen por Empaque (Tabla 2) - Forzar cuadre con detalle
