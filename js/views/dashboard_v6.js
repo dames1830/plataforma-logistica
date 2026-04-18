@@ -10,7 +10,7 @@ import {
   setDateFilter, 
   currentDateFilter, 
   pingServer 
-} from '../services/csvHub_v6.js?v=10.1-beta';
+} from '../services/csvHub_v6.js?v=10.2-beta';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -47,7 +47,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
       <header class="topbar">
         <div class="topbar-brand">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.1 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.2 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
         </div>
         <div class="user-profile">
           <div class="user-details" style="text-align:right;">
@@ -125,7 +125,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let lastBufferKPI = null;
 
   const renderBufferTab = async (container, subtitle) => {
-    subtitle.textContent = "Análisis de Reposición (V10.1 Fix)";
+    subtitle.textContent = "Análisis de Reposición (V10.2 Fix)";
     if (!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
 
     container.innerHTML = `
@@ -150,7 +150,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1.2rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.1 (Precision Fix)</h4>
+              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.2 (Master-Joined)</h4>
               <button id="btn_calc" class="btn" style="width:auto; padding:0.5rem 1.5rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
             <div id="resultsArea" style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;"></div>
@@ -171,7 +171,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderGenericTab = (container, subtitle, id, label) => {
     subtitle.textContent = `Operativa: ${label}`;
-    container.innerHTML = `<div class="upload-grid" id="genGrid"></div>`;
+    container.innerHTML = `<div class="upload-grid" id="genGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;"></div>`;
     renderUploadArea(document.getElementById('genGrid'), id, dataStore[id], '.csv', label);
   };
 
@@ -209,7 +209,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <p style="font-size:0.7rem; color:${data?'var(--success)':'var(--text-muted)'}">${data ? '✅ '+data.length.toLocaleString()+' Filas' : 'Sin datos'}</p>
         <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.75rem; cursor:pointer;">${data?'REPLACING':'UPLOAD'} <input type="file" id="up_input_${area}" accept="${ext}" style="display:none;"></label>`;
     container.appendChild(div);
-    const input = document.getElementById(`up_input_${area}`);
+    const input = div.querySelector('input');
     if(input) input.addEventListener('change', async (e) => { 
         if(e.target.files[0]) { try { await parseFile(e.target.files[0], area); renderTabContent(); } catch(err){ alert(err); } } 
     });
