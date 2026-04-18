@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.9';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=8.0';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -46,7 +46,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.9</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V8.0</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -215,9 +215,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-        <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.8rem; border-radius:6px; font-size:0.82rem; margin-bottom: 2rem;">📥 EXCEL DETALLADO</button>
+        <div style="display:flex; gap:1rem;">
+            <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📊 EXPORTAR ANÁLISIS ZONA</button>
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO SKU</button>
+        </div>
     `;
-    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V79'));
+    document.getElementById('btn_exp_zonas').addEventListener('click', () => exportToExcel(data.detalleZonas, 'Analisis_Zonas_V80'));
+    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Analisis_SKU_V80'));
   };
 
   let activeAdminSub = 'usuarios';
