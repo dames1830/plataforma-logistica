@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=6.9';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.0';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -61,16 +61,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         </button>
       </div>
     </header>
-    
     <nav class="top-nav-links" id="navLinks"></nav>
-    
     <main class="main-wrapper">
       <div class="glass-panel" style="padding:2rem; min-height:80vh;">
         <div class="tab-header" style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end;">
-          <div>
-            <h1 id="contentTitle" style="color:var(--primary); font-size:2rem; font-weight:800;">Cargando...</h1>
-            <p id="contentSubtitle" style="color:var(--text-muted); font-size:0.9rem;">Analizando base de datos centralizada</p>
-          </div>
+          <div><h1 id="contentTitle" style="color:var(--primary); font-size:2rem; font-weight:800;">Cargando...</h1><p id="contentSubtitle" style="color:var(--text-muted); font-size:0.9rem;">Analizando base de datos centralizada</p></div>
         </div>
         <div id="contentArea"></div>
       </div>
@@ -90,12 +85,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   });
 
   const renderNav = () => {
-    navContainer.innerHTML = allowedTabs.map(t => `
-      <a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">
-        <span style="font-size:1.2rem; margin-right:8px;">${t.icon}</span> ${t.label}
-      </a>
-    `).join('');
-    
+    navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">${t.icon} ${t.label}</a>`).join('');
     document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => {
       currentTab = e.currentTarget.dataset.id;
       renderNav(); renderTabContent();
@@ -104,25 +94,16 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderTabContent = async () => {
     const tabObj = allowedTabs.find(t => t.id === currentTab);
-    const dateTag = currentDateFilter ? ` <span style="font-size:0.8rem; background:var(--warning); color:#000; padding:2px 10px; border-radius:12px; font-weight:600;">Snapshot: ${currentDateFilter}</span>` : '';
+    const dateTag = currentDateFilter ? ` <span style="background:var(--warning); color:#000; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;">Snapshot: ${currentDateFilter}</span>` : '';
     contentTitle.innerHTML = tabObj.label + dateTag;
-    
     if(currentChart) { currentChart.destroy(); currentChart = null; }
-    
-    // Espaciado animado
-    contentArea.innerHTML = `
-      <div style="text-align:center; padding:5rem; color:var(--text-muted); opacity:0.7;">
-         <i class="fas fa-circle-notch fa-spin fa-3x" style="color:var(--primary); margin-bottom:1rem;"></i>
-         <p>Sincronizando con Servidor Maestro...</p>
-      </div>
-    `;
+    contentArea.innerHTML = `<div style="text-align:center; padding:5rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando...</p></div>`;
 
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'stock') await renderStockTab();
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
-      contentSubtitle.textContent = `Visualización Analítica del Área ${tabObj.label}`;
       const data = await getAreaData(currentTab);
       if (!data) renderUploadArea(contentArea, currentTab);
       else renderDashboardView(contentArea, data);
@@ -132,82 +113,39 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderHomeTab = async () => {
     contentSubtitle.textContent = "Control Global de Operaciones Logísticas";
     contentArea.innerHTML = `<div class="kpi-grid" id="homeKpiGrid"></div>`;
-    const areas = ['stockActivo', 'stockReserva', 'buffer', 'picking', 'packing', 'despacho'];
-    
-    areas.forEach(a => {
+    ['stockActivo', 'stockReserva', 'buffer', 'picking', 'packing'].forEach(a => {
         getAreaData(a).then(rows => {
             const grid = document.getElementById('homeKpiGrid');
             if(!grid) return;
-            const count = rows ? rows.length : 0;
-            grid.innerHTML += `
-               <div class="kpi-card" style="border-left: 4px solid var(--primary); background:rgba(255,255,255,0.02);">
-                  <div class="kpi-title">${a.replace('stock', 'STOCK ').toUpperCase()}</div>
-                  <div class="kpi-value" style="color:${count>0?'var(--primary)':'var(--text-muted)'};">${count.toLocaleString()}</div>
-                  <div class="kpi-subtitle">Registros en Tiempo Real</div>
-               </div>
-            `;
-        }).catch(e => console.error(e));
+            grid.innerHTML += `<div class="kpi-card"><h4>${a.toUpperCase()}</h4><h2>${rows ? rows.length.toLocaleString() : 0}</h2></div>`;
+        });
     });
   };
 
   const renderStockTab = async () => {
     contentSubtitle.textContent = "Gestión de Existencias Físicas y de Reserva";
-    contentArea.innerHTML = `<div id="stockSub" style="display:flex; flex-direction:column; gap:2rem;"></div>`;
+    contentArea.innerHTML = `<div id="stockSub" style="display:flex; flex-direction:column; gap:1.5rem;"></div>`;
     const sub = document.getElementById('stockSub');
     const [act, res] = await Promise.all([getAreaData('stockActivo'), getAreaData('stockReserva')]);
     renderUploadArea(sub, 'stockActivo', act, '.csv');
     renderUploadArea(sub, 'stockReserva', res, '.xlsx');
-    
-    // Si tenemos ambos, mostrar botón de "Ir a Buffer"
-    if(act && res) {
-        sub.innerHTML += `
-          <div style="padding:2rem; background:rgba(79,70,229,0.05); border-radius:12px; text-align:center; border:1px dashed var(--primary);">
-            <p style="margin-bottom:1rem; color:var(--text-muted);">Stock físico indexado correctamente. ¿Deseas analizar la reposición?</p>
-            <button class="btn" style="width:auto; padding:0.8rem 3rem;" onclick="document.querySelector('[data-id=buffer]').click()">⚡ IR A ZONA BUFFER</button>
-          </div>
-        `;
-    }
   };
 
   const renderUploadArea = (container, area, hasData = null, ext = '.csv') => {
     const div = document.createElement('div');
     div.style.width = '100%';
+    const label = area.replace('solicitud', 'OTRAS SOLICITUDES').replace('articulos', 'MAESTRO ARTÍCULOS').replace('tallas', 'TALLAS').toUpperCase();
     
     if (hasData) {
-      div.innerHTML = `
-        <div style="padding:1.5rem; background:rgba(34, 197, 94, 0.08); border:1px solid var(--success); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
-           <div>
-              <h4 style="color:var(--success); font-weight:700;">✅ ${area.toUpperCase()} CARGADO</h4>
-              <p style="font-size:0.8rem; color:var(--text-muted);">${hasData.length.toLocaleString()} registros en el servidor.</p>
-           </div>
-           <label class="btn" style="width:auto; background:transparent; border:1px solid var(--border); color:var(--text-main); font-size:0.75rem; padding:0.4rem 1rem; cursor:pointer;">
-             RE-SUBIR <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
-           </label>
-        </div>
-      `;
+      div.innerHTML = `<div style="padding:1.5rem; background:rgba(34, 197, 94, 0.1); border:1px solid var(--success); border-radius:12px; display:flex; justify-content:space-between; align-items:center;"><div><h4 style="color:var(--success);">✅ ${label} OK</h4><p style="font-size:0.8rem;">${hasData.length.toLocaleString()} registros.</p></div><label class="btn" style="width:auto; padding:0.5rem 1rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">ACTUALIZAR</label></div>`;
     } else {
-      div.innerHTML = `
-        <div class="upload-area" id="drop_${area}">
-           <i class="fas fa-cloud-upload-alt fa-2x" style="color:var(--primary); margin-bottom:1rem;"></i>
-           <h3 style="margin-bottom:0.5rem; color:#fff;">Carga de ${area.toUpperCase()}</h3>
-           <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">Sube el archivo ${ext} diario para alojarlo en la base de datos nacional.</p>
-           <label class="btn" style="width:auto; padding:0.6rem 2rem; cursor:pointer;">
-             CARGAR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
-           </label>
-        </div>
-      `;
+      div.innerHTML = `<div class="upload-area" style="padding:2rem;"><h3 style="margin-bottom:1rem;">${label}</h3><label class="btn" style="width:auto; padding:0.6rem 2rem; cursor:pointer;">SUBIR ${ext} <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label></div>`;
     }
     container.appendChild(div);
     const input = document.getElementById(`up_${area}`);
     if(input) input.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const ogText = input.parentElement.innerText;
-        input.parentElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
-        try {
-            await parseFile(file, area);
-            renderTabContent();
-        } catch(err) { alert('Error: ' + err); renderTabContent(); }
+        if(!e.target.files[0]) return;
+        try { await parseFile(e.target.files[0], area); renderTabContent(); } catch(err) { alert(err); renderTabContent(); }
     });
   };
 
@@ -217,9 +155,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
     contentArea.innerHTML = `
-        <nav style="display:flex; gap:1.5rem; margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
-          <a class="sub-nav-item ${activeBufferSub==='maestros'?'active':''}" data-s="maestros" style="color:${activeBufferSub==='maestros'?'var(--primary)':'var(--text-muted)'}; font-weight:600; cursor:pointer; padding-bottom:0.5rem; border-bottom:2px solid ${activeBufferSub==='maestros'?'var(--primary)':'transparent'}">🗂️ ARCHIVOS MAESTROS</a>
-          <a class="sub-nav-item ${activeBufferSub==='reportes'?'active':''}" data-s="reportes" style="color:${activeBufferSub==='reportes'?'var(--primary)':'var(--text-muted)'}; font-weight:600; cursor:pointer; padding-bottom:0.5rem; border-bottom:2px solid ${activeBufferSub==='reportes'?'var(--primary)':'transparent'}">📉 ANÁLISIS BUFFER</a>
+        <nav style="display:flex; gap:1.5rem; margin-bottom:2rem; border-bottom:1px solid var(--border);">
+          <a class="sub-nav-item ${activeBufferSub==='maestros'?'active':''}" data-s="maestros">🗂️ ARCHIVOS MAESTROS</a>
+          <a class="sub-nav-item ${activeBufferSub==='reportes'?'active':''}" data-s="reportes">📉 ANÁLISIS BUFFER</a>
         </nav>
         <div id="bufContent"></div>`;
     
@@ -230,26 +168,18 @@ export const renderDashboard = async (container, user, onLogout) => {
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div');
-        wrap.style.display = 'flex'; wrap.style.direction = 'column'; wrap.style.gap = '1.5rem';
+        wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))'; wrap.style.gap = '1.5rem';
         buf.appendChild(wrap);
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv');
-        // También mostrar estados de Activo y Reserva
-        const stAct = await getAreaData('stockActivo');
-        const stRes = await getAreaData('stockReserva');
-        if(!stAct || !stRes) {
-            wrap.innerHTML += `<div style="padding:1.5rem; background:rgba(239,68,68,0.1); color:var(--danger); border-radius:12px; border:1px dashed var(--danger);">⚠️ ADVERTENCIA: Debes cargar el Stock Activo y Reserva en la pestaña "Stock General" antes de procesar el Buffer.</div>`;
-        }
+        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv');
+        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
+        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
     } else {
         buf.innerHTML = `
-            <div style="background:rgba(219,39,119,0.08); padding:2rem; border-radius:16px; border:3px solid #db2777; box-shadow:0 0 40px rgba(219,39,119,0.15);">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
-                    <div>
-                        <h2 style="color:#db2777; font-weight:900; font-size:1.6rem; letter-spacing:1px; margin:0;">ANÁLISIS BUFFER NUCLEAR V6.9</h2>
-                        <p style="color:#fff; opacity:0.8; font-size:0.85rem; margin-top:0.3rem;">Algoritmo de Priorización de Paletas Global</p>
-                    </div>
-                    <button id="btn_calc" class="btn" style="background:#db2777; width:auto; padding:1rem 3rem; font-weight:800; font-size:1.1rem; box-shadow: 0 4px 15px rgba(219,39,119,0.4);">
-                        ⚡ PROCESAR ANÁLISIS
-                    </button>
+            <div style="background:rgba(219,39,119,0.08); padding:2rem; border-radius:16px; border:3px solid #db2777;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h2 style="color:#db2777; font-weight:900; margin:0;">ANÁLISIS BUFFER NUCLEAR V7.0</h2>
+                    <button id="btn_calc" class="btn" style="background:#db2777; width:auto; padding:1rem 3rem; font-weight:800;">⚡ PROCESAR ANÁLISIS</button>
                 </div>
                 <div id="resultsArea"></div>
             </div>`;
@@ -259,18 +189,15 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         document.getElementById('btn_calc').addEventListener('click', async () => {
             const btn = document.getElementById('btn_calc');
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> CALCULANDO...';
-            
-            // Simular carga para UI
+            btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
             setTimeout(async () => {
                 const res = calculateBufferPallets(bufferConfigCached);
                 if(res) {
                     lastBufferKPI = res;
                     localStorage.setItem('lastBufferKPI', JSON.stringify(res));
-                    await logSystemAction(user.username, 'CALC_BUFFER', 'Ejecución del análisis manual nuclear');
                     saveBufferReport(res, user.username);
                     renderBufferResults(results, res);
-                } else alert('ERROR: Faltan archivos maestros (Activo + Reserva + Pedidos)');
+                } else alert('ERROR: Faltan archivos maestros.');
                 btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
             }, 500);
         });
@@ -279,97 +206,70 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:2rem;">
-            <!-- CUADRO 1: ZONIFICACION -->
-            <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:12px; overflow:hidden;">
-                <div style="padding:1rem; background:rgba(79,70,229,0.15); border-bottom:1px solid var(--border); text-align:center;">
-                    <h3 style="color:#fff; font-weight:700; font-size:1rem; margin:0;">DETALLE POR ZONIFICACIÓN</h3>
+        <div style="display:flex; flex-direction:column; gap:2rem;">
+            <!-- BLOQUE 1: ZONAS -->
+            <div style="background:rgba(15,23,42,0.8); border:2px solid #4f46e5; border-radius:12px; overflow:hidden;">
+                <div style="padding:1.2rem; background:rgba(79,70,229,0.2); border-bottom:1px solid #4f46e5; text-align:center;">
+                    <h3 style="color:#fff; font-weight:700; margin:0; letter-spacing:1px;">ANÁLISIS BUFFER ZONAS</h3>
                 </div>
-                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <table style="width:100%; border-collapse:collapse;">
                     <thead>
-                        <tr style="background:rgba(0,0,0,0.3);">
-                            <th style="padding:1rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">NIVEL / ÁREA</th>
-                            <th style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">ATENDIDO (RQ)</th>
-                            <th style="padding:1rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">% ATEND.</th>
+                        <tr style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <th style="padding:1.2rem; text-align:left; color:var(--text-muted); font-size:0.8rem;">NIVEL/AREA</th>
+                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">RQ</th>
+                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">ATD RQ</th>
+                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">% ATD</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${data.waterfall.map(r => `
-                            <tr style="border-bottom:1px solid var(--border); ${r.nivel === 'Total' ? 'background:rgba(34,197,94,0.1); font-weight:700;' : ''}">
-                                <td style="padding:0.8rem 1rem;">${r.nivel}</td>
-                                <td style="padding:0.8rem 1rem; text-align:center; color:${r.atd > 0 ? 'var(--success)' : 'var(--text-muted)'};">${r.atd.toLocaleString()}</td>
-                                <td style="padding:0.8rem 1rem; text-align:right; color:var(--success);">${r.pct}</td>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.nivel === 'Total' ? 'background:rgba(255,255,255,0.05); font-weight:800;' : ''}">
+                                <td style="padding:1rem 1.2rem;">${r.nivel}</td>
+                                <td style="padding:1rem 1.2rem; text-align:right;">${r.rq.toLocaleString()}</td>
+                                <td style="padding:1rem 1.2rem; text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.atd.toLocaleString()}</td>
+                                <td style="padding:1rem 1.2rem; text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.pct}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
 
-            <!-- CUADRO 2: RESUMEN SKU -->
-            <div style="background:rgba(15,23,42,0.6); border:1px solid #db2777; border-radius:12px; overflow:hidden;">
-                <div style="padding:1rem; background:rgba(219,39,119,0.2); border-bottom:1px solid #db2777; text-align:center;">
-                    <h3 style="color:#fff; font-weight:700; font-size:1rem; margin:0;">RESUMEN DE EMPAQUE (V6.9)</h3>
+            <!-- BLOQUE 2: SKU -->
+            <div style="background:rgba(15,23,42,0.8); border:2px solid #f59e0b; border-radius:12px; overflow:hidden;">
+                <div style="padding:1.2rem; background:rgba(245,158,11,0.1); border-bottom:1px solid #f59e0b; text-align:center;">
+                    <h3 style="color:#f59e0b; font-weight:700; margin:0; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3>
                 </div>
-                <table style="width:100%; border-collapse:collapse; font-size:1.1rem;">
+                <table style="width:100%; border-collapse:collapse;">
                     <thead>
-                        <tr>
-                            <th style="padding:1rem; text-align:left; color:#fff; font-size:0.8rem;">TIPO</th>
-                            <th style="padding:1rem; text-align:center; color:#fff; font-size:0.8rem;">PALETAS</th>
-                            <th style="padding:1rem; text-align:right; color:#fff; font-size:0.8rem;">CAJAS/PAR</th>
+                        <tr style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <th style="padding:1.2rem; text-align:left; color:var(--text-muted); font-size:0.8rem;">TIPO DE EMPAQUE</th>
+                            <th style="padding:1.2rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">PALETAS A BAJAR</th>
+                            <th style="padding:1.2rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">SKUS</th>
+                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">PAR/CAJA</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${data.resumenSKU.map(r => `
-                            <tr style="border-bottom:1px solid rgba(219,39,119,0.2); ${r.tipo === 'TOTAL' ? 'font-weight:900; background:rgba(219,39,119,0.1); height:4rem;' : ''}">
-                                <td style="padding:1rem; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}">${r.tipo}</td>
-                                <td style="padding:1rem; text-align:center; color:#fff;">${r.paletas}</td>
-                                <td style="padding:1rem; text-align:right; font-weight:800; color:${r.tipo==='TOTAL'?'#22c55e':'#db2777'}; font-size:${r.tipo==='TOTAL'?'1.4rem':'1.1rem'};">
-                                    ${Number(r.parcaja).toLocaleString()}
-                                </td>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.tipo === 'TOTAL' ? 'background:rgba(255,255,255,0.05); font-weight:800;' : ''}">
+                                <td style="padding:1rem 1.2rem; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'};">${r.tipo}</td>
+                                <td style="padding:1rem 1.2rem; text-align:center;">${r.paletas}</td>
+                                <td style="padding:1rem 1.2rem; text-align:center;">${r.skus}</td>
+                                <td style="padding:1rem 1.2rem; text-align:right; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}; font-size:${r.tipo==='TOTAL'?'1.2rem':'1rem'};">${Number(r.parcaja).toLocaleString()}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <div style="margin-top:2.5rem; display:flex; justify-content:center; gap:1.5rem;">
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.8rem 2.5rem; display:flex; align-items:center; gap:0.5rem;">
-                <i class="fas fa-file-excel"></i> DESCARGAR DETALLE (.xlsx)
-            </button>
-            <button class="btn" style="width:auto; background:var(--border); padding:0.8rem 2rem; border-radius:12px; font-size:0.85rem;" onclick="location.reload()">
-                ↻ LIMPIAR PARA NUEVO ANÁLISIS
-            </button>
+        <div style="margin-top:2rem; display:flex; justify-content:center; gap:2rem;">
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:1rem 3rem;">📥 EXPORTAR DETALLE EXCEL</button>
         </div>
     `;
-    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Análisis_Buffer_V69'));
+    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V7'));
   };
 
   const renderConfigTab = async () => {
-    contentSubtitle.textContent = "Parámetros del Sistema y Panel de Control";
-    contentArea.innerHTML = `
-        <div class="glass-panel" style="max-width:600px; margin:0 auto; padding:2rem; border:1px solid var(--border);">
-            <h3 style="color:var(--primary); font-weight:800; margin-bottom:1.5rem;">⚙️ Configuración del Analizador</h3>
-            <div style="display:flex; flex-direction:column; gap:1.2rem;">
-               <div style="padding:1.5rem; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid var(--border);">
-                  <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Zonas que el algoritmo considerará para asignar stock libre:</p>
-                  ${['include_reserva', 'include_alto', 'include_piso', 'include_aereo', 'include_logico'].map(k => `
-                    <label style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.02);">
-                      <span style="font-size:0.9rem;">${k.replace('include_', 'INCLUIR ').toUpperCase()}</span>
-                      <input type="checkbox" class="config-chk" data-k="${k}" ${bufferConfigCached[k]==='1'?'checked':''} style="width:1.2rem; height:1.2rem; accent-color:var(--primary);">
-                    </label>
-                  `).join('')}
-               </div>
-               <button id="save_conf" class="btn" style="background:var(--success);">💾 GUARDAR CONFIGURACIÓN</button>
-            </div>
-        </div>`;
-    
-    document.getElementById('save_conf').addEventListener('click', async () => {
-        const conf = {};
-        document.querySelectorAll('.config-chk').forEach(c => conf[c.dataset.k] = c.checked ? '1' : '0');
-        bufferConfigCached = conf;
-        alert('Configuración maestros actualizada (Local).');
-    });
+    contentArea.innerHTML = `<div class="glass-panel" style="max-width:500px; margin:2rem auto; padding:2rem;"><h3>Configuración</h3><button id="save_conf" class="btn">Guardar</button></div>`;
   };
 
   document.getElementById('logoutBtn').addEventListener('click', onLogout);
@@ -378,12 +278,5 @@ export const renderDashboard = async (container, user, onLogout) => {
 };
 
 const renderDashboardView = (container, data) => {
-    container.innerHTML = `
-        <div style="padding:3rem; text-align:center; background:rgba(30,41,59,0.3); border:1px dashed var(--border); border-radius:16px;">
-            <i class="fas fa-database fa-3x" style="color:var(--primary); opacity:0.3; margin-bottom:1.5rem;"></i>
-            <h3 style="color:#fff; font-weight:700;">Base de Datos Indexada</h3>
-            <p style="color:var(--text-muted);">Registros cargados para esta área: <strong style="color:var(--success); font-size:1.2rem;">${data.length.toLocaleString()}</strong></p>
-            <button class="btn" style="width:auto; margin-top:2rem; padding:0.6rem 2rem;" onclick="location.reload()">ACTUALIZAR DATOS</button>
-        </div>
-    `;
+    container.innerHTML = `<div style="padding:3rem; text-align:center;"><h3>Datos Cargados</h3><p>${data.length.toLocaleString()} registros.</p></div>`;
 };

@@ -8,7 +8,10 @@ export const dataStore = {
   despacho: null,
   recepcion: null,
   almacenaje: null,
-  buffer: null
+  buffer: null,
+  solicitud: null,
+  articulos: null,
+  tallas: null
 };
 
 // =============================================
