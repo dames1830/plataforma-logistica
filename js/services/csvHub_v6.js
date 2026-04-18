@@ -163,7 +163,19 @@ export const parseFile = (file, area) => {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, {type: 'array'});
-          const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 2, defval: "" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          
+          // Detección robusta de cabeceras: Buscamos la fila que contenga 'NIVEL' o 'PRODUCTO'
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          let headerIdx = 0;
+          for(let i=0; i<Math.min(rows.length, 10); i++) {
+              const rowStr = JSON.stringify(rows[i]).toUpperCase();
+              if(rowStr.includes('NIVEL') || rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO')) {
+                  headerIdx = i; break;
+              }
+          }
+
+          const json = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
           await persistToDatabase(area, json, session.username || 'sistema');
           resolve(json);
