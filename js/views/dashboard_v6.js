@@ -10,7 +10,7 @@ import {
   setDateFilter, 
   currentDateFilter, 
   pingServer 
-} from '../services/csvHub_v6.js?v=10.2-beta';
+} from '../services/csvHub_v6.js?v=10.3-beta';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -47,7 +47,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
       <header class="topbar">
         <div class="topbar-brand">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.2 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.3 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
         </div>
         <div class="user-profile">
           <div class="user-details" style="text-align:right;">
@@ -125,7 +125,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let lastBufferKPI = null;
 
   const renderBufferTab = async (container, subtitle) => {
-    subtitle.textContent = "Análisis de Reposición (V10.2 Fix)";
+    subtitle.textContent = "Análisis de Reposición (V10.3 Precision)";
     if (!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
 
     container.innerHTML = `
@@ -143,14 +143,15 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (activeBufferSub === 'maestros') {
         buf.innerHTML = `<div class="upload-grid" id="mastersGrid"></div>`;
         const grid = document.getElementById('mastersGrid');
-        renderUploadArea(grid, 'buffer', dataStore.buffer, '.xlsx', 'Zona Buffer');
+        // V10.3: Soporte para CSV y XLSX en Pedidos
+        renderUploadArea(grid, 'buffer', dataStore.buffer, '.csv,.xlsx', 'PEDIDOS / ZONA BUFFER');
         renderUploadArea(grid, 'articulos', dataStore.articulos, '.xlsx', 'Artículos (XLSX)');
         renderUploadArea(grid, 'tallas', dataStore.tallas, '.xlsx', 'Tallas (XLSX)');
     } else {
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1.2rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.2 (Master-Joined)</h4>
+              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.3 (Join Engine Active)</h4>
               <button id="btn_calc" class="btn" style="width:auto; padding:0.5rem 1.5rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
             <div id="resultsArea" style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;"></div>
