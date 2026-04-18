@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.4';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.5';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -46,7 +46,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.4</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.5</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -128,7 +128,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (hasData) {
       div.innerHTML = `<div style="padding:1.5rem; background:rgba(34, 197, 94, 0.1); border:1px solid var(--success); border-radius:12px; display:flex; justify-content:space-between; align-items:center;"><div><h4 style="color:var(--success);">✅ ${label} CARGADO</h4><p style="font-size:0.8rem;">${hasData.length.toLocaleString()} registros.</p></div><label class="btn" style="width:auto; padding:0.5rem 1rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label></div>`;
     } else {
-      div.innerHTML = `<div class="upload-area" style="padding:2rem;"><h3>${label}</h3><label class="btn" style="width:auto; padding:0.6rem 2rem; cursor:pointer;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label></div>`;
+      div.innerHTML = `<div class="upload-area" style="padding:2rem; text-align:center;"><h3>${label}</h3><label class="btn" style="width:auto; padding:0.6rem 2rem; cursor:pointer; margin-top:1rem;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label></div>`;
     }
     container.appendChild(div);
     const input = document.getElementById(`up_${area}`);
@@ -153,7 +153,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
     } else {
-        buf.innerHTML = `<div style="background:rgba(219,39,119,0.08); padding:2rem; border-radius:16px; border:3px solid #db2777;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;"><h2 style="color:#db2777; font-weight:900;">ANÁLISIS BUFFER NUCLEAR V7.4</h2><button id="btn_calc" class="btn" style="background:#db2777; width:auto; padding:1rem 3rem;">⚡ PROCESAR ANÁLISIS</button></div><div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:2rem;"></div></div>`;
+        const now = new Date();
+        const timeStr = `${now.toLocaleDateString()} a las ${now.toLocaleTimeString()}`;
+        buf.innerHTML = `<div style="background:rgba(30, 41, 59, 0.4); padding:2rem; border-radius:16px; border:1px solid var(--border);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;"><h4 style="color:var(--text-muted); font-weight:600; font-size:0.9rem;">Análisis generado el: <span style="color:var(--primary);">${timeStr}</span></h4><button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.8rem 2rem; border-radius:8px;">⚡ PROCESAR ANÁLISIS</button></div><div id="resultsArea" style="display:flex; flex-direction:column; align-items:center; gap:3rem;"></div></div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
         document.getElementById('btn_calc').addEventListener('click', async () => {
@@ -170,23 +172,35 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     container.innerHTML = `
-        <div style="background:rgba(15,23,42,0.8); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; width:fit-content; min-width:600px;">
-            <div style="padding:1rem; background:rgba(79,70,229,0.2); border-bottom:1px solid #4f46e5; text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:1rem;">ANÁLISIS BUFFER ZONAS</h3></div>
+        <div style="background:rgba(15,23,42,0.8); border:1px solid #4f46e5; border-radius:12px; overflow:hidden; width:fit-content; min-width:700px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+            <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:1rem; letter-spacing:1px;">ANÁLISIS BUFFER POR ZONAS</h3></div>
             <table style="border-collapse:collapse; width:100%;">
-                <thead><tr style="background:rgba(0,0,0,0.5);"><th style="padding:0.75rem 1.5rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">NIVEL/AREA</th><th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">RQ</th><th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">ATD RQ</th><th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">% ATD</th></tr></thead>
-                <tbody>${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.nivel==='Total'?'background:rgba(255,255,255,0.05); font-weight:800;':''}"><td>${r.nivel}</td><td style="text-align:right;">${r.rq.toLocaleString()}</td><td style="text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.atd.toLocaleString()}</td><td style="text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.pct}</td></tr>`).join('')}</tbody>
+                <thead><tr style="background:rgba(0,0,0,0.5);"><th style="padding:1rem 2rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">NIVEL/AREA</th><th style="padding:1rem 2rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">DEMANDA (RQ)</th><th style="padding:1rem 2rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">ATENCIÓN (ATD)</th><th style="padding:1rem 2rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">% EFECTIVIDAD</th></tr></thead>
+                <tbody>${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.nivel==='Total'?'background:rgba(255,255,255,0.05); font-weight:800;':''}">
+                    <td style="padding:1rem 2rem;">${r.nivel}</td>
+                    <td style="padding:1rem 2rem; text-align:center;">${r.rq.toLocaleString()}</td>
+                    <td style="padding:1rem 2rem; text-align:center; color:${r.atd > 0 ? '#fff' : 'var(--text-muted)'};">${r.atd.toLocaleString()}</td>
+                    <td style="padding:1rem 2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e':'#fff'}; font-weight:bold;">${r.pct}</td>
+                </tr>`).join('')}</tbody>
             </table>
         </div>
-        <div style="background:rgba(15,23,42,0.8); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; width:fit-content; min-width:600px;">
-            <div style="padding:1rem; background:rgba(245,158,11,0.1); border-bottom:1px solid #f59e0b; text-align:center;"><h3 style="color:#f59e0b; font-weight:700; margin:0; font-size:1rem;">ANÁLISIS BUFFER SKU</h3></div>
+        <div style="background:rgba(15,23,42,0.8); border:1px solid #f59e0b; border-radius:12px; overflow:hidden; width:fit-content; min-width:700px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+            <div style="padding:1rem; background:rgba(245,158,11,0.05); border-bottom:1px solid rgba(245,158,11,0.2); text-align:center;"><h3 style="color:#f59e0b; font-weight:700; margin:0; font-size:1rem; letter-spacing:1px;">ANÁLISIS BUFFER POR TIPO SKU</h3></div>
             <table style="border-collapse:collapse; width:100%;">
-                <thead><tr style="background:rgba(0,0,0,0.5);"><th style="padding:0.75rem 1.5rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">TIPO DE EMPAQUE</th><th style="padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">PALETAS A BAJAR</th><th style="padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">SKUS</th><th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">PAR/CAJA</th></tr></thead>
-                <tbody>${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.tipo==='TOTAL'?'background:rgba(255,255,255,0.05); font-weight:800;':''}"><td>${r.tipo}</td><td style="text-align:center;">${r.paletas}</td><td style="text-align:center;">${r.skus}</td><td style="text-align:right; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'};">${Number(r.parcaja).toLocaleString()}</td></tr>`).join('')}</tbody>
+                <thead><tr style="background:rgba(0,0,0,0.5);"><th style="padding:1rem 2rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">TIPO DE EMPAQUE</th><th style="padding:1rem 2rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">PALETAS A BAJAR</th><th style="padding:1rem 2rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">SKUS TOTALES</th><th style="padding:1rem 2rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">TOTAL PAR/CAJA</th></tr></thead>
+                <tbody>${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.tipo==='TOTAL'?'background:rgba(255,255,255,0.05); font-weight:800;':''}">
+                    <td style="padding:1rem 2rem;">${r.tipo}</td>
+                    <td style="padding:1rem 2rem; text-align:center; font-weight:bold;">${r.paletas}</td>
+                    <td style="padding:1rem 2rem; text-align:center;">${r.skus}</td>
+                    <td style="padding:1rem 2rem; text-align:center; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}; font-weight:bold;">${Number(r.parcaja).toLocaleString()}</td>
+                </tr>`).join('')}</tbody>
             </table>
         </div>
-        <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success);">📥 EXPORTAR EXCEL</button>
+        <div style="display:flex; gap:1.5rem;">
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.8rem 2.5rem; border-radius:8px;">📥 EXPORTAR REPORTE EXCEL</button>
+        </div>
     `;
-    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V72'));
+    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V75'));
   };
 
   let activeAdminSub = 'usuarios';
