@@ -117,6 +117,16 @@ export const fetchAvailableDates = async () => {
 const API_BASE = "https://logistics-backend-wv0x.onrender.com/api";
 const API_URL  = `${API_BASE}/logistics`;
 
+// Helper para extraer columnas de forma robusta (ignora mayúsculas/minúsculas, acentos y espacios)
+const getCol = (row, possibleNames) => {
+    if (!row) return null;
+    const keys = Object.keys(row);
+    const normalize = (s) => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const names = possibleNames.map(normalize);
+    const foundKey = keys.find(k => names.includes(normalize(k)));
+    return foundKey ? row[foundKey] : null;
+};
+
 export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
     if (!file) return reject('Archivo inválido');
@@ -301,28 +311,16 @@ export const calculateBufferPallets = (configOverride = null) => {
     let reserva = dataStore.stockReserva;
     let pedidos = dataStore.buffer; 
     
-    // Validar que EXISTAN y tengan datos ([] es truthy en JS!)
     if(!activo || !activo.length || !reserva || !reserva.length || !pedidos || !pedidos.length) {
-        console.warn('⚠️ calculateBufferPallets: Datos insuficientes →', {
-            activo: activo ? activo.length : 'null',
-            reserva: reserva ? reserva.length : 'null',
-            pedidos: pedidos ? pedidos.length : 'null'
-        });
         return null;
     }
 
-    // DIAGNÓSTICO: Mostrar las columnas de cada fuente para detectar desajustes
-    console.log('🔍 Columnas Stock Activo:', Object.keys(activo[0]));
-    console.log('🔍 Columnas Stock Reserva:', Object.keys(reserva[0]));
-    console.log('🔍 Columnas Pedidos:', Object.keys(pedidos[0]));
-
-    // Configuración por defecto si no se pasa nada
     const config = configOverride || {
         include_reserva: '1', include_alto: '1', include_piso: '1', 
         include_aereo: '1', include_logico: '1'
     };
 
-    // 1. Indexación del Almacén Físico Global
+    // 1. Indexación del Almacén Físico Global con columnas robustas
     let stBaja = {};
     let stPiso = {};
     let stLogico = {};
@@ -330,9 +328,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     let stAereo = {};
 
     activo.forEach(filaVal => {
-        let areaRaw = String(filaVal['Ãrea'] || filaVal['Área'] || filaVal['Area'] || '').trim().toUpperCase();
-        let sku = String(filaVal['ArtÃculo'] || filaVal['Artículo'] || filaVal['Articulo'] || '').trim();
-        let qty = parseFloat(filaVal['Cantidad actual']) || 0;
+        let areaRaw = String(getCol(filaVal, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
+        let sku = String(getCol(filaVal, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let qty = parseFloat(getCol(filaVal, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         
         if(!sku || qty <= 0) return;
         
@@ -340,19 +338,16 @@ export const calculateBufferPallets = (configOverride = null) => {
             stPiso[sku] = (stPiso[sku] || 0) + qty;
         } else if (config.include_logico === '1' && areaRaw === 'DIS') {
             stLogico[sku] = (stLogico[sku] || 0) + qty;
-        } else {
-            // Zonas Bajas (Cualquier área regular)
-            if (config.include_reserva === '1') {
-                stBaja[sku] = (stBaja[sku] || 0) + qty;
-            }
+        } else if (config.include_reserva === '1') {
+            stBaja[sku] = (stBaja[sku] || 0) + qty;
         }
     });
 
     reserva.forEach(filaVal => {
-        let nivelRaw = String(filaVal['NIVEL'] || filaVal['Nivel'] || '').trim().toUpperCase();
-        let nroAnd = String(filaVal['NRO AND'] || filaVal['Nro And'] || filaVal['nro and'] || '').trim().toUpperCase();
-        let sku = String(filaVal['PRODUCTO'] || filaVal['Producto'] || filaVal['ARTICULO'] || filaVal['ArtÃculo'] || filaVal['Artículo'] || filaVal['Articulo'] || '').trim();
-        let qty = parseFloat(filaVal['CANTIDAD'] || filaVal['Cantidad actual'] || filaVal['Cantidad'] || filaVal['cantidad']) || 0;
+        let nivelRaw = String(getCol(filaVal, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
+        let nroAnd = String(getCol(filaVal, ['NRO AND', 'Nro And', 'Nro. And']) || '').trim().toUpperCase();
+        let sku = String(getCol(filaVal, ['Producto', 'PRODUCTO', 'Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let qty = parseFloat(getCol(filaVal, ['Cantidad', 'CANTIDAD', 'Cantidad actual', 'Cant.'])) || 0;
 
         if(!sku || qty <= 0) return;
 
@@ -370,14 +365,15 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 2. Extracción y Consolidación de Pedidos
     let demandaConsolidada = {};
     pedidos.forEach(filaP => {
-        let skuP = String(filaP['CÃ³digo de artÃculo'] || filaP['Código de artículo'] || '').trim();
-        let cantPedida = parseFloat(filaP['Cantidad solicitada']) || 0;
-        let cantAsignada = parseFloat(filaP['Cantidad asignada']) || 0;
+        let skuP = String(getCol(filaP, ['Código de artículo', 'Codigo de articulo', 'CÃ³digo de artÃculo', 'Articulo', 'SKU']) || '').trim();
+        let cantPedida = parseFloat(getCol(filaP, ['Cantidad solicitada', 'Solicitada', 'Cant. Pedida'])) || 0;
+        let cantAsignada = parseFloat(getCol(filaP, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
         let faltanteLocal = cantPedida - cantAsignada;
         
         if (faltanteLocal <= 0 || !skuP) return;
         demandaConsolidada[skuP] = (demandaConsolidada[skuP] || 0) + faltanteLocal;
     });
+
 
     // 3. Pre-agrupar Reserva por SKU para Velocidad O(N)
     const reservaPorSku = {};

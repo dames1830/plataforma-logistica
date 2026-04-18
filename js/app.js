@@ -1,6 +1,6 @@
-import { renderLogin } from './views/login.js?v=6.3';
-import { renderDashboard } from './views/dashboard_v6.js?v=6.3';
-import { getSession } from './services/auth.js?v=6.3';
+import { renderLogin } from './views/login.js?v=6.4';
+import { renderDashboard } from './views/dashboard_v6.js?v=6.4';
+import { getSession } from './services/auth.js?v=6.4';
 
 class App {
   constructor(rootId) {

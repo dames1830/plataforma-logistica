@@ -354,18 +354,21 @@ export const renderDashboard = async (container, user, onLogout) => {
           const localStored = localStorage.getItem('lastBufferKPI');
           if (localStored) {
               try {
-                  lastBufferKPI = JSON.parse(localStored);
-                  console.log('📦 Reporte Buffer recuperado de memoria local.');
+                  const p = JSON.parse(localStored);
+                  if (p && p.waterfall) {
+                      lastBufferKPI = p;
+                      console.log('📦 Reporte Buffer recuperado de memoria local.');
+                  }
               } catch(e) { /* corrupto, ignorar */ }
           }
       }
 
       let bufferKPIObj = lastBufferKPI;
 
-      // ── SINCRONIZACIÓN ENTRE PCs (Carga inicial si está vacío) ──
+      // ── SINCRONIZACIÓN ENTRE PCs (Solo si memoria local está vacía) ──
       if (!bufferKPIObj) {
           const serverReport = await loadBufferReport();
-          if (serverReport) {
+          if (serverReport && serverReport.waterfall) {
               bufferKPIObj = serverReport;
               lastBufferKPI = serverReport;
           }
@@ -434,7 +437,7 @@ export const renderDashboard = async (container, user, onLogout) => {
               <div>
                 <div style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.3rem;">
                   <h4 style="color:#db2777; margin:0; font-weight:800;">Análisis Stock (NUCLEAR FIX V6)</h4>
-                  <span style="background:#db2777; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">FORZADO FINAL</span>
+                  <span style="background:#db2777; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">FORZADO FINAL V6.4</span>
                 </div>
                 <p style="font-size:0.8rem; color:#fff; margin:0; opacity:0.9;">¡Atención! Si ves este borde FUCSIA, los cambios se cargaron correctamente.</p>
               </div>
@@ -471,8 +474,19 @@ export const renderDashboard = async (container, user, onLogout) => {
           } else {
             // Si el reporte existe, procedemos con las tablas pero de forma segura
             try {
-              // FORZADO DE DISEÑO V3 - BLOQUE VERTICAL PURO
-              rhtml += `<div style="display:block !important; width:100% !important; border:0 !important; background:transparent !important;">`;
+              // Si no hay datos REALES (rq = 0), avisar
+              if (!bufferKPIObj.waterfall || bufferKPIObj.waterfall.length === 0 || Number(bufferKPIObj.waterfall.find(x=>x.nivel==='Total')?.rq || 0) === 0) {
+                  rhtml += `
+                    <div style="padding:3rem; text-align:center; background:rgba(255,165,0,0.1); border:1px dashed var(--warning); border-radius:12px; margin-top:1rem;">
+                        <i class="fas fa-search-minus fa-3x" style="color:var(--warning); margin-bottom:1rem;"></i>
+                        <h3 style="color:#fff;">Sin coincidencias encontradas</h3>
+                        <p style="color:var(--text-muted);">El proceso terminó con éxito, pero la demanda no coincide con ningún SKU del Stock físico.</p>
+                        <p style="color:var(--text-muted); font-size:0.8rem;">Sube archivos maestros actualizados e inténtalo de nuevo.</p>
+                    </div>
+                  `;
+              } else {
+                  // FORZADO DE DISEÑO V3 - BLOQUE VERTICAL PURO
+                  rhtml += `<div style="display:block !important; width:100% !important; border:0 !important; background:transparent !important; visibility:visible !important;">`;
               
               const containerStyle = `display:block !important; width:100% !important; max-width:100% !important; border-radius:12px; overflow:hidden; margin-bottom:2.5rem; box-shadow:0 8px 32px rgba(0,0,0,0.3); clear:both;`;
 
@@ -513,7 +527,7 @@ export const renderDashboard = async (container, user, onLogout) => {
               rhtml += `
                 <div style="${containerStyle} border:4px solid #db2777; background:rgba(0,0,0,0.4);">
                   <div style="padding:1.2rem; background:#db2777; border-bottom:1px solid #db2777; text-align:center;">
-                    <h2 style="color:#fff; font-weight:900; letter-spacing:3px; font-size:1.3rem; margin:0; text-transform:uppercase;">ANÁLISIS BUFFER SKU (VERSIÓN 6.0)</h2>
+                    <h2 style="color:#fff; font-weight:900; letter-spacing:3px; font-size:1.3rem; margin:0; text-transform:uppercase;">ANÁLISIS BUFFER SKU (VERSIÓN 6.4)</h2>
                   </div>
                   <table style="width:100%; border-collapse:collapse; font-size:1.1rem; background:rgba(15,23,42,0.6);">
                     <thead>
