@@ -239,6 +239,13 @@ export const logSystemAction = async (username, action, details) => {
     } catch (e) { console.error("Error al loguear acción:", e); }
 };
 
+export const pingServer = async () => {
+    try {
+        await fetch(`${API_BASE}/ping`, { method: 'GET', signal: AbortSignal.timeout(3000) });
+    } catch (e) { /* silent ping */ }
+};
+
+
 // Función Asíncrona: Preguntar a la BD maestra por los datos
 export const getAreaData = async (area) => {
   // 1. Prioridad: Memoria RAM
