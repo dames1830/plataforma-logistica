@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.7';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.8';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -46,7 +46,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.7</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.8</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -190,33 +190,33 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     container.innerHTML = `
-        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(79,70,229,0.4); border-radius:10px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            <div style="padding:0.6rem; background:rgba(79,70,229,0.08); border-bottom:1px solid rgba(79,70,229,0.2); text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS DE ZONAS</h3></div>
+        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(79,70,229,0.5); border-radius:10px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 20px rgba(79,70,229,0.15);">
+            <div style="padding:0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.2); text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS DE ZONAS</h3></div>
             <table style="border-collapse:collapse; width:100%; font-size:0.82rem;">
                 <thead style="background:rgba(0,0,0,0.4);"><tr style="color:var(--text-muted);"><th style="padding:0.6rem 1.2rem; text-align:left; font-weight:600; font-size:0.75rem;">NIVEL/AREA</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">RQ</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">ATD</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">% ATD</th></tr></thead>
                 <tbody>${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.05); font-weight:800;':''}">
-                    <td style="padding:0.5rem 1.2rem;">${r.nivel}</td>
-                    <td style="padding:0.5rem 1.2rem; text-align:center;">${r.rq.toLocaleString()}</td>
-                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.atd > 0 ? '#fff' : 'var(--text-muted)'};">${r.atd.toLocaleString()}</td>
-                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e':'#fff'}; font-weight:bold;">${r.pct}</td>
+                    <td style="padding:0.5rem 1.2rem; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.nivel}</td>
+                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.rq.toLocaleString()}</td>
+                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e' : (r.atd > 0 ? '#fff' : 'var(--text-muted)')};">${r.atd.toLocaleString()}</td>
+                    <td style="padding:0.5rem 1.2rem; text-align:center; color:#22c55e; font-weight:bold;">${r.pct}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(245,158,11,0.3); border-radius:10px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            <div style="padding:0.6rem; background:rgba(245,158,11,0.05); border-bottom:1px solid rgba(245,158,11,0.15); text-align:center;"><h3 style="color:#f59e0b; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS POR SKU</h3></div>
+        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(245,158,11,0.4); border-radius:10px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 20px rgba(245,158,11,0.1);">
+            <div style="padding:0.6rem; background:rgba(245,158,11,0.08); border-bottom:1px solid rgba(245,158,11,0.2); text-align:center;"><h3 style="color:#f59e0b; font-weight:700; margin:0; font-size:0.85rem; letter-spacing:0.5px;">ANÁLISIS POR SKU</h3></div>
             <table style="border-collapse:collapse; width:100%; font-size:0.82rem;">
                 <thead style="background:rgba(0,0,0,0.4);"><tr style="color:var(--text-muted);"><th style="padding:0.6rem 1.2rem; text-align:left; font-weight:600; font-size:0.75rem;">TIPO</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">PALETAS</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">SKUS</th><th style="padding:0.6rem 1.2rem; text-align:center; font-weight:600; font-size:0.75rem;">P/C</th></tr></thead>
                 <tbody>${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.05); font-weight:800;':''}">
-                    <td style="padding:0.5rem 1.2rem;">${r.tipo}</td>
-                    <td style="padding:0.5rem 1.2rem; text-align:center; font-weight:bold;">${r.paletas}</td>
-                    <td style="padding:0.5rem 1.2rem; text-align:center;">${r.skus}</td>
-                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}; font-weight:bold;">${Number(r.parcaja).toLocaleString()}</td>
+                    <td style="padding:0.5rem 1.2rem; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'};">${r.tipo}</td>
+                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}; font-weight:bold;">${r.paletas}</td>
+                    <td style="padding:0.5rem 1.2rem; text-align:center; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'};">${r.skus}</td>
+                    <td style="padding:0.5rem 1.2rem; text-align:center; color:#22c55e; font-weight:bold;">${Number(r.parcaja).toLocaleString()}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
         <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.8rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO</button>
     `;
-    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V77'));
+    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V78'));
   };
 
   let activeAdminSub = 'usuarios';
