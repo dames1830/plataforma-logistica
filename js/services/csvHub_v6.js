@@ -499,7 +499,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         reservaMapByUbi[u].push(f);
     });
 
-    let detallePallets = [];
+    detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
         let inquilinosMadera = reservaMapByUbi[ubi] || [];
         let skusEnEstaMadera = {};
