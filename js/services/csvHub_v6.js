@@ -379,9 +379,14 @@ export const calculateBufferPallets = (configOverride = null) => {
         demandaConsolidada[skuP] = (demandaConsolidada[skuP] || 0) + faltanteLocal;
     });
 
-    let resumenSKU = []; // <-- AGREGADO: Declaración faltante
+    // 3. Pre-agrupar Reserva por SKU para Velocidad O(N)
+    const reservaPorSku = {};
+    reservaRuta.forEach(r => {
+        let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['ArtÃculo'] || r['Artículo'] || r['Articulo'] || '').trim();
+        if (!reservaPorSku[skuR]) reservaPorSku[skuR] = [];
+        reservaPorSku[skuR].push(r);
+    });
 
-    // 3. Acumuladores de Cascada (Waterfall)
     let globalRQ = 0;
     let atdBaja = 0;
     let atdAlto = 0;
@@ -389,54 +394,40 @@ export const calculateBufferPallets = (configOverride = null) => {
     let atdAereo = 0;
     let atdLogico = 0;
 
-    let detallePallets = [];
-    
-    // Pre-ordenar Reserva para ruta de montacargas determinista (Ubicación -> SKU -> LPN)
-    let reservaRuta = [...reserva].sort((a, b) => {
-        let uA = String(a['UBICACION'] || '').trim();
-        let uB = String(b['UBICACION'] || '').trim();
-        if (uA !== uB) return uA.localeCompare(uB);
-        
-        let sA = String(a['PRODUCTO'] || a['ARTICULO'] || '').trim();
-        let sB = String(b['PRODUCTO'] || b['ARTICULO'] || '').trim();
-        if (sA !== sB) return sA.localeCompare(sB);
-        
-        return String(a['LPN'] || '').localeCompare(String(b['LPN'] || ''));
-    });
-
+    let resumenSKU = [];
+    let stockUsadoMap = new Map();
     let ubicacionesEnElPiso = new Set();
-    let cuotasPicking = {}; // Mapa para órdenes de extracción
-    let stockUsadoMap = new Map(); // Mapa local para evitar efectos secundarios en dataStore
+    let cuotasPicking = {};
 
-    // 4. Simulación de ruta CRUZANDO LA DEMANDA CONSOLIDADA VS STOCK FÍSICO (Ordenado para determinismo)
+    // 4. Simulación de ruta CRUZANDO LA DEMANDA CONSOLIDADA VS STOCK FÍSICO
     Object.keys(demandaConsolidada).sort().forEach(skuP => {
         let faltanteTotalSinergia = demandaConsolidada[skuP];
         globalRQ += faltanteTotalSinergia;
+
+        // Reset contadores por SKU para evitar ReferenceErrors
+        let actuallyPickedAlto = 0;
+        let actuallyPickedAereo = 0;
 
         // Cascada 1: Zonas Bajas
         let p1 = Math.min(faltanteTotalSinergia, stBaja[skuP] || 0);
         atdBaja += p1;
         faltanteTotalSinergia -= p1;
 
-        // Cascada 2: Alta (Rastreo Físico de Paletas)
-        if (faltanteTotalSinergia > 0) {
-            let cuotaAltoTeorico = Math.min(faltanteTotalSinergia, stAlto[skuP] || 0);
-            let needed = cuotaAltoTeorico;
-            let actuallyPickedAlto = 0;
+        // Cascada 2: Alta (Rastreo Físico de Paletas Indexado)
+        if (faltanteTotalSinergia > 0 && reservaPorSku[skuP]) {
+            let needed = Math.min(faltanteTotalSinergia, stAlto[skuP] || 0);
             
-            for (let r of reservaRuta) {
+            for (let r of reservaPorSku[skuP]) {
                 if (needed <= 0) break;
-                
                 let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
-                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['ArtÃculo'] || r['Artículo'] || r['Articulo'] || '').trim();
+                if (nivelR !== 'ALTO') continue;
+
                 let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || r['cantidad']) || 0;
-                
-                // Usamos el ID de la fila o LPN+SKU+UBI para rastrear uso local
-                let rowId = r._id || `${r.LPN || ''}_${skuR}_${r.UBICACION || ''}`;
+                let rowId = r._id || `${r.LPN || ''}_${skuP}_${r.UBICACION || ''}`;
                 let pickeadoMismaPaleta = stockUsadoMap.get(rowId) || 0;
                 let available = qtyR - pickeadoMismaPaleta;
                 
-                if (nivelR === 'ALTO' && skuR === skuP && available > 0) {
+                if (available > 0) {
                     let pick = Math.min(needed, available);
                     needed -= pick;
                     actuallyPickedAlto += pick;
@@ -447,24 +438,29 @@ export const calculateBufferPallets = (configOverride = null) => {
                     cuotasPicking[ubiRaw][skuP] = (cuotasPicking[ubiRaw][skuP] || 0) + pick;
                 }
             }
+            atdAlto += actuallyPickedAlto;
             faltanteTotalSinergia -= actuallyPickedAlto;
         }
 
+        // Cascada 3: Pisos
         let p3 = Math.min(faltanteTotalSinergia, stPiso[skuP] || 0);
+        atdPiso += p3;
         faltanteTotalSinergia -= p3;
 
-        let actuallyPickedAereo = 0;
-        if (faltanteTotalSinergia > 0) {
+        // Cascada 4: Aereo (Indexado)
+        if (faltanteTotalSinergia > 0 && reservaPorSku[skuP]) {
             let neededAe = Math.min(faltanteTotalSinergia, stAereo[skuP] || 0);
-            for (let r of reservaRuta) {
+            for (let r of reservaPorSku[skuP]) {
                 if (neededAe <= 0) break;
                 let nivelR = String(r['NIVEL'] || r['Nivel'] || '').trim().toUpperCase();
-                let skuR = String(r['PRODUCTO'] || r['Producto'] || r['ARTICULO'] || r['ArtÃculo'] || r['Artículo'] || r['Articulo'] || '').trim();
+                if (nivelR !== 'AEREO') continue;
+
                 let qtyR = parseFloat(r['CANTIDAD'] || r['Cantidad actual'] || r['Cantidad'] || r['cantidad']) || 0;
-                let rowIdAe = r._id || `${r.LPN || ''}_${skuR}_${r.UBICACION || ''}`;
+                let rowIdAe = r._id || `${r.LPN || ''}_${skuP}_${r.UBICACION || ''}`;
                 let pickeadoMismaPaletaAe = stockUsadoMap.get(rowIdAe) || 0;
                 let availableAe = qtyR - pickeadoMismaPaletaAe;
-                if (nivelR === 'AEREO' && skuR === skuP && availableAe > 0) {
+                
+                if (availableAe > 0) {
                     let pickAe = Math.min(neededAe, availableAe);
                     neededAe -= pickAe;
                     actuallyPickedAereo += pickAe;
@@ -475,23 +471,19 @@ export const calculateBufferPallets = (configOverride = null) => {
                     cuotasPicking[ubiRawAe][skuP] = (cuotasPicking[ubiRawAe][skuP] || 0) + pickAe;
                 }
             }
+            atdAereo += actuallyPickedAereo;
             faltanteTotalSinergia -= actuallyPickedAereo;
         }
 
+        // Cascada 5: Logico
         let p5 = Math.min(faltanteTotalSinergia, stLogico[skuP] || 0);
+        atdLogico += p5;
         faltanteTotalSinergia -= p5;
 
         resumenSKU.push({ sku: skuP, total: demandaConsolidada[skuP], baja: p1, alto: actuallyPickedAlto, piso: p3, aereo: actuallyPickedAereo, logico: p5, faltante: faltanteTotalSinergia });
     });
 
-    atdBaja = resumenSKU.reduce((sum, r) => sum + r.baja, 0);
-    atdAlto = resumenSKU.reduce((sum, r) => sum + r.alto, 0);
-    atdPiso = resumenSKU.reduce((sum, r) => sum + r.piso, 0);
-    atdAereo = resumenSKU.reduce((sum, r) => sum + r.aereo, 0);
-    atdLogico = resumenSKU.reduce((sum, r) => sum + r.logico, 0);
-    let totalRQ_Global = Object.values(demandaConsolidada).reduce((a, b) => a + b, 0);
-    let totalATD_Global = atdBaja + atdAlto + atdPiso + atdAereo + atdLogico;
-
+    // 5. Generar Reporte Físico (Consolidado de Ubicaciones)
     const reservaMapByUbi = {};
     reserva.forEach(f => {
         const u = String(f['UBICACION'] || '').trim();
@@ -499,7 +491,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         reservaMapByUbi[u].push(f);
     });
 
-    detallePallets = [];
+    let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
         let inquilinosMadera = reservaMapByUbi[ubi] || [];
         let skusEnEstaMadera = {};

@@ -598,18 +598,35 @@ export const renderDashboard = async (container, user, onLogout) => {
           // Listeners
           document.getElementById('btn_procesar_buffer').addEventListener('click', async () => {
               const btn = document.getElementById('btn_procesar_buffer');
-              btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+              const originalHTML = btn.innerHTML;
+              btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
               btn.disabled = true;
 
               setTimeout(async () => {
-                  const config = await fetchBufferConfig();
-                  lastBufferKPI = calculateBufferPallets(config);
-                  if (lastBufferKPI) {
-                      localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferKPI));
-                      await logSystemAction(user.username, 'PROCESAR_BUFFER', 'Análisis manual ejecutado');
-                      saveBufferReport(lastBufferKPI, user.username);
+                  try {
+                      const config = await fetchBufferConfig();
+                      const result = calculateBufferPallets(config);
+                      
+                      if (result) {
+                          lastBufferKPI = result;
+                          localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferKPI));
+                          await logSystemAction(user.username, 'PROCESAR_BUFFER', 'Análisis manual completado con éxito');
+                          saveBufferReport(lastBufferKPI, user.username);
+                          renderBufferTab(); // Refrescar vista
+                      } else {
+                          alert('No se pudo generar el reporte. Verifica que los archivos maestros tengan datos válidos.');
+                          btn.innerHTML = originalHTML;
+                          btn.disabled = false;
+                      }
+                  } catch (err) {
+                      console.error("Error crítico en procesamiento buffer:", err);
+                      alert('Error crítico durante el análisis. Revisa la consola para más detalles.');
+                      btn.innerHTML = originalHTML;
+                      btn.disabled = false;
+                  } finally {
+                      // El renderBufferTab() ya se encarga de redibujar si hubo éxito
+                      // de lo contrario, el catch/else resetea el botón.
                   }
-                  renderBufferTab();
               }, 100);
           });
 
