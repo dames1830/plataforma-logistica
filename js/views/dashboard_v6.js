@@ -1,5 +1,7 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.0';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.1';
+
+// ... (Resto de constantes y exportToExcel igual que v7.0) ... 
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -45,33 +47,25 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   container.innerHTML = `
     <header class="topbar">
-      <div class="topbar-brand">
-        <h2 style="font-weight:700; letter-spacing:1px; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span></h2>
-      </div>
+      <div class="topbar-brand"><h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span></h2></div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center; gap:0.5rem;">
-          <input type="date" id="globalDatePicker" style="background:transparent; border:none; color:var(--text-main); font-family:inherit; outline:none; cursor:pointer; color-scheme:dark;">
+          <input type="date" id="globalDatePicker" style="background:transparent; border:none; color:var(--text-main); color-scheme:dark; outline:none; cursor:pointer;">
         </div>
-        <div class="user-details" style="text-align:right;">
-          <span class="user-name" style="color:#fff; font-weight:600;">${user.name}</span>
-          <span class="user-role" style="color:var(--text-muted); font-size:0.75rem;">${user.role.toUpperCase()} MASTER</span>
-        </div>
-        <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">
-           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        </button>
+        <div class="user-details" style="text-align:right;"><span class="user-name" style="color:#fff; font-weight:600;">${user.name}</span><span class="user-role" style="color:var(--text-muted); font-size:0.75rem;">${user.role.toUpperCase()} MASTER</span></div>
+        <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
       </div>
     </header>
     <nav class="top-nav-links" id="navLinks"></nav>
     <main class="main-wrapper">
       <div class="glass-panel" style="padding:2rem; min-height:80vh;">
-        <div class="tab-header" style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end;">
-          <div><h1 id="contentTitle" style="color:var(--primary); font-size:2rem; font-weight:800;">Cargando...</h1><p id="contentSubtitle" style="color:var(--text-muted); font-size:0.9rem;">Analizando base de datos centralizada</p></div>
-        </div>
+        <div class="tab-header" style="margin-bottom:2rem;"><h1 id="contentTitle" style="color:var(--primary); font-size:2rem; font-weight:800;">Cargando...</h1><p id="contentSubtitle" style="color:var(--text-muted); font-size:0.9rem;">Analizando base de datos centralizada</p></div>
         <div id="contentArea"></div>
       </div>
     </main>
   `;
 
+  // ... (Same navigation logic as v7.0) ...
   const navContainer = document.getElementById('navLinks');
   const contentTitle = document.getElementById('contentTitle');
   const contentSubtitle = document.getElementById('contentSubtitle');
@@ -79,17 +73,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   const datePicker = document.getElementById('globalDatePicker');
   
   if (currentDateFilter) datePicker.value = currentDateFilter;
-  datePicker.addEventListener('change', (e) => {
-      setDateFilter(e.target.value || null);
-      renderTabContent();
-  });
+  datePicker.addEventListener('change', (e) => { setDateFilter(e.target.value || null); renderTabContent(); });
 
   const renderNav = () => {
     navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">${t.icon} ${t.label}</a>`).join('');
-    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => {
-      currentTab = e.currentTarget.dataset.id;
-      renderNav(); renderTabContent();
-    }));
+    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { currentTab = e.currentTarget.dataset.id; renderNav(); renderTabContent(); }));
   };
 
   const renderTabContent = async () => {
@@ -111,7 +99,6 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderHomeTab = async () => {
-    contentSubtitle.textContent = "Control Global de Operaciones Logísticas";
     contentArea.innerHTML = `<div class="kpi-grid" id="homeKpiGrid"></div>`;
     ['stockActivo', 'stockReserva', 'buffer', 'picking', 'packing'].forEach(a => {
         getAreaData(a).then(rows => {
@@ -123,7 +110,6 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderStockTab = async () => {
-    contentSubtitle.textContent = "Gestión de Existencias Físicas y de Reserva";
     contentArea.innerHTML = `<div id="stockSub" style="display:flex; flex-direction:column; gap:1.5rem;"></div>`;
     const sub = document.getElementById('stockSub');
     const [act, res] = await Promise.all([getAreaData('stockActivo'), getAreaData('stockReserva')]);
@@ -135,7 +121,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     const div = document.createElement('div');
     div.style.width = '100%';
     const label = area.replace('solicitud', 'OTRAS SOLICITUDES').replace('articulos', 'MAESTRO ARTÍCULOS').replace('tallas', 'TALLAS').toUpperCase();
-    
     if (hasData) {
       div.innerHTML = `<div style="padding:1.5rem; background:rgba(34, 197, 94, 0.1); border:1px solid var(--success); border-radius:12px; display:flex; justify-content:space-between; align-items:center;"><div><h4 style="color:var(--success);">✅ ${label} OK</h4><p style="font-size:0.8rem;">${hasData.length.toLocaleString()} registros.</p></div><label class="btn" style="width:auto; padding:0.5rem 1rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">ACTUALIZAR</label></div>`;
     } else {
@@ -143,28 +128,19 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
     container.appendChild(div);
     const input = document.getElementById(`up_${area}`);
-    if(input) input.addEventListener('change', async (e) => {
-        if(!e.target.files[0]) return;
-        try { await parseFile(e.target.files[0], area); renderTabContent(); } catch(err) { alert(err); renderTabContent(); }
-    });
+    if(input) input.addEventListener('change', async (e) => { if(e.target.files[0]) { try { await parseFile(e.target.files[0], area); renderTabContent(); } catch(err) { alert(err); renderTabContent(); } } });
   };
 
   let activeBufferSub = 'reportes';
   const renderBufferTab = async () => {
-    contentSubtitle.textContent = "Análisis de Reposición y Sincronización de Stock";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
-    
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.5rem; margin-bottom:2rem; border-bottom:1px solid var(--border);">
           <a class="sub-nav-item ${activeBufferSub==='maestros'?'active':''}" data-s="maestros">🗂️ ARCHIVOS MAESTROS</a>
           <a class="sub-nav-item ${activeBufferSub==='reportes'?'active':''}" data-s="reportes">📉 ANÁLISIS BUFFER</a>
         </nav>
         <div id="bufContent"></div>`;
-    
-    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => {
-        activeBufferSub = e.target.dataset.s; renderBufferTab();
-    }));
-
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeBufferSub = e.target.dataset.s; renderBufferTab(); }));
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div');
@@ -178,26 +154,19 @@ export const renderDashboard = async (container, user, onLogout) => {
         buf.innerHTML = `
             <div style="background:rgba(219,39,119,0.08); padding:2rem; border-radius:16px; border:3px solid #db2777;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                    <h2 style="color:#db2777; font-weight:900; margin:0;">ANÁLISIS BUFFER NUCLEAR V7.0</h2>
+                    <h2 style="color:#db2777; font-weight:900; margin:0;">ANÁLISIS BUFFER NUCLEAR V7.1</h2>
                     <button id="btn_calc" class="btn" style="background:#db2777; width:auto; padding:1rem 3rem; font-weight:800;">⚡ PROCESAR ANÁLISIS</button>
                 </div>
-                <div id="resultsArea"></div>
+                <div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:2rem;"></div>
             </div>`;
-        
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
-
         document.getElementById('btn_calc').addEventListener('click', async () => {
-            const btn = document.getElementById('btn_calc');
-            btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
+            const btn = document.getElementById('btn_calc'); btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
             setTimeout(async () => {
                 const res = calculateBufferPallets(bufferConfigCached);
-                if(res) {
-                    lastBufferKPI = res;
-                    localStorage.setItem('lastBufferKPI', JSON.stringify(res));
-                    saveBufferReport(res, user.username);
-                    renderBufferResults(results, res);
-                } else alert('ERROR: Faltan archivos maestros.');
+                if(res) { lastBufferKPI = res; localStorage.setItem('lastBufferKPI', JSON.stringify(res)); saveBufferReport(res, user.username); renderBufferResults(results, res); }
+                else alert('ERROR: Faltan archivos maestros.');
                 btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
             }, 500);
         });
@@ -206,66 +175,59 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:2rem;">
-            <!-- BLOQUE 1: ZONAS -->
-            <div style="background:rgba(15,23,42,0.8); border:2px solid #4f46e5; border-radius:12px; overflow:hidden;">
-                <div style="padding:1.2rem; background:rgba(79,70,229,0.2); border-bottom:1px solid #4f46e5; text-align:center;">
-                    <h3 style="color:#fff; font-weight:700; margin:0; letter-spacing:1px;">ANÁLISIS BUFFER ZONAS</h3>
-                </div>
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
-                            <th style="padding:1.2rem; text-align:left; color:var(--text-muted); font-size:0.8rem;">NIVEL/AREA</th>
-                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">RQ</th>
-                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">ATD RQ</th>
-                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">% ATD</th>
+        <!-- BLOQUE 1: ZONAS -->
+        <div style="background:rgba(15,23,42,0.8); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; width:fit-content; min-width:600px;">
+            <div style="padding:1rem; background:rgba(79,70,229,0.2); border-bottom:1px solid #4f46e5; text-align:center;"><h3 style="color:#fff; font-weight:700; margin:0; letter-spacing:1px; font-size:1rem;">ANÁLISIS BUFFER ZONAS</h3></div>
+            <table style="border-collapse:collapse; width:100%;">
+                <thead>
+                    <tr style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <th style="padding:0.75rem 1.5rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">NIVEL/AREA</th>
+                        <th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">RQ</th>
+                        <th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">ATD RQ</th>
+                        <th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">% ATD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.waterfall.map(r => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.nivel === 'Total' ? 'background:rgba(255,255,255,0.05); font-weight:800;' : ''}">
+                            <td style="padding:0.7rem 1.5rem;">${r.nivel}</td>
+                            <td style="padding:0.7rem 1.5rem; text-align:right;">${r.rq.toLocaleString()}</td>
+                            <td style="padding:0.7rem 1.5rem; text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.atd.toLocaleString()}</td>
+                            <td style="padding:0.7rem 1.5rem; text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.pct}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${data.waterfall.map(r => `
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.nivel === 'Total' ? 'background:rgba(255,255,255,0.05); font-weight:800;' : ''}">
-                                <td style="padding:1rem 1.2rem;">${r.nivel}</td>
-                                <td style="padding:1rem 1.2rem; text-align:right;">${r.rq.toLocaleString()}</td>
-                                <td style="padding:1rem 1.2rem; text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.atd.toLocaleString()}</td>
-                                <td style="padding:1rem 1.2rem; text-align:right; color:${r.nivel==='Total'?'#22c55e':'#fff'};">${r.pct}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
 
-            <!-- BLOQUE 2: SKU -->
-            <div style="background:rgba(15,23,42,0.8); border:2px solid #f59e0b; border-radius:12px; overflow:hidden;">
-                <div style="padding:1.2rem; background:rgba(245,158,11,0.1); border-bottom:1px solid #f59e0b; text-align:center;">
-                    <h3 style="color:#f59e0b; font-weight:700; margin:0; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3>
-                </div>
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
-                            <th style="padding:1.2rem; text-align:left; color:var(--text-muted); font-size:0.8rem;">TIPO DE EMPAQUE</th>
-                            <th style="padding:1.2rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">PALETAS A BAJAR</th>
-                            <th style="padding:1.2rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">SKUS</th>
-                            <th style="padding:1.2rem; text-align:right; color:var(--text-muted); font-size:0.8rem;">PAR/CAJA</th>
+        <!-- BLOQUE 2: SKU -->
+        <div style="background:rgba(15,23,42,0.8); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; width:fit-content; min-width:600px;">
+            <div style="padding:1rem; background:rgba(245,158,11,0.1); border-bottom:1px solid #f59e0b; text-align:center;"><h3 style="color:#f59e0b; font-weight:700; margin:0; letter-spacing:1px; font-size:1rem;">ANÁLISIS BUFFER SKU</h3></div>
+            <table style="border-collapse:collapse; width:100%;">
+                <thead>
+                    <tr style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <th style="padding:0.75rem 1.5rem; text-align:left; color:var(--text-muted); font-size:0.75rem;">TIPO DE EMPAQUE</th>
+                        <th style="padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">PALETAS A BAJAR</th>
+                        <th style="padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">SKUS</th>
+                        <th style="padding:0.75rem 1.5rem; text-align:right; color:var(--text-muted); font-size:0.75rem;">PAR/CAJA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.resumenSKU.map(r => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.tipo === 'TOTAL' ? 'background:rgba(255,255,255,0.05); font-weight:800;' : ''}">
+                            <td style="padding:0.7rem 1.5rem; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'};">${r.tipo}</td>
+                            <td style="padding:0.7rem 1.5rem; text-align:center;">${r.paletas}</td>
+                            <td style="padding:0.7rem 1.5rem; text-align:center;">${r.skus}</td>
+                            <td style="padding:0.7rem 1.5rem; text-align:right; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'};">${Number(r.parcaja).toLocaleString()}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${data.resumenSKU.map(r => `
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.tipo === 'TOTAL' ? 'background:rgba(255,255,255,0.05); font-weight:800;' : ''}">
-                                <td style="padding:1rem 1.2rem; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'};">${r.tipo}</td>
-                                <td style="padding:1rem 1.2rem; text-align:center;">${r.paletas}</td>
-                                <td style="padding:1rem 1.2rem; text-align:center;">${r.skus}</td>
-                                <td style="padding:1rem 1.2rem; text-align:right; color:${r.tipo==='TOTAL'?'#22c55e':'#fff'}; font-size:${r.tipo==='TOTAL'?'1.2rem':'1rem'};">${Number(r.parcaja).toLocaleString()}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
+                    `).join('')}
+                </tbody>
+            </table>
         </div>
-        <div style="margin-top:2rem; display:flex; justify-content:center; gap:2rem;">
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:1rem 3rem;">📥 EXPORTAR DETALLE EXCEL</button>
-        </div>
+
+        <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.8rem 2rem;">📥 EXPORTAR EXCEL</button>
     `;
-    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V7'));
+    document.getElementById('btn_exp_buffer').addEventListener('click', () => exportToExcel(data.detalle, 'Buffer_V71'));
   };
 
   const renderConfigTab = async () => {

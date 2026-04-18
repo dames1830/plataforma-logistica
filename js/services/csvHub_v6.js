@@ -394,10 +394,12 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
     ];
 
-    const empaque = {};
+    const empaque = {
+        'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 },
+        'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 }
+    };
     detallePallets.forEach(r => {
         const tipo = r.SKU.length >= 14 ? 'PreePack' : 'SolidPack';
-        if (!empaque[tipo]) empaque[tipo] = { paletas: new Set(), skus: new Set(), parcaja: 0 };
         empaque[tipo].paletas.add(r.UBICACIONES);
         empaque[tipo].skus.add(r.SKU);
         empaque[tipo].parcaja += r['QTY BUFFER'];
