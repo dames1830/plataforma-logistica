@@ -10,7 +10,7 @@ import {
   setDateFilter, 
   currentDateFilter, 
   pingServer 
-} from '../services/csvHub_v6.js?v=10.0-beta';
+} from '../services/csvHub_v6.js?v=10.1-beta';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -47,7 +47,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
       <header class="topbar">
         <div class="topbar-brand">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.0 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.1 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
         </div>
         <div class="user-profile">
           <div class="user-details" style="text-align:right;">
@@ -109,17 +109,15 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="font-size:0.75rem; color:${k.color}; margin-top:0.5rem; font-weight:600;">${k.subtitle}</div>
           </div>
         `).join('')}
-      </div>
-      <div style="padding:4rem; text-align:center; color:var(--text-muted); opacity:0.5;">
-        <p style="font-size:0.9rem;">Entorno de Desarrollo: Rama DEV.</p>
       </div>`;
   };
 
   const renderStockTab = (container, subtitle) => {
     subtitle.textContent = "Gestión de Archivos de Inventario";
-    container.innerHTML = `<div class="upload-grid"><div id="up_stock_activo"></div><div id="up_stock_reserva"></div></div>`;
-    renderUploadArea(document.getElementById('up_stock_activo'), 'stockActivo', dataStore.stockActivo, '.csv', 'Activo');
-    renderUploadArea(document.getElementById('up_stock_reserva'), 'stockReserva', dataStore.stockReserva, '.xlsx', 'Reserva');
+    container.innerHTML = `<div class="upload-grid" id="stockGrid"></div>`;
+    const grid = document.getElementById('stockGrid');
+    renderUploadArea(grid, 'stockActivo', dataStore.stockActivo, '.csv', 'Activo');
+    renderUploadArea(grid, 'stockReserva', dataStore.stockReserva, '.xlsx', 'Reserva');
   };
 
   let activeBufferSub = 'reportes';
@@ -127,7 +125,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let lastBufferKPI = null;
 
   const renderBufferTab = async (container, subtitle) => {
-    subtitle.textContent = "Análisis de Reposición (V10 Precision)";
+    subtitle.textContent = "Análisis de Reposición (V10.1 Fix)";
     if (!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
 
     container.innerHTML = `
@@ -143,15 +141,16 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
-        const wrap = document.createElement('div'); wrap.className = 'upload-grid'; buf.appendChild(wrap);
-        renderUploadArea(wrap, 'buffer', dataStore.buffer, '.xlsx', 'Zona Buffer');
-        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'Artículos (XLSX)');
-        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'Tallas (XLSX)');
+        buf.innerHTML = `<div class="upload-grid" id="mastersGrid"></div>`;
+        const grid = document.getElementById('mastersGrid');
+        renderUploadArea(grid, 'buffer', dataStore.buffer, '.xlsx', 'Zona Buffer');
+        renderUploadArea(grid, 'articulos', dataStore.articulos, '.xlsx', 'Artículos (XLSX)');
+        renderUploadArea(grid, 'tallas', dataStore.tallas, '.xlsx', 'Tallas (XLSX)');
     } else {
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1.2rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.0 (Master-Joined)</h4>
+              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.1 (Precision Fix)</h4>
               <button id="btn_calc" class="btn" style="width:auto; padding:0.5rem 1.5rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
             <div id="resultsArea" style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;"></div>
@@ -172,28 +171,44 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderGenericTab = (container, subtitle, id, label) => {
     subtitle.textContent = `Operativa: ${label}`;
-    container.innerHTML = `<div id="up_${id}"></div>`;
-    renderUploadArea(document.getElementById(`up_${id}`), id, dataStore[id], '.csv', label);
+    container.innerHTML = `<div class="upload-grid" id="genGrid"></div>`;
+    renderUploadArea(document.getElementById('genGrid'), id, dataStore[id], '.csv', label);
   };
 
   const renderAdminTab = (container, subtitle) => {
-    subtitle.textContent = "Administración del Sistema";
-    container.innerHTML = `<div style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">Interfaz administrativa estable v8.1 (V10 Engine ready).</div>`;
+    subtitle.textContent = "Control de Usuarios y Accesos";
+    container.innerHTML = `
+      <div style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+        <a class="sub-nav-item active">👤 USUARIOS</a>
+        <a class="sub-nav-item">🔑 PERMISOS</a>
+        <a class="sub-nav-item">📜 LOGS</a>
+      </div>
+      <div style="padding:2rem; text-align:center; color:var(--text-muted); border:1px dashed var(--border); border-radius:12px;">
+        Este módulo utiliza los privilegios de tu cuenta: <strong>${user.role.toUpperCase()}</strong>.
+      </div>`;
   };
 
   const renderConfigTab = (container, subtitle) => {
-    subtitle.textContent = "Configuración Técnica";
-    container.innerHTML = `<div style="padding:3rem; text-align:center; color:var(--text-muted);">Configuración del motor activo.</div>`;
+    subtitle.textContent = "Parámetros del Motor Lógico";
+    container.innerHTML = `
+      <div style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+        <a class="sub-nav-item active">⚙️ PARÁMETROS</a>
+        <a class="sub-nav-item">🔌 CONEXIONES</a>
+      </div>
+      <div style="padding:2rem; text-align:center; color:var(--text-muted); border:1px dashed var(--border); border-radius:12px;">
+        Configuración activa para optimización distribuida.
+      </div>`;
   };
 
   const renderUploadArea = (container, area, data, ext, label) => {
     if (!container) return;
-    container.innerHTML = `
-      <div class="upload-area">
+    const div = document.createElement('div');
+    div.className = 'upload-area';
+    div.innerHTML = `
         <h3 style="margin:0; font-size:0.85rem;">${label.toUpperCase()}</h3>
         <p style="font-size:0.7rem; color:${data?'var(--success)':'var(--text-muted)'}">${data ? '✅ '+data.length.toLocaleString()+' Filas' : 'Sin datos'}</p>
-        <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.75rem; cursor:pointer;">${data?'REPLACING':'UPLOAD'} <input type="file" id="up_input_${area}" accept="${ext}" style="display:none;"></label>
-      </div>`;
+        <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.75rem; cursor:pointer;">${data?'REPLACING':'UPLOAD'} <input type="file" id="up_input_${area}" accept="${ext}" style="display:none;"></label>`;
+    container.appendChild(div);
     const input = document.getElementById(`up_input_${area}`);
     if(input) input.addEventListener('change', async (e) => { 
         if(e.target.files[0]) { try { await parseFile(e.target.files[0], area); renderTabContent(); } catch(err){ alert(err); } } 
