@@ -323,10 +323,10 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (pending > 0 && reservaPorSku[sku]) {
             for (let r of reservaPorSku[sku]) {
                 if (pending <= 0) break;
-                let nivel = String(r['NIVEL'] || '').trim().toUpperCase();
+                let nivel = String(getCol(r, ['NIVEL', 'Nivel']) || '').trim().toUpperCase();
                 if (nivel !== 'ALTO') continue;
-                let q = parseFloat(r['CANTIDAD'] || 0);
-                let id = r._id || `${r.LPN}_${sku}_${r.UBICACION}`;
+                let q = parseFloat(getCol(r, ['CANTIDAD', 'Cantidad'])) || 0;
+                let id = r._id || `${getCol(r, ['LPN']) || ''}_${sku}_${getCol(r, ['UBICACION', 'Ubicación']) || ''}`;
                 let uses = stockUsadoMap.get(id) || 0;
                 let avail = q - uses;
                 if (avail > 0) {
@@ -334,7 +334,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     pending -= pick;
                     atdAlto += pick;
                     stockUsadoMap.set(id, uses + pick);
-                    let ubi = String(r['UBICACION']).trim();
+                    let ubi = String(getCol(r, ['UBICACION', 'Ubicación']) || '').trim();
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
@@ -349,10 +349,10 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (pending > 0 && reservaPorSku[sku]) {
             for (let r of reservaPorSku[sku]) {
                 if (pending <= 0) break;
-                let nivel = String(r['NIVEL'] || '').trim().toUpperCase();
+                let nivel = String(getCol(r, ['NIVEL', 'Nivel']) || '').trim().toUpperCase();
                 if (nivel !== 'AEREO') continue;
-                let q = parseFloat(r['CANTIDAD'] || 0);
-                let id = r._id || `${r.LPN}_${sku}_${r.UBICACION}`;
+                let q = parseFloat(getCol(r, ['CANTIDAD', 'Cantidad'])) || 0;
+                let id = r._id || `${getCol(r, ['LPN']) || ''}_${sku}_${getCol(r, ['UBICACION', 'Ubicación']) || ''}`;
                 let uses = stockUsadoMap.get(id) || 0;
                 let avail = q - uses;
                 if (avail > 0) {
@@ -360,7 +360,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     pending -= pick;
                     atdAereo += pick;
                     stockUsadoMap.set(id, uses + pick);
-                    let ubi = String(r['UBICACION']).trim();
+                    let ubi = String(getCol(r, ['UBICACION', 'Ubicación']) || '').trim();
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
