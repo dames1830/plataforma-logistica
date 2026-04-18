@@ -165,20 +165,41 @@ export const parseFile = (file, area) => {
           const workbook = XLSX.read(data, {type: 'array'});
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           
-          // Detección robusta de cabeceras: Buscamos la fila que contenga 'NIVEL' o 'PRODUCTO'
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          let headerIdx = 0;
-          for(let i=0; i<Math.min(rows.length, 10); i++) {
-              const rowStr = JSON.stringify(rows[i]).toUpperCase();
-              if(rowStr.includes('NIVEL') || rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO')) {
-                  headerIdx = i; break;
+          let jsonData = [];
+          if (area === 'stockReserva') {
+              // MODO QUIRÚRGICO: Salto fila 1 (Título) y 2 (Blanco). Fila 3 cabeceras.
+              // Convertimos a array de arrays para usar índices exactos de columna
+              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+              const deepClean = (s) => String(s || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+              
+              // Empezamos en i=3 (Fila 4 de Excel)
+              for (let i = 3; i < rows.length; i++) {
+                  const row = rows[i];
+                  if (!row || row.length < 2) continue;
+                  jsonData.push({
+                      'NIVEL': deepClean(row[1]),     // Columna B (index 1)
+                      'PRODUCTO': deepClean(row[8]),  // Columna I (index 8)
+                      'CANTIDAD': parseFloat(row[10]) || 0, // Columna K (index 10)
+                      'UBICACION': deepClean(row[4]), // Columna E (index 4) para el detalle
+                      'LPN': deepClean(row[5]),       // Columna F (index 5)
+                      'NRO AND': deepClean(row[2])    // Columna C (index 2)
+                  });
               }
+          } else {
+              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+              let headerIdx = 0;
+              for(let i=0; i<Math.min(rows.length, 10); i++) {
+                  const rowStr = JSON.stringify(rows[i]).toUpperCase();
+                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO')) {
+                      headerIdx = i; break;
+                  }
+              }
+              jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
           }
 
-          const json = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-          await persistToDatabase(area, json, session.username || 'sistema');
-          resolve(json);
+          await persistToDatabase(area, jsonData, session.username || 'sistema');
+          resolve(jsonData);
         } catch(err) { reject(err); }
       };
       reader.readAsArrayBuffer(file);

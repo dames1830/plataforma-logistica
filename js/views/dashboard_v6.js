@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.3';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=7.4';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -46,7 +46,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.3</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V7.4</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -153,7 +153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
     } else {
-        buf.innerHTML = `<div style="background:rgba(219,39,119,0.08); padding:2rem; border-radius:16px; border:3px solid #db2777;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;"><h2 style="color:#db2777; font-weight:900;">ANÁLISIS BUFFER NUCLEAR V7.3</h2><button id="btn_calc" class="btn" style="background:#db2777; width:auto; padding:1rem 3rem;">⚡ PROCESAR ANÁLISIS</button></div><div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:2rem;"></div></div>`;
+        buf.innerHTML = `<div style="background:rgba(219,39,119,0.08); padding:2rem; border-radius:16px; border:3px solid #db2777;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;"><h2 style="color:#db2777; font-weight:900;">ANÁLISIS BUFFER NUCLEAR V7.4</h2><button id="btn_calc" class="btn" style="background:#db2777; width:auto; padding:1rem 3rem;">⚡ PROCESAR ANÁLISIS</button></div><div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:2rem;"></div></div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
         document.getElementById('btn_calc').addEventListener('click', async () => {
