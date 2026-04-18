@@ -10,7 +10,7 @@ import {
   setDateFilter, 
   currentDateFilter, 
   pingServer 
-} from '../services/csvHub_v6.js?v=10.3-beta';
+} from '../services/csvHub_v6.js?v=10.4-beta';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -47,7 +47,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
       <header class="topbar">
         <div class="topbar-brand">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.3 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V10.4 <span style="font-size:0.6rem; color:#ef4444; vertical-align:middle;">BETA (DEV)</span></span></h2>
         </div>
         <div class="user-profile">
           <div class="user-details" style="text-align:right;">
@@ -125,7 +125,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let lastBufferKPI = null;
 
   const renderBufferTab = async (container, subtitle) => {
-    subtitle.textContent = "Análisis de Reposición (V10.3 Precision)";
+    subtitle.textContent = "Análisis de Reposición (V10.4 Refined)";
     if (!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
 
     container.innerHTML = `
@@ -143,7 +143,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (activeBufferSub === 'maestros') {
         buf.innerHTML = `<div class="upload-grid" id="mastersGrid"></div>`;
         const grid = document.getElementById('mastersGrid');
-        // V10.3: Soporte para CSV y XLSX en Pedidos
         renderUploadArea(grid, 'buffer', dataStore.buffer, '.csv,.xlsx', 'PEDIDOS / ZONA BUFFER');
         renderUploadArea(grid, 'articulos', dataStore.articulos, '.xlsx', 'Artículos (XLSX)');
         renderUploadArea(grid, 'tallas', dataStore.tallas, '.xlsx', 'Tallas (XLSX)');
@@ -151,10 +150,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1.2rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.3 (Join Engine Active)</h4>
+              <h4 style="color:var(--text-muted); font-size:0.8rem; margin:0;">Análisis Forense V10.4 (Compact)</h4>
               <button id="btn_calc" class="btn" style="width:auto; padding:0.5rem 1.5rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
-            <div id="resultsArea" style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;"></div>
+            <div id="resultsArea" style="display:flex; flex-wrap:wrap; gap:1.2rem; justify-content:flex-start;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
@@ -218,11 +217,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     container.innerHTML = `
-        ${renderTable('ANÁLISIS BUFFER ZONAS', ['AREA', 'RQ', 'ATD', '%'], data.waterfall, '#6366f1')}
-        ${renderSKUTable(data.resumenSKU)}
-        ${renderTable('DISCREPANCIAS GENDER RIMS', ['GENDER', 'RQ', 'ATD', '%'], data.resumenGender, '#ec4899')}
-        ${renderTable('DISCREPANCIAS MARCAS', ['MARCA', 'RQ', 'ATD', '%'], data.resumenMarca, '#06b6d4')}
-        <div style="display:flex; gap:1.5rem; width:100%; margin-top:0.5rem; justify-content:center;">
+        <div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">
+            ${renderTable('ANÁLISIS BUFFER ZONAS', ['AREA', 'RQ', 'ATD', '%'], data.waterfall, '#6366f1')}
+            ${renderSKUTable(data.resumenSKU)}
+            ${renderTable('DISCREPANCIAS GENDER (Zones 3,4,5)', ['GENDER', 'RQ', 'ATD', '%'], data.resumenGender, '#ec4899')}
+            ${renderTable('DISCREPANCIAS MARCAS (Zones 3,4,5)', ['MARCA', 'RQ', 'ATD', '%'], data.resumenMarca, '#06b6d4')}
+        </div>
+        <div style="display:flex; gap:1.5rem; width:100%; margin-top:1.2rem; justify-content:center;">
             <button id="btn_exp_zonas" class="btn" style="width:auto; min-width:180px; background:#4f46e5;">📊 REPORT ZONAL</button>
             <button id="btn_exp_sku" class="btn" style="width:auto; min-width:180px; background:var(--success);">📥 EXCEL SKU FORENSE</button>
         </div>`;
@@ -231,28 +232,28 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderTable = (title, cols, rows, color) => `
-    <div class="neon-table-container" style="border:1px solid ${color}; box-shadow:0 0 10px ${color}22; width:520px;">
-        <div style="padding:0.6rem; background:${color}08; border-bottom:1px solid ${color}22; text-align:center;"><h3 style="margin:0; font-size:0.8rem; color:${color}; font-weight:700;">${title}</h3></div>
-        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
-            <thead style="background:rgba(0,0,0,0.2);"><tr style="border-bottom:1px solid ${color}22;">${cols.map(c=>`<th style="padding:0.5rem; text-align:center; color:var(--text-muted);">${c}</th>`).join('')}</tr></thead>
+    <div class="neon-table-container" style="border:1px solid ${color}; box-shadow:0 0 10px ${color}11; width:460px;">
+        <div style="padding:0.6rem; background:${color}08; border-bottom:1px solid ${color}22; text-align:center;"><h3 style="margin:0; font-size:0.75rem; color:${color}; font-weight:700;">${title}</h3></div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.7rem;">
+            <thead style="background:rgba(0,0,0,0.2);"><tr style="border-bottom:1px solid ${color}22;">${cols.map(c=>`<th style="padding:0.4rem; text-align:center; color:var(--text-muted);">${c}</th>`).join('')}</tr></thead>
             <tbody>${rows.map(r => `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.02); ${(r.nivel && r.nivel.includes('Total')) || r.key==='Total'?'background:'+color+'11; font-weight:bold;':''}">
-                    ${Object.values(r).map((v,idx) => `<td style="padding:0.4rem; text-align:center; color:${idx===Object.values(r).length-1?'#22c55e':(r.nivel==='Total'?'#22c55e':'#fff')};">${typeof v==='number'?v.toLocaleString():v}</td>`).join('')}
+                    ${Object.values(r).map((v,idx) => `<td style="padding:0.35rem; text-align:center; color:${idx===Object.values(r).length-1?'#22c55e':(r.nivel==='Total'?'#22c55e':'#fff')};">${typeof v==='number'?v.toLocaleString():v}</td>`).join('')}
                 </tr>`).join('')}</tbody>
         </table>
     </div>`;
 
   const renderSKUTable = (rows) => `
-    <div class="neon-table-container" style="border:1px solid #f59e0b; box-shadow:0 0 10px rgba(245,158,11,0.1); width:520px;">
-        <div style="padding:0.6rem; background:rgba(245,158,11,0.05); border-bottom:1px solid rgba(245,158,11,0.2); text-align:center;"><h3 style="margin:0; font-size:0.8rem; color:#f59e0b; font-weight:700;">ANÁLISIS BUFFER SKU</h3></div>
-        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
-            <thead style="background:rgba(0,0,0,0.2);"><tr style="border-bottom:1px solid rgba(245,158,11,0.1);"><th style="padding:0.5rem;">EMPAQUE</th><th style="padding:0.5rem;">PALETAS</th><th style="padding:0.5rem;">SKUS</th><th style="padding:0.5rem;">PAR/CAJA</th></tr></thead>
+    <div class="neon-table-container" style="border:1px solid #f59e0b; box-shadow:0 0 10px rgba(245,158,11,0.08); width:460px;">
+        <div style="padding:0.6rem; background:rgba(245,158,11,0.05); border-bottom:1px solid rgba(245,158,11,0.2); text-align:center;"><h3 style="margin:0; font-size:0.75rem; color:#f59e0b; font-weight:700;">ANÁLISIS BUFFER SKU</h3></div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.7rem;">
+            <thead style="background:rgba(0,0,0,0.2);"><tr style="border-bottom:1px solid rgba(245,158,11,0.1);"><th style="padding:0.4rem;">EMPAQUE</th><th style="padding:0.4rem;">PALETAS</th><th style="padding:0.4rem;">SKUS</th><th style="padding:0.4rem;">PAR/CAJA</th></tr></thead>
             <tbody>${rows.map(r => `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.02); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.1); font-weight:bold;':''}">
-                    <td style="padding:0.4rem; text-align:center; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'}">${r.tipo}</td>
-                    <td style="padding:0.4rem; text-align:center;">${r.paletas}</td>
-                    <td style="padding:0.4rem; text-align:center;">${r.skus}</td>
-                    <td style="padding:0.4rem; text-align:center; color:#22c55e; font-weight:bold;">${r.parcaja.toLocaleString()}</td>
+                    <td style="padding:0.35rem; text-align:center; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'}">${r.tipo}</td>
+                    <td style="padding:0.35rem; text-align:center;">${r.paletas}</td>
+                    <td style="padding:0.35rem; text-align:center;">${r.skus}</td>
+                    <td style="padding:0.35rem; text-align:center; color:#22c55e; font-weight:bold;">${r.parcaja.toLocaleString()}</td>
                 </tr>`).join('')}</tbody>
         </table>
     </div>`;
