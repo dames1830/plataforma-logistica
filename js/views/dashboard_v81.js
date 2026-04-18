@@ -154,7 +154,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Análisis de Reposición";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
-    // VERIFICACIÓN DE CACHÉ PARA V8.1 (Invalida si falta detalleZonas)
+    // VERIFICACIÓN DE CACHÉ PARA V8.1
     const stored = localStorage.getItem('lastBufferKPI');
     if (stored) {
         try {
@@ -244,20 +244,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO SKU</button>
         </div>
     `;
+    const checkData = (d) => {
+        if (!d || !d.length) {
+            alert('⚠️ ERROR: Los datos detallados no están disponibles. Por favor haz clic en "PROCESAR ANÁLISIS" para generarlos.');
+            return false;
+        }
+        return true;
+    };
 
     document.getElementById('btn_exp_zonas').addEventListener('click', () => {
-        if(!data.detalleZonas || !data.detalleZonas.length) {
-            alert('⚠️ ERROR: Los datos detallados de Zonas no están disponibles. Por favor haz clic en "PROCESAR ANÁLISIS" nuevamente.');
-        } else {
-            exportToExcel(data.detalleZonas, 'Analisis_Zonas_V81');
-        }
+        if(checkData(data.detalleZonas)) exportToExcel(data.detalleZonas, 'Analisis_Zonas_V81');
     });
     document.getElementById('btn_exp_buffer').addEventListener('click', () => {
-        if(!data.detalle || !data.detalle.length) {
-            alert('⚠️ ERROR: El detalle de SKU no está disponible. Por favor haz clic en "PROCESAR ANÁLISIS" nuevamente.');
-        } else {
-            exportToExcel(data.detalle, 'Analisis_SKU_V81');
-        }
+        if(checkData(data.detalle)) exportToExcel(data.detalle, 'Analisis_SKU_V81');
     });
   };
 
