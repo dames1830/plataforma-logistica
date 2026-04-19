@@ -400,7 +400,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         atdAereo += wrapAereo.val;
 
         let wrapLogico = { val: 0 };
-        pending = satisfyDemand(sku, pending, stLogicos, 'Lógica', wrapLogico);
+        pending = satisfyDemand(sku, pending, stLogicos, 'Logica', wrapLogico);
         atdLogico += wrapLogico.val;
     });
 
@@ -423,7 +423,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: '2. Alto', rq: globalRQ - atdBaja, atd: atdAlto, pct: calcPct(atdAlto, globalRQ - atdBaja) },
         { nivel: '3. Pisos', rq: globalRQ - atdBaja - atdAlto, atd: atdPiso, pct: calcPct(atdPiso, globalRQ - atdBaja - atdAlto) },
         { nivel: '4. Aereo', rq: globalRQ - atdBaja - atdAlto - atdPiso, atd: atdAereo, pct: calcPct(atdAereo, globalRQ - atdBaja - atdAlto - atdPiso) },
-        { nivel: '5. Lógica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
+        { nivel: '5. Logica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
     ];
 
@@ -441,7 +441,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     // =============================================
     // V10.8: ANÁLISIS FORENSE (ZONAS 3, 4, 5)
     // =============================================
-    const forensicZones = ['Pisos', 'Aereo', 'Lógica'];
+    const forensicZones = ['Pisos', 'Aereo', 'Logica'];
     const getArtInfo = (sku) => {
         const art = sku.substring(0, 7);
         const row = dataStore.articulos?.find(a => String(getCol(a, ['Articulo']) || '').trim() === art);
