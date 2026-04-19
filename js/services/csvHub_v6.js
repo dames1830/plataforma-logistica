@@ -427,16 +427,61 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
     ];
 
-    const empaque = { 'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 }, 'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 } };
+    const empaqueMap = { 'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 }, 'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 } };
     detallePallets.forEach(r => {
         const tipo = r.SKU.length >= 14 ? 'PreePack' : 'SolidPack';
-        empaque[tipo].paletas.add(r.UBICACIONES);
-        empaque[tipo].skus.add(r.SKU);
-        empaque[tipo].parcaja += r['QTY BUFFER'];
+        empaqueMap[tipo].paletas.add(r.UBICACIONES);
+        empaqueMap[tipo].skus.add(r.SKU);
+        empaqueMap[tipo].parcaja += r['QTY BUFFER'];
     });
 
-    const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
+    const resEmp = Object.keys(empaqueMap).map(t => ({ tipo: t, paletas: empaqueMap[t].paletas.size, skus: empaqueMap[t].skus.size, parcaja: empaqueMap[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
-    return { waterfall, detalle: detallePallets, detalleZonas, resumenSKU: resEmp };
+    // =============================================
+    // V10.8: ANÁLISIS FORENSE (ZONAS 3, 4, 5)
+    // =============================================
+    const forensicZones = ['Pisos', 'Aereo', 'Lógica'];
+    const getArtInfo = (sku) => {
+        const art = sku.substring(0, 7);
+        const row = dataStore.articulos?.find(a => String(getCol(a, ['Articulo']) || '').trim() === art);
+        return {
+            gender: String(getCol(row, ['Genero', 'Gender', 'GÉNERO']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marca', 'Brand', 'MARCA']) || 'Otros')
+        };
+    };
+
+    let genderAggr = {}, marcaAggr = {};
+    detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
+        const info = getArtInfo(d.SKU);
+        const atd = d['ATD RQ'] || 0;
+        const rq = d['RQ'] || 0;
+
+        if (!genderAggr[info.gender]) genderAggr[info.gender] = { rq: 0, atd: 0 };
+        genderAggr[info.gender].rq += rq;
+        genderAggr[info.gender].atd += atd;
+
+        if (!marcaAggr[info.marca]) marcaAggr[info.marca] = { rq: 0, atd: 0 };
+        marcaAggr[info.marca].rq += rq;
+        marcaAggr[info.marca].atd += atd;
+    });
+
+    const formatForensic = (aggr) => {
+        const rows = Object.keys(aggr).sort().map(k => ({ key: k, rq: aggr[k].rq, atd: aggr[k].atd }));
+        if (rows.length) {
+            const totRQ = rows.reduce((a, b) => a + b.rq, 0);
+            const totATD = rows.reduce((a, b) => a + b.atd, 0);
+            rows.push({ key: 'TOTAL', rq: totRQ, atd: totATD });
+        }
+        return rows;
+    };
+
+    return { 
+        waterfall, 
+        detalle: detallePallets, 
+        detalleZonas, 
+        resumenSKU: resEmp,
+        resumenGender: formatForensic(genderAggr),
+        resumenMarca: formatForensic(marcaAggr)
+    };
 };
