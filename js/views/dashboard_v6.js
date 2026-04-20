@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=8.1';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=10.5.3-pulse';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -198,15 +198,22 @@ export const renderDashboard = async (container, user, onLogout) => {
         document.getElementById('btn_calc').addEventListener('click', async () => {
             const btn = document.getElementById('btn_calc'); btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
             setTimeout(async () => {
-                const res = calculateBufferPallets(bufferConfigCached);
-                if(res) { 
-                    lastBufferKPI = res; 
-                    localStorage.setItem('lastBufferKPI', JSON.stringify(res)); 
-                    saveBufferReport(res, user.username); 
-                    renderBufferResults(results, res); 
+                try {
+                    const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+                    const res = calculateBufferPallets(config);
+                    if(res) { 
+                        lastBufferKPI = res; 
+                        localStorage.setItem('lastBufferKPI', JSON.stringify(res)); 
+                        await saveBufferReport(res, user.username).catch(() => console.warn("Save failed, continuing...")); 
+                        renderBufferResults(results, res); 
+                    }
+                    else alert('ERROR: Faltan archivos maestros.');
+                } catch (err) {
+                    console.error("Error en proceso:", err);
+                    alert("Error al procesar: " + err.message);
+                } finally {
+                    btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
                 }
-                else alert('ERROR: Faltan archivos maestros.');
-                btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
             }, 500);
         });
     }
