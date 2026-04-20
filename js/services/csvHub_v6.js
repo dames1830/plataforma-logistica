@@ -432,11 +432,23 @@ export const calculateBufferPallets = (configOverride = null) => {
     // =============================================
     const forensicZones = ['Pisos', 'Aereo', 'Logica'];
     const getArtInfo = (sku) => {
-        const art = sku.substring(0, 7);
-        const row = dataStore.articulos?.find(a => String(getCol(a, ['Articulo']) || '').trim() === art);
+        if (!dataStore.articulos) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        
+        const cleanSku = (s) => String(s || '').trim();
+        const shortSku = (s) => cleanSku(s).substring(0, 7);
+        const target = cleanSku(sku);
+        const targetShort = shortSku(sku);
+
+        const row = dataStore.articulos.find(a => {
+            const masterVal = cleanSku(getCol(a, ['Articulo', 'ARTICULO', 'SKU', 'ITEM', 'Producto']));
+            return masterVal === target || masterVal === targetShort || shortSku(masterVal) === targetShort;
+        });
+
+        if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
+
         return {
-            gender: String(getCol(row, ['Genero', 'Gender']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marca', 'Brand']) || 'Otros')
+            gender: String(getCol(row, ['Genero', 'Gender', 'GÉNERO', 'Categoria']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marca', 'Brand', 'MARCA']) || 'Otros')
         };
     };
 
