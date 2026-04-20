@@ -188,7 +188,7 @@ export const parseFile = (file, area) => {
               let headerIdx = 0;
               for(let i=0; i<Math.min(rows.length, 10); i++) {
                   const rowStr = JSON.stringify(rows[i]).toUpperCase();
-                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO')) {
+                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO') || rowStr.includes('CODARTICULO')) {
                       headerIdx = i; break;
                   }
               }
@@ -440,9 +440,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         // El usuario indica: pedidos(Código de articulo)[7] -> articulos(CodArticulo)
         const target7 = to7(sku);
 
-        const row = dataStore.articulos.find(a => {
+        const row = dataStore.articulos.find((a, idx) => {
             const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto']));
-            return clean(masterVal) === target7 || to7(masterVal) === target7;
+            const match = (clean(masterVal) === target7 || to7(masterVal) === target7);
+            if(idx < 5 && !match) console.log(`[DEBUG] No match: Master(${masterVal}) vs Target(${target7})`);
+            return match;
         });
 
         if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
