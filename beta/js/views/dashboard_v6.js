@@ -1,5 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=10.5.3-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=11.1.4-final';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -49,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.3 (Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.4 (Final Pulse)</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -154,13 +154,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Análisis de Reposición";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
-    // VERIFICACIÓN DE CACHÉ PARA V8.1 (Invalida si falta detalleZonas)
     const stored = localStorage.getItem('lastBufferKPI');
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
             if (!parsed.detalleZonas) {
-                console.warn("Removiendo caché Buffer antigua...");
                 localStorage.removeItem('lastBufferKPI');
                 lastBufferKPI = null;
             } else {
@@ -206,38 +204,45 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
+
         document.getElementById('btn_calc').addEventListener('click', async () => {
-            const btn = document.getElementById('btn_calc'); btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
+            const btn = document.getElementById('btn_calc'); 
+            btn.disabled = true; btn.innerHTML = '⚙️ CALCULANDO...';
+            results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de Análisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
+
             setTimeout(async () => {
                 try {
                     const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                     const res = calculateBufferPallets(config);
-                    console.log("[PULSE] Resultado del cálculo:", res ? "ÉXITO" : "FALLO (Sin datos)");
                     if(res) { 
                         lastBufferKPI = res; 
                         localStorage.setItem('lastBufferKPI', JSON.stringify(res)); 
-                        await saveBufferReport(res, user.username).catch(() => console.warn("Save failed, continuing...")); 
+                        const saved = await saveBufferReport(res, user.username);
                         renderBufferResults(results, res); 
+                        alert(saved ? '✅ Análisis COMPLETO y Sincronizado.' : '✅ Análisis COMPLETO (Guardado solo Localmente).');
                     }
                     else {
                         const missing = [];
                         if(!dataStore.buffer) missing.push("PEDIDOS (BUFFER)");
                         if(!dataStore.stockActivo) missing.push("STOCK ACTIVO");
                         if(!dataStore.stockReserva) missing.push("STOCK RESERVA");
+                        results.innerHTML = '';
                         alert('⚠️ ERROR: Faltan archivos críticos en memoria:\n\n' + missing.join("\n") + '\n\nPor favor súbelos en la pestaña "STOCK GENERAL" y "ZONA BUFFER".');
                     }
                 } catch (err) {
                     console.error("Error en proceso:", err);
-                    alert("Error al procesar: " + err.message);
+                    results.innerHTML = '';
+                    alert("Error crítico al procesar: " + err.message);
                 } finally {
                     btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
                 }
-            }, 500);
+            }, 800);
         });
 
         document.getElementById('btn_reset_cache').addEventListener('click', () => {
-            if(confirm('¿Reiniciar memoria local? Se borrarán los archivos cargados temporalmente para solucionar bloqueos.')) {
-                localStorage.clear();
+            if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos. Tendrás que volver a subirlos.')) {
+                Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
+                localStorage.removeItem('lastBufferKPI');
                 window.location.reload();
             }
         });
@@ -319,7 +324,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
-  let activeAdminSub = 'usuarios';
   const renderAdminTab = async () => {
     contentSubtitle.textContent = "Gestión de Personal y Auditoría";
     contentArea.innerHTML = `
@@ -332,7 +336,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     document.getElementById('adminContent').innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: 0.85rem;">Módulo en desarrollo: ${activeAdminSub.toUpperCase()}</div>`;
   };
 
-  let activeConfigSub = 'parametros';
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
     contentArea.innerHTML = `

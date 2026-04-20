@@ -76,14 +76,21 @@ export const pingServer = () => {
 
 export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
     try {
-        await fetch(`${SHARED_API}/buffer_report`, {
+        const response = await fetch(`${SHARED_API}/buffer_report`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: bufferKPIObj, updated_by: username })
         });
-        console.log('✅ Reporte Buffer guardado en servidor.');
+        if (response.ok) {
+            console.log('✅ Reporte Buffer guardado en servidor.');
+            return true;
+        } else {
+            console.warn(`⚠️ Error servidor (${response.status}): Reporte NO guardado.`);
+            return false;
+        }
     } catch (e) {
-        console.warn('⚠️ No se pudo guardar el reporte en servidor:', e);
+        console.warn('⚠️ Fallo de conexión: Reporte guardado solo LOCALMENTE.', e);
+        return false;
     }
 };
 
@@ -299,7 +306,10 @@ export const calculateBufferPallets = (configOverride = null) => {
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
     
-    if(!activo || !reserva || !pedidos) return null;
+    if(!activo || !reserva || !pedidos) {
+        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
+        return null;
+    }
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
