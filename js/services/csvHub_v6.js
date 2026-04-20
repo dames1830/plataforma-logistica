@@ -76,11 +76,15 @@ export const pingServer = () => {
 
 export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 sec max
         const response = await fetch(`${SHARED_API}/buffer_report`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: bufferKPIObj, updated_by: username })
+            body: JSON.stringify({ data: bufferKPIObj, updated_by: username }),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         if (response.ok) {
             console.log('✅ Reporte Buffer guardado en servidor.');
             return true;
@@ -89,7 +93,7 @@ export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
             return false;
         }
     } catch (e) {
-        console.warn('⚠️ Fallo de conexión: Reporte guardado solo LOCALMENTE.', e);
+        console.warn('⚠️ Fallo de conexión o Timeout: Reporte guardado solo LOCALMENTE.', e);
         return false;
     }
 };

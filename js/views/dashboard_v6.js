@@ -49,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.4 (Final Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.5 (Pulse Emergency)</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -214,11 +214,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 try {
                     const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                     const res = calculateBufferPallets(config);
-                    if(res) { 
-                        lastBufferKPI = res; 
-                        localStorage.setItem('lastBufferKPI', JSON.stringify(res)); 
-                        const saved = await saveBufferReport(res, user.username);
+                    if (res) {
+                        lastBufferKPI = res;
+                        localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                         renderBufferResults(results, res); 
+                        
+                        const saved = await saveBufferReport(res, user.username);
                         alert(saved ? '✅ Análisis COMPLETO y Sincronizado.' : '✅ Análisis COMPLETO (Guardado solo Localmente).');
                     }
                     else {
