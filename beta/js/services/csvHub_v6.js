@@ -450,8 +450,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
 
         return {
-            gender: String(getCol(row, ['Genero', 'Gender', 'GÉNERO', 'Categoria']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marca', 'Brand', 'MARCA']) || 'Otros')
+            gender: String(getCol(row, ['Genero', 'Gender', 'GÉNERO', 'Categoria', 'Division', 'División', 'Seccion', 'Sección', 'Depto', 'Departamento', 'Sección 2']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Casa']) || 'Otros')
         };
     };
 
