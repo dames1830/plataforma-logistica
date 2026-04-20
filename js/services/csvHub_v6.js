@@ -440,18 +440,16 @@ export const calculateBufferPallets = (configOverride = null) => {
         // El usuario indica: pedidos(Código de articulo)[7] -> articulos(CodArticulo)
         const target7 = to7(sku);
 
-        const row = dataStore.articulos.find((a, idx) => {
+        const row = dataStore.articulos.find(a => {
             const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto']));
-            const match = (clean(masterVal) === target7 || to7(masterVal) === target7);
-            if(idx < 5 && !match) console.log(`[DEBUG] No match: Master(${masterVal}) vs Target(${target7})`);
-            return match;
+            return clean(masterVal) === target7 || to7(masterVal) === target7;
         });
 
         if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
 
         return {
-            gender: String(getCol(row, ['Genero', 'Gender', 'GÉNERO', 'Categoria', 'Division', 'División', 'Seccion', 'Sección', 'Depto', 'Departamento', 'Sección 2']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Casa']) || 'Otros')
+            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial']) || 'Otros')
         };
     };
 
