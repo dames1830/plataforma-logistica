@@ -400,7 +400,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         atdAereo += wrapAereo.val;
 
         let wrapLogico = { val: 0 };
-        pending = satisfyDemand(sku, pending, stLogicos, 'Lógica', wrapLogico);
+        pending = satisfyDemand(sku, pending, stLogicos, 'Logica', wrapLogico);
         atdLogico += wrapLogico.val;
     });
 
@@ -423,9 +423,43 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: '2. Alto', rq: globalRQ - atdBaja, atd: atdAlto, pct: calcPct(atdAlto, globalRQ - atdBaja) },
         { nivel: '3. Pisos', rq: globalRQ - atdBaja - atdAlto, atd: atdPiso, pct: calcPct(atdPiso, globalRQ - atdBaja - atdAlto) },
         { nivel: '4. Aereo', rq: globalRQ - atdBaja - atdAlto - atdPiso, atd: atdAereo, pct: calcPct(atdAereo, globalRQ - atdBaja - atdAlto - atdPiso) },
-        { nivel: '5. Lógica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
+        { nivel: '5. Logica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
     ];
+
+    // =============================================
+    // V10.5-Pulse: ANÁLISIS FORENSE (ZONAS 3, 4, 5)
+    // =============================================
+    const forensicZones = ['Pisos', 'Aereo', 'Logica'];
+    const getArtInfo = (sku) => {
+        const art = sku.substring(0, 7);
+        const row = dataStore.articulos?.find(a => String(getCol(a, ['Articulo']) || '').trim() === art);
+        return {
+            gender: String(getCol(row, ['Genero', 'Gender']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marca', 'Brand']) || 'Otros')
+        };
+    };
+
+    const genderAggr = {}, marcaAggr = {};
+    detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
+        const info = getArtInfo(d.SKU);
+        const atd = d['ATD RQ'] || 0;
+        if (!genderAggr[info.gender]) genderAggr[info.gender] = { rq: 0, atd: 0 };
+        genderAggr[info.gender].atd += atd;
+        genderAggr[info.gender].rq += atd; // User wants only total ATD as RQ
+
+        if (!marcaAggr[info.marca]) marcaAggr[info.marca] = { rq: 0, atd: 0 };
+        marcaAggr[info.marca].atd += atd;
+        marcaAggr[info.marca].rq += atd;
+    });
+
+    const formatForensic = (aggr) => {
+        const rows = Object.keys(aggr).sort().map(k => ({ key: k, rq: aggr[k].rq }));
+        if (rows.length > 0) {
+            rows.push({ key: 'TOTAL', rq: rows.reduce((sum, r) => sum + r.rq, 0) });
+        }
+        return rows;
+    };
 
     const empaque = { 'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 }, 'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 } };
     detallePallets.forEach(r => {
@@ -438,5 +472,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
-    return { waterfall, detalle: detallePallets, detalleZonas, resumenSKU: resEmp };
+    return { 
+        waterfall, 
+        detalle: detallePallets, 
+        detalleZonas, 
+        resumenSKU: resEmp,
+        resumenGender: formatForensic(genderAggr),
+        resumenMarca: formatForensic(marcaAggr)
+    };
 };

@@ -239,6 +239,26 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </tr>`).join('')}</tbody>
             </table>
         </div>
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #ec4899; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(236,72,153,0.3);">
+            <div style="padding:0.8rem; background:rgba(236,72,153,0.1); border-bottom:1px solid rgba(236,72,153,0.3); text-align:center;"><h3 style="color:#ec4899; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">DISCREPANCIAS GENDER (Zones 3,4,5)</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(236,72,153,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">GENDER</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">RQ</th></tr></thead>
+                <tbody style="color:#eee;">${data.resumenGender.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.key==='TOTAL'?'background:rgba(236,72,153,0.08); font-weight:900;':''}">
+                    <td style="padding:0.6rem 1.2rem; text-align:left;">${r.key}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
+            <div style="padding:0.8rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;"><h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">DISCREPANCIAS MARCAS (Zones 3,4,5)</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">MARCA</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">RQ</th></tr></thead>
+                <tbody style="color:#eee;">${data.resumenMarca.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.key==='TOTAL'?'background:rgba(6,182,212,0.08); font-weight:900;':''}">
+                    <td style="padding:0.6rem 1.2rem; text-align:left;">${r.key}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>
         <div style="display:flex; gap:1rem;">
             <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📊 EXPORTAR ANÁLISIS ZONA</button>
             <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO SKU</button>
