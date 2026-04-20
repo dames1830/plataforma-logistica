@@ -49,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.2 (Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.3 (Pulse)</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -190,10 +190,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
               <div>
                 <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
-                <div style="display:flex; gap:1rem; font-size:0.7rem;">
+                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center;">
                     <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
                     <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
                     <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
+                    <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                 </div>
               </div>
               <div style="text-align:right;">
@@ -232,6 +233,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                     btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
                 }
             }, 500);
+        });
+
+        document.getElementById('btn_reset_cache').addEventListener('click', () => {
+            if(confirm('¿Reiniciar memoria local? Se borrarán los archivos cargados temporalmente para solucionar bloqueos.')) {
+                localStorage.clear();
+                window.location.reload();
+            }
         });
     }
   };

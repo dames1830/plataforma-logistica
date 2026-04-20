@@ -285,9 +285,12 @@ export const generateKPIs = (data, area) => {
 
 export const fetchBufferConfig = async () => {
     try {
-        const response = await fetch(`${API_BASE}/buffer/config`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos máx
+        const response = await fetch(`${API_BASE}/buffer/config`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (response.ok) return await response.json();
-    } catch (e) { console.warn("No se pudo obtener config buffer", e); }
+    } catch (e) { console.warn("Timeout o error config buffer, usando local default", e); }
     return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
 };
 
