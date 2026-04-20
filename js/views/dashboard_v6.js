@@ -49,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v10.6.0 (Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.0.0 (Pulse)</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -191,7 +191,7 @@ export const renderDashboard = async (container, user, onLogout) => {
               <h4 style="color:var(--text-muted); font-weight:600; font-size:0.8rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
               <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.85rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
-            <div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:1.5rem; margin-left:1rem;"></div>
+            <div id="resultsArea" style="display:grid; grid-template-columns: repeat(2, auto); gap:1.5rem; align-items:start; margin-left:1rem;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
@@ -220,53 +220,59 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
+    const tableWidth = '450px';
     container.innerHTML = `
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(79,70,229,0.4);">
-            <div style="padding:0.8rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">ANÁLISIS BUFFER ZONAS</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">NIVEL/AREA</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">RQ</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">ATD RQ</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">% ATD</th></tr></thead>
+        <!-- FILA 1: ZONAS + GENDER -->
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(79,70,229,0.4);">
+            <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">ANÁLISIS BUFFER ZONAS</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">%</th></tr></thead>
                 <tbody style="color:#eee;">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.08); font-weight:900;':''}">
-                    <td style="padding:0.6rem 1.2rem; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.nivel}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.rq.toLocaleString()}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e' : (r.atd > 0 ? '#fff' : '#64748b')};">${r.atd.toLocaleString()}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${r.pct}</td>
+                    <td style="padding:0.5rem 1rem; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.nivel}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center;">${r.rq.toLocaleString()}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? '#fff' : '#64748b'};">${r.atd.toLocaleString()}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${r.pct}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
-            <div style="padding:0.8rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">TIPO DE EMPAQUE</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">PALETAS A BAJAR</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">SKUS</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">PAR/CAJA</th></tr></thead>
-                <tbody style="color:#eee;">${data.resumenSKU.map(r => `
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
-                    <td style="padding:0.6rem 1.2rem; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'};">${r.tipo}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; font-weight:bold; color:${r.tipo==='TOTAL'?'#fff':'inherit'};">${r.paletas}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:${r.tipo==='TOTAL'?'#fff':'inherit'};">${r.skus}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${Number(r.parcaja).toLocaleString()}</td>
-                </tr>`).join('')}</tbody>
-            </table>
-        </div>
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #ec4899; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(236,72,153,0.3);">
-            <div style="padding:0.8rem; background:rgba(236,72,153,0.1); border-bottom:1px solid rgba(236,72,153,0.3); text-align:center;"><h3 style="color:#ec4899; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">DISCREPANCIAS GENDER (Zones 3,4,5)</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(236,72,153,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">GENDER</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">RQ</th></tr></thead>
+
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #ec4899; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(236,72,153,0.3);">
+            <div style="padding:0.7rem; background:rgba(236,72,153,0.1); border-bottom:1px solid rgba(236,72,153,0.3); text-align:center;"><h3 style="color:#ec4899; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">DISCREPANCIAS GENDER (Zonas 3,4,5)</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(236,72,153,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">GENDER</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th></tr></thead>
                 <tbody style="color:#eee;">${data.resumenGender.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.key==='TOTAL'?'background:rgba(236,72,153,0.08); font-weight:900;':''}">
-                    <td style="padding:0.6rem 1.2rem; text-align:left;">${r.key}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
+                    <td style="padding:0.5rem 1rem;">${r.key}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
-            <div style="padding:0.8rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;"><h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">DISCREPANCIAS MARCAS (Zones 3,4,5)</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">MARCA</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">RQ</th></tr></thead>
+
+        <!-- FILA 2: SKU + MARCAS -->
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
+            <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PAL</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR</th></tr></thead>
+                <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
+                    <td style="padding:0.5rem 1rem;">${r.tipo}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${Number(r.parcaja).toLocaleString()}</td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>
+
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
+            <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;"><h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">DISCREPANCIAS MARCAS (Zonas 3,4,5)</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">MARCA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th></tr></thead>
                 <tbody style="color:#eee;">${data.resumenMarca.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.key==='TOTAL'?'background:rgba(6,182,212,0.08); font-weight:900;':''}">
-                    <td style="padding:0.6rem 1.2rem; text-align:left;">${r.key}</td>
-                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
+                    <td style="padding:0.5rem 1rem;">${r.key}</td>
+                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-        <div style="display:flex; gap:1rem;">
+
+        <div style="grid-column: span 2; display:flex; gap:1rem; margin-top:0.5rem;">
             <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📊 EXPORTAR ANÁLISIS ZONA</button>
             <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO SKU</button>
         </div>
