@@ -49,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.1 (Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.2 (Pulse)</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -187,9 +187,19 @@ export const renderDashboard = async (container, user, onLogout) => {
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
-              <h4 style="color:var(--text-muted); font-weight:600; font-size:0.8rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
-              <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.85rem;">⚡ PROCESAR ANÁLISIS</button>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+              <div>
+                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
+                <div style="display:flex; gap:1rem; font-size:0.7rem;">
+                    <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
+                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
+                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
+                <button id="btn_calc" class="btn" style="background:var(--primary); margin-top:0.5rem; width:auto; padding:0.5rem 1.2rem; border-radius:6px; font-size:0.8rem;">⚡ PROCESAR ANÁLISIS</button>
+              </div>
             </div>
             <div id="resultsArea" style="display:grid; grid-template-columns: repeat(2, auto); gap:1.5rem; align-items:start; margin-left:1rem;"></div>
           </div>`;
@@ -201,13 +211,20 @@ export const renderDashboard = async (container, user, onLogout) => {
                 try {
                     const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                     const res = calculateBufferPallets(config);
+                    console.log("[PULSE] Resultado del cálculo:", res ? "ÉXITO" : "FALLO (Sin datos)");
                     if(res) { 
                         lastBufferKPI = res; 
                         localStorage.setItem('lastBufferKPI', JSON.stringify(res)); 
                         await saveBufferReport(res, user.username).catch(() => console.warn("Save failed, continuing...")); 
                         renderBufferResults(results, res); 
                     }
-                    else alert('ERROR: Faltan archivos maestros.');
+                    else {
+                        const missing = [];
+                        if(!dataStore.buffer) missing.push("PEDIDOS (BUFFER)");
+                        if(!dataStore.stockActivo) missing.push("STOCK ACTIVO");
+                        if(!dataStore.stockReserva) missing.push("STOCK RESERVA");
+                        alert('⚠️ ERROR: Faltan archivos críticos en memoria:\n\n' + missing.join("\n") + '\n\nPor favor súbelos en la pestaña "STOCK GENERAL" y "ZONA BUFFER".');
+                    }
                 } catch (err) {
                     console.error("Error en proceso:", err);
                     alert("Error al procesar: " + err.message);
