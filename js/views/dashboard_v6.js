@@ -49,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.0 (Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.1 (Pulse)</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -327,14 +327,4 @@ export const renderDashboard = async (container, user, onLogout) => {
   document.getElementById('logoutBtn').addEventListener('click', onLogout);
   renderNav();
   renderTabContent();
-};
-
-const renderDashboardView = (container, data) => { container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);"><h3 style="font-size:1rem; margin:0;">Visualización de Datos</h3><p style="font-size:0.85rem;">${data.length.toLocaleString()} registros detectados.</p></div>`; };
-
-const exportToExcel = (data, filename) => {
-    if (!data || !data.length) return alert('No hay datos para exportar.');
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    XLSX.writeFile(wb, `${filename}_${new Date().getTime()}.xlsx`);
 };
