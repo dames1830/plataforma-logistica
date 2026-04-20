@@ -55,9 +55,11 @@ const clearLS = () => {
 export let currentDateFilter = null;
 
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
-const API_BASE   = "https://logistics-backend-wv0x.onrender.com/api";
+const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
+const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
+const VERSION = '11.1.6-lockdown';
+const CACHE_KEY = `logistics_v11_1_6_`;
 const API_URL    = `${API_BASE}/logistics`;
-const SHARED_API = `${API_BASE}/shared`;
 
 export const setDateFilter = (newDateStr) => {
     if (currentDateFilter !== newDateStr) {
@@ -297,11 +299,16 @@ export const generateKPIs = (data, area) => {
 export const fetchBufferConfig = async () => {
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos máx
-        const response = await fetch(`${API_BASE}/buffer/config`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (response.ok) return await response.json();
-    } catch (e) { console.warn("Timeout o error config buffer, usando local default", e); }
+        const timeoutId = setTimeout(() => controller.abort(), 2000); 
+        try {
+            const response = await fetch(`${API_BASE}/buffer/config`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.ok) return await response.json();
+        } catch (err) {
+            if (err.name === 'AbortError') console.warn("Timeout config buffer (2s): usando local default");
+            else console.warn("Error config buffer:", err);
+        }
+    } catch (e) { console.error("Error crítico fetchBufferConfig:", e); }
     return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
 };
 
