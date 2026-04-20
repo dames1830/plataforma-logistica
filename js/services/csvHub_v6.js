@@ -432,16 +432,17 @@ export const calculateBufferPallets = (configOverride = null) => {
     // =============================================
     const forensicZones = ['Pisos', 'Aereo', 'Logica'];
     const getArtInfo = (sku) => {
-        if (!dataStore.articulos) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        if (!dataStore.articulos || !sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
         
-        const cleanSku = (s) => String(s || '').trim();
-        const shortSku = (s) => cleanSku(s).substring(0, 7);
-        const target = cleanSku(sku);
-        const targetShort = shortSku(sku);
+        const clean = (s) => String(s || '').trim();
+        const to7 = (s) => clean(s).substring(0, 7);
+        
+        // El usuario indica: pedidos(Código de articulo)[7] -> articulos(CodArticulo)
+        const target7 = to7(sku);
 
         const row = dataStore.articulos.find(a => {
-            const masterVal = cleanSku(getCol(a, ['Articulo', 'ARTICULO', 'SKU', 'ITEM', 'Producto']));
-            return masterVal === target || masterVal === targetShort || shortSku(masterVal) === targetShort;
+            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto']));
+            return clean(masterVal) === target7 || to7(masterVal) === target7;
         });
 
         if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
