@@ -1,20 +1,26 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.19-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.19-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.20-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.20-pulse';
 
-const VERSION = '11.1.19-pulse';
-const CACHE_KEY = `logistics_v11_1_19_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Sub-Tab Permissions)`);
+const VERSION = '11.1.20-pulse';
+const CACHE_KEY = `logistics_v11_1_20_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Accordion Permissions)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'stock', label: 'Stock General', icon: '🏦', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
+  { id: 'stock', label: 'Stock General', icon: '🏦', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'], subTabs: [
+    { id: 'stockActivo', label: 'Stock Activo', icon: '⚡' },
+    { id: 'stockReserva', label: 'Stock Reserva', icon: '📦' }
+  ] },
   { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'] },
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
+    { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
+  ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
@@ -66,7 +72,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.19 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.20 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -134,11 +140,18 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderStockTab = async () => {
     contentSubtitle.textContent = "Existencias Físicas";
+    const perms = adminService.getPermissions(user.role) || {};
+    
     contentArea.innerHTML = `<div id="stockSub" style="display:flex; flex-direction:column; gap:1.2rem;"></div>`;
     const sub = document.getElementById('stockSub');
     const [act, res] = await Promise.all([getAreaData('stockActivo'), getAreaData('stockReserva')]);
-    renderUploadArea(sub, 'stockActivo', act, '.csv');
-    renderUploadArea(sub, 'stockReserva', res, '.xlsx');
+    
+    if (user.role === 'admin' || perms['stock_stockActivo'] === 1) renderUploadArea(sub, 'stockActivo', act, '.csv');
+    if (user.role === 'admin' || perms['stock_stockReserva'] === 1) renderUploadArea(sub, 'stockReserva', res, '.xlsx');
+
+    if (sub.children.length === 0) {
+        sub.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para ver las áreas de Stock.</div>`;
+    }
   };
 
   const renderUploadArea = (container, area, hasData = null, ext = '.csv') => {
@@ -208,12 +221,35 @@ export const renderDashboard = async (container, user, onLogout) => {
         } catch(e) { localStorage.removeItem('lastBufferKPI'); }
     }
 
+    const bufferTabDef = TABS.find(t => t.id === 'buffer');
+    const perms = adminService.getPermissions(user.role) || {};
+    
+    const allowedSubTabs = bufferTabDef.subTabs.filter(sub => {
+        if (user.role === 'admin') return true;
+        return perms[`buffer_${sub.id}`] === 1;
+    });
+
+    if (!allowedSubTabs.find(s => s.id === activeBufferSub)) {
+        activeBufferSub = allowedSubTabs[0]?.id || '';
+    }
+
+    if (!activeBufferSub) {
+        contentArea.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para acceder a la Zona Buffer.</div>`;
+        return;
+    }
+
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-          <a class="sub-nav-item ${activeBufferSub==='maestros'?'active':''}" data-s="maestros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🗂️ ARCHIVOS MAESTROS</a>
-          <a class="sub-nav-item ${activeBufferSub==='reportes'?'active':''}" data-s="reportes" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">📉 ANÁLISIS BUFFER</a>
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeBufferSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+                ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
         </nav><div id="bufContent"></div>`;
-    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeBufferSub = e.target.dataset.s; renderBufferTab(); }));
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeBufferSub = e.currentTarget.dataset.s; 
+        renderBufferTab(); 
+    }));
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
@@ -624,24 +660,29 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Granular</h3>
-            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✨ Cambios se guardan automáticamente</span>
+            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Dinámica</h3>
+            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✨ Haz clic en un módulo para expandir sus sub-pestañas</span>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
-                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO / SUB-SECCIÓN</th>
+                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO / SECCIÓN</th>
                         ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
                     ${TABS.map(t => {
                         let rows = [];
+                        const hasSub = t.subTabs && t.subTabs.length > 0;
+                        
                         // Fila principal
                         rows.push(`
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff;">${t.icon} ${t.label}</td>
+                        <tr class="main-tab-row" data-tab-id="${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02); cursor:${hasSub ? 'pointer' : 'default'};">
+                            <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff; display:flex; align-items:center; gap:8px;">
+                                ${hasSub ? '<span class="toggle-icon">▶</span>' : ''}
+                                ${t.icon} ${t.label}
+                            </td>
                             ${allRoles.map(r => {
                                 let hasAccess = false;
                                 if (r === 'admin') hasAccess = true;
@@ -658,11 +699,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </tr>`);
 
                         // Filas de sub-pestañas
-                        if (t.subTabs) {
+                        if (hasSub) {
                             t.subTabs.forEach(sub => {
                                 const subKey = `${t.id}_${sub.id}`;
                                 rows.push(`
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.01);">
+                                <tr class="sub-row-${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.01); display:none; background:rgba(255,255,255,0.01);">
                                     <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border);">${sub.icon} ${sub.label}</td>
                                     ${allRoles.map(r => {
                                         let hasSubAccess = false;
@@ -687,11 +728,29 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div style="margin-top:1rem; padding:1rem; background:rgba(79,70,229,0.05); border-radius:8px; border:1px solid rgba(79,70,229,0.2);">
             <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
-                <b>Nota:</b> Puedes restringir el acceso a módulos completos o a sub-secciones específicas dentro de Administración. 
-                Los cambios se aplican automáticamente para mejorar la fluidez de la configuración.
+                <b>Tip:</b> Haz clic en los módulos con el icono ▶ para ver y restringir sus secciones internas. 
+                Los cambios se guardan automáticamente y afectan la visibilidad de los menús al instante.
             </p>
         </div>
     `;
+
+    // Lógica de Acordeón
+    document.querySelectorAll('.main-tab-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+            if (e.target.type === 'checkbox') return; // No colapsar si hace clic en checkbox
+            
+            const tabId = row.dataset.tabId;
+            const subRows = document.querySelectorAll(`.sub-row-${tabId}`);
+            if (subRows.length === 0) return;
+            
+            const icon = row.querySelector('.toggle-icon');
+            const isVisible = subRows[0].style.display !== 'none';
+            
+            subRows.forEach(sr => sr.style.display = isVisible ? 'none' : 'table-row');
+            if(icon) icon.textContent = isVisible ? '▶' : '▼';
+            row.style.background = isVisible ? 'rgba(255,255,255,0.02)' : 'rgba(79,70,229,0.05)';
+        });
+    });
 
     document.querySelectorAll('.perm-toggle:not(:disabled)').forEach(cb => {
         cb.onchange = (e) => {
