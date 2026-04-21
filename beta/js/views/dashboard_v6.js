@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.76-pulse';
-const CACHE_KEY = `logistics_v11_1_76_`;
+const VERSION = '11.1.80-pulse';
+const CACHE_KEY = `logistics_v11_1_80_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -27,7 +27,8 @@ const TABS = [
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
     { id: 'asistencia', label: 'Asistencia', icon: '📅' },
     { id: 'performance', label: 'Performance', icon: '📈' },
-    { id: 'kpi_performance', label: 'KPI Performance', icon: '📊' },
+    { id: 'kpi_graficos', label: 'KPI Gráficos', icon: '📊' },
+    { id: 'kpi_reporte', label: 'KPI Reporte', icon: '📋' },
     { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
@@ -75,7 +76,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.76 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.80 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -459,7 +460,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeAdminSub === 'permisos') renderPermisosSection(adminContainer);
     else if (activeAdminSub === 'asistencia') renderAsistenciaSection(adminContainer);
     else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
-    else if (activeAdminSub === 'kpi_performance') renderKPIPerformanceSection(adminContainer);
+    else if (activeAdminSub === 'kpi_graficos') renderKPIGraphsSection(adminContainer);
+    else if (activeAdminSub === 'kpi_reporte') renderKPIReportSection(adminContainer);
     else if (activeAdminSub === 'rfs') renderRFSection(adminContainer);
   };
 
@@ -1040,35 +1042,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   let kpiEnd = new Date().toISOString().split('T')[0];
   let kpiSearch = '';
 
-  const renderKPIPerformanceSection = (container) => {
+  const renderKPIGraphsSection = (container) => {
     const rawLog = adminService.getPerformanceLog();
-    
-    // Función para exportar Consolidado
-    window.exportKPIConsolidado = (data) => {
-        if (!data.length) return alert('No hay datos para exportar.');
-        const exportData = data.map(d => ({
-            'Operario': d.name,
-            'Días Trabajados': d.diasTrabajados,
-            'Justificaciones': d.justificaciones,
-            'Faltas': d.faltas,
-            'Tardanzas': d.tardanzas,
-            'Promedio Rendimiento %': d.avg + '%'
-        }));
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Consolidado_KPI");
-        XLSX.writeFile(wb, `Consolidado_KPI_${kpiStart}_a_${kpiEnd}.xlsx`);
-    };
-
-    // --- DATOS PARA GRÁFICOS Y MÉTRICAS (Totales, sin filtro de reporte) ---
-    const log = rawLog;
-
-    // --- DATOS FILTRADOS PARA EL REPORTE CONSOLIDADO ---
-    const filteredLogForConsolidado = rawLog.filter(entry => {
-        return entry.date >= kpiStart && entry.date <= kpiEnd;
-    });
-
-    if (!log || log.length === 0) {
+    if (!rawLog || rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
             <h4>Sin datos de Performance</h4>
@@ -1077,12 +1053,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         return;
     }
 
-    // --- AGREGACIÓN DE DATOS ---
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
-
-    // 1. Promedio por Fecha (Evolución)
     const datesMap = {};
-    log.forEach(entry => {
+    rawLog.forEach(entry => {
         if (!datesMap[entry.date]) datesMap[entry.date] = { sum: 0, count: 0 };
         datesMap[entry.date].sum += parsePct(entry.rendimiento);
         datesMap[entry.date].count++;
@@ -1091,56 +1064,22 @@ export const renderDashboard = async (container, user, onLogout) => {
     const evolutionLabels = sortedDates;
     const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
 
-    // 2. Ranking de Operarios (Top 5) y Consolidado
-    const workerMap = {};
-    filteredLogForConsolidado.forEach(entry => {
+    const globalWorkerMap = {};
+    rawLog.forEach(entry => {
         const key = entry.dni;
-        if (!workerMap[key]) {
-            workerMap[key] = { 
-                name: `${entry.nombre} ${entry.apellidos}`, 
-                sum: 0, 
-                countForAvg: 0, 
-                diasTrabajados: 0,
-                justificaciones: 0,
-                faltas: 0,
-                tardanzas: 0
-            };
-        }
-        const w = workerMap[key];
-        const rend = parsePct(entry.rendimiento);
-
-        if (entry.asistencia === 'P') {
-            w.diasTrabajados++;
-            w.sum += rend;
-            w.countForAvg++;
-            if (entry.puntualidad === 'NO') w.tardanzas++;
-        } else {
-            if (entry.justification && entry.justification !== '') {
-                w.justificaciones++;
-                // No se suma rendimiento y NO se cuenta para el divisor (según solicitud usuario)
-            } else {
-                w.faltas++;
-                w.sum += rend; // Suele ser 0 pero se suma por consistencia
-                w.countForAvg++;
-            }
-        }
+        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0 };
+        globalWorkerMap[key].sum += parsePct(entry.rendimiento);
+        globalWorkerMap[key].count++;
     });
+    const workerRanking = Object.values(globalWorkerMap)
+        .map(w => ({ name: w.name, avg: Math.round(w.sum / w.count) }))
+        .sort((a,b) => b.avg - a.avg).slice(0,5);
 
-    const consolidado = Object.values(workerMap).map(w => ({
-        ...w,
-        avg: w.countForAvg > 0 ? Math.round(w.sum / w.countForAvg) : 0
-    })).filter(w => {
-        return w.name.toLowerCase().includes(kpiSearch.toLowerCase());
-    }).sort((a, b) => b.avg - a.avg);
-
-    const workerRanking = consolidado.slice(0, 5);
-
-    // 3. Métricas Globales
     const globalAvg = Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length);
     const getStatusColor = (val) => {
-        if (val >= 90) return '#22c55e'; // Verde
-        if (val >= 80) return '#f59e0b'; // Ámbar
-        return '#ef4444'; // Rojo
+        if (val >= 90) return '#22c55e';
+        if (val >= 80) return '#f59e0b';
+        return '#ef4444';
     };
 
     container.innerHTML = `
@@ -1163,7 +1102,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">⭐ ${workerRanking[0]?.avg || 0}%</span>
             </div>
         </div>
-
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
             <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
                 <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">📈 Evolución de Rendimiento</h4>
@@ -1178,13 +1116,64 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
         </div>
+    `;
 
+    setTimeout(() => {
+        const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
+        const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
+        if (!ctxEvo || !ctxRank) return;
+        if (window.evoChart instanceof Chart) window.evoChart.destroy();
+        if (window.rankChart instanceof Chart) window.rankChart.destroy();
+        window.evoChart = new Chart(ctxEvo, { type: 'line', data: { labels: evolutionLabels, datasets: [{ label: 'Promedio %', data: evolutionData, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', borderWidth: 3, tension: 0.1, fill: true, pointBackgroundColor: '#fff', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } }, plugins: { legend: { display: false } } } });
+        window.rankChart = new Chart(ctxRank, { type: 'bar', data: { labels: workerRanking.map(w => w.name.split(' ')[0]), datasets: [{ data: workerRanking.map(w => w.avg), backgroundColor: workerRanking.map(w => getStatusColor(w.avg)), borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, indexAxis: 'y', scales: { x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, y: { grid: { display: false }, ticks: { color: '#fff', font: { weight: 'bold' } } } }, plugins: { legend: { display: false } } } });
+    }, 50);
+  };
+
+  const renderKPIReportSection = (container) => {
+    const rawLog = adminService.getPerformanceLog();
+    if (!rawLog || rawLog.length === 0) {
+        container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Sin datos para el reporte</h4></div>`;
+        return;
+    }
+
+    const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
+    const getStatusColor = (val) => {
+        if (val >= 90) return '#22c55e';
+        if (val >= 80) return '#f59e0b';
+        return '#ef4444';
+    };
+
+    window.exportKPIConsolidado = (data) => {
+        const exportData = data.map(d => ({ 'Operario': d.name, 'Días Trabajados': d.diasTrabajados, 'Justificaciones': d.justificaciones, 'Faltas': d.faltas, 'Tardanzas': d.tardanzas, 'Promedio Rendimiento %': d.avg + '%' }));
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Consolidado_KPI");
+        XLSX.writeFile(wb, `Consolidado_KPI_${kpiStart}_a_${kpiEnd}.xlsx`);
+    };
+
+    const filtered = rawLog.filter(e => e.date >= kpiStart && e.date <= kpiEnd);
+    const workerMap = {};
+    filtered.forEach(entry => {
+        const key = entry.dni;
+        if (!workerMap[key]) workerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, countForAvg: 0, diasTrabajados: 0, justificaciones: 0, faltas: 0, tardanzas: 0 };
+        const w = workerMap[key];
+        const rend = parsePct(entry.rendimiento);
+        if (entry.asistencia === 'P') {
+            w.diasTrabajados++; w.sum += rend; w.countForAvg++;
+            if (entry.puntualidad === 'NO') w.tardanzas++;
+        } else {
+            if (entry.justification && entry.justification !== '') w.justificaciones++;
+            else { w.faltas++; w.sum += rend; w.countForAvg++; }
+        }
+    });
+
+    const consolidado = Object.values(workerMap).map(w => ({ ...w, avg: w.countForAvg > 0 ? Math.round(w.sum / w.countForAvg) : 0 }))
+        .filter(w => w.name.toLowerCase().includes(kpiSearch.toLowerCase())).sort((a,b) => b.avg - a.avg);
+
+    container.innerHTML = `
         <div class="glass-panel" style="padding:1.5rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
-                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800; display:flex; align-items:center; gap:10px;">
-                    📊 CONSOLIDADO KPI <small style="color:var(--text-muted); font-weight:400; font-size:0.75rem;">(Filtrado por rango)</small>
-                </h4>
-                
+                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800;">📊 CONSOLIDADO KPI</h4>
                 <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
                     <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px;">
                          <span style="font-size:0.7rem; color:var(--text-muted);">DESDE:</span>
@@ -1193,40 +1182,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                          <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:#fff; font-size:0.75rem; outline:none;">
                     </div>
                     <input type="text" id="kpi_search" placeholder="🔍 Buscar operario..." value="${kpiSearch}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; outline:none; width:200px;">
-                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px; display:flex; align-items:center; gap:5px;">
-                        📥 EXPORTAR
-                    </button>
+                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px;">📥 EXPORTAR</button>
                 </div>
             </div>
-            
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead>
-                        <tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);">
-                            <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
-                            <th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th>
-                            <th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th>
-                            <th style="padding:0.8rem; text-align:center;">FALTAS</th>
-                            <th style="padding:0.8rem; text-align:center;">TARDANZAS</th>
-                            <th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${consolidado.map(w => `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
-                            <td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td>
-                            <td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados}</td>
-                            <td style="padding:0.8rem; text-align:center; color:#fcd34d;">${w.justificaciones}</td>
-                            <td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? '#ef4444' : 'var(--text-muted)'};">${w.faltas}</td>
-                            <td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? '#f97316' : 'var(--text-muted)'};">${w.tardanzas}</td>
-                            <td style="padding:0.8rem; text-align:center;">
-                                <div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">
-                                    ${w.avg}%
-                                </div>
-                            </td>
-                        </tr>
-                        `).join('')}
-                    </tbody>
+                    <thead><tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);"><th style="padding:0.8rem; text-align:left;">OPERARIO</th><th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th><th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th><th style="padding:0.8rem; text-align:center;">FALTAS</th><th style="padding:0.8rem; text-align:center;">TARDANZAS</th><th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th></tr></thead>
+                    <tbody>${consolidado.map(w => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td><td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados}</td><td style="padding:0.8rem; text-align:center; color:#fcd34d;">${w.justificaciones}</td><td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? '#ef4444' : 'var(--text-muted)'};">${w.faltas}</td><td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? '#f97316' : 'var(--text-muted)'};">${w.tardanzas}</td><td style="padding:0.8rem; text-align:center;"><div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">${w.avg}%</div></td></tr>`).join('')}</tbody>
                 </table>
             </div>
         </div>
@@ -1236,81 +1199,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         const iStart = document.getElementById('kpi_start');
         const iEnd = document.getElementById('kpi_end');
         const iSearch = document.getElementById('kpi_search');
-        
-        // Mantenimiento de foco
-        if (kpiSearch && iSearch) {
-            iSearch.focus();
-            iSearch.selectionStart = iSearch.selectionEnd = iSearch.value.length;
-        }
-
-        if (iStart) iStart.onchange = (e) => { kpiStart = e.target.value; renderKPIPerformanceSection(container); };
-        if (iEnd) iEnd.onchange = (e) => { kpiEnd = e.target.value; renderKPIPerformanceSection(container); };
-        if (iSearch) iSearch.oninput = (e) => { 
-            kpiSearch = e.target.value; 
-            renderKPIPerformanceSection(container); 
-        };
-
-        const canvasEvo = document.getElementById('chartEvolution');
-        const canvasRank = document.getElementById('chartRanking');
-        if (!canvasEvo || !canvasRank) return;
-
-        const ctxEvo = canvasEvo.getContext('2d');
-        const ctxRank = canvasRank.getContext('2d');
-
-        // Limpieza de instancia previa si existe globalmente
-        if (window.evoChart instanceof Chart) window.evoChart.destroy();
-        if (window.rankChart instanceof Chart) window.rankChart.destroy();
-
-        window.evoChart = new Chart(ctxEvo, {
-            type: 'line',
-            data: {
-                labels: evolutionLabels,
-                datasets: [{
-                    label: 'Promedio %',
-                    data: evolutionData,
-                    borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.1, // Reducido para estabilidad
-                    fill: true,
-                    pointBackgroundColor: '#fff',
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false, // Fix: Gráficos estáticos para evitar loop
-                scales: {
-                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
-
-        window.rankChart = new Chart(ctxRank, {
-            type: 'bar',
-            data: {
-                labels: workerRanking.map(w => w.name.split(' ')[0]),
-                datasets: [{
-                    data: workerRanking.map(w => w.avg),
-                    backgroundColor: workerRanking.map(w => getStatusColor(w.avg)),
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false, // Fix: Gráficos estáticos
-                indexAxis: 'y',
-                scales: {
-                    x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { display: false }, ticks: { color: '#fff', font: { weight: 'bold' } } }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
+        if (kpiSearch && iSearch) { iSearch.focus(); iSearch.selectionStart = iSearch.selectionEnd = iSearch.value.length; }
+        if (iStart) iStart.onchange = (e) => { kpiStart = e.target.value; renderKPIReportSection(container); };
+        if (iEnd) iEnd.onchange = (e) => { kpiEnd = e.target.value; renderKPIReportSection(container); };
+        if (iSearch) iSearch.oninput = (e) => { kpiSearch = e.target.value; renderKPIReportSection(container); };
     }, 50);
   };
 
