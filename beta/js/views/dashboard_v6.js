@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.40-pulse';
-const CACHE_KEY = `logistics_v11_1_40_`;
+const VERSION = '11.1.45-pulse';
+const CACHE_KEY = `logistics_v11_1_45_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -27,6 +27,7 @@ const TABS = [
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
     { id: 'asistencia', label: 'Asistencia', icon: '📅' },
     { id: 'performance', label: 'Performance', icon: '📈' },
+    { id: 'kpi_performance', label: 'KPI Performance', icon: '📊' },
     { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
@@ -73,7 +74,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.40 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.45 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -457,6 +458,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeAdminSub === 'permisos') renderPermisosSection(adminContainer);
     else if (activeAdminSub === 'asistencia') renderAsistenciaSection(adminContainer);
     else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
+    else if (activeAdminSub === 'kpi_performance') renderKPIPerformanceSection(adminContainer);
     else if (activeAdminSub === 'rfs') renderRFSection(adminContainer);
   };
 
@@ -1001,6 +1003,146 @@ export const renderDashboard = async (container, user, onLogout) => {
       score += (sup / 10) * 15;
       
       return Math.round(score) + '%';
+  };
+
+  const renderKPIPerformanceSection = (container) => {
+    const log = adminService.getPerformanceLog();
+    if (!log || log.length === 0) {
+        container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+            <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
+            <h4>Sin datos de Performance</h4>
+            <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o más días para generar estadísticas.</p>
+        </div>`;
+        return;
+    }
+
+    // --- AGREGACIÓN DE DATOS ---
+    const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
+
+    // 1. Promedio por Fecha (Evolución)
+    const datesMap = {};
+    log.forEach(entry => {
+        if (!datesMap[entry.date]) datesMap[entry.date] = { sum: 0, count: 0 };
+        datesMap[entry.date].sum += parsePct(entry.rendimiento);
+        datesMap[entry.date].count++;
+    });
+    const sortedDates = Object.keys(datesMap).sort();
+    const evolutionLabels = sortedDates;
+    const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
+
+    // 2. Ranking de Operarios (Top 5)
+    const workerMap = {};
+    log.forEach(entry => {
+        const key = entry.dni;
+        if (!workerMap[key]) workerMap[key] = { nombre: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0 };
+        workerMap[key].sum += parsePct(entry.rendimiento);
+        workerMap[key].count++;
+    });
+    const workerRanking = Object.values(workerMap)
+        .map(w => ({ name: w.name || w.nombre, avg: Math.round(w.sum / w.count) }))
+        .sort((a, b) => b.avg - a.avg)
+        .slice(0, 5);
+
+    // 3. Métricas Globales
+    const globalAvg = Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length);
+    const getStatusColor = (val) => {
+        if (val >= 90) return '#22c55e'; // Verde
+        if (val >= 80) return '#f59e0b'; // Ámbar
+        return '#ef4444'; // Rojo
+    };
+
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+            <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid ${getStatusColor(globalAvg)};">
+                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Rendimiento General</h4>
+                <h2 style="margin:0.5rem 0; font-size:2.2rem; color:${getStatusColor(globalAvg)}; font-weight:800;">${globalAvg}%</h2>
+                <span style="font-size:0.7rem; background:${getStatusColor(globalAvg)}22; color:${getStatusColor(globalAvg)}; padding:2px 8px; border-radius:10px; font-weight:700;">
+                    ${globalAvg >= 90 ? 'EXCELENTE' : (globalAvg >= 80 ? 'REGULAR' : 'CRÍTICO')}
+                </span>
+            </div>
+            <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid var(--primary);">
+                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Días Registrados</h4>
+                <h2 style="margin:0.5rem 0; font-size:2.2rem; color:#fff; font-weight:800;">${sortedDates.length}</h2>
+                <span style="font-size:0.7rem; color:var(--text-muted);">Historial acumulado</span>
+            </div>
+            <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid #fcd34d;">
+                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Top Operario</h4>
+                <h2 style="margin:0.5rem 0; font-size:1.1rem; color:#fff; line-height:1.2; font-weight:700;">${workerRanking[0]?.name || '-'}</h2>
+                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">⭐ ${workerRanking[0]?.avg || 0}%</span>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+            <div class="glass-panel" style="padding:1.5rem;">
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">📈 Evolución de Rendimiento</h4>
+                <canvas id="chartEvolution" height="200"></canvas>
+            </div>
+            <div class="glass-panel" style="padding:1.5rem;">
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">🏆 Top 5 Operarios</h4>
+                <canvas id="chartRanking" height="200"></canvas>
+            </div>
+        </div>
+    `;
+
+    // --- RENDERIZADO DE GRÁFICOS (Chart.js) ---
+    setTimeout(() => {
+        const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
+        const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
+        if (!ctxEvo || !ctxRank) return;
+
+        // Limpieza de instancia previa si existe (aunque aquí usamos IDs diferentes, Chart.js puede quejarse)
+        if (window.evoChart) window.evoChart.destroy();
+        if (window.rankChart) window.rankChart.destroy();
+
+        window.evoChart = new Chart(ctxEvo, {
+            type: 'line',
+            data: {
+                labels: evolutionLabels,
+                datasets: [{
+                    label: 'Promedio %',
+                    data: evolutionData,
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        window.rankChart = new Chart(ctxRank, {
+            type: 'bar',
+            data: {
+                labels: workerRanking.map(w => w.name.split(' ')[0]),
+                datasets: [{
+                    data: workerRanking.map(w => w.avg),
+                    backgroundColor: workerRanking.map(w => getStatusColor(w.avg)),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { display: false }, ticks: { color: '#fff', font: { weight: 'bold' } } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }, 100);
   };
 
   const renderPerformanceSection = (container) => {
