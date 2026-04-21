@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.60-pulse';
-const CACHE_KEY = `logistics_v11_1_60_`;
+const VERSION = '11.1.62-pulse';
+const CACHE_KEY = `logistics_v11_1_62_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.60 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.62 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -924,11 +924,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="sel-just" data-dni="${dni}" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;" ${existing?.finalized || isPresent ? 'disabled' : ''}>
-                                    <option value="">- SELECCIONE -</option>
-                                    <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':''}>DESCANSO MÉDICO</option>
-                                    <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':''}>VACACIONES</option>
-                                    <option value="Otros" ${rec?.justification==='Otros'?'selected':''}>OTROS</option>
+                                <select class="sel-just" data-dni="${dni}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;" ${existing?.finalized || isPresent ? 'disabled' : ''}>
+                                    <option value="" style="background:#1e293b;">- SELECCIONE -</option>
+                                    <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
+                                    <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
+                                    <option value="Otros" ${rec?.justification==='Otros'?'selected':'' } style="background:#1e293b;">OTROS</option>
                                 </select>
                             </td>
                         </tr>`;
