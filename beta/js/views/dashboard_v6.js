@@ -1,7 +1,7 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.23-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.23-pulse';
 
-const VERSION = '11.1.23-pulse';
+const VERSION = '11.1.24-pulse';
 const CACHE_KEY = `logistics_v11_1_23_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Attendance UI & RFs)`);
 
@@ -27,7 +27,7 @@ const TABS = [
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
     { id: 'asistencia', label: 'Asistencia', icon: '📅' },
     { id: 'performance', label: 'Performance', icon: '📈' },
-    { id: 'rfs', label: 'RF\'s', icon: '🔋' }
+    { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];

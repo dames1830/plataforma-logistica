@@ -1,4 +1,4 @@
-import { getSession, logout } from './services/auth.js?v=11.1.22';
+import { getSession, logout } from './services/auth.js?v=11.1.24';
 
 class App {
   constructor(rootId) {
