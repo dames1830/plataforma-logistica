@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.10-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.11-pulse';
 
-const VERSION = '11.1.10-pulse';
-const CACHE_KEY = `logistics_v11_1_10_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta)`);
+const VERSION = '11.1.11-pulse';
+const CACHE_KEY = `logistics_v11_1_11_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / UX Fix)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -52,7 +52,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.10 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.11 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -139,16 +139,20 @@ export const renderDashboard = async (container, user, onLogout) => {
       div.innerHTML = `
         <div style="padding:1rem; background:rgba(34, 197, 94, 0.05); border:1px solid rgba(34, 197, 94, 0.3); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <h4 style="color:var(--success); margin:0; font-size:0.9rem;">✅ ${label} CARGADO</h4>
-            <p style="font-size:0.75rem; margin:2px 0 0 0; color:var(--text-muted);">${hasData.length.toLocaleString()} registros. <span style="color:var(--primary); opacity:0.8;">(Subido: ${dateStr})</span></p>
+            <h4 style="color:var(--success); margin:0; font-size:0.95rem; font-weight:700;">✅ ${label} CARGADO</h4>
+            <p style="font-size:0.8rem; margin:4px 0 0 0; color:var(--text-muted); font-weight:500;">
+                ${hasData.length.toLocaleString()} registros. 
+                <span style="color:#fbbf24; background:rgba(251,191,36,0.1); padding:2px 8px; border-radius:4px; margin-left:10px;">📅 Subido: ${dateStr}</span>
+            </p>
           </div>
           <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
         </div>`;
     } else {
       div.innerHTML = `
-        <div class="upload-area" style="padding:1.5rem; text-align:center; border: 1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:0.8rem;">
-          <h3 style="margin:0; font-size:1rem; color:var(--text-main);">${label}</h3>
-          <p style="font-size:0.7rem; color:var(--text-muted); margin:-0.5rem 0 0.5rem 0;">Última carga: ${dateStr}</p>
+        <div class="upload-area" style="padding:1.5rem; text-align:center; border: 1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:0.6rem;">
+          <h3 style="margin:0; font-size:1rem; color:var(--text-main); font-weight:700;">${label}</h3>
+          <p style="font-size:0.75rem; color:#f87171; font-weight:600; margin:0;">⚠️ Sin datos en memoria</p>
+          <p style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">Última carga detectada: <span style="color:#fbbf24;">${dateStr}</span></p>
           <label class="btn" style="width:auto; padding:0.5rem 1.5rem; cursor:pointer; font-size:0.85rem;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label>
         </div>`;
     }
