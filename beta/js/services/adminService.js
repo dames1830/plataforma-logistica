@@ -184,7 +184,7 @@ const calculateRendimientoValue = (entry) => {
     return Math.round(score) + '%';
 };
 
-export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
+export const closeAttendanceAndSyncPerformance = async (date, attendanceData) => {
     const currentPerf = getPerformance();
     const log = getPerformanceLog();
     
@@ -216,7 +216,6 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
         }
 
         // 2. Guardar en Historial Diario (Nuevo)
-        // Evitar duplicados para el mismo día si se re-cierra (sobrescribir)
         const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
         const isPresent = att.present;
         const tempEntry = {
@@ -243,9 +242,9 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
         }
     });
 
-    save('performance', currentPerf);
-    save('performance_log', log);
-    saveAttendance(date, { finalized: true, data: attendanceData });
+    await save('performance', currentPerf);
+    await save('performance_log', log);
+    await saveAttendance(date, { finalized: true, data: attendanceData });
 };
 
 export const getPerformanceLog = () => adminStore.performance_log;

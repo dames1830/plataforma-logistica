@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.50-pulse';
-const CACHE_KEY = `logistics_v11_1_50_`;
+const VERSION = '11.1.52-pulse';
+const CACHE_KEY = `logistics_v11_1_52_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.50 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.52 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -881,8 +881,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             
             <div style="display:flex; gap:1rem;">
                 ${!existing?.finalized ? `
-                    <button id="btn_reset_asist" class="btn" style="width:auto; background:rgba(255,255,255,0.1); padding:0.6rem 1rem; font-size:0.8rem; font-weight:600; border-radius:8px;">♻️ REINICIAR TODOS</button>
-                    <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 1.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA</button>
+                    <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 2.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA</button>
                 ` : `
                     <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
                 `}
@@ -971,17 +970,23 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         };
 
-        document.getElementById('btn_reset_asist').onclick = () => {
-            localState.forEach(s => { s.present = true; s.onTime = true; });
-            renderAsistenciaSection(container);
-        };
-
-        document.getElementById('btn_close_asist').onclick = () => {
-            if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}? Esta acción enviará los datos al historial de Performance.`)) {
-                adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
-                renderAsistenciaSection(container);
-            }
-        };
+        const btnClose = document.getElementById('btn_close_asist');
+        if (btnClose) {
+            btnClose.onclick = async () => {
+                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}? Esta acción enviará los datos al historial de Performance y reiniciará las columnas de toma de datos.`)) {
+                    // Deshabilitar botón para evitar doble clic
+                    btnClose.disabled = true;
+                    btnClose.textContent = "⌛ PROCESANDO...";
+                    
+                    await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                    
+                    // Lógica solicitado por el usuario: Reiniciar columnas localmente
+                    localState.forEach(s => { s.present = true; s.onTime = true; });
+                    
+                    renderAsistenciaSection(container);
+                }
+            };
+        }
     }
     
     document.getElementById('asist_date_picker').onchange = (e) => {
