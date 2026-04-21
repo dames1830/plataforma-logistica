@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.90-pulse';
-const CACHE_KEY = `logistics_v11_1_90_`;
+const VERSION = '11.1.95-pulse';
+const CACHE_KEY = `logistics_v11_1_95_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -78,7 +78,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.90 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.95 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -755,7 +755,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         let rows = [];
                         const hasSub = t.subTabs && t.subTabs.length > 0;
                         
-                        // Fila principal
+                        // Nivel 1: Fila principal
                         rows.push(`
                         <tr class="main-tab-row" data-tab-id="${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02); cursor:${hasSub ? 'pointer' : 'default'};">
                             <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff; display:flex; align-items:center; gap:8px;">
@@ -763,41 +763,43 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
-                                let hasAccess = false;
-                                if (r === 'admin') hasAccess = true;
-                                else {
-                                    const perms = adminService.getPermissions(r);
-                                    hasAccess = perms ? perms[t.id] === 1 : t.roles.includes(r);
-                                }
+                                let hasAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[t.id] === 1 || t.roles.includes(r));
                                 const isFixed = r === 'admin' || t.id === 'inicio';
-                                return `
-                                <td style="padding:0.8rem; text-align:center;">
-                                    <input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled title="Protegido"' : 'style="cursor:pointer;"'}>
-                                </td>`;
+                                return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
                             }).join('')}
                         </tr>`);
 
-                        // Filas de sub-pestañas
+                        // Nivel 2: Filas de sub-pestañas
                         if (hasSub) {
                             t.subTabs.forEach(sub => {
                                 const subKey = `${t.id}_${sub.id}`;
+                                const hasSubSub = sub.subTabs && sub.subTabs.length > 0;
                                 rows.push(`
-                                <tr class="sub-row-${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.01); display:none; background:rgba(255,255,255,0.01);">
-                                    <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border);">${sub.icon} ${sub.label}</td>
+                                <tr class="sub-row-${t.id} ${hasSubSub ? 'main-tab-row' : ''}" data-tab-id="${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.01); display:none; background:rgba(255,255,255,0.01); cursor:${hasSubSub ? 'pointer' : 'default'};">
+                                    <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border); display:flex; align-items:center; gap:8px;">
+                                        ${hasSubSub ? '<span class="toggle-icon">▶</span>' : ''}
+                                        ${sub.icon} ${sub.label}
+                                    </td>
                                     ${allRoles.map(r => {
-                                        let hasSubAccess = false;
-                                        if (r === 'admin') hasSubAccess = true;
-                                        else {
-                                            const perms = adminService.getPermissions(r);
-                                            hasSubAccess = perms ? perms[subKey] === 1 : t.roles.includes(r);
-                                        }
-                                        const isFixed = r === 'admin';
-                                        return `
-                                        <td style="padding:0.6rem; text-align:center;">
-                                            <input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}>
-                                        </td>`;
+                                        let hasSubAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[subKey] === 1 || t.roles.includes(r));
+                                        return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${r === 'admin' ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
                                     }).join('')}
                                 </tr>`);
+
+                                // Nivel 3: Filas de sub-sub-pestañas (Performance -> Historial/Graficos/Reporte)
+                                if (hasSubSub) {
+                                    sub.subTabs.forEach(ss => {
+                                        const ssKey = `${sub.id}_${ss.id}`;
+                                        rows.push(`
+                                        <tr class="sub-row-${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.005); display:none; background:rgba(0,0,0,0.2);">
+                                            <td style="padding:0.5rem 0.8rem 0.5rem 4.5rem; font-size:0.7rem; color:var(--primary); border-right:1px solid var(--border);">${ss.icon} ${ss.label}</td>
+                                            ${allRoles.map(r => {
+                                                let hasSSAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[ssKey] === 1 || t.roles.includes(r));
+                                                return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${r === 'admin' ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
+                                            }).join('')}
+                                        </tr>`);
+                                    });
+                                }
                             });
                         }
                         return rows.join('');
@@ -807,24 +809,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div style="margin-top:1rem; padding:1rem; background:rgba(79,70,229,0.05); border-radius:8px; border:1px solid rgba(79,70,229,0.2);">
             <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
-                <b>Tip:</b> Haz clic en los módulos con el icono ▶ para ver y restringir sus secciones internas. 
-                Los cambios se guardan automáticamente y afectan la visibilidad de los menús al instante.
+                <b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.
             </p>
         </div>
     `;
 
-    // Lógica de Acordeón
+    // Lógica de Acordeón (Universal por data-tab-id)
     document.querySelectorAll('.main-tab-row').forEach(row => {
         row.addEventListener('click', (e) => {
-            if (e.target.type === 'checkbox') return; // No colapsar si hace clic en checkbox
-            
+            if (e.target.type === 'checkbox') return;
             const tabId = row.dataset.tabId;
             const subRows = document.querySelectorAll(`.sub-row-${tabId}`);
             if (subRows.length === 0) return;
-            
             const icon = row.querySelector('.toggle-icon');
             const isVisible = subRows[0].style.display !== 'none';
-            
             subRows.forEach(sr => sr.style.display = isVisible ? 'none' : 'table-row');
             if(icon) icon.textContent = isVisible ? '▶' : '▼';
             row.style.background = isVisible ? 'rgba(255,255,255,0.02)' : 'rgba(79,70,229,0.05)';
