@@ -17,8 +17,32 @@ const save = (key, data) => {
 };
 
 // --- TRABAJADORES ---
-export const saveWorkers = (workers) => save('workers', workers);
+export const saveWorkers = (workers) => {
+    // Asegurar que cada trabajador tenga un estado activo si no existe
+    const normalized = workers.map(w => ({ active: true, ...w }));
+    save('workers', normalized);
+};
 export const getWorkers = () => adminStore.workers;
+
+export const saveWorker = (worker) => {
+    const workers = getWorkers();
+    const idx = workers.findIndex(w => (w.dni || w.Dni) === (worker.dni || worker.Dni));
+    if (idx >= 0) {
+        workers[idx] = { ...workers[idx], ...worker };
+    } else {
+        workers.push({ active: true, ...worker });
+    }
+    save('workers', workers);
+};
+
+export const toggleWorkerStatus = (dni) => {
+    const workers = getWorkers();
+    const idx = workers.findIndex(w => (w.dni || w.Dni) === dni);
+    if (idx >= 0) {
+        workers[idx].active = !workers[idx].active;
+        save('workers', workers);
+    }
+};
 
 // --- USUARIOS ---
 export const saveUser = (user) => {
@@ -100,7 +124,7 @@ export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
 export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
-    // attendanceData: [{dni, present, ...}]
+    // attendanceData: [{dni, present, onTime, ...}]
     const currentPerf = adminStore.performance;
     
     attendanceData.forEach(att => {
@@ -111,6 +135,7 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
                 nombre: att.nombre, 
                 apellidos: att.apellidos,
                 asistencia: 0, 
+                puntualidad_count: 0,
                 puntualidad: '0%', 
                 produccion: 0, 
                 bpa: 0, 
@@ -118,8 +143,16 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
             };
             currentPerf.push(entry);
         }
+        
         if (att.present) {
             entry.asistencia += 1;
+            if (att.onTime) {
+                entry.puntualidad_count = (entry.puntualidad_count || 0) + 1;
+            }
+            
+            // Recalcular porcentaje de puntualidad
+            const pct = Math.round((entry.puntualidad_count / entry.asistencia) * 100);
+            entry.puntualidad = `${pct}%`;
         }
     });
 

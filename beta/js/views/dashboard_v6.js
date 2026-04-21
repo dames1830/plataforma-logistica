@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.21-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.21-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.22-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.22-pulse';
 
-const VERSION = '11.1.21-pulse';
-const CACHE_KEY = `logistics_v11_1_21_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Worker Import Fix)`);
+const VERSION = '11.1.22-pulse';
+const CACHE_KEY = `logistics_v11_1_22_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Workers & Punctuality)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -72,7 +72,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.21 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.22 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -461,37 +461,97 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderTrabajadoresSection = (container) => {
     const workers = adminService.getWorkers();
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
-            <label class="btn" style="width:auto; background:var(--success); font-size:0.8rem; padding:0.5rem 1rem;">
-                📥 IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
-            </label>
-        </div>
-        <div class="glass-panel" style="padding:0; overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
-                    <tr>
-                        <th style="padding:0.8rem; text-align:left;">DNI</th>
-                        <th style="padding:0.8rem; text-align:left;">Nombre</th>
-                        <th style="padding:0.8rem; text-align:left;">Apellidos</th>
-                        <th style="padding:0.8rem; text-align:left;">Puesto</th>
-                        <th style="padding:0.8rem; text-align:left;">Turno</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${workers.length ? workers.map(w => `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem;">${w.dni || ''}</td>
-                            <td style="padding:0.8rem;">${w.nombre || ''}</td>
-                            <td style="padding:0.8rem;">${w.apellidos || ''}</td>
-                            <td style="padding:0.8rem;">${w.puesto || ''}</td>
-                            <td style="padding:0.8rem;">${w.turno || ''}</td>
-                        </tr>
-                    `).join('') : '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay trabajadores cargados. Por favor importa un archivo Excel.</td></tr>'}
-                </tbody>
-            </table>
+        <div style="display:grid; grid-template-columns: 1fr 300px; gap:1.5rem;">
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+                    <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
+                    <label class="btn" style="width:auto; background:var(--success); font-size:0.75rem; padding:0.4rem 0.8rem;">
+                        📥 IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
+                    </label>
+                </div>
+                <div class="glass-panel" style="padding:0; overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
+                            <tr>
+                                <th style="padding:0.7rem; text-align:left;">Estado</th>
+                                <th style="padding:0.7rem; text-align:left;">DNI</th>
+                                <th style="padding:0.7rem; text-align:left;">Nombre</th>
+                                <th style="padding:0.7rem; text-align:left;">Apellidos</th>
+                                <th style="padding:0.7rem; text-align:left;">Puesto</th>
+                                <th style="padding:0.7rem; text-align:left;">Turno</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${workers.length ? workers.map(w => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity: ${w.active === false ? '0.5' : '1'}">
+                                    <td style="padding:0.7rem; text-align:center;">
+                                        <button class="btn-worker-status" data-dni="${w.dni || w.Dni}" title="${w.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1rem;">
+                                            ${w.active === false ? '❌' : '✅'}
+                                        </button>
+                                    </td>
+                                    <td style="padding:0.7rem; font-weight:700; color:var(--primary);">${w.dni || w.Dni || ''}</td>
+                                    <td style="padding:0.7rem;">${w.nombre || w.Nombre || ''}</td>
+                                    <td style="padding:0.7rem;">${w.apellidos || w.Apellidos || ''}</td>
+                                    <td style="padding:0.7rem;">${w.puesto || w.Puesto || ''}</td>
+                                    <td style="padding:0.7rem;"><span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.65rem;">${w.turno || w.Turno || ''}</span></td>
+                                </tr>
+                            `).join('') : '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay trabajadores cargados.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="glass-panel" style="background:rgba(79, 70, 229, 0.05); border-color:rgba(79, 70, 229, 0.2);">
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">➕ Nuevo Trabajador</h4>
+                <form id="form_new_worker" style="display:flex; flex-direction:column; gap:0.8rem;">
+                    <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">DNI</label>
+                        <input type="text" id="nw_dni" required style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">NOMBRE</label>
+                        <input type="text" id="nw_nombre" required style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">APELLIDOS</label>
+                        <input type="text" id="nw_apellidos" required style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">PUESTO</label>
+                        <input type="text" id="nw_puesto" required style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TURNO</label>
+                        <select id="nw_turno" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">
+                            <option value="DIA" style="background:#0f172a;">DIA</option>
+                            <option value="NOCHE" style="background:#0f172a;">NOCHE</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn" style="background:var(--primary); margin-top:0.5rem; padding:0.6rem; font-size:0.8rem; font-weight:800;">GUARDAR TRABAJADOR</button>
+                </form>
+            </div>
         </div>
     `;
+
+    // Listeners
+    document.getElementById('form_new_worker').onsubmit = (e) => {
+        e.preventDefault();
+        const nw = {
+            dni: document.getElementById('nw_dni').value.trim(),
+            nombre: document.getElementById('nw_nombre').value.toUpperCase().trim(),
+            apellidos: document.getElementById('nw_apellidos').value.toUpperCase().trim(),
+            puesto: document.getElementById('nw_puesto').value.toUpperCase().trim(),
+            turno: document.getElementById('nw_turno').value
+        };
+        adminService.saveWorker(nw);
+        renderAdminTab();
+    };
+
+    document.querySelectorAll('.btn-worker-status').forEach(btn => {
+        btn.onclick = () => {
+            adminService.toggleWorkerStatus(btn.dataset.dni);
+            renderAdminTab();
+        };
+    });
 
     document.getElementById('import_workers').addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -772,12 +832,12 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderAsistenciaSection = (container) => {
-    const workers = adminService.getWorkers();
+    const workers = adminService.getWorkers().filter(w => w.active !== false);
     const today = new Date().toISOString().split('T')[0];
     const existing = adminService.getAttendance(today);
     
     if (!workers.length) {
-        container.innerHTML = `<div style="padding:3rem; text-align:center;"><p style="color:var(--text-muted);">Debes importar la lista de <b>Trabajadores</b> antes de tomar asistencia.</p></div>`;
+        container.innerHTML = `<div style="padding:3rem; text-align:center;"><p style="color:var(--text-muted);">Debes importar o registrar <b>Trabajadores Activos</b> antes de tomar asistencia.</p></div>`;
         return;
     }
 
@@ -794,20 +854,32 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
                 <thead style="background:rgba(255,255,255,0.05);">
-                    <tr><th style="padding:0.8rem; text-align:left;">DNI</th><th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th><th style="padding:0.8rem; text-align:center;">Estado</th></tr>
+                    <tr>
+                        <th style="padding:0.8rem; text-align:left;">DNI</th>
+                        <th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th>
+                        <th style="padding:0.8rem; text-align:center;">Estado</th>
+                        <th style="padding:0.8rem; text-align:center;">Puntualidad</th>
+                    </tr>
                 </thead>
                 <tbody>
                     ${workers.map(w => {
-                        const rec = existing?.data?.find(d => d.dni === (w.Dni || w.dni));
+                        const rec = existing?.data?.find(d => d.dni === (w.dni || w.Dni));
                         const isPresent = rec ? rec.present : true;
+                        const isOnTime = rec ? rec.onTime : true;
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem;">${w.Dni || w.dni || ''}</td>
-                            <td style="padding:0.8rem;">${w.Apellidos || w.apellidos || ''}, ${w.Nombre || w.nombre || ''}</td>
+                            <td style="padding:0.8rem; color:var(--primary); font-weight:700;">${w.dni || w.Dni || ''}</td>
+                            <td style="padding:0.8rem;">${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.Dni || w.dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
-                                    <button class="btn-att ${!isPresent ? 'active' : ''}" data-dni="${w.Dni || w.dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:${!isPresent?'#fff':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>F</button>
+                                    <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
+                                    <button class="btn-att ${!isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:${!isPresent?'#fff':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>F</button>
+                                </div>
+                            </td>
+                            <td style="padding:0.8rem; text-align:center;">
+                                <div style="display:flex; gap:0.5rem; justify-content:center;">
+                                    <button class="btn-ontime ${isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>SÍ</button>
+                                    <button class="btn-ontime ${!isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>NO</button>
                                 </div>
                             </td>
                         </tr>`;
@@ -818,21 +890,54 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     if (!existing?.finalized) {
-        let localState = workers.map(w => ({ dni: (w.Dni || w.dni), nombre: (w.Nombre || w.nombre), apellidos: (w.Apellidos || w.apellidos), present: true }));
+        let localState = workers.map(w => ({ 
+            dni: (w.dni || w.Dni), 
+            nombre: (w.nombre || w.Nombre), 
+            apellidos: (w.apellidos || w.Apellidos), 
+            present: true,
+            onTime: true
+        }));
+
         document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
             const dni = e.target.dataset.dni;
             const val = e.target.dataset.v === 'true';
             const node = localState.find(s => s.dni === dni);
-            if (node) node.present = val;
+            if (node) {
+                node.present = val;
+                if (!val) node.onTime = false; // Si falta, no es puntual
+            }
             
-            // UI Toggle visual feedback
-            const rowButtons = document.querySelectorAll(`.btn-att[data-dni="${dni}"]`);
-            rowButtons.forEach(rb => {
-                const isP = rb.dataset.v === 'true';
-                rb.style.background = (isP === val && val) ? 'var(--success)' : (isP === val && !val) ? '#ef4444' : 'none';
-                rb.style.color = (isP === val && val) ? '#000' : '#fff';
-            });
+            // UI Toggle
+            renderAsistenciaUI(dni, localState);
         });
+
+        document.querySelectorAll('.btn-ontime').forEach(btn => btn.onclick = (e) => {
+            const dni = e.target.dataset.dni;
+            const val = e.target.dataset.v === 'true';
+            const node = localState.find(s => s.dni === dni);
+            if (node && node.present) node.onTime = val;
+            
+            renderAsistenciaUI(dni, localState);
+        });
+
+        const renderAsistenciaUI = (dni, state) => {
+            const node = state.find(s => s.dni === dni);
+            const attBtns = document.querySelectorAll(`.btn-att[data-dni="${dni}"]`);
+            const otBtns = document.querySelectorAll(`.btn-ontime[data-dni="${dni}"]`);
+
+            attBtns.forEach(b => {
+                const isP = b.dataset.v === 'true';
+                b.style.background = (isP === node.present && node.present) ? 'var(--success)' : (isP === node.present && !node.present) ? '#ef4444' : 'none';
+                b.style.color = (isP === node.present && node.present) ? '#000' : '#fff';
+            });
+
+            otBtns.forEach(b => {
+                const isT = b.dataset.v === 'true';
+                b.style.opacity = node.present ? '1' : '0.3';
+                b.style.pointerEvents = node.present ? 'auto' : 'none';
+                b.style.background = (isT === node.onTime && node.onTime) ? '#06b6d4' : (isT === node.onTime && !node.onTime) ? '#f97316' : 'none';
+            });
+        };
 
         document.getElementById('btn_close_asist').onclick = () => {
             if (confirm('¿Cerrar asistencia? Estos datos se enviarán a Performance.')) {
