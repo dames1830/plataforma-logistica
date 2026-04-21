@@ -958,13 +958,28 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  const calculateRendimiento = (p) => {
+      let score = 0;
+      if (p.asistencia === 'P') score += 30;
+      if (p.puntualidad === 'SÍ') score += 10;
+      
+      const prod = parseFloat(p.produccion) || 0;
+      const bpa = parseFloat(p.bpa) || 0;
+      const sup = parseFloat(p.supervisor) || 0;
+      
+      score += (prod / 10) * 30;
+      score += (bpa / 10) * 15;
+      score += (sup / 10) * 15;
+      
+      return Math.round(score) + '%';
+  };
+
   const renderPerformanceSection = (container) => {
     const log = adminService.getPerformanceLog();
     
     // Función para exportar a Excel
     window.exportPerformanceToExcel = () => {
         if (!log.length) return alert('No hay datos para exportar.');
-        
         try {
             const dataToExport = log.map(p => ({
                 'Fecha': p.date,
@@ -973,9 +988,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 'Nombre': p.nombre,
                 'Asistencia': p.asistencia,
                 'Puntualidad': p.puntualidad,
-                'BPA': p.bpa,
-                'Producción': p.produccion,
-                'Supervisor': p.supervisor,
+                'Producción (1-10)': p.produccion,
+                'BPA (1-10)': p.bpa,
+                'Supervisor (1-10)': p.supervisor,
                 'Rendimiento %': p.rendimiento
             }));
 
@@ -983,12 +998,17 @@ export const renderDashboard = async (container, user, onLogout) => {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Performance_Log");
             XLSX.writeFile(wb, `Reporte_Performance_${new Date().toISOString().split('T')[0]}.xlsx`);
-            console.log("[PULSE] Excel exportado correctamente.");
-        } catch (e) {
-            console.error("Error exportando Excel:", e);
-            alert("Error al generar el archivo Excel.");
-        }
+        } catch (e) { alert("Error al generar el archivo Excel."); }
     };
+
+    // Lógica de agrupamiento y Promedio
+    const grouped = log.reduce((acc, p) => {
+        if (!acc[p.date]) acc[p.date] = [];
+        acc[p.date].push(p);
+        return acc;
+    }, {});
+
+    const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a)); // Recientes primero
 
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
@@ -1002,7 +1022,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                     <tr>
                         <th style="padding:0.8rem; text-align:center; width:45px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
-                        <th style="padding:0.8rem; text-align:center;">FECHA</th>
                         <th style="padding:0.8rem; text-align:left;">TRABAJADOR / DNI</th>
                         <th style="padding:0.8rem; text-align:center;">ASISTENCIA</th>
                         <th style="padding:0.8rem; text-align:center;">PUNTUALIDAD</th>
@@ -1013,32 +1032,81 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${log.length ? [...log].reverse().map((p, idx) => `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${log.length - idx}</td>
-                            <td style="padding:0.8rem; text-align:center; font-family:monospace; color:var(--primary); font-weight:700;">${p.date}</td>
+                    ${sortedDates.length ? sortedDates.map(date => {
+                        const entries = grouped[date];
+                        const avgRend = Math.round(entries.reduce((sum, e) => sum + (parseInt(e.rendimiento) || 0), 0) / entries.length);
+                        return `
+                        <!-- CABECERA DE FECHA -->
+                        <tr class="perf-date-header" data-date="${date}" style="cursor:pointer; background:rgba(79,70,229,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <td colspan="7" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">
+                                <span style="margin-right:10px; color:var(--primary); font-size:1rem;">📅</span> 
+                                <span style="color:#60a5fa;">${date}</span> 
+                                <small style="margin-left:15px; color:rgba(255,255,255,0.3); font-weight:400;">(${entries.length} registros)</small>
+                            </td>
+                            <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;">
+                                <span style="font-size:0.65rem; color:var(--text-muted);">Prom:</span> ${avgRend}%
+                            </td>
+                        </tr>
+                        <!-- FILAS DE TRABAJADORES -->
+                        ${entries.map((p, idx) => `
+                        <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem;"><b>${p.apellidos}, ${p.nombre}</b><br><small style="color:#fff; font-weight:800;">${p.dni}</small></td>
                             <td style="padding:0.8rem; text-align:center;"><span style="color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900;">${p.asistencia}</span></td>
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${p.puntualidad}</td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:80px; background:none; border:none; color:#fff; text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05);">
-                                <input type="text" value="${p.rendimiento}" data-date="${p.date}" data-dni="${p.dni}" data-f="rendimiento" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fcd34d; text-align:center; font-weight:800; font-size:0.9rem; outline:none;">
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                <input type="number" min="0" max="10" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                            </td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                <input type="number" min="0" max="10" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                            </td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                <input type="number" min="0" max="10" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                            </td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;">
+                                ${p.rendimiento}
                             </td>
                         </tr>
-                    `).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
+                        `).join('')}
+                        `;
+                    }).join('') : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
             </table>
         </div>
-        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Los campos resaltados son editables manualmente y se guardan al cambiar el valor. Los registros se ordenan del más reciente al más antiguo.</p>
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Haz clic en una fecha para expandir/contraer. Los campos de producción, BPA y supervisor (escala 1-10) actualizan el % de rendimiento automáticamente.</p>
     `;
 
+    // Event listeners para Colapsar/Expandir
+    document.querySelectorAll('.perf-date-header').forEach(header => {
+        header.onclick = () => {
+            const date = header.dataset.date;
+            const rows = document.querySelectorAll(`.perf-row-${date}`);
+            const isHidden = rows[0].style.display === 'none';
+            rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
+        };
+    });
+
+    // Event listener para Edición y Cálculo automático
     document.querySelectorAll('.edit-perf-log').forEach(input => input.onchange = (e) => {
         const { date, dni, f: field } = e.target.dataset;
-        const val = e.target.value;
-        adminService.updatePerformanceLogEntry(date, dni, { [field]: val });
-        console.log(`[PULSE] Historial actualizado: ${date} - ${dni} (${field} -> ${val})`);
+        let val = parseFloat(e.target.value) || 0;
+        if (val > 10) val = 10;
+        if (val < 0) val = 0;
+        e.target.value = val;
+
+        // Obtener el registro actual para re-calcular
+        const entries = adminService.getPerformanceLog();
+        const entry = entries.find(l => l.date === date && l.dni === dni);
+        if (entry) {
+            entry[field] = val;
+            entry.rendimiento = calculateRendimiento(entry);
+            adminService.updatePerformanceLogEntry(date, dni, entry);
+            renderPerformanceSection(container); // Re-render para mostrar nuevo rendimiento y promedio
+            
+            // Expandir la fecha que se estaba editando para que no se contraiga al re-renderizar
+            const rows = document.querySelectorAll(`.perf-row-${date}`);
+            rows.forEach(r => r.style.display = 'table-row' );
+        }
     });
   };
 

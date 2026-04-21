@@ -12,20 +12,20 @@ class App {
 
   async navigate() {
     const user = getSession();
-    this.root.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse v11.1.27 (Beta / Cache Force)...</div>';
+    this.root.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse v11.1.28 (Beta / Cache Force)...</div>';
 
     try {
         const timestamp = new Date().getTime();
-        console.log(`[PULSE] Beta App v11.1.27 navigate - ts: ${timestamp}`);
+        console.log(`[PULSE] Beta App v11.1.28 navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.27_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.28_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 logout();
                 this.navigate();
             });
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=11.1.27_${timestamp}`);
+            const { renderLogin } = await import(`./views/login.js?v=11.1.28_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }

@@ -165,14 +165,14 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
             apellidos: att.apellidos,
             asistencia: att.present ? 'P' : 'F',
             puntualidad: att.onTime ? 'SÍ' : 'NO',
-            rendimiento: '0%', // Inicializado para edición manual o cálculo futuro
-            produccion: entry.produccion || 0,
-            bpa: entry.bpa || 0,
-            supervisor: entry.supervisor || '-'
+            rendimiento: att.present ? '30%' : '0%', // Inicial con asistencia básica (30 pts = 30% si puntualidad es NO)
+            produccion: 0,
+            bpa: 0,
+            supervisor: 0
         };
 
         if (existingLogIdx >= 0) {
-            log[existingLogIdx] = newLogEntry;
+            log[existingLogIdx] = { ...log[existingLogIdx], ...newLogEntry, rendimiento: log[existingLogIdx].rendimiento };
         } else {
             log.push(newLogEntry);
         }
