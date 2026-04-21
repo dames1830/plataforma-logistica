@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.52-pulse';
-const CACHE_KEY = `logistics_v11_1_52_`;
+const VERSION = '11.1.55-pulse';
+const CACHE_KEY = `logistics_v11_1_55_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.52 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.55 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1078,14 +1078,18 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-            <div class="glass-panel" style="padding:1.5rem;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem;">
+            <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
                 <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">📈 Evolución de Rendimiento</h4>
-                <canvas id="chartEvolution" height="200"></canvas>
+                <div style="height:300px; position:relative; overflow:hidden;">
+                    <canvas id="chartEvolution"></canvas>
+                </div>
             </div>
-            <div class="glass-panel" style="padding:1.5rem;">
+            <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
                 <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">🏆 Top 5 Operarios</h4>
-                <canvas id="chartRanking" height="200"></canvas>
+                <div style="height:300px; position:relative; overflow:hidden;">
+                    <canvas id="chartRanking"></canvas>
+                </div>
             </div>
         </div>
     `;

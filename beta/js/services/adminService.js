@@ -33,19 +33,41 @@ export const initializeAdminData = async () => {
                 const result = await res.json();
                 if (result.data) {
                     adminStore[area] = result.data;
-                    localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                    // Intentar guardar localmente, pero no fallar si el almacenamiento está lleno
+                    try {
+                        localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                    } catch(e) { console.warn(`Quota full while syncing ${area}`); }
                 }
             }
         }));
         console.log("✅ Datos de Administración sincronizados con la BD.");
+        
+        // 3. Limpieza de claves antiguas si ya estamos sincronizados
+        flushOldKeys();
     } catch (e) {
         console.warn("⚠️ Error sincronizando con BD: Operando en modo local.", e);
     }
 };
 
+// Limpia claves de versiones muy antiguas para liberar espacio
+const flushOldKeys = () => {
+    const activePrefix = 'logistics_admin_v11_';
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('logistics_') && !key.startsWith(activePrefix)) {
+            localStorage.removeItem(key);
+        }
+    }
+    console.log("🧹 Almacenamiento optimizado.");
+};
+
 const save = async (key, data) => {
     adminStore[key] = data;
-    localStorage.setItem(PREFIX + key, JSON.stringify(data));
+    try {
+        localStorage.setItem(PREFIX + key, JSON.stringify(data));
+    } catch (e) {
+        console.warn(`⚠️ [PULSE] Quota Full. El dato se guardará solo en la base de datos.`);
+    }
     
     // Persistencia en el servidor
     try {
