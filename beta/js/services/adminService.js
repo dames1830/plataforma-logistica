@@ -51,15 +51,24 @@ export const toggleUserStatus = (username) => {
 
 // --- PERMISOS ---
 export const initPermissions = (tabs) => {
-    // Si ya hay permisos, no sobreescribir, pero asegurar que los nuevos módulos existan
     const perms = adminStore.permissions;
-    const roles = ['jefe', 'supervisor', 'encargado', 'asistente']; // admin es siempre full
+    const roles = ['jefe', 'supervisor', 'encargado', 'asistente'];
     
     tabs.forEach(tab => {
         roles.forEach(role => {
             if (!perms[role]) perms[role] = {};
+            // Permiso principal
             if (perms[role][tab.id] === undefined) {
                 perms[role][tab.id] = tab.roles.includes(role) ? 1 : 0;
+            }
+            // Permisos de sub-pestañas
+            if (tab.subTabs) {
+                tab.subTabs.forEach(sub => {
+                    const subKey = `${tab.id}_${sub.id}`;
+                    if (perms[role][subKey] === undefined) {
+                        perms[role][subKey] = tab.roles.includes(role) ? 1 : 0;
+                    }
+                });
             }
         });
     });

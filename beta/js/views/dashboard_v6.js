@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.18-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.18-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.19-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.19-pulse';
 
-const VERSION = '11.1.18-pulse';
-const CACHE_KEY = `logistics_v11_1_18_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Login Logic Fix)`);
+const VERSION = '11.1.19-pulse';
+const CACHE_KEY = `logistics_v11_1_19_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Sub-Tab Permissions)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -15,7 +15,13 @@ const TABS = [
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'] },
+  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
+    { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
+    { id: 'usuarios', label: 'Usuarios', icon: '👥' },
+    { id: 'permisos', label: 'Permisos', icon: '🛡️' },
+    { id: 'asistencia', label: 'Asistencia', icon: '📅' },
+    { id: 'performance', label: 'Performance', icon: '📈' }
+  ] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
@@ -60,7 +66,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.18 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.19 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -367,35 +373,53 @@ export const renderDashboard = async (container, user, onLogout) => {
         if(!data.detalle || !data.detalle.length) {
             alert('⚠️ ERROR: El detalle de SKU no está disponible. Por favor haz clic en "PROCESAR ANÁLISIS" nuevamente.');
         } else {
-            exportToExcel(data.detalle, 'Analisis_SKU_V81');
+            exportToExcel(data.detalle, 'Analisis_SKU_V82');
         }
     });
   };
 
-  let activeAdminSub = 'trabajadores';
-  const renderAdminTab = async () => {
-    contentSubtitle.textContent = "Gestión de Personal y Auditoría";
+  let activeAdminSub = 'trabajadores';  const renderAdminTab = () => {
+    const adminTabDef = TABS.find(t => t.id === 'admin_pers');
+    const rolePerms = adminService.getPermissions(user.role) || {};
+    
+    // Filtrar sub-pestañas permitidas
+    const allowedSubTabs = adminTabDef.subTabs.filter(sub => {
+        if (user.role === 'admin') return true;
+        const key = `admin_pers_${sub.id}`;
+        return rolePerms[key] === 1;
+    });
+
+    // Si la sub-pestaña actual no está permitida, ir a la primera disponible
+    if (!allowedSubTabs.find(s => s.id === activeAdminSub)) {
+        activeAdminSub = allowedSubTabs[0]?.id || '';
+    }
+
+    if (!activeAdminSub) {
+        contentArea.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para acceder a las secciones de Administración.</div>`;
+        return;
+    }
+
     contentArea.innerHTML = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); overflow-x:auto;">
-          <a class="sub-nav-item ${activeAdminSub==='trabajadores'?'active':''}" data-s="trabajadores" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">👷 TRABAJADORES</a>
-          <a class="sub-nav-item ${activeAdminSub==='usuarios'?'active':''}" data-s="usuarios" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">👥 USUARIOS</a>
-          <a class="sub-nav-item ${activeAdminSub==='permisos'?'active':''}" data-s="permisos" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">🛡️ PERMISOS</a>
-          <a class="sub-nav-item ${activeAdminSub==='asistencia'?'active':''}" data-s="asistencia" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">📅 ASISTENCIA</a>
-          <a class="sub-nav-item ${activeAdminSub==='performance'?'active':''}" data-s="performance" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">📈 PERFORMANCE</a>
+        <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeAdminSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
+              ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
         </nav><div id="adminContent"></div>`;
     
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
-        activeAdminSub = e.target.dataset.s; 
+        activeAdminSub = e.currentTarget.dataset.s; 
         renderAdminTab(); 
     }));
 
-    const container = document.getElementById('adminContent');
+    const adminContainer = document.getElementById('adminContent');
     
-    if (activeAdminSub === 'trabajadores') renderTrabajadoresSection(container);
-    else if (activeAdminSub === 'usuarios') renderUsuariosSection(container);
-    else if (activeAdminSub === 'permisos') renderPermisosSection(container);
-    else if (activeAdminSub === 'asistencia') renderAsistenciaSection(container);
-    else if (activeAdminSub === 'performance') renderPerformanceSection(container);
+    if (activeAdminSub === 'trabajadores') renderTrabajadoresSection(adminContainer);
+    else if (activeAdminSub === 'usuarios') renderUsuariosSection(adminContainer);
+    else if (activeAdminSub === 'permisos') renderPermisosSection(adminContainer);
+    else if (activeAdminSub === 'asistencia') renderAsistenciaSection(adminContainer);
+    else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
   };
 
   const renderTrabajadoresSection = (container) => {
@@ -600,21 +624,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos por Rol</h3>
+            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Granular</h3>
             <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✨ Cambios se guardan automáticamente</span>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
-                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO</th>
+                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO / SUB-SECCIÓN</th>
                         ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
                     ${TABS.map(t => {
-                        return `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: background 0.2s;">
+                        let rows = [];
+                        // Fila principal
+                        rows.push(`
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff;">${t.icon} ${t.label}</td>
                             ${allRoles.map(r => {
                                 let hasAccess = false;
@@ -626,23 +652,43 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const isFixed = r === 'admin' || t.id === 'inicio';
                                 return `
                                 <td style="padding:0.8rem; text-align:center;">
-                                    <input type="checkbox" 
-                                           class="perm-toggle" 
-                                           data-role="${r}" 
-                                           data-tab="${t.id}"
-                                           ${hasAccess ? 'checked' : ''} 
-                                           ${isFixed ? 'disabled title="Permiso Protegido"' : 'style="cursor:pointer;"'}>
+                                    <input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled title="Protegido"' : 'style="cursor:pointer;"'}>
                                 </td>`;
                             }).join('')}
-                        </tr>`;
+                        </tr>`);
+
+                        // Filas de sub-pestañas
+                        if (t.subTabs) {
+                            t.subTabs.forEach(sub => {
+                                const subKey = `${t.id}_${sub.id}`;
+                                rows.push(`
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.01);">
+                                    <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border);">${sub.icon} ${sub.label}</td>
+                                    ${allRoles.map(r => {
+                                        let hasSubAccess = false;
+                                        if (r === 'admin') hasSubAccess = true;
+                                        else {
+                                            const perms = adminService.getPermissions(r);
+                                            hasSubAccess = perms ? perms[subKey] === 1 : t.roles.includes(r);
+                                        }
+                                        const isFixed = r === 'admin';
+                                        return `
+                                        <td style="padding:0.6rem; text-align:center;">
+                                            <input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}>
+                                        </td>`;
+                                    }).join('')}
+                                </tr>`);
+                            });
+                        }
+                        return rows.join('');
                     }).join('')}
                 </tbody>
             </table>
         </div>
         <div style="margin-top:1rem; padding:1rem; background:rgba(79,70,229,0.05); border-radius:8px; border:1px solid rgba(79,70,229,0.2);">
             <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
-                <b>Nota:</b> Los permisos protegidos (Admin e Inicio) no pueden ser modificados para asegurar el acceso básico a la plataforma. 
-                Cualquier cambio realizado se aplicará la próxima vez que el usuario navegue o recargue el sitio.
+                <b>Nota:</b> Puedes restringir el acceso a módulos completos o a sub-secciones específicas dentro de Administración. 
+                Los cambios se aplican automáticamente para mejorar la fluidez de la configuración.
             </p>
         </div>
     `;
