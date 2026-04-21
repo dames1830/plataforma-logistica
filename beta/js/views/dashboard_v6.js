@@ -1,8 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.12-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.13-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.13-pulse';
 
-const VERSION = '11.1.12-pulse';
-const CACHE_KEY = `logistics_v11_1_12_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Storage Fix)`);
+const VERSION = '11.1.13-pulse';
+const CACHE_KEY = `logistics_v11_1_13_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Admin Module)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -52,7 +53,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.12 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.13 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -364,16 +365,286 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
+  let activeAdminSub = 'trabajadores';
   const renderAdminTab = async () => {
     contentSubtitle.textContent = "Gestión de Personal y Auditoría";
     contentArea.innerHTML = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-          <a class="sub-nav-item ${activeAdminSub==='usuarios'?'active':''}" data-s="usuarios" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">👥 USUARIOS</a>
-          <a class="sub-nav-item ${activeAdminSub==='permisos'?'active':''}" data-s="permisos" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🛡️ PERMISOS</a>
-          <a class="sub-nav-item ${activeAdminSub==='logs'?'active':''}" data-s="logs" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">📜 REGISTRO LOG</a>
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); overflow-x:auto;">
+          <a class="sub-nav-item ${activeAdminSub==='trabajadores'?'active':''}" data-s="trabajadores" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">👷 TRABAJADORES</a>
+          <a class="sub-nav-item ${activeAdminSub==='usuarios'?'active':''}" data-s="usuarios" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">👥 USUARIOS</a>
+          <a class="sub-nav-item ${activeAdminSub==='permisos'?'active':''}" data-s="permisos" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">🛡️ PERMISOS</a>
+          <a class="sub-nav-item ${activeAdminSub==='asistencia'?'active':''}" data-s="asistencia" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">📅 ASISTENCIA</a>
+          <a class="sub-nav-item ${activeAdminSub==='performance'?'active':''}" data-s="performance" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap;">📈 PERFORMANCE</a>
         </nav><div id="adminContent"></div>`;
-    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeAdminSub = e.target.dataset.s; renderAdminTab(); }));
-    document.getElementById('adminContent').innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: 0.85rem;">Módulo en desarrollo: ${activeAdminSub.toUpperCase()}</div>`;
+    
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeAdminSub = e.target.dataset.s; 
+        renderAdminTab(); 
+    }));
+
+    const container = document.getElementById('adminContent');
+    
+    if (activeAdminSub === 'trabajadores') renderTrabajadoresSection(container);
+    else if (activeAdminSub === 'usuarios') renderUsuariosSection(container);
+    else if (activeAdminSub === 'permisos') renderPermisosSection(container);
+    else if (activeAdminSub === 'asistencia') renderAsistenciaSection(container);
+    else if (activeAdminSub === 'performance') renderPerformanceSection(container);
+  };
+
+  const renderTrabajadoresSection = (container) => {
+    const workers = adminService.getWorkers();
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
+            <label class="btn" style="width:auto; background:var(--success); font-size:0.8rem; padding:0.5rem 1rem;">
+                📥 IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
+            </label>
+        </div>
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
+                    <tr>
+                        <th style="padding:0.8rem; text-align:left;">DNI</th>
+                        <th style="padding:0.8rem; text-align:left;">Nombre</th>
+                        <th style="padding:0.8rem; text-align:left;">Apellidos</th>
+                        <th style="padding:0.8rem; text-align:left;">Puesto</th>
+                        <th style="padding:0.8rem; text-align:left;">Turno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${workers.length ? workers.map(w => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td style="padding:0.8rem;">${w.Dni || w.dni || ''}</td>
+                            <td style="padding:0.8rem;">${w.Nombre || w.nombre || ''}</td>
+                            <td style="padding:0.8rem;">${w.Apellidos || w.apellidos || ''}</td>
+                            <td style="padding:0.8rem;">${w.Puesto || w.puesto || ''}</td>
+                            <td style="padding:0.8rem;">${w.Turno || w.turno || ''}</td>
+                        </tr>
+                    `).join('') : '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay trabajadores cargados. Por favor importa un archivo Excel.</td></tr>'}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    document.getElementById('import_workers').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet);
+            adminService.saveWorkers(json);
+            renderAdminTab();
+        };
+        reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const renderUsuariosSection = (container) => {
+    const users = adminService.getUsers();
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 300px; gap:1.5rem;">
+            <div>
+                <h3 style="color:var(--primary); margin-bottom:1rem;">Usuarios de la Plataforma</h3>
+                <div class="glass-panel" style="padding:0; overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead style="background:rgba(255,255,255,0.05);">
+                            <tr><th style="padding:0.8rem; text-align:left;">Nombre</th><th style="padding:0.8rem; text-align:left;">Usuario</th><th style="padding:0.8rem; text-align:left;">Rol</th><th style="padding:0.8rem;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            ${users.length ? users.map(u => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                                    <td style="padding:0.8rem;">${u.name}</td>
+                                    <td style="padding:0.8rem;">${u.username}</td>
+                                    <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); padding:2px 8px; border-radius:4px; font-size:0.7rem;">${u.role.toUpperCase()}</span></td>
+                                    <td style="padding:0.8rem; text-align:center;"><button class="btn-del" data-user="${u.username}" style="background:none; border:none; color:#f87171; cursor:pointer;">🗑️</button></td>
+                                </tr>
+                            `).join('') : '<tr><td colspan="4" style="padding:1rem; text-align:center;">No hay usuarios adicionales creatos.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <h3 style="color:var(--primary); margin-bottom:1rem;">Nuevo Usuario</h3>
+                <div class="glass-panel" style="padding:1.2rem;">
+                    <form id="form_user" style="display:flex; flex-direction:column; gap:0.8rem;">
+                        <input type="text" id="u_name" placeholder="Nombre Completo" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;" required>
+                        <input type="text" id="u_username" placeholder="Usuario (Login)" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;" required>
+                        <input type="password" id="u_pass" placeholder="Contraseña" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;" required>
+                        <select id="u_role" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;">
+                            <option value="supervisor">SUPERVISOR</option>
+                            <option value="encargado">ENCARGADO</option>
+                            <option value="asistente">ASISTENTE</option>
+                            <option value="jefe">JEFE</option>
+                        </select>
+                        <button type="submit" class="btn" style="padding:0.6rem;">GUARDAR USUARIO</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('form_user').onsubmit = (e) => {
+        e.preventDefault();
+        const newUser = {
+            name: document.getElementById('u_name').value,
+            username: document.getElementById('u_username').value,
+            password: document.getElementById('u_pass').value,
+            role: document.getElementById('u_role').value
+        };
+        adminService.saveUser(newUser);
+        renderAdminTab();
+    };
+
+    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = () => {
+        if (confirm('¿Eliminar este usuario?')) {
+            adminService.deleteUser(btn.dataset.user);
+            renderAdminTab();
+        }
+    });
+  };
+
+  const renderPermisosSection = (container) => {
+    const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'];
+    const modules = TABS.map(t => t.id);
+    
+    container.innerHTML = `
+        <h3 style="color:var(--primary); margin-bottom:1rem;">Matriz de Permisos por Rol</h3>
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                <thead>
+                    <tr style="background:rgba(255,255,255,0.05);"><th style="padding:0.8rem; text-align:left;">MÓDULO</th>${roles.map(r => `<th style="padding:0.8rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${TABS.map(t => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td style="padding:0.8rem; font-weight:600;">${t.icon} ${t.label}</td>
+                            ${roles.map(r => {
+                                const hasAccess = t.roles.includes(r);
+                                return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" ${hasAccess ? 'checked disabled' : ''} style="cursor:pointer;"></td>`;
+                            }).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:1rem;">* Los permisos base de Admin no pueden ser modificados. El sistema de permisos dinámicos se habilitará en la siguiente fase de desarrollo.</p>
+    `;
+  };
+
+  const renderAsistenciaSection = (container) => {
+    const workers = adminService.getWorkers();
+    const today = new Date().toISOString().split('T')[0];
+    const existing = adminService.getAttendance(today);
+    
+    if (!workers.length) {
+        container.innerHTML = `<div style="padding:3rem; text-align:center;"><p style="color:var(--text-muted);">Debes importar la lista de <b>Trabajadores</b> antes de tomar asistencia.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div>
+                <h3 style="color:var(--primary); margin:0;">Asistencia Diaria</h3>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Fecha: <b>${today}</b></p>
+            </div>
+            ${existing?.finalized ? '<span style="background:var(--success); color:#000; padding:0.4rem 0.8rem; border-radius:6px; font-weight:800; font-size:0.8rem;">✅ ASISTENCIA CERRADA</span>' : `
+                <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.5rem 1.2rem; font-size:0.8rem;">💾 CERRAR ASISTENCIA DEL DÍA</button>
+            `}
+        </div>
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead style="background:rgba(255,255,255,0.05);">
+                    <tr><th style="padding:0.8rem; text-align:left;">DNI</th><th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th><th style="padding:0.8rem; text-align:center;">Estado</th></tr>
+                </thead>
+                <tbody>
+                    ${workers.map(w => {
+                        const rec = existing?.data?.find(d => d.dni === (w.Dni || w.dni));
+                        const isPresent = rec ? rec.present : true;
+                        return `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td style="padding:0.8rem;">${w.Dni || w.dni || ''}</td>
+                            <td style="padding:0.8rem;">${w.Apellidos || w.apellidos || ''}, ${w.Nombre || w.nombre || ''}</td>
+                            <td style="padding:0.8rem; text-align:center;">
+                                <div style="display:flex; gap:0.5rem; justify-content:center;">
+                                    <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.Dni || w.dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
+                                    <button class="btn-att ${!isPresent ? 'active' : ''}" data-dni="${w.Dni || w.dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:${!isPresent?'#fff':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>F</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    if (!existing?.finalized) {
+        let localState = workers.map(w => ({ dni: (w.Dni || w.dni), nombre: (w.Nombre || w.nombre), apellidos: (w.Apellidos || w.apellidos), present: true }));
+        document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
+            const dni = e.target.dataset.dni;
+            const val = e.target.dataset.v === 'true';
+            const node = localState.find(s => s.dni === dni);
+            if (node) node.present = val;
+            
+            // UI Toggle visual feedback
+            const rowButtons = document.querySelectorAll(`.btn-att[data-dni="${dni}"]`);
+            rowButtons.forEach(rb => {
+                const isP = rb.dataset.v === 'true';
+                rb.style.background = (isP === val && val) ? 'var(--success)' : (isP === val && !val) ? '#ef4444' : 'none';
+                rb.style.color = (isP === val && val) ? '#000' : '#fff';
+            });
+        });
+
+        document.getElementById('btn_close_asist').onclick = () => {
+            if (confirm('¿Cerrar asistencia? Estos datos se enviarán a Performance.')) {
+                adminService.closeAttendanceAndSyncPerformance(today, localState);
+                renderAdminTab();
+            }
+        };
+    }
+  };
+
+  const renderPerformanceSection = (container) => {
+    const perf = adminService.getPerformance();
+    container.innerHTML = `
+        <h3 style="color:var(--primary); margin-bottom:1rem;">Reporte de Performance</h3>
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
+                    <tr>
+                        <th style="padding:0.8rem; text-align:left;">TRABAJADOR</th>
+                        <th style="padding:0.8rem; text-align:center;">ASISTENCIAS</th>
+                        <th style="padding:0.8rem; text-align:center;">PUNTUALIDAD</th>
+                        <th style="padding:0.8rem; text-align:center;">PRODUCCIÓN</th>
+                        <th style="padding:0.8rem; text-align:center;">BPA</th>
+                        <th style="padding:0.8rem; text-align:center;">SUPERVISOR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${perf.length ? perf.map(p => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td style="padding:0.8rem;"><b>${p.apellidos}, ${p.nombre}</b><br><small style="color:var(--text-muted);">${p.dni}</small></td>
+                            <td style="padding:0.8rem; text-align:center; color:var(--success); font-weight:700;">${p.asistencia}</td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.puntualidad}" data-dni="${p.dni}" data-f="puntualidad" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.produccion}" data-dni="${p.dni}" data-f="produccion" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.bpa}" data-dni="${p.dni}" data-f="bpa" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.supervisor}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf" style="width:80px; background:none; border:none; color:#fff; text-align:center;"></td>
+                        </tr>
+                    `).join('') : '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay datos de performance registrados aún. Cierra una asistencia para empezar.</td></tr>'}
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Los campos en las celdas blancas son editables manualmente.</p>
+    `;
+
+    document.querySelectorAll('.edit-perf').forEach(input => input.onchange = (e) => {
+        const dni = e.target.dataset.dni;
+        const field = e.target.dataset.f;
+        const val = e.target.value;
+        adminService.updatePerformanceEntry(dni, { [field]: val });
+    });
   };
 
   const renderConfigTab = async () => {
