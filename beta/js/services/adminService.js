@@ -2,19 +2,61 @@
  * Admin Service - Gestión de Personal, Usuarios y Performance (Beta v11.1.28)
  */
 const PREFIX = 'logistics_admin_v11_';
+const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
+const API_URL = `${API_BASE}/logistics`;
 
 export const adminStore = {
-    workers: JSON.parse(localStorage.getItem(PREFIX + 'workers') || '[]'),
-    users: JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]'),
-    permissions: JSON.parse(localStorage.getItem(PREFIX + 'permissions') || '{}'),
-    attendance: JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}'), // Keyed by date YYYY-MM-DD
-    performance: JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]'),
-    performance_log: JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]')
+    workers: [],
+    users: [],
+    permissions: {},
+    attendance: {}, // Keyed by date YYYY-MM-DD
+    performance: [],
+    performance_log: []
 };
 
-const save = (key, data) => {
+// Carga inicial híbrida (Local + Servidor)
+export const initializeAdminData = async () => {
+    // 1. Carga rápida desde LocalStorage
+    adminStore.workers = JSON.parse(localStorage.getItem(PREFIX + 'workers') || '[]');
+    adminStore.users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+    adminStore.permissions = JSON.parse(localStorage.getItem(PREFIX + 'permissions') || '{}');
+    adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
+    adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
+    adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
+
+    // 2. Sincronización con Servidor (Sobrescribe si hay datos nuevos)
+    try {
+        const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log'];
+        await Promise.all(areas.map(async (area) => {
+            const res = await fetch(`${API_URL}/${area}`);
+            if (res.ok) {
+                const result = await res.json();
+                if (result.data) {
+                    adminStore[area] = result.data;
+                    localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                }
+            }
+        }));
+        console.log("✅ Datos de Administración sincronizados con la BD.");
+    } catch (e) {
+        console.warn("⚠️ Error sincronizando con BD: Operando en modo local.", e);
+    }
+};
+
+const save = async (key, data) => {
     adminStore[key] = data;
     localStorage.setItem(PREFIX + key, JSON.stringify(data));
+    
+    // Persistencia en el servidor
+    try {
+        await fetch(`${API_URL}/${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    } catch (e) {
+        console.error(`❌ Error persistiendo ${key} en el servidor:`, e);
+    }
 };
 
 // --- TRABAJADORES ---

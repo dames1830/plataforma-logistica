@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.45-pulse';
-const CACHE_KEY = `logistics_v11_1_45_`;
+const VERSION = '11.1.50-pulse';
+const CACHE_KEY = `logistics_v11_1_50_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -51,6 +51,7 @@ const exportToExcel = (data, filename) => {
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
+  await adminService.initializeAdminData(); // Sincronización 100% DB
   adminService.initPermissions(TABS);
   container.className = 'dashboard-layout animate-fade-in';
   
@@ -74,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.45 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.50 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1085,14 +1086,18 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     // --- RENDERIZADO DE GRÁFICOS (Chart.js) ---
+    // Fix v11.1.50: Evitar bucle infinito y deshabilitar animaciones pesadas
     setTimeout(() => {
-        const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
-        const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
-        if (!ctxEvo || !ctxRank) return;
+        const canvasEvo = document.getElementById('chartEvolution');
+        const canvasRank = document.getElementById('chartRanking');
+        if (!canvasEvo || !canvasRank) return;
 
-        // Limpieza de instancia previa si existe (aunque aquí usamos IDs diferentes, Chart.js puede quejarse)
-        if (window.evoChart) window.evoChart.destroy();
-        if (window.rankChart) window.rankChart.destroy();
+        const ctxEvo = canvasEvo.getContext('2d');
+        const ctxRank = canvasRank.getContext('2d');
+
+        // Limpieza de instancia previa si existe globalmente
+        if (window.evoChart instanceof Chart) window.evoChart.destroy();
+        if (window.rankChart instanceof Chart) window.rankChart.destroy();
 
         window.evoChart = new Chart(ctxEvo, {
             type: 'line',
@@ -1104,7 +1109,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     borderColor: '#4f46e5',
                     backgroundColor: 'rgba(79, 70, 229, 0.1)',
                     borderWidth: 3,
-                    tension: 0.4,
+                    tension: 0.1, // Reducido para estabilidad
                     fill: true,
                     pointBackgroundColor: '#fff',
                     pointRadius: 4
@@ -1113,6 +1118,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false, // Fix: Gráficos estáticos para evitar loop
                 scales: {
                     y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
                     x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
@@ -1134,6 +1140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false, // Fix: Gráficos estáticos
                 indexAxis: 'y',
                 scales: {
                     x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
@@ -1142,7 +1149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 plugins: { legend: { display: false } }
             }
         });
-    }, 100);
+    }, 50);
   };
 
   const renderPerformanceSection = (container) => {
