@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.80-pulse';
-const CACHE_KEY = `logistics_v11_1_80_`;
+const VERSION = '11.1.85-pulse';
+const CACHE_KEY = `logistics_v11_1_85_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -26,9 +26,11 @@ const TABS = [
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
     { id: 'asistencia', label: 'Asistencia', icon: '📅' },
-    { id: 'performance', label: 'Performance', icon: '📈' },
-    { id: 'kpi_graficos', label: 'KPI Gráficos', icon: '📊' },
-    { id: 'kpi_reporte', label: 'KPI Reporte', icon: '📋' },
+    { id: 'performance', label: 'Performance', icon: '📈', subTabs: [
+        { id: 'historial', label: 'Historial', icon: '📅' },
+        { id: 'graficos', label: 'KPI Gráficos', icon: '📊' },
+        { id: 'reporte', label: 'KPI Reporte', icon: '📋' }
+    ]},
     { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
@@ -76,7 +78,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.80 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.85 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -460,8 +462,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeAdminSub === 'permisos') renderPermisosSection(adminContainer);
     else if (activeAdminSub === 'asistencia') renderAsistenciaSection(adminContainer);
     else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
-    else if (activeAdminSub === 'kpi_graficos') renderKPIGraphsSection(adminContainer);
-    else if (activeAdminSub === 'kpi_reporte') renderKPIReportSection(adminContainer);
     else if (activeAdminSub === 'rfs') renderRFSection(adminContainer);
   };
 
@@ -1206,7 +1206,42 @@ export const renderDashboard = async (container, user, onLogout) => {
     }, 50);
   };
 
+  let activePerfSub = 'historial';
   const renderPerformanceSection = (container) => {
+    const perfTabDef = TABS.find(t => t.id === 'admin_pers').subTabs.find(s => s.id === 'performance');
+    const perms = adminService.getPermissions(user.role) || {};
+    
+    // Triple anidamiento: Administración -> Performance -> (Historial/Graficos/Reporte)
+    const allowedSubSubs = perfTabDef.subTabs.filter(ss => {
+        if (user.role === 'admin') return true;
+        return perms[`performance_${ss.id}`] === 1 || perms['performance'] === 1; // Fallback a permiso general
+    });
+
+    if (!allowedSubSubs.find(s => s.id === activePerfSub)) {
+        activePerfSub = allowedSubSubs[0]?.id || '';
+    }
+
+    container.innerHTML = `
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+          ${allowedSubSubs.map(ss => `
+            <a class="perf-sub-item ${activePerfSub===ss.id?'active':''}" data-ss="${ss.id}" style="padding: 0.5rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${activePerfSub===ss.id?'var(--primary)':'var(--text-muted)'}; font-weight:${activePerfSub===ss.id?'800':'500'}; text-decoration:none; border-bottom:${activePerfSub===ss.id?'2px solid var(--primary)':'none'};">
+                ${ss.icon} ${ss.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="perfContent"></div>`;
+
+    document.querySelectorAll('.perf-sub-item').forEach(b => b.addEventListener('click', (e) => { 
+        activePerfSub = e.currentTarget.dataset.ss; 
+        renderPerformanceSection(container); 
+    }));
+
+    const perfContent = document.getElementById('perfContent');
+    if (activePerfSub === 'historial') renderPerformanceHistory(perfContent);
+    else if (activePerfSub === 'graficos') renderKPIGraphsSection(perfContent);
+    else if (activePerfSub === 'reporte') renderKPIReportSection(perfContent);
+  };
+
+  const renderPerformanceHistory = (container) => {
     const log = adminService.getPerformanceLog();
     
     // Función para exportar a Excel
