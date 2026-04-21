@@ -1,4 +1,4 @@
-import { getSession } from './services/auth.js?v=11.1.9';
+import { getSession } from './services/auth.js?v=11.1.10';
 
 class App {
   constructor(rootId) {
@@ -12,23 +12,23 @@ class App {
 
   async navigate() {
     const user = getSession();
-    this.root.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse v11.1.9 (Beta / Resiliente)...</div>';
+    this.root.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse v11.1.10 (Beta / UX)...</div>';
 
     try {
         const timestamp = new Date().getTime();
-        console.log(`[PULSE] Beta App navigate - ts: ${timestamp}, user: ${user ? user.username : 'Guest'}`);
+        console.log(`[PULSE] Beta App v11.1.10 navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.9_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.10_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => this.navigate());
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=11.1.9_${timestamp}`);
+            const { renderLogin } = await import(`./views/login.js?v=11.1.10_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }
     } catch (err) {
-        console.error("Critical Load Error v11.1.9:", err);
-        this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo al cargar versión 11.1.9 Beta. Error: ${err.message}</div>`;
+        console.error("Critical Load Error v11.1.10:", err);
+        this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo al cargar versión 11.1.10 Beta. Error: ${err.message}</div>`;
     }
   }
 }

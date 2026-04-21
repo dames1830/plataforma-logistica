@@ -39,6 +39,14 @@ const loadFromLS = (area) => {
     } catch(e) { return null; }
 };
 
+export const getUploadMeta = (area) => {
+    try {
+        const raw = localStorage.getItem(LS_PREFIX + area);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch(e) { return null; }
+};
+
 const clearLS = () => {
     Object.keys(dataStore).forEach(k => localStorage.removeItem(LS_PREFIX + k));
 };
@@ -57,8 +65,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.9-pulse';
-const CACHE_KEY = `logistics_v11_1_9_`;
+const VERSION = '11.1.10-pulse';
+const CACHE_KEY = `logistics_v11_1_10_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {

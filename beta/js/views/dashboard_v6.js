@@ -1,8 +1,7 @@
-import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=11.1.9-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.10-pulse';
 
-const VERSION = '11.1.9-pulse';
-const CACHE_KEY = `logistics_v11_1_9_`;
+const VERSION = '11.1.10-pulse';
+const CACHE_KEY = `logistics_v11_1_10_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta)`);
 
 const TABS = [
@@ -53,7 +52,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.9 [BETA / CONSTR]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.10 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -129,15 +128,19 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderUploadArea = (container, area, hasData = null, ext = '.csv') => {
+    const meta = getUploadMeta(area);
+    const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'Nunca';
     const div = document.createElement('div');
+    div.id = `wrap_${area}`;
     div.style.width = '100%';
     const label = area.toUpperCase();
+    
     if (hasData) {
       div.innerHTML = `
         <div style="padding:1rem; background:rgba(34, 197, 94, 0.05); border:1px solid rgba(34, 197, 94, 0.3); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
           <div>
             <h4 style="color:var(--success); margin:0; font-size:0.9rem;">✅ ${label} CARGADO</h4>
-            <p style="font-size:0.75rem; margin:2px 0 0 0; color:var(--text-muted);">${hasData.length.toLocaleString()} registros.</p>
+            <p style="font-size:0.75rem; margin:2px 0 0 0; color:var(--text-muted);">${hasData.length.toLocaleString()} registros. <span style="color:var(--primary); opacity:0.8;">(Subido: ${dateStr})</span></p>
           </div>
           <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
         </div>`;
@@ -145,12 +148,28 @@ export const renderDashboard = async (container, user, onLogout) => {
       div.innerHTML = `
         <div class="upload-area" style="padding:1.5rem; text-align:center; border: 1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:0.8rem;">
           <h3 style="margin:0; font-size:1rem; color:var(--text-main);">${label}</h3>
+          <p style="font-size:0.7rem; color:var(--text-muted); margin:-0.5rem 0 0.5rem 0;">Última carga: ${dateStr}</p>
           <label class="btn" style="width:auto; padding:0.5rem 1.5rem; cursor:pointer; font-size:0.85rem;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label>
         </div>`;
     }
     container.appendChild(div);
+
     const input = document.getElementById(`up_${area}`);
-    if(input) input.addEventListener('change', async (e) => { if(e.target.files[0]) { try { await parseFile(e.target.files[0], area); renderTabContent(); } catch(err) { alert(err); renderTabContent(); } } });
+    if(input) input.addEventListener('change', async (e) => { 
+        if(e.target.files[0]) { 
+            const wrap = document.getElementById(`wrap_${area}`);
+            const originalContent = wrap.innerHTML;
+            wrap.innerHTML = `<div style="padding:1.5rem; text-align:center; background:rgba(255,255,255,0.05); border-radius:10px; border:1px dashed var(--primary);"><div class="spinner" style="margin:0 auto 0.5rem auto; width:20px; height:20px; border:2px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h4 style="margin:0; font-size:0.9rem; color:var(--primary);">⌛ PROCESANDO...</h4></div>`;
+            try { 
+                await parseFile(e.target.files[0], area); 
+                renderTabContent(); 
+            } catch(err) { 
+                alert(err); 
+                wrap.innerHTML = originalContent;
+                renderTabContent(); 
+            } 
+        } 
+    });
   };
 
   let activeBufferSub = 'reportes';
@@ -204,7 +223,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <button id="btn_calc" class="btn" style="background:var(--primary); margin-top:0.5rem; width:auto; padding:0.5rem 1.2rem; border-radius:6px; font-size:0.8rem;">⚡ PROCESAR ANÁLISIS</button>
               </div>
             </div>
-            <div id="resultsArea" style="display:grid; grid-template-columns: repeat(2, auto); gap:1.5rem; align-items:start; margin-left:1rem;"></div>
+            <div id="resultsArea" style="display:grid; grid-template-columns: repeat(2, auto); gap:0.8rem; align-items:start; margin-left:0.5rem;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
         
