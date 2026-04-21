@@ -24,14 +24,29 @@ export const getWorkers = () => adminStore.workers;
 export const saveUser = (user) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.username === user.username);
-    if (idx >= 0) users[idx] = user;
-    else users.push(user);
+    if (idx >= 0) {
+        // Preservar el estado si no se envía en el nuevo objeto de usuario
+        const currentActive = users[idx].active !== undefined ? users[idx].active : true;
+        users[idx] = { active: currentActive, ...user };
+    } else {
+        // Usuario nuevo: por defecto activo
+        users.push({ active: true, ...user });
+    }
     save('users', users);
 };
 export const getUsers = () => adminStore.users;
 export const deleteUser = (username) => {
     const filtered = getUsers().filter(u => u.username !== username);
     save('users', filtered);
+};
+
+export const toggleUserStatus = (username) => {
+    const users = getUsers();
+    const idx = users.findIndex(u => u.username === username);
+    if (idx >= 0) {
+        users[idx].active = !users[idx].active;
+        save('users', users);
+    }
 };
 
 // --- PERMISOS ---

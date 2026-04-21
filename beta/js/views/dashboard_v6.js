@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.13-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.13-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.14-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.14-pulse';
 
-const VERSION = '11.1.13-pulse';
-const CACHE_KEY = `logistics_v11_1_13_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Admin Module)`);
+const VERSION = '11.1.14-pulse';
+const CACHE_KEY = `logistics_v11_1_14_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / UX & User Actions)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -53,7 +53,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.13 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.14 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -451,55 +451,127 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div class="glass-panel" style="padding:0; overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
                         <thead style="background:rgba(255,255,255,0.05);">
-                            <tr><th style="padding:0.8rem; text-align:left;">Nombre</th><th style="padding:0.8rem; text-align:left;">Usuario</th><th style="padding:0.8rem; text-align:left;">Rol</th><th style="padding:0.8rem;">Acciones</th></tr>
+                            <tr>
+                                <th style="padding:0.8rem; text-align:left;">Estado</th>
+                                <th style="padding:0.8rem; text-align:left;">Nombre</th>
+                                <th style="padding:0.8rem; text-align:left;">Usuario</th>
+                                <th style="padding:0.8rem; text-align:left;">Rol</th>
+                                <th style="padding:0.8rem; text-align:center;">Acciones</th>
+                            </tr>
                         </thead>
                         <tbody>
                             ${users.length ? users.map(u => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                                    <td style="padding:0.8rem;">${u.name}</td>
-                                    <td style="padding:0.8rem;">${u.username}</td>
-                                    <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); padding:2px 8px; border-radius:4px; font-size:0.7rem;">${u.role.toUpperCase()}</span></td>
-                                    <td style="padding:0.8rem; text-align:center;"><button class="btn-del" data-user="${u.username}" style="background:none; border:none; color:#f87171; cursor:pointer;">🗑️</button></td>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity: ${u.active === false ? '0.5' : '1'}">
+                                    <td style="padding:0.8rem; text-align:center;">
+                                        <button class="btn-status" data-user="${u.username}" title="${u.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">
+                                            ${u.active === false ? '❌' : '✅'}
+                                        </button>
+                                    </td>
+                                    <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
+                                    <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
+                                    <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
+                                    <td style="padding:0.8rem; text-align:center;">
+                                        <div style="display:flex; gap:0.8rem; justify-content:center;">
+                                            <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1rem;">✏️</button>
+                                            <button class="btn-del" data-user="${u.username}" title="Eliminar" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1rem;">🗑️</button>
+                                        </div>
+                                    </td>
                                 </tr>
-                            `).join('') : '<tr><td colspan="4" style="padding:1rem; text-align:center;">No hay usuarios adicionales creatos.</td></tr>'}
+                            `).join('') : '<tr><td colspan="5" style="padding:1rem; text-align:center; color:var(--text-muted);">No hay usuarios adicionales creados.</td></tr>'}
                         </tbody>
                     </table>
                 </div>
             </div>
             <div>
-                <h3 style="color:var(--primary); margin-bottom:1rem;">Nuevo Usuario</h3>
-                <div class="glass-panel" style="padding:1.2rem;">
+                <h3 style="color:var(--primary); margin-bottom:1rem;" id="form_title">Nuevo Usuario</h3>
+                <div class="glass-panel" style="padding:1.2rem; border-color:rgba(255,255,255,0.1);">
                     <form id="form_user" style="display:flex; flex-direction:column; gap:0.8rem;">
-                        <input type="text" id="u_name" placeholder="Nombre Completo" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;" required>
-                        <input type="text" id="u_username" placeholder="Usuario (Login)" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;" required>
-                        <input type="password" id="u_pass" placeholder="Contraseña" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;" required>
-                        <select id="u_role" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:4px;">
-                            <option value="supervisor">SUPERVISOR</option>
-                            <option value="encargado">ENCARGADO</option>
-                            <option value="asistente">ASISTENTE</option>
-                            <option value="jefe">JEFE</option>
-                        </select>
-                        <button type="submit" class="btn" style="padding:0.6rem;">GUARDAR USUARIO</button>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">NOMBRE COMPLETO:</label>
+                            <input type="text" id="u_name" placeholder="Ej: Juan Pérez" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">USUARIO (LOGIN):</label>
+                            <input type="text" id="u_username" placeholder="Ej: jperez" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">CONTRASEÑA:</label>
+                            <input type="password" id="u_pass" placeholder="••••••••" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">ROL ASIGNADO:</label>
+                            <select id="u_role" style="width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:#fff; padding:0.6rem; border-radius:6px; outline:none; cursor:pointer;">
+                                <option value="admin" style="background:#1e293b;">ADMIN</option>
+                                <option value="jefe" style="background:#1e293b;">JEFE</option>
+                                <option value="supervisor" style="background:#1e293b;">SUPERVISOR</option>
+                                <option value="encargado" style="background:#1e293b;">ENCARGADO</option>
+                                <option value="asistente" style="background:#1e293b;">ASISTENTE</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="btn_submit_user" class="btn" style="padding:0.7rem; font-weight:700; margin-top:0.5rem;">GUARDAR USUARIO</button>
+                        <button type="button" id="btn_cancel_edit" style="display:none; background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Cancelar edición</button>
                     </form>
                 </div>
             </div>
         </div>
     `;
 
-    document.getElementById('form_user').onsubmit = (e) => {
+    const form = document.getElementById('form_user');
+    const uName = document.getElementById('u_name');
+    const uUser = document.getElementById('u_username');
+    const uPass = document.getElementById('u_pass');
+    const uRole = document.getElementById('u_role');
+    const uTitle = document.getElementById('form_title');
+    const btnSubmit = document.getElementById('btn_submit_user');
+    const btnCancel = document.getElementById('btn_cancel_edit');
+
+    let isEditing = false;
+
+    form.onsubmit = (e) => {
         e.preventDefault();
         const newUser = {
-            name: document.getElementById('u_name').value,
-            username: document.getElementById('u_username').value,
-            password: document.getElementById('u_pass').value,
-            role: document.getElementById('u_role').value
+            name: uName.value,
+            username: uUser.value,
+            password: uPass.value,
+            role: uRole.value
         };
         adminService.saveUser(newUser);
+        alert(isEditing ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito');
         renderAdminTab();
     };
 
+    document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = (e) => {
+        const u = JSON.parse(e.currentTarget.dataset.user);
+        uName.value = u.name;
+        uUser.value = u.username;
+        uUser.readOnly = true; // No permitir cambiar el login
+        uUser.style.opacity = '0.5';
+        uPass.value = u.password;
+        uRole.value = u.role;
+        
+        uTitle.textContent = "Editar Usuario";
+        btnSubmit.textContent = "ACTUALIZAR DATOS";
+        btnCancel.style.display = 'block';
+        isEditing = true;
+    });
+
+    btnCancel.onclick = () => {
+        form.reset();
+        uUser.readOnly = false;
+        uUser.style.opacity = '1';
+        uTitle.textContent = "Nuevo Usuario";
+        btnSubmit.textContent = "GUARDAR USUARIO";
+        btnCancel.style.display = 'none';
+        isEditing = false;
+    };
+
+    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = () => {
+        adminService.toggleUserStatus(btn.dataset.user);
+        renderAdminTab();
+    });
+
     document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = () => {
-        if (confirm('¿Eliminar este usuario?')) {
+        if (confirm('¿Estás seguro de eliminar permanentemente este usuario?')) {
             adminService.deleteUser(btn.dataset.user);
             renderAdminTab();
         }

@@ -1,4 +1,4 @@
-import { getSession } from './services/auth.js?v=11.1.13';
+import { getSession } from './services/auth.js?v=11.1.14';
 
 class App {
   constructor(rootId) {
@@ -12,17 +12,17 @@ class App {
 
   async navigate() {
     const user = getSession();
-    this.root.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse v11.1.13 (Beta / Admin Module)...</div>';
+    this.root.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse v11.1.14 (Beta / UX & Actions)...</div>';
 
     try {
         const timestamp = new Date().getTime();
         console.log(`[PULSE] Beta App v11.1.11 navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.13_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.14_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => this.navigate());
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=11.1.13_${timestamp}`);
+            const { renderLogin } = await import(`./views/login.js?v=11.1.14_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }
