@@ -124,6 +124,8 @@ export const saveAttendance = (date, records) => {
 export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
+export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
+    const currentPerf = getPerformance();
     const log = adminStore.performance_log;
     
     attendanceData.forEach(att => {
