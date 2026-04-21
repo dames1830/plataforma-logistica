@@ -32,13 +32,34 @@ export const login = async (username, password) => {
     console.warn("Error de conexión al servidor, intentando login local...");
   }
 
-  // Fallback: login local solo para admin de emergencia
-  const user = FALLBACK_USERS.find(u => u.username === username && u.password === password);
-  if (user) {
-    const sessionData = { id: user.id, username: user.username, role: user.role, name: user.name };
+  // 2. Fallback: login local solo para admin de emergencia (Maestro)
+  const masterUser = FALLBACK_USERS.find(u => u.username === username && u.password === password);
+  if (masterUser) {
+    const sessionData = { id: masterUser.id, username: masterUser.username, role: masterUser.role, name: masterUser.name };
     localStorage.setItem('logistics_session', JSON.stringify(sessionData));
     return { success: true, user: sessionData };
   }
+
+  // 3. Fallback: Usuarios dinámicos creados en el módulo de Administración
+  try {
+    const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+    if (dynamicUsersRaw) {
+      const dynamicUsers = JSON.parse(dynamicUsersRaw);
+      const dUser = dynamicUsers.find(u => u.username === username && u.password === password);
+      
+      if (dUser) {
+        if (dUser.active === false) {
+           return { success: false, message: 'Cuenta desactivada. Contacte al administrador.' };
+        }
+        const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
+        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+        return { success: true, user: sessionData };
+      }
+    }
+  } catch (err) {
+    console.error("Error leyendo usuarios dinámicos:", err);
+  }
+
   return { success: false, message: 'Credenciales inválidas' };
 };
 
