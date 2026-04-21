@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (Beta v11.1.28)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (Beta v11.1.115)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -17,48 +17,81 @@ export const adminStore = {
 // Carga inicial híbrida (Local + Servidor)
 export const initializeAdminData = async () => {
     // 1. Carga rápida desde LocalStorage
-    adminStore.workers = JSON.parse(localStorage.getItem(PREFIX + 'workers') || '[]');
-    adminStore.users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
-    adminStore.permissions = JSON.parse(localStorage.getItem(PREFIX + 'permissions') || '{}');
-    adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
-    adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
-    adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
+    try {
+        adminStore.workers = JSON.parse(localStorage.getItem(PREFIX + 'workers') || '[]');
+        adminStore.users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+        adminStore.permissions = JSON.parse(localStorage.getItem(PREFIX + 'permissions') || '{}');
+        adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
+        adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
+        adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
+    } catch (e) {
+        console.warn("⚠️ Error cargando datos locales (posible corrupción):", e);
+    }
 
-    // 2. Sincronización con Servidor (Sobrescribe si hay datos nuevos)
+    // 2. Sincronización con Servidor (Sincronización Inteligente)
     try {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log'];
+        
+        // Función con Timeout de 4s para no bloquear la UI
+        const fetchWithTimeout = (url, options, timeout = 4000) => {
+            return Promise.race([
+                fetch(url, options),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de Sincronización')), timeout))
+            ]);
+        };
+
         await Promise.all(areas.map(async (area) => {
-            const res = await fetch(`${API_URL}/${area}`);
-            if (res.ok) {
-                const result = await res.json();
-                if (result.data) {
-                    adminStore[area] = result.data;
-                    // Intentar guardar localmente, pero no fallar si el almacenamiento está lleno
-                    try {
-                        localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
-                    } catch(e) { console.warn(`Quota full while syncing ${area}`); }
+            try {
+                const res = await fetchWithTimeout(`${API_URL}/${area}`);
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.data) {
+                        adminStore[area] = result.data;
+                        // Intentar guardar localmente
+                        try {
+                            localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                        } catch(e) { 
+                            console.warn(`Quota full while syncing ${area}. Clearing old keys...`);
+                            flushOldKeys(true); // Limpieza agresiva
+                            try {
+                                localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                            } catch(e2) { console.error("Still no space after cleanup."); }
+                        }
+                    }
                 }
+            } catch (err) {
+                console.warn(`⚠️ Fallo parcial en área ${area}: ${err.message}`);
             }
         }));
-        console.log("✅ Datos de Administración sincronizados con la BD.");
         
-        // 3. Limpieza de claves antiguas si ya estamos sincronizados
+        console.log("✅ Sincronización Pulse completada.");
+        // Clean old keys occasionally
         flushOldKeys();
     } catch (e) {
-        console.warn("⚠️ Error sincronizando con BD: Operando en modo local.", e);
+        console.warn("⚠️ Sincronización fallida: Operando en modo local (off-line).", e);
     }
 };
 
 // Limpia claves de versiones muy antiguas para liberar espacio
-const flushOldKeys = () => {
-    const activePrefix = 'logistics_admin_v11_';
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('logistics_') && !key.startsWith(activePrefix)) {
-            localStorage.removeItem(key);
+const flushOldKeys = (aggressive = false) => {
+    try {
+        const activePrefix = 'logistics_admin_v11_';
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            // Eliminar claves de Pulse que no sean de la versión actual
+            if (key.startsWith('logistics_') && !key.startsWith(activePrefix)) {
+                keysToRemove.push(key);
+            }
+            // Si es agresivo, eliminar backups temporales o logs muy pesados si existen
+            if (aggressive && key.includes('_performance_log') && key.length > 500000) {
+                 // Aquí podríamos decidir si borrar logs locales demasiado pesados
+            }
         }
-    }
-    console.log("🧹 Almacenamiento optimizado.");
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        console.log(`🧹 Almacenamiento: ${keysToRemove.length} claves antiguas eliminadas.`);
+    } catch (e) { console.error("Error in flushOldKeys:", e); }
 };
 
 const save = async (key, data) => {
@@ -66,7 +99,8 @@ const save = async (key, data) => {
     try {
         localStorage.setItem(PREFIX + key, JSON.stringify(data));
     } catch (e) {
-        console.warn(`⚠️ [PULSE] Quota Full. El dato se guardará solo en la base de datos.`);
+        console.warn(`⚠️ [PULSE] Quota Full Local. El dato se guardará solo en la base de datos.`);
+        flushOldKeys(true);
     }
     
     // Persistencia en el servidor
@@ -77,13 +111,12 @@ const save = async (key, data) => {
             body: JSON.stringify(data)
         });
     } catch (e) {
-        console.error(`❌ Error persistiendo ${key} en el servidor:`, e);
+        console.error(`❌ Error persistiendo ${key} en los servidores de Pulse:`, e);
     }
 };
 
 // --- TRABAJADORES ---
 export const saveWorkers = (workers) => {
-    // Asegurar que cada trabajador tenga un estado activo si no existe
     const normalized = workers.map(w => ({ active: true, ...w }));
     save('workers', normalized);
 };
@@ -114,11 +147,9 @@ export const saveUser = (user) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.username === user.username);
     if (idx >= 0) {
-        // Preservar el estado si no se envía en el nuevo objeto de usuario
         const currentActive = users[idx].active !== undefined ? users[idx].active : true;
         users[idx] = { active: currentActive, ...user };
     } else {
-        // Usuario nuevo: por defecto activo
         users.push({ active: true, ...user });
     }
     save('users', users);
@@ -146,16 +177,14 @@ export const initPermissions = (tabs) => {
     tabs.forEach(tab => {
         roles.forEach(role => {
             if (!perms[role]) perms[role] = {};
-            // Permiso principal
             if (perms[role][tab.id] === undefined) {
-                perms[role][tab.id] = tab.roles.includes(role) ? 1 : 0;
+                perms[role][tab.id] = (tab.roles && tab.roles.includes(role)) ? 1 : 0;
             }
-            // Permisos de sub-pestañas
             if (tab.subTabs) {
                 tab.subTabs.forEach(sub => {
                     const subKey = `${tab.id}_${sub.id}`;
                     if (perms[role][subKey] === undefined) {
-                        perms[role][subKey] = tab.roles.includes(role) ? 1 : 0;
+                        perms[role][subKey] = (tab.roles && tab.roles.includes(role)) ? 1 : 0;
                     }
                 });
             }
@@ -188,21 +217,16 @@ export const saveAttendance = (date, records) => {
 export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
-// Helper para calcular el porcentaje de rendimiento basado en los pesos oficiales
 const calculateRendimientoValue = (entry) => {
     let score = 0;
     if (entry.asistencia === 'P') score += 30;
     if (entry.puntualidad === 'SÍ') score += 10;
-    
-    // Escala 1-10 para los otros 3
     const prod = parseInt(entry.produccion) || 0;
     const bpa = parseInt(entry.bpa) || 0;
     const sup = parseInt(entry.supervisor) || 0;
-
     score += (prod / 10) * 30;
     score += (bpa / 10) * 15;
     score += (sup / 10) * 15;
-
     return Math.round(score) + '%';
 };
 
@@ -211,53 +235,33 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
     const log = getPerformanceLog();
     
     attendanceData.forEach(att => {
-        // 1. Actualizar Totales (Existente)
         let entry = currentPerf.find(p => p.dni === att.dni);
         if (!entry) {
             entry = { 
-                dni: att.dni, 
-                nombre: att.nombre, 
-                apellidos: att.apellidos,
-                asistencia: 0, 
-                puntualidad_count: 0,
-                puntualidad: '0%', 
-                produccion: 0, 
-                bpa: 0, 
-                supervisor: '-' 
+                dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
+                asistencia: 0, puntualidad_count: 0, puntualidad: '0%', 
+                produccion: 0, bpa: 0, supervisor: '-' 
             };
             currentPerf.push(entry);
         }
-        
         if (att.present) {
             entry.asistencia += 1;
-            if (att.onTime) {
-                entry.puntualidad_count = (entry.puntualidad_count || 0) + 1;
-            }
+            if (att.onTime) entry.puntualidad_count = (entry.puntualidad_count || 0) + 1;
             const pct = Math.round((entry.puntualidad_count / entry.asistencia) * 100);
             entry.puntualidad = `${pct}%`;
         }
-
-        // 2. Guardar en Historial Diario (Nuevo)
         const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
         const isPresent = att.present;
         const tempEntry = {
             asistencia: isPresent ? 'P' : 'F',
             puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
-            produccion: 0,
-            bpa: 0,
-            supervisor: 0
+            produccion: 0, bpa: 0, supervisor: 0
         };
-
         const newLogEntry = {
-            date,
-            dni: att.dni,
-            nombre: att.nombre,
-            apellidos: att.apellidos,
-            ...tempEntry,
-            justification: att.justification || '',
+            date, dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
+            ...tempEntry, justification: att.justification || '',
             rendimiento: calculateRendimientoValue(tempEntry)
         };
-
         if (existingLogIdx >= 0) {
             log[existingLogIdx] = { ...log[existingLogIdx], ...newLogEntry, rendimiento: log[existingLogIdx].rendimiento };
         } else {
@@ -271,14 +275,11 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
 };
 
 export const getPerformanceLog = () => adminStore.performance_log;
-
 export const updatePerformanceLogEntry = (date, dni, fields) => {
     const log = getPerformanceLog();
     const idx = log.findIndex(l => l.date === date && l.dni === dni);
     if (idx >= 0) {
-        // Actualizar campos
         log[idx] = { ...log[idx], ...fields };
-        // Recalcular rendimiento tras cualquier cambio
         log[idx].rendimiento = calculateRendimientoValue(log[idx]);
         save('performance_log', log);
     }
