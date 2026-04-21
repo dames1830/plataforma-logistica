@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.20-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.20-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.21-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.21-pulse';
 
-const VERSION = '11.1.20-pulse';
-const CACHE_KEY = `logistics_v11_1_20_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Accordion Permissions)`);
+const VERSION = '11.1.21-pulse';
+const CACHE_KEY = `logistics_v11_1_21_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Worker Import Fix)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -72,7 +72,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.20 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.21 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -481,11 +481,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <tbody>
                     ${workers.length ? workers.map(w => `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem;">${w.Dni || w.dni || ''}</td>
-                            <td style="padding:0.8rem;">${w.Nombre || w.nombre || ''}</td>
-                            <td style="padding:0.8rem;">${w.Apellidos || w.apellidos || ''}</td>
-                            <td style="padding:0.8rem;">${w.Puesto || w.puesto || ''}</td>
-                            <td style="padding:0.8rem;">${w.Turno || w.turno || ''}</td>
+                            <td style="padding:0.8rem;">${w.dni || ''}</td>
+                            <td style="padding:0.8rem;">${w.nombre || ''}</td>
+                            <td style="padding:0.8rem;">${w.apellidos || ''}</td>
+                            <td style="padding:0.8rem;">${w.puesto || ''}</td>
+                            <td style="padding:0.8rem;">${w.turno || ''}</td>
                         </tr>
                     `).join('') : '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay trabajadores cargados. Por favor importa un archivo Excel.</td></tr>'}
                 </tbody>
@@ -502,7 +502,17 @@ export const renderDashboard = async (container, user, onLogout) => {
             const workbook = XLSX.read(data, {type: 'array'});
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet);
-            adminService.saveWorkers(json);
+            
+            // Normalizar las llaves a minúsculas para consistencia (DNI/Dni/dni -> dni)
+            const normalized = json.map(row => {
+                const newRow = {};
+                for (let key in row) {
+                    newRow[key.toLowerCase().trim()] = row[key];
+                }
+                return newRow;
+            });
+
+            adminService.saveWorkers(normalized);
             renderAdminTab();
         };
         reader.readAsArrayBuffer(file);
