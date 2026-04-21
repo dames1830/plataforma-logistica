@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.62-pulse';
-const CACHE_KEY = `logistics_v11_1_62_`;
+const VERSION = '11.1.65-pulse';
+const CACHE_KEY = `logistics_v11_1_65_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.62 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.65 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1203,6 +1203,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 'Producción (1-10)': p.produccion,
                 'BPA (1-10)': p.bpa,
                 'Supervisor (1-10)': p.supervisor,
+                'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
                 'Rendimiento %': p.rendimiento
             }));
 
@@ -1240,6 +1241,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <th style="padding:0.8rem; text-align:center;">PRODUCCIÓN</th>
                         <th style="padding:0.8rem; text-align:center;">BPA</th>
                         <th style="padding:0.8rem; text-align:center;">SUPERVISOR</th>
+                        <th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th>
                         <th style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1);">RENDIMIENTO %</th>
                     </tr>
                 </thead>
@@ -1250,7 +1252,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         return `
                         <!-- CABECERA DE FECHA -->
                         <tr class="perf-date-header" data-date="${date}" style="cursor:pointer; background:rgba(79,70,229,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td colspan="7" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">
+                            <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">
                                 <span style="margin-right:10px; color:var(--primary); font-size:1rem;">📅</span> 
                                 <span style="color:#60a5fa;">${date}</span> 
                                 <small style="margin-left:15px; color:rgba(255,255,255,0.3); font-weight:400;">(${entries.length} registros)</small>
@@ -1290,13 +1292,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
                                 <input type="number" min="0" max="10" value="${p.supervisor !== undefined ? p.supervisor : 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
                             </td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05); color:${p.justification?'#fcd34d':'rgba(255,255,255,0.2)'}; font-weight:800;">
+                                ${ (p.justification && p.justification !== '') ? 'SI' : 'NO' }
+                            </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;">
                                 ${p.rendimiento}
                             </td>
                         </tr>
                         `).join('')}
                         `;
-                    }).join('') : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
+                    }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
             </table>
         </div>
