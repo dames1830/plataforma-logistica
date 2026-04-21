@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.22-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.22-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.23-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.23-pulse';
 
-const VERSION = '11.1.22-pulse';
-const CACHE_KEY = `logistics_v11_1_22_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Workers & Punctuality)`);
+const VERSION = '11.1.23-pulse';
+const CACHE_KEY = `logistics_v11_1_23_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Attendance UI & RFs)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -26,7 +26,8 @@ const TABS = [
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
     { id: 'asistencia', label: 'Asistencia', icon: '📅' },
-    { id: 'performance', label: 'Performance', icon: '📈' }
+    { id: 'performance', label: 'Performance', icon: '📈' },
+    { id: 'rfs', label: 'RF\'s', icon: '🔋' }
   ] },
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
@@ -72,7 +73,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.22 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.23 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -456,6 +457,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeAdminSub === 'permisos') renderPermisosSection(adminContainer);
     else if (activeAdminSub === 'asistencia') renderAsistenciaSection(adminContainer);
     else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
+    else if (activeAdminSub === 'rfs') renderRFSection(adminContainer);
   };
 
   const renderTrabajadoresSection = (container) => {
@@ -473,6 +475,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                         <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                             <tr>
+                                <th style="padding:0.7rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
                                 <th style="padding:0.7rem; text-align:left;">Estado</th>
                                 <th style="padding:0.7rem; text-align:left;">DNI</th>
                                 <th style="padding:0.7rem; text-align:left;">Nombre</th>
@@ -482,14 +485,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${workers.length ? workers.map(w => `
+                            ${workers.length ? workers.map((w, idx) => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity: ${w.active === false ? '0.5' : '1'}">
+                                    <td style="padding:0.7rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                                     <td style="padding:0.7rem; text-align:center;">
                                         <button class="btn-worker-status" data-dni="${w.dni || w.Dni}" title="${w.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1rem;">
                                             ${w.active === false ? '❌' : '✅'}
                                         </button>
                                     </td>
-                                    <td style="padding:0.7rem; font-weight:700; color:var(--primary);">${w.dni || w.Dni || ''}</td>
+                                    <td style="padding:0.7rem; font-weight:800; color:#fff;">${w.dni || w.Dni || ''}</td>
                                     <td style="padding:0.7rem;">${w.nombre || w.Nombre || ''}</td>
                                     <td style="padding:0.7rem;">${w.apellidos || w.Apellidos || ''}</td>
                                     <td style="padding:0.7rem;">${w.puesto || w.Puesto || ''}</td>
@@ -836,6 +840,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     const today = new Date().toISOString().split('T')[0];
     const existing = adminService.getAttendance(today);
     
+    // Formatear fecha legible con nombre del día
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateFormatted = new Date().toLocaleDateString('es-ES', dateOptions);
+
     if (!workers.length) {
         container.innerHTML = `<div style="padding:3rem; text-align:center;"><p style="color:var(--text-muted);">Debes importar o registrar <b>Trabajadores Activos</b> antes de tomar asistencia.</p></div>`;
         return;
@@ -843,18 +851,19 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <div>
-                <h3 style="color:var(--primary); margin:0;">Asistencia Diaria</h3>
-                <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Fecha: <b>${today}</b></p>
+            <div style="background:rgba(255,255,255,0.03); padding:0.8rem 1.2rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05); box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                <h3 style="color:var(--primary); margin:0; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">Asistencia Diaria</h3>
+                <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;">🗓️ ${dateFormatted}</p>
             </div>
-            ${existing?.finalized ? '<span style="background:var(--success); color:#000; padding:0.4rem 0.8rem; border-radius:6px; font-weight:800; font-size:0.8rem;">✅ ASISTENCIA CERRADA</span>' : `
-                <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.5rem 1.2rem; font-size:0.8rem;">💾 CERRAR ASISTENCIA DEL DÍA</button>
+            ${existing?.finalized ? '<span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>' : `
+                <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 1.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA DEL DÍA</button>
             `}
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                <thead style="background:rgba(255,255,255,0.05);">
+                <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                     <tr>
+                        <th style="padding:0.8rem; text-align:center; width:50px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
                         <th style="padding:0.8rem; text-align:left;">DNI</th>
                         <th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th>
                         <th style="padding:0.8rem; text-align:center;">Estado</th>
@@ -862,14 +871,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${workers.map(w => {
+                    ${workers.map((w, idx) => {
                         const rec = existing?.data?.find(d => d.dni === (w.dni || w.Dni));
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem; color:var(--primary); font-weight:700;">${w.dni || w.Dni || ''}</td>
-                            <td style="padding:0.8rem;">${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}</td>
+                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
+                            <td style="padding:0.8rem; color:#fff; font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">${w.dni || w.Dni || ''}</td>
+                            <td style="padding:0.8rem; font-weight:600;">${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
                                     <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
@@ -956,7 +966,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
                 <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                     <tr>
-                        <th style="padding:0.8rem; text-align:left;">TRABAJADOR</th>
+                        <th style="padding:0.8rem; text-align:center; width:45px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
+                        <th style="padding:0.8rem; text-align:left;">TRABAJADOR / DNI</th>
                         <th style="padding:0.8rem; text-align:center;">ASISTENCIAS</th>
                         <th style="padding:0.8rem; text-align:center;">PUNTUALIDAD</th>
                         <th style="padding:0.8rem; text-align:center;">PRODUCCIÓN</th>
@@ -965,20 +976,21 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${perf.length ? perf.map(p => `
+                    ${perf.length ? perf.map((p, idx) => `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem;"><b>${p.apellidos}, ${p.nombre}</b><br><small style="color:var(--text-muted);">${p.dni}</small></td>
+                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
+                            <td style="padding:0.8rem;"><b>${p.apellidos}, ${p.nombre}</b><br><small style="color:#fff; font-weight:800;">${p.dni}</small></td>
                             <td style="padding:0.8rem; text-align:center; color:var(--success); font-weight:700;">${p.asistencia}</td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.puntualidad}" data-dni="${p.dni}" data-f="puntualidad" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.puntualidad}" data-dni="${p.dni}" data-f="puntualidad" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center; font-weight:700;"></td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.produccion}" data-dni="${p.dni}" data-f="produccion" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.bpa}" data-dni="${p.dni}" data-f="bpa" class="edit-perf" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.supervisor}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf" style="width:80px; background:none; border:none; color:#fff; text-align:center;"></td>
                         </tr>
-                    `).join('') : '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay datos de performance registrados aún. Cierra una asistencia para empezar.</td></tr>'}
+                    `).join('') : '<tr><td colspan="7" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay datos de performance registrados aún. Cierra una asistencia para empezar.</td></tr>'}
                 </tbody>
             </table>
         </div>
-        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Los campos en las celdas blancas son editables manualmente.</p>
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Los campos en las celdas blancas son editables manualmente. El DNI ahora es más visible.</p>
     `;
 
     document.querySelectorAll('.edit-perf').forEach(input => input.onchange = (e) => {
@@ -987,6 +999,22 @@ export const renderDashboard = async (container, user, onLogout) => {
         const val = e.target.value;
         adminService.updatePerformanceEntry(dni, { [field]: val });
     });
+  };
+
+  const renderRFSection = (container) => {
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 style="color:var(--primary); margin:0;">Gestión de Equipos RF</h3>
+            <button class="btn" style="width:auto; background:var(--primary); padding:0.5rem 1.2rem; font-size:0.8rem;">➕ REGISTRAR EQUIPO</button>
+        </div>
+        <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+            <div style="margin-bottom:1.5rem;">
+                 <span style="font-size:3rem; opacity:0.3;">🔋</span>
+            </div>
+            <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
+            <p style="font-size:0.85rem; max-width:400px; margin:0.5rem auto;">Próximamente podrás gestionar números de serie, asignaciones diarias y estado de baterías de los terminales RF.</p>
+        </div>
+    `;
   };
 
   const renderConfigTab = async () => {
