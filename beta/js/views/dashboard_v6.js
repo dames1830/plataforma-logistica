@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.29-pulse';
-const CACHE_KEY = `logistics_v11_1_29_`;
+const VERSION = '11.1.40-pulse';
+const CACHE_KEY = `logistics_v11_1_40_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -73,7 +73,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.29 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.40 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -835,14 +835,31 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
+  let forcedDate = new Date().toISOString().split('T')[0]; // Default hoy
+  let localState = [];
+
   const renderAsistenciaSection = (container) => {
     const workers = adminService.getWorkers().filter(w => w.active !== false);
-    const today = new Date().toISOString().split('T')[0];
-    const existing = adminService.getAttendance(today);
     
-    // Formatear fecha legible con nombre del día
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateFormatted = new Date().toLocaleDateString('es-ES', dateOptions);
+    const loadAttendanceState = (dateStr) => {
+        const existing = adminService.getAttendance(dateStr);
+        if (existing) {
+            localState = existing.data.map(d => ({ ...d }));
+            return existing;
+        }
+        // Si no existe, estado inicial (todos presentes)
+        localState = workers.map(w => ({ 
+            dni: (w.dni || w.Dni), 
+            nombre: (w.nombre || w.Nombre), 
+            apellidos: (w.apellidos || w.Apellidos), 
+            present: true,
+            onTime: true
+        }));
+        return null;
+    };
+
+    const existing = loadAttendanceState(forcedDate);
+    const dateFormatted = new Date(forcedDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 
     if (!workers.length) {
         container.innerHTML = `<div style="padding:3rem; text-align:center;"><p style="color:var(--text-muted);">Debes importar o registrar <b>Trabajadores Activos</b> antes de tomar asistencia.</p></div>`;
@@ -850,14 +867,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <div style="background:rgba(255,255,255,0.03); padding:0.8rem 1.2rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05); box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-                <h3 style="color:var(--primary); margin:0; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">Asistencia Diaria</h3>
-                <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;">🗓️ ${dateFormatted}</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1rem; flex-wrap:wrap;">
+            <div style="background:rgba(255,255,255,0.03); padding:0.8rem 1.2rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05); box-shadow:0 4px 15px rgba(0,0,0,0.2); display:flex; align-items:center; gap:15px;">
+                <div>
+                    <h3 style="color:var(--primary); margin:0; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">Asistencia Diaria</h3>
+                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;">🗓️ ${dateFormatted}</p>
+                </div>
+                <input type="date" id="asist_date_picker" value="${forcedDate}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.4rem; border-radius:6px; font-size:0.8rem; outline:none;">
             </div>
-            ${existing?.finalized ? '<span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>' : `
-                <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 1.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA DEL DÍA</button>
-            `}
+            
+            <div style="display:flex; gap:1rem;">
+                ${!existing?.finalized ? `
+                    <button id="btn_reset_asist" class="btn" style="width:auto; background:rgba(255,255,255,0.1); padding:0.6rem 1rem; font-size:0.8rem; font-weight:600; border-radius:8px;">♻️ REINICIAR TODOS</button>
+                    <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 1.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA</button>
+                ` : `
+                    <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
+                `}
+            </div>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
@@ -872,13 +898,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </thead>
                 <tbody>
                     ${workers.map((w, idx) => {
-                        const rec = existing?.data?.find(d => d.dni === (w.dni || w.Dni));
+                        const dni = (w.dni || w.Dni);
+                        const rec = localState.find(d => d.dni === dni);
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
-                            <td style="padding:0.8rem; color:#fff; font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">${w.dni || w.Dni || ''}</td>
+                            <td style="padding:0.8rem; color:#fff; font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">${dni}</td>
                             <td style="padding:0.8rem; font-weight:600;">${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
@@ -900,14 +927,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     if (!existing?.finalized) {
-        let localState = workers.map(w => ({ 
-            dni: (w.dni || w.Dni), 
-            nombre: (w.nombre || w.Nombre), 
-            apellidos: (w.apellidos || w.Apellidos), 
-            present: true,
-            onTime: true
-        }));
-
         document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
             const dni = e.target.dataset.dni;
             const val = e.target.dataset.v === 'true';
@@ -949,13 +968,23 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         };
 
+        document.getElementById('btn_reset_asist').onclick = () => {
+            localState.forEach(s => { s.present = true; s.onTime = true; });
+            renderAsistenciaSection(container);
+        };
+
         document.getElementById('btn_close_asist').onclick = () => {
-            if (confirm('¿Cerrar asistencia? Estos datos se enviarán a Performance.')) {
-                adminService.closeAttendanceAndSyncPerformance(today, localState);
-                renderAdminTab();
+            if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}? Esta acción enviará los datos al historial de Performance.`)) {
+                adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                renderAsistenciaSection(container);
             }
         };
     }
+    
+    document.getElementById('asist_date_picker').onchange = (e) => {
+        forcedDate = e.target.value;
+        renderAsistenciaSection(container);
+    };
   };
 
   const calculateRendimiento = (p) => {
@@ -1057,16 +1086,26 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-weight:700; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${p.dni}</span>
                                 </div>
                             </td>
-                            <td style="padding:0.8rem; text-align:center;"><span style="color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900;">${p.asistencia}</span></td>
-                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${p.puntualidad}</td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="number" min="0" max="10" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                            <td style="padding:0.8rem; text-align:center;">
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="asistencia" style="background:none; border:none; color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900; outline:none; cursor:pointer;">
+                                    <option value="P" ${p.asistencia==='P'?'selected':''}>P</option>
+                                    <option value="F" ${p.asistencia==='F'?'selected':''}>F</option>
+                                </select>
+                            </td>
+                            <td style="padding:0.8rem; text-align:center;">
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:var(--text-muted); outline:none; cursor:pointer;">
+                                    <option value="SÍ" ${p.puntualidad==='SÍ'?'selected':''}>SÍ</option>
+                                    <option value="NO" ${p.puntualidad==='NO'?'selected':''}>NO</option>
+                                </select>
                             </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="number" min="0" max="10" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                                <input type="number" min="0" max="10" value="${p.produccion || 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
                             </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="number" min="0" max="10" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                                <input type="number" min="0" max="10" value="${p.bpa || 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
+                            </td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                <input type="number" min="0" max="10" value="${p.supervisor !== undefined ? p.supervisor : 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
                             </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;">
                                 ${p.rendimiento}
@@ -1094,23 +1133,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Event listener para Edición y Cálculo automático
     document.querySelectorAll('.edit-perf-log').forEach(input => input.onchange = (e) => {
         const { date, dni, f: field } = e.target.dataset;
-        let val = parseFloat(e.target.value) || 0;
-        if (val > 10) val = 10;
-        if (val < 0) val = 0;
-        e.target.value = val;
+        let val = e.target.value;
 
-        // Obtener el registro actual para re-calcular
-        const entries = adminService.getPerformanceLog();
-        const entry = entries.find(l => l.date === date && l.dni === dni);
-        if (entry) {
-            entry[field] = val;
-            entry.rendimiento = calculateRendimiento(entry);
-            adminService.updatePerformanceLogEntry(date, dni, entry);
-            renderPerformanceSection(container); // Re-render para mostrar nuevo rendimiento y promedio
-            
-            // Expandir la fecha que se estaba editando para que no se contraiga al re-renderizar
-            const rows = document.querySelectorAll(`.perf-row-${date}`);
-            rows.forEach(r => r.style.display = 'table-row' );
+        // Validar si es numérico (escala 1-10)
+        if (field === 'produccion' || field === 'bpa' || field === 'supervisor') {
+            val = parseFloat(val) || 0;
+            if (val > 10) val = 10;
+            if (val < 0) val = 0;
+            e.target.value = val;
+        }
+
+        adminService.updatePerformanceLogEntry(date, dni, { [field]: val });
+        renderPerformanceSection(container); 
+        
+        // Mantener expandido
+        const row = document.querySelector(`.perf-row-${date}`);
+        if (row) {
+            document.querySelectorAll(`.perf-row-${date}`).forEach(r => r.style.display = 'table-row');
         }
     });
   };
@@ -1123,7 +1162,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v11.1.26 [BETA] | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v11.1.30 [BETA] | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>

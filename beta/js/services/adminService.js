@@ -124,9 +124,27 @@ export const saveAttendance = (date, records) => {
 export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
+// Helper para calcular el porcentaje de rendimiento basado en los pesos oficiales
+const calculateRendimientoValue = (entry) => {
+    let score = 0;
+    if (entry.asistencia === 'P') score += 30;
+    if (entry.puntualidad === 'SÍ') score += 10;
+    
+    // Escala 1-10 para los otros 3
+    const prod = parseInt(entry.produccion) || 0;
+    const bpa = parseInt(entry.bpa) || 0;
+    const sup = parseInt(entry.supervisor) || 0;
+
+    score += (prod / 10) * 30;
+    score += (bpa / 10) * 15;
+    score += (sup / 10) * 15;
+
+    return Math.round(score) + '%';
+};
+
 export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
     const currentPerf = getPerformance();
-    const log = adminStore.performance_log;
+    const log = getPerformanceLog();
     
     attendanceData.forEach(att => {
         // 1. Actualizar Totales (Existente)
@@ -159,17 +177,21 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
         // Evitar duplicados para el mismo día si se re-cierra (sobrescribir)
         const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
         const isPresent = att.present;
+        const tempEntry = {
+            asistencia: isPresent ? 'P' : 'F',
+            puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
+            produccion: 0,
+            bpa: 0,
+            supervisor: 0
+        };
+
         const newLogEntry = {
             date,
             dni: att.dni,
             nombre: att.nombre,
             apellidos: att.apellidos,
-            asistencia: isPresent ? 'P' : 'F',
-            puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
-            rendimiento: isPresent ? (att.onTime ? '40%' : '30%') : '0%',
-            produccion: 0,
-            bpa: 0,
-            supervisor: 0
+            ...tempEntry,
+            rendimiento: calculateRendimientoValue(tempEntry)
         };
 
         if (existingLogIdx >= 0) {
@@ -190,7 +212,10 @@ export const updatePerformanceLogEntry = (date, dni, fields) => {
     const log = getPerformanceLog();
     const idx = log.findIndex(l => l.date === date && l.dni === dni);
     if (idx >= 0) {
+        // Actualizar campos
         log[idx] = { ...log[idx], ...fields };
+        // Recalcular rendimiento tras cualquier cambio
+        log[idx].rendimiento = calculateRendimientoValue(log[idx]);
         save('performance_log', log);
     }
 };
