@@ -57,8 +57,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.7-pulse';
-const CACHE_KEY = `logistics_v11_1_7_`;
+const VERSION = '11.1.9-pulse';
+const CACHE_KEY = `logistics_v11_1_9_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {

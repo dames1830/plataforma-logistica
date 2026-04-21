@@ -1,9 +1,9 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=11.1.7-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=11.1.9-pulse';
 
-const VERSION = '11.1.7-pulse';
-const CACHE_KEY = `logistics_v11_1_7_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized`);
+const VERSION = '11.1.9-pulse';
+const CACHE_KEY = `logistics_v11_1_9_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -53,7 +53,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.7 (Atomic Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.9 [BETA / CONSTR]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -207,52 +207,62 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div id="resultsArea" style="display:grid; grid-template-columns: repeat(2, auto); gap:1.5rem; align-items:start; margin-left:1rem;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
-        if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
-
+        
         console.log("[PULSE] Vinculando botones de acción...");
-        document.getElementById('btn_calc').addEventListener('click', async () => {
-            console.log("[PULSE] Click Procesar Análisis");
-            const btn = document.getElementById('btn_calc'); 
-            btn.disabled = true; btn.innerHTML = '⚙️ CALCULANDO...';
-            results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de Análisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
+        
+        // ACTIVAR BOTONES PRIMERO (Prioridad Máxima)
+        const btnCalc = document.getElementById('btn_calc');
+        const btnReset = document.getElementById('btn_reset_cache');
 
-            setTimeout(async () => {
-                try {
-                    const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
-                    const res = calculateBufferPallets(config);
-                    if (res) {
-                        lastBufferKPI = res;
-                        localStorage.setItem('lastBufferKPI', JSON.stringify(res));
-                        renderBufferResults(results, res); 
-                        
-                        const saved = await saveBufferReport(res, user.username);
-                        alert(saved ? '✅ Análisis COMPLETO y Sincronizado.' : '✅ Análisis COMPLETO (Guardado solo Localmente).');
+        if (btnCalc) {
+            btnCalc.onclick = async () => {
+                console.log("[PULSE] Click Procesar Análisis");
+                btnCalc.disabled = true; btnCalc.innerHTML = '⚙️ CALCULANDO...';
+                results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de Análisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
+
+                setTimeout(async () => {
+                    try {
+                        const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+                        const res = calculateBufferPallets(config);
+                        if (res) {
+                            lastBufferKPI = res;
+                            localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                            renderBufferResults(results, res); 
+                            const saved = await saveBufferReport(res, user.username);
+                            console.log(saved ? '✅ Sincronizado' : '⚠️ Solo Local');
+                        } else {
+                            alert('⚠️ ERROR: Faltan archivos maestros.');
+                        }
+                    } catch (err) {
+                        console.error("Error en proceso:", err);
+                        alert("Error crítico: " + err.message);
+                    } finally {
+                        btnCalc.disabled = false; btnCalc.innerHTML = '⚡ PROCESAR ANÁLISIS';
                     }
-                    else {
-                        const missing = [];
-                        if(!dataStore.buffer) missing.push("PEDIDOS (BUFFER)");
-                        if(!dataStore.stockActivo) missing.push("STOCK ACTIVO");
-                        if(!dataStore.stockReserva) missing.push("STOCK RESERVA");
-                        results.innerHTML = '';
-                        alert('⚠️ ERROR: Faltan archivos críticos en memoria:\n\n' + missing.join("\n") + '\n\nPor favor súbelos en la pestaña "STOCK GENERAL" y "ZONA BUFFER".');
-                    }
-                } catch (err) {
-                    console.error("Error en proceso:", err);
-                    results.innerHTML = '';
-                    alert("Error crítico al procesar: " + err.message);
-                } finally {
-                    btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
+                }, 500);
+            };
+        }
+
+        if (btnReset) {
+            btnReset.onclick = () => {
+                if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.')) {
+                    Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
+                    localStorage.removeItem('lastBufferKPI');
+                    window.location.reload();
                 }
-            }, 800);
-        });
+            };
+        }
 
-        document.getElementById('btn_reset_cache').addEventListener('click', () => {
-            if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos. Tendrás que volver a subirlos.')) {
-                Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
+        // CARGAR RESULTADOS CACHEADOS AL FINAL (Protección contra fallos)
+        if (lastBufferKPI) {
+            try {
+                renderBufferResults(results, lastBufferKPI);
+            } catch (err) {
+                console.warn("[PULSE] Error cargando caché de resultados (incompatible), ignorando...", err);
                 localStorage.removeItem('lastBufferKPI');
-                window.location.reload();
+                results.innerHTML = '';
             }
-        });
+        }
     }
   };
 
