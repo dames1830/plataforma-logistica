@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.55-pulse';
-const CACHE_KEY = `logistics_v11_1_55_`;
+const VERSION = '11.1.60-pulse';
+const CACHE_KEY = `logistics_v11_1_60_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.55 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.60 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -856,7 +856,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             nombre: (w.nombre || w.Nombre), 
             apellidos: (w.apellidos || w.Apellidos), 
             present: true,
-            onTime: true
+            onTime: true,
+            justification: ''
         }));
         return null;
     };
@@ -896,6 +897,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th>
                         <th style="padding:0.8rem; text-align:center;">Estado</th>
                         <th style="padding:0.8rem; text-align:center;">Puntualidad</th>
+                        <th style="padding:0.8rem; text-align:center;">Justificación</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -920,6 +922,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <button class="btn-ontime ${isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>SÍ</button>
                                     <button class="btn-ontime ${!isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>NO</button>
                                 </div>
+                            </td>
+                            <td style="padding:0.8rem; text-align:center;">
+                                <select class="sel-just" data-dni="${dni}" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;" ${existing?.finalized || isPresent ? 'disabled' : ''}>
+                                    <option value="">- SELECCIONE -</option>
+                                    <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':''}>DESCANSO MÉDICO</option>
+                                    <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':''}>VACACIONES</option>
+                                    <option value="Otros" ${rec?.justification==='Otros'?'selected':''}>OTROS</option>
+                                </select>
                             </td>
                         </tr>`;
                     }).join('')}
@@ -951,6 +961,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             renderAsistenciaUI(dni, localState);
         });
 
+        document.querySelectorAll('.sel-just').forEach(sel => sel.onchange = (e) => {
+            const dni = e.target.dataset.dni;
+            const node = localState.find(s => s.dni === dni);
+            if (node) node.justification = e.target.value;
+        });
+
         const renderAsistenciaUI = (dni, state) => {
             const node = state.find(s => s.dni === dni);
             const attBtns = document.querySelectorAll(`.btn-att[data-dni="${dni}"]`);
@@ -968,6 +984,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 b.style.pointerEvents = node.present ? 'auto' : 'none';
                 b.style.background = (isT === node.onTime && node.onTime) ? '#06b6d4' : (isT === node.onTime && !node.onTime) ? '#f97316' : 'none';
             });
+
+            const selJust = document.querySelector(`.sel-just[data-dni="${dni}"]`);
+            if (selJust) {
+                selJust.disabled = node.present;
+                if (node.present) {
+                    selJust.value = "";
+                    node.justification = "";
+                }
+            }
         };
 
         const btnClose = document.getElementById('btn_close_asist');

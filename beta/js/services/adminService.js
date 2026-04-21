@@ -254,6 +254,7 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
             nombre: att.nombre,
             apellidos: att.apellidos,
             ...tempEntry,
+            justification: att.justification || '',
             rendimiento: calculateRendimientoValue(tempEntry)
         };
 
