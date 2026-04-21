@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.65-pulse';
-const CACHE_KEY = `logistics_v11_1_65_`;
+const VERSION = '11.1.70-pulse';
+const CACHE_KEY = `logistics_v11_1_70_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.65 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.70 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1061,18 +1061,47 @@ export const renderDashboard = async (container, user, onLogout) => {
     const evolutionLabels = sortedDates;
     const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
 
-    // 2. Ranking de Operarios (Top 5)
+    // 2. Ranking de Operarios (Top 5) y Consolidado
     const workerMap = {};
     log.forEach(entry => {
         const key = entry.dni;
-        if (!workerMap[key]) workerMap[key] = { nombre: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0 };
-        workerMap[key].sum += parsePct(entry.rendimiento);
-        workerMap[key].count++;
+        if (!workerMap[key]) {
+            workerMap[key] = { 
+                name: `${entry.nombre} ${entry.apellidos}`, 
+                sum: 0, 
+                countForAvg: 0, 
+                diasTrabajados: 0,
+                justificaciones: 0,
+                faltas: 0,
+                tardanzas: 0
+            };
+        }
+        const w = workerMap[key];
+        const rend = parsePct(entry.rendimiento);
+
+        if (entry.asistencia === 'P') {
+            w.diasTrabajados++;
+            w.sum += rend;
+            w.countForAvg++;
+            if (entry.puntualidad === 'NO') w.tardanzas++;
+        } else {
+            if (entry.justification && entry.justification !== '') {
+                w.justificaciones++;
+                // No se suma rendimiento y NO se cuenta para el divisor (según solicitud usuario)
+            } else {
+                w.faltas++;
+                w.sum += rend; // Suele ser 0 pero se suma por consistencia
+                w.countForAvg++;
+            }
+        }
     });
-    const workerRanking = Object.values(workerMap)
-        .map(w => ({ name: w.name || w.nombre, avg: Math.round(w.sum / w.count) }))
-        .sort((a, b) => b.avg - a.avg)
-        .slice(0, 5);
+
+    const consolidado = Object.values(workerMap).map(w => ({
+        ...w,
+        avg: w.countForAvg > 0 ? Math.round(w.sum / w.countForAvg) : 0
+    })).sort((a, b) => b.avg - a.avg);
+
+    const workerRanking = consolidado.slice(0, 5);
 
     // 3. Métricas Globales
     const globalAvg = Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length);
@@ -1103,7 +1132,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
             <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
                 <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">📈 Evolución de Rendimiento</h4>
                 <div style="height:300px; position:relative; overflow:hidden;">
@@ -1115,6 +1144,42 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="height:300px; position:relative; overflow:hidden;">
                     <canvas id="chartRanking"></canvas>
                 </div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="padding:1.5rem;">
+            <h4 style="margin:0 0 1.5rem 0; color:var(--primary); font-size:1rem; font-weight:800; display:flex; align-items:center; gap:10px;">
+                📊 CONSOLIDADO KPI <small style="color:var(--text-muted); font-weight:400; font-size:0.75rem;">(Acumulado total)</small>
+            </h4>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);">
+                            <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
+                            <th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th>
+                            <th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th>
+                            <th style="padding:0.8rem; text-align:center;">FALTAS</th>
+                            <th style="padding:0.8rem; text-align:center;">TARDANZAS</th>
+                            <th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${consolidado.map(w => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+                            <td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td>
+                            <td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados}</td>
+                            <td style="padding:0.8rem; text-align:center; color:#fcd34d;">${w.justificaciones}</td>
+                            <td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? '#ef4444' : 'var(--text-muted)'};">${w.faltas}</td>
+                            <td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? '#f97316' : 'var(--text-muted)'};">${w.tardanzas}</td>
+                            <td style="padding:0.8rem; text-align:center;">
+                                <div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">
+                                    ${w.avg}%
+                                </div>
+                            </td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
