@@ -50,12 +50,36 @@ export const toggleUserStatus = (username) => {
 };
 
 // --- PERMISOS ---
+export const initPermissions = (tabs) => {
+    // Si ya hay permisos, no sobreescribir, pero asegurar que los nuevos módulos existan
+    const perms = adminStore.permissions;
+    const roles = ['jefe', 'supervisor', 'encargado', 'asistente']; // admin es siempre full
+    
+    tabs.forEach(tab => {
+        roles.forEach(role => {
+            if (!perms[role]) perms[role] = {};
+            if (perms[role][tab.id] === undefined) {
+                perms[role][tab.id] = tab.roles.includes(role) ? 1 : 0;
+            }
+        });
+    });
+    save('permissions', perms);
+};
+
 export const savePermissions = (role, mods) => {
     const perms = adminStore.permissions;
     perms[role] = mods;
     save('permissions', perms);
 };
+
 export const getPermissions = (role) => adminStore.permissions[role] || null;
+
+export const togglePermission = (role, tabId) => {
+    const perms = adminStore.permissions;
+    if (!perms[role]) perms[role] = {};
+    perms[role][tabId] = perms[role][tabId] === 1 ? 0 : 1;
+    save('permissions', perms);
+};
 
 // --- ASISTENCIA ---
 export const saveAttendance = (date, records) => {

@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.14-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.14-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.15-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.15-pulse';
 
-const VERSION = '11.1.14-pulse';
-const CACHE_KEY = `logistics_v11_1_14_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / UX & User Actions)`);
+const VERSION = '11.1.15-pulse';
+const CACHE_KEY = `logistics_v11_1_15_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Dynamic Permissions)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -37,14 +37,21 @@ const exportToExcel = (data, filename) => {
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
+  adminService.initPermissions(TABS);
   container.className = 'dashboard-layout animate-fade-in';
   
-  let rolePermissions = {};
-  if (user.role !== 'admin') {
+  let rolePermissions = adminService.getPermissions(user.role) || {};
+  // Si no hay locales para este rol (raro por init), intentar API como fallback secundario
+  if (user.role !== 'admin' && Object.keys(rolePermissions).length === 0) {
     try {
       const res = await fetch(`${API_BASE}/permissions/${user.role}`);
-      if (res.ok) rolePermissions = (await res.json()).modules || {};
-    } catch (e) { console.error("Error permisos:", e); }
+      if (res.ok) {
+          const apiPerms = (await res.json()).modules || {};
+          rolePermissions = apiPerms;
+          // Opcional: Sincronizar localmente
+          adminService.savePermissions(user.role, apiPerms);
+      }
+    } catch (e) { console.error("Error permisos API:", e); }
   }
 
   const allowedTabs = TABS.filter(t => user.role === 'admin' || t.id === 'inicio' || rolePermissions[t.id] === 1);
@@ -53,7 +60,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.14 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.15 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -579,31 +586,65 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderPermisosSection = (container) => {
-    const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'];
-    const modules = TABS.map(t => t.id);
+    const roles = ['jefe', 'supervisor', 'encargado', 'asistente'];
+    const allRoles = ['admin', ...roles];
     
     container.innerHTML = `
-        <h3 style="color:var(--primary); margin-bottom:1rem;">Matriz de Permisos por Rol</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos por Rol</h3>
+            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✨ Cambios se guardan automáticamente</span>
+        </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead>
-                    <tr style="background:rgba(255,255,255,0.05);"><th style="padding:0.8rem; text-align:left;">MÓDULO</th>${roles.map(r => `<th style="padding:0.8rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}</tr>
+                    <tr style="background:rgba(255,255,255,0.05);">
+                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO</th>
+                        ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
+                    </tr>
                 </thead>
                 <tbody>
-                    ${TABS.map(t => `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem; font-weight:600;">${t.icon} ${t.label}</td>
-                            ${roles.map(r => {
-                                const hasAccess = t.roles.includes(r);
-                                return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" ${hasAccess ? 'checked disabled' : ''} style="cursor:pointer;"></td>`;
+                    ${TABS.map(t => {
+                        return `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: background 0.2s;">
+                            <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff;">${t.icon} ${t.label}</td>
+                            ${allRoles.map(r => {
+                                let hasAccess = false;
+                                if (r === 'admin') hasAccess = true;
+                                else {
+                                    const perms = adminService.getPermissions(r);
+                                    hasAccess = perms ? perms[t.id] === 1 : t.roles.includes(r);
+                                }
+                                const isFixed = r === 'admin' || t.id === 'inicio';
+                                return `
+                                <td style="padding:0.8rem; text-align:center;">
+                                    <input type="checkbox" 
+                                           class="perm-toggle" 
+                                           data-role="${r}" 
+                                           data-tab="${t.id}"
+                                           ${hasAccess ? 'checked' : ''} 
+                                           ${isFixed ? 'disabled title="Permiso Protegido"' : 'style="cursor:pointer;"'}>
+                                </td>`;
                             }).join('')}
-                        </tr>
-                    `).join('')}
+                        </tr>`;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
-        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:1rem;">* Los permisos base de Admin no pueden ser modificados. El sistema de permisos dinámicos se habilitará en la siguiente fase de desarrollo.</p>
+        <div style="margin-top:1rem; padding:1rem; background:rgba(79,70,229,0.05); border-radius:8px; border:1px solid rgba(79,70,229,0.2);">
+            <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
+                <b>Nota:</b> Los permisos protegidos (Admin e Inicio) no pueden ser modificados para asegurar el acceso básico a la plataforma. 
+                Cualquier cambio realizado se aplicará la próxima vez que el usuario navegue o recargue el sitio.
+            </p>
+        </div>
     `;
+
+    document.querySelectorAll('.perm-toggle:not(:disabled)').forEach(cb => {
+        cb.onchange = (e) => {
+            const { role, tab } = e.target.dataset;
+            adminService.togglePermission(role, tab);
+            console.log(`[PULSE] Permiso actualizado: ${role} -> ${tab}`);
+        };
+    });
   };
 
   const renderAsistenciaSection = (container) => {
