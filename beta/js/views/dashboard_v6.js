@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.26-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.26-pulse';
 
-const VERSION = '11.1.26-pulse';
-const CACHE_KEY = `logistics_v11_1_26_`;
+const VERSION = '11.1.27-pulse';
+const CACHE_KEY = `logistics_v11_1_27_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -73,7 +73,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.26 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.27 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -973,10 +973,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 'Nombre': p.nombre,
                 'Asistencia': p.asistencia,
                 'Puntualidad': p.puntualidad,
-                'Rendimiento %': p.rendimiento,
                 'BPA': p.bpa,
                 'Producción': p.produccion,
-                'Supervisor': p.supervisor
+                'Supervisor': p.supervisor,
+                'Rendimiento %': p.rendimiento
             }));
 
             const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -1004,12 +1004,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <th style="padding:0.8rem; text-align:center; width:45px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
                         <th style="padding:0.8rem; text-align:center;">FECHA</th>
                         <th style="padding:0.8rem; text-align:left;">TRABAJADOR / DNI</th>
-                        <th style="padding:0.8rem; text-align:center;">ASIST.</th>
-                        <th style="padding:0.8rem; text-align:center;">PUNT.</th>
-                        <th style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1);">RENDIMIENTO %</th>
+                        <th style="padding:0.8rem; text-align:center;">ASISTENCIA</th>
+                        <th style="padding:0.8rem; text-align:center;">PUNTUALIDAD</th>
                         <th style="padding:0.8rem; text-align:center;">PRODUCCIÓN</th>
                         <th style="padding:0.8rem; text-align:center;">BPA</th>
                         <th style="padding:0.8rem; text-align:center;">SUPERVISOR</th>
+                        <th style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1);">RENDIMIENTO %</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1020,12 +1020,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem;"><b>${p.apellidos}, ${p.nombre}</b><br><small style="color:#fff; font-weight:800;">${p.dni}</small></td>
                             <td style="padding:0.8rem; text-align:center;"><span style="color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900;">${p.asistencia}</span></td>
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${p.puntualidad}</td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05);">
-                                <input type="text" value="${p.rendimiento}" data-date="${p.date}" data-dni="${p.dni}" data-f="rendimiento" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fcd34d; text-align:center; font-weight:800; font-size:0.9rem; outline:none;">
-                            </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fff; text-align:center;"></td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);"><input type="text" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:80px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05);">
+                                <input type="text" value="${p.rendimiento}" data-date="${p.date}" data-dni="${p.dni}" data-f="rendimiento" class="edit-perf-log" style="width:60px; background:none; border:none; color:#fcd34d; text-align:center; font-weight:800; font-size:0.9rem; outline:none;">
+                            </td>
                         </tr>
                     `).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
