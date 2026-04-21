@@ -293,3 +293,12 @@ export const updatePerformanceEntry = (dni, fields) => {
         save('performance', perf);
     }
 };
+
+// --- REINICIO DE DATOS ---
+export const resetProductionData = async () => {
+    console.log("⚠️ [PULSE] Iniciando reinicio maestro de datos de producción...");
+    await save('attendance', {});
+    await save('performance', []);
+    await save('performance_log', []);
+    console.log("✅ [PULSE] Datos reiniciados satisfactoriamente.");
+};
