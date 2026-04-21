@@ -8,7 +8,8 @@ export const adminStore = {
     users: JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]'),
     permissions: JSON.parse(localStorage.getItem(PREFIX + 'permissions') || '{}'),
     attendance: JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}'), // Keyed by date YYYY-MM-DD
-    performance: JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]')
+    performance: JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]'),
+    performance_log: JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]')
 };
 
 const save = (key, data) => {
@@ -123,11 +124,10 @@ export const saveAttendance = (date, records) => {
 export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
-export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
-    // attendanceData: [{dni, present, onTime, ...}]
-    const currentPerf = adminStore.performance;
+    const log = adminStore.performance_log;
     
     attendanceData.forEach(att => {
+        // 1. Actualizar Totales (Existente)
         let entry = currentPerf.find(p => p.dni === att.dni);
         if (!entry) {
             entry = { 
@@ -149,16 +149,47 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
             if (att.onTime) {
                 entry.puntualidad_count = (entry.puntualidad_count || 0) + 1;
             }
-            
-            // Recalcular porcentaje de puntualidad
             const pct = Math.round((entry.puntualidad_count / entry.asistencia) * 100);
             entry.puntualidad = `${pct}%`;
+        }
+
+        // 2. Guardar en Historial Diario (Nuevo)
+        // Evitar duplicados para el mismo día si se re-cierra (sobrescribir)
+        const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
+        const newLogEntry = {
+            date,
+            dni: att.dni,
+            nombre: att.nombre,
+            apellidos: att.apellidos,
+            asistencia: att.present ? 'P' : 'F',
+            puntualidad: att.onTime ? 'SÍ' : 'NO',
+            rendimiento: '0%', // Inicializado para edición manual o cálculo futuro
+            produccion: entry.produccion || 0,
+            bpa: entry.bpa || 0,
+            supervisor: entry.supervisor || '-'
+        };
+
+        if (existingLogIdx >= 0) {
+            log[existingLogIdx] = newLogEntry;
+        } else {
+            log.push(newLogEntry);
         }
     });
 
     save('performance', currentPerf);
-    // Marcamos la asistencia como CERRADA
+    save('performance_log', log);
     saveAttendance(date, { finalized: true, data: attendanceData });
+};
+
+export const getPerformanceLog = () => adminStore.performance_log;
+
+export const updatePerformanceLogEntry = (date, dni, fields) => {
+    const log = getPerformanceLog();
+    const idx = log.findIndex(l => l.date === date && l.dni === dni);
+    if (idx >= 0) {
+        log[idx] = { ...log[idx], ...fields };
+        save('performance_log', log);
+    }
 };
 
 export const getPerformance = () => adminStore.performance;
