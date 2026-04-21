@@ -1,9 +1,5 @@
 import { logout } from '../services/auth.js';
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=11.1.7-pulse';
-
-const VERSION = '11.1.7-pulse';
-const CACHE_KEY = `logistics_v11_1_7_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized`);
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter } from '../services/csvHub_v6.js?v=8.1';
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -53,7 +49,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.7 (Atomic Pulse)</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 V8.1</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -158,11 +154,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Análisis de Reposición";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
+    // VERIFICACIÓN DE CACHÉ PARA V8.1 (Invalida si falta detalleZonas)
     const stored = localStorage.getItem('lastBufferKPI');
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
             if (!parsed.detalleZonas) {
+                console.warn("Removiendo caché Buffer antigua...");
                 localStorage.removeItem('lastBufferKPI');
                 lastBufferKPI = null;
             } else {
@@ -189,127 +187,59 @@ export const renderDashboard = async (container, user, onLogout) => {
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
-              <div>
-                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
-                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center;">
-                    <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
-                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
-                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
-                    <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
-                </div>
-              </div>
-              <div style="text-align:right;">
-                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
-                <button id="btn_calc" class="btn" style="background:var(--primary); margin-top:0.5rem; width:auto; padding:0.5rem 1.2rem; border-radius:6px; font-size:0.8rem;">⚡ PROCESAR ANÁLISIS</button>
-              </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+              <h4 style="color:var(--text-muted); font-weight:600; font-size:0.8rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
+              <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.85rem;">⚡ PROCESAR ANÁLISIS</button>
             </div>
-            <div id="resultsArea" style="display:grid; grid-template-columns: repeat(2, auto); gap:1.5rem; align-items:start; margin-left:1rem;"></div>
+            <div id="resultsArea" style="display:flex; flex-direction:column; align-items:flex-start; gap:1.5rem; margin-left:1rem;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
         if (lastBufferKPI) renderBufferResults(results, lastBufferKPI);
-
-        console.log("[PULSE] Vinculando botones de acción...");
         document.getElementById('btn_calc').addEventListener('click', async () => {
-            console.log("[PULSE] Click Procesar Análisis");
-            const btn = document.getElementById('btn_calc'); 
-            btn.disabled = true; btn.innerHTML = '⚙️ CALCULANDO...';
-            results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de Análisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
-
+            const btn = document.getElementById('btn_calc'); btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
             setTimeout(async () => {
-                try {
-                    const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
-                    const res = calculateBufferPallets(config);
-                    if (res) {
-                        lastBufferKPI = res;
-                        localStorage.setItem('lastBufferKPI', JSON.stringify(res));
-                        renderBufferResults(results, res); 
-                        
-                        const saved = await saveBufferReport(res, user.username);
-                        alert(saved ? '✅ Análisis COMPLETO y Sincronizado.' : '✅ Análisis COMPLETO (Guardado solo Localmente).');
-                    }
-                    else {
-                        const missing = [];
-                        if(!dataStore.buffer) missing.push("PEDIDOS (BUFFER)");
-                        if(!dataStore.stockActivo) missing.push("STOCK ACTIVO");
-                        if(!dataStore.stockReserva) missing.push("STOCK RESERVA");
-                        results.innerHTML = '';
-                        alert('⚠️ ERROR: Faltan archivos críticos en memoria:\n\n' + missing.join("\n") + '\n\nPor favor súbelos en la pestaña "STOCK GENERAL" y "ZONA BUFFER".');
-                    }
-                } catch (err) {
-                    console.error("Error en proceso:", err);
-                    results.innerHTML = '';
-                    alert("Error crítico al procesar: " + err.message);
-                } finally {
-                    btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
+                const res = calculateBufferPallets(bufferConfigCached);
+                if(res) { 
+                    lastBufferKPI = res; 
+                    localStorage.setItem('lastBufferKPI', JSON.stringify(res)); 
+                    saveBufferReport(res, user.username); 
+                    renderBufferResults(results, res); 
                 }
-            }, 800);
-        });
-
-        document.getElementById('btn_reset_cache').addEventListener('click', () => {
-            if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos. Tendrás que volver a subirlos.')) {
-                Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
-                localStorage.removeItem('lastBufferKPI');
-                window.location.reload();
-            }
+                else alert('ERROR: Faltan archivos maestros.');
+                btn.disabled = false; btn.innerHTML = '⚡ PROCESAR ANÁLISIS';
+            }, 500);
         });
     }
   };
 
   const renderBufferResults = (container, data) => {
-    const tableWidth = '450px';
     container.innerHTML = `
-        <!-- FILA 1: ZONAS + GENDER -->
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(79,70,229,0.4);">
-            <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">ANÁLISIS BUFFER ZONAS</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">%</th></tr></thead>
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(79,70,229,0.4);">
+            <div style="padding:0.8rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">ANÁLISIS BUFFER ZONAS</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">NIVEL/AREA</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">RQ</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">ATD RQ</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">% ATD</th></tr></thead>
                 <tbody style="color:#eee;">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.08); font-weight:900;':''}">
-                    <td style="padding:0.5rem 1rem; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.nivel}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center;">${r.rq.toLocaleString()}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? '#fff' : '#64748b'};">${r.atd.toLocaleString()}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${r.pct}</td>
+                    <td style="padding:0.6rem 1.2rem; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.nivel}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.rq.toLocaleString()}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:${r.nivel==='Total'?'#22c55e' : (r.atd > 0 ? '#fff' : '#64748b')};">${r.atd.toLocaleString()}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${r.pct}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #ec4899; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(236,72,153,0.3);">
-            <div style="padding:0.7rem; background:rgba(236,72,153,0.1); border-bottom:1px solid rgba(236,72,153,0.3); text-align:center;"><h3 style="color:#ec4899; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">DISCREPANCIAS GENDER (Zonas 3,4,5)</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(236,72,153,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">GENDER</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th></tr></thead>
-                <tbody style="color:#eee;">${data.resumenGender.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.key==='TOTAL'?'background:rgba(236,72,153,0.08); font-weight:900;':''}">
-                    <td style="padding:0.5rem 1rem;">${r.key}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; width:500px; max-width:100%; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
+            <div style="padding:0.8rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.9rem; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3></div>
+            <table style="border-collapse:collapse; width:100%; font-size:0.85rem;">
+                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.7rem 1.2rem; text-align:left; font-weight:700; font-size:0.75rem;">TIPO DE EMPAQUE</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">PALETAS A BAJAR</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">SKUS</th><th style="padding:0.7rem 1.2rem; text-align:center; font-weight:700; font-size:0.75rem;">PAR/CAJA</th></tr></thead>
+                <tbody style="color:#eee;">${data.resumenSKU.map(r => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
+                    <td style="padding:0.6rem 1.2rem; color:${r.tipo==='SolidPack'?'#22c55e':r.tipo==='PreePack'?'#f59e0b':'#fff'};">${r.tipo}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; font-weight:bold; color:${r.tipo==='TOTAL'?'#fff':'inherit'};">${r.paletas}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:${r.tipo==='TOTAL'?'#fff':'inherit'};">${r.skus}</td>
+                    <td style="padding:0.6rem 1.2rem; text-align:center; color:#22c55e; font-weight:900;">${Number(r.parcaja).toLocaleString()}</td>
                 </tr>`).join('')}</tbody>
             </table>
         </div>
-
-        <!-- FILA 2: SKU + MARCAS -->
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
-            <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">ANÁLISIS BUFFER SKU</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PAL</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR</th></tr></thead>
-                <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
-                    <td style="padding:0.5rem 1rem;">${r.tipo}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${Number(r.parcaja).toLocaleString()}</td>
-                </tr>`).join('')}</tbody>
-            </table>
-        </div>
-
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; width:${tableWidth}; max-width:100%; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
-            <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;"><h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">DISCREPANCIAS MARCAS (Zonas 3,4,5)</h3></div>
-            <table style="border-collapse:collapse; width:100%; font-size:0.8rem;">
-                <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">MARCA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th></tr></thead>
-                <tbody style="color:#eee;">${data.resumenMarca.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.key==='TOTAL'?'background:rgba(6,182,212,0.08); font-weight:900;':''}">
-                    <td style="padding:0.5rem 1rem;">${r.key}</td>
-                    <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e; font-weight:900;">${r.rq.toLocaleString()}</td>
-                </tr>`).join('')}</tbody>
-            </table>
-        </div>
-
-        <div style="grid-column: span 2; display:flex; gap:1rem; margin-top:0.5rem;">
+        <div style="display:flex; gap:1rem;">
             <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📊 EXPORTAR ANÁLISIS ZONA</button>
             <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.6rem 1.5rem; border-radius:6px; font-size:0.82rem;">📥 EXCEL DETALLADO SKU</button>
         </div>
@@ -331,6 +261,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
+  let activeAdminSub = 'usuarios';
   const renderAdminTab = async () => {
     contentSubtitle.textContent = "Gestión de Personal y Auditoría";
     contentArea.innerHTML = `
@@ -343,6 +274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     document.getElementById('adminContent').innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: 0.85rem;">Módulo en desarrollo: ${activeAdminSub.toUpperCase()}</div>`;
   };
 
+  let activeConfigSub = 'parametros';
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
     contentArea.innerHTML = `
@@ -363,3 +295,5 @@ export const renderDashboard = async (container, user, onLogout) => {
   renderNav();
   renderTabContent();
 };
+
+const renderDashboardView = (container, data) => { container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);"><h3 style="font-size:1rem; margin:0;">Visualización de Datos</h3><p style="font-size:0.85rem;">${data.length.toLocaleString()} registros detectados.</p></div>`; };

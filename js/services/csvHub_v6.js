@@ -55,11 +55,9 @@ const clearLS = () => {
 export let currentDateFilter = null;
 
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
-const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
-const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.7-pulse';
-const CACHE_KEY = `logistics_v11_1_7_`;
+const API_BASE   = "https://logistics-backend-wv0x.onrender.com/api";
 const API_URL    = `${API_BASE}/logistics`;
+const SHARED_API = `${API_BASE}/shared`;
 
 export const setDateFilter = (newDateStr) => {
     if (currentDateFilter !== newDateStr) {
@@ -78,25 +76,14 @@ export const pingServer = () => {
 
 export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 sec max
-        const response = await fetch(`${SHARED_API}/buffer_report`, {
+        await fetch(`${SHARED_API}/buffer_report`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: bufferKPIObj, updated_by: username }),
-            signal: controller.signal
+            body: JSON.stringify({ data: bufferKPIObj, updated_by: username })
         });
-        clearTimeout(timeoutId);
-        if (response.ok) {
-            console.log('✅ Reporte Buffer guardado en servidor.');
-            return true;
-        } else {
-            console.warn(`⚠️ Error servidor (${response.status}): Reporte NO guardado.`);
-            return false;
-        }
+        console.log('✅ Reporte Buffer guardado en servidor.');
     } catch (e) {
-        console.warn('⚠️ Fallo de conexión o Timeout: Reporte guardado solo LOCALMENTE.', e);
-        return false;
+        console.warn('⚠️ No se pudo guardar el reporte en servidor:', e);
     }
 };
 
@@ -201,7 +188,7 @@ export const parseFile = (file, area) => {
               let headerIdx = 0;
               for(let i=0; i<Math.min(rows.length, 10); i++) {
                   const rowStr = JSON.stringify(rows[i]).toUpperCase();
-                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO') || rowStr.includes('CODARTICULO')) {
+                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO')) {
                       headerIdx = i; break;
                   }
               }
@@ -298,17 +285,9 @@ export const generateKPIs = (data, area) => {
 
 export const fetchBufferConfig = async () => {
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000); 
-        try {
-            const response = await fetch(`${API_BASE}/buffer/config`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.ok) return await response.json();
-        } catch (err) {
-            if (err.name === 'AbortError') console.warn("Timeout config buffer (2s): usando local default");
-            else console.warn("Error config buffer:", err);
-        }
-    } catch (e) { console.error("Error crítico fetchBufferConfig:", e); }
+        const response = await fetch(`${API_BASE}/buffer/config`);
+        if (response.ok) return await response.json();
+    } catch (e) { console.warn("No se pudo obtener config buffer", e); }
     return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
 };
 
@@ -317,10 +296,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
     
-    if(!activo || !reserva || !pedidos) {
-        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
-        return null;
-    }
+    if(!activo || !reserva || !pedidos) return null;
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
@@ -424,7 +400,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         atdAereo += wrapAereo.val;
 
         let wrapLogico = { val: 0 };
-        pending = satisfyDemand(sku, pending, stLogicos, 'Logica', wrapLogico);
+        pending = satisfyDemand(sku, pending, stLogicos, 'Lógica', wrapLogico);
         atdLogico += wrapLogico.val;
     });
 
@@ -447,56 +423,9 @@ export const calculateBufferPallets = (configOverride = null) => {
         { nivel: '2. Alto', rq: globalRQ - atdBaja, atd: atdAlto, pct: calcPct(atdAlto, globalRQ - atdBaja) },
         { nivel: '3. Pisos', rq: globalRQ - atdBaja - atdAlto, atd: atdPiso, pct: calcPct(atdPiso, globalRQ - atdBaja - atdAlto) },
         { nivel: '4. Aereo', rq: globalRQ - atdBaja - atdAlto - atdPiso, atd: atdAereo, pct: calcPct(atdAereo, globalRQ - atdBaja - atdAlto - atdPiso) },
-        { nivel: '5. Logica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
+        { nivel: '5. Lógica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
         { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
     ];
-
-    // =============================================
-    // V10.5-Pulse: ANÁLISIS FORENSE (ZONAS 3, 4, 5)
-    // =============================================
-    const forensicZones = ['Pisos', 'Aereo', 'Logica'];
-    const getArtInfo = (sku) => {
-        if (!dataStore.articulos || !sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        
-        const clean = (s) => String(s || '').trim();
-        const to7 = (s) => clean(s).substring(0, 7);
-        
-        // El usuario indica: pedidos(Código de articulo)[7] -> articulos(CodArticulo)
-        const target7 = to7(sku);
-
-        const row = dataStore.articulos.find(a => {
-            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto']));
-            return clean(masterVal) === target7 || to7(masterVal) === target7;
-        });
-
-        if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
-
-        return {
-            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial']) || 'Otros')
-        };
-    };
-
-    const genderAggr = {}, marcaAggr = {};
-    detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
-        const info = getArtInfo(d.SKU);
-        const atd = d['ATD RQ'] || 0;
-        if (!genderAggr[info.gender]) genderAggr[info.gender] = { rq: 0, atd: 0 };
-        genderAggr[info.gender].atd += atd;
-        genderAggr[info.gender].rq += atd; // User wants only total ATD as RQ
-
-        if (!marcaAggr[info.marca]) marcaAggr[info.marca] = { rq: 0, atd: 0 };
-        marcaAggr[info.marca].atd += atd;
-        marcaAggr[info.marca].rq += atd;
-    });
-
-    const formatForensic = (aggr) => {
-        const rows = Object.keys(aggr).sort().map(k => ({ key: k, rq: aggr[k].rq }));
-        if (rows.length > 0) {
-            rows.push({ key: 'TOTAL', rq: rows.reduce((sum, r) => sum + r.rq, 0) });
-        }
-        return rows;
-    };
 
     const empaque = { 'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 }, 'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 } };
     detallePallets.forEach(r => {
@@ -509,12 +438,5 @@ export const calculateBufferPallets = (configOverride = null) => {
     const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
-    return { 
-        waterfall, 
-        detalle: detallePallets, 
-        detalleZonas, 
-        resumenSKU: resEmp,
-        resumenGender: formatForensic(genderAggr),
-        resumenMarca: formatForensic(marcaAggr)
-    };
+    return { waterfall, detalle: detallePallets, detalleZonas, resumenSKU: resEmp };
 };
