@@ -158,14 +158,15 @@ export const closeAttendanceAndSyncPerformance = (date, attendanceData) => {
         // 2. Guardar en Historial Diario (Nuevo)
         // Evitar duplicados para el mismo día si se re-cierra (sobrescribir)
         const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
+        const isPresent = att.present;
         const newLogEntry = {
             date,
             dni: att.dni,
             nombre: att.nombre,
             apellidos: att.apellidos,
-            asistencia: att.present ? 'P' : 'F',
-            puntualidad: att.onTime ? 'SÍ' : 'NO',
-            rendimiento: att.present ? '30%' : '0%', // Inicial con asistencia básica (30 pts = 30% si puntualidad es NO)
+            asistencia: isPresent ? 'P' : 'F',
+            puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
+            rendimiento: isPresent ? (att.onTime ? '40%' : '30%') : '0%',
             produccion: 0,
             bpa: 0,
             supervisor: 0

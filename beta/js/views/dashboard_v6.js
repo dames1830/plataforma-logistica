@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.28-pulse';
-const CACHE_KEY = `logistics_v11_1_28_`;
+const VERSION = '11.1.29-pulse';
+const CACHE_KEY = `logistics_v11_1_29_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -73,7 +73,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.28 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.29 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1051,7 +1051,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                         ${entries.map((p, idx) => `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
-                            <td style="padding:0.8rem;"><b>${p.apellidos}, ${p.nombre}</b><br><small style="color:#fff; font-weight:800;">${p.dni}</small></td>
+                            <td style="padding:0.8rem;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <b style="color:#fff;">${p.apellidos}, ${p.nombre}</b>
+                                    <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-weight:700; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${p.dni}</span>
+                                </div>
+                            </td>
                             <td style="padding:0.8rem; text-align:center;"><span style="color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900;">${p.asistencia}</span></td>
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${p.puntualidad}</td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
