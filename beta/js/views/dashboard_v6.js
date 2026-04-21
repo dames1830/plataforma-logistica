@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.15-pulse';
-import * as adminService from '../services/adminService.js?v=11.1.15-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.16-pulse';
+import * as adminService from '../services/adminService.js?v=11.1.16-pulse';
 
-const VERSION = '11.1.15-pulse';
-const CACHE_KEY = `logistics_v11_1_15_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Dynamic Permissions)`);
+const VERSION = '11.1.16-pulse';
+const CACHE_KEY = `logistics_v11_1_16_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Security & UX Fixes)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -60,7 +60,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.15 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.16 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -544,6 +544,15 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
         adminService.saveUser(newUser);
         alert(isEditing ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito');
+        form.reset();
+        if (isEditing) {
+            uUser.readOnly = false;
+            uUser.style.opacity = '1';
+            uTitle.textContent = "Nuevo Usuario";
+            btnSubmit.textContent = "GUARDAR USUARIO";
+            btnCancel.style.display = 'none';
+            isEditing = false;
+        }
         renderAdminTab();
     };
 

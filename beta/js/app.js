@@ -1,4 +1,4 @@
-import { getSession } from './services/auth.js?v=11.1.15';
+import { getSession, logout } from './services/auth.js?v=11.1.16';
 
 class App {
   constructor(rootId) {
@@ -18,11 +18,14 @@ class App {
         const timestamp = new Date().getTime();
         console.log(`[PULSE] Beta App v11.1.11 navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.15_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.1.16_${timestamp}`);
             this.root.innerHTML = '';
-            await renderDashboard(this.root, user, () => this.navigate());
+            await renderDashboard(this.root, user, () => {
+                logout();
+                this.navigate();
+            });
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=11.1.15_${timestamp}`);
+            const { renderLogin } = await import(`./views/login.js?v=11.1.16_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }
