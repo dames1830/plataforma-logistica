@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (Beta v11.1.13)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (Beta v11.1.28)
  */
 const PREFIX = 'logistics_admin_v11_';
 
