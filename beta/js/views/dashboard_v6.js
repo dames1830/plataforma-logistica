@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.11-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.12-pulse';
 
-const VERSION = '11.1.11-pulse';
-const CACHE_KEY = `logistics_v11_1_11_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / UX Fix)`);
+const VERSION = '11.1.12-pulse';
+const CACHE_KEY = `logistics_v11_1_12_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Storage Fix)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -52,7 +52,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.11 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.12 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -142,7 +142,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <h4 style="color:var(--success); margin:0; font-size:0.95rem; font-weight:700;">✅ ${label} CARGADO</h4>
             <p style="font-size:0.8rem; margin:4px 0 0 0; color:var(--text-muted); font-weight:500;">
                 ${hasData.length.toLocaleString()} registros. 
-                <span style="color:#fbbf24; background:rgba(251,191,36,0.1); padding:2px 8px; border-radius:4px; margin-left:10px;">📅 Subido: ${dateStr}</span>
+                <span style="color:#fff; background:#d97706; padding:2px 10px; border-radius:6px; margin-left:10px; font-weight:800; border:1px solid #fbbf24; display:inline-block; box-shadow:0 0 10px rgba(251,191,36,0.3);">📅 Subido: ${dateStr}</span>
             </p>
           </div>
           <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="upload-area" style="padding:1.5rem; text-align:center; border: 1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:0.6rem;">
           <h3 style="margin:0; font-size:1rem; color:var(--text-main); font-weight:700;">${label}</h3>
           <p style="font-size:0.75rem; color:#f87171; font-weight:600; margin:0;">⚠️ Sin datos en memoria</p>
-          <p style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">Última carga detectada: <span style="color:#fbbf24;">${dateStr}</span></p>
+          <p style="font-size:0.8rem; color:var(--text-muted); font-weight:600; margin-top:4px;">Última carga detectada: <span style="color:#fbbf24; font-weight:800; text-decoration:underline;">${dateStr}</span></p>
           <label class="btn" style="width:auto; padding:0.5rem 1.5rem; cursor:pointer; font-size:0.85rem;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label>
         </div>`;
     }

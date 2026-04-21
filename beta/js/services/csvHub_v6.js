@@ -18,12 +18,20 @@ export const dataStore = {
 // OPTIMIZACIÓN: CACHÉ PERSISTENTE En localStorage
 // =============================================
 const LS_PREFIX = 'logistics_cache_';
+const META_PREFIX = 'logistics_meta_'; // Almacenamiento pequeño para persistencia de fechas
 const LS_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de validez
 
 const saveToLS = (area, data) => {
+    const ts = Date.now();
     try {
-        localStorage.setItem(LS_PREFIX + area, JSON.stringify({ ts: Date.now(), data }));
-    } catch(e) { /* cuota llena, ignorar */ }
+        // NIVEL 1: Metadatos (Siempre se guardan, muy pequeños)
+        localStorage.setItem(META_PREFIX + area, JSON.stringify({ ts }));
+    } catch(e) { console.warn("Error guardando meta:", e); }
+
+    try {
+        // NIVEL 2: Datos (Pueden fallar si localStorage está lleno)
+        localStorage.setItem(LS_PREFIX + area, JSON.stringify({ ts, data }));
+    } catch(e) { console.warn("Quota Full: Datos no persistidos localmente para " + area); }
 };
 
 const loadFromLS = (area) => {
@@ -41,6 +49,11 @@ const loadFromLS = (area) => {
 
 export const getUploadMeta = (area) => {
     try {
+        // Intentar recuperar de la tabla de metadatos primero
+        const metaRaw = localStorage.getItem(META_PREFIX + area);
+        if (metaRaw) return JSON.parse(metaRaw);
+
+        // Fallback: intentar recuperar del caché de datos si el meta no existe
         const raw = localStorage.getItem(LS_PREFIX + area);
         if (!raw) return null;
         return JSON.parse(raw);
@@ -48,7 +61,10 @@ export const getUploadMeta = (area) => {
 };
 
 const clearLS = () => {
-    Object.keys(dataStore).forEach(k => localStorage.removeItem(LS_PREFIX + k));
+    Object.keys(dataStore).forEach(k => {
+        localStorage.removeItem(LS_PREFIX + k);
+        localStorage.removeItem(META_PREFIX + k);
+    });
 };
 
 // Inicializar dataStore desde localStorage al cargar la app
@@ -65,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.10-pulse';
-const CACHE_KEY = `logistics_v11_1_10_`;
+const VERSION = '11.1.12-pulse';
+const CACHE_KEY = `logistics_v11_1_12_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
