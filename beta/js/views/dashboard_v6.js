@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.70-pulse';
-const CACHE_KEY = `logistics_v11_1_70_`;
+const VERSION = '11.1.75-pulse';
+const CACHE_KEY = `logistics_v11_1_75_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.70 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.75 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1036,8 +1036,39 @@ export const renderDashboard = async (container, user, onLogout) => {
       return Math.round(score) + '%';
   };
 
+  let kpiStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  let kpiEnd = new Date().toISOString().split('T')[0];
+  let kpiSearch = '';
+
   const renderKPIPerformanceSection = (container) => {
-    const log = adminService.getPerformanceLog();
+    const rawLog = adminService.getPerformanceLog();
+    
+    // Función para exportar Consolidado
+    window.exportKPIConsolidado = (data) => {
+        if (!data.length) return alert('No hay datos para exportar.');
+        const exportData = data.map(d => ({
+            'Operario': d.name,
+            'Días Trabajados': d.diasTrabajados,
+            'Justificaciones': d.justificaciones,
+            'Faltas': d.faltas,
+            'Tardanzas': d.tardanzas,
+            'Promedio Rendimiento %': d.avg + '%'
+        }));
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Consolidado_KPI");
+        XLSX.writeFile(wb, `Consolidado_KPI_${kpiStart}_a_${kpiEnd}.xlsx`);
+    };
+
+    // --- FILTRADO INICIAL ---
+    const log = rawLog.filter(entry => {
+        const isDateIn = entry.date >= kpiStart && entry.date <= kpiEnd;
+        const matchesSearch = entry.nombre.toLowerCase().includes(kpiSearch.toLowerCase()) || 
+                             entry.apellidos.toLowerCase().includes(kpiSearch.toLowerCase()) ||
+                             entry.dni.includes(kpiSearch);
+        return isDateIn; // Los gráficos se filtran solo por fecha, la tabla por fecha + nombre
+    });
+
     if (!log || log.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
@@ -1099,7 +1130,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     const consolidado = Object.values(workerMap).map(w => ({
         ...w,
         avg: w.countForAvg > 0 ? Math.round(w.sum / w.countForAvg) : 0
-    })).sort((a, b) => b.avg - a.avg);
+    })).filter(w => {
+        return w.name.toLowerCase().includes(kpiSearch.toLowerCase());
+    }).sort((a, b) => b.avg - a.avg);
 
     const workerRanking = consolidado.slice(0, 5);
 
@@ -1148,9 +1181,25 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <div class="glass-panel" style="padding:1.5rem;">
-            <h4 style="margin:0 0 1.5rem 0; color:var(--primary); font-size:1rem; font-weight:800; display:flex; align-items:center; gap:10px;">
-                📊 CONSOLIDADO KPI <small style="color:var(--text-muted); font-weight:400; font-size:0.75rem;">(Acumulado total)</small>
-            </h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
+                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800; display:flex; align-items:center; gap:10px;">
+                    📊 CONSOLIDADO KPI <small style="color:var(--text-muted); font-weight:400; font-size:0.75rem;">(Filtrado por rango)</small>
+                </h4>
+                
+                <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px;">
+                         <span style="font-size:0.7rem; color:var(--text-muted);">DESDE:</span>
+                         <input type="date" id="kpi_start" value="${kpiStart}" style="background:none; border:none; color:#fff; font-size:0.75rem; outline:none;">
+                         <span style="font-size:0.7rem; color:var(--text-muted);">HASTA:</span>
+                         <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:#fff; font-size:0.75rem; outline:none;">
+                    </div>
+                    <input type="text" id="kpi_search" placeholder="🔍 Buscar operario..." value="${kpiSearch}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; outline:none; width:200px;">
+                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px; display:flex; align-items:center; gap:5px;">
+                        📥 EXPORTAR
+                    </button>
+                </div>
+            </div>
+            
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
                     <thead>
@@ -1184,9 +1233,15 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
-    // --- RENDERIZADO DE GRÁFICOS (Chart.js) ---
-    // Fix v11.1.50: Evitar bucle infinito y deshabilitar animaciones pesadas
     setTimeout(() => {
+        const iStart = document.getElementById('kpi_start');
+        const iEnd = document.getElementById('kpi_end');
+        const iSearch = document.getElementById('kpi_search');
+        
+        if (iStart) iStart.onchange = (e) => { kpiStart = e.target.value; renderKPIPerformanceSection(container); };
+        if (iEnd) iEnd.onchange = (e) => { kpiEnd = e.target.value; renderKPIPerformanceSection(container); };
+        if (iSearch) iSearch.oninput = (e) => { kpiSearch = e.target.value; renderKPIPerformanceSection(container); };
+
         const canvasEvo = document.getElementById('chartEvolution');
         const canvasRank = document.getElementById('chartRanking');
         if (!canvasEvo || !canvasRank) return;
