@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.95-pulse';
-const CACHE_KEY = `logistics_v11_1_95_`;
+const VERSION = '11.1.100-pulse';
+const CACHE_KEY = `logistics_v11_1_100_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -78,7 +78,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.95 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.100 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1319,7 +1319,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <small style="margin-left:15px; color:rgba(255,255,255,0.3); font-weight:400;">(${entries.length} registros)</small>
                             </td>
                             <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;">
-                                <span style="font-size:0.65rem; color:var(--text-muted);">Prom:</span> ${avgRend}%
+                                <span style="font-size:0.65rem; color:var(--text-muted);">Prom:</span> <span id="avg-${date}">${avgRend}%</span>
                             </td>
                         </tr>
                         <!-- FILAS DE TRABAJADORES -->
@@ -1339,7 +1339,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 </select>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:var(--text-muted); outline:none; cursor:pointer;">
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÍ'?'var(--success)':'#ef4444'}; font-weight:700; outline:none; cursor:pointer;">
                                     <option value="SÍ" ${p.puntualidad==='SÍ'?'selected':''}>SÍ</option>
                                     <option value="NO" ${p.puntualidad==='NO'?'selected':''}>NO</option>
                                 </select>
@@ -1353,10 +1353,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
                                 <input type="number" min="0" max="10" value="${p.supervisor !== undefined ? p.supervisor : 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
                             </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05); color:${p.justification?'#fcd34d':'rgba(255,255,255,0.2)'}; font-weight:800;">
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05); color:${p.justification?'#fcd34d':'rgba(255,255,255,0.2)'}; font-weight:800;" id="just-${p.dni}-${p.date}">
                                 ${ (p.justification && p.justification !== '') ? 'SI' : 'NO' }
                             </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;">
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
                         </tr>
@@ -1379,27 +1379,77 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
     });
 
-    // Event listener para Edición y Cálculo automático
-    document.querySelectorAll('.edit-perf-log').forEach(input => input.onchange = (e) => {
-        const { date, dni, f: field } = e.target.dataset;
-        let val = e.target.value;
+    // Mejorar edición y navegación (Keyboard Friendly)
+    document.querySelectorAll('.edit-perf-log').forEach((input, index, all) => {
+        // Auto-selección al enfocar
+        input.onfocus = () => { if(input.select) input.select(); };
 
-        // Validar si es numérico (escala 1-10)
-        if (field === 'produccion' || field === 'bpa' || field === 'supervisor') {
-            val = parseFloat(val) || 0;
-            if (val > 10) val = 10;
-            if (val < 0) val = 0;
-            e.target.value = val;
-        }
+        // Navegación por flechas o TAB
+        input.onkeydown = (e) => {
+            const rowsInTable = Array.from(document.querySelectorAll('.edit-perf-log'));
+            const currentIndex = rowsInTable.indexOf(e.target);
+            const colsPerRow = 5; // select(att), select(pun), produccion, bpa, supervisor
 
-        adminService.updatePerformanceLogEntry(date, dni, { [field]: val });
-        renderPerformanceSection(container); 
-        
-        // Mantener expandido
-        const row = document.querySelector(`.perf-row-${date}`);
-        if (row) {
-            document.querySelectorAll(`.perf-row-${date}`).forEach(r => r.style.display = 'table-row');
-        }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = rowsInTable[currentIndex + colsPerRow];
+                if (next) next.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = rowsInTable[currentIndex - colsPerRow];
+                if (prev) prev.focus();
+            } else if (e.key === 'ArrowRight' && (e.target.type !== 'number' || e.target.selectionEnd === e.target.value.length)) {
+                // Navegar derecha si no es número o si el cursor está al final
+                const next = rowsInTable[currentIndex + 1];
+                if (next) next.focus();
+            } else if (e.key === 'ArrowLeft' && (e.target.type !== 'number' || e.target.selectionStart === 0)) {
+                // Navegar izquierda si el cursor está al inicio
+                const prev = rowsInTable[currentIndex - 1];
+                if (prev) prev.focus();
+            }
+        };
+
+        // Cambio y cálculo instantáneo (Sin re-render total para no perder foco)
+        input.onchange = (e) => {
+            const { date, dni, f: field } = e.target.dataset;
+            let val = e.target.value;
+
+            if (field === 'produccion' || field === 'bpa' || field === 'supervisor') {
+                val = parseFloat(val) || 0;
+                if (val > 10) val = 10;
+                if (val < 0) val = 0;
+                e.target.value = val;
+            }
+
+            // Actualizar datos en memoria
+            adminService.updatePerformanceLogEntry(date, dni, { [field]: val });
+
+            // Recalcular rendimiento de la FILA localmente para la UI
+            const entry = adminService.getPerformanceLog().find(p => p.dni === dni && p.date === date);
+            if (entry) {
+                const cellRend = document.getElementById(`rend-${dni}-${date}`);
+                if (cellRend) cellRend.textContent = entry.rendimiento;
+                
+                // Actualizar color si es select
+                if (field === 'asistencia') e.target.style.color = val === 'P' ? 'var(--success)' : '#ef4444';
+                if (field === 'puntualidad') e.target.style.color = val === 'SÍ' ? 'var(--success)' : '#ef4444';
+                
+                // Actualizar indicador de Justificación
+                const cellJust = document.getElementById(`just-${dni}-${date}`);
+                if (cellJust) {
+                    const hasJ = (entry.justification && entry.justification !== '');
+                    cellJust.textContent = hasJ ? 'SI' : 'NO';
+                    cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                }
+
+                // Recalcular PROMEDIO DE LA FECHA en la cabecera
+                const allForDate = adminService.getPerformanceLog().filter(p => p.date === date);
+                const sum = allForDate.reduce((acc, curr) => acc + parseInt(curr.rendimiento || 0), 0);
+                const avgText = Math.round(sum / allForDate.length) + '%';
+                const cellAvg = document.getElementById(`avg-${date}`);
+                if (cellAvg) cellAvg.textContent = avgText;
+            }
+        };
     });
   };
 
