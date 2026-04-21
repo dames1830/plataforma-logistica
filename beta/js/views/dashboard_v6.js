@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.75-pulse';
-const CACHE_KEY = `logistics_v11_1_75_`;
+const VERSION = '11.1.76-pulse';
+const CACHE_KEY = `logistics_v11_1_76_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -75,7 +75,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.75 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.76 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1060,13 +1060,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         XLSX.writeFile(wb, `Consolidado_KPI_${kpiStart}_a_${kpiEnd}.xlsx`);
     };
 
-    // --- FILTRADO INICIAL ---
-    const log = rawLog.filter(entry => {
-        const isDateIn = entry.date >= kpiStart && entry.date <= kpiEnd;
-        const matchesSearch = entry.nombre.toLowerCase().includes(kpiSearch.toLowerCase()) || 
-                             entry.apellidos.toLowerCase().includes(kpiSearch.toLowerCase()) ||
-                             entry.dni.includes(kpiSearch);
-        return isDateIn; // Los gráficos se filtran solo por fecha, la tabla por fecha + nombre
+    // --- DATOS PARA GRÁFICOS Y MÉTRICAS (Totales, sin filtro de reporte) ---
+    const log = rawLog;
+
+    // --- DATOS FILTRADOS PARA EL REPORTE CONSOLIDADO ---
+    const filteredLogForConsolidado = rawLog.filter(entry => {
+        return entry.date >= kpiStart && entry.date <= kpiEnd;
     });
 
     if (!log || log.length === 0) {
@@ -1094,7 +1093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // 2. Ranking de Operarios (Top 5) y Consolidado
     const workerMap = {};
-    log.forEach(entry => {
+    filteredLogForConsolidado.forEach(entry => {
         const key = entry.dni;
         if (!workerMap[key]) {
             workerMap[key] = { 
@@ -1238,9 +1237,18 @@ export const renderDashboard = async (container, user, onLogout) => {
         const iEnd = document.getElementById('kpi_end');
         const iSearch = document.getElementById('kpi_search');
         
+        // Mantenimiento de foco
+        if (kpiSearch && iSearch) {
+            iSearch.focus();
+            iSearch.selectionStart = iSearch.selectionEnd = iSearch.value.length;
+        }
+
         if (iStart) iStart.onchange = (e) => { kpiStart = e.target.value; renderKPIPerformanceSection(container); };
         if (iEnd) iEnd.onchange = (e) => { kpiEnd = e.target.value; renderKPIPerformanceSection(container); };
-        if (iSearch) iSearch.oninput = (e) => { kpiSearch = e.target.value; renderKPIPerformanceSection(container); };
+        if (iSearch) iSearch.oninput = (e) => { 
+            kpiSearch = e.target.value; 
+            renderKPIPerformanceSection(container); 
+        };
 
         const canvasEvo = document.getElementById('chartEvolution');
         const canvasRank = document.getElementById('chartRanking');
