@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.85-pulse';
-const CACHE_KEY = `logistics_v11_1_85_`;
+const VERSION = '11.1.90-pulse';
+const CACHE_KEY = `logistics_v11_1_90_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -78,7 +78,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.85 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830 v11.1.90 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1144,7 +1144,15 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     window.exportKPIConsolidado = (data) => {
-        const exportData = data.map(d => ({ 'Operario': d.name, 'Días Trabajados': d.diasTrabajados, 'Justificaciones': d.justificaciones, 'Faltas': d.faltas, 'Tardanzas': d.tardanzas, 'Promedio Rendimiento %': d.avg + '%' }));
+        const exportData = data.map(d => ({ 
+            'Periodo': `${kpiStart} al ${kpiEnd}`,
+            'Operario': d.name, 
+            'Días Trabajados': d.diasTrabajados, 
+            'Justificaciones': d.justificaciones, 
+            'Faltas': d.faltas, 
+            'Tardanzas': d.tardanzas, 
+            'Promedio Rendimiento %': d.avg + '%' 
+        }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Consolidado_KPI");
