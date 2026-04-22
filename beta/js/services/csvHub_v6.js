@@ -131,12 +131,28 @@ export const loadBufferReport = async () => {
         const json = await res.json();
         if (json.status === 'ok' && json.data) {
             console.log(`✅ Reporte Buffer cargado del servidor.`);
+            // Si devuelve un array, tomamos el último
+            if (Array.isArray(json.data)) return json.data[json.data.length - 1];
             return json.data;
         }
     } catch (e) {
         console.warn('⚠️ No se pudo cargar el reporte del servidor:', e);
     }
     return null;
+};
+
+export const fetchBufferHistory = async () => {
+    try {
+        const res = await fetch(`${SHARED_API}/buffer_report`);
+        if (!res.ok) return [];
+        const json = await res.json();
+        if (json.status === 'ok' && json.data) {
+            return Array.isArray(json.data) ? json.data : [json.data];
+        }
+    } catch (e) {
+        console.warn('⚠️ Error enviando consulta de historial:', e);
+    }
+    return [];
 };
 
 export const fetchAvailableDates = async () => {

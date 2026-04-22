@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.2.5-dev';
-const CACHE_KEY = `logistics_v11_2_5_`;
+const VERSION = '11.2.6-dev';
+const CACHE_KEY = `logistics_v11_2_6_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -19,6 +19,8 @@ const TABS = [
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
+    { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
@@ -89,7 +91,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.2.5 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.2.6 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -274,6 +276,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
+    } else if (activeBufferSub === 'historial_buffer') {
+        renderBufferHistory(buf);
+    } else if (activeBufferSub === 'kpi_buffer') {
+        renderBufferKPI(buf);
     } else {
         const now = new Date();
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
@@ -1514,7 +1520,129 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  document.getElementById('logoutBtn').addEventListener('click', onLogout);
-  renderNav();
-  renderTabContent();
-};
+  const renderBufferHistory = async (container) => {
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial desde el servidor compartido...</p></div>`;
+    const history = await fetchBufferHistory();
+    
+    if (!history || history.length === 0) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
+        return;
+    }
+
+    // Ordenar por fecha descendente
+    const sorted = [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
+
+    container.innerHTML = `
+        <div class="glass-panel animate-fade-in" style="padding:0; overflow:hidden;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                <thead>
+                    <tr style="background:rgba(255,255,255,0.05); text-align:left;">
+                        <th style="padding:1rem;">FECHA</th>
+                        <th style="padding:1rem;">USUARIO</th>
+                        <th style="padding:1rem; text-align:center;">EFICIENCIA</th>
+                        <th style="padding:1rem; text-align:right;">DETALLES</th>
+                        <th style="padding:1rem; text-align:right;">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted.map((item, idx) => {
+                        const date = new Date(item.created_at || item.ts).toLocaleString();
+                        const data = item.data || {};
+                        const totalEff = data.waterfall ? data.waterfall.find(w => w.nivel === 'Total')?.pct : '0%';
+                        return `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <td style="padding:0.8rem 1rem;">${date}</td>
+                            <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:600;">${item.updated_by || 'system'}</td>
+                            <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:rgba(16, 185, 129, 0.1); color:#10b981; padding:0.2rem 0.5rem; border-radius:4px; font-weight:bold;">${totalEff}</span></td>
+                            <td style="padding:0.8rem 1rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">${data.detalleZonas?.length || 0} LPNs</td>
+                            <td style="padding:0.8rem 1rem; text-align:right;">
+                                <button class="btn-restore" data-idx="${idx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️ CARGAR</button>
+                            </td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    container.querySelectorAll('.btn-restore').forEach(btn => {
+        btn.onclick = () => {
+            const item = sorted[parseInt(btn.dataset.idx)];
+            lastBufferKPI = item.data;
+            localStorage.setItem('lastBufferKPI', JSON.stringify(item.data));
+            activeBufferSub = 'reportes';
+            renderBufferTab();
+        };
+    });
+  };
+
+  const renderBufferKPI = async (container) => {
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Generando indicadores...</p></div>`;
+    const history = await fetchBufferHistory();
+    
+    if (!history || history.length < 2) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">Se requieren al menos 2 reportes para generar comparativas y gráficos de tendencia.</p></div>`;
+        return;
+    }
+
+    const sorted = [...history].sort((a,b) => new Date(a.created_at || a.ts) - new Date(b.created_at || b.ts));
+    const labels = sorted.map(item => new Date(item.created_at || item.ts).toLocaleDateString());
+    const effData = sorted.map(item => {
+        const pctStr = item.data?.waterfall?.find(w => w.nivel === 'Total')?.pct || '0%';
+        return parseFloat(pctStr);
+    });
+
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+            <div class="glass-panel animate-fade-in" style="padding:1.5rem;">
+                <h4 style="margin:0 0 1rem 0; font-size:0.9rem;">TENDENCIA DE EFICIENCIA (%)</h4>
+                <canvas id="bufferTrendChart" style="max-height:250px;"></canvas>
+            </div>
+            <div class="glass-panel animate-fade-in" style="padding:1.5rem;">
+                <h4 style="margin:0 0 1rem 0; font-size:0.9rem;">VOLUMEN RQ vs ATD</h4>
+                <canvas id="bufferVolumeChart" style="max-height:250px;"></canvas>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        const ctxTrend = document.getElementById('bufferTrendChart')?.getContext('2d');
+        if (ctxTrend) {
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Eficiencia de Llenado %',
+                        data: effData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+
+        const ctxVol = document.getElementById('bufferVolumeChart')?.getContext('2d');
+        if (ctxVol) {
+            new Chart(ctxVol, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'RQ (Demanda)', data: sorted.map(i => i.data?.waterfall?.find(w=>w.nivel==='Total')?.rq || 0), backgroundColor: '#fbbf24' },
+                        { label: 'ATD (Atendido)', data: sorted.map(i => i.data?.waterfall?.find(w=>w.nivel==='Total')?.atd || 0), backgroundColor: '#10b981' }
+                    ]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+    }, 100);
+  };
