@@ -340,9 +340,10 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.stockActivo;
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
+    const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !pedidos) {
-        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
+    if(!activo || !reserva || !pedidos || !articulos) {
+        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos, articulos: !!articulos });
         return null;
     }
 

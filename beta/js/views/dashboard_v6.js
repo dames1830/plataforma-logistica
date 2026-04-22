@@ -282,10 +282,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
               <div>
                 <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
-                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center;">
+                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
                     <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
                     <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
                     <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
+                    <span>${dataStore.articulos ? '✅' : '❌'} ARTICULO</span>
                     <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                 </div>
               </div>
