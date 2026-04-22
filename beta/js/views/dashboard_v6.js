@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.3.1-dev';
-const CACHE_KEY = `logistics_v11_3_1_`;
+const VERSION = '11.3.2-dev';
+const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -91,7 +91,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.1 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.2 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1527,8 +1527,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  const getWeekNumber = (d) => {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  };
+
   const renderBufferHistory = async (container) => {
-    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial desde el servidor compartido...</p></div>`;
+    container.innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+            <div class="spinner"></div>
+            <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer día...</p>
+        </div>`;
+    
     const history = await fetchBufferHistory();
     
     if (!history || history.length === 0) {
@@ -1536,69 +1548,62 @@ export const renderDashboard = async (container, user, onLogout) => {
         return;
     }
 
-    // Ordenar por fecha descendente
     const sorted = [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
 
     container.innerHTML = `
-        <div class="glass-panel animate-fade-in" style="padding:1.5rem; overflow-x:auto;">
-            <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; border: 1px solid rgba(255,255,255,0.1);">
-                <thead>
-                    <tr style="background:rgba(255,255,255,0.05);">
-                        <th rowspan="2" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); background:#facc15; color:#000;">FECHA</th>
-                        <th rowspan="2" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); background:#facc15; color:#000;">NIVEL/AREA</th>
-                        <th colspan="2" style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">SolidPack</th>
-                        <th colspan="2" style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">PreePack</th>
-                        <th rowspan="2" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">ACCIÓN</th>
-                    </tr>
-                    <tr style="background:rgba(255,255,255,0.03);">
-                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">PAL</th>
-                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">SKU</th>
-                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">PAL</th>
-                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">SKU</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sorted.map((report, rIdx) => {
-                        const ts = report.created_at || report.ts || Date.now();
-                        const date = new Date(ts).toLocaleDateString('es-ES', { day:'numeric', month:'short' });
-                        const repData = report.data || {};
-                        const niveles = repData.resumenNiveles || [];
-                        
-                        if (niveles.length === 0) return `<tr><td style="padding:1rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${date}</td><td colspan="6" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.1);">Datos del reporte no disponibles o formato antiguo</td></tr>`;
+        <div class="animate-fade-in" style="padding:0.5rem;">
+            <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
+            <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+                <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
+                    <thead>
+                        <tr style="background:#facc15; color:#000;">
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:rgba(255,255,255,0.05); color:white;">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map((report, rIdx) => {
+                            const ts = report.created_at || report.ts || Date.now();
+                            const dObj = new Date(ts);
+                            const semana = getWeekNumber(dObj);
+                            const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                            const repData = report.data || {};
+                            const niveles = repData.resumenNiveles || [];
+                            
+                            if (niveles.length === 0) {
+                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                    <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
+                                    </td>
+                                </tr>`;
+                            }
 
-                        // Calcular Totales del Reporte
-                        const total = { sp:0, ss:0, pp:0, ps:0 };
-                        niveles.forEach(n => {
-                            total.sp += n.solid.pal; total.ss += n.solid.sku;
-                            total.pp += n.pree.pal; total.ps += n.pree.sku;
-                        });
-
-                        return `
-                            ${niveles.map((n, nIdx) => `
-                                <tr>
-                                    ${nIdx === 0 ? `<td rowspan="${niveles.length + 1}" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center; font-weight:bold;">${date}</td>` : ''}
-                                    <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.1);">${n.nivel}</td>
-                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.solid.pal}</td>
-                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.solid.sku}</td>
-                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.pree.pal}</td>
-                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.pree.sku}</td>
-                                    ${nIdx === 0 ? `<td rowspan="${niveles.length + 1}" style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">
-                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.4rem; border-radius:4px; cursor:pointer; font-size:0.7rem;">👁️ CARGAR</button>
-                                    </td>` : ''}
-                                </tr>
-                            `).join('')}
-                            <tr style="background:rgba(255,255,255,0.05); font-weight:bold;">
-                                <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.1);">TOTAL</td>
-                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.sp}</td>
-                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.ss}</td>
-                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.pp}</td>
-                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.ps}</td>
-                            </tr>
-                            <tr style="height:1.5rem;"><td colspan="7"></td></tr> <!-- Espaciador entre reportes -->
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+                            return `
+                                ${niveles.map((n, nIdx) => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05);">${n.nivel}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.pal + n.pree.pal}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.sku + n.pree.sku}</td>
+                                        ${nIdx === 0 ? `<td rowspan="${niveles.length}" style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05); vertical-align:middle;">
+                                            <button class="btn-restore" data-idx="${rIdx}" title="Cargar Historial" style="background:var(--primary); border:none; color:white; padding:0.4rem 0.7rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">👁️ CARGAR</button>
+                                        </td>` : ''}
+                                    </tr>
+                                `).join('')}
+                                <tr style="height:10px; background:rgba(255,255,255,0.02);"><td colspan="6"></td></tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 
