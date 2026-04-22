@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.2.8-dev';
-const CACHE_KEY = `logistics_v11_2_8_`;
+const VERSION = '11.3.0-dev';
+const CACHE_KEY = `logistics_v11_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -91,7 +91,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.2.8 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.0 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -325,8 +325,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                             lastBufferKPI = res;
                             localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
-                            const saved = await saveBufferReport(res, user.username);
-                            console.log(saved ? '✅ Sincronizado' : '⚠️ Solo Local');
+                            
+                            // NUEVO: Confirmación de guardado en el historial
+                            setTimeout(async () => {
+                                if (confirm("¿Deseas guardar este análisis en el Historial Buffer?")) {
+                                    const saved = await saveBufferReport(res, user.username);
+                                    if (saved) alert("✅ Análisis guardado exitosamente en el historial.");
+                                    else console.warn('⚠️ Solo Local');
+                                }
+                            }, 300);
                         } else {
                             alert('⚠️ ERROR: Faltan archivos maestros.');
                         }
@@ -1533,32 +1540,60 @@ export const renderDashboard = async (container, user, onLogout) => {
     const sorted = [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
 
     container.innerHTML = `
-        <div class="glass-panel animate-fade-in" style="padding:0; overflow:hidden;">
-            <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+        <div class="glass-panel animate-fade-in" style="padding:1.5rem; overflow-x:auto;">
+            <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; border: 1px solid rgba(255,255,255,0.1);">
                 <thead>
-                    <tr style="background:rgba(255,255,255,0.05); text-align:left;">
-                        <th style="padding:1rem;">FECHA</th>
-                        <th style="padding:1rem;">USUARIO</th>
-                        <th style="padding:1rem; text-align:center;">EFICIENCIA</th>
-                        <th style="padding:1rem; text-align:right;">DETALLES</th>
-                        <th style="padding:1rem; text-align:right;">ACCIONES</th>
+                    <tr style="background:rgba(255,255,255,0.05);">
+                        <th rowspan="2" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); background:#facc15; color:#000;">FECHA</th>
+                        <th rowspan="2" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); background:#facc15; color:#000;">NIVEL/AREA</th>
+                        <th colspan="2" style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">SolidPack</th>
+                        <th colspan="2" style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">PreePack</th>
+                        <th rowspan="2" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">ACCIÓN</th>
+                    </tr>
+                    <tr style="background:rgba(255,255,255,0.03);">
+                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">PAL</th>
+                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">SKU</th>
+                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">PAL</th>
+                        <th style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:#facc15; color:#000;">SKU</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${sorted.map((item, idx) => {
-                        const date = new Date(item.created_at || item.ts).toLocaleString();
-                        const data = item.data || {};
-                        const totalEff = data.waterfall ? data.waterfall.find(w => w.nivel === 'Total')?.pct : '0%';
+                    ${sorted.map((report, rIdx) => {
+                        const date = new Date(report.created_at || report.ts).toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                        const niveles = report.data.resumenNiveles || [];
+                        
+                        if (niveles.length === 0) return `<tr><td colspan="7" style="padding:1rem; text-align:center; opacity:0.5;">Reporte antiguo sin desglose detallado</td></tr>`;
+
+                        // Calcular Totales del Reporte
+                        const total = { sp:0, ss:0, pp:0, ps:0 };
+                        niveles.forEach(n => {
+                            total.sp += n.solid.pal; total.ss += n.solid.sku;
+                            total.pp += n.pree.pal; total.ps += n.pree.sku;
+                        });
+
                         return `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td style="padding:0.8rem 1rem;">${date}</td>
-                            <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:600;">${item.updated_by || 'system'}</td>
-                            <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:rgba(16, 185, 129, 0.1); color:#10b981; padding:0.2rem 0.5rem; border-radius:4px; font-weight:bold;">${totalEff}</span></td>
-                            <td style="padding:0.8rem 1rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">${data.detalleZonas?.length || 0} LPNs</td>
-                            <td style="padding:0.8rem 1rem; text-align:right;">
-                                <button class="btn-restore" data-idx="${idx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️ CARGAR</button>
-                            </td>
-                        </tr>`;
+                            ${niveles.map((n, nIdx) => `
+                                <tr>
+                                    ${nIdx === 0 ? `<td rowspan="${niveles.length + 1}" style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center; font-weight:bold;">${date}</td>` : ''}
+                                    <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.1);">${n.nivel}</td>
+                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.solid.pal}</td>
+                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.solid.sku}</td>
+                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.pree.pal}</td>
+                                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${n.pree.sku}</td>
+                                    ${nIdx === 0 ? `<td rowspan="${niveles.length + 1}" style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">
+                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.4rem; border-radius:4px; cursor:pointer; font-size:0.7rem;">👁️ CARGAR</button>
+                                    </td>` : ''}
+                                </tr>
+                            `).join('')}
+                            <tr style="background:rgba(255,255,255,0.05); font-weight:bold;">
+                                <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.1);">TOTAL</td>
+                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.sp}</td>
+                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.ss}</td>
+                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.pp}</td>
+                                <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${total.ps}</td>
+                            </tr>
+                            <tr style="height:1.5rem;"><td colspan="7"></td></tr> <!-- Espaciador entre reportes -->
+                        `;
                     }).join('')}
                 </tbody>
             </table>

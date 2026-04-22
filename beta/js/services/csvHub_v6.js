@@ -550,11 +550,41 @@ export const calculateBufferPallets = (configOverride = null) => {
     const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
+    // =============================================
+    // V11.3: AGRUPACIÓN POR NIVEL (ESTRUCTURA IMAGEN)
+    // =============================================
+    const resumenNiveles = {};
+    const nivelMapping = { 'Zonas Bajas': '1. ZONAS BAJAS', 'Alto': '2. ALTO', 'Pisos': '3. PISOS', 'Aereo': '4. AEREO', 'Logica': '5. LOGICA' };
+    
+    detallePallets.forEach(r => {
+        const zonaInfo = detalleZonas.find(dz => dz.UBICACION === r.UBICACIONES);
+        const nivelRaw = zonaInfo ? zonaInfo['NIVEL/AREA'] : 'OTROS';
+        const nivelLabel = nivelMapping[nivelRaw] || nivelRaw;
+        
+        if (!resumenNiveles[nivelLabel]) {
+            resumenNiveles[nivelLabel] = {
+                solid: { pal: new Set(), sku: new Set() },
+                pree: { pal: new Set(), sku: new Set() }
+            };
+        }
+        const tipo = r.SKU.length >= 14 ? 'pree' : 'solid';
+        resumenNiveles[nivelLabel][tipo].pal.add(r.UBICACIONES);
+        resumenNiveles[nivelLabel][tipo].sku.add(r.SKU);
+    });
+
+    // Formatear para persistencia (Sets a Arrays/Counts)
+    const historyData = Object.keys(resumenNiveles).sort().map(lvl => ({
+        nivel: lvl,
+        solid: { pal: resumenNiveles[lvl].solid.pal.size, sku: resumenNiveles[lvl].solid.sku.size },
+        pree: { pal: resumenNiveles[lvl].pree.pal.size, sku: resumenNiveles[lvl].pree.sku.size }
+    }));
+
     return { 
         waterfall, 
         detalle: detallePallets, 
         detalleZonas, 
         resumenSKU: resEmp,
+        resumenNiveles: historyData,
         resumenGender: formatForensic(genderAggr),
         resumenMarca: formatForensic(marcaAggr)
     };
