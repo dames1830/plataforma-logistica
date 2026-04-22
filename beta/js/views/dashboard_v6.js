@@ -1646,3 +1646,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     }, 100);
   };
+
+  if (document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').addEventListener('click', onLogout);
+  }
+  renderNav();
+  renderTabContent();
+};
