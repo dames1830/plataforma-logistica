@@ -1193,8 +1193,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             w.diasTrabajados++; w.sum += rend; w.countForAvg++;
             if (entry.puntualidad === 'NO') w.tardanzas++;
         } else {
-            if (entry.justification && entry.justification !== '') w.justificaciones++;
-            else { w.faltas++; w.sum += rend; w.countForAvg++; }
+            const hasJustification = entry.justification && 
+                                   entry.justification.trim() !== '' && 
+                                   entry.justification.toUpperCase() !== 'NO';
+            
+            if (hasJustification) {
+                w.justificaciones++;
+                // Los días con justificación NO se cuentan en el promedio (se divide entre menos días)
+            } else {
+                w.faltas++; 
+                w.sum += rend; 
+                w.countForAvg++; 
+                // Sin justificación: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
+            }
         }
     });
 
