@@ -1378,8 +1378,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
                                 <input type="number" min="0" max="10" value="${p.supervisor !== undefined ? p.supervisor : 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
                             </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05); color:${p.justification?'#fcd34d':'rgba(255,255,255,0.2)'}; font-weight:800;" id="just-${p.dni}-${p.date}">
-                                ${ (p.justification && p.justification !== '') ? 'SI' : 'NO' }
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                <input type="text" id="just-${p.dni}-${p.date}" value="${p.justification || ''}" placeholder="NO" data-date="${p.date}" data-dni="${p.dni}" data-f="justification" class="edit-perf-log" style="width:100%; background:none; border:none; color:${p.justification ? '#fcd34d' : 'rgba(255,255,255,0.2)'}; text-align:center; outline:none; font-weight:800; font-size:0.75rem;">
                             </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
@@ -1413,7 +1413,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         input.onkeydown = (e) => {
             const rowsInTable = Array.from(document.querySelectorAll('.edit-perf-log'));
             const currentIndex = rowsInTable.indexOf(e.target);
-            const colsPerRow = 5; // select(att), select(pun), produccion, bpa, supervisor
+            const colsPerRow = 6; // select(att), select(pun), produccion, bpa, supervisor, justificacion
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
@@ -1463,8 +1463,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const cellJust = document.getElementById(`just-${dni}-${date}`);
                 if (cellJust) {
                     const hasJ = (entry.justification && entry.justification !== '');
-                    cellJust.textContent = hasJ ? 'SI' : 'NO';
-                    cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                    if (cellJust.tagName === 'INPUT') {
+                        cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                    } else {
+                        cellJust.textContent = hasJ ? 'SI' : 'NO';
+                        cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                    }
                 }
 
                 // Recalcular PROMEDIO DE LA FECHA en la cabecera
