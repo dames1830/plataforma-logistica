@@ -113,15 +113,29 @@ export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
         clearTimeout(timeoutId);
         if (response.ok) {
             console.log('✅ Reporte Buffer guardado en servidor.');
+            // Espejo local para asegurar que la pestaña de historial no se vea vacía
+            saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
             return true;
         } else {
             console.warn(`⚠️ Error servidor (${response.status}): Reporte NO guardado.`);
             return false;
         }
     } catch (e) {
-        console.warn('⚠️ Fallo de conexión o Timeout: Reporte guardado solo LOCALMENTE.', e);
+        console.warn('⚠️ Fallo de conexión o Timeout: Intentando guardado LOCAL.', e);
+        saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
         return false;
     }
+};
+
+const saveToLocalHistory = (report) => {
+    try {
+        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const history = JSON.parse(raw);
+        history.push(report);
+        // Mantener solo los últimos 20 reportes localmente
+        if (history.length > 20) history.shift();
+        localStorage.setItem('logistics_buffer_history_local', JSON.stringify(history));
+    } catch(e) { console.warn('⚠️ No se pudo guardar historial local:', e); }
 };
 
 export const loadBufferReport = async () => {
@@ -142,17 +156,35 @@ export const loadBufferReport = async () => {
 };
 
 export const fetchBufferHistory = async () => {
+    let serverHistory = [];
     try {
         const res = await fetch(`${SHARED_API}/buffer_report`);
-        if (!res.ok) return [];
-        const json = await res.json();
-        if (json.status === 'ok' && json.data) {
-            return Array.isArray(json.data) ? json.data : [json.data];
+        if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'ok' && json.data) {
+                serverHistory = Array.isArray(json.data) ? json.data : [json.data];
+            }
         }
     } catch (e) {
-        console.warn('⚠️ Error enviando consulta de historial:', e);
+        console.warn('⚠️ Error obteniendo historial del servidor:', e);
     }
-    return [];
+    
+    // Combinar con historial local para redundancia
+    try {
+        const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const localHistory = JSON.parse(localRaw);
+        
+        // Evitar duplicados (por timestamp si existe)
+        const combined = [...serverHistory];
+        localHistory.forEach(lh => {
+            const exists = combined.some(sh => (sh.ts === lh.ts) || (sh.created_at === lh.created_at));
+            if (!exists) combined.push(lh);
+        });
+        
+        return combined;
+    } catch(e) { 
+        return serverHistory; 
+    }
 };
 
 export const fetchAvailableDates = async () => {

@@ -1,8 +1,8 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.3.0-dev';
-const CACHE_KEY = `logistics_v11_3_0_`;
+const VERSION = '11.3.1-dev';
+const CACHE_KEY = `logistics_v11_3_1_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -91,7 +91,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.0 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.1 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1559,10 +1559,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </thead>
                 <tbody>
                     ${sorted.map((report, rIdx) => {
-                        const date = new Date(report.created_at || report.ts).toLocaleDateString('es-ES', { day:'numeric', month:'short' });
-                        const niveles = report.data.resumenNiveles || [];
+                        const ts = report.created_at || report.ts || Date.now();
+                        const date = new Date(ts).toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                        const repData = report.data || {};
+                        const niveles = repData.resumenNiveles || [];
                         
-                        if (niveles.length === 0) return `<tr><td colspan="7" style="padding:1rem; text-align:center; opacity:0.5;">Reporte antiguo sin desglose detallado</td></tr>`;
+                        if (niveles.length === 0) return `<tr><td style="padding:1rem; border:1px solid rgba(255,255,255,0.1); text-align:center;">${date}</td><td colspan="6" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.1);">Datos del reporte no disponibles o formato antiguo</td></tr>`;
 
                         // Calcular Totales del Reporte
                         const total = { sp:0, ss:0, pp:0, ps:0 };
