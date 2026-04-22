@@ -77,20 +77,26 @@ const flushOldKeys = (aggressive = false) => {
     try {
         const activePrefix = 'logistics_admin_v11_';
         const keysToRemove = [];
+        const whiteList = ['logistics_session', 'logistics_cache_', 'logistics_meta_'];
+        
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (!key) continue;
-            // Eliminar claves de Pulse que no sean de la versión actual
-            if (key.startsWith('logistics_') && !key.startsWith(activePrefix)) {
-                keysToRemove.push(key);
-            }
-            // Si es agresivo, eliminar backups temporales o logs muy pesados si existen
-            if (aggressive && key.includes('_performance_log') && key.length > 500000) {
-                 // Aquí podríamos decidir si borrar logs locales demasiado pesados
+            
+            // Si la clave es de logística pero no es la versión actual y no está en la lista blanca
+            if (key.startsWith('logistics_')) {
+                const isInWhiteList = whiteList.some(w => key.startsWith(w));
+                const isCurrentVersion = key.startsWith(activePrefix);
+                
+                if (!isCurrentVersion && !isInWhiteList) {
+                    keysToRemove.push(key);
+                }
             }
         }
         keysToRemove.forEach(k => localStorage.removeItem(k));
-        console.log(`🧹 Almacenamiento: ${keysToRemove.length} claves antiguas eliminadas.`);
+        if (keysToRemove.length > 0) {
+            console.log(`🧹 Almacenamiento: ${keysToRemove.length} claves antiguas eliminadas.`);
+        }
     } catch (e) { console.error("Error in flushOldKeys:", e); }
 };
 
