@@ -77,20 +77,26 @@ const flushOldKeys = (aggressive = false) => {
     try {
         const activePrefix = 'logistics_admin_v11_';
         const keysToRemove = [];
+        const whiteList = ['logistics_session', 'logistics_cache_', 'logistics_meta_'];
+        
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (!key) continue;
-            // Eliminar claves de Pulse que no sean de la versión actual
-            if (key.startsWith('logistics_') && !key.startsWith(activePrefix)) {
-                keysToRemove.push(key);
-            }
-            // Si es agresivo, eliminar backups temporales o logs muy pesados si existen
-            if (aggressive && key.includes('_performance_log') && key.length > 500000) {
-                 // Aquí podríamos decidir si borrar logs locales demasiado pesados
+            
+            // Si la clave es de logística pero no es la versión actual y no está en la lista blanca
+            if (key.startsWith('logistics_')) {
+                const isInWhiteList = whiteList.some(w => key.startsWith(w));
+                const isCurrentVersion = key.startsWith(activePrefix);
+                
+                if (!isCurrentVersion && !isInWhiteList) {
+                    keysToRemove.push(key);
+                }
             }
         }
         keysToRemove.forEach(k => localStorage.removeItem(k));
-        console.log(`🧹 Almacenamiento: ${keysToRemove.length} claves antiguas eliminadas.`);
+        if (keysToRemove.length > 0) {
+            console.log(`🧹 Almacenamiento: ${keysToRemove.length} claves antiguas eliminadas.`);
+        }
     } catch (e) { console.error("Error in flushOldKeys:", e); }
 };
 
@@ -274,7 +280,39 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
     await saveAttendance(date, { finalized: true, data: attendanceData });
 };
 
+export const reopenAttendance = async (date) => {
+    const all = adminStore.attendance;
+    if (!all[date] || !all[date].finalized) return;
+
+    // 1. Revertir cambios en currentPerf (Acumulado)
+    const currentPerf = getPerformance();
+    const log = getPerformanceLog();
+    const dailyLog = log.filter(l => l.date === date);
+
+    dailyLog.forEach(l => {
+        const entry = currentPerf.find(p => p.dni === l.dni);
+        if (entry) {
+            if (l.asistencia === 'P') {
+                entry.asistencia = Math.max(0, entry.asistencia - 1);
+                if (l.puntualidad === 'SÍ') {
+                    entry.puntualidad_count = Math.max(0, (entry.puntualidad_count || 0) - 1);
+                }
+                const pct = entry.asistencia > 0 ? Math.round((entry.puntualidad_count / entry.asistencia) * 100) : 0;
+                entry.puntualidad = `${pct}%`;
+            }
+        }
+    });
+
+    // 2. Marcar como no finalizado
+    all[date].finalized = false;
+
+    // 3. Guardar cambios
+    await save('performance', currentPerf);
+    await save('attendance', all);
+};
+
 export const getPerformanceLog = () => adminStore.performance_log;
+
 export const updatePerformanceLogEntry = (date, dni, fields) => {
     const log = getPerformanceLog();
     const idx = log.findIndex(l => l.date === date && l.dni === dni);

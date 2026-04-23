@@ -113,15 +113,29 @@ export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
         clearTimeout(timeoutId);
         if (response.ok) {
             console.log('✅ Reporte Buffer guardado en servidor.');
+            // Espejo local para asegurar que la pestaña de historial no se vea vacía
+            saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
             return true;
         } else {
             console.warn(`⚠️ Error servidor (${response.status}): Reporte NO guardado.`);
             return false;
         }
     } catch (e) {
-        console.warn('⚠️ Fallo de conexión o Timeout: Reporte guardado solo LOCALMENTE.', e);
+        console.warn('⚠️ Fallo de conexión o Timeout: Intentando guardado LOCAL.', e);
+        saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
         return false;
     }
+};
+
+const saveToLocalHistory = (report) => {
+    try {
+        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const history = JSON.parse(raw);
+        history.push(report);
+        // Mantener solo los últimos 20 reportes localmente
+        if (history.length > 20) history.shift();
+        localStorage.setItem('logistics_buffer_history_local', JSON.stringify(history));
+    } catch(e) { console.warn('⚠️ No se pudo guardar historial local:', e); }
 };
 
 export const loadBufferReport = async () => {
@@ -131,12 +145,46 @@ export const loadBufferReport = async () => {
         const json = await res.json();
         if (json.status === 'ok' && json.data) {
             console.log(`✅ Reporte Buffer cargado del servidor.`);
+            // Si devuelve un array, tomamos el último
+            if (Array.isArray(json.data)) return json.data[json.data.length - 1];
             return json.data;
         }
     } catch (e) {
         console.warn('⚠️ No se pudo cargar el reporte del servidor:', e);
     }
     return null;
+};
+
+export const fetchBufferHistory = async () => {
+    let serverHistory = [];
+    try {
+        const res = await fetch(`${SHARED_API}/buffer_report`);
+        if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'ok' && json.data) {
+                serverHistory = Array.isArray(json.data) ? json.data : [json.data];
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Error obteniendo historial del servidor:', e);
+    }
+    
+    // Combinar con historial local para redundancia
+    try {
+        const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const localHistory = JSON.parse(localRaw);
+        
+        // Evitar duplicados (por timestamp si existe)
+        const combined = [...serverHistory];
+        localHistory.forEach(lh => {
+            const exists = combined.some(sh => (sh.ts === lh.ts) || (sh.created_at === lh.created_at));
+            if (!exists) combined.push(lh);
+        });
+        
+        return combined;
+    } catch(e) { 
+        return serverHistory; 
+    }
 };
 
 export const fetchAvailableDates = async () => {
@@ -340,9 +388,10 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.stockActivo;
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
+    const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !pedidos) {
-        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
+    if(!activo || !reserva || !pedidos || !articulos) {
+        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos, articulos: !!articulos });
         return null;
     }
 
@@ -533,11 +582,41 @@ export const calculateBufferPallets = (configOverride = null) => {
     const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
     if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
 
+    // =============================================
+    // V11.3: AGRUPACIÓN POR NIVEL (ESTRUCTURA IMAGEN)
+    // =============================================
+    const resumenNiveles = {};
+    const nivelMapping = { 'Zonas Bajas': '1. ZONAS BAJAS', 'Alto': '2. ALTO', 'Pisos': '3. PISOS', 'Aereo': '4. AEREO', 'Logica': '5. LOGICA' };
+    
+    detallePallets.forEach(r => {
+        const zonaInfo = detalleZonas.find(dz => dz.UBICACION === r.UBICACIONES);
+        const nivelRaw = zonaInfo ? zonaInfo['NIVEL/AREA'] : 'OTROS';
+        const nivelLabel = nivelMapping[nivelRaw] || nivelRaw;
+        
+        if (!resumenNiveles[nivelLabel]) {
+            resumenNiveles[nivelLabel] = {
+                solid: { pal: new Set(), sku: new Set() },
+                pree: { pal: new Set(), sku: new Set() }
+            };
+        }
+        const tipo = r.SKU.length >= 14 ? 'pree' : 'solid';
+        resumenNiveles[nivelLabel][tipo].pal.add(r.UBICACIONES);
+        resumenNiveles[nivelLabel][tipo].sku.add(r.SKU);
+    });
+
+    // Formatear para persistencia (Sets a Arrays/Counts)
+    const historyData = Object.keys(resumenNiveles).sort().map(lvl => ({
+        nivel: lvl,
+        solid: { pal: resumenNiveles[lvl].solid.pal.size, sku: resumenNiveles[lvl].solid.sku.size },
+        pree: { pal: resumenNiveles[lvl].pree.pal.size, sku: resumenNiveles[lvl].pree.sku.size }
+    }));
+
     return { 
         waterfall, 
         detalle: detallePallets, 
         detalleZonas, 
         resumenSKU: resEmp,
+        resumenNiveles: historyData,
         resumenGender: formatForensic(genderAggr),
         resumenMarca: formatForensic(marcaAggr)
     };

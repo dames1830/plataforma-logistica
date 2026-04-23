@@ -1,8 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
-const VERSION = '11.1.120-pulse';
-const CACHE_KEY = `logistics_v11_1_120_`;
+
+const VERSION = '11.3.2-dev';
+const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -19,6 +20,8 @@ const TABS = [
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
+    { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
@@ -89,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.1.120</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.3 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -274,6 +277,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
+    } else if (activeBufferSub === 'historial_buffer') {
+        renderBufferHistory(buf);
+    } else if (activeBufferSub === 'kpi_buffer') {
+        renderBufferKPI(buf);
     } else {
         const now = new Date();
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
@@ -282,10 +289,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
               <div>
                 <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
-                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center;">
+                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
                     <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
                     <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
                     <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
+                    <span>${dataStore.articulos ? '✅' : '❌'} ARTICULO</span>
                     <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                 </div>
               </div>
@@ -318,8 +326,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                             lastBufferKPI = res;
                             localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
-                            const saved = await saveBufferReport(res, user.username);
-                            console.log(saved ? '✅ Sincronizado' : '⚠️ Solo Local');
+                            
+                            // NUEVO: Confirmación de guardado en el historial
+                            setTimeout(async () => {
+                                if (confirm("¿Deseas guardar este análisis en el Historial Buffer?")) {
+                                    const saved = await saveBufferReport(res, user.username);
+                                    if (saved) alert("✅ Análisis guardado exitosamente en el historial.");
+                                    else console.warn('⚠️ Solo Local');
+                                }
+                            }, 300);
                         } else {
                             alert('⚠️ ERROR: Faltan archivos maestros.');
                         }
@@ -895,7 +910,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${!existing?.finalized ? `
                     <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 2.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA</button>
                 ` : `
-                    <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
+                        ${(user.role.toLowerCase() === 'admin' || user.username === 'dames') ? `
+                            <button id="btn_reopen_asist" class="btn" style="width:auto; background:#ef4444; padding:0.6rem 1rem; font-size:0.8rem; font-weight:800; border-radius:8px; box-shadow:0 0 10px rgba(239,68,68,0.3);">🔓 REABRIR</button>
+                        ` : ''}
+                    </div>
                 `}
             </div>
         </div>
@@ -1019,6 +1039,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                     // Lógica solicitado por el usuario: Reiniciar columnas localmente
                     localState.forEach(s => { s.present = true; s.onTime = true; });
                     
+                    renderAsistenciaSection(container);
+                }
+            };
+        }
+    } else {
+        // Lógica de Reapertura exclusiva para ADMIN o usuario 'dames'
+        const btnReopen = document.getElementById('btn_reopen_asist');
+        if (btnReopen && (user.role.toLowerCase() === 'admin' || user.username === 'dames')) {
+            btnReopen.onclick = async () => {
+                if (confirm(`🚨 ¿Deseas REABRIR la asistencia para el día ${forcedDate}? \n\nEsto permitirá al asistente volver a pasar lista y descontará los registros actuales del acumulado de performance para evitar duplicados.`)) {
+                    btnReopen.disabled = true;
+                    btnReopen.textContent = "⌛ REABRIENDO...";
+                    await adminService.reopenAttendance(forcedDate);
                     renderAsistenciaSection(container);
                 }
             };
@@ -1179,8 +1212,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             w.diasTrabajados++; w.sum += rend; w.countForAvg++;
             if (entry.puntualidad === 'NO') w.tardanzas++;
         } else {
-            if (entry.justification && entry.justification !== '') w.justificaciones++;
-            else { w.faltas++; w.sum += rend; w.countForAvg++; }
+            const hasJustification = entry.justification && 
+                                   entry.justification.trim() !== '' && 
+                                   entry.justification.toUpperCase() !== 'NO';
+            
+            if (hasJustification) {
+                w.justificaciones++;
+                // Los días con justificación NO se cuentan en el promedio (se divide entre menos días)
+            } else {
+                w.faltas++; 
+                w.sum += rend; 
+                w.countForAvg++; 
+                // Sin justificación: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
+            }
         }
     });
 
@@ -1364,8 +1408,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
                                 <input type="number" min="0" max="10" value="${p.supervisor !== undefined ? p.supervisor : 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
                             </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05); color:${p.justification?'#fcd34d':'rgba(255,255,255,0.2)'}; font-weight:800;" id="just-${p.dni}-${p.date}">
-                                ${ (p.justification && p.justification !== '') ? 'SI' : 'NO' }
+                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                <input type="text" id="just-${p.dni}-${p.date}" value="${p.justification || ''}" placeholder="NO" data-date="${p.date}" data-dni="${p.dni}" data-f="justification" class="edit-perf-log" style="width:100%; background:none; border:none; color:${p.justification ? '#fcd34d' : 'rgba(255,255,255,0.2)'}; text-align:center; outline:none; font-weight:800; font-size:0.75rem;">
                             </td>
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
@@ -1399,7 +1443,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         input.onkeydown = (e) => {
             const rowsInTable = Array.from(document.querySelectorAll('.edit-perf-log'));
             const currentIndex = rowsInTable.indexOf(e.target);
-            const colsPerRow = 5; // select(att), select(pun), produccion, bpa, supervisor
+            const colsPerRow = 6; // select(att), select(pun), produccion, bpa, supervisor, justificacion
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
@@ -1449,8 +1493,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const cellJust = document.getElementById(`just-${dni}-${date}`);
                 if (cellJust) {
                     const hasJ = (entry.justification && entry.justification !== '');
-                    cellJust.textContent = hasJ ? 'SI' : 'NO';
-                    cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                    if (cellJust.tagName === 'INPUT') {
+                        cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                    } else {
+                        cellJust.textContent = hasJ ? 'SI' : 'NO';
+                        cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
+                    }
                 }
 
                 // Recalcular PROMEDIO DE LA FECHA en la cabecera
@@ -1513,7 +1561,171 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  document.getElementById('logoutBtn').addEventListener('click', onLogout);
+  const getWeekNumber = (d) => {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  };
+
+  const renderBufferHistory = async (container) => {
+    container.innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+            <div class="spinner"></div>
+            <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer día...</p>
+        </div>`;
+    
+    const history = await fetchBufferHistory();
+    
+    if (!history || history.length === 0) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
+        return;
+    }
+
+    const sorted = [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
+
+    container.innerHTML = `
+        <div class="animate-fade-in" style="padding:0.5rem;">
+            <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
+            <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+                <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
+                    <thead>
+                        <tr style="background:#facc15; color:#000;">
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:rgba(255,255,255,0.05); color:white;">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map((report, rIdx) => {
+                            const ts = report.created_at || report.ts || Date.now();
+                            const dObj = new Date(ts);
+                            const semana = getWeekNumber(dObj);
+                            const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                            const repData = report.data || {};
+                            const niveles = repData.resumenNiveles || [];
+                            
+                            if (niveles.length === 0) {
+                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                    <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
+                                    </td>
+                                </tr>`;
+                            }
+
+                            return `
+                                ${niveles.map((n, nIdx) => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05);">${n.nivel}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.pal + n.pree.pal}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.sku + n.pree.sku}</td>
+                                        ${nIdx === 0 ? `<td rowspan="${niveles.length}" style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05); vertical-align:middle;">
+                                            <button class="btn-restore" data-idx="${rIdx}" title="Cargar Historial" style="background:var(--primary); border:none; color:white; padding:0.4rem 0.7rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">👁️ CARGAR</button>
+                                        </td>` : ''}
+                                    </tr>
+                                `).join('')}
+                                <tr style="height:10px; background:rgba(255,255,255,0.02);"><td colspan="6"></td></tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    container.querySelectorAll('.btn-restore').forEach(btn => {
+        btn.onclick = () => {
+            const item = sorted[parseInt(btn.dataset.idx)];
+            lastBufferKPI = item.data;
+            localStorage.setItem('lastBufferKPI', JSON.stringify(item.data));
+            activeBufferSub = 'reportes';
+            renderBufferTab();
+        };
+    });
+  };
+
+  const renderBufferKPI = async (container) => {
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Generando indicadores...</p></div>`;
+    const history = await fetchBufferHistory();
+    
+    if (!history || history.length < 2) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">Se requieren al menos 2 reportes para generar comparativas y gráficos de tendencia.</p></div>`;
+        return;
+    }
+
+    const sorted = [...history].sort((a,b) => new Date(a.created_at || a.ts) - new Date(b.created_at || b.ts));
+    const labels = sorted.map(item => new Date(item.created_at || item.ts).toLocaleDateString());
+    const effData = sorted.map(item => {
+        const pctStr = item.data?.waterfall?.find(w => w.nivel === 'Total')?.pct || '0%';
+        return parseFloat(pctStr);
+    });
+
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+            <div class="glass-panel animate-fade-in" style="padding:1.5rem;">
+                <h4 style="margin:0 0 1rem 0; font-size:0.9rem;">TENDENCIA DE EFICIENCIA (%)</h4>
+                <canvas id="bufferTrendChart" style="max-height:250px;"></canvas>
+            </div>
+            <div class="glass-panel animate-fade-in" style="padding:1.5rem;">
+                <h4 style="margin:0 0 1rem 0; font-size:0.9rem;">VOLUMEN RQ vs ATD</h4>
+                <canvas id="bufferVolumeChart" style="max-height:250px;"></canvas>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        const ctxTrend = document.getElementById('bufferTrendChart')?.getContext('2d');
+        if (ctxTrend) {
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Eficiencia de Llenado %',
+                        data: effData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+
+        const ctxVol = document.getElementById('bufferVolumeChart')?.getContext('2d');
+        if (ctxVol) {
+            new Chart(ctxVol, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'RQ (Demanda)', data: sorted.map(i => i.data?.waterfall?.find(w=>w.nivel==='Total')?.rq || 0), backgroundColor: '#fbbf24' },
+                        { label: 'ATD (Atendido)', data: sorted.map(i => i.data?.waterfall?.find(w=>w.nivel==='Total')?.atd || 0), backgroundColor: '#10b981' }
+                    ]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+    }, 100);
+  };
+
+  if (document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').addEventListener('click', onLogout);
+  }
   renderNav();
   renderTabContent();
 };

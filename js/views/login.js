@@ -6,17 +6,17 @@ export const renderLogin = (container, onLoginSuccess) => {
   container.innerHTML = `
     <div class="login-box glass-panel animate-fade-in">
       <div class="login-header">
-        <h1>SysLogistics</h1>
+        <h1>DAMES1830 <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v11.3.1</span></h1>
         <p>Inicia sesión para acceder a tu área</p>
       </div>
       <form id="loginForm">
         <div class="input-group">
           <label for="username">Usuario</label>
-          <input type="text" id="username" placeholder="Ej: admin o operario" required autofocus autocomplete="off">
+          <input type="text" id="username" placeholder="Ingresa tu usuario" required autofocus autocomplete="off">
         </div>
         <div class="input-group">
           <label for="password">Contraseña</label>
-          <input type="password" id="password" placeholder="Ingresa 123" required>
+          <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
         </div>
         <div id="loginError" class="error-message"></div>
         <button type="submit" class="btn" style="margin-top: 1rem;" id="loginBtn">Ingresar al Sistema</button>
