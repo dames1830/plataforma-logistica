@@ -1,6 +1,7 @@
 import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.1.28-pulse';
 import * as adminService from '../services/adminService.js?v=11.1.28-pulse';
 
+
 const VERSION = '11.3.2-dev';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
@@ -91,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.2 [BETA]</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.3 [BETA]</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -909,7 +910,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${!existing?.finalized ? `
                     <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 2.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA</button>
                 ` : `
-                    <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
+                        ${(user.role.toLowerCase() === 'admin' || user.username === 'dames') ? `
+                            <button id="btn_reopen_asist" class="btn" style="width:auto; background:#ef4444; padding:0.6rem 1rem; font-size:0.8rem; font-weight:800; border-radius:8px; box-shadow:0 0 10px rgba(239,68,68,0.3);">🔓 REABRIR</button>
+                        ` : ''}
+                    </div>
                 `}
             </div>
         </div>
@@ -1033,6 +1039,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                     // Lógica solicitado por el usuario: Reiniciar columnas localmente
                     localState.forEach(s => { s.present = true; s.onTime = true; });
                     
+                    renderAsistenciaSection(container);
+                }
+            };
+        }
+    } else {
+        // Lógica de Reapertura exclusiva para ADMIN o usuario 'dames'
+        const btnReopen = document.getElementById('btn_reopen_asist');
+        if (btnReopen && (user.role.toLowerCase() === 'admin' || user.username === 'dames')) {
+            btnReopen.onclick = async () => {
+                if (confirm(`🚨 ¿Deseas REABRIR la asistencia para el día ${forcedDate}? \n\nEsto permitirá al asistente volver a pasar lista y descontará los registros actuales del acumulado de performance para evitar duplicados.`)) {
+                    btnReopen.disabled = true;
+                    btnReopen.textContent = "⌛ REABRIENDO...";
+                    await adminService.reopenAttendance(forcedDate);
                     renderAsistenciaSection(container);
                 }
             };

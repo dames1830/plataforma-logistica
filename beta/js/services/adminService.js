@@ -280,7 +280,39 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
     await saveAttendance(date, { finalized: true, data: attendanceData });
 };
 
+export const reopenAttendance = async (date) => {
+    const all = adminStore.attendance;
+    if (!all[date] || !all[date].finalized) return;
+
+    // 1. Revertir cambios en currentPerf (Acumulado)
+    const currentPerf = getPerformance();
+    const log = getPerformanceLog();
+    const dailyLog = log.filter(l => l.date === date);
+
+    dailyLog.forEach(l => {
+        const entry = currentPerf.find(p => p.dni === l.dni);
+        if (entry) {
+            if (l.asistencia === 'P') {
+                entry.asistencia = Math.max(0, entry.asistencia - 1);
+                if (l.puntualidad === 'SÍ') {
+                    entry.puntualidad_count = Math.max(0, (entry.puntualidad_count || 0) - 1);
+                }
+                const pct = entry.asistencia > 0 ? Math.round((entry.puntualidad_count / entry.asistencia) * 100) : 0;
+                entry.puntualidad = `${pct}%`;
+            }
+        }
+    });
+
+    // 2. Marcar como no finalizado
+    all[date].finalized = false;
+
+    // 3. Guardar cambios
+    await save('performance', currentPerf);
+    await save('attendance', all);
+};
+
 export const getPerformanceLog = () => adminStore.performance_log;
+
 export const updatePerformanceLogEntry = (date, dni, fields) => {
     const log = getPerformanceLog();
     const idx = log.findIndex(l => l.date === date && l.dni === dni);
