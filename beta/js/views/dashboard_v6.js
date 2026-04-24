@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.5.1</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.5.2</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -378,9 +378,10 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
-    const tableWidth = '600px';
+    const widthLeft = '580px';
+    const widthRight = '420px';
     container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:0.6rem; width:${tableWidth};">
+        <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthLeft};">
             <!-- COLUMNA IZQUIERDA: ZONAS + SKU -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
                 <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER ZONAS</h3></div>
@@ -409,7 +410,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:0.6rem; width:${tableWidth};">
+        <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
             <!-- COLUMNA DERECHA: GENDER + MARCAS -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid #ec4899; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(236,72,153,0.3);">
                 <div style="padding:0.7rem; background:rgba(236,72,153,0.1); border-bottom:1px solid rgba(236,72,153,0.3); text-align:center;"><h3 style="color:#ec4899; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">DISCREPANCIAS GENDER (Zonas 3,4,5)</h3></div>
