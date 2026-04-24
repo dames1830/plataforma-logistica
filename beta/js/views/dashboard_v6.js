@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.9</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.0</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1109,14 +1109,27 @@ export const renderDashboard = async (container, user, onLogout) => {
     const evolutionLabels = sortedDates;
     const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
 
+    const getWeekNumber = (d) => {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    };
+
+    const currentWeekNum = getWeekNumber(new Date());
+
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
+        const entryDate = new Date(entry.date + 'T12:00:00'); // Evitar desfase
+        if (getWeekNumber(entryDate) !== currentWeekNum) return;
+
         const key = entry.dni;
-        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0, tardanzas: 0 };
+        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0 };
         
         if (entry.asistencia === 'P') {
             globalWorkerMap[key].sum += parsePct(entry.rendimiento);
             globalWorkerMap[key].count++;
+            globalWorkerMap[key].diasTrabajados++;
             if (entry.puntualidad === 'NO') globalWorkerMap[key].tardanzas++;
         }
     });
@@ -1174,8 +1187,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
-                <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (HISTÓRICO)</h4>
-                <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Ordenado de forma descendente</span>
+                <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (SEMANA ${currentWeekNum})</h4>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Operarios con incidencias en la semana actual</span>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
@@ -1183,7 +1196,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tr style="border-bottom:2px solid rgba(249, 115, 22, 0.2); color:var(--text-muted);">
                             <th style="padding:0.8rem; text-align:center; width:60px;">N°</th>
                             <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
+                            <th style="padding:0.8rem; text-align:center;">DÍAS TRABAJADOS</th>
                             <th style="padding:0.8rem; text-align:center; background:rgba(249, 115, 22, 0.05); color:#f97316;">TARDANZAS</th>
+                            <th style="padding:0.8rem; text-align:center;">N° SEMANA</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1191,9 +1206,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                                 <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700;">${idx + 1}</td>
                                 <td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td>
+                                <td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados} d</td>
                                 <td style="padding:0.8rem; text-align:center; font-weight:900; color:#f97316; background:rgba(249, 115, 22, 0.02);">${w.tardanzas}</td>
+                                <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:800;">${currentWeekNum}</td>
                             </tr>
-                        `).join('') : '<tr><td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted);">No se registran tardanzas en el historial.</td></tr>'}
+                        `).join('') : '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No se registran tardanzas en la semana actual.</td></tr>'}
                     </tbody>
                 </table>
             </div>
