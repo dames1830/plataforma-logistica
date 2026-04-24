@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.5</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.6</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1224,24 +1224,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span style="font-size:1.3rem;">🚫</span> RANKING DE TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(251, 146, 60, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.8rem; text-align:center; width:40px;">N°</th>
-                                    <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th>
-                                    <th style="padding:0.8rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARDANZAS</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:30px;">N°</th>
+                                    <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS TRAB.</th>
+                                    <th style="padding:0.4rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARDANZAS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${tardanzasRanking.length ? tardanzasRanking.map((w, idx) => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.8rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.8rem; color:#f8fafc; font-weight:600;">${w.name}</td>
-                                        <td style="padding:0.8rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.8rem; text-align:center; font-weight:950; color:#fb923c; background:rgba(251, 146, 60, 0.05); font-size:0.9rem;">${w.tardanzas}</td>
+                                        <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
+                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600;">${w.name}</td>
+                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
+                                        <td style="padding:0.3rem; text-align:center; font-weight:950; color:#fb923c; background:rgba(251, 146, 60, 0.05);">${w.tardanzas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:3rem; text-align:center; color:#64748b; font-weight:600;">Sin incidencias registradas</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b; font-weight:600;">Sin incidencias</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -1253,24 +1253,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span style="font-size:1.3rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(248, 113, 113, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.8rem; text-align:center; width:40px;">N°</th>
-                                    <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th>
-                                    <th style="padding:0.8rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:30px;">N°</th>
+                                    <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS TRAB.</th>
+                                    <th style="padding:0.4rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${faltasRanking.length ? faltasRanking.map((w, idx) => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.8rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.8rem; color:#f8fafc; font-weight:600;">${w.name}</td>
-                                        <td style="padding:0.8rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.8rem; text-align:center; font-weight:950; color:#f87171; background:rgba(248, 113, 113, 0.05); font-size:0.9rem;">${w.faltas}</td>
+                                        <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
+                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600;">${w.name}</td>
+                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
+                                        <td style="padding:0.3rem; text-align:center; font-weight:950; color:#f87171; background:rgba(248, 113, 113, 0.05);">${w.faltas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:3rem; text-align:center; color:#64748b; font-weight:600;">Sin faltas injustificadas</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b; font-weight:600;">Sin faltas</td></tr>'}
                             </tbody>
                         </table>
                     </div>
