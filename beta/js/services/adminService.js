@@ -261,7 +261,9 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
         const tempEntry = {
             asistencia: isPresent ? 'P' : 'F',
             puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
-            produccion: 0, bpa: 0, supervisor: 0
+            produccion: isPresent ? 10 : 0, 
+            bpa: isPresent ? 10 : 0, 
+            supervisor: isPresent ? 9 : 0
         };
         const newLogEntry = {
             date, dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
