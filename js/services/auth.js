@@ -17,6 +17,19 @@ export const login = async (username, password) => {
     if (response.ok) {
       const result = await response.json();
       if (result.success) {
+        // [PULSE SECURITY OVERRIDE] Verificar contra la lista local de administración
+        try {
+          const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+          if (dynamicUsersRaw) {
+            const dynamicUsers = JSON.parse(dynamicUsersRaw);
+            const dUser = dynamicUsers.find(u => u.username === username);
+            if (dUser) {
+              if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
+              if (dUser.password !== password) return { success: false, message: 'Contraseña incorrecta. Se ha actualizado recientemente.' };
+            }
+          }
+        } catch(e) { console.warn("Error en Security Override:", e); }
+
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };

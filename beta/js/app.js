@@ -3,8 +3,7 @@ import { getSession, logout } from './services/auth.js?v=11.3.3';
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.idleTimer = null;
-    this.IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutos en milisegundos
+    this.IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutos
     this.init();
   }
 
@@ -14,27 +13,43 @@ class App {
   }
 
   setupInactivityTracker() {
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     
-    const resetTimer = () => {
-      if (this.idleTimer) clearTimeout(this.idleTimer);
-      
+    const updateLastActivity = () => {
+      if (getSession()) {
+        localStorage.setItem('pulse_last_activity', Date.now().toString());
+      }
+    };
+
+    const checkInactivity = () => {
       const user = getSession();
-      if (user) {
-        this.idleTimer = setTimeout(() => {
-          console.warn("[PULSE] Sesión cerrada por inactividad (5 min)");
-          alert("Tu sesión ha expirado por inactividad. Serás redirigido al inicio.");
-          this.handleInactivityLogout();
-        }, this.IDLE_TIMEOUT);
+      if (!user) return;
+
+      const lastActivity = parseInt(localStorage.getItem('pulse_last_activity') || '0');
+      const now = Date.now();
+
+      if (lastActivity > 0 && (now - lastActivity) > this.IDLE_TIMEOUT) {
+        console.warn("[PULSE] Sesión expirada por inactividad detectada.");
+        alert("Tu sesión ha expirado (5 min de inactividad).");
+        this.handleInactivityLogout();
       }
     };
 
     events.forEach(name => {
-      window.addEventListener(name, resetTimer, true);
+      window.addEventListener(name, () => {
+        updateLastActivity();
+        checkInactivity();
+      }, true);
     });
 
-    // Iniciar el contador si ya hay sesión al cargar
-    resetTimer();
+    setInterval(checkInactivity, 30000); // Chequeo cada 30 segundos en background
+    
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') checkInactivity();
+    });
+
+    updateLastActivity();
+    checkInactivity();
   }
 
   handleInactivityLogout() {
@@ -44,21 +59,21 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v11.3.6";
+    const versionStr = "v11.6.0";
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
 
     try {
         const timestamp = new Date().getTime();
         console.log(`[PULSE] App ${versionStr} navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.3.6_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 logout();
                 this.navigate();
             });
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=11.1.101_${timestamp}`);
+            const { renderLogin } = await import(`./views/login.js?v=${versionStr}_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }
