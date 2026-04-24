@@ -92,12 +92,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.6.4</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.6.5</span></h2>
       </div>
       <div class="user-profile">
-        <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
-          <input type="date" id="globalDatePicker" style="background:transparent; border:none; color:var(--text-main); color-scheme:dark; outline:none; cursor:pointer;">
-        </div>
         <div class="user-details" style="text-align:right;">
           <span class="user-name" style="color:#fff; font-weight:600;">${user.name}</span>
           <span class="user-role" style="color:var(--text-muted); font-size:0.75rem;">${user.role.toUpperCase()} MASTER</span>
@@ -115,13 +112,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   `;
 
   const navContainer = document.getElementById('navLinks');
-  const contentTitle = document.getElementById('contentTitle');
-  const contentSubtitle = document.getElementById('contentSubtitle');
   const contentArea = document.getElementById('contentArea');
-  const datePicker = document.getElementById('globalDatePicker');
   
-  if (currentDateFilter) datePicker.value = currentDateFilter;
-  datePicker.addEventListener('change', (e) => { setDateFilter(e.target.value || null); renderTabContent(); });
+  if (currentDateFilter) setDateFilter(null); // Limpiar filtro al quitar el picker
 
   const renderNav = () => {
     navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">${t.icon} ${t.label}</a>`).join('');
@@ -150,13 +143,50 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderHomeTab = async () => {
-    contentSubtitle.textContent = "Control Global de Operaciones";
-    contentArea.innerHTML = `<div class="kpi-grid" id="homeKpiGrid"></div>`;
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const now = new Date();
+    
+    contentTitle.style.display = 'none'; // Ocultar título estándar para el Home
+    contentSubtitle.style.display = 'none';
+
+    contentArea.innerHTML = `
+        <div class="animate-fade-in" style="margin-bottom:2.5rem;">
+            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:2.5rem; border-radius:20px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); position:relative; overflow:hidden;">
+                <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary); filter:blur(100px); opacity:0.2;"></div>
+                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+                <div style="margin-top:0.8rem; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                    <p style="margin:0; color:#cbd5e1; font-size:1.1rem; font-weight:500;">Bienvenido al centro de control operativo.</p>
+                    <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">
+                        ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kpi-grid" id="homeKpiGrid"></div>
+    `;
+
+    // Reloj dinámico
+    if (window.homeClockInterval) clearInterval(window.homeClockInterval);
+    window.homeClockInterval = setInterval(() => {
+        const clockEl = document.getElementById('homeClock');
+        if (clockEl) {
+            const d = new Date();
+            clockEl.textContent = `${d.toLocaleDateString('es-ES', options)} | ${d.toLocaleTimeString()}`;
+        } else {
+            clearInterval(window.homeClockInterval);
+        }
+    }, 1000);
+
     ['stockActivo', 'stockReserva', 'buffer', 'picking'].forEach(a => {
         getAreaData(a).then(rows => {
             const grid = document.getElementById('homeKpiGrid');
             if(!grid) return;
-            grid.innerHTML += `<div class="kpi-card"><h4>${a.toUpperCase()}</h4><h2>${rows ? rows.length.toLocaleString() : 0}</h2></div>`;
+            grid.innerHTML += `
+                <div class="kpi-card" style="transition:transform 0.3s ease; cursor:pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <h4 style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">${a.replace('stock', 'STOCK ')}</h4>
+                    <h2 style="font-size:2.2rem; font-weight:800; color:#fff; margin:0;">${rows ? rows.length.toLocaleString() : 0}</h2>
+                    <div style="height:4px; width:40px; background:var(--primary); margin-top:1rem; border-radius:2px;"></div>
+                </div>`;
         });
     });
   };
