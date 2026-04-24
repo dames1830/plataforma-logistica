@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.5.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.5.1</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -297,15 +297,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
                     <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
                     <span>${dataStore.articulos ? '✅' : '❌'} ARTICULO</span>
-                    <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
+                    <div style="display:flex; align-items:center;">
+                        <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
+                        <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
+                        <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem; margin-left:1rem;">Generado el: <span style="color:var(--primary);">${timeStr}</span></span>
+                    </div>
                 </div>
               </div>
-              <div style="text-align:right; display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">
-                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0;">Generado el: <span style="color:var(--primary);">${timeStr}</span></h4>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
-                    <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.2rem; border-radius:6px; font-size:0.8rem;">⚡ PROCESAR ANÁLISIS</button>
-                </div>
+              <div style="text-align:right;">
+                <div id="export_actions" style="display:flex; gap:0.5rem; justify-content:flex-end;"></div>
               </div>
             </div>
             <div id="resultsArea" style="display:flex; gap:0.6rem; align-items:start;"></div>
