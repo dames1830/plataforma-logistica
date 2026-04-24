@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.3</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.4</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1202,15 +1202,15 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem;">
                 <div>
-                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800;">📉 ANALÍTICA DE INCIDENCIAS</h4>
-                    <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Análisis consolidado de puntualidad y asistencia</span>
+                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">📉 ANALÍTICA DE INCIDENCIAS</h4>
+                    <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* Análisis consolidado de puntualidad y asistencia</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                     <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">SEMANAS:</span>
+                     <span style="font-size:0.75rem; color:#fff; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Semanas:</span>
                      ${availableWeeks.map(wn => `
-                        <button class="week-tag ${selectedWeeks.includes(wn) ? 'active' : ''}" data-wn="${wn}" style="padding:4px 12px; border-radius:12px; font-size:0.7rem; font-weight:700; border:1px solid ${selectedWeeks.includes(wn) ? 'var(--primary)' : 'var(--border)'}; background:${selectedWeeks.includes(wn) ? 'rgba(79, 70, 229, 0.2)' : 'none'}; color:${selectedWeeks.includes(wn) ? 'var(--primary)' : 'var(--text-muted)'}; cursor:pointer;">
+                        <button class="week-tag ${selectedWeeks.includes(wn) ? 'active' : ''}" data-wn="${wn}" style="padding:5px 14px; border-radius:14px; font-size:0.75rem; font-weight:900; border:1px solid ${selectedWeeks.includes(wn) ? 'var(--primary)' : 'rgba(255,255,255,0.2)'}; background:${selectedWeeks.includes(wn) ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}; color:${selectedWeeks.includes(wn) ? '#fff' : '#cbd5e1'}; cursor:pointer; transition:all 0.2s ease;">
                             SEM ${wn}
                         </button>
                      `).join('')}
@@ -1219,58 +1219,58 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap:1.5rem;">
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
-                <div style="background:rgba(255,255,255,0.02); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.05);">
-                    <h5 style="margin:0 0 1rem 0; color:#f97316; font-size:0.85rem; font-weight:800; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:1.2rem;">🚫</span> RANKING DE TARDANZAS
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <h5 style="margin:0 0 1.2rem 0; color:#fb923c; font-size:0.9rem; font-weight:900; display:flex; align-items:center; gap:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                        <span style="font-size:1.3rem;">🚫</span> RANKING DE TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
                             <thead>
-                                <tr style="border-bottom:1px solid rgba(249, 115, 22, 0.2); color:var(--text-muted);">
-                                    <th style="padding:0.6rem; text-align:center; width:30px;">N°</th>
-                                    <th style="padding:0.6rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.6rem; text-align:center;">DÍAS TRAB.</th>
-                                    <th style="padding:0.6rem; text-align:center; background:rgba(249, 115, 22, 0.05); color:#f97316;">TARDANZAS</th>
+                                <tr style="border-bottom:2px solid rgba(251, 146, 60, 0.3); color:#cbd5e1;">
+                                    <th style="padding:0.8rem; text-align:center; width:40px;">N°</th>
+                                    <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
+                                    <th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th>
+                                    <th style="padding:0.8rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARDANZAS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${tardanzasRanking.length ? tardanzasRanking.map((w, idx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                                        <td style="padding:0.6rem; text-align:center; color:var(--text-muted); font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.6rem; color:#fff; font-weight:600;">${w.name}</td>
-                                        <td style="padding:0.6rem; text-align:center; color:#60a5fa;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.6rem; text-align:center; font-weight:900; color:#f97316; background:rgba(249, 115, 22, 0.02);">${w.tardanzas}</td>
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:0.8rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
+                                        <td style="padding:0.8rem; color:#f8fafc; font-weight:600;">${w.name}</td>
+                                        <td style="padding:0.8rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
+                                        <td style="padding:0.8rem; text-align:center; font-weight:950; color:#fb923c; background:rgba(251, 146, 60, 0.05); font-size:0.9rem;">${w.tardanzas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">Sin incidencias</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:3rem; text-align:center; color:#64748b; font-weight:600;">Sin incidencias registradas</td></tr>'}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- COLUMNA DERECHA: FALTAS INJUSTIFICADAS -->
-                <div style="background:rgba(255,255,255,0.02); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.05);">
-                    <h5 style="margin:0 0 1rem 0; color:#ef4444; font-size:0.85rem; font-weight:800; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:1.2rem;">⚠️</span> FALTAS INJUSTIFICADAS
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <h5 style="margin:0 0 1.2rem 0; color:#f87171; font-size:0.9rem; font-weight:900; display:flex; align-items:center; gap:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                        <span style="font-size:1.3rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
                             <thead>
-                                <tr style="border-bottom:1px solid rgba(239, 68, 68, 0.2); color:var(--text-muted);">
-                                    <th style="padding:0.6rem; text-align:center; width:30px;">N°</th>
-                                    <th style="padding:0.6rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.6rem; text-align:center;">DÍAS TRAB.</th>
-                                    <th style="padding:0.6rem; text-align:center; background:rgba(239, 68, 68, 0.05); color:#ef4444;">FALTAS</th>
+                                <tr style="border-bottom:2px solid rgba(248, 113, 113, 0.3); color:#cbd5e1;">
+                                    <th style="padding:0.8rem; text-align:center; width:40px;">N°</th>
+                                    <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
+                                    <th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th>
+                                    <th style="padding:0.8rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${faltasRanking.length ? faltasRanking.map((w, idx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                                        <td style="padding:0.6rem; text-align:center; color:var(--text-muted); font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.6rem; color:#fff; font-weight:600;">${w.name}</td>
-                                        <td style="padding:0.6rem; text-align:center; color:#60a5fa;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.6rem; text-align:center; font-weight:900; color:#ef4444; background:rgba(239, 68, 68, 0.02);">${w.faltas}</td>
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:0.8rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
+                                        <td style="padding:0.8rem; color:#f8fafc; font-weight:600;">${w.name}</td>
+                                        <td style="padding:0.8rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
+                                        <td style="padding:0.8rem; text-align:center; font-weight:950; color:#f87171; background:rgba(248, 113, 113, 0.05); font-size:0.9rem;">${w.faltas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">Sin faltas injustificadas</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:3rem; text-align:center; color:#64748b; font-weight:600;">Sin faltas injustificadas</td></tr>'}
                             </tbody>
                         </table>
                     </div>
