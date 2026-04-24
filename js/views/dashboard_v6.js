@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.1</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.2</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1100,9 +1100,17 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
     
-    // Filtro de fecha para el Ranking de Tardanzas (v11.4.1)
-    if (!window._tardanzasFilterDate) window._tardanzasFilterDate = new Date().toISOString().split('T')[0];
-    const filterDate = window._tardanzasFilterDate;
+    // Filtro de SEMANAS para el Ranking de Tardanzas (v11.4.2)
+    const getWeekNumber = (d) => {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    };
+    
+    const currentWeekNum = getWeekNumber(new Date());
+    if (!window._selectedWeeks) window._selectedWeeks = [currentWeekNum];
+    const selectedWeeks = window._selectedWeeks;
     const datesMap = {};
     rawLog.forEach(entry => {
         if (!datesMap[entry.date]) datesMap[entry.date] = { sum: 0, count: 0 };
@@ -1113,19 +1121,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     const evolutionLabels = sortedDates;
     const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
 
-    const getWeekNumber = (d) => {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-    };
-
-    const currentWeekNum = getWeekNumber(new Date(filterDate + 'T12:00:00'));
+    // Obtener todas las semanas disponibles en los datos (orden descendente)
+    const availableWeeks = [...new Set(rawLog.map(e => getWeekNumber(new Date(e.date + 'T12:00:00'))))].sort((a,b) => b-a);
 
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
         const entryDate = new Date(entry.date + 'T12:00:00');
-        if (getWeekNumber(entryDate) !== currentWeekNum) return;
+        const wNum = getWeekNumber(entryDate);
+        if (!selectedWeeks.includes(wNum)) return;
 
         const key = entry.dni;
         if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0 };
@@ -1192,12 +1195,16 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:1rem;">
                 <div>
-                    <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (SEMANA ${currentWeekNum})</h4>
-                    <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Operarios con incidencias en la semana seleccionada</span>
+                    <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (${selectedWeeks.length > 1 ? 'MULTI-SEMANA' : 'SEMANA ' + selectedWeeks[0]})</h4>
+                    <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Operarios con incidencias en las semanas seleccionadas</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:6px 12px; border-radius:8px;">
-                     <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">FILTRAR POR DÍA:</span>
-                     <input type="date" id="tardanzas_date_picker" value="${filterDate}" style="background:none; border:none; color:#fff; font-size:0.8rem; outline:none; color-scheme:dark; cursor:pointer;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                     <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">SEMANAS:</span>
+                     ${availableWeeks.map(wn => `
+                        <button class="week-tag ${selectedWeeks.includes(wn) ? 'active' : ''}" data-wn="${wn}" style="padding:4px 12px; border-radius:12px; font-size:0.7rem; font-weight:700; border:1px solid ${selectedWeeks.includes(wn) ? '#f97316' : 'var(--border)'}; background:${selectedWeeks.includes(wn) ? 'rgba(249, 115, 22, 0.2)' : 'none'}; color:${selectedWeeks.includes(wn) ? '#f97316' : 'var(--text-muted)'}; cursor:pointer;">
+                            SEM ${wn}
+                        </button>
+                     `).join('')}
                 </div>
             </div>
             <div style="overflow-x:auto;">
@@ -1208,7 +1215,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
                             <th style="padding:0.8rem; text-align:center;">DÍAS TRABAJADOS</th>
                             <th style="padding:0.8rem; text-align:center; background:rgba(249, 115, 22, 0.05); color:#f97316;">TARDANZAS</th>
-                            <th style="padding:0.8rem; text-align:center;">N° SEMANA</th>
+                            <th style="padding:0.8rem; text-align:center;">SEMANAS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1218,9 +1225,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td>
                                 <td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados} d</td>
                                 <td style="padding:0.8rem; text-align:center; font-weight:900; color:#f97316; background:rgba(249, 115, 22, 0.02);">${w.tardanzas}</td>
-                                <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:800;">${currentWeekNum}</td>
+                                <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-size:0.7rem;">${selectedWeeks.join(', ')}</td>
                             </tr>
-                        `).join('') : '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No se registran tardanzas en la semana actual.</td></tr>'}
+                        `).join('') : '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No se registran tardanzas en el periodo seleccionado.</td></tr>'}
                     </tbody>
                 </table>
             </div>
@@ -1228,13 +1235,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     setTimeout(() => {
-        const picker = document.getElementById('tardanzas_date_picker');
-        if (picker) {
-            picker.onchange = (e) => {
-                window._tardanzasFilterDate = e.target.value;
+        document.querySelectorAll('.week-tag').forEach(tag => {
+            tag.onclick = () => {
+                const wn = parseInt(tag.dataset.wn);
+                if (window._selectedWeeks.includes(wn)) {
+                    // Evitar deseleccionar todo
+                    if (window._selectedWeeks.length > 1) {
+                        window._selectedWeeks = window._selectedWeeks.filter(w => w !== wn);
+                    }
+                } else {
+                    window._selectedWeeks.push(wn);
+                }
                 renderKPIGraphsSection(container);
             };
-        }
+        });
 
         const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
         const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
