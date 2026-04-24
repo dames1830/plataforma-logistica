@@ -59,7 +59,13 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v11.6.2";
+    const versionStr = "v11.6.5";
+    
+    // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
+    if (user) {
+      localStorage.setItem('pulse_last_activity', Date.now().toString());
+    }
+    
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
 
     try {
