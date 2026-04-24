@@ -549,30 +549,62 @@ export const calculateBufferPallets = (configOverride = null) => {
         const target7 = to7(sku);
 
         const row = dataStore.articulos.find(a => {
-            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto']));
+            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']));
             return clean(masterVal) === target7 || to7(masterVal) === target7;
         });
 
         if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
 
         return {
-            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial']) || 'Otros')
+            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
         };
     };
 
-    const genderAggr = {}, marcaAggr = {};
+    const genderAggr = {}, marcaAggr = {}, matrixAggr = {};
+    const genderKeys = new Set();
+    
     detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
         const info = getArtInfo(d.SKU);
         const atd = d['ATD RQ'] || 0;
+        
+        genderKeys.add(info.gender);
+        
+        // Agregados individuales (Retrocompatibilidad)
         if (!genderAggr[info.gender]) genderAggr[info.gender] = { rq: 0, atd: 0 };
         genderAggr[info.gender].atd += atd;
-        genderAggr[info.gender].rq += atd; // User wants only total ATD as RQ
+        genderAggr[info.gender].rq += atd;
 
         if (!marcaAggr[info.marca]) marcaAggr[info.marca] = { rq: 0, atd: 0 };
         marcaAggr[info.marca].atd += atd;
         marcaAggr[info.marca].rq += atd;
+        
+        // Matriz de doble entrada
+        if (!matrixAggr[info.marca]) matrixAggr[info.marca] = {};
+        if (!matrixAggr[info.marca][info.gender]) matrixAggr[info.marca][info.gender] = 0;
+        matrixAggr[info.marca][info.gender] += atd;
     });
+
+    const sortedGenders = Array.from(genderKeys).sort();
+    const matrixRows = Object.keys(matrixAggr).sort().map(marca => {
+        const row = { marca: marca, breakdown: {}, total: 0 };
+        sortedGenders.forEach(g => {
+            const val = matrixAggr[marca][g] || 0;
+            row.breakdown[g] = val;
+            row.total += val;
+        });
+        return row;
+    });
+    
+    if (matrixRows.length > 0) {
+        const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
+        sortedGenders.forEach(g => {
+            const sumG = matrixRows.reduce((acc, r) => acc + (r.breakdown[g] || 0), 0);
+            totalRow.breakdown[g] = sumG;
+            totalRow.total += sumG;
+        });
+        matrixRows.push(totalRow);
+    }
 
     const formatForensic = (aggr) => {
         const rows = Object.keys(aggr).sort().map(k => ({ key: k, rq: aggr[k].rq }));
@@ -629,6 +661,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         resumenSKU: resEmp,
         resumenNiveles: historyData,
         resumenGender: formatForensic(genderAggr),
-        resumenMarca: formatForensic(marcaAggr)
+        resumenMarca: formatForensic(marcaAggr),
+        resumenMatrix: { columns: sortedGenders, rows: matrixRows }
     };
 };
