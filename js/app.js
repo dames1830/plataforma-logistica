@@ -1,4 +1,4 @@
-import { getSession, logout } from './services/auth.js?v=11.3.3';
+import { getSession, logout } from './services/auth.js?v=11.6.1';
 
 class App {
   constructor(rootId) {
@@ -59,7 +59,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v11.6.0";
+    const versionStr = "v11.6.1";
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
 
     try {
