@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.7</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.8</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1112,13 +1112,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
         const key = entry.dni;
-        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0 };
-        globalWorkerMap[key].sum += parsePct(entry.rendimiento);
-        globalWorkerMap[key].count++;
+        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0, tardanzas: 0 };
+        
+        if (entry.asistencia === 'P') {
+            globalWorkerMap[key].sum += parsePct(entry.rendimiento);
+            globalWorkerMap[key].count++;
+            if (entry.puntualidad === 'NO') globalWorkerMap[key].tardanzas++;
+        }
     });
+
     const workerRanking = Object.values(globalWorkerMap)
-        .map(w => ({ name: w.name, avg: Math.round(w.sum / w.count) }))
+        .filter(w => w.count > 0)
+        .map(w => ({ name: w.name, avg: Math.round(w.sum / w.count), tardanzas: w.tardanzas }))
         .sort((a,b) => b.avg - a.avg).slice(0,5);
+
+    const tardanzasRanking = Object.values(globalWorkerMap)
+        .filter(w => w.tardanzas > 0)
+        .sort((a,b) => b.tardanzas - a.tardanzas);
 
     const globalAvg = Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length);
     const getStatusColor = (val) => {
@@ -1159,6 +1169,33 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="height:300px; position:relative; overflow:hidden;">
                     <canvas id="chartRanking"></canvas>
                 </div>
+            </div>
+        </div>
+
+        <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+                <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (HISTÓRICO)</h4>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Ordenado de forma descendente</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="border-bottom:2px solid rgba(249, 115, 22, 0.2); color:var(--text-muted);">
+                            <th style="padding:0.8rem; text-align:center; width:60px;">N°</th>
+                            <th style="padding:0.8rem; text-align:left;">OPERARIO</th>
+                            <th style="padding:0.8rem; text-align:center; background:rgba(249, 115, 22, 0.05); color:#f97316;">TARDANZAS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tardanzasRanking.length ? tardanzasRanking.map((w, idx) => `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                                <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700;">${idx + 1}</td>
+                                <td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td>
+                                <td style="padding:0.8rem; text-align:center; font-weight:900; color:#f97316; background:rgba(249, 115, 22, 0.02);">${w.tardanzas}</td>
+                            </tr>
+                        `).join('') : '<tr><td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted);">No se registran tardanzas en el historial.</td></tr>'}
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
