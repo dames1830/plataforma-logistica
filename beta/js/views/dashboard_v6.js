@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.6.5</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.6.6</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1274,22 +1274,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span style="font-size:1.1rem;">🚫</span> TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(251, 146, 60, 0.3); color:#cbd5e1;">
                                     <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">TARDANZAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
+                                    <th style="padding:0.4rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARD.</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${tardanzasRanking.length ? tardanzasRanking.map((w, idx) => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                         <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${w.name}</td>
+                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${w.name}</td>
+                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
                                         <td style="padding:0.3rem; text-align:center; font-weight:950; color:#fb923c; background:rgba(251, 146, 60, 0.05);">${w.tardanzas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="3" style="padding:2rem; text-align:center; color:#64748b;">Sin incidencias</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b;">Sin incidencias</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -1301,22 +1303,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(248, 113, 113, 0.3); color:#cbd5e1;">
                                     <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">FALTAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
+                                    <th style="padding:0.4rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${faltasRanking.length ? faltasRanking.map((w, idx) => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                         <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${w.name}</td>
+                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${w.name}</td>
+                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
                                         <td style="padding:0.3rem; text-align:center; font-weight:950; color:#f87171; background:rgba(248, 113, 113, 0.05);">${w.faltas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="3" style="padding:2rem; text-align:center; color:#64748b;">Sin faltas</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b;">Sin faltas</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -1328,22 +1332,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(6, 182, 212, 0.3); color:#cbd5e1;">
                                     <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">FALTAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
+                                    <th style="padding:0.4rem; text-align:center; background:rgba(6, 182, 212, 0.1); color:#06b6d4; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${faltasJustificadasRanking.length ? faltasJustificadasRanking.map((w, idx) => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                         <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${w.name}</td>
+                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${w.name}</td>
+                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
                                         <td style="padding:0.3rem; text-align:center; font-weight:950; color:#06b6d4; background:rgba(6, 182, 212, 0.05);">${w.faltasJustificadas}</td>
                                     </tr>
-                                `).join('') : '<tr><td colspan="3" style="padding:2rem; text-align:center; color:#64748b;">Sin faltas</td></tr>'}
+                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b;">Sin faltas</td></tr>'}
                             </tbody>
                         </table>
                     </div>
