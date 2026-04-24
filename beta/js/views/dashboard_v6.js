@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.5</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.3.6</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -128,11 +128,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { currentTab = e.currentTarget.dataset.id; renderNav(); renderTabContent(); }));
   };
 
-  const renderTabContent = async () => {
+  const renderTabContent = async (silent = false) => {
     const tabObj = allowedTabs.find(t => t.id === currentTab);
     const dateTag = currentDateFilter ? ` <span style="background:var(--warning); color:#000; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;">Snapshot: ${currentDateFilter}</span>` : '';
     contentTitle.innerHTML = tabObj.label + dateTag;
-    contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando...</p></div>`;
+    
+    if (!silent) {
+        contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando...</p></div>`;
+    }
 
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'stock') await renderStockTab();
@@ -1726,6 +1729,32 @@ export const renderDashboard = async (container, user, onLogout) => {
   if (document.getElementById('logoutBtn')) {
     document.getElementById('logoutBtn').addEventListener('click', onLogout);
   }
+  // =============================================
+  // MOTOR DE SINCRONIZACIÓN EN TIEMPO REAL (v11.3.6)
+  // =============================================
+  const startRealTimeSync = () => {
+      // Evitar múltiples intervalos si se re-renderiza el dashboard
+      if (window._pulseSyncInterval) clearInterval(window._pulseSyncInterval);
+      
+      window._pulseSyncInterval = setInterval(async () => {
+          // Solo sincronizar si la pestaña es visible y el usuario no está escribiendo
+          const isIdle = !document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA');
+          
+          if (document.visibilityState === 'visible' && isIdle) {
+              console.log("🔄 [PULSE] Sincronización automática de datos...");
+              
+              // 1. Sincronizar datos de Administración (Asistencia, Performance, etc.)
+              await adminService.initializeAdminData();
+              
+              // 2. Si estamos en una pestaña que depende de datos vivos, refrescar silenciosamente
+              if (currentTab === 'admin_pers' || currentTab === 'inicio') {
+                  renderTabContent(true); 
+              }
+          }
+      }, 20000); // Frecuencia: 20 segundos
+  };
+
   renderNav();
   renderTabContent();
+  startRealTimeSync();
 };

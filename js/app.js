@@ -44,14 +44,14 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v11.3.5";
+    const versionStr = "v11.3.6";
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
 
     try {
         const timestamp = new Date().getTime();
         console.log(`[PULSE] App ${versionStr} navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.3.5_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=11.3.6_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 logout();
