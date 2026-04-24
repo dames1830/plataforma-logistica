@@ -549,15 +549,15 @@ export const calculateBufferPallets = (configOverride = null) => {
         const target7 = to7(sku);
 
         const row = dataStore.articulos.find(a => {
-            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto']));
+            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']));
             return clean(masterVal) === target7 || to7(masterVal) === target7;
         });
 
         if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
 
         return {
-            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial']) || 'Otros')
+            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
         };
     };
 
