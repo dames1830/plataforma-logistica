@@ -258,22 +258,50 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
         }
         const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
         const isPresent = att.present;
-        const tempEntry = {
+        
+        const baseValues = {
             asistencia: isPresent ? 'P' : 'F',
             puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
-            produccion: isPresent ? 10 : 0, 
-            bpa: isPresent ? 10 : 0, 
-            supervisor: isPresent ? 9 : 0
+            justification: att.justification || ''
         };
-        const newLogEntry = {
-            date, dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
-            ...tempEntry, justification: att.justification || '',
-            rendimiento: calculateRendimientoValue(tempEntry)
-        };
+
         if (existingLogIdx >= 0) {
-            log[existingLogIdx] = { ...log[existingLogIdx], ...newLogEntry, rendimiento: log[existingLogIdx].rendimiento };
+            // CASO REAPERTURA: Mezcla inteligente
+            const old = log[existingLogIdx];
+            const updated = { ...old, ...baseValues };
+
+            // Si antes era Falta y ahora es Presente -> Dar puntos base
+            if (old.asistencia === 'F' && isPresent) {
+                updated.produccion = 10;
+                updated.bpa = 10;
+                updated.supervisor = 9;
+            }
+            // Si antes era Presente y ahora es Falta -> Quitar puntos
+            else if (old.asistencia === 'P' && !isPresent) {
+                updated.produccion = 0;
+                updated.bpa = 0;
+                updated.supervisor = 0;
+            }
+            // Si sigue presente -> PRESERVAR lo que ya tenía (manual o default)
+            else if (isPresent) {
+                updated.produccion = old.produccion !== undefined ? old.produccion : 10;
+                updated.bpa = old.bpa !== undefined ? old.bpa : 10;
+                updated.supervisor = (old.supervisor !== undefined && old.supervisor !== '-') ? old.supervisor : 9;
+            }
+
+            updated.rendimiento = calculateRendimientoValue(updated);
+            log[existingLogIdx] = updated;
         } else {
-            log.push(newLogEntry);
+            // CASO NUEVO: Valores por defecto
+            const newEntry = {
+                date, dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
+                ...baseValues,
+                produccion: isPresent ? 10 : 0,
+                bpa: isPresent ? 10 : 0,
+                supervisor: isPresent ? 9 : 0
+            };
+            newEntry.rendimiento = calculateRendimientoValue(newEntry);
+            log.push(newEntry);
         }
     });
 
