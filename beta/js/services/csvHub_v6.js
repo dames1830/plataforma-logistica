@@ -100,28 +100,35 @@ export const pingServer = () => {
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
 
+// URL para Historial de Buffer en la DB Principal
+const BUFFER_HISTORY_URL = `${API_URL}/buffer_history`;
+
 export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 sec max
-        const response = await fetch(`${SHARED_API}/buffer_report`, {
+        const payload = {
+            data: bufferKPIObj,
+            updated_by: username,
+            ts: Date.now(),
+            created_at: new Date().toISOString()
+        };
+
+        const response = await fetch(BUFFER_HISTORY_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: bufferKPIObj, updated_by: username }),
-            signal: controller.signal
+            body: JSON.stringify(payload)
         });
-        clearTimeout(timeoutId);
+
         if (response.ok) {
-            console.log('✅ Reporte Buffer guardado en servidor.');
-            // Espejo local para asegurar que la pestaña de historial no se vea vacía
-            saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
+            console.log('✅ Reporte Buffer guardado en DB Principal.');
+            saveToLocalHistory(payload);
             return true;
         } else {
-            console.warn(`⚠️ Error servidor (${response.status}): Reporte NO guardado.`);
+            console.warn(`⚠️ Error DB (${response.status}): Guardando solo localmente.`);
+            saveToLocalHistory(payload);
             return false;
         }
     } catch (e) {
-        console.warn('⚠️ Fallo de conexión o Timeout: Intentando guardado LOCAL.', e);
+        console.warn('⚠️ Fallo de conexión: Guardando solo localmente.', e);
         saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
         return false;
     }
@@ -158,29 +165,33 @@ export const loadBufferReport = async () => {
 export const fetchBufferHistory = async () => {
     let serverHistory = [];
     try {
-        const res = await fetch(`${SHARED_API}/buffer_report`);
+        const res = await fetch(BUFFER_HISTORY_URL);
         if (res.ok) {
             const json = await res.json();
-            if (json.status === 'ok' && json.data) {
+            if (json.data) {
                 serverHistory = Array.isArray(json.data) ? json.data : [json.data];
+                console.log(`✅ ${serverHistory.length} reportes cargados de DB Principal.`);
             }
         }
     } catch (e) {
-        console.warn('⚠️ Error obteniendo historial del servidor:', e);
+        console.warn('⚠️ Error obteniendo historial de DB:', e);
     }
     
-    // Combinar con historial local para redundancia
     try {
         const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
         const localHistory = JSON.parse(localRaw);
         
-        // Evitar duplicados (por timestamp si existe)
         const combined = [...serverHistory];
         localHistory.forEach(lh => {
             const exists = combined.some(sh => (sh.ts === lh.ts) || (sh.created_at === lh.created_at));
             if (!exists) combined.push(lh);
         });
         
+        // Limpieza de Quota: Solo mantener los últimos 10 locales si hay muchos
+        if (localHistory.length > 10) {
+            localStorage.setItem('logistics_buffer_history_local', JSON.stringify(localHistory.slice(-10)));
+        }
+
         return combined;
     } catch(e) { 
         return serverHistory; 
