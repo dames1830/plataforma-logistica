@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.1</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1099,6 +1099,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
+    
+    // Filtro de fecha para el Ranking de Tardanzas (v11.4.1)
+    if (!window._tardanzasFilterDate) window._tardanzasFilterDate = new Date().toISOString().split('T')[0];
+    const filterDate = window._tardanzasFilterDate;
     const datesMap = {};
     rawLog.forEach(entry => {
         if (!datesMap[entry.date]) datesMap[entry.date] = { sum: 0, count: 0 };
@@ -1116,11 +1120,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     };
 
-    const currentWeekNum = getWeekNumber(new Date());
+    const currentWeekNum = getWeekNumber(new Date(filterDate + 'T12:00:00'));
 
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
-        const entryDate = new Date(entry.date + 'T12:00:00'); // Evitar desfase
+        const entryDate = new Date(entry.date + 'T12:00:00');
         if (getWeekNumber(entryDate) !== currentWeekNum) return;
 
         const key = entry.dni;
@@ -1186,9 +1190,15 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
-                <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (SEMANA ${currentWeekNum})</h4>
-                <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Operarios con incidencias en la semana actual</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:1rem;">
+                <div>
+                    <h4 style="margin:0; color:#f97316; font-size:1rem; font-weight:800;">🚫 RANKING DE TARDANZAS (SEMANA ${currentWeekNum})</h4>
+                    <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">* Operarios con incidencias en la semana seleccionada</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:6px 12px; border-radius:8px;">
+                     <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">FILTRAR POR DÍA:</span>
+                     <input type="date" id="tardanzas_date_picker" value="${filterDate}" style="background:none; border:none; color:#fff; font-size:0.8rem; outline:none; color-scheme:dark; cursor:pointer;">
+                </div>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
@@ -1218,6 +1228,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     setTimeout(() => {
+        const picker = document.getElementById('tardanzas_date_picker');
+        if (picker) {
+            picker.onchange = (e) => {
+                window._tardanzasFilterDate = e.target.value;
+                renderKPIGraphsSection(container);
+            };
+        }
+
         const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
         const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
         if (!ctxEvo || !ctxRank) return;
