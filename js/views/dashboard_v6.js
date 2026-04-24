@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.4</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.4.5</span></h2>
       </div>
       <div class="user-profile">
         <div class="date-filter-container" style="background:rgba(255,255,255,0.05); padding:0.4rem 0.8rem; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center;">
@@ -1219,8 +1219,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap:1.5rem;">
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    <h5 style="margin:0 0 1.2rem 0; color:#fb923c; font-size:0.9rem; font-weight:900; display:flex; align-items:center; gap:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1.2rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
+                    <h5 style="margin:0 0 1.2rem 0; color:#fb923c; font-size:0.9rem; font-weight:900; display:flex; align-items:center; gap:10px; text-transform:uppercase; letter-spacing:0.5px; text-shadow: 0 0 8px rgba(251, 146, 60, 0.5);">
                         <span style="font-size:1.3rem;">🚫</span> RANKING DE TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
@@ -1248,8 +1248,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- COLUMNA DERECHA: FALTAS INJUSTIFICADAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    <h5 style="margin:0 0 1.2rem 0; color:#f87171; font-size:0.9rem; font-weight:900; display:flex; align-items:center; gap:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1.2rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
+                    <h5 style="margin:0 0 1.2rem 0; color:#f87171; font-size:0.9rem; font-weight:900; display:flex; align-items:center; gap:10px; text-transform:uppercase; letter-spacing:0.5px; text-shadow: 0 0 8px rgba(248, 113, 113, 0.5);">
                         <span style="font-size:1.3rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
