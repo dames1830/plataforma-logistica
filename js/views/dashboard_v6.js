@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.0.1';
+const VERSION = '12.0.2';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.1</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.2</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1100,11 +1100,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const rec = localState.find(d => d.dni === dni);
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
+                        
+                        // Nombre dinámico desde la base de trabajadores
+                        const displayName = `${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}`;
+                        
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem; color:#fff; font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">${dni}</td>
-                            <td style="padding:0.8rem; font-weight:600;">${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}</td>
+                            <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
                                     <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
@@ -1639,19 +1643,22 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.exportPerformanceToExcel = () => {
         if (!log.length) return alert('No hay datos para exportar.');
         try {
-            const dataToExport = log.map(p => ({
-                'Fecha': p.date,
-                'DNI': p.dni,
-                'Apellidos': p.apellidos,
-                'Nombre': p.nombre,
-                'Asistencia': p.asistencia,
-                'Puntualidad': p.puntualidad,
-                'Producción (1-10)': p.produccion,
-                'BPA (1-10)': p.bpa,
-                'Supervisor (1-10)': p.supervisor,
-                'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
-                'Rendimiento %': p.rendimiento
-            }));
+            const dataToExport = log.map(p => {
+                const worker = adminService.getWorkers().find(w => (w.dni || w.Dni) === p.dni);
+                const nombreCompleto = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
+                return {
+                    'Fecha': p.date,
+                    'DNI': p.dni,
+                    'Nombre Completo': nombreCompleto,
+                    'Asistencia': p.asistencia,
+                    'Puntualidad': p.puntualidad,
+                    'Producción (1-10)': p.produccion,
+                    'BPA (1-10)': p.bpa,
+                    'Supervisor (1-10)': p.supervisor,
+                    'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
+                    'Rendimiento %': p.rendimiento
+                };
+            });
 
             const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
@@ -1708,12 +1715,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                         </tr>
                         <!-- FILAS DE TRABAJADORES -->
-                        ${entries.map((p, idx) => `
+                        ${entries.map((p, idx) => {
+                            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni) === p.dni);
+                            const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
+                            return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem;">
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <b style="color:#fff;">${p.apellidos}, ${p.nombre}</b>
+                                    <b style="color:#fff;">${displayName}</b>
                                     <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-weight:700; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${p.dni}</span>
                                 </div>
                             </td>
