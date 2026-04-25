@@ -526,16 +526,28 @@ export const calculateBufferPallets = (configOverride = null) => {
         return pending;
     };
 
-    // PROCESAMIENTO DE ANÁLISIS
+    // PROCESAMIENTO DE ANÁLISIS (SÓLO LO SOLICITADO - RQ)
     Object.keys(demanda).sort().forEach(sku => {
-        let pending = demanda[sku].total;
-        globalRQ += pending;
+        let totalSolicitado = demanda[sku].total;
+        globalRQ += totalSolicitado;
 
-        pending = satisfyDemand(sku, pending, stBajas, 'Zonas Bajas');
-        pending = satisfyDemand(sku, pending, stAltos, 'Alto');
-        pending = satisfyDemand(sku, pending, stPisos, 'Pisos');
-        pending = satisfyDemand(sku, pending, stAereos, 'Aereo');
-        pending = satisfyDemand(sku, pending, stLogicos, 'Logica');
+        // 1. Miramos qué hay en Activo/Bajas y lo descontamos del pedido (SIN CONTARLO COMO MOVIMIENTO)
+        let enActivo = 0;
+        if (stBajas[sku]) {
+            enActivo = stBajas[sku].reduce((acc, item) => acc + item.qty, 0);
+        }
+        
+        // 2. Lo que realmente necesitamos bajar es: Pedido - Activo
+        let realPending = Math.max(0, totalSolicitado - enActivo);
+
+        // 3. Sólo si falta algo, buscamos en las zonas de reserva
+        if (realPending > 0) {
+            // No procesamos stBajas aquí porque ya lo descontamos arriba
+            realPending = satisfyDemand(sku, realPending, stAltos, 'Alto');
+            realPending = satisfyDemand(sku, realPending, stPisos, 'Pisos');
+            realPending = satisfyDemand(sku, realPending, stAereos, 'Aereo');
+            realPending = satisfyDemand(sku, realPending, stLogicos, 'Logica');
+        }
     });
 
     // DISTRIBUCIÓN PROPORCIONAL DE PALETS POR FUENTE
