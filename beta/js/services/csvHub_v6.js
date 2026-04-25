@@ -595,6 +595,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
+    const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
+
     const nivelesMap = {
         'Bajas': '1. Zonas Bajas',
         'Alto': '2. Alto',
