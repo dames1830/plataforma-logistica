@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.6.1';
-import * as adminService from '../services/adminService.js?v=11.6.1';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.0.0';
+import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '11.6.1';
+const VERSION = '12.0.0';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -43,6 +43,7 @@ const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
+let lastBufferResult = null;
 
 const exportToExcel = (data, filename) => {
     if(!data || !data.length) {
@@ -53,6 +54,65 @@ const exportToExcel = (data, filename) => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Data");
     XLSX.writeFile(wb, `${filename}_${new Date().getTime()}.xlsx`);
+};
+
+window.downloadExcelDetail = () => {
+    if (!lastBufferResult) return;
+    const data = lastBufferResult;
+    
+    // 1. Pestaña DETALLE (Resumen de todos los SKUs)
+    const sheetDetalle = XLSX.utils.json_to_sheet(data.resumenSKUDetalle || []);
+    
+    // 2. Pestaña SKU BAJAR (Solo SKUs con Diferencia > 0)
+    const skusBajarData = (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0);
+    const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
+    
+    // 3. Pestaña LPN SELECIONADOS
+    const lpnData = (data.detalle || []).map(d => ({
+        'Ubicacion': d.UBICACIONES,
+        'LPN': d.LPN,
+        'Sku': d.SKU,
+        'Stock Activo': d['QTY ACTIVO'],
+        'Stock Reserva': d['QTY RESERVA'],
+        'Qty Buffer': d['QTY BUFFER'],
+        'Articulo': d.Articulo
+    }));
+    const sheetLPN = XLSX.utils.json_to_sheet(lpnData);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, sheetDetalle, "Detalle");
+    XLSX.utils.book_append_sheet(wb, sheetSkuBajar, "Sku Bajar");
+    XLSX.utils.book_append_sheet(wb, sheetLPN, "LPN Selecionados");
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
+};
+
+window.downloadExcelZonas = () => {
+    if (!lastBufferResult) return;
+    const data = lastBufferResult;
+    
+    // 1. Pestaña Detalle Zonas (SOLO lo físico, como antes)
+    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '6. Sin Stock');
+    const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
+    
+    // 2. Pestaña Sin Stock (EXCLUSIVO lo faltante)
+    const sinStockData = (data.detalleZonas || [])
+        .filter(d => d['NIVEL/AREA'] === '6. Sin Stock')
+        .map(d => ({
+            'NIVEL/AREA': d['NIVEL/AREA'],
+            'ARTICULO': d['ARTÍCULO'],
+            'SKU': d['SKU'],
+            'RQ': d['ATD RQ']
+        }));
+    const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, sheetZonas, "Detalle Zonas");
+    XLSX.utils.book_append_sheet(wb, sheetOOS, "Sin Stock");
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Analisis_Zonas_${date}.xlsx`);
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
@@ -92,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.6.6</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.0</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -207,13 +267,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const renderUploadArea = (container, area, hasData = null, ext = '.csv') => {
+  const renderUploadArea = (container, area, hasData = null, ext = '.csv', customLabel = null) => {
     const meta = getUploadMeta(area);
     const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'Nunca';
     const div = document.createElement('div');
     div.id = `wrap_${area}`;
     div.style.width = '100%';
-    const label = area.toUpperCase();
+    const label = customLabel || area.toUpperCase();
     
     if (hasData) {
       div.innerHTML = `
@@ -306,10 +366,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
-        renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv');
-        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv');
-        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
-        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
+        renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
+        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
+        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
+        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
     } else if (activeBufferSub === 'historial_buffer') {
         renderBufferHistory(buf);
     } else if (activeBufferSub === 'kpi_buffer') {
@@ -360,15 +420,23 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const res = calculateBufferPallets(config);
                         if (res) {
                             lastBufferKPI = res;
+                            lastBufferResult = res;
                             localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
                             
-                            // NUEVO: Confirmación de guardado en el historial
+                            // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
                             setTimeout(async () => {
-                                if (confirm("¿Deseas guardar este análisis en el Historial Buffer?")) {
-                                    const saved = await saveBufferReport(res, user.username);
-                                    if (saved) alert("✅ Análisis guardado exitosamente en el historial.");
-                                    else console.warn('⚠️ Solo Local');
+                                if (confirm("¿Deseas guardar este análisis desglosado por FUENTE en el Historial?")) {
+                                    const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+                                    let successCount = 0;
+                                    for (const s of sources) {
+                                        const sourceRows = res.resumenNiveles.filter(n => n.fuente === s);
+                                        if (sourceRows.length > 0) {
+                                            const saved = await saveBufferReport({ resumenNiveles: sourceRows, sourceName: s }, user.username);
+                                            if (saved) successCount++;
+                                        }
+                                    }
+                                    if (successCount > 0) alert(`✅ Se guardaron ${successCount} reportes en el historial.`);
                                 }
                             }, 300);
                         } else {
@@ -407,10 +475,55 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  const createMatrixHTML = (matrix, title) => {
+    if (!matrix || !matrix.rows || !matrix.rows.length) return '';
+    
+    const brandAlias = (name) => {
+        if (name === 'Bubblegummers Licenses') return 'BG Licenses';
+        if (name === 'Bubblegummers') return 'BG';
+        if (name === 'Bata Industrials') return 'Industrials';
+        return name;
+    };
+    const genderAlias = (name) => {
+        if (name === '11 NON COMMERCIAL COMPLEMENTS') return '11 COMPLEMENTS';
+        return name;
+    };
+
+    return `
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem;">
+            <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
+                <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">${title}</h3>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                    <thead style="background:rgba(0,0,0,0.5);">
+                        <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
+                            <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
+                            ${matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('')}
+                            <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody style="color:#eee;">
+                        ${matrix.rows.map(r => `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
+                                <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${brandAlias(r.marca)}</td>
+                                ${matrix.columns.map(c => {
+                                    const val = r.breakdown[c] || 0;
+                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#fff' : 'rgba(255,255,255,0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
+                                }).join('')}
+                                <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(236,72,153,0.05); color:#22c55e; font-weight:900; border-left:1px solid rgba(255,255,255,0.05);">${r.total.toLocaleString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+  };
+
   const renderBufferResults = (container, data) => {
     const widthLeft = '580px';
-    const widthRight = '850px'; // Ampliado para la matriz
-    const matrix = data.resumenMatrix || { columns: [], rows: [] };
+    const widthRight = '1200px';
 
     container.innerHTML = `
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthLeft};">
@@ -431,9 +544,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
                 <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
-                    <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
-                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
-                        <td style="padding:0.5rem 1rem;">${r.tipo}</td>
+                    <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
+                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente.includes('TOTAL') ? 'background:rgba(255,255,255,0.04); font-weight:700;' : ''}">
+                        <td style="padding:0.5rem 1rem; color:${r.fuente.includes('TOTAL') ? '#d1d5db' : 'var(--primary)'}; font-weight:700;">${r.fuente}</td>
+                        <td style="padding:0.5rem 1rem; color:#94a3b8;">${r.tipo}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${Number(r.parcaja).toLocaleString()}</td>
@@ -443,37 +557,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
-            <!-- COLUMNA DERECHA: MATRIZ DE DISCREPANCIAS -->
-            <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
-                <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
-                    <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">DISCREPANCIA BUFFER | ZONAS 3,4,5</h3>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
-                        <thead style="background:rgba(0,0,0,0.5);">
-                            <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
-                                <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
-                                ${matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center;">${c.replace('01 ', '').replace('02 ', '').replace('03 ', '').replace('04 ', '').replace('05 ', '').replace('06 ', '').replace('08 ', '').replace('09 ', '')}</th>`).join('')}
-                                <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
-                            </tr>
-                        </thead>
-                        <tbody style="color:#eee;">
-                            ${matrix.rows.map(r => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
-                                    <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${r.marca}</td>
-                                    ${matrix.columns.map(c => {
-                                        const val = r.breakdown[c] || 0;
-                                        return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#fff' : 'rgba(255,255,255,0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
-                                    }).join('')}
-                                    <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(236,72,153,0.05); color:#22c55e; font-weight:900; border-left:1px solid rgba(255,255,255,0.05);">${r.total.toLocaleString()}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
+            ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6')}
+            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)')}
         </div>
     `;
 
@@ -485,11 +570,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         `;
         document.getElementById('btn_exp_zonas').onclick = () => {
             if(!data.detalleZonas || !data.detalleZonas.length) alert('⚠️ ERROR: Datos no disponibles.');
-            else exportToExcel(data.detalleZonas, 'Analisis_Zonas_V81');
+            else window.downloadExcelZonas();
         };
         document.getElementById('btn_exp_buffer').onclick = () => {
             if(!data.detalle || !data.detalle.length) alert('⚠️ ERROR: Datos no disponibles.');
-            else exportToExcel(data.detalle, 'Analisis_SKU_V82');
+            else window.downloadExcelDetail();
         };
     }
   };
@@ -1024,10 +1109,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             const node = localState.find(s => s.dni === dni);
             if (node) {
                 node.present = val;
-                if (!val) node.onTime = false; // Si falta, no es puntual
+                if (!val) node.onTime = false;
             }
-            
-            // UI Toggle
+            // Auto-guardado preventivo para evitar pérdida por parpadeos
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
             renderAsistenciaUI(dni, localState);
         });
 
@@ -1037,6 +1122,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const node = localState.find(s => s.dni === dni);
             if (node && node.present) node.onTime = val;
             
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
             renderAsistenciaUI(dni, localState);
         });
 
@@ -1044,6 +1130,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const dni = e.target.dataset.dni;
             const node = localState.find(s => s.dni === dni);
             if (node) node.justification = e.target.value;
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
         });
 
         const renderAsistenciaUI = (dni, state) => {
@@ -1806,10 +1893,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tr style="background:#facc15; color:#000;">
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:rgba(255,255,255,0.05); color:white;">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1837,15 +1924,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                         <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
                                         <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05);">${n.nivel}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.pal + n.pree.pal}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.sku + n.pree.sku}</td>
-                                        ${nIdx === 0 ? `<td rowspan="${niveles.length}" style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05); vertical-align:middle;">
-                                            <button class="btn-restore" data-idx="${rIdx}" title="Cargar Historial" style="background:var(--primary); border:none; color:white; padding:0.4rem 0.7rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">👁️ CARGAR</button>
-                                        </td>` : ''}
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
                                     </tr>
                                 `).join('')}
-                                <tr style="height:10px; background:rgba(255,255,255,0.02);"><td colspan="6"></td></tr>
+                                <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
                             `;
                         }).join('')}
                     </tbody>
@@ -1947,21 +2032,17 @@ export const renderDashboard = async (container, user, onLogout) => {
       if (window._pulseSyncInterval) clearInterval(window._pulseSyncInterval);
       
       window._pulseSyncInterval = setInterval(async () => {
-          // Solo sincronizar si la pestaña es visible y el usuario no está escribiendo
+          // No sincronizar si el usuario está en Asistencia (Evita el "parpadeo" reportado)
+          if (currentTab === 'admin_pers' && activeAdminSub === 'asistencia') return;
+
           const isIdle = !document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA');
           
           if (document.visibilityState === 'visible' && isIdle) {
               console.log("🔄 [PULSE] Sincronización automática de datos...");
-              
-              // 1. Sincronizar datos de Administración (Asistencia, Performance, etc.)
               await adminService.initializeAdminData();
-              
-              // 2. Si estamos en una pestaña que depende de datos vivos, refrescar silenciosamente
-              if (currentTab === 'admin_pers' || currentTab === 'inicio') {
-                  renderTabContent(true); 
-              }
+              if (currentTab === 'inicio') renderTabContent(true); 
           }
-      }, 20000); // Frecuencia: 20 segundos
+      }, 20000); 
   };
 
   renderNav();

@@ -399,60 +399,125 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.stockActivo;
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
+    const solicitud = dataStore.solicitud; // OTRAS SOLICITUDES
+    const tallas = dataStore.tallas;     // REPLENISHMENT
     const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !pedidos || !articulos) {
-        console.error("[VALIDACIÓN] Intento de cálculo con datos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos, articulos: !!articulos });
+    if(!activo || !reserva || !pedidos) {
+        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
         return null;
     }
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
 
-    // Mapeo detallado de stock por SKU para cada nivel
-    let stBajas = {}, stPisos = {}, stLogicos = {}, stAltos = {}, stAereos = {};
+    // Mapeo de Stock según Jerarquías (Fase 11.9.1)
+    let stBajas = {}, stAltos = {}, stPisos = {}, stAereos = {}, stLogicos = {}, stMerma = {};
     const registerStock = (map, sku, qty, row) => {
         if (!map[sku]) map[sku] = [];
         map[sku].push({ qty, row });
     };
 
+    // 1. Mapeo de ACTIVO (Normalmente Jerarquía 1 o 5 según área)
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
-        
-        if (config.include_piso === '1' && (area === 'PISO' || area === 'CROSS')) registerStock(stPisos, sku, qty, f);
-        else if (config.include_logico === '1' && area === 'DIS') registerStock(stLogicos, sku, qty, f);
-        else if (config.include_reserva === '1') registerStock(stBajas, sku, qty, f);
+
+        // Siguiendo la lógica del cuadro: PISO y DIS son Lógico
+        if (area === 'PISO' || area === 'DIS') registerStock(stLogicos, sku, qty, f);
+        else if (area === 'CROSS') registerStock(stPisos, sku, qty, f);
+        else registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
     });
 
+    // 2. Mapeo de RESERVA (Jerarquías 1 a 6)
     reserva.forEach(f => {
         let nivel = String(getCol(f, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
         let nroAnd = String(getCol(f, ['NRO AND', 'Nro And']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
         if(!sku || qty <= 0) return;
-        
-        if (config.include_alto === '1' && nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
-        else if (config.include_aereo === '1' && nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
-        else if (config.include_piso === '1' && nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
-        else if (config.include_logico === '1' && nivel === 'VER' && nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
+
+        // Jerarquía 1: ZONAS BAJAS
+        if (['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'].includes(nivel)) {
+            registerStock(stBajas, sku, qty, f);
+        }
+        // Jerarquía 2: ALTO
+        else if (['ALTO', 'INS'].includes(nivel)) {
+            registerStock(stAltos, sku, qty, f);
+        }
+        // Jerarquía 3: PISOS
+        else if (nivel === 'CROSS') {
+            registerStock(stPisos, sku, qty, f);
+        }
+        // Jerarquía 4: AEREO
+        else if (nivel === 'AEREO') {
+            registerStock(stAereos, sku, qty, f);
+        }
+        // Jerarquía 5: LÓGICO (PISO, DIS, VER con MZM-TR)
+        else if (nivel === 'PISO' || nivel === 'DIS' || (nivel === 'VER' && nroAnd === 'MZM-TR')) {
+            registerStock(stLogicos, sku, qty, f);
+        }
+        // Jerarquía 6: MERMA (VER sin MZM-TR)
+        else if (nivel === 'VER' && nroAnd !== 'MZM-TR') {
+            registerStock(stMerma, sku, qty, f);
+        }
     });
 
-    let demanda = {};
+    // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
+    let demanda = {}; // sku -> { total: X, sources: [ {src, qty} ] }
+    let processedSKUs = new Set();
+    
+    // 1. PRIORIDAD: PEDIDOS (CSV)
     pedidos.forEach(f => {
         let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
         let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
         let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
         let diff = cant - asig;
-        if (diff > 0 && sku) demanda[sku] = (demanda[sku] || 0) + diff;
+        if (diff > 0 && sku) {
+            if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
+            demanda[sku].total += diff;
+            demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
+            processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
+        }
     });
 
-    let globalRQ = 0, atdBaja = 0, atdAlto = 0, atdPiso = 0, atdAereo = 0, atdLogico = 0;
-    let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
+    // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
+    if (solicitud && solicitud.length) {
+        solicitud.forEach(row => {
+            const keys = Object.keys(row);
+            const sku = String(row[keys[0]] || '').trim();
+            const qty = parseFloat(row[keys[1]]) || 0;
+            // Solo si no fue procesado por PEDIDOS
+            if (sku && qty > 0 && !processedSKUs.has(sku)) {
+                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
+                demanda[sku].total += qty;
+                demanda[sku].sources.push({ src: 'OTRAS SOLICITUDES', qty: qty });
+                processedSKUs.add(sku); // Bloqueamos para REPLENISHMENT
+            }
+        });
+    }
 
-    const satisfyDemand = (sku, pending, stockMap, nivelLabel, counterRef) => {
+    // 3. PRIORIDAD: REPLENISHMENT (XLSX)
+    if (tallas && tallas.length) {
+        tallas.forEach(row => {
+            const keys = Object.keys(row);
+            const sku = String(row[keys[0]] || '').trim();
+            const qty = parseFloat(row[keys[1]]) || 0;
+            // Solo si no fue procesado por PEDIDOS ni OTRAS SOLICITUDES
+            if (sku && qty > 0 && !processedSKUs.has(sku)) {
+                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
+                demanda[sku].total += qty;
+                demanda[sku].sources.push({ src: 'REPLENISHMENT', qty: qty });
+            }
+        });
+    }
+
+    let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
+    let globalRQ = 0, totalsByNivel = {};
+
+    const satisfyDemand = (sku, pending, stockMap, nivelLabel) => {
         if (!stockMap[sku] || pending <= 0) return pending;
         for (let item of stockMap[sku]) {
             if (pending <= 0) break;
@@ -468,48 +533,118 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'UBICACION': ubi,
                     'ARTÍCULO': getArticulo(sku),
                     'SKU': sku,
-                    'RQ': (pending === demanda[sku]) ? pending : 0,
                     'ATD RQ': pick
                 });
 
-                if (nivelLabel === 'Alto' || nivelLabel === 'Aereo') {
+                // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
+                if (nivelLabel === '1. Zonas Bajas' || nivelLabel === '2. Alto' || nivelLabel === '4. Aereo') {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
                 }
 
                 stockUsadoMap.set(id, uses + pick);
-                counterRef.val += pick;
+                if (!totalsByNivel[nivelLabel]) totalsByNivel[nivelLabel] = 0;
+                totalsByNivel[nivelLabel] += pick;
                 pending -= pick;
             }
         }
         return pending;
     };
 
+    // 0. Mapa global de Activo para descuento rápido
+    const totalActivoPorSKU = {};
+    activo.forEach(f => {
+        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
+    });
+
+    const nivelesMap = {
+        'Bajas': '1. Zonas Bajas',
+        'Alto': '2. Alto',
+        'Pisos': '3. Pisos',
+        'Aereo': '4. Aereo',
+        'Logica': '5. Lógico',
+        'Merma': '6. Merma'
+    };
+
+    // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
     Object.keys(demanda).sort().forEach(sku => {
-        let initialRQ = demanda[sku];
-        let pending = initialRQ;
-        globalRQ += initialRQ;
+        let totalSolicitado = demanda[sku].total;
+        globalRQ += totalSolicitado;
 
-        let wrapBaja = { val: 0 };
-        pending = satisfyDemand(sku, pending, stBajas, 'Zonas Bajas', wrapBaja);
-        atdBaja += wrapBaja.val;
+        // 1. Descontamos lo que ya está en Activo (Zonas Bajas)
+        let enActivo = totalActivoPorSKU[sku] || 0;
+        let pending = totalSolicitado;
+        
+        let atdActivo = Math.min(pending, enActivo);
+        if (!totalsByNivel[nivelesMap['Bajas']]) totalsByNivel[nivelesMap['Bajas']] = 0;
+        totalsByNivel[nivelesMap['Bajas']] += atdActivo;
+        pending -= atdActivo;
 
-        let wrapAlto = { val: 0 };
-        pending = satisfyDemand(sku, pending, stAltos, 'Alto', wrapAlto);
-        atdAlto += wrapAlto.val;
+        // 2. Satisfacemos el resto siguiendo las jerarquías
+        if (pending > 0) {
+            pending = satisfyDemand(sku, pending, stBajas, nivelesMap['Bajas']);
+            pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
+            pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Pisos']);
+            pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
+            pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logica']);
+            pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
+            
+            // 3. Si aún queda pendiente, es "Sin Stock"
+            if (pending > 0) {
+                detalleZonas.push({
+                    'NIVEL/AREA': '7. Sin Stock',
+                    'UBICACION': 'S/S',
+                    'ARTÍCULO': getArticulo(sku),
+                    'SKU': sku,
+                    'ATD RQ': pending
+                });
+            }
+        }
+    });
 
-        let wrapPiso = { val: 0 };
-        pending = satisfyDemand(sku, pending, stPisos, 'Pisos', wrapPiso);
-        atdPiso += wrapPiso.val;
+    const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
 
-        let wrapAereo = { val: 0 };
-        pending = satisfyDemand(sku, pending, stAereos, 'Aereo', wrapAereo);
-        atdAereo += wrapAereo.val;
+    let runningRQ = globalRQ;
+    const waterfall = Object.keys(nivelesMap).map(k => {
+        const val = totalsByNivel[nivelesMap[k]] || 0;
+        const currentRQ = runningRQ;
+        runningRQ = Math.max(0, runningRQ - val);
+        return {
+            nivel: nivelesMap[k],
+            rq: currentRQ,
+            atd: val,
+            pct: calcPct(val, globalRQ)
+        };
+    });
 
-        let wrapLogico = { val: 0 };
-        pending = satisfyDemand(sku, pending, stLogicos, 'Logica', wrapLogico);
-        atdLogico += wrapLogico.val;
+    // 7. SIN STOCK
+    waterfall.push({
+        nivel: '7. Sin Stock',
+        rq: runningRQ,
+        atd: runningRQ,
+        pct: calcPct(runningRQ, globalRQ)
+    });
+
+    waterfall.push({ nivel: 'Total', rq: globalRQ, atd: globalRQ, pct: '100.0%' });
+    // (Para saber cuántos palets y SKUs corresponden a cada fuente)
+    const empaqueAggr = {}; // { source: { type: { pal: Set, sku: Set, units: 0 } } }
+    const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+    sources.forEach(s => {
+        empaqueAggr[s] = {
+            'SolidPack': { pal: new Set(), sku: new Set(), units: 0 },
+            'PreePack': { pal: new Set(), sku: new Set(), units: 0 }
+        };
+    });
+
+    // Mapa de Stock Activo para columna QTY ACTIVO
+    const activeStockMap = {};
+    activo.forEach(f => {
+        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
 
     let detallePallets = [];
@@ -519,149 +654,215 @@ export const calculateBufferPallets = (configOverride = null) => {
             let sku = String(getCol(item, ['PRODUCTO', 'Articulo', 'Producto']) || '').trim();
             let qty = parseFloat(item['CANTIDAD'] || 0);
             let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
+            
             if (pick > 0) {
-                detallePallets.push({ 'UBICACIONES': ubi, 'LPN': item['LPN'], 'SKU': sku, 'QTY ACTIVO': 0, 'QTY RESERVA': qty, 'QTY BUFFER': pick });
+                const demandObj = demanda[sku];
+                const tipo = sku.length >= 14 ? 'PreePack' : 'SolidPack';
+                
+                if (demandObj) {
+                    demandObj.sources.forEach(dSrc => {
+                        const proportion = dSrc.qty / demandObj.total;
+                        const attributedUnits = pick * proportion;
+                        
+                        if (attributedUnits > 0) {
+                            detallePallets.push({ 
+                                'FUENTE': dSrc.src,
+                                'UBICACIONES': ubi, 
+                                'LPN': item['LPN'], 
+                                'SKU': sku, 
+                                'Articulo': sku.substring(0,7),
+                                'RQ': dSrc.qty,
+                                'QTY ACTIVO': activeStockMap[sku] || 0,
+                                'QTY RESERVA': qty, 
+                                'QTY BUFFER': Math.round(attributedUnits)
+                            });
+                            
+                            // Atribución para resumen empaque
+                            empaqueAggr[dSrc.src][tipo].pal.add(ubi);
+                            empaqueAggr[dSrc.src][tipo].sku.add(sku);
+                            empaqueAggr[dSrc.src][tipo].units += attributedUnits;
+                        }
+                    });
+                } else {
+                    // Caso borde: SKU sin demanda clara (no debería pasar)
+                    detallePallets.push({ 
+                        'FUENTE': 'DESCONOCIDO',
+                        'UBICACIONES': ubi, 
+                        'LPN': item['LPN'], 
+                        'SKU': sku, 
+                        'RQ': 0,
+                        'QTY ACTIVO': activeStockMap[sku] || 0,
+                        'QTY RESERVA': qty, 
+                        'QTY BUFFER': pick 
+                    });
+                }
             }
         });
     });
 
-    const calcPct = (a, b) => b > 0 ? ((a / b) * 100).toFixed(2) + '%' : '0.00%';
-    let waterfall = [
-        { nivel: '1. Zonas Bajas', rq: globalRQ, atd: atdBaja, pct: calcPct(atdBaja, globalRQ) },
-        { nivel: '2. Alto', rq: globalRQ - atdBaja, atd: atdAlto, pct: calcPct(atdAlto, globalRQ - atdBaja) },
-        { nivel: '3. Pisos', rq: globalRQ - atdBaja - atdAlto, atd: atdPiso, pct: calcPct(atdPiso, globalRQ - atdBaja - atdAlto) },
-        { nivel: '4. Aereo', rq: globalRQ - atdBaja - atdAlto - atdPiso, atd: atdAereo, pct: calcPct(atdAereo, globalRQ - atdBaja - atdAlto - atdPiso) },
-        { nivel: '5. Logica', rq: globalRQ - atdBaja - atdAlto - atdPiso - atdAereo, atd: atdLogico, pct: calcPct(atdLogico, globalRQ - atdBaja - atdAlto - atdPiso - atdAereo) },
-        { nivel: 'Total', rq: globalRQ, atd: atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, pct: calcPct(atdBaja + atdAlto + atdPiso + atdAereo + atdLogico, globalRQ) }
-    ];
+    const resEmp = [];
+    sources.forEach(s => {
+        let sourcePallets = new Set();
+        let sourceSkus = new Set();
+        let sourceUnits = 0;
+        let hasData = false;
 
-    // =============================================
-    // V10.5-Pulse: ANÁLISIS FORENSE (ZONAS 3, 4, 5)
-    // =============================================
-    const forensicZones = ['Pisos', 'Aereo', 'Logica'];
-    const getArtInfo = (sku) => {
-        if (!dataStore.articulos || !sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        
-        const clean = (s) => String(s || '').trim();
-        const to7 = (s) => clean(s).substring(0, 7);
-        
-        // El usuario indica: pedidos(Código de articulo)[7] -> articulos(CodArticulo)
-        const target7 = to7(sku);
-
-        const row = dataStore.articulos.find(a => {
-            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']));
-            return clean(masterVal) === target7 || to7(masterVal) === target7;
+        ['SolidPack', 'PreePack'].forEach(t => {
+            const data = empaqueAggr[s][t];
+            if (data.sku.size > 0) {
+                hasData = true;
+                resEmp.push({ 
+                    fuente: s, 
+                    tipo: t, 
+                    paletas: data.pal.size, 
+                    skus: data.sku.size, 
+                    parcaja: Math.round(data.units) 
+                });
+                data.pal.forEach(p => sourcePallets.add(p));
+                data.sku.forEach(sk => sourceSkus.add(sk));
+                sourceUnits += data.units;
+            }
         });
 
-        if (!row) return { gender: 'NO ENCONTRADO', marca: 'No Encontrado' };
-
-        return {
-            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
-        };
-    };
-
-    const genderAggr = {}, marcaAggr = {}, matrixAggr = {};
-    const genderKeys = new Set();
-    
-    detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
-        const info = getArtInfo(d.SKU);
-        const atd = d['ATD RQ'] || 0;
-        
-        genderKeys.add(info.gender);
-        
-        // Agregados individuales (Retrocompatibilidad)
-        if (!genderAggr[info.gender]) genderAggr[info.gender] = { rq: 0, atd: 0 };
-        genderAggr[info.gender].atd += atd;
-        genderAggr[info.gender].rq += atd;
-
-        if (!marcaAggr[info.marca]) marcaAggr[info.marca] = { rq: 0, atd: 0 };
-        marcaAggr[info.marca].atd += atd;
-        marcaAggr[info.marca].rq += atd;
-        
-        // Matriz de doble entrada
-        if (!matrixAggr[info.marca]) matrixAggr[info.marca] = {};
-        if (!matrixAggr[info.marca][info.gender]) matrixAggr[info.marca][info.gender] = 0;
-        matrixAggr[info.marca][info.gender] += atd;
+        if (hasData) {
+            resEmp.push({
+                fuente: `TOTAL ${s}`,
+                tipo: '---',
+                paletas: sourcePallets.size,
+                skus: sourceSkus.size,
+                parcaja: Math.round(sourceUnits),
+                isSubTotal: true
+            });
+        }
     });
 
-    const sortedGenders = Array.from(genderKeys).sort();
-    const matrixRows = Object.keys(matrixAggr).sort().map(marca => {
-        const row = { marca: marca, breakdown: {}, total: 0 };
-        sortedGenders.forEach(g => {
-            const val = matrixAggr[marca][g] || 0;
-            row.breakdown[g] = val;
-            row.total += val;
+    if (resEmp.length) {
+        resEmp.push({ 
+            fuente: 'TOTAL GENERAL', 
+            tipo: '---', 
+            paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, 
+            skus: new Set(detallePallets.map(d=>d.SKU)).size, 
+            parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 
         });
-        return row;
-    });
-    
-    if (matrixRows.length > 0) {
-        const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
-        sortedGenders.forEach(g => {
-            const sumG = matrixRows.reduce((acc, r) => acc + (r.breakdown[g] || 0), 0);
-            totalRow.breakdown[g] = sumG;
-            totalRow.total += sumG;
-        });
-        matrixRows.push(totalRow);
     }
 
-    const formatForensic = (aggr) => {
-        const rows = Object.keys(aggr).sort().map(k => ({ key: k, rq: aggr[k].rq }));
-        if (rows.length > 0) {
-            rows.push({ key: 'TOTAL', rq: rows.reduce((sum, r) => sum + r.rq, 0) });
-        }
-        return rows;
+    // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
+    const articulosMap = new Map();
+    if (articulos && articulos.length) {
+        articulos.forEach(a => {
+            const masterVal = String(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']) || '').trim();
+            const sku7 = masterVal.substring(0, 7);
+            if (sku7 && !articulosMap.has(sku7)) {
+                articulosMap.set(sku7, {
+                    gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+                    marca: String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
+                });
+            }
+        });
+    }
+
+    const getArtInfo = (sku) => {
+        if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        const sku7 = sku.trim().substring(0, 7);
+        return articulosMap.get(sku7) || { gender: 'OTRO', marca: 'OTRO' };
     };
 
-    const empaque = { 'SolidPack': { paletas: new Set(), skus: new Set(), parcaja: 0 }, 'PreePack': { paletas: new Set(), skus: new Set(), parcaja: 0 } };
-    detallePallets.forEach(r => {
-        const tipo = r.SKU.length >= 14 ? 'PreePack' : 'SolidPack';
-        empaque[tipo].paletas.add(r.UBICACIONES);
-        empaque[tipo].skus.add(r.SKU);
-        empaque[tipo].parcaja += r['QTY BUFFER'];
-    });
-
-    const resEmp = Object.keys(empaque).map(t => ({ tipo: t, paletas: empaque[t].paletas.size, skus: empaque[t].skus.size, parcaja: empaque[t].parcaja }));
-    if (resEmp.length) resEmp.push({ tipo: 'TOTAL', paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, skus: new Set(detallePallets.map(d=>d.SKU)).size, parcaja: resEmp.reduce((a,b)=>a+b.parcaja, 0) });
-
-    // =============================================
-    // V11.3: AGRUPACIÓN POR NIVEL (ESTRUCTURA IMAGEN)
-    // =============================================
-    const resumenNiveles = {};
-    const nivelMapping = { 'Zonas Bajas': '1. ZONAS BAJAS', 'Alto': '2. ALTO', 'Pisos': '3. PISOS', 'Aereo': '4. AEREO', 'Logica': '5. LOGICA' };
-    
-    detallePallets.forEach(r => {
-        const zonaInfo = detalleZonas.find(dz => dz.UBICACION === r.UBICACIONES);
-        const nivelRaw = zonaInfo ? zonaInfo['NIVEL/AREA'] : 'OTROS';
-        const nivelLabel = nivelMapping[nivelRaw] || nivelRaw;
-        
-        if (!resumenNiveles[nivelLabel]) {
-            resumenNiveles[nivelLabel] = {
-                solid: { pal: new Set(), sku: new Set() },
-                pree: { pal: new Set(), sku: new Set() }
-            };
+    const buildMatrix = (filterFn) => {
+        const aggr = {};
+        const keys = new Set();
+        detalleZonas.filter(filterFn).forEach(d => {
+            const info = getArtInfo(d.SKU);
+            const qty = d['ATD RQ'] || 0;
+            keys.add(info.gender);
+            if (!aggr[info.marca]) aggr[info.marca] = {};
+            if (!aggr[info.marca][info.gender]) aggr[info.marca][info.gender] = 0;
+            aggr[info.marca][info.gender] += qty;
+        });
+        const sorted = Array.from(keys).sort();
+        const rows = Object.keys(aggr).sort().map(marca => {
+            const row = { marca, breakdown: {}, total: 0 };
+            sorted.forEach(g => {
+                const val = aggr[marca][g] || 0;
+                row.breakdown[g] = val;
+                row.total += val;
+            });
+            return row;
+        });
+        if (rows.length > 0) {
+            const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
+            sorted.forEach(g => {
+                const sumG = rows.reduce((acc, r) => acc + (r.breakdown[g] || 0), 0);
+                totalRow.breakdown[g] = sumG;
+                totalRow.total += sumG;
+            });
+            rows.push(totalRow);
         }
-        const tipo = r.SKU.length >= 14 ? 'pree' : 'solid';
-        resumenNiveles[nivelLabel][tipo].pal.add(r.UBICACIONES);
-        resumenNiveles[nivelLabel][tipo].sku.add(r.SKU);
+        return { columns: sorted, rows: rows };
+    };
+
+    const matrixResumen = buildMatrix(d => ['3. Pisos', '4. Aereo', '5. Lógico', '6. Merma'].includes(d['NIVEL/AREA']));
+    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. Sin Stock');
+
+    // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
+    const historyDataMap = {}; 
+    detalleZonas.forEach(dz => {
+        const demandObj = demanda[dz.SKU];
+        if (!demandObj) return;
+        
+        const ubi = dz.UBICACION;
+        const isPalletSource = ubicacionesEnElPiso.has(ubi);
+        const nivelLabel = dz['NIVEL/AREA'];
+
+        demandObj.sources.forEach(ds => {
+            if (ds.qty <= 0) return;
+            if (!historyDataMap[ds.src]) historyDataMap[ds.src] = {};
+            if (!historyDataMap[ds.src][nivelLabel]) historyDataMap[ds.src][nivelLabel] = { pal: new Set(), sku: new Set() };
+            if (isPalletSource) historyDataMap[ds.src][nivelLabel].pal.add(ubi);
+            historyDataMap[ds.src][nivelLabel].sku.add(dz.SKU);
+        });
     });
 
-    // Formatear para persistencia (Sets a Arrays/Counts)
-    const historyData = Object.keys(resumenNiveles).sort().map(lvl => ({
-        nivel: lvl,
-        solid: { pal: resumenNiveles[lvl].solid.pal.size, sku: resumenNiveles[lvl].solid.sku.size },
-        pree: { pal: resumenNiveles[lvl].pree.pal.size, sku: resumenNiveles[lvl].pree.sku.size }
-    }));
+    const historyData = [];
+    Object.keys(historyDataMap).sort().forEach(s => {
+        Object.keys(historyDataMap[s]).sort().forEach(lvl => {
+            historyData.push({
+                fuente: s,
+                nivel: lvl,
+                pal: historyDataMap[s][lvl].pal.size,
+                sku: historyDataMap[s][lvl].sku.size
+            });
+        });
+    });
+
+    // 4. RESUMEN SKU DETALLE (Para pestaña Detalle y Sku Bajar)
+    const resumenSKUDetalle = Object.keys(demanda).sort().map(sku => {
+        const d = demanda[sku];
+        const enActivo = totalActivoPorSKU[sku] || 0;
+        const diff = Math.max(0, d.total - enActivo);
+        
+        // Calcular stock en reserva total (Altos + Pisos + Aereos + Logicos)
+        let enReserva = 0;
+        [stAltos, stPisos, stAereos, stLogicos].forEach(map => {
+            if (map[sku]) enReserva += map[sku].reduce((acc, i) => acc + i.qty, 0);
+        });
+
+        return {
+            'Sku': sku,
+            'RQ': d.total,
+            'Qty Activo': enActivo,
+            'Diferencia': diff,
+            'Qty Reserva': enReserva
+        };
+    });
 
     return { 
-        waterfall, 
         detalle: detallePallets, 
         detalleZonas, 
         resumenSKU: resEmp,
-        resumenNiveles: historyData,
-        resumenGender: formatForensic(genderAggr),
-        resumenMarca: formatForensic(marcaAggr),
-        resumenMatrix: { columns: sortedGenders, rows: matrixRows }
+        resumenSKUDetalle, 
+        resumenNiveles: historyData, 
+        waterfall: waterfall,
+        resumenMatrix: matrixResumen,
+        resumenMatrixSinStock: matrixSinStock
     };
 };
