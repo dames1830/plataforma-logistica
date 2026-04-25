@@ -403,8 +403,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     const tallas = dataStore.tallas;     // REPLENISHMENT
     const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !pedidos || !articulos) {
-        console.error("[VALIDACIÓN] Datos base incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos, articulos: !!articulos });
+    if(!activo || !reserva || !pedidos) {
+        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
         return null;
     }
 
@@ -615,11 +615,13 @@ export const calculateBufferPallets = (configOverride = null) => {
     const matrixRows = [];
     const matrixCols = Array.from(new Set(detalleZonas.map(d => d['NIVEL/AREA']))).sort();
     const marcasMap = {}; 
-    articulos.forEach(a => {
-        const sku = String(getCol(a, ['Codigo', 'Articulo', 'SKU']) || '').trim();
-        const marca = String(getCol(a, ['Marca', 'MARCA']) || 'SIN MARCA').trim();
-        if (sku) marcasMap[sku] = marca;
-    });
+    if (articulos) {
+        articulos.forEach(a => {
+            const sku = String(getCol(a, ['Codigo', 'Articulo', 'SKU']) || '').trim();
+            const marca = String(getCol(a, ['Marca', 'MARCA']) || 'SIN MARCA').trim();
+            if (sku) marcasMap[sku] = marca;
+        });
+    }
 
     const marcasAggr = {};
     detalleZonas.forEach(dz => {
