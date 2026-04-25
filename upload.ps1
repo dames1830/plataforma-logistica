@@ -1,3 +1,3 @@
 git add .
-git commit -m "PRODUCTION v12.0.2: Dynamic worker names in reports"
+git commit -m "PRODUCTION v12.0.4: Hardened dynamic names and cache force"
 git push origin main
