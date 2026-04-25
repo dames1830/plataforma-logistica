@@ -728,8 +728,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: calcPct(totalATD, globalRQ) });
 
-    // 2. MATRIZ DE DISCREPANCIAS (MARCAS VS GÉNEROS - ZONAS 3,4,5)
-    const forensicZones = ['Pisos', 'Aereo', 'Logica'];
+    // 2. MATRIZ DE DISCREPANCIAS
     const getArtInfo = (sku) => {
         if (!articulos || !sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
         const clean = (s) => String(s || '').trim();
@@ -748,38 +747,41 @@ export const calculateBufferPallets = (configOverride = null) => {
         };
     };
 
-    const matrixAggr = {};
-    const genderKeys = new Set();
-    
-    detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
-        const info = getArtInfo(d.SKU);
-        const atd = d['ATD RQ'] || 0;
-        genderKeys.add(info.gender);
-        if (!matrixAggr[info.marca]) matrixAggr[info.marca] = {};
-        if (!matrixAggr[info.marca][info.gender]) matrixAggr[info.marca][info.gender] = 0;
-        matrixAggr[info.marca][info.gender] += atd;
-    });
+    const buildMatrix = (filterFn) => {
+        const aggr = {};
+        const keys = new Set();
+        detalleZonas.filter(filterFn).forEach(d => {
+            const info = getArtInfo(d.SKU);
+            const qty = d['ATD RQ'] || 0;
+            keys.add(info.gender);
+            if (!aggr[info.marca]) aggr[info.marca] = {};
+            if (!aggr[info.marca][info.gender]) aggr[info.marca][info.gender] = 0;
+            aggr[info.marca][info.gender] += qty;
+        });
+        const sorted = Array.from(keys).sort();
+        const rows = Object.keys(aggr).sort().map(marca => {
+            const row = { marca, breakdown: {}, total: 0 };
+            sorted.forEach(g => {
+                const val = aggr[marca][g] || 0;
+                row.breakdown[g] = val;
+                row.total += val;
+            });
+            return row;
+        });
+        if (rows.length > 0) {
+            const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
+            sorted.forEach(g => {
+                const sumG = rows.reduce((acc, r) => acc + (r.breakdown[g] || 0), 0);
+                totalRow.breakdown[g] = sumG;
+                totalRow.total += sumG;
+            });
+            rows.push(totalRow);
+        }
+        return { columns: sorted, rows: rows };
+    };
 
-    const sortedGenders = Array.from(genderKeys).sort();
-    const matrixRows = Object.keys(matrixAggr).sort().map(marca => {
-        const row = { marca: marca, breakdown: {}, total: 0 };
-        sortedGenders.forEach(g => {
-            const val = matrixAggr[marca][g] || 0;
-            row.breakdown[g] = val;
-            row.total += val;
-        });
-        return row;
-    });
-    
-    if (matrixRows.length > 0) {
-        const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
-        sortedGenders.forEach(g => {
-            const sumG = matrixRows.reduce((acc, r) => acc + (r.breakdown[g] || 0), 0);
-            totalRow.breakdown[g] = sumG;
-            totalRow.total += sumG;
-        });
-        matrixRows.push(totalRow);
-    }
+    const matrixResumen = buildMatrix(d => ['Pisos', 'Aereo', 'Logica'].includes(d['NIVEL/AREA']));
+    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '6. Sin Stock');
 
     // 3. RESUMEN PARA HISTORIAL (3 FILAS POR PROCESO)
     const historyData = [];
@@ -835,9 +837,10 @@ export const calculateBufferPallets = (configOverride = null) => {
         detalle: detallePallets, 
         detalleZonas, 
         resumenSKU: resEmp,
-        resumenSKUDetalle, // Nueva data para Excel
+        resumenSKUDetalle, 
         resumenNiveles: historyData, 
         waterfall: waterfall,
-        resumenMatrix: { columns: sortedGenders, rows: matrixRows }
+        resumenMatrix: matrixResumen,
+        resumenMatrixSinStock: matrixSinStock
     };
 };
