@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.9.8';
-import * as adminService from '../services/adminService.js?v=11.9.8';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.9.9';
+import * as adminService from '../services/adminService.js?v=11.9.9';
 
 
-const VERSION = '11.9.8';
+const VERSION = '11.9.9';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.9.8</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.9.9</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1109,10 +1109,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             const node = localState.find(s => s.dni === dni);
             if (node) {
                 node.present = val;
-                if (!val) node.onTime = false; // Si falta, no es puntual
+                if (!val) node.onTime = false;
             }
-            
-            // UI Toggle
+            // Auto-guardado preventivo para evitar pérdida por parpadeos
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
             renderAsistenciaUI(dni, localState);
         });
 
@@ -1122,6 +1122,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const node = localState.find(s => s.dni === dni);
             if (node && node.present) node.onTime = val;
             
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
             renderAsistenciaUI(dni, localState);
         });
 
@@ -1129,6 +1130,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const dni = e.target.dataset.dni;
             const node = localState.find(s => s.dni === dni);
             if (node) node.justification = e.target.value;
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
         });
 
         const renderAsistenciaUI = (dni, state) => {
@@ -2030,21 +2032,17 @@ export const renderDashboard = async (container, user, onLogout) => {
       if (window._pulseSyncInterval) clearInterval(window._pulseSyncInterval);
       
       window._pulseSyncInterval = setInterval(async () => {
-          // Solo sincronizar si la pestaña es visible y el usuario no está escribiendo
+          // No sincronizar si el usuario está en Asistencia (Evita el "parpadeo" reportado)
+          if (currentTab === 'admin_pers' && activeAdminSub === 'asistencia') return;
+
           const isIdle = !document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA');
           
           if (document.visibilityState === 'visible' && isIdle) {
               console.log("🔄 [PULSE] Sincronización automática de datos...");
-              
-              // 1. Sincronizar datos de Administración (Asistencia, Performance, etc.)
               await adminService.initializeAdminData();
-              
-              // 2. Si estamos en una pestaña que depende de datos vivos, refrescar silenciosamente
-              if (currentTab === 'admin_pers' || currentTab === 'inicio') {
-                  renderTabContent(true); 
-              }
+              if (currentTab === 'inicio') renderTabContent(true); 
           }
-      }, 20000); // Frecuencia: 20 segundos
+      }, 20000); 
   };
 
   renderNav();
