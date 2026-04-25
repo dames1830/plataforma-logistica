@@ -596,7 +596,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         if (hasData) {
             resEmp.push({
-                fuente: `SUB-TOTAL ${s}`,
+                fuente: `TOTAL ${s}`,
                 tipo: '---',
                 paletas: sourcePallets.size,
                 skus: sourceSkus.size,
