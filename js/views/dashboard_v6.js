@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.0.5';
-const CACHE_KEY = `logistics_v12_0_5_`;
+const VERSION = '12.0.6';
+const CACHE_KEY = `logistics_v12_0_6_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.5</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.6</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1296,8 +1296,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         const wNum = getWeekNumber(entryDate);
         if (!selectedWeeks.includes(wNum)) return;
 
-        const key = entry.dni;
-        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0, faltas: 0, faltasJustificadas: 0 };
+        const key = (entry.dni || '').toString().trim();
+        if (!globalWorkerMap[key]) {
+            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === key);
+            const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
+            globalWorkerMap[key] = { name: currentName, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0, faltas: 0, faltasJustificadas: 0 };
+        }
         
         if (entry.asistencia === 'P') {
             globalWorkerMap[key].sum += parsePct(entry.rendimiento);
@@ -1538,8 +1542,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     const filtered = rawLog.filter(e => e.date >= kpiStart && e.date <= kpiEnd);
     const workerMap = {};
     filtered.forEach(entry => {
-        const key = entry.dni;
-        if (!workerMap[key]) workerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, countForAvg: 0, diasTrabajados: 0, justificaciones: 0, faltas: 0, tardanzas: 0 };
+        const key = (entry.dni || '').toString().trim();
+        if (!workerMap[key]) {
+            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === key);
+            const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
+            workerMap[key] = { name: currentName, sum: 0, count: 0, diasTrabajados: 0, justificaciones: 0, faltas: 0, tardanzas: 0 };
+        }
         const w = workerMap[key];
         const rend = parsePct(entry.rendimiento);
         if (entry.asistencia === 'P') {
