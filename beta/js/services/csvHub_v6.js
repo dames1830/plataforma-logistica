@@ -440,10 +440,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         else if (config.include_logico === '1' && nivel === 'VER' && nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
     });
 
-    // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE
+    // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
     let demanda = {}; // sku -> { total: X, sources: [ {src, qty} ] }
+    let processedSKUs = new Set();
     
-    // 1. PEDIDOS (CSV)
+    // 1. PRIORIDAD: PEDIDOS (CSV)
     pedidos.forEach(f => {
         let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
         let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
@@ -453,30 +454,34 @@ export const calculateBufferPallets = (configOverride = null) => {
             if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
             demanda[sku].total += diff;
             demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
+            processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
         }
     });
 
-    // 2. OTRAS SOLICITUDES (XLSX: Col1=SKU, Col2=Units)
+    // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
             const keys = Object.keys(row);
             const sku = String(row[keys[0]] || '').trim();
             const qty = parseFloat(row[keys[1]]) || 0;
-            if (sku && qty > 0) {
+            // Solo si no fue procesado por PEDIDOS
+            if (sku && qty > 0 && !processedSKUs.has(sku)) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
                 demanda[sku].sources.push({ src: 'OTRAS SOLICITUDES', qty: qty });
+                processedSKUs.add(sku); // Bloqueamos para REPLENISHMENT
             }
         });
     }
 
-    // 3. REPLENISHMENT (XLSX: Col1=SKU, Col2=Units)
+    // 3. PRIORIDAD: REPLENISHMENT (XLSX)
     if (tallas && tallas.length) {
         tallas.forEach(row => {
             const keys = Object.keys(row);
             const sku = String(row[keys[0]] || '').trim();
             const qty = parseFloat(row[keys[1]]) || 0;
-            if (sku && qty > 0) {
+            // Solo si no fue procesado por PEDIDOS ni OTRAS SOLICITUDES
+            if (sku && qty > 0 && !processedSKUs.has(sku)) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
                 demanda[sku].sources.push({ src: 'REPLENISHMENT', qty: qty });
