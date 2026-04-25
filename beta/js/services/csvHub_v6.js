@@ -678,6 +678,13 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // 1. WATERFALL (RESUMEN POR NIVELES DESCENDENTE)
     const waterfall = [];
+    const nivelesMap = {
+        'Zonas Bajas': '1. Zonas Bajas',
+        'Alto': '2. Alto',
+        'Pisos': '3. Pisos',
+        'Aereo': '4. Aereo',
+        'Logica': '5. Logica'
+    };
     const nivelesList = ['Zonas Bajas', 'Alto', 'Pisos', 'Aereo', 'Logica'];
     let runningRQ = globalRQ;
     let totalATD = 0;
@@ -687,7 +694,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     nivelesList.forEach(nivel => {
         const atd = totalsByNivel[nivel] || 0;
         waterfall.push({
-            nivel,
+            nivel: nivelesMap[nivel],
             rq: Math.max(0, runningRQ),
             atd: atd,
             pct: calcPct(atd, runningRQ)
@@ -699,11 +706,11 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 6. Sin Stock (Lo que no se encontró en ninguna zona)
     if (runningRQ > 0) {
         waterfall.push({
-            nivel: 'Sin Stock',
+            nivel: '6. Sin Stock',
             rq: runningRQ,
-            atd: 0, // No fue atendido por stock real
+            atd: 0,
             pct: '0.0%',
-            isOOS: true // Flag para estilo visual
+            isOOS: true
         });
     }
 
