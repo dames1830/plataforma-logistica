@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.0.2';
+const VERSION = '12.0.3';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.2</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.3</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1754,8 +1754,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
-                        </tr>
-                        `).join('')}
+                        `; }).join('')}
                         `;
                     }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
