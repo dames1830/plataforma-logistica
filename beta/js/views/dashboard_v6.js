@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.9.7';
-import * as adminService from '../services/adminService.js?v=11.9.7';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.9.8';
+import * as adminService from '../services/adminService.js?v=11.9.8';
 
 
-const VERSION = '11.9.7';
+const VERSION = '11.9.8';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.9.7</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.9.8</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -478,17 +478,13 @@ export const renderDashboard = async (container, user, onLogout) => {
   const createMatrixHTML = (matrix, title) => {
     if (!matrix || !matrix.rows || !matrix.rows.length) return '';
     
-    // Alias específicos para el cuadro de SIN STOCK
-    const isOOS = title === 'ANÁLISIS BUFFER | SIN STOCK';
     const brandAlias = (name) => {
-        if (!isOOS) return name;
         if (name === 'Bubblegummers Licenses') return 'BG Licenses';
         if (name === 'Bubblegummers') return 'BG';
         if (name === 'Bata Industrials') return 'Industrials';
         return name;
     };
     const genderAlias = (name) => {
-        if (!isOOS) return name;
         if (name === '11 NON COMMERCIAL COMPLEMENTS') return '11 COMPLEMENTS';
         return name;
     };
