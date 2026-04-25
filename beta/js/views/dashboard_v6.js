@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.6.6</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.7.0</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -207,13 +207,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const renderUploadArea = (container, area, hasData = null, ext = '.csv') => {
+  const renderUploadArea = (container, area, hasData = null, ext = '.csv', customLabel = null) => {
     const meta = getUploadMeta(area);
     const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'Nunca';
     const div = document.createElement('div');
     div.id = `wrap_${area}`;
     div.style.width = '100%';
-    const label = area.toUpperCase();
+    const label = customLabel || area.toUpperCase();
     
     if (hasData) {
       div.innerHTML = `
@@ -306,10 +306,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
-        renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv');
-        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv');
-        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx');
-        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx');
+        renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
+        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv', 'OTRAS SOLICITUDES');
+        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
+        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
     } else if (activeBufferSub === 'historial_buffer') {
         renderBufferHistory(buf);
     } else if (activeBufferSub === 'kpi_buffer') {
