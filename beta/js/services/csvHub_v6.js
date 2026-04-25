@@ -730,46 +730,6 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // 1. WATERFALL (RESUMEN POR NIVELES DESCENDENTE)
-    const waterfall = [];
-    const nivelesMap = {
-        'Zonas Bajas': '1. Zonas Bajas',
-        'Alto': '2. Alto',
-        'Pisos': '3. Pisos',
-        'Aereo': '4. Aereo',
-        'Logica': '5. Logica'
-    };
-    const nivelesList = ['Zonas Bajas', 'Alto', 'Pisos', 'Aereo', 'Logica'];
-    let runningRQ = globalRQ;
-    let totalATD = 0;
-
-    const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
-
-    nivelesList.forEach(nivel => {
-        const atd = totalsByNivel[nivel] || 0;
-        waterfall.push({
-            nivel: nivelesMap[nivel],
-            rq: Math.max(0, runningRQ),
-            atd: atd,
-            pct: calcPct(atd, runningRQ)
-        });
-        runningRQ -= atd;
-        totalATD += atd;
-    });
-
-    // 6. Sin Stock (Lo que no se encontró en ninguna zona)
-    if (runningRQ > 0) {
-        waterfall.push({
-            nivel: '6. Sin Stock',
-            rq: runningRQ,
-            atd: 0,
-            pct: '0.0%',
-            isOOS: true
-        });
-    }
-
-    waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: calcPct(totalATD, globalRQ) });
-
     // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
     const articulosMap = new Map();
     if (articulos && articulos.length) {
@@ -824,8 +784,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         return { columns: sorted, rows: rows };
     };
 
-    const matrixResumen = buildMatrix(d => ['Pisos', 'Aereo', 'Logica'].includes(d['NIVEL/AREA']));
-    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '6. Sin Stock');
+    const matrixResumen = buildMatrix(d => ['1. Zonas Bajas', '2. Alto', '3. Pisos', '4. Aereo', '5. Lógico'].includes(d['NIVEL/AREA']));
+    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. Sin Stock');
 
     // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
     const historyDataMap = {}; 
