@@ -728,23 +728,25 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: calcPct(totalATD, globalRQ) });
 
-    // 2. MATRIZ DE DISCREPANCIAS
-    const getArtInfo = (sku) => {
-        if (!articulos || !sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        const clean = (s) => String(s || '').trim();
-        const to7 = (s) => clean(s).substring(0, 7);
-        const target7 = to7(sku);
-
-        const row = articulos.find(a => {
-            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']));
-            return clean(masterVal) === target7 || to7(masterVal) === target7;
+    // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
+    const articulosMap = new Map();
+    if (articulos && articulos.length) {
+        articulos.forEach(a => {
+            const masterVal = String(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']) || '').trim();
+            const sku7 = masterVal.substring(0, 7);
+            if (sku7 && !articulosMap.has(sku7)) {
+                articulosMap.set(sku7, {
+                    gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+                    marca: String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
+                });
+            }
         });
+    }
 
-        if (!row) return { gender: 'OTRO', marca: 'OTRO' };
-        return {
-            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
-        };
+    const getArtInfo = (sku) => {
+        if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        const sku7 = sku.trim().substring(0, 7);
+        return articulosMap.get(sku7) || { gender: 'OTRO', marca: 'OTRO' };
     };
 
     const buildMatrix = (filterFn) => {
@@ -783,31 +785,33 @@ export const calculateBufferPallets = (configOverride = null) => {
     const matrixResumen = buildMatrix(d => ['Pisos', 'Aereo', 'Logica'].includes(d['NIVEL/AREA']));
     const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '6. Sin Stock');
 
-    // 3. RESUMEN PARA HISTORIAL (3 FILAS POR PROCESO)
-    const historyData = [];
-    sources.forEach(s => {
-        const sourceLvlAggr = {};
-        detalleZonas.forEach(dz => {
-            const demandObj = demanda[dz.SKU];
-            if (demandObj) {
-                const proportion = (demandObj.sources.find(ds => ds.src === s)?.qty || 0) / demandObj.total;
-                if (proportion > 0) {
-                    const ubi = dz.UBICACION;
-                    const isPalletSource = ubicacionesEnElPiso.has(ubi);
-                    const nivelLabel = dz['NIVEL/AREA'];
-                    if (!sourceLvlAggr[nivelLabel]) sourceLvlAggr[nivelLabel] = { pal: new Set(), sku: new Set() };
-                    if (isPalletSource) sourceLvlAggr[nivelLabel].pal.add(ubi);
-                    sourceLvlAggr[nivelLabel].sku.add(dz.SKU);
-                }
-            }
-        });
+    // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
+    const historyDataMap = {}; 
+    detalleZonas.forEach(dz => {
+        const demandObj = demanda[dz.SKU];
+        if (!demandObj) return;
+        
+        const ubi = dz.UBICACION;
+        const isPalletSource = ubicacionesEnElPiso.has(ubi);
+        const nivelLabel = dz['NIVEL/AREA'];
 
-        Object.keys(sourceLvlAggr).forEach(lvl => {
+        demandObj.sources.forEach(ds => {
+            if (ds.qty <= 0) return;
+            if (!historyDataMap[ds.src]) historyDataMap[ds.src] = {};
+            if (!historyDataMap[ds.src][nivelLabel]) historyDataMap[ds.src][nivelLabel] = { pal: new Set(), sku: new Set() };
+            if (isPalletSource) historyDataMap[ds.src][nivelLabel].pal.add(ubi);
+            historyDataMap[ds.src][nivelLabel].sku.add(dz.SKU);
+        });
+    });
+
+    const historyData = [];
+    Object.keys(historyDataMap).sort().forEach(s => {
+        Object.keys(historyDataMap[s]).sort().forEach(lvl => {
             historyData.push({
                 fuente: s,
                 nivel: lvl,
-                pal: sourceLvlAggr[lvl].pal.size,
-                sku: sourceLvlAggr[lvl].sku.size
+                pal: historyDataMap[s][lvl].pal.size,
+                sku: historyDataMap[s][lvl].sku.size
             });
         });
     });
