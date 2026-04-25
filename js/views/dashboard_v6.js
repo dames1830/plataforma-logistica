@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.0.0';
+const VERSION = '12.0.1';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.1</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -657,11 +657,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             ${w.active === false ? '❌' : '✅'}
                                         </button>
                                     </td>
-                                    <td style="padding:0.7rem; font-weight:800; color:#fff;">${w.dni || w.Dni || ''}</td>
-                                    <td style="padding:0.7rem;">${w.nombre || w.Nombre || ''}</td>
-                                    <td style="padding:0.7rem;">${w.apellidos || w.Apellidos || ''}</td>
-                                    <td style="padding:0.7rem;">${w.puesto || w.Puesto || ''}</td>
-                                    <td style="padding:0.7rem;"><span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.65rem;">${w.turno || w.Turno || ''}</span></td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="dni" contenteditable="true" style="padding:0.7rem; font-weight:800; color:#fff; outline:none;">${w.dni || w.Dni || ''}</td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="nombre" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.nombre || w.Nombre || ''}</td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="apellidos" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.apellidos || w.Apellidos || ''}</td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="puesto" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.puesto || w.Puesto || ''}</td>
+                                    <td style="padding:0.7rem;">
+                                        <select class="edit-worker-select" data-dni="${w.dni || w.Dni}" data-f="turno" style="background:rgba(255,255,255,0.05); border:none; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; outline:none; cursor:pointer;">
+                                            <option value="DIA" ${ (w.turno||w.Turno)==='DIA'?'selected':'' }>DIA</option>
+                                            <option value="NOCHE" ${ (w.turno||w.Turno)==='NOCHE'?'selected':'' }>NOCHE</option>
+                                        </select>
+                                    </td>
                                 </tr>
                             `).join('') : '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay trabajadores cargados.</td></tr>'}
                         </tbody>
@@ -718,6 +723,31 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.onclick = () => {
             adminService.toggleWorkerStatus(btn.dataset.dni);
             renderAdminTab();
+        };
+    });
+
+    // Eventos para Edición Directa
+    document.querySelectorAll('.edit-worker').forEach(cell => {
+        cell.onblur = (e) => {
+            const dni = e.target.dataset.dni;
+            const field = e.target.dataset.f;
+            const val = e.target.innerText.trim();
+            const updates = {};
+            updates[field] = (field === 'dni') ? val : val.toUpperCase();
+            adminService.saveWorker({ dni, ...updates });
+            // Si cambió el DNI, necesitamos refrescar para que los IDs de las celdas se actualicen
+            if (field === 'dni') renderAdminTab();
+        };
+    });
+
+    document.querySelectorAll('.edit-worker-select').forEach(sel => {
+        sel.onchange = (e) => {
+            const dni = e.target.dataset.dni;
+            const field = e.target.dataset.f;
+            const val = e.target.value;
+            const updates = {};
+            updates[field] = val;
+            adminService.saveWorker({ dni, ...updates });
         };
     });
 

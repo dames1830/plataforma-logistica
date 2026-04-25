@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v11.9.9: Attendance flicker fix and auto-save"
+git commit -m "PRODUCTION v12.0.1: Inline editing for Workers"
 git push origin main
