@@ -536,7 +536,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'ATD RQ': pick
                 });
 
-                if (nivelLabel === 'Alto' || nivelLabel === 'Aereo') {
+                // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
+                if (nivelLabel === '1. Zonas Bajas' || nivelLabel === '2. Alto' || nivelLabel === '4. Aereo') {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
