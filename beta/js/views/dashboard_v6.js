@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.8.7';
-import * as adminService from '../services/adminService.js?v=11.8.7';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.8.8';
+import * as adminService from '../services/adminService.js?v=11.8.8';
 
 
-const VERSION = '11.8.7';
+const VERSION = '11.8.8';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.8.7</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.8.8</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -477,6 +477,22 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const createMatrixHTML = (matrix, title) => {
     if (!matrix || !matrix.rows || !matrix.rows.length) return '';
+    
+    // Alias específicos para el cuadro de SIN STOCK
+    const isOOS = title === 'ANÁLISIS BUFFER | SIN STOCK';
+    const brandAlias = (name) => {
+        if (!isOOS) return name;
+        if (name === 'Bubblegummers Licenses') return 'BG Licenses';
+        if (name === 'Bubblegummers') return 'BG';
+        if (name === 'Bata Industrials') return 'Industrials';
+        return name;
+    };
+    const genderAlias = (name) => {
+        if (!isOOS) return name;
+        if (name === '11 NON COMMERCIAL COMPLEMENTS') return '11 COMPLEMENTS';
+        return name;
+    };
+
     return `
         <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem;">
             <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
@@ -487,14 +503,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <thead style="background:rgba(0,0,0,0.5);">
                         <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
                             <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
-                            ${matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center;">${c}</th>`).join('')}
+                            ${matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('')}
                             <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody style="color:#eee;">
                         ${matrix.rows.map(r => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
-                                <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${r.marca}</td>
+                                <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${brandAlias(r.marca)}</td>
                                 ${matrix.columns.map(c => {
                                     const val = r.breakdown[c] || 0;
                                     return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#fff' : 'rgba(255,255,255,0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
