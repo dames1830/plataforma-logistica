@@ -595,53 +595,76 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // 1. WATERFALL (RESUMEN POR NIVELES COMBINADO)
+    // 1. WATERFALL (RESUMEN POR NIVELES DESCENDENTE)
     const waterfall = [];
     const nivelesList = ['Zonas Bajas', 'Alto', 'Pisos', 'Aereo', 'Logica'];
+    let runningRQ = globalRQ;
     let totalATD = 0;
+
+    const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
+
     nivelesList.forEach(nivel => {
         const atd = totalsByNivel[nivel] || 0;
-        totalATD += atd;
         waterfall.push({
             nivel,
-            rq: globalRQ,
+            rq: Math.max(0, runningRQ),
             atd: atd,
-            pct: globalRQ > 0 ? ((atd / globalRQ) * 100).toFixed(1) + '%' : '0%'
+            pct: calcPct(atd, runningRQ)
         });
+        runningRQ -= atd;
+        totalATD += atd;
     });
-    waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: globalRQ > 0 ? ((totalATD / globalRQ) * 100).toFixed(1) + '%' : '0%' });
+    waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: calcPct(totalATD, globalRQ) });
 
-    // 2. MATRIZ DE DISCREPANCIAS (ZONAS 3,4,5)
-    const matrixRows = [];
-    const matrixCols = Array.from(new Set(detalleZonas.map(d => d['NIVEL/AREA']))).sort();
-    const marcasMap = {}; 
-    if (articulos) {
-        articulos.forEach(a => {
-            const sku = String(getCol(a, ['Codigo', 'Articulo', 'SKU']) || '').trim();
-            const marca = String(getCol(a, ['Marca', 'MARCA']) || 'SIN MARCA').trim();
-            if (sku) marcasMap[sku] = marca;
+    // 2. MATRIZ DE DISCREPANCIAS (MARCAS VS GÉNEROS - ZONAS 3,4,5)
+    const forensicZones = ['Pisos', 'Aereo', 'Logica'];
+    const getArtInfo = (sku) => {
+        if (!articulos || !sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        const clean = (s) => String(s || '').trim();
+        const to7 = (s) => clean(s).substring(0, 7);
+        const target7 = to7(sku);
+
+        const row = articulos.find(a => {
+            const masterVal = clean(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']));
+            return clean(masterVal) === target7 || to7(masterVal) === target7;
         });
-    }
 
-    const marcasAggr = {};
-    detalleZonas.forEach(dz => {
-        const marca = marcasMap[dz.SKU] || 'OTRO';
-        const nivel = dz['NIVEL/AREA'];
-        if (!marcasAggr[marca]) marcasAggr[marca] = { total: 0, breakdown: {} };
-        marcasAggr[marca].total += dz['ATD RQ'];
-        marcasAggr[marca].breakdown[nivel] = (marcasAggr[marca].breakdown[nivel] || 0) + dz['ATD RQ'];
+        if (!row) return { gender: 'OTRO', marca: 'OTRO' };
+        return {
+            gender: String(getCol(row, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+            marca: String(getCol(row, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
+        };
+    };
+
+    const matrixAggr = {};
+    const genderKeys = new Set();
+    
+    detalleZonas.filter(d => forensicZones.includes(d['NIVEL/AREA'])).forEach(d => {
+        const info = getArtInfo(d.SKU);
+        const atd = d['ATD RQ'] || 0;
+        genderKeys.add(info.gender);
+        if (!matrixAggr[info.marca]) matrixAggr[info.marca] = {};
+        if (!matrixAggr[info.marca][info.gender]) matrixAggr[info.marca][info.gender] = 0;
+        matrixAggr[info.marca][info.gender] += atd;
     });
 
-    Object.keys(marcasAggr).sort().forEach(m => {
-        matrixRows.push({ marca: m, total: marcasAggr[m].total, breakdown: marcasAggr[m].breakdown });
+    const sortedGenders = Array.from(genderKeys).sort();
+    const matrixRows = Object.keys(matrixAggr).sort().map(marca => {
+        const row = { marca: marca, breakdown: {}, total: 0 };
+        sortedGenders.forEach(g => {
+            const val = matrixAggr[marca][g] || 0;
+            row.breakdown[g] = val;
+            row.total += val;
+        });
+        return row;
     });
-    if (matrixRows.length) {
-        const totalRow = { marca: 'TOTAL', total: 0, breakdown: {} };
-        matrixRows.forEach(r => {
-            totalRow.total += r.total;
-            Object.keys(r.breakdown).forEach(lvl => {
-                totalRow.breakdown[lvl] = (totalRow.breakdown[lvl] || 0) + r.breakdown[lvl];
-            });
+    
+    if (matrixRows.length > 0) {
+        const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
+        sortedGenders.forEach(g => {
+            const sumG = matrixRows.reduce((acc, r) => acc + (r.breakdown[g] || 0), 0);
+            totalRow.breakdown[g] = sumG;
+            totalRow.total += sumG;
         });
         matrixRows.push(totalRow);
     }
@@ -681,6 +704,6 @@ export const calculateBufferPallets = (configOverride = null) => {
         resumenSKU: resEmp,
         resumenNiveles: historyData, 
         waterfall: waterfall,
-        resumenMatrix: { columns: matrixCols, rows: matrixRows }
+        resumenMatrix: { columns: sortedGenders, rows: matrixRows }
     };
 };
