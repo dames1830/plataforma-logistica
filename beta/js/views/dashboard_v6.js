@@ -92,7 +92,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.7.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.7.2</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -307,7 +307,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
-        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.csv', 'OTRAS SOLICITUDES');
+        renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
     } else if (activeBufferSub === 'historial_buffer') {
@@ -363,12 +363,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                             localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
                             
-                            // NUEVO: Confirmación de guardado en el historial
+                            // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
                             setTimeout(async () => {
-                                if (confirm("¿Deseas guardar este análisis en el Historial Buffer?")) {
-                                    const saved = await saveBufferReport(res, user.username);
-                                    if (saved) alert("✅ Análisis guardado exitosamente en el historial.");
-                                    else console.warn('⚠️ Solo Local');
+                                if (confirm("¿Deseas guardar este análisis desglosado por FUENTE en el Historial?")) {
+                                    const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+                                    let successCount = 0;
+                                    for (const s of sources) {
+                                        const sourceRows = res.resumenNiveles.filter(n => n.fuente === s);
+                                        if (sourceRows.length > 0) {
+                                            const saved = await saveBufferReport({ resumenNiveles: sourceRows, sourceName: s }, user.username);
+                                            if (saved) successCount++;
+                                        }
+                                    }
+                                    if (successCount > 0) alert(`✅ Se guardaron ${successCount} reportes en el historial.`);
                                 }
                             }, 300);
                         } else {
@@ -431,9 +438,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
                 <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
-                    <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
-                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.tipo==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
-                        <td style="padding:0.5rem 1rem;">${r.tipo}</td>
+                    <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
+                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
+                        <td style="padding:0.5rem 1rem; color:var(--primary); font-weight:700;">${r.fuente}</td>
+                        <td style="padding:0.5rem 1rem; color:#94a3b8;">${r.tipo}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${Number(r.parcaja).toLocaleString()}</td>
@@ -1806,10 +1814,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tr style="background:#facc15; color:#000;">
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
                             <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(255,255,255,0.1); text-align:center; background:rgba(255,255,255,0.05); color:white;">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1837,15 +1845,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                         <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
                                         <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05);">${n.nivel}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.pal + n.pree.pal}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${n.solid.sku + n.pree.sku}</td>
-                                        ${nIdx === 0 ? `<td rowspan="${niveles.length}" style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05); vertical-align:middle;">
-                                            <button class="btn-restore" data-idx="${rIdx}" title="Cargar Historial" style="background:var(--primary); border:none; color:white; padding:0.4rem 0.7rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">👁️ CARGAR</button>
-                                        </td>` : ''}
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
                                     </tr>
                                 `).join('')}
-                                <tr style="height:10px; background:rgba(255,255,255,0.02);"><td colspan="6"></td></tr>
+                                <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
                             `;
                         }).join('')}
                     </tbody>
