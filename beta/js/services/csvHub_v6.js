@@ -615,6 +615,18 @@ export const calculateBufferPallets = (configOverride = null) => {
             pct: calcPct(val, globalRQ)
         };
     });
+
+    // 7. SIN STOCK (CALCULO MANUAL PARA EL WATERFALL)
+    const atdTotal = Object.values(totalsByNivel).reduce((a,b) => a+b, 0);
+    const atdSinStock = Math.max(0, globalRQ - atdTotal);
+    waterfall.push({
+        nivel: '7. Sin Stock',
+        rq: globalRQ,
+        atd: atdSinStock,
+        pct: calcPct(atdSinStock, globalRQ)
+    });
+
+    waterfall.push({ nivel: 'Total', rq: globalRQ, atd: globalRQ, pct: '100.0%' });
     // (Para saber cuántos palets y SKUs corresponden a cada fuente)
     const empaqueAggr = {}; // { source: { type: { pal: Set, sku: Set, units: 0 } } }
     const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
@@ -786,7 +798,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         return { columns: sorted, rows: rows };
     };
 
-    const matrixResumen = buildMatrix(d => ['1. Zonas Bajas', '2. Alto', '3. Pisos', '4. Aereo', '5. Lógico'].includes(d['NIVEL/AREA']));
+    const matrixResumen = buildMatrix(d => ['3. Pisos', '4. Aereo', '5. Lógico', '6. Merma'].includes(d['NIVEL/AREA']));
     const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. Sin Stock');
 
     // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
