@@ -551,10 +551,21 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         // 3. Sólo si falta algo, buscamos en las zonas de reserva
         if (realPending > 0) {
-            realPending = satisfyDemand(sku, realPending, stAltos, 'Alto');
-            realPending = satisfyDemand(sku, realPending, stPisos, 'Pisos');
-            realPending = satisfyDemand(sku, realPending, stAereos, 'Aereo');
-            realPending = satisfyDemand(sku, realPending, stLogicos, 'Logica');
+            realPending = satisfyDemand(sku, realPending, stAltos, '2. Alto');
+            realPending = satisfyDemand(sku, realPending, stPisos, '3. Pisos');
+            realPending = satisfyDemand(sku, realPending, stAereos, '4. Aereo');
+            realPending = satisfyDemand(sku, realPending, stLogicos, '5. Logica');
+            
+            // 4. Si aún queda pendiente, es "Sin Stock"
+            if (realPending > 0) {
+                detalleZonas.push({
+                    'NIVEL/AREA': '6. Sin Stock',
+                    'UBICACION': 'S/S',
+                    'ARTÍCULO': getArticulo(sku),
+                    'SKU': sku,
+                    'ATD RQ': realPending
+                });
+            }
         }
     });
 

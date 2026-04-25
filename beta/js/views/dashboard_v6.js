@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.8.3';
-import * as adminService from '../services/adminService.js?v=11.8.3';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.8.4';
+import * as adminService from '../services/adminService.js?v=11.8.4';
 
 
-const VERSION = '11.8.3';
+const VERSION = '11.8.4';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -68,7 +68,6 @@ window.downloadExcelDetail = () => {
     const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
     
     // 3. Pestaña LPN SELECIONADOS
-    // Reordenamos y filtramos columnas para el formato exacto pedido
     const lpnData = (data.detalle || []).map(d => ({
         'Ubicacion': d.UBICACIONES,
         'LPN': d.LPN,
@@ -87,7 +86,33 @@ window.downloadExcelDetail = () => {
     
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
-  };
+};
+
+window.downloadExcelZonas = () => {
+    if (!lastBufferResult) return;
+    const data = lastBufferResult;
+    
+    // 1. Pestaña Detalle Zonas (Toda la data)
+    const sheetZonas = XLSX.utils.json_to_sheet(data.detalleZonas || []);
+    
+    // 2. Pestaña Sin Stock (Filtrado)
+    const sinStockData = (data.detalleZonas || [])
+        .filter(d => d['NIVEL/AREA'] === '6. Sin Stock')
+        .map(d => ({
+            'NIVEL/AREA': d['NIVEL/AREA'],
+            'ARTICULO': d['ARTÍCULO'],
+            'SKU': d['SKU'],
+            'RQ': d['ATD RQ']
+        }));
+    const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, sheetZonas, "Detalle Zonas");
+    XLSX.utils.book_append_sheet(wb, sheetOOS, "Sin Stock");
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Analisis_Zonas_${date}.xlsx`);
+};
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
@@ -126,7 +151,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.8.3</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.8.4</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -528,7 +553,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         `;
         document.getElementById('btn_exp_zonas').onclick = () => {
             if(!data.detalleZonas || !data.detalleZonas.length) alert('⚠️ ERROR: Datos no disponibles.');
-            else exportToExcel(data.detalleZonas, 'Analisis_Zonas_V81');
+            else window.downloadExcelZonas();
         };
         document.getElementById('btn_exp_buffer').onclick = () => {
             if(!data.detalle || !data.detalle.length) alert('⚠️ ERROR: Datos no disponibles.');
