@@ -544,6 +544,14 @@ export const calculateBufferPallets = (configOverride = null) => {
         };
     });
 
+    // Mapa de Stock Activo para columna QTY ACTIVO
+    const activeStockMap = {};
+    activo.forEach(f => {
+        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
+    });
+
     let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
         let items = reserva.filter(f => String(f['UBICACION']).trim() === ubi);
@@ -551,19 +559,45 @@ export const calculateBufferPallets = (configOverride = null) => {
             let sku = String(getCol(item, ['PRODUCTO', 'Articulo', 'Producto']) || '').trim();
             let qty = parseFloat(item['CANTIDAD'] || 0);
             let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
+            
             if (pick > 0) {
-                detallePallets.push({ 'UBICACIONES': ubi, 'LPN': item['LPN'], 'SKU': sku, 'QTY RESERVA': qty, 'QTY BUFFER': pick });
-                
-                // Atribución a la fuente
-                const tipo = sku.length >= 14 ? 'PreePack' : 'SolidPack';
                 const demandObj = demanda[sku];
+                const tipo = sku.length >= 14 ? 'PreePack' : 'SolidPack';
+                
                 if (demandObj) {
                     demandObj.sources.forEach(dSrc => {
                         const proportion = dSrc.qty / demandObj.total;
                         const attributedUnits = pick * proportion;
-                        empaqueAggr[dSrc.src][tipo].pal.add(ubi);
-                        empaqueAggr[dSrc.src][tipo].sku.add(sku);
-                        empaqueAggr[dSrc.src][tipo].units += attributedUnits;
+                        
+                        if (attributedUnits > 0) {
+                            detallePallets.push({ 
+                                'FUENTE': dSrc.src,
+                                'UBICACIONES': ubi, 
+                                'LPN': item['LPN'], 
+                                'SKU': sku, 
+                                'RQ': dSrc.qty,
+                                'QTY ACTIVO': activeStockMap[sku] || 0,
+                                'QTY RESERVA': qty, 
+                                'QTY BUFFER': Math.round(attributedUnits)
+                            });
+                            
+                            // Atribución para resumen empaque
+                            empaqueAggr[dSrc.src][tipo].pal.add(ubi);
+                            empaqueAggr[dSrc.src][tipo].sku.add(sku);
+                            empaqueAggr[dSrc.src][tipo].units += attributedUnits;
+                        }
+                    });
+                } else {
+                    // Caso borde: SKU sin demanda clara (no debería pasar)
+                    detallePallets.push({ 
+                        'FUENTE': 'DESCONOCIDO',
+                        'UBICACIONES': ubi, 
+                        'LPN': item['LPN'], 
+                        'SKU': sku, 
+                        'RQ': 0,
+                        'QTY ACTIVO': activeStockMap[sku] || 0,
+                        'QTY RESERVA': qty, 
+                        'QTY BUFFER': pick 
                     });
                 }
             }
