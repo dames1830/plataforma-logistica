@@ -411,33 +411,58 @@ export const calculateBufferPallets = (configOverride = null) => {
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
 
-    // Mapeo de Stock
-    let stBajas = {}, stPisos = {}, stLogicos = {}, stAltos = {}, stAereos = {};
+    // Mapeo de Stock según Jerarquías (Fase 11.9.1)
+    let stBajas = {}, stAltos = {}, stPisos = {}, stAereos = {}, stLogicos = {}, stMerma = {};
     const registerStock = (map, sku, qty, row) => {
         if (!map[sku]) map[sku] = [];
         map[sku].push({ qty, row });
     };
 
+    // 1. Mapeo de ACTIVO (Normalmente Jerarquía 1 o 5 según área)
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
-        if (config.include_piso === '1' && (area === 'PISO' || area === 'CROSS')) registerStock(stPisos, sku, qty, f);
-        else if (config.include_logico === '1' && area === 'DIS') registerStock(stLogicos, sku, qty, f);
-        else if (config.include_reserva === '1') registerStock(stBajas, sku, qty, f);
+
+        // Siguiendo la lógica del cuadro: PISO y DIS son Lógico
+        if (area === 'PISO' || area === 'DIS') registerStock(stLogicos, sku, qty, f);
+        else if (area === 'CROSS') registerStock(stPisos, sku, qty, f);
+        else registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
     });
 
+    // 2. Mapeo de RESERVA (Jerarquías 1 a 6)
     reserva.forEach(f => {
         let nivel = String(getCol(f, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
         let nroAnd = String(getCol(f, ['NRO AND', 'Nro And']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
         if(!sku || qty <= 0) return;
-        if (config.include_alto === '1' && nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
-        else if (config.include_aereo === '1' && nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
-        else if (config.include_piso === '1' && nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
-        else if (config.include_logico === '1' && nivel === 'VER' && nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
+
+        // Jerarquía 1: ZONAS BAJAS
+        if (['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'].includes(nivel)) {
+            registerStock(stBajas, sku, qty, f);
+        }
+        // Jerarquía 2: ALTO
+        else if (['ALTO', 'INS'].includes(nivel)) {
+            registerStock(stAltos, sku, qty, f);
+        }
+        // Jerarquía 3: PISOS
+        else if (nivel === 'CROSS') {
+            registerStock(stPisos, sku, qty, f);
+        }
+        // Jerarquía 4: AEREO
+        else if (nivel === 'AEREO') {
+            registerStock(stAereos, sku, qty, f);
+        }
+        // Jerarquía 5: LÓGICO (PISO, DIS, VER con MZM-TR)
+        else if (nivel === 'PISO' || nivel === 'DIS' || (nivel === 'VER' && nroAnd === 'MZM-TR')) {
+            registerStock(stLogicos, sku, qty, f);
+        }
+        // Jerarquía 6: MERMA (VER sin MZM-TR)
+        else if (nivel === 'VER' && nroAnd !== 'MZM-TR') {
+            registerStock(stMerma, sku, qty, f);
+        }
     });
 
     // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
@@ -534,43 +559,60 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
     });
 
-    // PROCESAMIENTO DE ANÁLISIS (SÓLO LO SOLICITADO - RQ)
+    // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
     Object.keys(demanda).sort().forEach(sku => {
         let totalSolicitado = demanda[sku].total;
         globalRQ += totalSolicitado;
 
-        // 1. Descontamos TODO lo que haya en Activo para este SKU
+        // 1. Descontamos lo que ya está en Activo (Zonas Bajas)
         let enActivo = totalActivoPorSKU[sku] || 0;
+        let pending = totalSolicitado;
         
-        // 2. Lo que realmente necesitamos bajar es: Pedido - Activo
-        let realPending = Math.max(0, totalSolicitado - enActivo);
+        let atdActivo = Math.min(pending, enActivo);
+        if (!totalsByNivel['Bajas']) totalsByNivel['Bajas'] = 0;
+        totalsByNivel['Bajas'] += atdActivo;
+        pending -= atdActivo;
 
-        // Actualizamos Waterfall para Zonas Bajas (lo que ya está ahí)
-        if (!totalsByNivel['Zonas Bajas']) totalsByNivel['Zonas Bajas'] = 0;
-        totalsByNivel['Zonas Bajas'] += Math.min(totalSolicitado, enActivo);
-
-        // 3. Sólo si falta algo, buscamos en las zonas de reserva
-        if (realPending > 0) {
-            // No procesamos stBajas aquí porque ya lo descontamos arriba
-            realPending = satisfyDemand(sku, realPending, stAltos, 'Alto');
-            realPending = satisfyDemand(sku, realPending, stPisos, 'Pisos');
-            realPending = satisfyDemand(sku, realPending, stAereos, 'Aereo');
-            realPending = satisfyDemand(sku, realPending, stLogicos, 'Logica');
+        // 2. Satisfacemos el resto siguiendo las jerarquías
+        if (pending > 0) {
+            pending = satisfyDemand(sku, pending, stBajas, 'Bajas');
+            pending = satisfyDemand(sku, pending, stAltos, 'Alto');
+            pending = satisfyDemand(sku, pending, stPisos, 'Pisos');
+            pending = satisfyDemand(sku, pending, stAereos, 'Aereo');
+            pending = satisfyDemand(sku, pending, stLogicos, 'Logica');
+            pending = satisfyDemand(sku, pending, stMerma, 'Merma');
             
-            // 4. Si aún queda pendiente, es "Sin Stock"
-            if (realPending > 0) {
+            // 3. Si aún queda pendiente, es "Sin Stock"
+            if (pending > 0) {
                 detalleZonas.push({
-                    'NIVEL/AREA': '6. Sin Stock',
+                    'NIVEL/AREA': '7. Sin Stock',
                     'UBICACION': 'S/S',
                     'ARTÍCULO': getArticulo(sku),
                     'SKU': sku,
-                    'ATD RQ': realPending
+                    'ATD RQ': pending
                 });
             }
         }
     });
 
-    // DISTRIBUCIÓN PROPORCIONAL DE PALETS POR FUENTE
+    const nivelesMap = {
+        'Bajas': '1. Zonas Bajas',
+        'Alto': '2. Alto',
+        'Pisos': '3. Pisos',
+        'Aereo': '4. Aereo',
+        'Logica': '5. Lógico',
+        'Merma': '6. Merma'
+    };
+
+    const waterfall = Object.keys(nivelesMap).map(k => {
+        const val = totalsByNivel[k] || 0;
+        return {
+            nivel: nivelesMap[k],
+            rq: globalRQ,
+            atd: val,
+            pct: calcPct(val, globalRQ)
+        };
+    });
     // (Para saber cuántos palets y SKUs corresponden a cada fuente)
     const empaqueAggr = {}; // { source: { type: { pal: Set, sku: Set, units: 0 } } }
     const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
