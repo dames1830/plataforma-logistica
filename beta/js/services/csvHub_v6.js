@@ -559,6 +559,15 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
     });
 
+    const nivelesMap = {
+        'Bajas': '1. Zonas Bajas',
+        'Alto': '2. Alto',
+        'Pisos': '3. Pisos',
+        'Aereo': '4. Aereo',
+        'Logica': '5. Lógico',
+        'Merma': '6. Merma'
+    };
+
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
     Object.keys(demanda).sort().forEach(sku => {
         let totalSolicitado = demanda[sku].total;
@@ -569,18 +578,18 @@ export const calculateBufferPallets = (configOverride = null) => {
         let pending = totalSolicitado;
         
         let atdActivo = Math.min(pending, enActivo);
-        if (!totalsByNivel['Bajas']) totalsByNivel['Bajas'] = 0;
-        totalsByNivel['Bajas'] += atdActivo;
+        if (!totalsByNivel[nivelesMap['Bajas']]) totalsByNivel[nivelesMap['Bajas']] = 0;
+        totalsByNivel[nivelesMap['Bajas']] += atdActivo;
         pending -= atdActivo;
 
         // 2. Satisfacemos el resto siguiendo las jerarquías
         if (pending > 0) {
-            pending = satisfyDemand(sku, pending, stBajas, 'Bajas');
-            pending = satisfyDemand(sku, pending, stAltos, 'Alto');
-            pending = satisfyDemand(sku, pending, stPisos, 'Pisos');
-            pending = satisfyDemand(sku, pending, stAereos, 'Aereo');
-            pending = satisfyDemand(sku, pending, stLogicos, 'Logica');
-            pending = satisfyDemand(sku, pending, stMerma, 'Merma');
+            pending = satisfyDemand(sku, pending, stBajas, nivelesMap['Bajas']);
+            pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
+            pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Pisos']);
+            pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
+            pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logica']);
+            pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
             
             // 3. Si aún queda pendiente, es "Sin Stock"
             if (pending > 0) {
@@ -597,33 +606,25 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
 
-    const nivelesMap = {
-        'Bajas': '1. Zonas Bajas',
-        'Alto': '2. Alto',
-        'Pisos': '3. Pisos',
-        'Aereo': '4. Aereo',
-        'Logica': '5. Lógico',
-        'Merma': '6. Merma'
-    };
-
+    let runningRQ = globalRQ;
     const waterfall = Object.keys(nivelesMap).map(k => {
-        const val = totalsByNivel[k] || 0;
+        const val = totalsByNivel[nivelesMap[k]] || 0;
+        const currentRQ = runningRQ;
+        runningRQ = Math.max(0, runningRQ - val);
         return {
             nivel: nivelesMap[k],
-            rq: globalRQ,
+            rq: currentRQ,
             atd: val,
             pct: calcPct(val, globalRQ)
         };
     });
 
-    // 7. SIN STOCK (CALCULO MANUAL PARA EL WATERFALL)
-    const atdTotal = Object.values(totalsByNivel).reduce((a,b) => a+b, 0);
-    const atdSinStock = Math.max(0, globalRQ - atdTotal);
+    // 7. SIN STOCK
     waterfall.push({
         nivel: '7. Sin Stock',
-        rq: globalRQ,
-        atd: atdSinStock,
-        pct: calcPct(atdSinStock, globalRQ)
+        rq: runningRQ,
+        atd: runningRQ,
+        pct: calcPct(runningRQ, globalRQ)
     });
 
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: globalRQ, pct: '100.0%' });
