@@ -695,6 +695,18 @@ export const calculateBufferPallets = (configOverride = null) => {
         runningRQ -= atd;
         totalATD += atd;
     });
+
+    // 6. Sin Stock (Lo que no se encontró en ninguna zona)
+    if (runningRQ > 0) {
+        waterfall.push({
+            nivel: 'Sin Stock',
+            rq: runningRQ,
+            atd: 0, // No fue atendido por stock real
+            pct: '0.0%',
+            isOOS: true // Flag para estilo visual
+        });
+    }
+
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: calcPct(totalATD, globalRQ) });
 
     // 2. MATRIZ DE DISCREPANCIAS (MARCAS VS GÉNEROS - ZONAS 3,4,5)
