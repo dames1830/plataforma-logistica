@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.8.5';
-import * as adminService from '../services/adminService.js?v=11.8.5';
+import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=11.8.6';
+import * as adminService from '../services/adminService.js?v=11.8.6';
 
 
-const VERSION = '11.8.5';
+const VERSION = '11.8.6';
 const CACHE_KEY = `logistics_v11_3_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -92,10 +92,11 @@ window.downloadExcelZonas = () => {
     if (!lastBufferResult) return;
     const data = lastBufferResult;
     
-    // 1. Pestaña Detalle Zonas (Toda la data)
-    const sheetZonas = XLSX.utils.json_to_sheet(data.detalleZonas || []);
+    // 1. Pestaña Detalle Zonas (SOLO lo físico, como antes)
+    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '6. Sin Stock');
+    const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
     
-    // 2. Pestaña Sin Stock (Filtrado)
+    // 2. Pestaña Sin Stock (EXCLUSIVO lo faltante)
     const sinStockData = (data.detalleZonas || [])
         .filter(d => d['NIVEL/AREA'] === '6. Sin Stock')
         .map(d => ({
@@ -151,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.8.5</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v11.8.6</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
