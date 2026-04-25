@@ -43,6 +43,7 @@ const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
+let lastBufferResult = null;
 
 const exportToExcel = (data, filename) => {
     if(!data || !data.length) {
@@ -54,6 +55,39 @@ const exportToExcel = (data, filename) => {
     XLSX.utils.book_append_sheet(wb, ws, "Data");
     XLSX.writeFile(wb, `${filename}_${new Date().getTime()}.xlsx`);
 };
+
+window.downloadExcelDetail = () => {
+    if (!lastBufferResult) return;
+    const data = lastBufferResult;
+    
+    // 1. Pestaña DETALLE (Resumen de todos los SKUs)
+    const sheetDetalle = XLSX.utils.json_to_sheet(data.resumenSKUDetalle || []);
+    
+    // 2. Pestaña SKU BAJAR (Solo SKUs con Diferencia > 0)
+    const skusBajarData = (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0);
+    const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
+    
+    // 3. Pestaña LPN SELECIONADOS
+    // Reordenamos y filtramos columnas para el formato exacto pedido
+    const lpnData = (data.detalle || []).map(d => ({
+        'Ubicacion': d.UBICACIONES,
+        'LPN': d.LPN,
+        'Sku': d.SKU,
+        'Stock Activo': d['QTY ACTIVO'],
+        'Stock Reserva': d['QTY RESERVA'],
+        'Qty Buffer': d['QTY BUFFER'],
+        'Articulo': d.Articulo
+    }));
+    const sheetLPN = XLSX.utils.json_to_sheet(lpnData);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, sheetDetalle, "Detalle");
+    XLSX.utils.book_append_sheet(wb, sheetSkuBajar, "Sku Bajar");
+    XLSX.utils.book_append_sheet(wb, sheetLPN, "LPN Selecionados");
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
+  };
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
@@ -360,6 +394,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const res = calculateBufferPallets(config);
                         if (res) {
                             lastBufferKPI = res;
+                            lastBufferResult = res;
                             localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
                             

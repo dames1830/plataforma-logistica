@@ -600,6 +600,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'UBICACIONES': ubi, 
                                 'LPN': item['LPN'], 
                                 'SKU': sku, 
+                                'Articulo': sku.substring(0,7),
                                 'RQ': dSrc.qty,
                                 'QTY ACTIVO': activeStockMap[sku] || 0,
                                 'QTY RESERVA': qty, 
@@ -778,10 +779,32 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     });
 
+    // 4. RESUMEN SKU DETALLE (Para pestaña Detalle y Sku Bajar)
+    const resumenSKUDetalle = Object.keys(demanda).sort().map(sku => {
+        const d = demanda[sku];
+        const enActivo = totalActivoPorSKU[sku] || 0;
+        const diff = Math.max(0, d.total - enActivo);
+        
+        // Calcular stock en reserva total (Altos + Pisos + Aereos + Logicos)
+        let enReserva = 0;
+        [stAltos, stPisos, stAereos, stLogicos].forEach(map => {
+            if (map[sku]) enReserva += map[sku].reduce((acc, i) => acc + i.qty, 0);
+        });
+
+        return {
+            'Sku': sku,
+            'RQ': d.total,
+            'Qty Activo': enActivo,
+            'Diferencia': diff,
+            'Qty Reserva': enReserva
+        };
+    });
+
     return { 
         detalle: detallePallets, 
         detalleZonas, 
         resumenSKU: resEmp,
+        resumenSKUDetalle, // Nueva data para Excel
         resumenNiveles: historyData, 
         waterfall: waterfall,
         resumenMatrix: { columns: sortedGenders, rows: matrixRows }
