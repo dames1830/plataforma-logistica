@@ -595,7 +595,56 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // RESUMEN PARA HISTORIAL (3 FILAS POR PROCESO)
+    // 1. WATERFALL (RESUMEN POR NIVELES COMBINADO)
+    const waterfall = [];
+    const nivelesList = ['Zonas Bajas', 'Alto', 'Pisos', 'Aereo', 'Logica'];
+    let totalATD = 0;
+    nivelesList.forEach(nivel => {
+        const atd = totalsByNivel[nivel] || 0;
+        totalATD += atd;
+        waterfall.push({
+            nivel,
+            rq: globalRQ,
+            atd: atd,
+            pct: globalRQ > 0 ? ((atd / globalRQ) * 100).toFixed(1) + '%' : '0%'
+        });
+    });
+    waterfall.push({ nivel: 'Total', rq: globalRQ, atd: totalATD, pct: globalRQ > 0 ? ((totalATD / globalRQ) * 100).toFixed(1) + '%' : '0%' });
+
+    // 2. MATRIZ DE DISCREPANCIAS (ZONAS 3,4,5)
+    const matrixRows = [];
+    const matrixCols = Array.from(new Set(detalleZonas.map(d => d['NIVEL/AREA']))).sort();
+    const marcasMap = {}; 
+    articulos.forEach(a => {
+        const sku = String(getCol(a, ['Codigo', 'Articulo', 'SKU']) || '').trim();
+        const marca = String(getCol(a, ['Marca', 'MARCA']) || 'SIN MARCA').trim();
+        if (sku) marcasMap[sku] = marca;
+    });
+
+    const marcasAggr = {};
+    detalleZonas.forEach(dz => {
+        const marca = marcasMap[dz.SKU] || 'OTRO';
+        const nivel = dz['NIVEL/AREA'];
+        if (!marcasAggr[marca]) marcasAggr[marca] = { total: 0, breakdown: {} };
+        marcasAggr[marca].total += dz['ATD RQ'];
+        marcasAggr[marca].breakdown[nivel] = (marcasAggr[marca].breakdown[nivel] || 0) + dz['ATD RQ'];
+    });
+
+    Object.keys(marcasAggr).sort().forEach(m => {
+        matrixRows.push({ marca: m, total: marcasAggr[m].total, breakdown: marcasAggr[m].breakdown });
+    });
+    if (matrixRows.length) {
+        const totalRow = { marca: 'TOTAL', total: 0, breakdown: {} };
+        matrixRows.forEach(r => {
+            totalRow.total += r.total;
+            Object.keys(r.breakdown).forEach(lvl => {
+                totalRow.breakdown[lvl] = (totalRow.breakdown[lvl] || 0) + r.breakdown[lvl];
+            });
+        });
+        matrixRows.push(totalRow);
+    }
+
+    // 3. RESUMEN PARA HISTORIAL (3 FILAS POR PROCESO)
     const historyData = [];
     sources.forEach(s => {
         const sourceLvlAggr = {};
@@ -628,7 +677,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         detalle: detallePallets, 
         detalleZonas, 
         resumenSKU: resEmp,
-        resumenNiveles: historyData, // Ahora trae campo 'fuente'
-        waterfall: [] // Waterfall simplificado para esta lógica multi-fuente
+        resumenNiveles: historyData, 
+        waterfall: waterfall,
+        resumenMatrix: { columns: matrixCols, rows: matrixRows }
     };
 };
