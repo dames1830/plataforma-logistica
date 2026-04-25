@@ -572,9 +572,15 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     const resEmp = [];
     sources.forEach(s => {
+        let sourcePallets = new Set();
+        let sourceSkus = new Set();
+        let sourceUnits = 0;
+        let hasData = false;
+
         ['SolidPack', 'PreePack'].forEach(t => {
             const data = empaqueAggr[s][t];
             if (data.sku.size > 0) {
+                hasData = true;
                 resEmp.push({ 
                     fuente: s, 
                     tipo: t, 
@@ -582,16 +588,31 @@ export const calculateBufferPallets = (configOverride = null) => {
                     skus: data.sku.size, 
                     parcaja: Math.round(data.units) 
                 });
+                data.pal.forEach(p => sourcePallets.add(p));
+                data.sku.forEach(sk => sourceSkus.add(sk));
+                sourceUnits += data.units;
             }
         });
+
+        if (hasData) {
+            resEmp.push({
+                fuente: `SUB-TOTAL ${s}`,
+                tipo: '---',
+                paletas: sourcePallets.size,
+                skus: sourceSkus.size,
+                parcaja: Math.round(sourceUnits),
+                isSubTotal: true
+            });
+        }
     });
+
     if (resEmp.length) {
         resEmp.push({ 
-            fuente: 'TOTAL', 
+            fuente: 'TOTAL GENERAL', 
             tipo: '---', 
             paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, 
             skus: new Set(detallePallets.map(d=>d.SKU)).size, 
-            parcaja: Math.round(resEmp.reduce((a,b)=>a+b.parcaja, 0)) 
+            parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 
         });
     }
 

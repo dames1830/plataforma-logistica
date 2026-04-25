@@ -439,8 +439,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
-                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente==='TOTAL'?'background:rgba(245,158,11,0.08); font-weight:900;':''}">
-                        <td style="padding:0.5rem 1rem; color:var(--primary); font-weight:700;">${r.fuente}</td>
+                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente.includes('TOTAL') ? 'background:rgba(245,158,11,0.08); font-weight:900;' : ''}">
+                        <td style="padding:0.5rem 1rem; color:${r.fuente.includes('TOTAL') ? '#fbbf24' : 'var(--primary)'}; font-weight:700;">${r.fuente}</td>
                         <td style="padding:0.5rem 1rem; color:#94a3b8;">${r.tipo}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
