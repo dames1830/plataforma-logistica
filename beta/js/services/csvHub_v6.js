@@ -526,23 +526,31 @@ export const calculateBufferPallets = (configOverride = null) => {
         return pending;
     };
 
+    // 0. Mapa global de Activo para descuento rápido
+    const totalActivoPorSKU = {};
+    activo.forEach(f => {
+        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
+    });
+
     // PROCESAMIENTO DE ANÁLISIS (SÓLO LO SOLICITADO - RQ)
     Object.keys(demanda).sort().forEach(sku => {
         let totalSolicitado = demanda[sku].total;
         globalRQ += totalSolicitado;
 
-        // 1. Miramos qué hay en Activo/Bajas y lo descontamos del pedido (SIN CONTARLO COMO MOVIMIENTO)
-        let enActivo = 0;
-        if (stBajas[sku]) {
-            enActivo = stBajas[sku].reduce((acc, item) => acc + item.qty, 0);
-        }
+        // 1. Descontamos TODO lo que haya en Activo para este SKU
+        let enActivo = totalActivoPorSKU[sku] || 0;
         
         // 2. Lo que realmente necesitamos bajar es: Pedido - Activo
         let realPending = Math.max(0, totalSolicitado - enActivo);
 
+        // Actualizamos Waterfall para Zonas Bajas (lo que ya está ahí)
+        if (!totalsByNivel['Zonas Bajas']) totalsByNivel['Zonas Bajas'] = 0;
+        totalsByNivel['Zonas Bajas'] += Math.min(totalSolicitado, enActivo);
+
         // 3. Sólo si falta algo, buscamos en las zonas de reserva
         if (realPending > 0) {
-            // No procesamos stBajas aquí porque ya lo descontamos arriba
             realPending = satisfyDemand(sku, realPending, stAltos, 'Alto');
             realPending = satisfyDemand(sku, realPending, stPisos, 'Pisos');
             realPending = satisfyDemand(sku, realPending, stAereos, 'Aereo');
