@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.16-pulse';
-const CACHE_KEY = `logistics_v12_0_9_`;
+const VERSION = '11.1.17-pulse';
+const CACHE_KEY = `logistics_v12_1_0_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -488,12 +488,10 @@ export const calculateBufferPallets = (configOverride = null) => {
             const keys = Object.keys(row);
             const sku = String(row[keys[0]] || '').trim();
             const qty = parseFloat(row[keys[1]]) || 0;
-            // Solo si no fue procesado por PEDIDOS
-            if (sku && qty > 0 && !processedSKUs.has(sku)) {
+            if (sku && qty > 0) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
                 demanda[sku].sources.push({ src: 'OTRAS SOLICITUDES', qty: qty });
-                processedSKUs.add(sku); // Bloqueamos para REPLENISHMENT
             }
         });
     }
@@ -504,8 +502,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             const keys = Object.keys(row);
             const sku = String(row[keys[0]] || '').trim();
             const qty = parseFloat(row[keys[1]]) || 0;
-            // Solo si no fue procesado por PEDIDOS ni OTRAS SOLICITUDES
-            if (sku && qty > 0 && !processedSKUs.has(sku)) {
+            if (sku && qty > 0) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
                 demanda[sku].sources.push({ src: 'REPLENISHMENT', qty: qty });
@@ -852,10 +849,17 @@ export const calculateBufferPallets = (configOverride = null) => {
         const enActivo = totalActivoPorSKU[sku] || 0;
         const diff = Math.max(0, d.total - enActivo);
         
-        // Calcular stock en reserva total (Altos + Pisos + Aereos + Logicos)
+        // Calcular stock en reserva total (Todo lo que viene del archivo Reserva para este SKU)
         let enReserva = 0;
-        [stAltos, stPisos, stAereos, stLogicos].forEach(map => {
-            if (map[sku]) enReserva += map[sku].reduce((acc, i) => acc + i.qty, 0);
+        [stBajas, stAltos, stPisos, stAereos, stLogicos].forEach(map => {
+            if (map[sku]) {
+                // Solo sumar si el registro proviene del archivo de reserva (evitar duplicar activo si se mapeó a stBajas)
+                enReserva += map[sku].reduce((acc, i) => {
+                    // Verificamos si la fila original tiene la columna 'Nivel' (propia de reserva) para no sumar stock activo aquí
+                    const rowNivel = getCol(i.row, ['Nivel', 'NIVEL']);
+                    return acc + (rowNivel ? i.qty : 0);
+                }, 0);
+            }
         });
 
         return {

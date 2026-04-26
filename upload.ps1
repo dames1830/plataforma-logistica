@@ -1,3 +1,3 @@
 git add .
-git commit -m "PRODUCTION v12.0.9: Total DIS Exclusion (Map + Excel Fix)"
+git commit -m "PRODUCTION v12.1.0: Additive Demand Sum + Full Reserva Stock Fix"
 git push origin main
