@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.15-pulse';
-const CACHE_KEY = `logistics_v12_0_8_`;
+const VERSION = '11.1.16-pulse';
+const CACHE_KEY = `logistics_v12_0_9_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -554,6 +554,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
+        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
+        if (area === 'DIS' || area === 'VER') return; // EXCLUSIÓN CRÍTICA: No contar discrepancias como activo real
+
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
