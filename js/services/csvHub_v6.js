@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.20-pulse';
-const CACHE_KEY = `logistics_v12_1_3_`;
+const VERSION = '11.1.21-pulse';
+const CACHE_KEY = `logistics_v12_1_4_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -418,41 +418,30 @@ export const calculateBufferPallets = (configOverride = null) => {
         map[sku].push({ qty, row });
     };
 
-    // 1. Mapeo de ACTIVO
+    // 1. Mapeo de ACTIVO (WHITELIST ESTRICTA)
+    const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
 
-        // REGLA MAESTRA: Ignorar DIS, VER y PISOS (CROSS) por completo
-        if (area === 'DIS' || area === 'VER' || area === 'CROSS') return; 
-
-        registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
+        // Solo incluir si está en la lista permitida
+        if (activeWhitelist.includes(area)) {
+            registerStock(stBajas, sku, qty, f); 
+        }
     });
 
-    // 2. Mapeo de RESERVA (Jerarquías 1 a 4)
+    // 2. Mapeo de RESERVA (SOLO NIVEL ALTO)
     reserva.forEach(f => {
         let nivel = String(getCol(f, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
-        let nroAnd = String(getCol(f, ['NRO AND', 'Nro And']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
         if(!sku || qty <= 0) return;
 
-        // REGLA MAESTRA: Ignorar todo lo que sea PISO o CROSS
-        if (nivel === 'PISO' || nivel === 'CROSS') return;
-
-        // Jerarquía 1: ZONAS BAJAS
-        if (['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'].includes(nivel)) {
-            registerStock(stBajas, sku, qty, f);
-        }
-        // Jerarquía 2: ALTO
-        else if (['ALTO', 'INS'].includes(nivel)) {
+        // REGLA MAESTRA: Solamente sirve el nivel ALTO
+        if (nivel === 'ALTO') {
             registerStock(stAltos, sku, qty, f);
-        }
-        // Jerarquía 3: AEREO
-        else if (nivel === 'AEREO') {
-            registerStock(stAereos, sku, qty, f);
         }
     });
 
@@ -542,8 +531,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     const totalActivoPorSKU = {};
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
-        // EXCLUSIÓN: DIS/VER son discrepancias. CROSS es Zona Piso (Buffer), no Activo de picking.
-        if (area === 'DIS' || area === 'VER' || area === 'CROSS') return; 
+        const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
+        if (!activeWhitelist.includes(area)) return; 
 
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
@@ -551,10 +540,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     const nivelesMap = {
-        'Bajas': '1. Zonas Bajas',
-        'Alto': '2. Alto',
-        'Aereo': '3. Aereo',
-        'Merma': '4. Merma'
+        'Bajas': '1. Activo',
+        'Alto': '2. Reserva (Altos)'
     };
 
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
@@ -571,11 +558,9 @@ export const calculateBufferPallets = (configOverride = null) => {
         totalsByNivel[nivelesMap['Bajas']] += atdActivo;
         pending -= atdActivo;
 
-        // 2. Satisfacemos el resto siguiendo las jerarquías
+        // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         if (pending > 0) {
-            pending = satisfyDemand(sku, pending, stBajas, nivelesMap['Bajas']);
             pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
-            pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
             
             // 3. Si aún queda pendiente, es "Sin Stock"
             if (pending > 0) {
@@ -835,16 +820,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         const enActivo = totalActivoPorSKU[sku] || 0;
         const diff = Math.max(0, d.total - enActivo);
         
-        // Calcular stock en reserva total (Todo lo que viene del archivo Reserva para este SKU, excluyendo pisos)
+        // Calcular stock en reserva total (Solo nivel ALTO)
         let enReserva = 0;
-        [stBajas, stAltos, stAereos].forEach(map => {
-            if (map[sku]) {
-                enReserva += map[sku].reduce((acc, i) => {
-                    const rowNivel = getCol(i.row, ['Nivel', 'NIVEL']);
-                    return acc + (rowNivel ? i.qty : 0);
-                }, 0);
-            }
-        });
+        if (stAltos[sku]) {
+            enReserva = stAltos[sku].reduce((acc, i) => acc + i.qty, 0);
+        }
 
         return {
             'Sku': sku,
