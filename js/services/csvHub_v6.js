@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.21-pulse';
-const CACHE_KEY = `logistics_v12_1_4_`;
+const VERSION = '11.1.22-pulse';
+const CACHE_KEY = `logistics_v12_1_5_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -223,7 +223,13 @@ export const logSystemAction = async (username, action, details) => {
 const getCol = (row, possibleNames) => {
     if (!row) return null;
     const keys = Object.keys(row);
-    const normalize = (s) => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    // Normalización extrema: Quita acentos, barras (macrones), tildes y espacios
+    const normalize = (s) => String(s || '').toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quita diacríticos
+        .replace(/[^a-z0-9]/g, "")      // Deja solo letras y números
+        .trim();
+    
     const names = possibleNames.map(normalize);
     const foundKey = keys.find(k => names.includes(normalize(k)));
     return foundKey ? row[foundKey] : null;
@@ -420,13 +426,16 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // 1. Mapeo de ACTIVO (WHITELIST ESTRICTA)
     const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
+    const possibleAreaHeaders = ['Area', 'Área', 'Ãrea', 'Ārea', 'A-rea'];
+    
     activo.forEach(f => {
-        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let areaRaw = getCol(f, possibleAreaHeaders);
+        let area = String(areaRaw || '').trim().toUpperCase();
+        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo', 'Sku']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
 
-        // Solo incluir si está en la lista permitida
+        // Solo incluir si está en la lista permitida (esto excluye automáticamente PISO, DIS, MATE)
         if (activeWhitelist.includes(area)) {
             registerStock(stBajas, sku, qty, f); 
         }
@@ -530,11 +539,14 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
-        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
+        const possibleAreaHeaders = ['Area', 'Área', 'Ãrea', 'Ārea', 'A-rea'];
+        let areaRaw = getCol(f, possibleAreaHeaders);
+        let area = String(areaRaw || '').trim().toUpperCase();
+        
         const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
-        if (!activeWhitelist.includes(area)) return; 
+        if (!activeWhitelist.includes(area)) return; // EXCLUSIÓN CRÍTICA PARA EL EXCEL
 
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo', 'Sku']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
     });
