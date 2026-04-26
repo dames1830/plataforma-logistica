@@ -1,3 +1,3 @@
 git add .
-git commit -m "PRODUCTION v12.0.6: Dynamic names in Analytics and KPI reports"
+git commit -m "PRODUCTION v12.0.7: Fixed KPI average calculation"
 git push origin main

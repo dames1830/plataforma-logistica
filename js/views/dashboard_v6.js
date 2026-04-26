@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.0.6';
-const CACHE_KEY = `logistics_v12_0_6_`;
+const VERSION = '12.0.7';
+const CACHE_KEY = `logistics_v12_0_7_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.6</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.7</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1551,7 +1551,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const w = workerMap[key];
         const rend = parsePct(entry.rendimiento);
         if (entry.asistencia === 'P') {
-            w.diasTrabajados++; w.sum += rend; w.countForAvg++;
+            w.diasTrabajados++; w.sum += rend; w.count++;
             if (entry.puntualidad === 'NO') w.tardanzas++;
         } else {
             const hasJustification = entry.justification && 
@@ -1564,13 +1564,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             } else {
                 w.faltas++; 
                 w.sum += rend; 
-                w.countForAvg++; 
+                w.count++; 
                 // Sin justificación: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
             }
         }
     });
 
-    const consolidado = Object.values(workerMap).map(w => ({ ...w, avg: w.countForAvg > 0 ? Math.round(w.sum / w.countForAvg) : 0 }))
+    const consolidado = Object.values(workerMap).map(w => ({ ...w, avg: w.count > 0 ? Math.round(w.sum / w.count) : 0 }))
         .filter(w => w.name.toLowerCase().includes(kpiSearch.toLowerCase())).sort((a,b) => b.avg - a.avg);
 
     container.innerHTML = `
