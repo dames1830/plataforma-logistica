@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.19-pulse';
-const CACHE_KEY = `logistics_v12_1_2_`;
+const VERSION = '11.1.20-pulse';
+const CACHE_KEY = `logistics_v12_1_3_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -418,27 +418,29 @@ export const calculateBufferPallets = (configOverride = null) => {
         map[sku].push({ qty, row });
     };
 
-    // 1. Mapeo de ACTIVO (Normalmente Jerarquía 1 o 5 según área)
+    // 1. Mapeo de ACTIVO
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
 
-        // EXCLUSIÓN DE ZONAS DE DISCREPANCIA (DIS, VER, etc. no deben entrar al análisis de paletas)
-        if (area === 'DIS' || area === 'VER') return; 
+        // REGLA MAESTRA: Ignorar DIS, VER y PISOS (CROSS) por completo
+        if (area === 'DIS' || area === 'VER' || area === 'CROSS') return; 
 
-        if (area === 'CROSS') registerStock(stPisos, sku, qty, f);
-        else registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
+        registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
     });
 
-    // 2. Mapeo de RESERVA (Jerarquías 1 a 6)
+    // 2. Mapeo de RESERVA (Jerarquías 1 a 4)
     reserva.forEach(f => {
         let nivel = String(getCol(f, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
         let nroAnd = String(getCol(f, ['NRO AND', 'Nro And']) || '').trim().toUpperCase();
         let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
         if(!sku || qty <= 0) return;
+
+        // REGLA MAESTRA: Ignorar todo lo que sea PISO o CROSS
+        if (nivel === 'PISO' || nivel === 'CROSS') return;
 
         // Jerarquía 1: ZONAS BAJAS
         if (['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'].includes(nivel)) {
@@ -448,20 +450,10 @@ export const calculateBufferPallets = (configOverride = null) => {
         else if (['ALTO', 'INS'].includes(nivel)) {
             registerStock(stAltos, sku, qty, f);
         }
-        // Jerarquía 3: PISOS
-        else if (nivel === 'CROSS') {
-            registerStock(stPisos, sku, qty, f);
-        }
-        // Jerarquía 4: AEREO
+        // Jerarquía 3: AEREO
         else if (nivel === 'AEREO') {
             registerStock(stAereos, sku, qty, f);
         }
-        // Jerarquía 5: LÓGICO (Solo PISO, excluimos DIS por solicitud del usuario)
-        else if (nivel === 'PISO' || (nivel === 'VER' && nroAnd === 'MZM-TR')) {
-            registerStock(stLogicos, sku, qty, f);
-        }
-        // Jerarquía 6: MERMA (Solo informativo, NO satisface demanda si el usuario lo pide)
-        // Nota: Se elimina el registro en stMerma para que el waterfall lo mande a 'Sin Stock'
     });
 
     // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
@@ -561,10 +553,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     const nivelesMap = {
         'Bajas': '1. Zonas Bajas',
         'Alto': '2. Alto',
-        'Pisos': '3. Pisos',
-        'Aereo': '4. Aereo',
-        'Logica': '5. Lógico',
-        'Merma': '6. Merma'
+        'Aereo': '3. Aereo',
+        'Merma': '4. Merma'
     };
 
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
@@ -585,10 +575,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (pending > 0) {
             pending = satisfyDemand(sku, pending, stBajas, nivelesMap['Bajas']);
             pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
-            pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Pisos']);
             pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
-            pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logica']);
-            pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
             
             // 3. Si aún queda pendiente, es "Sin Stock"
             if (pending > 0) {
@@ -848,13 +835,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         const enActivo = totalActivoPorSKU[sku] || 0;
         const diff = Math.max(0, d.total - enActivo);
         
-        // Calcular stock en reserva total (Todo lo que viene del archivo Reserva para este SKU)
+        // Calcular stock en reserva total (Todo lo que viene del archivo Reserva para este SKU, excluyendo pisos)
         let enReserva = 0;
-        [stBajas, stAltos, stPisos, stAereos, stLogicos].forEach(map => {
+        [stBajas, stAltos, stAereos].forEach(map => {
             if (map[sku]) {
-                // Solo sumar si el registro proviene del archivo de reserva (evitar duplicar activo si se mapeó a stBajas)
                 enReserva += map[sku].reduce((acc, i) => {
-                    // Verificamos si la fila original tiene la columna 'Nivel' (propia de reserva) para no sumar stock activo aquí
                     const rowNivel = getCol(i.row, ['Nivel', 'NIVEL']);
                     return acc + (rowNivel ? i.qty : 0);
                 }, 0);
