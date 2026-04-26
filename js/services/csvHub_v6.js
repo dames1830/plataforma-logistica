@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.17-pulse';
-const CACHE_KEY = `logistics_v12_1_0_`;
+const VERSION = '11.1.18-pulse';
+const CACHE_KEY = `logistics_v12_1_1_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -485,9 +485,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
-            const keys = Object.keys(row);
-            const sku = String(row[keys[0]] || '').trim();
-            const qty = parseFloat(row[keys[1]]) || 0;
+            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
+            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
             if (sku && qty > 0) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
@@ -499,9 +498,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 3. PRIORIDAD: REPLENISHMENT (XLSX)
     if (tallas && tallas.length) {
         tallas.forEach(row => {
-            const keys = Object.keys(row);
-            const sku = String(row[keys[0]] || '').trim();
-            const qty = parseFloat(row[keys[1]]) || 0;
+            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
+            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
             if (sku && qty > 0) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
