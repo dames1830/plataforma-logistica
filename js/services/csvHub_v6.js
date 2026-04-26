@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.22-pulse';
-const CACHE_KEY = `logistics_v12_1_5_`;
+const VERSION = '11.1.23-pulse';
+const CACHE_KEY = `logistics_v12_1_6_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -424,19 +424,24 @@ export const calculateBufferPallets = (configOverride = null) => {
         map[sku].push({ qty, row });
     };
 
-    // 1. Mapeo de ACTIVO (WHITELIST ESTRICTA)
+    // 1. Mapeo de ACTIVO (WHITELIST ESTRICTA + ESCANEO TOTAL)
     const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
     const possibleAreaHeaders = ['Area', 'Área', 'Ãrea', 'Ārea', 'A-rea'];
     
     activo.forEach(f => {
+        // ESCANEO NUCLEAR: Si la palabra PISO, DIS o MATE aparece en cualquier parte de la fila, se ignora.
+        const rowStr = JSON.stringify(f).toUpperCase();
+        if (rowStr.includes('"PISO"') || rowStr.includes('"DIS"') || rowStr.includes('"MATE"') || rowStr.includes(' PISO ') || rowStr.includes(' DIS ') || rowStr.includes(' MATE ')) return;
+
         let areaRaw = getCol(f, possibleAreaHeaders);
-        let area = String(areaRaw || '').trim().toUpperCase();
+        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo', 'Sku']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
 
-        // Solo incluir si está en la lista permitida (esto excluye automáticamente PISO, DIS, MATE)
-        if (activeWhitelist.includes(area)) {
+        // Solo incluir si el área limpia está en la whitelist
+        if (activeWhitelist.some(w => area.includes(w))) {
             registerStock(stBajas, sku, qty, f); 
         }
     });
@@ -539,12 +544,16 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
+        // ESCANEO NUCLEAR PARA EL EXCEL
+        const rowStr = JSON.stringify(f).toUpperCase();
+        if (rowStr.includes('"PISO"') || rowStr.includes('"DIS"') || rowStr.includes('"MATE"') || rowStr.includes(' PISO ') || rowStr.includes(' DIS ') || rowStr.includes(' MATE ')) return;
+
         const possibleAreaHeaders = ['Area', 'Área', 'Ãrea', 'Ārea', 'A-rea'];
         let areaRaw = getCol(f, possibleAreaHeaders);
-        let area = String(areaRaw || '').trim().toUpperCase();
+        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
         const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
-        if (!activeWhitelist.includes(area)) return; // EXCLUSIÓN CRÍTICA PARA EL EXCEL
+        if (!activeWhitelist.some(w => area.includes(w))) return; 
 
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo', 'Sku']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
