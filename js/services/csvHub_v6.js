@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.14-pulse';
-const CACHE_KEY = `logistics_v11_1_14_`;
+const VERSION = '11.1.15-pulse';
+const CACHE_KEY = `logistics_v12_0_8_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -425,9 +425,10 @@ export const calculateBufferPallets = (configOverride = null) => {
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if(!sku || qty <= 0) return;
 
-        // Siguiendo la lógica del cuadro: PISO y DIS son Lógico
-        if (area === 'PISO' || area === 'DIS') registerStock(stLogicos, sku, qty, f);
-        else if (area === 'CROSS') registerStock(stPisos, sku, qty, f);
+        // EXCLUSIÓN DE ZONAS DE DISCREPANCIA (DIS, VER, etc. no deben entrar al análisis de paletas)
+        if (area === 'DIS' || area === 'VER') return; 
+
+        if (area === 'CROSS') registerStock(stPisos, sku, qty, f);
         else registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
     });
 
@@ -455,14 +456,12 @@ export const calculateBufferPallets = (configOverride = null) => {
         else if (nivel === 'AEREO') {
             registerStock(stAereos, sku, qty, f);
         }
-        // Jerarquía 5: LÓGICO (PISO, DIS, VER con MZM-TR)
-        else if (nivel === 'PISO' || nivel === 'DIS' || (nivel === 'VER' && nroAnd === 'MZM-TR')) {
+        // Jerarquía 5: LÓGICO (Solo PISO, excluimos DIS por solicitud del usuario)
+        else if (nivel === 'PISO' || (nivel === 'VER' && nroAnd === 'MZM-TR')) {
             registerStock(stLogicos, sku, qty, f);
         }
-        // Jerarquía 6: MERMA (VER sin MZM-TR)
-        else if (nivel === 'VER' && nroAnd !== 'MZM-TR') {
-            registerStock(stMerma, sku, qty, f);
-        }
+        // Jerarquía 6: MERMA (Solo informativo, NO satisface demanda si el usuario lo pide)
+        // Nota: Se elimina el registro en stMerma para que el waterfall lo mande a 'Sin Stock'
     });
 
     // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
@@ -642,6 +641,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     // Mapa de Stock Activo para columna QTY ACTIVO
     const activeStockMap = {};
     activo.forEach(f => {
+        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
+        if (area === 'DIS' || area === 'VER') return; // Excluir de la visualización de stock activo en paletas
+        
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
@@ -755,7 +757,14 @@ export const calculateBufferPallets = (configOverride = null) => {
             if (sku7 && !articulosMap.has(sku7)) {
                 articulosMap.set(sku7, {
                     gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-                    marca: String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
+                    marca: (() => {
+                        let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
+                        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
+                        if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
+                        if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
+                        if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
+                        return m;
+                    })()
                 });
             }
         });
