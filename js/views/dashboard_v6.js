@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.1.6';
-const CACHE_KEY = `logistics_v12_1_6_`;
+const VERSION = '12.1.7';
+const CACHE_KEY = `logistics_v12_1_7_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.6</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.7</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">

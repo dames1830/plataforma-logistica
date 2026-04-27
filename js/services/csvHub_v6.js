@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.23-pulse';
-const CACHE_KEY = `logistics_v12_1_6_`;
+const VERSION = '11.1.24-pulse';
+const CACHE_KEY = `logistics_v12_1_7_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -269,20 +269,18 @@ export const parseFile = (file, area) => {
           
           let jsonData = [];
           if (area === 'stockReserva') {
-              // MODO QUIRÚRGICO: Salto fila 1 (Título) y 2 (Blanco). Fila 3 cabeceras.
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-              const deepClean = (s) => String(s || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-              
+              const dc = (s) => String(s || '').trim();
               for (let i = 3; i < rows.length; i++) {
-                  const row = rows[i];
-                  if (!row || row.length < 2) continue;
+                  const r = rows[i];
+                  if (!r || r.length < 11) continue;
                   jsonData.push({
-                      'NIVEL': deepClean(row[1]),     // Columna B (index 1)
-                      'PRODUCTO': deepClean(row[8]),  // Columna I (index 8)
-                      'CANTIDAD': parseFloat(row[10]) || 0, // Columna K (index 10)
-                      'UBICACION': deepClean(row[4]), // Columna E (index 4)
-                      'LPN': deepClean(row[5]),       // Columna F (index 5)
-                      'NRO AND': deepClean(row[2])    // Columna C (index 2)
+                      'NIVEL': dc(r[1]),
+                      'PRODUCTO': dc(r[8]),
+                      'CANTIDAD': parseFloat(r[10]) || 0,
+                      'UBICACION': dc(r[4]),
+                      'LPN': dc(r[5]),
+                      'NRO AND': dc(r[2])
                   });
               }
           } else {
@@ -424,36 +422,32 @@ export const calculateBufferPallets = (configOverride = null) => {
         map[sku].push({ qty, row });
     };
 
-    // 1. Mapeo de ACTIVO (WHITELIST ESTRICTA + ESCANEO TOTAL)
+    // 1. Mapeo de ACTIVO (COORDENADAS: Ãrea, ArtÃculo, Cantidad actual)
     const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
-    const possibleAreaHeaders = ['Area', 'Área', 'Ãrea', 'Ārea', 'A-rea'];
+    const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
+    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
+    const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
     
     activo.forEach(f => {
-        // ESCANEO NUCLEAR: Si la palabra PISO, DIS o MATE aparece en cualquier parte de la fila, se ignora.
-        const rowStr = JSON.stringify(f).toUpperCase();
-        if (rowStr.includes('"PISO"') || rowStr.includes('"DIS"') || rowStr.includes('"MATE"') || rowStr.includes(' PISO ') || rowStr.includes(' DIS ') || rowStr.includes(' MATE ')) return;
-
         let areaRaw = getCol(f, possibleAreaHeaders);
         let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo', 'Sku']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
+        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
         if(!sku || qty <= 0) return;
 
-        // Solo incluir si el área limpia está en la whitelist
         if (activeWhitelist.some(w => area.includes(w))) {
             registerStock(stBajas, sku, qty, f); 
         }
     });
 
-    // 2. Mapeo de RESERVA (SOLO NIVEL ALTO)
+    // 2. Mapeo de RESERVA (COORDENADAS: NIVEL, PRODUCTO, CANTIDAD)
     reserva.forEach(f => {
-        let nivel = String(getCol(f, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
-        let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
+        let nivel = String(f['NIVEL'] || '').trim().toUpperCase();
+        let sku = String(f['PRODUCTO'] || '').trim();
+        let qty = parseFloat(f['CANTIDAD']) || 0;
         if(!sku || qty <= 0) return;
 
-        // REGLA MAESTRA: Solamente sirve el nivel ALTO
         if (nivel === 'ALTO') {
             registerStock(stAltos, sku, qty, f);
         }
@@ -544,19 +538,17 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
-        // ESCANEO NUCLEAR PARA EL EXCEL
-        const rowStr = JSON.stringify(f).toUpperCase();
-        if (rowStr.includes('"PISO"') || rowStr.includes('"DIS"') || rowStr.includes('"MATE"') || rowStr.includes(' PISO ') || rowStr.includes(' DIS ') || rowStr.includes(' MATE ')) return;
-
-        const possibleAreaHeaders = ['Area', 'Área', 'Ãrea', 'Ārea', 'A-rea'];
+        const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
         let areaRaw = getCol(f, possibleAreaHeaders);
         let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
         const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
         if (!activeWhitelist.some(w => area.includes(w))) return; 
 
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo', 'Sku']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
+        const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
+        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
+        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
         if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
     });
 
