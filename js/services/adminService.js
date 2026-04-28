@@ -127,12 +127,10 @@ export const saveWorkers = (workers) => {
     save('workers', normalized);
 };
 export const getWorkers = () => {
-    return adminStore.workers.sort((a, b) => {
-        const nameA = (a.apellidos || a.Apellidos || a.nombre || a.Nombre || '').toUpperCase().trim();
-        const nameB = (b.apellidos || b.Apellidos || b.nombre || b.Nombre || '').toUpperCase().trim();
-        if (nameA < nameB) return -1;
-        if (nameA > nameB) return 1;
-        return 0;
+    return [...adminStore.workers].sort((a, b) => {
+        const nameA = String(a.apellidos || a.Apellidos || a.nombre || a.Nombre || '').toUpperCase().trim();
+        const nameB = String(b.apellidos || b.Apellidos || b.nombre || b.Nombre || '').toUpperCase().trim();
+        return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
     });
 };
 
