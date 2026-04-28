@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.25-pulse';
-const CACHE_KEY = `logistics_v12_1_8_`;
+const VERSION = '11.1.27-pulse';
+const CACHE_KEY = `logistics_v12_1_11_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -407,8 +407,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     const tallas = dataStore.tallas;     // REPLENISHMENT
     const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !pedidos) {
-        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
+    if(!activo || !reserva) {
+        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva });
         return null;
     }
 
@@ -458,18 +458,21 @@ export const calculateBufferPallets = (configOverride = null) => {
     let processedSKUs = new Set();
     
     // 1. PRIORIDAD: PEDIDOS (CSV)
-    pedidos.forEach(f => {
-        let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
-        let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
-        let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
-        let diff = cant - asig;
-        if (diff > 0 && sku) {
-            if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-            demanda[sku].total += diff;
-            demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
-            processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
-        }
-    });
+    if (pedidos && pedidos.length) {
+        pedidos.forEach(f => {
+            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
+            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
+            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
+            let diff = cant - asig;
+            if (diff > 0 && sku) {
+                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
+                demanda[sku].total += diff;
+                demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
+                processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
+            }
+        });
+    }
+
 
     // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
     if (solicitud && solicitud.length) {

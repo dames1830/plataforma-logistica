@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.1.10';
-const CACHE_KEY = `logistics_v12_1_10_`;
+const VERSION = '12.1.11';
+const CACHE_KEY = `logistics_v12_1_11_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.10</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.11</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -285,7 +285,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <span style="color:#fff; background:#d97706; padding:2px 10px; border-radius:6px; margin-left:10px; font-weight:800; border:1px solid #fbbf24; display:inline-block; box-shadow:0 0 10px rgba(251,191,36,0.3);">📅 Subido: ${dateStr}</span>
             </p>
           </div>
-          <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
+          <div style="display:flex; gap:0.5rem;">
+              <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
+              <button id="del_${area}" class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; background:#ef4444; border:1px solid #b91c1c;">🗑️ QUITAR</button>
+          </div>
         </div>`;
     } else {
       div.innerHTML = `
@@ -313,6 +316,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                 renderTabContent(); 
             } 
         } 
+    });
+
+    const delBtn = document.getElementById(`del_${area}`);
+    if(delBtn) delBtn.addEventListener('click', () => {
+        if(confirm(`¿Estás seguro de que quieres quitar el archivo de ${label}?`)) {
+            dataStore[area] = null;
+            localStorage.removeItem('logistics_cache_' + area);
+            localStorage.removeItem('logistics_meta_' + area);
+            renderTabContent();
+        }
     });
   };
 
@@ -383,10 +396,10 @@ export const renderDashboard = async (container, user, onLogout) => {
               <div>
                 <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
                 <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
-                    <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
-                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
-                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
-                    <span>${dataStore.articulos ? '✅' : '❌'} ARTICULO</span>
+                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
+                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
+                    <span>${dataStore.buffer ? '✅' : '➖'} PEDIDOS</span>
+                    <span>${dataStore.articulos ? '✅' : '➖'} ARTICULO</span>
                     <div style="display:flex; align-items:center;">
                         <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                         <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
