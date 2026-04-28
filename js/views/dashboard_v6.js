@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBuffer
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.1.7';
-const CACHE_KEY = `logistics_v12_1_7_`;
+const VERSION = '12.1.9';
+const CACHE_KEY = `logistics_v12_1_9_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.7</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.9</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1037,6 +1037,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         const existing = adminService.getAttendance(dateStr);
         if (existing) {
             localState = existing.data.map(d => ({ ...d }));
+            // Sincronizar trabajadores nuevos que no estén en el estado guardado
+            workers.forEach(w => {
+                const wDni = (w.dni || w.Dni);
+                if (!localState.find(d => d.dni === wDni)) {
+                    localState.push({
+                        dni: wDni,
+                        nombre: (w.nombre || w.Nombre),
+                        apellidos: (w.apellidos || w.Apellidos),
+                        present: true,
+                        onTime: true,
+                        justification: ''
+                    });
+                }
+            });
             return existing;
         }
         // Si no existe, estado inicial (todos presentes)

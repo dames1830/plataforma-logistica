@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.24-pulse';
-const CACHE_KEY = `logistics_v12_1_7_`;
+const VERSION = '11.1.25-pulse';
+const CACHE_KEY = `logistics_v12_1_8_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -588,6 +588,43 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
+    // [MOD V12.1.8] EXPLOSIÓN DE LPN: Basta que se pida un SKU de un LPN, traemos TODO el LPN.
+    const selectedLPNs = new Set();
+    detalle.forEach(d => { if(d.LPN) selectedLPNs.add(d.LPN); });
+
+    // Re-escanear reserva para traer los "acompañantes" de esas paletas
+    const detalleExplosionado = [];
+    const rowsYaIncluidas = new Set();
+    
+    // Primero añadimos lo que ya estaba (lo que disparó la bajada)
+    detalle.forEach(d => {
+        detalleExplosionado.push(d);
+        if(d._rowId) rowsYaIncluidas.add(d._rowId);
+    });
+
+    // Ahora buscamos los acompañantes en las mismas paletas
+    if (selectedLPNs.size > 0) {
+        reserva.forEach((f, idx) => {
+            const lpn = String(f['LPN'] || '').trim();
+            if (selectedLPNs.has(lpn) && !rowsYaIncluidas.has(idx)) {
+                const sku = String(f['PRODUCTO'] || '').trim();
+                detalleExplosionado.push({
+                    'NIVEL/AREA': 'Paleta Completa',
+                    'UBICACIONES': String(f['UBICACION'] || '').trim(),
+                    'LPN': lpn,
+                    'ARTÍCULO': 'Acompañante',
+                    'SKU': sku,
+                    'ATD RQ': parseFloat(f['CANTIDAD']) || 0,
+                    'QTY ACTIVO': 0,
+                    'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
+                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0,
+                    'Articulo': sku,
+                    '_rowId': idx
+                });
+            }
+        });
+    }
+
     const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
 
     let runningRQ = globalRQ;
@@ -849,7 +886,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        detalle: detallePallets, 
+        version: 'v12.1.8',
+        totalReserva: globalRQ,
+        detalle: detalleExplosionado, 
         detalleZonas, 
         resumenSKU: resEmp,
         resumenSKUDetalle, 

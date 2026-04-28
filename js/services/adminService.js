@@ -126,7 +126,15 @@ export const saveWorkers = (workers) => {
     const normalized = workers.map(w => ({ active: true, ...w }));
     save('workers', normalized);
 };
-export const getWorkers = () => adminStore.workers;
+export const getWorkers = () => {
+    return adminStore.workers.sort((a, b) => {
+        const nameA = (a.apellidos || a.Apellidos || a.nombre || a.Nombre || '').toUpperCase().trim();
+        const nameB = (b.apellidos || b.Apellidos || b.nombre || b.Nombre || '').toUpperCase().trim();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        return 0;
+    });
+};
 
 export const saveWorker = (worker) => {
     const workers = getWorkers();
