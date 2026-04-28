@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.27-pulse';
-const CACHE_KEY = `logistics_v12_1_11_`;
+const VERSION = '11.1.28-pulse';
+const CACHE_KEY = `logistics_v12_1_12_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -349,6 +349,24 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     }
 };
 
+export const clearAreaData = async (area, username = 'sistema') => {
+    dataStore[area] = null;
+    localStorage.removeItem(LS_PREFIX + area);
+    localStorage.removeItem(META_PREFIX + area);
+    
+    try {
+        // Enviar array vacío al servidor para "limpiar" la persistencia remota
+        await fetch(`${API_URL}/${area}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([])
+        });
+        await logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario.`);
+    } catch (e) {
+        console.warn(`[PULSE] No se pudo limpiar el servidor para '${area}', se limpió solo local.`, e);
+    }
+};
+
 export const getAreaData = async (area) => {
   if (dataStore[area] !== null) return dataStore[area];
   const lsData = loadFromLS(area);
@@ -360,7 +378,7 @@ export const getAreaData = async (area) => {
      const response = await fetch(queryURL);
      if (response.ok) {
          const serverResponse = await response.json();
-         if (serverResponse.data) {
+         if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
              dataStore[area] = serverResponse.data;
              saveToLS(area, serverResponse.data);
              return serverResponse.data;

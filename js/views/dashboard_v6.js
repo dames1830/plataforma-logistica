@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.0.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.0.0';
 import * as adminService from '../services/adminService.js?v=12.0.0';
 
 
-const VERSION = '12.1.11';
-const CACHE_KEY = `logistics_v12_1_11_`;
+const VERSION = '12.1.12';
+const CACHE_KEY = `logistics_v12_1_12_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.11</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.12</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -275,7 +275,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     div.style.width = '100%';
     const label = customLabel || area.toUpperCase();
     
-    if (hasData) {
+    if (hasData && hasData.length > 0) {
       div.innerHTML = `
         <div style="padding:1rem; background:rgba(34, 197, 94, 0.05); border:1px solid rgba(34, 197, 94, 0.3); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
           <div>
@@ -319,11 +319,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     const delBtn = document.getElementById(`del_${area}`);
-    if(delBtn) delBtn.addEventListener('click', () => {
+    if(delBtn) delBtn.addEventListener('click', async () => {
         if(confirm(`¿Estás seguro de que quieres quitar el archivo de ${label}?`)) {
-            dataStore[area] = null;
-            localStorage.removeItem('logistics_cache_' + area);
-            localStorage.removeItem('logistics_meta_' + area);
+            delBtn.disabled = true;
+            delBtn.innerHTML = '⌛...';
+            await clearAreaData(area, user.username);
             renderTabContent();
         }
     });
