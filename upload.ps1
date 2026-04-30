@@ -1,3 +1,3 @@
 git add .
-git commit -m "PRODUCTION v12.1.22: Hierarchies Stabilization (7 tiers) + Zone Mapping Fix"
+git commit -m "PRODUCTION v12.1.23: Hierarchies Fix + Matrices Restoration"
 git push origin main

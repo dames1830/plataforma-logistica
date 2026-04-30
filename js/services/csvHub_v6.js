@@ -888,8 +888,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         return { columns: sorted, rows: rows };
     };
 
-    const matrixResumen = buildMatrix(d => ['3. Pisos', '4. Aereo', '5. Lógico', '6. Merma'].includes(d['NIVEL/AREA']));
-    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. Sin Stock');
+    const matrixResumen = buildMatrix(d => ['3. PISOS', '4. AEREO', '5. LÓGICO', '6. MERMA'].includes(d['NIVEL/AREA']));
+    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. SIN STOCK');
 
     // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
     const historyDataMap = {}; 
@@ -944,7 +944,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.8',
+        version: 'v12.1.23',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
