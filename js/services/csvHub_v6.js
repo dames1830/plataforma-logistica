@@ -946,13 +946,16 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 5. RESUMEN SIN STOCK (ZONA 7)
     const sinStockRows = detalleZonas.filter(d => d['NIVEL/AREA'] === '7. SIN STOCK');
     const sinStockSummary = {
-        skus: new Set(sinStockRows.map(d => d['SKU'])).size,
-        articulos: new Set(sinStockRows.map(d => d['ARTÍCULO'])).size,
-        qty: sinStockRows.reduce((acc, d) => acc + (d['ATD RQ'] || 0), 0)
+        skus: new Set(sinStockRows.map(d => String(d['SKU'] || d['Sku'] || d['sku'] || '').trim()).filter(x => x)).size,
+        articulos: new Set(sinStockRows.map(d => {
+            let val = d['ARTÍCULO'] || d['ARTICULO'] || d['SKU'] || d['Sku'] || d['sku'] || '';
+            return String(val).trim().substring(0, 7);
+        }).filter(x => x && x.length >= 5)).size,
+        qty: sinStockRows.reduce((acc, d) => acc + (parseFloat(d['ATD RQ'] || d['ATD_RQ'] || 0) || 0), 0)
     };
 
     return { 
-        version: 'v12.1.26',
+        version: 'v12.1.27',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
