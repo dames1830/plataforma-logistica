@@ -943,8 +943,15 @@ export const calculateBufferPallets = (configOverride = null) => {
         };
     });
 
+    // 5. RESUMEN SIN STOCK (ZONA 7)
+    const sinStockRows = detalleZonas.filter(d => d['NIVEL/AREA'] === '7. SIN STOCK');
+    const sinStockSummary = {
+        skus: new Set(sinStockRows.map(d => d.SKU)).size,
+        qty: sinStockRows.reduce((acc, d) => acc + (d['ATD RQ'] || 0), 0)
+    };
+
     return { 
-        version: 'v12.1.23',
+        version: 'v12.1.24',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -953,6 +960,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         resumenNiveles: historyData, 
         waterfall: waterfall,
         resumenMatrix: matrixResumen,
-        resumenMatrixSinStock: matrixSinStock
+        resumenMatrixSinStock: matrixSinStock,
+        sinStockSummary: sinStockSummary
     };
 };
