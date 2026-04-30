@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.31-pulse';
-const CACHE_KEY = `logistics_v12_1_15_`;
+const VERSION = '11.1.32-pulse';
+const CACHE_KEY = `logistics_v12_1_16_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -685,7 +685,13 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'QTY BUFFER': Math.round(attributedUnits)
                             });
                             
-                            // Atribución para resumen empaque
+                            empaqueAggr[dSrc.src][tipo].pal.add(ubi);
+                            empaqueAggr[dSrc.src][tipo].sku.add(sku);
+                            empaqueAggr[dSrc.src][tipo].units += attributedUnits;
+                        }
+                    });
+                }
+            }
         });
     });
 
