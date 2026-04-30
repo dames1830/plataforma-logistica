@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.32-pulse';
-const CACHE_KEY = `logistics_v12_1_16_`;
+const VERSION = '11.1.33-pulse';
+const CACHE_KEY = `logistics_v12_1_17_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -466,9 +466,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         let qty = parseFloat(f['CANTIDAD']) || 0;
         if(!sku || qty <= 0) return;
 
-        if (nivel === 'ALTO') {
-            registerStock(stAltos, sku, qty, f);
-        }
+        if (nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
+        else if (nivel === 'PISO') registerStock(stPisos, sku, qty, f);
+        else if (nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
+        else if (nivel === 'LOGICO') registerStock(stLogicos, sku, qty, f);
+        else if (nivel === 'MERMA') registerStock(stMerma, sku, qty, f);
     });
 
     // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
@@ -541,7 +543,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                if (nivelLabel === '1. Zonas Bajas' || nivelLabel === '2. Alto' || nivelLabel === '4. Aereo') {
+                if (nivelLabel.includes('2. Reserva') || nivelLabel.includes('3. Pisos') || nivelLabel.includes('4. Aereo')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
@@ -575,7 +577,11 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     const nivelesMap = {
         'Bajas': '1. Activo',
-        'Alto': '2. Reserva (Altos)'
+        'Alto': '2. Reserva (Altos)',
+        'Piso': '3. Pisos',
+        'Aereo': '4. Aereo',
+        'Logico': '5. Lógico',
+        'Merma': '6. Merma'
     };
 
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
@@ -595,6 +601,10 @@ export const calculateBufferPallets = (configOverride = null) => {
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         if (pending > 0) {
             pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Piso']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logico']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
             
             // 3. Si aún queda pendiente, es "Sin Stock"
             if (pending > 0) {
