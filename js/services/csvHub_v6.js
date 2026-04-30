@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.30-pulse';
-const CACHE_KEY = `logistics_v12_1_14_`;
+const VERSION = '11.1.31-pulse';
+const CACHE_KEY = `logistics_v12_1_15_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -609,42 +609,6 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // [MOD V12.1.8] EXPLOSIÓN DE LPN: Basta que se pida un SKU de un LPN, traemos TODO el LPN.
-    const selectedLPNs = new Set();
-    detalle.forEach(d => { if(d.LPN) selectedLPNs.add(d.LPN); });
-
-    // Re-escanear reserva para traer los "acompañantes" de esas paletas
-    const detalleExplosionado = [];
-    const rowsYaIncluidas = new Set();
-    
-    // Primero añadimos lo que ya estaba (lo que disparó la bajada)
-    detalle.forEach(d => {
-        detalleExplosionado.push(d);
-        if(d._rowId) rowsYaIncluidas.add(d._rowId);
-    });
-
-    // Ahora buscamos los acompañantes en las mismas paletas
-    if (selectedLPNs.size > 0) {
-        reserva.forEach((f, idx) => {
-            const lpn = String(f['LPN'] || '').trim();
-            if (selectedLPNs.has(lpn) && !rowsYaIncluidas.has(idx)) {
-                const sku = String(f['PRODUCTO'] || '').trim();
-                detalleExplosionado.push({
-                    'NIVEL/AREA': 'Paleta Completa',
-                    'UBICACIONES': String(f['UBICACION'] || '').trim(),
-                    'LPN': lpn,
-                    'ARTÍCULO': 'Acompañante',
-                    'SKU': sku,
-                    'ATD RQ': parseFloat(f['CANTIDAD']) || 0,
-                    'QTY ACTIVO': 0,
-                    'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
-                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0,
-                    'Articulo': sku,
-                    '_rowId': idx
-                });
-            }
-        });
-    }
 
     const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
 
@@ -722,27 +686,43 @@ export const calculateBufferPallets = (configOverride = null) => {
                             });
                             
                             // Atribución para resumen empaque
-                            empaqueAggr[dSrc.src][tipo].pal.add(ubi);
-                            empaqueAggr[dSrc.src][tipo].sku.add(sku);
-                            empaqueAggr[dSrc.src][tipo].units += attributedUnits;
-                        }
-                    });
-                } else {
-                    // Caso borde: SKU sin demanda clara (no debería pasar)
-                    detallePallets.push({ 
-                        'FUENTE': 'DESCONOCIDO',
-                        'UBICACIONES': ubi, 
-                        'LPN': item['LPN'], 
-                        'SKU': sku, 
-                        'RQ': 0,
-                        'QTY ACTIVO': activeStockMap[sku] || 0,
-                        'QTY RESERVA': qty, 
-                        'QTY BUFFER': pick 
-                    });
-                }
-            }
         });
     });
+
+    // [MOD V12.1.8] EXPLOSIÓN DE LPN: Basta que se pida un SKU de un LPN, traemos TODO el LPN.
+    const selectedLPNs = new Set();
+    detallePallets.forEach(d => { if(d.LPN) selectedLPNs.add(d.LPN); });
+
+    const detalleExplosionado = [];
+    const rowsYaIncluidas = new Set();
+    
+    detallePallets.forEach((d, idx) => {
+        detalleExplosionado.push(d);
+        rowsYaIncluidas.add(idx); // No necesitamos el ID real aquí, solo marcar posición
+    });
+
+    if (selectedLPNs.size > 0) {
+        reserva.forEach((f, idx) => {
+            const lpn = String(f['LPN'] || '').trim();
+            // Evitar duplicados (si el LPN ya estaba en detallePallets por demanda)
+            const yaEnDetalle = detallePallets.some(dp => dp.LPN === lpn && dp.SKU === String(f['PRODUCTO']).trim());
+            
+            if (selectedLPNs.has(lpn) && !yaEnDetalle) {
+                const sku = String(f['PRODUCTO'] || '').trim();
+                detalleExplosionado.push({
+                    'FUENTE': 'ACOMPAÑANTE LPN',
+                    'UBICACIONES': String(f['UBICACION'] || '').trim(),
+                    'LPN': lpn,
+                    'Articulo': sku.substring(0,7),
+                    'SKU': sku,
+                    'RQ': 0,
+                    'QTY ACTIVO': activeStockMap[sku] || 0,
+                    'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
+                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
+                });
+            }
+        });
+    }
 
     const resEmp = [];
     sources.forEach(s => {
