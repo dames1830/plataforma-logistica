@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.34-pulse';
-const CACHE_KEY = `logistics_v12_1_18_`;
+const VERSION = '11.1.36-pulse';
+const CACHE_KEY = `logistics_v12_1_20_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -565,7 +565,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         let areaRaw = getCol(f, possibleAreaHeaders);
         let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
-        const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
+        const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
         if (!activeWhitelist.some(w => area.includes(w))) return; 
 
         const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
@@ -596,6 +596,16 @@ export const calculateBufferPallets = (configOverride = null) => {
         let atdActivo = Math.min(pending, enActivo);
         if (!totalsByNivel[nivelesMap['Bajas']]) totalsByNivel[nivelesMap['Bajas']] = 0;
         totalsByNivel[nivelesMap['Bajas']] += atdActivo;
+        
+        if (atdActivo > 0) {
+            detalleZonas.push({
+                'NIVEL/AREA': nivelesMap['Bajas'],
+                'UBICACION': 'ZONA PICKING',
+                'ARTÍCULO': getArticulo(sku),
+                'SKU': sku,
+                'ATD RQ': atdActivo
+            });
+        }
         pending -= atdActivo;
 
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
@@ -657,8 +667,10 @@ export const calculateBufferPallets = (configOverride = null) => {
     // Mapa de Stock Activo para columna QTY ACTIVO
     const activeStockMap = {};
     activo.forEach(f => {
-        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
-        if (area === 'DIS' || area === 'VER') return; // Excluir de la visualización de stock activo en paletas
+        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        // [MOD V12.1.19] Incluimos DIS y VER para que el conteo de 'Stock Activo' en las tablas sea veraz
+        const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
+        if (!activeWhitelist.some(w => area.includes(w))) return;
         
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
