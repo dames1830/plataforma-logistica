@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.33-pulse';
-const CACHE_KEY = `logistics_v12_1_17_`;
+const VERSION = '11.1.34-pulse';
+const CACHE_KEY = `logistics_v12_1_18_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -704,6 +704,18 @@ export const calculateBufferPallets = (configOverride = null) => {
             }
         });
     });
+
+    // [MOD V12.1.18] CONSOLIDACIÓN: Evitar duplicados por SKU/LPN/Ubicación en el Excel (Multi-fuente)
+    const consolidatedMap = new Map();
+    detallePallets.forEach(d => {
+        const key = `${d.UBICACIONES}|${d.LPN}|${d.SKU}`;
+        if (!consolidatedMap.has(key)) {
+            consolidatedMap.set(key, { ...d });
+        } else {
+            consolidatedMap.get(key)['QTY BUFFER'] += d['QTY BUFFER'];
+        }
+    });
+    detallePallets = Array.from(consolidatedMap.values());
 
     // [MOD V12.1.8] EXPLOSIÓN DE LPN: Basta que se pida un SKU de un LPN, traemos TODO el LPN.
     const selectedLPNs = new Set();
