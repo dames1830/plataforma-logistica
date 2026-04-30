@@ -947,11 +947,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     const sinStockRows = detalleZonas.filter(d => d['NIVEL/AREA'] === '7. SIN STOCK');
     const sinStockSummary = {
         skus: new Set(sinStockRows.map(d => d.SKU)).size,
+        articulos: new Set(sinStockRows.map(d => String(d.SKU).substring(0, 7))).size,
         qty: sinStockRows.reduce((acc, d) => acc + (d['ATD RQ'] || 0), 0)
     };
 
     return { 
-        version: 'v12.1.24',
+        version: 'v12.1.25',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
