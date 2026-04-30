@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.36-pulse';
-const CACHE_KEY = `logistics_v12_1_20_`;
+const VERSION = '11.1.37-pulse';
+const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -441,7 +441,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     };
 
     // 1. Mapeo de ACTIVO (COORDENADAS: Ãrea, ArtÃculo, Cantidad actual)
-    const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL'];
+    const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
     const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
     const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
     const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
@@ -464,13 +464,17 @@ export const calculateBufferPallets = (configOverride = null) => {
         let nivel = String(f['NIVEL'] || '').trim().toUpperCase();
         let sku = String(f['PRODUCTO'] || '').trim();
         let qty = parseFloat(f['CANTIDAD']) || 0;
+        let nroAnd = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
         if(!sku || qty <= 0) return;
 
         if (nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
-        else if (nivel === 'PISO') registerStock(stPisos, sku, qty, f);
+        else if (nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
         else if (nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
-        else if (nivel === 'LOGICO') registerStock(stLogicos, sku, qty, f);
-        else if (nivel === 'MERMA') registerStock(stMerma, sku, qty, f);
+        else if (nivel === 'PISO' || nivel === 'DIS') registerStock(stLogicos, sku, qty, f);
+        else if (nivel === 'VER') {
+            if (nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
+            else registerStock(stMerma, sku, qty, f);
+        }
     });
 
     // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
@@ -543,7 +547,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                if (nivelLabel.includes('2. Reserva') || nivelLabel.includes('3. Pisos') || nivelLabel.includes('4. Aereo')) {
+                if (nivelLabel.includes('2. ALTO') || nivelLabel.includes('3. PISOS') || nivelLabel.includes('4. AEREO')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
@@ -565,23 +569,36 @@ export const calculateBufferPallets = (configOverride = null) => {
         let areaRaw = getCol(f, possibleAreaHeaders);
         let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
-        const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
-        if (!activeWhitelist.some(w => area.includes(w))) return; 
+        const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+        const isLevel1 = activeWhitelist.some(w => area.includes(w));
 
         const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
         const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
         let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
         let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
-        if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
+        
+        if (!sku || qty <= 0) return;
+
+        if (isLevel1) {
+            totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
+        } else if (area === 'DIS' || area === 'VER' || area === 'PISO') {
+            if (area === 'DIS' || area === 'PISO') {
+                registerStock(stLogicos, sku, qty, f);
+            } else if (area === 'VER') {
+                let andVal = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
+                if (andVal === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
+                else registerStock(stMerma, sku, qty, f);
+            }
+        }
     });
 
     const nivelesMap = {
-        'Bajas': '1. Activo',
-        'Alto': '2. Reserva (Altos)',
-        'Piso': '3. Pisos',
-        'Aereo': '4. Aereo',
-        'Logico': '5. Lógico',
-        'Merma': '6. Merma'
+        'Bajas': '1. ZONAS BAJAS',
+        'Alto': '2. ALTO',
+        'Piso': '3. PISOS',
+        'Aereo': '4. AEREO',
+        'Logico': '5. LÓGICO',
+        'Merma': '6. MERMA'
     };
 
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
@@ -619,7 +636,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             // 3. Si aún queda pendiente, es "Sin Stock"
             if (pending > 0) {
                 detalleZonas.push({
-                    'NIVEL/AREA': '7. Sin Stock',
+                    'NIVEL/AREA': '7. SIN STOCK',
                     'UBICACION': 'S/S',
                     'ARTÍCULO': getArticulo(sku),
                     'SKU': sku,
@@ -647,7 +664,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // 7. SIN STOCK
     waterfall.push({
-        nivel: '7. Sin Stock',
+        nivel: '7. SIN STOCK',
         rq: runningRQ,
         atd: runningRQ,
         pct: calcPct(runningRQ, globalRQ)
@@ -668,9 +685,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activeStockMap = {};
     activo.forEach(f => {
         let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        // [MOD V12.1.19] Incluimos DIS y VER para que el conteo de 'Stock Activo' en las tablas sea veraz
-        const activeWhitelist = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
-        if (!activeWhitelist.some(w => area.includes(w))) return;
+        // [MOD V12.1.21] DIS y VER ahora se muestran como stock en reportes pero restan de niveles superiores
+        const validAreas = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
+        if (!validAreas.some(w => area.includes(w))) return;
         
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;

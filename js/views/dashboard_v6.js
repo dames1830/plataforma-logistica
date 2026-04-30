@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.1.20';
-import * as adminService from '../services/adminService.js?v=12.1.20';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.1.21';
+import * as adminService from '../services/adminService.js?v=12.1.21';
 
 
-const VERSION = '12.1.20';
-const CACHE_KEY = `logistics_v12_1_20_`;
+const VERSION = '12.1.21';
+const CACHE_KEY = `logistics_v12_1_21_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -93,17 +93,17 @@ window.downloadExcelZonas = () => {
     const data = lastBufferResult;
     
     // 1. Pestaña Detalle Zonas (SOLO lo físico, como antes)
-    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '6. Sin Stock');
+    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK');
     const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
     
     // 2. Pestaña Sin Stock (EXCLUSIVO lo faltante)
     const sinStockData = (data.detalleZonas || [])
-        .filter(d => d['NIVEL/AREA'] === '6. Sin Stock')
+        .filter(d => d['NIVEL/AREA'] === '7. SIN STOCK')
         .map(d => ({
             'NIVEL/AREA': d['NIVEL/AREA'],
-            'ARTICULO': d['ARTÍCULO'],
+            'ARTÍCULO': d['ARTÍCULO'],
             'SKU': d['SKU'],
-            'RQ': d['ATD RQ']
+            'ATD RQ': d['ATD RQ']
         }));
     const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
 
@@ -152,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.20</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.21</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
