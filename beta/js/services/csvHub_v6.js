@@ -273,10 +273,10 @@ export const parseFile = (file, area) => {
               const dc = (s) => String(s || '').trim();
               for (let i = 3; i < rows.length; i++) {
                   const r = rows[i];
-                  if (!r || r.length < 11) continue;
+                  if (!r || r.length < 9) continue;
                   jsonData.push({
                       'NIVEL': dc(r[1]),
-                      'PRODUCTO': dc(r[8]),
+                      'PRODUCTO': dc(r[8]), // Columna I
                       'CANTIDAD': parseFloat(r[10]) || 0,
                       'UBICACION': dc(r[4]),
                       'LPN': dc(r[5]),
@@ -831,9 +831,14 @@ export const calculateBufferPallets = (configOverride = null) => {
     const articulosMap = new Map();
     if (articulos && articulos.length) {
         articulos.forEach(a => {
-            const masterVal = String(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']) || '').trim();
+            // SKU/Articulo suele estar al inicio del maestro (Columna A/B)
+            const masterVal = String(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']) || Object.values(a)[0] || '').trim();
             const sku7 = masterVal.substring(0, 7);
             if (sku7 && !articulosMap.has(sku7)) {
+                // Coordenada exacta: Temporada en Columna J (index 9)
+                const rawValues = Object.values(a);
+                const seasonVal = rawValues[9] || getCol(a, ['Temporada', 'TEMPORADA', 'Season', 'SEASON', 'Temp']) || 'S/T';
+
                 articulosMap.set(sku7, {
                     gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
                     marca: (() => {
@@ -844,7 +849,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                         if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
                         return m;
                     })(),
-                    temporada: String(getCol(a, ['Temporada', 'TEMPORADA', 'Season', 'SEASON', 'Temp']) || 'S/T').trim()
+                    temporada: String(seasonVal).trim()
                 });
             }
         });
