@@ -843,8 +843,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                         if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
                         if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
                         return m;
-                    })(),
-                    temporada: String(getCol(a, ['Temporada', 'TEMPORADA', 'Season', 'SEASON', 'Temp']) || 'S/T').trim()
+                    })()
                 });
             }
         });
@@ -955,43 +954,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         qty: sinStockRows.reduce((acc, d) => acc + (parseFloat(d['ATD RQ'] || d['ATD_RQ'] || 0) || 0), 0)
     };
 
-    // [BETA] 6. CONSOLIDACIÓN GLOBAL POR ARTÍCULO (Activo + Reserva)
-    const stockGlobalPorArticulo = new Map();
-    
-    // Sumar Activo
-    Object.keys(activeStockMap).forEach(sku => {
-        const art = String(sku).substring(0, 7);
-        if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
-        stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + (activeStockMap[sku] || 0));
-    });
-    
-    // Sumar Reserva
-    reserva.forEach(r => {
-        const sku = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
-        const qty = parseFloat(getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
-        const art = sku.substring(0, 7);
-        if (art) {
-            if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
-            stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
-        }
-    });
-
-    // Generar Reporte Temporadas Q
-    const aggrTemporadas = {};
-    stockGlobalPorArticulo.forEach((qty, art) => {
-        const info = articulosMap.get(art) || { temporada: 'S/MAESTRO' };
-        const temp = info.temporada || 'S/MAESTRO';
-        if (!aggrTemporadas[temp]) aggrTemporadas[temp] = 0;
-        aggrTemporadas[temp] += qty;
-    });
-
-    const reporteTemporadasQ = Object.keys(aggrTemporadas).map(temp => ({
-        'Temporada': temp,
-        'Qty': Math.round(aggrTemporadas[temp])
-    })).sort((a, b) => b.Qty - a.Qty);
-
     return { 
-        version: 'v12.1.28-BETA',
+        version: 'v12.1.27',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1001,7 +965,6 @@ export const calculateBufferPallets = (configOverride = null) => {
         waterfall: waterfall,
         resumenMatrix: matrixResumen,
         resumenMatrixSinStock: matrixSinStock,
-        sinStockSummary: sinStockSummary,
-        reporteTemporadasQ: reporteTemporadasQ
+        sinStockSummary: sinStockSummary
     };
 };

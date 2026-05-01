@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.0.0';
-import * as adminService from '../services/adminService.js?v=12.0.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.1.21';
+import * as adminService from '../services/adminService.js?v=12.1.21';
 
 
-const VERSION = '12.0.0';
-const CACHE_KEY = `logistics_v11_3_2_`;
+const VERSION = '12.1.21';
+const CACHE_KEY = `logistics_v12_1_21_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -24,6 +24,7 @@ const TABS = [
     { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
+  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
@@ -93,17 +94,17 @@ window.downloadExcelZonas = () => {
     const data = lastBufferResult;
     
     // 1. Pestaña Detalle Zonas (SOLO lo físico, como antes)
-    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '6. Sin Stock');
+    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK');
     const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
     
     // 2. Pestaña Sin Stock (EXCLUSIVO lo faltante)
     const sinStockData = (data.detalleZonas || [])
-        .filter(d => d['NIVEL/AREA'] === '6. Sin Stock')
+        .filter(d => d['NIVEL/AREA'] === '7. SIN STOCK')
         .map(d => ({
             'NIVEL/AREA': d['NIVEL/AREA'],
-            'ARTICULO': d['ARTÍCULO'],
+            'ARTÍCULO': d['ARTÍCULO'],
             'SKU': d['SKU'],
-            'RQ': d['ATD RQ']
+            'ATD RQ': d['ATD RQ']
         }));
     const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
 
@@ -152,7 +153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.0.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.28-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -193,6 +194,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'stock') await renderStockTab();
     else if (currentTab === 'buffer') await renderBufferTab();
+    else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -275,7 +277,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     div.style.width = '100%';
     const label = customLabel || area.toUpperCase();
     
-    if (hasData) {
+    if (hasData && hasData.length > 0) {
       div.innerHTML = `
         <div style="padding:1rem; background:rgba(34, 197, 94, 0.05); border:1px solid rgba(34, 197, 94, 0.3); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
           <div>
@@ -285,7 +287,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <span style="color:#fff; background:#d97706; padding:2px 10px; border-radius:6px; margin-left:10px; font-weight:800; border:1px solid #fbbf24; display:inline-block; box-shadow:0 0 10px rgba(251,191,36,0.3);">📅 Subido: ${dateStr}</span>
             </p>
           </div>
-          <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
+          <div style="display:flex; gap:0.5rem;">
+              <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
+              <button id="del_${area}" class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; background:#ef4444; border:1px solid #b91c1c;">🗑️ QUITAR</button>
+          </div>
         </div>`;
     } else {
       div.innerHTML = `
@@ -313,6 +318,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                 renderTabContent(); 
             } 
         } 
+    });
+
+    const delBtn = document.getElementById(`del_${area}`);
+    if(delBtn) delBtn.addEventListener('click', async () => {
+        if(confirm(`¿Estás seguro de que quieres quitar el archivo de ${label}?`)) {
+            delBtn.disabled = true;
+            delBtn.innerHTML = '⌛...';
+            await clearAreaData(area, user.username);
+            renderTabContent();
+        }
     });
   };
 
@@ -383,10 +398,10 @@ export const renderDashboard = async (container, user, onLogout) => {
               <div>
                 <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
                 <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
-                    <span>${dataStore.buffer ? '✅' : '❌'} PEDIDOS</span>
-                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO</span>
-                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA</span>
-                    <span>${dataStore.articulos ? '✅' : '❌'} ARTICULO</span>
+                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
+                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
+                    <span>${dataStore.buffer ? '✅' : '➖'} PEDIDOS</span>
+                    <span>${dataStore.articulos ? '✅' : '➖'} ARTICULO</span>
                     <div style="display:flex; align-items:center;">
                         <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                         <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
@@ -554,6 +569,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </tr>`).join('')}</tbody>
                 </table>
             </div>
+
+            <div style="background:rgba(15,23,42,0.9); border:2px solid #ef4444; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(239,68,68,0.3);">
+                <div style="padding:0.7rem; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.3); text-align:center;"><h3 style="color:#ef4444; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK</h3></div>
+                <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#eee;">
+                    <div style="text-align:center;">
+                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary?.articulos || 0).toLocaleString()}</div>
+                    </div>
+                    <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
+                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary?.skus || 0).toLocaleString()}</div>
+                    </div>
+                    <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
+                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#ef4444;">${(data.sinStockSummary?.qty || 0).toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
@@ -657,11 +690,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             ${w.active === false ? '❌' : '✅'}
                                         </button>
                                     </td>
-                                    <td style="padding:0.7rem; font-weight:800; color:#fff;">${w.dni || w.Dni || ''}</td>
-                                    <td style="padding:0.7rem;">${w.nombre || w.Nombre || ''}</td>
-                                    <td style="padding:0.7rem;">${w.apellidos || w.Apellidos || ''}</td>
-                                    <td style="padding:0.7rem;">${w.puesto || w.Puesto || ''}</td>
-                                    <td style="padding:0.7rem;"><span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.65rem;">${w.turno || w.Turno || ''}</span></td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="dni" contenteditable="true" style="padding:0.7rem; font-weight:800; color:#fff; outline:none;">${w.dni || w.Dni || ''}</td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="nombre" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.nombre || w.Nombre || ''}</td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="apellidos" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.apellidos || w.Apellidos || ''}</td>
+                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="puesto" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.puesto || w.Puesto || ''}</td>
+                                    <td style="padding:0.7rem;">
+                                        <select class="edit-worker-select" data-dni="${w.dni || w.Dni}" data-f="turno" style="background:rgba(255,255,255,0.05); border:none; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; outline:none; cursor:pointer;">
+                                            <option value="DIA" ${ (w.turno||w.Turno)==='DIA'?'selected':'' }>DIA</option>
+                                            <option value="NOCHE" ${ (w.turno||w.Turno)==='NOCHE'?'selected':'' }>NOCHE</option>
+                                        </select>
+                                    </td>
                                 </tr>
                             `).join('') : '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay trabajadores cargados.</td></tr>'}
                         </tbody>
@@ -718,6 +756,31 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.onclick = () => {
             adminService.toggleWorkerStatus(btn.dataset.dni);
             renderAdminTab();
+        };
+    });
+
+    // Eventos para Edición Directa
+    document.querySelectorAll('.edit-worker').forEach(cell => {
+        cell.onblur = (e) => {
+            const dni = e.target.dataset.dni;
+            const field = e.target.dataset.f;
+            const val = e.target.innerText.trim();
+            const updates = {};
+            updates[field] = (field === 'dni') ? val : val.toUpperCase();
+            adminService.saveWorker({ dni, ...updates });
+            // Si cambió el DNI, necesitamos refrescar para que los IDs de las celdas se actualicen
+            if (field === 'dni') renderAdminTab();
+        };
+    });
+
+    document.querySelectorAll('.edit-worker-select').forEach(sel => {
+        sel.onchange = (e) => {
+            const dni = e.target.dataset.dni;
+            const field = e.target.dataset.f;
+            const val = e.target.value;
+            const updates = {};
+            updates[field] = val;
+            adminService.saveWorker({ dni, ...updates });
         };
     });
 
@@ -1007,6 +1070,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         const existing = adminService.getAttendance(dateStr);
         if (existing) {
             localState = existing.data.map(d => ({ ...d }));
+            // Sincronizar trabajadores nuevos que no estén en el estado guardado
+            workers.forEach(w => {
+                const wDni = (w.dni || w.Dni);
+                if (!localState.find(d => d.dni === wDni)) {
+                    localState.push({
+                        dni: wDni,
+                        nombre: (w.nombre || w.Nombre),
+                        apellidos: (w.apellidos || w.Apellidos),
+                        present: true,
+                        onTime: true,
+                        justification: ''
+                    });
+                }
+            });
             return existing;
         }
         // Si no existe, estado inicial (todos presentes)
@@ -1070,11 +1147,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const rec = localState.find(d => d.dni === dni);
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
+                        
+                        // Nombre dinámico desde la base de trabajadores
+                        const displayName = `${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}`;
+                        
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem; color:#fff; font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">${dni}</td>
-                            <td style="padding:0.8rem; font-weight:600;">${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}</td>
+                            <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
                                     <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
@@ -1262,8 +1343,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         const wNum = getWeekNumber(entryDate);
         if (!selectedWeeks.includes(wNum)) return;
 
-        const key = entry.dni;
-        if (!globalWorkerMap[key]) globalWorkerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0, faltas: 0, faltasJustificadas: 0 };
+        const key = (entry.dni || '').toString().trim();
+        if (!globalWorkerMap[key]) {
+            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === key);
+            const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
+            globalWorkerMap[key] = { name: currentName, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0, faltas: 0, faltasJustificadas: 0 };
+        }
         
         if (entry.asistencia === 'P') {
             globalWorkerMap[key].sum += parsePct(entry.rendimiento);
@@ -1504,12 +1589,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     const filtered = rawLog.filter(e => e.date >= kpiStart && e.date <= kpiEnd);
     const workerMap = {};
     filtered.forEach(entry => {
-        const key = entry.dni;
-        if (!workerMap[key]) workerMap[key] = { name: `${entry.nombre} ${entry.apellidos}`, sum: 0, countForAvg: 0, diasTrabajados: 0, justificaciones: 0, faltas: 0, tardanzas: 0 };
+        const key = (entry.dni || '').toString().trim();
+        if (!workerMap[key]) {
+            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === key);
+            const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
+            workerMap[key] = { name: currentName, sum: 0, count: 0, diasTrabajados: 0, justificaciones: 0, faltas: 0, tardanzas: 0 };
+        }
         const w = workerMap[key];
         const rend = parsePct(entry.rendimiento);
         if (entry.asistencia === 'P') {
-            w.diasTrabajados++; w.sum += rend; w.countForAvg++;
+            w.diasTrabajados++; w.sum += rend; w.count++;
             if (entry.puntualidad === 'NO') w.tardanzas++;
         } else {
             const hasJustification = entry.justification && 
@@ -1522,13 +1611,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             } else {
                 w.faltas++; 
                 w.sum += rend; 
-                w.countForAvg++; 
+                w.count++; 
                 // Sin justificación: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
             }
         }
     });
 
-    const consolidado = Object.values(workerMap).map(w => ({ ...w, avg: w.countForAvg > 0 ? Math.round(w.sum / w.countForAvg) : 0 }))
+    const consolidado = Object.values(workerMap).map(w => ({ ...w, avg: w.count > 0 ? Math.round(w.sum / w.count) : 0 }))
         .filter(w => w.name.toLowerCase().includes(kpiSearch.toLowerCase())).sort((a,b) => b.avg - a.avg);
 
     container.innerHTML = `
@@ -1609,19 +1698,22 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.exportPerformanceToExcel = () => {
         if (!log.length) return alert('No hay datos para exportar.');
         try {
-            const dataToExport = log.map(p => ({
-                'Fecha': p.date,
-                'DNI': p.dni,
-                'Apellidos': p.apellidos,
-                'Nombre': p.nombre,
-                'Asistencia': p.asistencia,
-                'Puntualidad': p.puntualidad,
-                'Producción (1-10)': p.produccion,
-                'BPA (1-10)': p.bpa,
-                'Supervisor (1-10)': p.supervisor,
-                'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
-                'Rendimiento %': p.rendimiento
-            }));
+            const dataToExport = log.map(p => {
+                const worker = adminService.getWorkers().find(w => (w.dni || w.Dni) === p.dni);
+                const nombreCompleto = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
+                return {
+                    'Fecha': p.date,
+                    'DNI': p.dni,
+                    'Nombre Completo': nombreCompleto,
+                    'Asistencia': p.asistencia,
+                    'Puntualidad': p.puntualidad,
+                    'Producción (1-10)': p.produccion,
+                    'BPA (1-10)': p.bpa,
+                    'Supervisor (1-10)': p.supervisor,
+                    'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
+                    'Rendimiento %': p.rendimiento
+                };
+            });
 
             const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
@@ -1678,12 +1770,20 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                         </tr>
                         <!-- FILAS DE TRABAJADORES -->
-                        ${entries.map((p, idx) => `
+                        ${entries.map((p, idx) => {
+                            // Búsqueda robusta por DNI (sin espacios y como string)
+                            const worker = adminService.getWorkers().find(w => {
+                                const wDni = (w.dni || w.Dni || '').toString().trim();
+                                const pDni = (p.dni || '').toString().trim();
+                                return wDni === pDni;
+                            });
+                            const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
+                            return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem;">
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <b style="color:#fff;">${p.apellidos}, ${p.nombre}</b>
+                                    <b style="color:#fff;">${displayName}</b>
                                     <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-weight:700; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${p.dni}</span>
                                 </div>
                             </td>
@@ -1714,8 +1814,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
-                        </tr>
-                        `).join('')}
+                        `; }).join('')}
                         `;
                     }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
@@ -2043,6 +2142,75 @@ export const renderDashboard = async (container, user, onLogout) => {
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
+  };
+
+  const renderAnalisisSKUTab = async () => {
+    contentSubtitle.textContent = "Consolidado de Inventario Global";
+    const data = lastBufferResult;
+
+    if (!data || !data.reporteTemporadasQ) {
+      contentArea.innerHTML = `
+        <div class="glass-panel" style="padding:3rem; text-align:center;">
+          <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🔍</div>
+          <h3 style="color:#fff;">Sin Datos para Análisis</h3>
+          <p style="color:var(--text-muted);">Por favor, primero procesa un <b>Análisis Buffer</b> en la pestaña correspondiente para generar los datos consolidados.</p>
+        </div>`;
+      return;
+    }
+
+    contentArea.innerHTML = `
+      <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr 350px; gap:1.5rem;">
+        <div class="glass-panel" style="padding:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">REPORTE TEMPORADAS Q (BETA)</h3>
+            <button class="btn" style="width:auto; padding:0.5rem 1rem;" onclick="exportToExcel(lastBufferResult.reporteTemporadasQ, 'Reporte_Temporadas_Q')">
+              <i class="fas fa-file-excel"></i> EXPORTAR
+            </button>
+          </div>
+          
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="text-align:left;">TEMPORADA</th>
+                  <th style="text-align:right;">QTY TOTAL (ACTIVO + RESERVA)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.reporteTemporadasQ.map(row => `
+                  <tr>
+                    <td style="font-weight:700; color:#fff;">${row.Temporada}</td>
+                    <td style="text-align:right; font-weight:800; color:var(--primary); font-family:'Roboto Mono', monospace;">${row.Qty.toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background:rgba(255,255,255,0.05);">
+                  <td style="font-weight:900; color:var(--primary);">TOTAL GENERAL</td>
+                  <td style="text-align:right; font-weight:900; color:#fff; font-size:1.1rem;">
+                    ${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Qty, 0).toLocaleString()}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+            <div class="glass-panel" style="padding:1.5rem; background:linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);">
+                <h4 style="margin:0 0 1rem 0; font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Información del Reporte</h4>
+                <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.6; margin:0;">
+                    Este reporte consolida el inventario total de <b>Stock Activo</b> y <b>Stock Reserva</b>. 
+                    <br><br>
+                    La agrupación se realiza extrayendo los <b>7 primeros dígitos</b> de cada SKU para identificar el Artículo y cruzándolo con el Maestro para obtener su respectiva <b>Temporada</b>.
+                </p>
+                <div style="margin-top:1.5rem; padding:1rem; background:rgba(251, 191, 36, 0.1); border:1px solid rgba(251, 191, 36, 0.3); border-radius:8px;">
+                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST</p>
+                </div>
+            </div>
+        </div>
+      </div>
+    `;
   };
 
   renderNav();

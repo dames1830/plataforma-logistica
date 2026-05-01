@@ -24,7 +24,6 @@ const TABS = [
     { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
-  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
@@ -153,7 +152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.28-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.27</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -194,7 +193,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'stock') await renderStockTab();
     else if (currentTab === 'buffer') await renderBufferTab();
-    else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -2142,75 +2140,6 @@ export const renderDashboard = async (container, user, onLogout) => {
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
-  };
-
-  const renderAnalisisSKUTab = async () => {
-    contentSubtitle.textContent = "Consolidado de Inventario Global";
-    const data = lastBufferResult;
-
-    if (!data || !data.reporteTemporadasQ) {
-      contentArea.innerHTML = `
-        <div class="glass-panel" style="padding:3rem; text-align:center;">
-          <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🔍</div>
-          <h3 style="color:#fff;">Sin Datos para Análisis</h3>
-          <p style="color:var(--text-muted);">Por favor, primero procesa un <b>Análisis Buffer</b> en la pestaña correspondiente para generar los datos consolidados.</p>
-        </div>`;
-      return;
-    }
-
-    contentArea.innerHTML = `
-      <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr 350px; gap:1.5rem;">
-        <div class="glass-panel" style="padding:1.5rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">REPORTE TEMPORADAS Q (BETA)</h3>
-            <button class="btn" style="width:auto; padding:0.5rem 1rem;" onclick="exportToExcel(lastBufferResult.reporteTemporadasQ, 'Reporte_Temporadas_Q')">
-              <i class="fas fa-file-excel"></i> EXPORTAR
-            </button>
-          </div>
-          
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th style="text-align:left;">TEMPORADA</th>
-                  <th style="text-align:right;">QTY TOTAL (ACTIVO + RESERVA)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${data.reporteTemporadasQ.map(row => `
-                  <tr>
-                    <td style="font-weight:700; color:#fff;">${row.Temporada}</td>
-                    <td style="text-align:right; font-weight:800; color:var(--primary); font-family:'Roboto Mono', monospace;">${row.Qty.toLocaleString()}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-              <tfoot>
-                <tr style="background:rgba(255,255,255,0.05);">
-                  <td style="font-weight:900; color:var(--primary);">TOTAL GENERAL</td>
-                  <td style="text-align:right; font-weight:900; color:#fff; font-size:1.1rem;">
-                    ${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Qty, 0).toLocaleString()}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:1.5rem;">
-            <div class="glass-panel" style="padding:1.5rem; background:linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);">
-                <h4 style="margin:0 0 1rem 0; font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Información del Reporte</h4>
-                <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.6; margin:0;">
-                    Este reporte consolida el inventario total de <b>Stock Activo</b> y <b>Stock Reserva</b>. 
-                    <br><br>
-                    La agrupación se realiza extrayendo los <b>7 primeros dígitos</b> de cada SKU para identificar el Artículo y cruzándolo con el Maestro para obtener su respectiva <b>Temporada</b>.
-                </p>
-                <div style="margin-top:1.5rem; padding:1rem; background:rgba(251, 191, 36, 0.1); border:1px solid rgba(251, 191, 36, 0.3); border-radius:8px;">
-                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST</p>
-                </div>
-            </div>
-        </div>
-      </div>
-    `;
   };
 
   renderNav();

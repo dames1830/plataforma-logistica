@@ -81,8 +81,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.14-pulse';
-const CACHE_KEY = `logistics_v11_1_14_`;
+const VERSION = '11.1.37-pulse';
+const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const setDateFilter = (newDateStr) => {
@@ -223,7 +223,13 @@ export const logSystemAction = async (username, action, details) => {
 const getCol = (row, possibleNames) => {
     if (!row) return null;
     const keys = Object.keys(row);
-    const normalize = (s) => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    // Normalización extrema: Quita acentos, barras (macrones), tildes y espacios
+    const normalize = (s) => String(s || '').toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quita diacríticos
+        .replace(/[^a-z0-9]/g, "")      // Deja solo letras y números
+        .trim();
+    
     const names = possibleNames.map(normalize);
     const foundKey = keys.find(k => names.includes(normalize(k)));
     return foundKey ? row[foundKey] : null;
@@ -263,20 +269,18 @@ export const parseFile = (file, area) => {
           
           let jsonData = [];
           if (area === 'stockReserva') {
-              // MODO QUIRÚRGICO: Salto fila 1 (Título) y 2 (Blanco). Fila 3 cabeceras.
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-              const deepClean = (s) => String(s || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-              
+              const dc = (s) => String(s || '').trim();
               for (let i = 3; i < rows.length; i++) {
-                  const row = rows[i];
-                  if (!row || row.length < 2) continue;
+                  const r = rows[i];
+                  if (!r || r.length < 11) continue;
                   jsonData.push({
-                      'NIVEL': deepClean(row[1]),     // Columna B (index 1)
-                      'PRODUCTO': deepClean(row[8]),  // Columna I (index 8)
-                      'CANTIDAD': parseFloat(row[10]) || 0, // Columna K (index 10)
-                      'UBICACION': deepClean(row[4]), // Columna E (index 4)
-                      'LPN': deepClean(row[5]),       // Columna F (index 5)
-                      'NRO AND': deepClean(row[2])    // Columna C (index 2)
+                      'NIVEL': dc(r[1]),
+                      'PRODUCTO': dc(r[8]),
+                      'CANTIDAD': parseFloat(r[10]) || 0,
+                      'UBICACION': dc(r[4]),
+                      'LPN': dc(r[5]),
+                      'NRO AND': dc(r[2])
                   });
               }
           } else {
@@ -345,6 +349,24 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     }
 };
 
+export const clearAreaData = async (area, username = 'sistema') => {
+    dataStore[area] = null;
+    localStorage.removeItem(LS_PREFIX + area);
+    localStorage.removeItem(META_PREFIX + area);
+    
+    try {
+        // Enviar array vacío al servidor para "limpiar" la persistencia remota
+        await fetch(`${API_URL}/${area}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([])
+        });
+        await logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario.`);
+    } catch (e) {
+        console.warn(`[PULSE] No se pudo limpiar el servidor para '${area}', se limpió solo local.`, e);
+    }
+};
+
 export const getAreaData = async (area) => {
   if (dataStore[area] !== null) return dataStore[area];
   const lsData = loadFromLS(area);
@@ -356,7 +378,7 @@ export const getAreaData = async (area) => {
      const response = await fetch(queryURL);
      if (response.ok) {
          const serverResponse = await response.json();
-         if (serverResponse.data) {
+         if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
              dataStore[area] = serverResponse.data;
              saveToLS(area, serverResponse.data);
              return serverResponse.data;
@@ -403,8 +425,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     const tallas = dataStore.tallas;     // REPLENISHMENT
     const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !pedidos) {
-        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva, pedidos: !!pedidos });
+    if(!activo || !reserva) {
+        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva });
         return null;
     }
 
@@ -418,50 +440,40 @@ export const calculateBufferPallets = (configOverride = null) => {
         map[sku].push({ qty, row });
     };
 
-    // 1. Mapeo de ACTIVO (Normalmente Jerarquía 1 o 5 según área)
+    // 1. Mapeo de ACTIVO (COORDENADAS: Ãrea, ArtÃculo, Cantidad actual)
+    const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+    const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
+    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
+    const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
+    
     activo.forEach(f => {
-        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase();
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        let areaRaw = getCol(f, possibleAreaHeaders);
+        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
+        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
         if(!sku || qty <= 0) return;
 
-        // Siguiendo la lógica del cuadro: PISO y DIS son Lógico
-        if (area === 'PISO' || area === 'DIS') registerStock(stLogicos, sku, qty, f);
-        else if (area === 'CROSS') registerStock(stPisos, sku, qty, f);
-        else registerStock(stBajas, sku, qty, f); // El resto a Zonas Bajas
+        if (activeWhitelist.some(w => area.includes(w))) {
+            registerStock(stBajas, sku, qty, f); 
+        }
     });
 
-    // 2. Mapeo de RESERVA (Jerarquías 1 a 6)
+    // 2. Mapeo de RESERVA (COORDENADAS: NIVEL, PRODUCTO, CANTIDAD)
     reserva.forEach(f => {
-        let nivel = String(getCol(f, ['Nivel', 'NIVEL']) || '').trim().toUpperCase();
-        let nroAnd = String(getCol(f, ['NRO AND', 'Nro And']) || '').trim().toUpperCase();
-        let sku = String(getCol(f, ['Producto', 'PRODUCTO', 'Articulo']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad', 'CANTIDAD'])) || 0;
+        let nivel = String(f['NIVEL'] || '').trim().toUpperCase();
+        let sku = String(f['PRODUCTO'] || '').trim();
+        let qty = parseFloat(f['CANTIDAD']) || 0;
+        let nroAnd = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
         if(!sku || qty <= 0) return;
 
-        // Jerarquía 1: ZONAS BAJAS
-        if (['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'].includes(nivel)) {
-            registerStock(stBajas, sku, qty, f);
-        }
-        // Jerarquía 2: ALTO
-        else if (['ALTO', 'INS'].includes(nivel)) {
-            registerStock(stAltos, sku, qty, f);
-        }
-        // Jerarquía 3: PISOS
-        else if (nivel === 'CROSS') {
-            registerStock(stPisos, sku, qty, f);
-        }
-        // Jerarquía 4: AEREO
-        else if (nivel === 'AEREO') {
-            registerStock(stAereos, sku, qty, f);
-        }
-        // Jerarquía 5: LÓGICO (PISO, DIS, VER con MZM-TR)
-        else if (nivel === 'PISO' || nivel === 'DIS' || (nivel === 'VER' && nroAnd === 'MZM-TR')) {
-            registerStock(stLogicos, sku, qty, f);
-        }
-        // Jerarquía 6: MERMA (VER sin MZM-TR)
-        else if (nivel === 'VER' && nroAnd !== 'MZM-TR') {
-            registerStock(stMerma, sku, qty, f);
+        if (nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
+        else if (nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
+        else if (nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
+        else if (nivel === 'PISO' || nivel === 'DIS') registerStock(stLogicos, sku, qty, f);
+        else if (nivel === 'VER') {
+            if (nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
+            else registerStock(stMerma, sku, qty, f);
         }
     });
 
@@ -470,31 +482,31 @@ export const calculateBufferPallets = (configOverride = null) => {
     let processedSKUs = new Set();
     
     // 1. PRIORIDAD: PEDIDOS (CSV)
-    pedidos.forEach(f => {
-        let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
-        let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
-        let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
-        let diff = cant - asig;
-        if (diff > 0 && sku) {
-            if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-            demanda[sku].total += diff;
-            demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
-            processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
-        }
-    });
+    if (pedidos && pedidos.length) {
+        pedidos.forEach(f => {
+            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
+            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
+            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
+            let diff = cant - asig;
+            if (diff > 0 && sku) {
+                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
+                demanda[sku].total += diff;
+                demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
+                processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
+            }
+        });
+    }
+
 
     // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
-            const keys = Object.keys(row);
-            const sku = String(row[keys[0]] || '').trim();
-            const qty = parseFloat(row[keys[1]]) || 0;
-            // Solo si no fue procesado por PEDIDOS
-            if (sku && qty > 0 && !processedSKUs.has(sku)) {
+            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
+            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
+            if (sku && qty > 0) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
                 demanda[sku].sources.push({ src: 'OTRAS SOLICITUDES', qty: qty });
-                processedSKUs.add(sku); // Bloqueamos para REPLENISHMENT
             }
         });
     }
@@ -502,11 +514,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 3. PRIORIDAD: REPLENISHMENT (XLSX)
     if (tallas && tallas.length) {
         tallas.forEach(row => {
-            const keys = Object.keys(row);
-            const sku = String(row[keys[0]] || '').trim();
-            const qty = parseFloat(row[keys[1]]) || 0;
-            // Solo si no fue procesado por PEDIDOS ni OTRAS SOLICITUDES
-            if (sku && qty > 0 && !processedSKUs.has(sku)) {
+            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
+            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
+            if (sku && qty > 0) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += qty;
                 demanda[sku].sources.push({ src: 'REPLENISHMENT', qty: qty });
@@ -537,7 +547,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                if (nivelLabel === '1. Zonas Bajas' || nivelLabel === '2. Alto' || nivelLabel === '4. Aereo') {
+                if (nivelLabel.includes('2. ALTO') || nivelLabel.includes('3. PISOS') || nivelLabel.includes('4. AEREO')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
@@ -555,18 +565,40 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
-        if (sku) totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
+        const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
+        let areaRaw = getCol(f, possibleAreaHeaders);
+        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+        const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+        const isLevel1 = activeWhitelist.some(w => area.includes(w));
+
+        const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
+        const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
+        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
+        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
+        
+        if (!sku || qty <= 0) return;
+
+        if (isLevel1) {
+            totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
+        } else if (area === 'DIS' || area === 'VER' || area === 'PISO') {
+            if (area === 'DIS' || area === 'PISO') {
+                registerStock(stLogicos, sku, qty, f);
+            } else if (area === 'VER') {
+                let andVal = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
+                if (andVal === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
+                else registerStock(stMerma, sku, qty, f);
+            }
+        }
     });
 
     const nivelesMap = {
-        'Bajas': '1. Zonas Bajas',
-        'Alto': '2. Alto',
-        'Pisos': '3. Pisos',
-        'Aereo': '4. Aereo',
-        'Logica': '5. Lógico',
-        'Merma': '6. Merma'
+        'Bajas': '1. ZONAS BAJAS',
+        'Alto': '2. ALTO',
+        'Piso': '3. PISOS',
+        'Aereo': '4. AEREO',
+        'Logico': '5. LÓGICO',
+        'Merma': '6. MERMA'
     };
 
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
@@ -581,21 +613,30 @@ export const calculateBufferPallets = (configOverride = null) => {
         let atdActivo = Math.min(pending, enActivo);
         if (!totalsByNivel[nivelesMap['Bajas']]) totalsByNivel[nivelesMap['Bajas']] = 0;
         totalsByNivel[nivelesMap['Bajas']] += atdActivo;
+        
+        if (atdActivo > 0) {
+            detalleZonas.push({
+                'NIVEL/AREA': nivelesMap['Bajas'],
+                'UBICACION': 'ZONA PICKING',
+                'ARTÍCULO': getArticulo(sku),
+                'SKU': sku,
+                'ATD RQ': atdActivo
+            });
+        }
         pending -= atdActivo;
 
-        // 2. Satisfacemos el resto siguiendo las jerarquías
+        // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         if (pending > 0) {
-            pending = satisfyDemand(sku, pending, stBajas, nivelesMap['Bajas']);
             pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
-            pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Pisos']);
-            pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
-            pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logica']);
-            pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Piso']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logico']);
+            if (pending > 0) pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
             
             // 3. Si aún queda pendiente, es "Sin Stock"
             if (pending > 0) {
                 detalleZonas.push({
-                    'NIVEL/AREA': '7. Sin Stock',
+                    'NIVEL/AREA': '7. SIN STOCK',
                     'UBICACION': 'S/S',
                     'ARTÍCULO': getArticulo(sku),
                     'SKU': sku,
@@ -604,6 +645,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             }
         }
     });
+
 
     const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
 
@@ -622,7 +664,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // 7. SIN STOCK
     waterfall.push({
-        nivel: '7. Sin Stock',
+        nivel: '7. SIN STOCK',
         rq: runningRQ,
         atd: runningRQ,
         pct: calcPct(runningRQ, globalRQ)
@@ -642,6 +684,11 @@ export const calculateBufferPallets = (configOverride = null) => {
     // Mapa de Stock Activo para columna QTY ACTIVO
     const activeStockMap = {};
     activo.forEach(f => {
+        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        // [MOD V12.1.21] DIS y VER ahora se muestran como stock en reportes pero restan de niveles superiores
+        const validAreas = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
+        if (!validAreas.some(w => area.includes(w))) return;
+        
         let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
@@ -677,28 +724,62 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'QTY BUFFER': Math.round(attributedUnits)
                             });
                             
-                            // Atribución para resumen empaque
                             empaqueAggr[dSrc.src][tipo].pal.add(ubi);
                             empaqueAggr[dSrc.src][tipo].sku.add(sku);
                             empaqueAggr[dSrc.src][tipo].units += attributedUnits;
                         }
                     });
-                } else {
-                    // Caso borde: SKU sin demanda clara (no debería pasar)
-                    detallePallets.push({ 
-                        'FUENTE': 'DESCONOCIDO',
-                        'UBICACIONES': ubi, 
-                        'LPN': item['LPN'], 
-                        'SKU': sku, 
-                        'RQ': 0,
-                        'QTY ACTIVO': activeStockMap[sku] || 0,
-                        'QTY RESERVA': qty, 
-                        'QTY BUFFER': pick 
-                    });
                 }
             }
         });
     });
+
+    // [MOD V12.1.18] CONSOLIDACIÓN: Evitar duplicados por SKU/LPN/Ubicación en el Excel (Multi-fuente)
+    const consolidatedMap = new Map();
+    detallePallets.forEach(d => {
+        const key = `${d.UBICACIONES}|${d.LPN}|${d.SKU}`;
+        if (!consolidatedMap.has(key)) {
+            consolidatedMap.set(key, { ...d });
+        } else {
+            consolidatedMap.get(key)['QTY BUFFER'] += d['QTY BUFFER'];
+        }
+    });
+    detallePallets = Array.from(consolidatedMap.values());
+
+    // [MOD V12.1.8] EXPLOSIÓN DE LPN: Basta que se pida un SKU de un LPN, traemos TODO el LPN.
+    const selectedLPNs = new Set();
+    detallePallets.forEach(d => { if(d.LPN) selectedLPNs.add(d.LPN); });
+
+    const detalleExplosionado = [];
+    const rowsYaIncluidas = new Set();
+    
+    detallePallets.forEach((d, idx) => {
+        detalleExplosionado.push(d);
+        rowsYaIncluidas.add(idx); // No necesitamos el ID real aquí, solo marcar posición
+    });
+
+    if (selectedLPNs.size > 0) {
+        reserva.forEach((f, idx) => {
+            const lpn = String(f['LPN'] || '').trim();
+            // Evitar duplicados (si el LPN ya estaba en detallePallets por demanda)
+            const yaEnDetalle = detallePallets.some(dp => dp.LPN === lpn && dp.SKU === String(f['PRODUCTO']).trim());
+            
+            if (selectedLPNs.has(lpn) && !yaEnDetalle) {
+                const sku = String(f['PRODUCTO'] || '').trim();
+                detalleExplosionado.push({
+                    'FUENTE': 'ACOMPAÑANTE LPN',
+                    'UBICACIONES': String(f['UBICACION'] || '').trim(),
+                    'LPN': lpn,
+                    'Articulo': sku.substring(0,7),
+                    'SKU': sku,
+                    'RQ': 0,
+                    'QTY ACTIVO': activeStockMap[sku] || 0,
+                    'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
+                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
+                });
+            }
+        });
+    }
 
     const resEmp = [];
     sources.forEach(s => {
@@ -755,7 +836,15 @@ export const calculateBufferPallets = (configOverride = null) => {
             if (sku7 && !articulosMap.has(sku7)) {
                 articulosMap.set(sku7, {
                     gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-                    marca: String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros')
+                    marca: (() => {
+                        let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
+                        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
+                        if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
+                        if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
+                        if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
+                        return m;
+                    })(),
+                    temporada: String(getCol(a, ['Temporada', 'TEMPORADA', 'Season', 'SEASON', 'Temp']) || 'S/T').trim()
                 });
             }
         });
@@ -800,8 +889,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         return { columns: sorted, rows: rows };
     };
 
-    const matrixResumen = buildMatrix(d => ['3. Pisos', '4. Aereo', '5. Lógico', '6. Merma'].includes(d['NIVEL/AREA']));
-    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. Sin Stock');
+    const matrixResumen = buildMatrix(d => ['3. PISOS', '4. AEREO', '5. LÓGICO', '6. MERMA'].includes(d['NIVEL/AREA']));
+    const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. SIN STOCK');
 
     // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
     const historyDataMap = {}; 
@@ -840,11 +929,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         const enActivo = totalActivoPorSKU[sku] || 0;
         const diff = Math.max(0, d.total - enActivo);
         
-        // Calcular stock en reserva total (Altos + Pisos + Aereos + Logicos)
+        // Calcular stock en reserva total (Solo nivel ALTO)
         let enReserva = 0;
-        [stAltos, stPisos, stAereos, stLogicos].forEach(map => {
-            if (map[sku]) enReserva += map[sku].reduce((acc, i) => acc + i.qty, 0);
-        });
+        if (stAltos[sku]) {
+            enReserva = stAltos[sku].reduce((acc, i) => acc + i.qty, 0);
+        }
 
         return {
             'Sku': sku,
@@ -855,14 +944,64 @@ export const calculateBufferPallets = (configOverride = null) => {
         };
     });
 
+    // 5. RESUMEN SIN STOCK (ZONA 7)
+    const sinStockRows = detalleZonas.filter(d => d['NIVEL/AREA'] === '7. SIN STOCK');
+    const sinStockSummary = {
+        skus: new Set(sinStockRows.map(d => String(d['SKU'] || d['Sku'] || d['sku'] || '').trim()).filter(x => x)).size,
+        articulos: new Set(sinStockRows.map(d => {
+            let val = d['ARTÍCULO'] || d['ARTICULO'] || d['SKU'] || d['Sku'] || d['sku'] || '';
+            return String(val).trim().substring(0, 7);
+        }).filter(x => x && x.length >= 5)).size,
+        qty: sinStockRows.reduce((acc, d) => acc + (parseFloat(d['ATD RQ'] || d['ATD_RQ'] || 0) || 0), 0)
+    };
+
+    // [BETA] 6. CONSOLIDACIÓN GLOBAL POR ARTÍCULO (Activo + Reserva)
+    const stockGlobalPorArticulo = new Map();
+    
+    // Sumar Activo
+    Object.keys(activeStockMap).forEach(sku => {
+        const art = String(sku).substring(0, 7);
+        if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
+        stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + (activeStockMap[sku] || 0));
+    });
+    
+    // Sumar Reserva
+    reserva.forEach(r => {
+        const sku = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
+        const qty = parseFloat(getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
+        const art = sku.substring(0, 7);
+        if (art) {
+            if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
+            stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
+        }
+    });
+
+    // Generar Reporte Temporadas Q
+    const aggrTemporadas = {};
+    stockGlobalPorArticulo.forEach((qty, art) => {
+        const info = articulosMap.get(art) || { temporada: 'S/MAESTRO' };
+        const temp = info.temporada || 'S/MAESTRO';
+        if (!aggrTemporadas[temp]) aggrTemporadas[temp] = 0;
+        aggrTemporadas[temp] += qty;
+    });
+
+    const reporteTemporadasQ = Object.keys(aggrTemporadas).map(temp => ({
+        'Temporada': temp,
+        'Qty': Math.round(aggrTemporadas[temp])
+    })).sort((a, b) => b.Qty - a.Qty);
+
     return { 
-        detalle: detallePallets, 
+        version: 'v12.1.28-BETA',
+        totalReserva: globalRQ,
+        detalle: detalleExplosionado, 
         detalleZonas, 
         resumenSKU: resEmp,
         resumenSKUDetalle, 
         resumenNiveles: historyData, 
         waterfall: waterfall,
         resumenMatrix: matrixResumen,
-        resumenMatrixSinStock: matrixSinStock
+        resumenMatrixSinStock: matrixSinStock,
+        sinStockSummary: sinStockSummary,
+        reporteTemporadasQ: reporteTemporadasQ
     };
 };
