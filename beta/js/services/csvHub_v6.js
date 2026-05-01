@@ -996,7 +996,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     })).sort((a, b) => b.Qty - a.Qty);
 
     return { 
-        version: 'v12.1.28-BETA',
+        version: 'v12.1.29-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 

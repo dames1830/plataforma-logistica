@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.28: Added Reporte Temporadas Q in Análisis SKU tab"
+git commit -m "BETA v12.1.29: Updated Column Coordinates for SKU and Season"
 git push origin main
