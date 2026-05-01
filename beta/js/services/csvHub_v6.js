@@ -292,13 +292,7 @@ export const parseFile = (file, area) => {
                       headerIdx = i; break;
                   }
               }
-              // OPTIMIZACIÓN: Si es el maestro, usamos header: 1 para velocidad máxima
-              const isMaestro = sheetName.toUpperCase().includes('MAESTRO') || sheetName.toUpperCase().includes('ARTICULOS');
-              if (isMaestro) {
-                jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-              } else {
-                jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
-              }
+              jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
           }
 
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
@@ -838,26 +832,26 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
     const articulosMap = new Map();
     if (articulos && articulos.length) {
-        const isRawArray = Array.isArray(articulos[0]);
         for (let i = 0; i < articulos.length; i++) {
             const a = articulos[i];
-            let masterVal = "";
-            let seasonVal = "S/T";
-            
-            if (isRawArray) {
-                // Acceso directo por índice (Ultra-rápido)
-                masterVal = String(a[1] || '').trim();
-                seasonVal = a[9] || 'S/T';
-            } else {
-                const rawValues = Object.values(a);
-                masterVal = String(rawValues[1] || '').trim();
-                seasonVal = rawValues[9] || 'S/T';
-            }
+            const rawValues = Object.values(a);
+            // ESTRICTO: Columna B (index 1) para SKU, Columna J (index 9) para Temporada
+            const masterVal = String(rawValues[1] || '').trim();
             
             if (masterVal) {
                 const sku7 = masterVal.substring(0, 7);
                 if (sku7 && !articulosMap.has(sku7)) {
+                    const seasonVal = rawValues[9] || 'S/T';
                     articulosMap.set(sku7, {
+                        gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+                        marca: (() => {
+                            let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
+                            if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
+                            if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
+                            if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
+                            if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
+                            return m;
+                        })(),
                         temporada: String(seasonVal).trim()
                     });
                 }
