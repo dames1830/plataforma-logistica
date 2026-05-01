@@ -153,7 +153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.33-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.34-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2190,11 +2190,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     contentArea.innerHTML = `
-      <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr 350px; gap:1.5rem;">
+      <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
         <div class="glass-panel" style="padding:1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div style="display:flex; align-items:center; gap:1.5rem;">
-                <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">REPORTE TEMPORADAS Q</h3>
+                <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">ANÁLISIS SKU POR TEMPORADA</h3>
                 <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.7rem; background:rgba(255,255,255,0.05); border:1px solid var(--border);">🔄 RE-PROCESAR</button>
             </div>
             <button class="btn" style="width:auto; padding:0.5rem 1rem;" onclick="exportToExcel(lastBufferResult.reporteTemporadasQ, 'Reporte_Temporadas_Q')">
@@ -2203,23 +2203,49 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
           
           <div style="overflow-x:auto;">
-            <table class="data-table">
+            <table class="data-table" style="border-collapse: collapse;">
               <thead>
                 <tr>
-                  <th style="text-align:left;">TEMPORADA</th>
-                  <th style="text-align:right;">QTY TOTAL (ACTIVO + RESERVA)</th>
+                  <th style="width:40px;"></th>
+                  <th style="text-align:left;">TEMPORADA / AÑO</th>
+                  <th style="text-align:right;">QTY TOTAL</th>
                 </tr>
               </thead>
               <tbody>
-                ${data.reporteTemporadasQ.map(row => `
-                  <tr>
+                ${data.reporteTemporadasQ.map((row, idx) => `
+                  <tr class="row-main" style="cursor:pointer; transition:background 0.2s;" onclick="toggleSeasonRow(${idx})">
+                    <td style="text-align:center; color:var(--primary);"><i id="icon_${idx}" class="fas fa-chevron-right"></i></td>
                     <td style="font-weight:700; color:#fff;">${row.Temporada}</td>
                     <td style="text-align:right; font-weight:800; color:var(--primary); font-family:'Roboto Mono', monospace;">${row.Qty.toLocaleString()}</td>
+                  </tr>
+                  <tr id="detail_${idx}" style="display:none; background:rgba(0,0,0,0.2);">
+                    <td colspan="3" style="padding:0;">
+                        <div style="padding:1rem 1rem 1rem 3rem;">
+                            <table style="width:100%; font-size:0.8rem; color:var(--text-muted); border-left:2px solid var(--primary);">
+                                <thead>
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <th style="text-align:left; padding:0.5rem;">ARTÍCULO (7 Dígitos)</th>
+                                        <th style="text-align:right; padding:0.5rem;">CANTIDAD</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${row.Detalle.slice(0, 50).map(det => `
+                                        <tr>
+                                            <td style="padding:0.3rem 0.5rem;">${det.Articulo}</td>
+                                            <td style="text-align:right; padding:0.3rem 0.5rem; font-weight:600; color:#fff;">${det.Qty.toLocaleString()}</td>
+                                        </tr>
+                                    `).join('')}
+                                    ${row.Detalle.length > 50 ? `<tr><td colspan="2" style="text-align:center; padding:0.5rem; font-style:italic;">... y ${row.Detalle.length - 50} más</td></tr>` : ''}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
-                <tr style="background:rgba(255,255,255,0.05);">
+                <tr style="background:rgba(255,255,255,0.1); border-top:2px solid var(--primary);">
+                  <td></td>
                   <td style="font-weight:900; color:var(--primary);">TOTAL GENERAL</td>
                   <td style="text-align:right; font-weight:900; color:#fff; font-size:1.1rem;">
                     ${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Qty, 0).toLocaleString()}
@@ -2228,23 +2254,31 @@ export const renderDashboard = async (container, user, onLogout) => {
               </tfoot>
             </table>
           </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:1.5rem;">
-            <div class="glass-panel" style="padding:1.5rem; background:linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);">
-                <h4 style="margin:0 0 1rem 0; font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Información del Reporte</h4>
-                <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.6; margin:0;">
-                    Este reporte consolida el inventario total de <b>Stock Activo</b> y <b>Stock Reserva</b>. 
-                    <br><br>
-                    La agrupación se realiza extrayendo los <b>7 primeros dígitos</b> de cada SKU para identificar el Artículo y cruzándolo con el Maestro para obtener su respectiva <b>Temporada</b>.
-                </p>
-                <div style="margin-top:1.5rem; padding:1rem; background:rgba(251, 191, 36, 0.1); border:1px solid rgba(251, 191, 36, 0.3); border-radius:8px;">
-                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST (v12.1.33)</p>
-                </div>
-            </div>
+          <div style="margin-top:1.5rem; padding:1rem; background:rgba(79, 70, 229, 0.05); border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+             <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
+                <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
+             </p>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.34-BETA</span>
+          </div>
         </div>
       </div>
     `;
+
+    // Inyectar la función globalmente para el onclick
+    window.toggleSeasonRow = (idx) => {
+        const detail = document.getElementById(`detail_${idx}`);
+        const icon = document.getElementById(`icon_${idx}`);
+        if (!detail || !icon) return;
+        if (detail.style.display === 'none') {
+            detail.style.display = 'table-row';
+            icon.className = 'fas fa-chevron-down';
+            icon.parentElement.parentElement.style.background = 'rgba(255,255,255,0.05)';
+        } else {
+            detail.style.display = 'none';
+            icon.className = 'fas fa-chevron-right';
+            icon.parentElement.parentElement.style.background = 'transparent';
+        }
+    };
 
     const refreshBtn = document.getElementById('btn_refresh_global');
     if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;

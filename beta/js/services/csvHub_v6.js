@@ -986,22 +986,32 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // Generar Reporte Temporadas Q
+    // Generar Reporte Temporadas Q con detalles para expandir
     const aggrTemporadas = {};
     stockGlobalPorArticulo.forEach((qty, art) => {
         const info = articulosMap.get(art) || { temporada: 'S/MAESTRO' };
         const temp = info.temporada || 'S/MAESTRO';
-        if (!aggrTemporadas[temp]) aggrTemporadas[temp] = 0;
-        aggrTemporadas[temp] += qty;
+        if (!aggrTemporadas[temp]) aggrTemporadas[temp] = { Qty: 0, Articulos: {} };
+        
+        aggrTemporadas[temp].Qty += qty;
+        if (!aggrTemporadas[temp].Articulos[art]) aggrTemporadas[temp].Articulos[art] = 0;
+        aggrTemporadas[temp].Articulos[art] += qty;
     });
 
     const reporteTemporadasQ = Object.keys(aggrTemporadas).map(temp => ({
         'Temporada': temp,
-        'Qty': Math.round(aggrTemporadas[temp])
-    })).sort((a, b) => b.Qty - a.Qty);
+        'Qty': Math.round(aggrTemporadas[temp].Qty),
+        'Detalle': Object.entries(aggrTemporadas[temp].Articulos)
+                    .map(([a, q]) => ({ Articulo: a, Qty: Math.round(q) }))
+                    .sort((a, b) => b.Qty - a.Qty)
+    })).sort((a, b) => {
+        if (a.Temporada === 'S/MAESTRO') return 1;
+        if (b.Temporada === 'S/MAESTRO') return -1;
+        return b.Temporada.localeCompare(a.Temporada);
+    });
 
     return { 
-        version: 'v12.1.33-BETA',
+        version: 'v12.1.34-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
