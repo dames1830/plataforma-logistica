@@ -153,7 +153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.30-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.31-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2148,13 +2148,44 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Consolidado de Inventario Global";
     const data = lastBufferResult;
 
-    if (!data || !data.reporteTemporadasQ) {
+    const renderEmptyState = () => {
       contentArea.innerHTML = `
         <div class="glass-panel" style="padding:3rem; text-align:center;">
           <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🔍</div>
-          <h3 style="color:#fff;">Sin Datos para Análisis</h3>
-          <p style="color:var(--text-muted);">Por favor, primero procesa un <b>Análisis Buffer</b> en la pestaña correspondiente para generar los datos consolidados.</p>
+          <h3 style="color:#fff;">Análisis SKU Global</h3>
+          <p style="color:var(--text-muted); margin-bottom:2rem;">Presiona el botón para consolidar el Stock Activo y Reserva por Artículo y Temporada.</p>
+          <button id="btn_run_global" class="btn" style="background:var(--primary); font-weight:800; padding:1rem 2.5rem;">⚡ PROCESAR REPORTE GLOBAL</button>
         </div>`;
+      
+      const btn = document.getElementById('btn_run_global');
+      if (btn) btn.onclick = runGlobalAnalysis;
+    };
+
+    const runGlobalAnalysis = async () => {
+      const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
+      const oldHtml = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
+      
+      setTimeout(async () => {
+        try {
+          const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+          const res = calculateBufferPallets(config);
+          if (res) {
+            lastBufferResult = res;
+            renderAnalisisSKUTab(); // Refrescar vista con datos
+          } else {
+            alert('⚠️ ERROR: Asegúrate de haber cargado Stock Activo, Stock Reserva y Maestro.');
+          }
+        } catch (err) {
+          alert("Error: " + err.message);
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+        }
+      }, 500);
+    };
+
+    if (!data || !data.reporteTemporadasQ) {
+      renderEmptyState();
       return;
     }
 
@@ -2162,7 +2193,10 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr 350px; gap:1.5rem;">
         <div class="glass-panel" style="padding:1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">REPORTE TEMPORADAS Q (BETA)</h3>
+            <div style="display:flex; align-items:center; gap:1.5rem;">
+                <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">REPORTE TEMPORADAS Q</h3>
+                <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.7rem; background:rgba(255,255,255,0.05); border:1px solid var(--border);">🔄 RE-PROCESAR</button>
+            </div>
             <button class="btn" style="width:auto; padding:0.5rem 1rem;" onclick="exportToExcel(lastBufferResult.reporteTemporadasQ, 'Reporte_Temporadas_Q')">
               <i class="fas fa-file-excel"></i> EXPORTAR
             </button>
@@ -2205,12 +2239,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                     La agrupación se realiza extrayendo los <b>7 primeros dígitos</b> de cada SKU para identificar el Artículo y cruzándolo con el Maestro para obtener su respectiva <b>Temporada</b>.
                 </p>
                 <div style="margin-top:1.5rem; padding:1rem; background:rgba(251, 191, 36, 0.1); border:1px solid rgba(251, 191, 36, 0.3); border-radius:8px;">
-                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST</p>
+                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST (v12.1.31)</p>
                 </div>
             </div>
         </div>
       </div>
     `;
+
+    const refreshBtn = document.getElementById('btn_refresh_global');
+    if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;
   };
 
   renderNav();
