@@ -831,13 +831,14 @@ export const calculateBufferPallets = (configOverride = null) => {
     const articulosMap = new Map();
     if (articulos && articulos.length) {
         articulos.forEach(a => {
-            // SKU/Articulo suele estar al inicio del maestro (Columna A/B)
-            const masterVal = String(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']) || Object.values(a)[0] || '').trim();
+            const rawValues = Object.values(a);
+            // Coordenada exacta: Artículo en Columna B (index 1)
+            const masterVal = String(rawValues[1] || '').trim();
             const sku7 = masterVal.substring(0, 7);
+            
             if (sku7 && !articulosMap.has(sku7)) {
                 // Coordenada exacta: Temporada en Columna J (index 9)
-                const rawValues = Object.values(a);
-                const seasonVal = rawValues[9] || getCol(a, ['Temporada', 'TEMPORADA', 'Season', 'SEASON', 'Temp']) || 'S/T';
+                const seasonVal = rawValues[9] || 'S/T';
 
                 articulosMap.set(sku7, {
                     gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
@@ -996,7 +997,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     })).sort((a, b) => b.Qty - a.Qty);
 
     return { 
-        version: 'v12.1.29-BETA',
+        version: 'v12.1.30-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 

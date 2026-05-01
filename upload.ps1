@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.29: Updated Column Coordinates for SKU and Season"
+git commit -m "BETA v12.1.30: Fixed Maestro mapping using Column B for SKU"
 git push origin main
