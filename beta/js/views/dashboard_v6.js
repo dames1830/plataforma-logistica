@@ -2224,18 +2224,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <table style="width:100%; font-size:0.8rem; color:var(--text-muted); border-left:2px solid var(--primary);">
                                 <thead>
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <th style="text-align:left; padding:0.5rem;">ARTÍCULO (7 Dígitos)</th>
-                                        <th style="text-align:right; padding:0.5rem;">CANTIDAD</th>
+                                        <th style="text-align:left; padding:0.5rem;">DETALLE TEMPORADA (Q)</th>
+                                        <th style="text-align:right; padding:0.5rem;">CANTIDAD TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${row.Detalle.slice(0, 50).map(det => `
-                                        <tr>
-                                            <td style="padding:0.3rem 0.5rem;">${det.Articulo}</td>
-                                            <td style="text-align:right; padding:0.3rem 0.5rem; font-weight:600; color:#fff;">${det.Qty.toLocaleString()}</td>
+                                    ${row.Detalle.map(d => `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                                            <td style="padding:0.5rem; color:var(--primary); font-weight:500;">${d.Label}</td>
+                                            <td style="padding:0.5rem; text-align:right; font-family:'Roboto Mono', monospace; color:#fff;">${d.Qty.toLocaleString()}</td>
                                         </tr>
                                     `).join('')}
-                                    ${row.Detalle.length > 50 ? `<tr><td colspan="2" style="text-align:center; padding:0.5rem; font-style:italic;">... y ${row.Detalle.length - 50} más</td></tr>` : ''}
                                 </tbody>
                             </table>
                         </div>

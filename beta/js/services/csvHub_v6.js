@@ -985,24 +985,35 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // Generar Reporte Temporadas Q con detalles para expandir
-    const aggrTemporadas = {};
+    // Generar Reporte Temporadas Q agrupado por AÑO
+    const aggrAnual = {};
     stockGlobalPorArticulo.forEach((qty, art) => {
         const info = articulosMap.get(art) || { temporada: 'S/MAESTRO' };
-        const temp = info.temporada || 'S/MAESTRO';
-        if (!aggrTemporadas[temp]) aggrTemporadas[temp] = { Qty: 0, Articulos: {} };
+        const fullTemp = info.temporada || 'S/MAESTRO';
         
-        aggrTemporadas[temp].Qty += qty;
-        if (!aggrTemporadas[temp].Articulos[art]) aggrTemporadas[temp].Articulos[art] = 0;
-        aggrTemporadas[temp].Articulos[art] += qty;
+        // Extraer el Año (los primeros 4 dígitos si es formato YYYY-X)
+        let año = 'S/MAESTRO';
+        if (fullTemp.includes('-')) {
+            año = fullTemp.split('-')[0];
+        } else if (/^\d{4}$/.test(fullTemp)) {
+            año = fullTemp;
+        } else {
+            año = fullTemp; // Para RECONTINUADOS, etc.
+        }
+
+        if (!aggrAnual[año]) aggrAnual[año] = { Qty: 0, Temporadas: {} };
+        aggrAnual[año].Qty += qty;
+        
+        if (!aggrAnual[año].Temporadas[fullTemp]) aggrAnual[año].Temporadas[fullTemp] = 0;
+        aggrAnual[año].Temporadas[fullTemp] += qty;
     });
 
-    const reporteTemporadasQ = Object.keys(aggrTemporadas).map(temp => ({
-        'Temporada': temp,
-        'Qty': Math.round(aggrTemporadas[temp].Qty),
-        'Detalle': Object.entries(aggrTemporadas[temp].Articulos)
-                    .map(([a, q]) => ({ Articulo: a, Qty: Math.round(q) }))
-                    .sort((a, b) => b.Qty - a.Qty)
+    const reporteTemporadasQ = Object.keys(aggrAnual).map(año => ({
+        'Temporada': año, // Mostramos el AÑO en la columna principal
+        'Qty': Math.round(aggrAnual[año].Qty),
+        'Detalle': Object.entries(aggrAnual[año].Temporadas)
+                    .map(([t, q]) => ({ Label: t, Qty: Math.round(q) }))
+                    .sort((a, b) => b.Label.localeCompare(a.Label))
     })).sort((a, b) => {
         if (a.Temporada === 'S/MAESTRO') return 1;
         if (b.Temporada === 'S/MAESTRO') return -1;
@@ -1010,7 +1021,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.40-BETA',
+        version: 'v12.1.41-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
