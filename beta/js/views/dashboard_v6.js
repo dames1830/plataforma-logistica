@@ -153,7 +153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.31-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.33-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2239,7 +2239,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     La agrupación se realiza extrayendo los <b>7 primeros dígitos</b> de cada SKU para identificar el Artículo y cruzándolo con el Maestro para obtener su respectiva <b>Temporada</b>.
                 </p>
                 <div style="margin-top:1.5rem; padding:1rem; background:rgba(251, 191, 36, 0.1); border:1px solid rgba(251, 191, 36, 0.3); border-radius:8px;">
-                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST (v12.1.31)</p>
+                    <p style="margin:0; font-size:0.75rem; color:#fbbf24; font-weight:700;"><i class="fas fa-flask"></i> MODO BETA TEST (v12.1.33)</p>
                 </div>
             </div>
         </div>

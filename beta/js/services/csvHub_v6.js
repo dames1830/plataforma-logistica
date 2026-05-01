@@ -689,7 +689,9 @@ export const calculateBufferPallets = (configOverride = null) => {
         const validAreas = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
         if (!validAreas.some(w => area.includes(w))) return;
         
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
+        const rawF = Object.values(f);
+        // ESTRICTO: SKU en Columna B (index 1) según indicación
+        let sku = String(rawF[1] || '').trim();
         let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
@@ -832,26 +834,28 @@ export const calculateBufferPallets = (configOverride = null) => {
     if (articulos && articulos.length) {
         articulos.forEach(a => {
             const rawValues = Object.values(a);
-            // Coordenada exacta: Artículo en Columna B (index 1)
+            // ESTRICTO: Artículo en Columna B (index 1) según indicación
             const masterVal = String(rawValues[1] || '').trim();
-            const sku7 = masterVal.substring(0, 7);
             
-            if (sku7 && !articulosMap.has(sku7)) {
-                // Coordenada exacta: Temporada en Columna J (index 9)
-                const seasonVal = rawValues[9] || 'S/T';
+            if (masterVal) {
+                const sku7 = masterVal.substring(0, 7);
+                if (sku7 && !articulosMap.has(sku7)) {
+                    // ESTRICTO: Temporada en Columna J (index 9) según indicación
+                    const seasonVal = rawValues[9] || 'S/T';
 
-                articulosMap.set(sku7, {
-                    gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-                    marca: (() => {
-                        let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
-                        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
-                        if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
-                        if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
-                        if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
-                        return m;
-                    })(),
-                    temporada: String(seasonVal).trim()
-                });
+                    articulosMap.set(sku7, {
+                        gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+                        marca: (() => {
+                            let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
+                            if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
+                            if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
+                            if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
+                            if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
+                            return m;
+                        })(),
+                        temporada: String(seasonVal).trim()
+                    });
+                }
             }
         });
     }
@@ -997,7 +1001,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     })).sort((a, b) => b.Qty - a.Qty);
 
     return { 
-        version: 'v12.1.31-BETA',
+        version: 'v12.1.33-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
