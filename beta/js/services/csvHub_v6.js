@@ -303,7 +303,19 @@ export const parseFile = (file, area) => {
                   });
               }
           } else {
-              jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
+              if (area === 'articulos') {
+                  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                  let hIdx = 0;
+                  for(let i=0; i<Math.min(rows.length, 15); i++) {
+                      const rowStr = JSON.stringify(rows[i]).toUpperCase();
+                      if(rowStr.includes('ARTICULO') || rowStr.includes('PRODUCTO') || rowStr.includes('TEMPORADA')) {
+                          hIdx = i; break;
+                      }
+                  }
+                  jsonData = XLSX.utils.sheet_to_json(sheet, { range: hIdx, defval: "" });
+              } else {
+                  jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
+              }
           }
 
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
@@ -1067,7 +1079,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.61-BETA',
+        version: 'v12.1.62-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
