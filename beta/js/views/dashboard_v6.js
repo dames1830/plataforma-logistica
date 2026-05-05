@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.82-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.83-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.82-BETA';
-const CACHE_KEY = `logistics_v12_1_82_BETA_`;
+const VERSION = '12.1.83-BETA';
+const CACHE_KEY = `logistics_v12_1_83_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.82-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.83-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1859,7 +1859,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             } else if (e.key === 'ArrowLeft' && (e.target.type !== 'number' || e.target.selectionStart === 0)) {
                 // Navegar izquierda si el cursor está al inicio
                 const prev = rowsInTable[currentIndex - 1];
-                if (prev) prev.focus();
+                if (prev) next.focus();
             }
         };
 
@@ -1919,7 +1919,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.82-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.83-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2092,7 +2092,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.82-BETA'
+                        version: 'v12.1.83-BETA'
                     }]
                 },
                 options: {
@@ -2206,6 +2206,8 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (res) {
               lastBufferResult = {
                   reporteTemporadasQ: res.reporteTemporadasQ,
+                  reporteGender: res.reporteGender,
+                  reporteObsolencia: res.reporteObsolencia,
                   timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
               };
               localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferResult));
@@ -2245,107 +2247,55 @@ export const renderDashboard = async (container, user, onLogout) => {
     const data = lastBufferResult;
 
     contentArea.innerHTML = subNavHtml + `
-      <div class="animate-fade-in" style="max-width:900px;">
-        <!-- Botones fuera del margen (v12.1.79) -->
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:0.8rem;">
+      <div class="animate-fade-in" style="width:100%; max-width:1400px; margin:0 auto;">
+        <!-- Botones fuera del margen (v12.1.83) -->
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:0.8rem; padding-right:1rem;">
             <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:4px;">
-                <i class="fas fa-sync-alt"></i> RE-PROCESAR
-            </button>
-            <button id="btn_export_temporadas" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem;">
-                <i class="fas fa-file-excel"></i> EXPORTAR TEMPORADAS
+                <i class="fas fa-sync-alt"></i> RE-PROCESAR TODO
             </button>
         </div>
 
-        <div class="glass-panel" style="padding:1.5rem; overflow-x:auto;">
-          <!-- Título y Hora dentro del margen (v12.1.79) -->
-          <div style="margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1rem;">
-              <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px; font-size:1.2rem; display:flex; align-items:center; gap:12px;">
-                  ARTÍCULO POR TEMPORADA
-                  <span style="font-size:0.85rem; color:var(--text-muted); font-weight:500; opacity:0.8; background:rgba(255,255,255,0.03); padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.05);">
-                      <i class="far fa-clock" style="margin-right:5px; color:var(--primary);"></i> ${data.timestamp || new Date().toLocaleString()}
-                  </span>
-              </h3>
-          </div>
-
-          <table class="data-table" style="width:100%; border-collapse: collapse; text-align: center;">
-            <thead>
-              <tr style="border-bottom: 2px solid rgba(255,255,255,0.05);">
-                <th style="text-align:left; padding:0.8rem; font-size:0.75rem; color:var(--text-muted);">TEMPORADA / AÑO</th>
-                <th style="text-align:center; padding:0.8rem; font-size:0.75rem; color:var(--text-muted);">Q1</th>
-                <th style="text-align:center; padding:0.8rem; font-size:0.75rem; color:var(--text-muted);">Q2</th>
-                <th style="text-align:center; padding:0.8rem; font-size:0.75rem; color:var(--text-muted);">Q3</th>
-                <th style="text-align:center; padding:0.8rem; font-size:0.75rem; color:var(--text-muted);">Q4</th>
-                <th style="text-align:center; padding:0.8rem; font-size:0.75rem; color:var(--text-muted);">OTROS</th>
-                <th style="text-align:center; padding:0.8rem; font-size:0.75rem; color:var(--primary); font-weight:800;">TOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-                ${data.reporteTemporadasQ.map((row, idx) => `
-                  <tr style="transition:background 0.2s; border-bottom:1px solid rgba(255,255,255,0.02);">
-                    <td style="font-weight:700; color:#fff; padding:0.8rem; text-align:left;">${row.Año}</td>
-                    <td style="text-align:center; font-family:'Roboto Mono', monospace; color:${row.Q1 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q1 > 0 ? '800' : '400'}; font-size:0.85rem;">${row.Q1.toLocaleString()}</td>
-                    <td style="text-align:center; font-family:'Roboto Mono', monospace; color:${row.Q2 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q2 > 0 ? '800' : '400'}; font-size:0.85rem;">${row.Q2.toLocaleString()}</td>
-                    <td style="text-align:center; font-family:'Roboto Mono', monospace; color:${row.Q3 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q3 > 0 ? '800' : '400'}; font-size:0.85rem;">${row.Q3.toLocaleString()}</td>
-                    <td style="text-align:center; font-family:'Roboto Mono', monospace; color:${row.Q4 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q4 > 0 ? '800' : '400'}; font-size:0.85rem;">${row.Q4.toLocaleString()}</td>
-                    <td style="text-align:center; font-family:'Roboto Mono', monospace; color:${row.OTROS > 0 ? '#fbbf24' : 'rgba(255,255,255,0.05)'}; font-weight:${row.OTROS > 0 ? '800' : '400'}; font-size:0.85rem;">${row.OTROS.toLocaleString()}</td>
-                    <td style="text-align:center; font-weight:800; color:#fff; font-family:'Roboto Mono', monospace; background:rgba(255,255,255,0.01); font-size:0.85rem; border-left:1px solid rgba(255,255,255,0.02);">${row.TOTAL.toLocaleString()}</td>
-                  </tr>
-                `).join('')}
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.2rem; align-items: start;">
+          
+          <!-- TABLA 1: TEMPORADA -->
+          <div class="glass-panel" style="padding:1.2rem; overflow-x:auto;">
+            <h3 style="margin:0 0 1rem 0; color:var(--primary); font-weight:800; font-size:1rem;">TEMPORADA</h3>
+            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">AÑO</th><th>TOTAL</th></tr></thead>
+              <tbody>
+                ${data.reporteTemporadasQ.map(row => `<tr><td style="padding:0.4rem 0;">${row.Año}</td><td style="text-align:right;">${row.TOTAL.toLocaleString()}</td></tr>`).join('')}
               </tbody>
-              <tfoot>
-                <tr style="background:rgba(255,255,255,0.1); border-top:2px solid var(--primary);">
-                  <td style="font-weight:900; color:var(--primary);">TOTAL GENERAL</td>
-                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q1, 0).toLocaleString()}</td>
-                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q2, 0).toLocaleString()}</td>
-                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q3, 0).toLocaleString()}</td>
-                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q4, 0).toLocaleString()}</td>
-                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.OTROS, 0).toLocaleString()}</td>
-                  <td style="text-align:right; font-weight:900; color:var(--primary); font-size:1.1rem;">
-                    ${data.reporteTemporadasQ.reduce((acc, r) => acc + r.TOTAL, 0).toLocaleString()}
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
-          <div style="margin-top:1.5rem; padding:1rem; background:rgba(79, 70, 229, 0.05); border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-             <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
-                <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
-             </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.82-BETA</span>
+
+          <!-- TABLA 2: GENDER -->
+          <div class="glass-panel" style="padding:1.2rem;">
+            <h3 style="margin:0 0 1rem 0; color:#fbbf24; font-weight:800; font-size:1rem;">GÉNERO</h3>
+            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">LABEL</th><th>QTY</th></tr></thead>
+              <tbody>
+                ${data.reporteGender.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${row.qty.toLocaleString()}</td></tr>`).join('')}
+              </tbody>
+            </table>
           </div>
+
+          <!-- TABLA 3: OBSOLENCIA -->
+          <div class="glass-panel" style="padding:1.2rem;">
+            <h3 style="margin:0 0 1rem 0; color:#10b981; font-weight:800; font-size:1rem;">OBSOLENCIA</h3>
+            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">LABEL</th><th>QTY</th></tr></thead>
+              <tbody>
+                ${data.reporteObsolencia.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${row.qty.toLocaleString()}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
     `;
 
-    // Inyectar la función globalmente para el onclick
-    window.toggleSeasonRow = (idx) => {
-        const detail = document.getElementById(`detail_${idx}`);
-        const icon = document.getElementById(`icon_${idx}`);
-        if (!detail || !icon) return;
-        if (detail.style.display === 'none') {
-            detail.style.display = 'table-row';
-            icon.className = 'fas fa-chevron-down';
-            icon.parentElement.parentElement.style.background = 'rgba(255,255,255,0.05)';
-        } else {
-            detail.style.display = 'none';
-            icon.className = 'fas fa-chevron-right';
-            icon.parentElement.parentElement.style.background = 'transparent';
-        }
-    };
-
     const refreshBtn = document.getElementById('btn_refresh_global');
     if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;
-
-    const exportBtn = document.getElementById('btn_export_temporadas');
-    if (exportBtn) {
-        exportBtn.onclick = () => {
-            if (typeof exportToExcel === 'function') {
-                exportToExcel(data.reporteTemporadasQ, 'Reporte_Temporadas_Q');
-            } else {
-                alert('Motor de exportación no cargado.');
-            }
-        };
-    }
   };
 
   renderNav();
