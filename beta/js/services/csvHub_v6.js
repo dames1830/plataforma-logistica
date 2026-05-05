@@ -457,11 +457,20 @@ export const calculateBufferPallets = (configOverride = null) => {
         return null;
     }
 
-    // [OPTIMIZACIÓN V12.1.49] Crear mapa de búsqueda rápida para el maestro
+    // [OPTIMIZACIÓN V12.1.51] Búsqueda inteligente por nombre de columna
     const articulosMap = new Map();
     articulos.forEach(a => {
-        const art = String(getCol(a, ['ARTICULO', 'CodArticulo', 'Codigo']) || '').trim().substring(0, 7);
-        if (art) articulosMap.set(art, a);
+        const skuVal = String(getCol(a, ['ARTICULO', 'CodArticulo', 'Codigo', 'SKU', 'Articulo']) || '').trim();
+        const sku7 = skuVal.substring(0, 7);
+        if (sku7 && !articulosMap.has(sku7)) {
+            const m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
+            articulosMap.set(sku7, {
+                gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+                marca: m,
+                temporada: String(getCol(a, ['Temporada', 'Season', 'TEMPORADA', 'Seasonality']) || 'S/T').trim(),
+                empaque: String(getCol(a, ['Tipo de empaque', 'Tipo', 'Empaque']) || '').toUpperCase()
+            });
+        }
     });
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
@@ -870,39 +879,20 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
-    if (articulos && articulos.length) {
-        for (let i = 0; i < articulos.length; i++) {
-            const a = articulos[i];
-            const rawValues = Object.values(a);
-            // ESTRICTO: Columna B (index 1) para SKU, Columna J (index 9) para Temporada
-            const masterVal = String(rawValues[1] || '').trim();
-            
-            if (masterVal) {
-                const sku7 = masterVal.substring(0, 7);
-                if (sku7 && !articulosMap.has(sku7)) {
-                    const seasonVal = rawValues[9] || 'S/T';
-                    articulosMap.set(sku7, {
-                        gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-                        marca: (() => {
-                            let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
-                            if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
-                            if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
-                            if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
-                            if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
-                            return m;
-                        })(),
-                        temporada: String(seasonVal).trim()
-                    });
-                }
-            }
-        }
-    }
-
+    // 2. MATRIZ DE DISCREPANCIAS (YA OPTIMIZADA AL INICIO)
     const getArtInfo = (sku) => {
         if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
         const sku7 = sku.trim().substring(0, 7);
-        return articulosMap.get(sku7) || { gender: 'OTRO', marca: 'OTRO' };
+        const info = articulosMap.get(sku7);
+        if (!info) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        
+        let m = info.marca;
+        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) m = 'BG Licenses';
+        else if (m.toUpperCase().includes('BUBBLEGUMMERS')) m = 'BG';
+        else if (m.toUpperCase().includes('BATA INDUSTRIALS')) m = 'Industrials';
+        else if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) m = '11 COMPLEMENTS';
+
+        return { gender: info.gender, marca: m };
     };
 
     const buildMatrix = (filterFn) => {
@@ -1061,7 +1051,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.50-BETA',
+        version: 'v12.1.51-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
