@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.76-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.77-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.76-BETA';
-const CACHE_KEY = `logistics_v12_1_76_BETA_`;
+const VERSION = '12.1.77-BETA';
+const CACHE_KEY = `logistics_v12_1_77_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -158,7 +158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.76-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.77-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1930,7 +1930,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.76-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.77-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2103,7 +2103,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.76-BETA'
+                        version: 'v12.1.77-BETA'
                     }]
                 },
                 options: {
@@ -2254,7 +2254,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
-        <div class="glass-panel" style="padding:1.5rem; max-width:1000px;">
+        <div class="glass-panel" style="padding:1.5rem; max-width:900px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div style="display:flex; align-items:center; gap:1.5rem;">
                 <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">ANÁLISIS ARTÍCULO POR TEMPORADA</h3>
@@ -2282,11 +2282,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${data.reporteTemporadasQ.map((row, idx) => `
                   <tr style="transition:background 0.2s;">
                     <td style="font-weight:700; color:#fff;">${row.Año}</td>
-                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q1 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q1 > 0 ? '600' : '400'}">${row.Q1.toLocaleString()}</td>
-                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q2 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q2 > 0 ? '600' : '400'}">${row.Q2.toLocaleString()}</td>
-                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q3 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q3 > 0 ? '600' : '400'}">${row.Q3.toLocaleString()}</td>
-                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q4 > 0 ? '#818cf8' : 'rgba(255,255,255,0.05)'}; font-weight:${row.Q4 > 0 ? '600' : '400'}">${row.Q4.toLocaleString()}</td>
-                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.OTROS > 0 ? '#fbbf24' : 'rgba(255,255,255,0.05)'}; font-weight:${row.OTROS > 0 ? '600' : '400'}">${row.OTROS.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:#818cf8; font-weight:800;">${row.Q1.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:#818cf8; font-weight:800;">${row.Q2.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:#818cf8; font-weight:800;">${row.Q3.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:#818cf8; font-weight:800;">${row.Q4.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:#fbbf24; font-weight:800;">${row.OTROS.toLocaleString()}</td>
                     <td style="text-align:right; font-weight:800; color:#fff; font-family:'Roboto Mono', monospace; background:rgba(255,255,255,0.02);">${row.TOTAL.toLocaleString()}</td>
                   </tr>
                 `).join('')}
@@ -2310,7 +2310,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.76-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.77-BETA</span>
           </div>
         </div>
       </div>
