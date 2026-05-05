@@ -3,7 +3,7 @@ import { getSession, logout } from './services/auth.js?v=12.1.53-BETA';
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+    this.IDLE_TIMEOUT = 20 * 60 * 1000; // 20 minutos
     this.init();
   }
 
