@@ -871,7 +871,6 @@ export const calculateBufferPallets = (configOverride = null) => {
     }
 
     // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
-    const articulosMap = new Map();
     if (articulos && articulos.length) {
         for (let i = 0; i < articulos.length; i++) {
             const a = articulos[i];
@@ -1062,7 +1061,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.49-BETA',
+        version: 'v12.1.50-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
