@@ -619,30 +619,23 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
-        const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
-        let areaRaw = getCol(f, possibleAreaHeaders);
-        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (area === 'MATE') return;
+
+        let sku = String(rawF[1] || '').trim(); // SKU en B(1)
+        let qty = parseFloat(rawF[4]) || 0;     // Cantidad en E(4)
+        if (!sku || qty <= 0) return;
+
+        // Para la cascada de Zona Buffer seguimos distinguiendo por zonas conocidas
         const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
         const isLevel1 = activeWhitelist.some(w => area.includes(w));
 
-        const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
-        const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
-        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
-        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
-        
-        if (!sku || qty <= 0) return;
-
         if (isLevel1) {
             totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
-        } else if (area === 'DIS' || area === 'VER' || area === 'PISO') {
-            if (area === 'DIS' || area === 'PISO') {
-                registerStock(stLogicos, sku, qty, f);
-            } else if (area === 'VER') {
-                let andVal = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
-                if (andVal === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
-                else registerStock(stMerma, sku, qty, f);
-            }
+        } else {
+            // Todo lo demás que no es MATE pero tampoco es Picking, va a Lógico por defecto
+            registerStock(stLogicos, sku, qty, f);
         }
     });
 
@@ -753,13 +746,11 @@ export const calculateBufferPallets = (configOverride = null) => {
     // Mapa de Stock Activo para columna QTY ACTIVO
     const activeStockMap = {};
     activo.forEach(f => {
-        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        // [MOD V12.1.21] DIS y VER ahora se muestran como stock en reportes pero restan de niveles superiores
-        const validAreas = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
-        if (!validAreas.some(w => area.includes(w))) return;
-        
         const rawF = Array.isArray(f) ? f : Object.values(f);
-        let sku = String(rawF[2] || '').trim(); // SKU en Columna C (índice 2)
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (area === 'MATE') return; // EXCLUIR MATE SEGÚN INDICACIÓN
+        
+        let sku = String(rawF[1] || '').trim(); // SKU en Columna B (índice 1)
         let qty = parseFloat(rawF[4]) || 0;     // Cantidad en Columna E (índice 4)
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
@@ -1148,7 +1139,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.1.101-BETA',
+        version: 'v12.1.102-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
