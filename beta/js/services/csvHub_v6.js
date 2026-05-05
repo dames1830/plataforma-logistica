@@ -1045,8 +1045,20 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // Generar Reporte Temporadas Q agrupado por AÑO con columnas Q1-Q4
     const aggrAnual = {};
+    const aggrGender = {};
+    const aggrObsolencia = {};
+
     stockGlobalPorArticulo.forEach((qty, art) => {
-        const info = articulosMap.get(art) || { temporada: 'S/MAESTRO' };
+        const info = articulosMap.get(art) || { temporada: 'S/MAESTRO', gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO' };
+        
+        // Agregación Gender
+        const g = (info.gGender || 'S/MAESTRO').trim();
+        aggrGender[g] = (aggrGender[g] || 0) + qty;
+
+        // Agregación Obsolescencia
+        const o = (info.tipoObsolencia || 'S/MAESTRO').trim();
+        aggrObsolencia[o] = (aggrObsolencia[o] || 0) + qty;
+
         const fullTemp = info.temporada || 'S/MAESTRO';
         
         let año = 'S/MAESTRO';
@@ -1080,6 +1092,17 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
         aggrAnual[año].Total += qty;
     });
+
+    const reporteGender = Object.keys(aggrGender).map(label => ({
+        label: label,
+        qty: Math.round(aggrGender[label])
+    })).sort((a,b) => b.qty - a.qty);
+
+    const reporteObsolencia = Object.keys(aggrObsolencia).map(label => ({
+        label: label,
+        qty: Math.round(aggrObsolencia[label])
+    })).sort((a,b) => b.qty - a.qty);
+
 
     const reporteTemporadasQ = Object.keys(aggrAnual).map(año => ({
         'Año': año,
@@ -1115,6 +1138,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         resumenMatrixSinStock: matrixSinStock,
         sinStockSummary: sinStockSummary,
         reporteTemporadasQ: reporteTemporadasQ,
+        reporteGender: reporteGender,
+        reporteObsolencia: reporteObsolencia,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
