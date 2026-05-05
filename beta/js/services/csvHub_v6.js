@@ -1088,14 +1088,20 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     const sortSpecial = (a, b) => {
-        const bottom = ['S/MAESTRO', '(en blanco)', 'ND', 'OTROS'];
-        const aIsBottom = bottom.includes(a.label);
-        const bIsBottom = bottom.includes(b.label);
+        const bottom = ['S/MAESTRO', '(EN BLANCO)', 'ND', 'OTROS', ''];
+        const labelA = String(a.label || '').trim().toUpperCase();
+        const labelB = String(b.label || '').trim().toUpperCase();
+        
+        const aIsBottom = bottom.includes(labelA);
+        const bIsBottom = bottom.includes(labelB);
+        
         if (aIsBottom && !bIsBottom) return 1;
         if (!aIsBottom && bIsBottom) return -1;
-        if (aIsBottom && bIsBottom) return bottom.indexOf(a.label) - bottom.indexOf(b.label);
+        if (aIsBottom && bIsBottom) return bottom.indexOf(labelA) - bottom.indexOf(labelB);
+        
         return b.qty - a.qty;
     };
+
 
     const reporteGender = Object.keys(aggrGender).map(label => ({
         label: label,
@@ -1131,7 +1137,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.96-BETA',
+        version: 'v12.1.97-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
