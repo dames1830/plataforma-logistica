@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.62: FIX: Restore smart header detection for Maestro file while keeping fixed coords for others"
+git commit -m "BETA v12.1.63: FIX: Expand Season synonyms and fix hardcoded footer version"
 git push origin main

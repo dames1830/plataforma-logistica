@@ -467,11 +467,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         const skuVal = String(getCol(a, ['ARTICULO', 'CodArticulo', 'Codigo', 'SKU', 'Articulo']) || '').trim();
         const sku7 = skuVal.substring(0, 7);
         if (sku7 && !articulosMap.has(sku7)) {
-            const m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
+            const m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante', 'Manufacturer']) || 'Otros').trim();
             articulosMap.set(sku7, {
-                gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
+                gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA', 'SEXO']) || 'OTROS').toUpperCase(),
                 marca: m,
-                temporada: String(getCol(a, ['Temporada', 'Season', 'TEMPORADA', 'Seasonality']) || 'S/T').trim(),
+                temporada: String(getCol(a, ['Temporada', 'Season', 'TEMPORADA', 'Seasonality', 'Temporada Venta', 'Venta', 'Año', 'Year']) || 'S/T').trim(),
                 empaque: String(getCol(a, ['Tipo de empaque', 'Tipo', 'Empaque']) || '').toUpperCase()
             });
         }
@@ -1079,7 +1079,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.62-BETA',
+        version: 'v12.1.63-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
