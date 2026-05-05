@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.72-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.74-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.72-BETA';
-const CACHE_KEY = `logistics_v12_1_72_BETA_`;
+const VERSION = '12.1.74-BETA';
+const CACHE_KEY = `logistics_v12_1_74_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -158,7 +158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.72-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.74-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1930,7 +1930,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.72-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.74-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2103,7 +2103,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.72-BETA'
+                        version: 'v12.1.74-BETA'
                     }]
                 },
                 options: {
@@ -2193,17 +2193,32 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const runGlobalAnalysis = async () => {
       const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
+      const oldHtml = btn ? btn.innerHTML : '⚡ PROCESAR REPORTE ARTÍCULO';
+
+      // Validación previa de archivos
+      if (!dataStore.stockActivo || !dataStore.stockReserva) {
+          alert('⚠️ ATENCIÓN: Primero debes cargar "STOCK ACTIVO" y "STOCK RESERVA" en el módulo correspondiente.');
+          return;
+      }
+
       if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
+      
       setTimeout(async () => {
         try {
-          lastBufferResult = await generateKPIs();
-          renderAnalisisSKUTab();
+          const res = await generateKPIs();
+          if (res) {
+              lastBufferResult = res;
+              renderAnalisisSKUTab();
+          } else {
+              alert('⚠️ ERROR: El análisis no generó datos. Verifica que el archivo "Maestro de Artículos" también esté cargado.');
+              if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+          }
         } catch (err) {
           console.error(err);
-          alert('❌ Error al procesar datos.');
-          if (btn) { btn.disabled = false; btn.innerHTML = '⚡ PROCESAR REPORTE ARTÍCULO'; }
+          alert('❌ Error crítico al procesar datos: ' + err.message);
+          if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
         }
-      }, 50);
+      }, 100);
     };
 
     if (!lastBufferResult) {
@@ -2286,7 +2301,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.72-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.73-BETA</span>
           </div>
         </div>
       </div>
