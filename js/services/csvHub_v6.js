@@ -1171,7 +1171,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     console.log(`[PULSE] Analisis Finalizado: ${detalleTemporadas.length} items en temporadas.`);
     return { 
-        version: 'v12.2.4',
+        version: 'v12.2.5',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 

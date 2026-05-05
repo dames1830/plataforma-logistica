@@ -30,7 +30,7 @@ class App {
 
       if (lastActivity > 0 && (now - lastActivity) > this.IDLE_TIMEOUT) {
         console.warn("[PULSE] Sesión expirada por inactividad detectada.");
-        alert("Tu sesión ha expirado (5 min de inactividad).");
+        alert("Tu sesión ha expirado (20 min de inactividad).");
         this.handleInactivityLogout();
       }
     };
@@ -59,7 +59,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.2.4";
+    const versionStr = "v12.2.5";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
