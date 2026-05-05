@@ -601,7 +601,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                if (nivelLabel.includes('2. ALTO') || nivelLabel.includes('3. PISOS') || nivelLabel.includes('4. AEREO')) {
+                const lvlUpper = nivelLabel.toUpperCase();
+                if (lvlUpper.includes('ALTO') || lvlUpper.includes('PISO') || lvlUpper.includes('AEREO') || lvlUpper.includes('AÉREO')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
@@ -647,9 +648,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     const nivelesMap = {
-        'Alto': '1. ALTO',
-        'Piso': '2. PISO',
-        'Bajas': '3. BAJAS',
+        'Bajas': '1. BAJAS',
+        'Alto': '2. ALTO',
+        'Piso': '3. PISO',
         'Aereo': '4. AÉREO',
         'Logico': '5. LÓGICO',
         'Merma': '6. MERMA'
@@ -1051,7 +1052,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.51-BETA',
+        version: 'v12.1.54-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 

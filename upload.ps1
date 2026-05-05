@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.51: Restore intelligent Maestro mapping (fixing 0/undefined issues)"
+git commit -m "BETA v12.1.54: URGENT FIX: Restore correct stock hierarchy (BAJAS first)"
 git push origin main
