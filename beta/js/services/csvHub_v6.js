@@ -788,35 +788,22 @@ export const calculateBufferPallets = (configOverride = null) => {
         let sourcePallets = new Set();
         let sourceSkus = new Set();
         let sourceUnits = 0;
-        let hasData = false;
 
         ['SolidPack', 'PreePack'].forEach(t => {
             const data = empaqueAggr[s][t];
-            if (data.sku.size > 0) {
-                hasData = true;
-                resEmp.push({ 
-                    fuente: s, 
-                    tipo: t, 
-                    paletas: data.pal.size, 
-                    skus: data.sku.size, 
-                    parcaja: Math.round(data.units) 
-                });
-                data.pal.forEach(p => sourcePallets.add(p));
-                data.sku.forEach(sk => sourceSkus.add(sk));
-                sourceUnits += data.units;
-            }
-        });
-
-        // [MOD V12.1.43] SIEMPRE incluir la fuente, aunque esté en 0
-        if (!hasData) {
+            // [MOD V12.1.44] ESTRUCTURA 100% FIJA: Siempre mostrar fila, sea 0 o no
             resEmp.push({ 
                 fuente: s, 
-                tipo: 'SolidPack', 
-                paletas: 0, 
-                skus: 0, 
-                parcaja: 0 
+                tipo: t, 
+                paletas: data.pal.size || 0, 
+                skus: data.sku.size || 0, 
+                parcaja: Math.round(data.units) || 0
             });
-        }
+            
+            data.pal.forEach(p => sourcePallets.add(p));
+            data.sku.forEach(sk => sourceSkus.add(sk));
+            sourceUnits += data.units;
+        });
 
         resEmp.push({
             fuente: `TOTAL ${s}`,
