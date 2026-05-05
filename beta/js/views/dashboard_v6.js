@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.97-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.98-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.97-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.98-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2251,6 +2251,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tQ = data.reporteTemporadasQ || [];
     const tG = data.reporteGender || [];
     const tO = data.reporteObsolencia || [];
+    const tDetalle = data.detalleObsGen || [];
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="width:100%; max-width:1450px; margin:0 auto;">
@@ -2261,15 +2262,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                 🔄 RE-PROCESAR TODO
             </button>
             <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(16,185,129,0.05); border:1px solid #10b981; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#10b981'" onmouseout="this.style.background='rgba(16,185,129,0.05)'">
-                📥 EXPORTAR
+                📥 EXPORTAR TEMPORADA
+            </button>
+            <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(251,191,36,0.05); border:1px solid #fbbf24; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#fbbf24'" onmouseout="this.style.background='rgba(251,191,36,0.05)'">
+                📊 DETALLE OBS.GEN
             </button>
         </div>
 
-        <div style="display:flex; gap:1.5rem; align-items: flex-start;">
+        <div style="display:flex; gap:1.5rem; align-items: stretch;">
             
             <!-- REPORTE ARTICULO POR TEMPORADA (IZQUIERDA) -->
-            <div style="flex:2.2;">
-                <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6);">
+            <div style="flex:2.2; display:flex;">
+                <div class="glass-panel" style="flex:1; padding:1.5rem; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
                         <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">ARTICULO POR TEMPORADA</h3>
                         <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
@@ -2316,11 +2320,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
 
-            <!-- COLUMNA LATERAL (OBSOLESCENCIA Y GÉNERO) -->
+            <!-- COLUMNA DERECHA (OBS + GENDER) -->
             <div style="flex:1; display:flex; flex-direction:column; gap:1.5rem;">
                 
                 <!-- REPORTE OBSOLESCENCIA -->
-                <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 15px rgba(16,185,129,0.15);">
+                <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 15px rgba(16,185,129,0.15); display:flex; flex-direction:column;">
                     <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;">⏳ OBSOLESCENCIA</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">TIPO OBSOLENCIA</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
@@ -2332,7 +2336,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- REPORTE G. GENDER -->
-                <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(251,191,36,0.5); box-shadow:0 0 15px rgba(251,191,36,0.15);">
+                <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(251,191,36,0.5); box-shadow:0 0 15px rgba(251,191,36,0.15); display:flex; flex-direction:column;">
                     <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;">👥 G. GENDER</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">G. GENDER</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
@@ -2355,15 +2359,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     const exportBtn = document.getElementById('btn_export_analisis');
     if (exportBtn) {
         exportBtn.onclick = () => {
-            const exportData = [];
-            tQ.forEach(r => exportData.push({ 'Categoría': 'TEMPORADA', 'Año': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'CANTIDAD': r.TOTAL }));
-            tG.forEach(r => exportData.push({ 'Categoría': 'GÉNERO', 'Descripción': r.label, 'CANTIDAD': r.qty }));
-            tO.forEach(r => exportData.push({ 'Categoría': 'OBSOLESCENCIA', 'Estado': r.label, 'CANTIDAD': r.qty }));
-
+            if (!tQ.length) return alert('No hay datos para exportar.');
+            const exportData = tQ.map(r => ({ 'AÑO/TEMPORADA': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'OTROS': r.OTROS, 'TOTAL': r.TOTAL }));
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Analisis_SKU");
-            XLSX.writeFile(wb, `Analisis_SKU_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte_Temporadas");
+            XLSX.writeFile(wb, `Reporte_Temporadas_${new Date().getTime()}.xlsx`);
+        };
+    }
+
+    const exportObsGenBtn = document.getElementById('btn_export_obsgen');
+    if (exportObsGenBtn) {
+        exportObsGenBtn.onclick = () => {
+            if (!tDetalle.length) return alert('No hay datos detallados para exportar.');
+            const ws = XLSX.utils.json_to_sheet(tDetalle);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Detalle_OBS_GEN");
+            XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
         };
     }
   };

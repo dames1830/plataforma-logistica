@@ -1136,8 +1136,20 @@ export const calculateBufferPallets = (configOverride = null) => {
         return b.Año.localeCompare(a.Año);
     });
 
+    const detalleObsGen = [];
+    stockGlobalPorArticulo.forEach((qty, art) => {
+        const info = articulosMap.get(art) || { gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO' };
+        detalleObsGen.push({
+            'Articulo': art,
+            'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/MAESTRO',
+            'G. GENDER': info.gGender || 'S/MAESTRO',
+            'CANTIDAD': Math.round(qty)
+        });
+    });
+
+
     return { 
-        version: 'v12.1.97-BETA',
+        version: 'v12.1.98-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1151,6 +1163,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         reporteTemporadasQ: reporteTemporadasQ,
         reporteGender: reporteGender,
         reporteObsolencia: reporteObsolencia,
+        detalleObsGen: detalleObsGen,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
