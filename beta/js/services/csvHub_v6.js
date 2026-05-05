@@ -554,17 +554,17 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // 2. Consolidar: Sumar todo pero MANTENER registro de fuentes para la tabla
-    let tempMap = {}; // sku -> { total: 0, sources: { 'PEDIDOS': 0, 'OTRAS SOLICITUDES': 0, 'REPLENISHMENT': 0 } }
+    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente (Jerarquía: Pedidos > Otras > Replenish)
+    let tempMap = {}; // sku -> { total: 0, bestSrc: null }
     const hierarchy = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
-    
+
     hierarchy.forEach(src => {
         rawDemand[src].forEach(item => {
             if (!tempMap[item.sku]) {
-                tempMap[item.sku] = { total: 0, sources: { 'PEDIDOS': 0, 'OTRAS SOLICITUDES': 0, 'REPLENISHMENT': 0 } };
+                tempMap[item.sku] = { total: 0, bestSrc: src };
             }
             tempMap[item.sku].total += item.qty;
-            tempMap[item.sku].sources[src] += item.qty;
+            // No cambiamos bestSrc porque el primero que lo puso (según jerarquía) gana
         });
     });
 
@@ -572,11 +572,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     let demanda = {};
     Object.keys(tempMap).forEach(sku => {
         const item = tempMap[sku];
-        // Para el cálculo de RQ/ATD, el SKU se considera una sola entidad (suma total)
-        // Pero guardamos el desglose para el resumen SKU
         demanda[sku] = {
             total: item.total,
-            sources: Object.keys(item.sources).filter(s => item.sources[s] > 0).map(s => ({ src: s, qty: item.sources[s] }))
+            sources: [{ src: item.bestSrc, qty: item.total }]
         };
     });
 
@@ -840,19 +838,21 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
+    // 5. Agrupar resultados por Fuente y Tipo para el resumen SKU
+    let r = {}; 
+    sources.forEach(s => { r[s] = { 'SolidPack': { pal: 0, skus: 0, qty: 0 }, 'PreePack': { pal: 0, skus: 0, qty: 0 } }; });
+
     Object.keys(demanda).forEach(sku => {
         const d = demanda[sku];
         const info = getArtInfo(sku);
         const type = info.tipo; 
-        
-        // Atribuir datos para el resumen SKU basado en el desglose de fuentes
-        d.sources.forEach(source => {
-            const srcName = source.src;
-            if (empaqueAggr[srcName] && empaqueAggr[srcName][type]) {
-                // NOTA: pal y sku son Sets, ya se llenan en el bucle de ubicaciones arriba
-                // Solo aseguramos que si la fuente es secundaria, tenga su representación
-            }
-        });
+        const src = d.sources[0].src; 
+
+        if (r[src] && r[src][type]) {
+            r[src][type].qty += d.total;
+            r[src][type].skus++;
+            r[src][type].pal += (d.total / (info.unidadesPorPalet || 1));
+        }
     });
 
     const resEmp = [];
@@ -863,6 +863,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         ['SolidPack', 'PreePack'].forEach(t => {
             const data = empaqueAggr[s][t];
+            // [MOD V12.1.44] ESTRUCTURA 100% FIJA: Siempre mostrar fila, sea 0 o no
             resEmp.push({ 
                 fuente: s, 
                 tipo: t, 
@@ -1068,7 +1069,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.56-BETA',
+        version: 'v12.1.57-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
