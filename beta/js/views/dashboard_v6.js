@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.87-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.88-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.87-BETA';
-const CACHE_KEY = `logistics_v12_1_87_BETA_`;
+const VERSION = '12.1.88-BETA';
+const CACHE_KEY = `logistics_v12_1_88_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.87-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.88-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.87-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.88-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2153,10 +2153,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (raw) {
             try {
                 const parsed = JSON.parse(raw);
-                // Validación v12.1.86: SYNC: Fixed processing hang by adding missing calculation logic
-                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender) {
+                // Validación v12.1.88: Requiere las 3 tablas para cargar desde caché
+                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia) {
                     lastBufferResult = parsed;
                 } else {
+                    console.log("Caché incompleta, ignorando...");
                     localStorage.removeItem('lastBufferKPI');
                 }
             } catch(e) { localStorage.removeItem('lastBufferKPI'); }
@@ -2251,7 +2252,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         return;
     }
 
-    const data = lastBufferResult;
+    const data = lastBufferResult || {};
+    const tQ = data.reporteTemporadasQ || [];
+    const tG = data.reporteGender || [];
+    const tO = data.reporteObsolencia || [];
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="width:100%; max-width:1400px; margin:0 auto;">
@@ -2270,7 +2274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
               <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">AÑO</th><th>TOTAL</th></tr></thead>
               <tbody>
-                ${data.reporteTemporadasQ.map(row => `<tr><td style="padding:0.4rem 0;">${row.Año}</td><td style="text-align:right;">${row.TOTAL.toLocaleString()}</td></tr>`).join('')}
+                ${tQ.map(row => `<tr><td style="padding:0.4rem 0;">${row.Año}</td><td style="text-align:right;">${(row.TOTAL || 0).toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
@@ -2281,7 +2285,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
               <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">LABEL</th><th>QTY</th></tr></thead>
               <tbody>
-                ${data.reporteGender.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${row.qty.toLocaleString()}</td></tr>`).join('')}
+                ${tG.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
@@ -2292,7 +2296,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
               <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">LABEL</th><th>QTY</th></tr></thead>
               <tbody>
-                ${data.reporteObsolencia.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${row.qty.toLocaleString()}</td></tr>`).join('')}
+                ${tO.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
