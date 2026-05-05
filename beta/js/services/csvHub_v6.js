@@ -448,14 +448,21 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.stockActivo;
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
-    const solicitud = dataStore.solicitud; // OTRAS SOLICITUDES
-    const tallas = dataStore.tallas;     // REPLENISHMENT
+    const solicitud = dataStore.solicitud; 
+    const tallas = dataStore.tallas;     
     const articulos = dataStore.articulos;
     
-    if(!activo || !reserva) {
-        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva });
+    if(!activo || !reserva || !articulos) {
+        console.error("[VALIDACIÓN] Faltan datos críticos para el cálculo.", { activo: !!activo, reserva: !!reserva, maestro: !!articulos });
         return null;
     }
+
+    // [OPTIMIZACIÓN V12.1.49] Crear mapa de búsqueda rápida para el maestro
+    const articulosMap = new Map();
+    articulos.forEach(a => {
+        const art = String(getCol(a, ['ARTICULO', 'CodArticulo', 'Codigo']) || '').trim().substring(0, 7);
+        if (art) articulosMap.set(art, a);
+    });
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
@@ -1055,7 +1062,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.41-BETA',
+        version: 'v12.1.49-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
