@@ -1127,19 +1127,50 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     const detalleObsGen = [];
+    const detalleTemporadas = [];
     stockGlobalPorArticulo.forEach((qty, art) => {
-        const info = articulosMap.get(art) || { gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO' };
+        const info = articulosMap.get(art) || { gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO', temporada: 'S/MAESTRO' };
+        
+        // Detalle Obsolescencia
         detalleObsGen.push({
             'Articulo': art,
             'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/MAESTRO',
             'G. GENDER': info.gGender || 'S/MAESTRO',
             'CANTIDAD': Math.round(qty)
         });
+
+        // Detalle Temporadas
+        const fullTemp = info.temporada || 'S/MAESTRO';
+        let año = 'S/MAESTRO';
+        let qKey = 'OTROS';
+
+        if (fullTemp.includes('-')) {
+            const parts = fullTemp.split('-');
+            año = parts[0];
+            const qPart = parts[1];
+            if (['1','2','3','4'].includes(qPart)) qKey = 'Q' + qPart;
+            else if (qPart.toUpperCase().includes('Q')) {
+                const match = qPart.match(/[1-4]/);
+                qKey = match ? 'Q' + match[0] : 'OTROS';
+            }
+        } else if (/^\d{4}$/.test(fullTemp)) {
+            año = fullTemp;
+            qKey = 'OTROS';
+        } else {
+            año = fullTemp;
+        }
+
+        detalleTemporadas.push({
+            'Articulo': art,
+            'Año/Temporadas': año,
+            'Q': qKey,
+            'Cantidad': Math.round(qty)
+        });
     });
 
 
     return { 
-        version: 'v12.2.0',
+        version: 'v12.2.1',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1154,6 +1185,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         reporteGender: reporteGender,
         reporteObsolencia: reporteObsolencia,
         detalleObsGen: detalleObsGen,
+        detalleTemporadas: detalleTemporadas,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };

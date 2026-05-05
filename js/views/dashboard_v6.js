@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.2.0';
-const CACHE_KEY = `logistics_v12_2_0_`;
+const VERSION = '12.2.1';
+const CACHE_KEY = `logistics_v12_2_1_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.2.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.2.1</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.2.0 | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.2.1 | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2153,7 +2153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (raw) {
             try {
                 const parsed = JSON.parse(raw);
-                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen) {
+                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen && parsed.detalleTemporadas) {
                     lastBufferResult = parsed;
                 } else {
                     localStorage.removeItem('lastBufferKPI');
@@ -2207,13 +2207,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         try {
           const res = await calculateBufferPallets();
           if (res) {
-              lastBufferResult = {
-                  reporteTemporadasQ: res.reporteTemporadasQ,
-                  reporteGender: res.reporteGender,
-                  reporteObsolencia: res.reporteObsolencia,
-                  detalleObsGen: res.detalleObsGen || [],
-                  timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
-              };
+                  lastBufferResult = {
+                      reporteTemporadasQ: res.reporteTemporadasQ,
+                      reporteGender: res.reporteGender,
+                      reporteObsolencia: res.reporteObsolencia,
+                      detalleObsGen: res.detalleObsGen || [],
+                      detalleTemporadas: res.detalleTemporadas || [],
+                      timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+                  };
               localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferResult));
               renderAnalisisSKUTab();
           } else {
@@ -2360,12 +2361,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     const exportBtn = document.getElementById('btn_export_analisis');
     if (exportBtn) {
         exportBtn.onclick = () => {
-            if (!tQ.length) return alert('No hay datos para exportar.');
-            const exportData = tQ.map(r => ({ 'AÑO/TEMPORADA': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'OTROS': r.OTROS, 'TOTAL': r.TOTAL }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
+            const detail = data.detalleTemporadas || [];
+            if (!detail.length) return alert('No hay datos detallados de temporadas para exportar. Pulsa Procesar.');
+            
+            const ws = XLSX.utils.json_to_sheet(detail);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Reporte_Temporadas");
-            XLSX.writeFile(wb, `Reporte_Temporadas_${new Date().getTime()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Revision_Temporadas");
+            XLSX.writeFile(wb, `Reporte_Revision_Temporadas_${new Date().getTime()}.xlsx`);
         };
     }
 

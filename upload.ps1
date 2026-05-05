@@ -1,3 +1,3 @@
 git add .
-git commit -m "RELEASE v12.2.0: PRODUCTION: Final Official Release (SKU Analytics Dashboard Reconciled)"
+git commit -m "RELEASE v12.2.1: PRODUCTION: Detailed Season Export (Articulo, Año, Q, Cantidad)"
 git push origin main
