@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.84: UNBLOCK: Safety checks for triple report and cache validation"
+git commit -m "BETA v12.1.85: FIX: next is not defined error and unblocked app"
 git push origin main
