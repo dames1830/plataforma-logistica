@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta } from '../services/csvHub_v6.js?v=12.1.21';
-import * as adminService from '../services/adminService.js?v=12.1.21';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.103-BETA';
+import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.21';
-const CACHE_KEY = `logistics_v12_1_21_`;
+const VERSION = '12.1.103-BETA';
+const CACHE_KEY = `logistics_v12_1_103_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -23,6 +23,9 @@ const TABS = [
     { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
     { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
+  ] },
+  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
@@ -44,17 +47,8 @@ let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
 let lastBufferResult = null;
-
-const exportToExcel = (data, filename) => {
-    if(!data || !data.length) {
-        alert('⚠️ ERROR: Los datos para este reporte no están disponibles en la memoria actual. Por favor, haz clic en el botón "PROCESAR ANÁLISIS" nuevamente para regenerar el detalle completo.');
-        return;
-    }
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Data");
-    XLSX.writeFile(wb, `${filename}_${new Date().getTime()}.xlsx`);
-};
+let activeAnalisisSub = 'articulo_temp';
+let activeConfigSub = 'parametros';
 
 window.downloadExcelDetail = () => {
     if (!lastBufferResult) return;
@@ -117,7 +111,8 @@ window.downloadExcelZonas = () => {
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
-  await adminService.initializeAdminData(); // Sincronización Inteligente v11.1.115
+  await initPersistentData(); // [MOD V12.1.48] Esperar a IndexedDB antes de renderizar
+  await adminService.initializeAdminData();
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
@@ -152,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.27</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.103-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -178,7 +173,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderNav = () => {
     navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">${t.icon} ${t.label}</a>`).join('');
-    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { currentTab = e.currentTarget.dataset.id; renderNav(); renderTabContent(); }));
+    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { 
+        currentTab = e.currentTarget.dataset.id; 
+        activeAdminSub = null; // Resetear sub-pestaña al cambiar de sección
+        renderNav(); 
+        renderTabContent(); 
+    }));
   };
 
   const renderTabContent = async (silent = false) => {
@@ -193,6 +193,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'stock') await renderStockTab();
     else if (currentTab === 'buffer') await renderBufferTab();
+    else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -610,7 +611,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  let activeAdminSub = 'trabajadores';  const renderAdminTab = () => {
+  let activeAdminSub = 'trabajadores';
+  const renderAdminTab = () => {
     const adminTabDef = TABS.find(t => t.id === 'admin_pers');
     const rolePerms = adminService.getPermissions(user.role) || {};
     
@@ -1855,7 +1857,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const next = rowsInTable[currentIndex + 1];
                 if (next) next.focus();
             } else if (e.key === 'ArrowLeft' && (e.target.type !== 'number' || e.target.selectionStart === 0)) {
-                // Navegar izquierda si el cursor está al inicio
                 const prev = rowsInTable[currentIndex - 1];
                 if (prev) prev.focus();
             }
@@ -1917,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v11.1.30 [BETA] | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.103-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2089,7 +2090,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        version: 'v12.1.86-BETA'
                     }]
                 },
                 options: {
@@ -2140,6 +2142,243 @@ export const renderDashboard = async (container, user, onLogout) => {
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
+  };
+
+  const renderAnalisisSKUTab = async () => {
+    contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
+
+    // Recuperar persistencia si existe (v12.1.76)
+    if (!lastBufferResult) {
+        const raw = localStorage.getItem('lastBufferKPI');
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen) {
+                    lastBufferResult = parsed;
+                } else {
+                    localStorage.removeItem('lastBufferKPI');
+                }
+            } catch(e) { localStorage.removeItem('lastBufferKPI'); }
+        }
+    }
+
+    const tabData = TABS.find(t => t.id === 'analisis_sku');
+    const subId = activeAnalisisSub;
+    
+    let subNavHtml = `
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+            ${tabData.subTabs.map(st => `
+                <a class="sub-nav-item ${subId === st.id ? 'active' : ''}" 
+                   style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;"
+                   onclick="window.setActiveAnalisisSub('${st.id}')">
+                    ${st.icon} ${st.label.toUpperCase()}
+                </a>
+            `).join('')}
+        </nav>
+    `;
+
+    window.setActiveAnalisisSub = (id) => {
+        activeAnalisisSub = id;
+        renderAnalisisSKUTab();
+    };
+
+    if (subId !== 'articulo_temp') {
+        contentArea.innerHTML = subNavHtml + `
+            <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🚧</div>
+                <h4>Módulo en Desarrollo</h4>
+                <p>Esta sección estará disponible próximamente.</p>
+            </div>`;
+        return;
+    }
+
+    const runGlobalAnalysis = async () => {
+      const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
+      const oldHtml = btn ? btn.innerHTML : '⚡ PROCESAR REPORTE ARTÍCULO';
+
+      if (!dataStore.stockActivo || !dataStore.stockReserva) {
+          alert('⚠️ ATENCIÓN: Primero debes cargar "STOCK ACTIVO" y "STOCK RESERVA" en el módulo correspondiente.');
+          return;
+      }
+
+      if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
+      
+      setTimeout(async () => {
+        try {
+          const res = await calculateBufferPallets();
+          if (res) {
+              lastBufferResult = {
+                  reporteTemporadasQ: res.reporteTemporadasQ,
+                  reporteGender: res.reporteGender,
+                  reporteObsolencia: res.reporteObsolencia,
+                  detalleObsGen: res.detalleObsGen || [],
+                  timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+              };
+              localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferResult));
+              renderAnalisisSKUTab();
+          } else {
+              alert('⚠️ ERROR: El análisis no generó datos.');
+              if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+          }
+        } catch (err) {
+          console.error(err);
+          alert('❌ Error crítico: ' + err.message);
+          if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+        }
+      }, 100);
+    };
+
+    if (!lastBufferResult) {
+        contentArea.innerHTML = subNavHtml + `
+            <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border: 1px dashed rgba(255,255,255,0.1);">
+                <div style="margin-bottom:2rem;">
+                    <img src="https://img.icons8.com/fluency/96/000000/search-property.png" style="opacity:0.6; filter:grayscale(0.5);"/>
+                </div>
+                <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">ARTICULO POR TEMPORADA</h3>
+                <p style="color:var(--text-muted); max-width:500px; margin:0 auto 2.5rem;">
+                    Presiona el botón para consolidar el Stock Activo y Reserva por Artículo y Temporada.
+                </p>
+                <button id="btn_run_global" class="btn" style="max-width:400px; padding:1.2rem; font-weight:800; font-size:1rem; letter-spacing:1px; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);">
+                    ⚡ PROCESAR REPORTE ARTÍCULO
+                </button>
+            </div>
+        `;
+        const btn = document.getElementById('btn_run_global');
+        if (btn) btn.onclick = runGlobalAnalysis;
+        return;
+    }
+
+    const data = lastBufferResult || {};
+    const tQ = data.reporteTemporadasQ || [];
+    const tG = data.reporteGender || [];
+    const tO = data.reporteObsolencia || [];
+    const tDetalle = data.detalleObsGen || [];
+
+    contentArea.innerHTML = subNavHtml + `
+      <div class="animate-fade-in" style="width:100%; max-width:1450px; margin:0 auto;">
+        
+        <!-- BOTONES ARRIBA (FUERA DEL MARGEN) -->
+        <div style="display:flex; gap:1rem; margin-bottom:1.5rem; padding-left:0.5rem;">
+            <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(79,70,229,0.05); border:1px solid var(--primary); font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='rgba(79,70,229,0.05)'">
+                🔄 RE-PROCESAR TODO
+            </button>
+            <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(16,185,129,0.05); border:1px solid #10b981; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#10b981'" onmouseout="this.style.background='rgba(16,185,129,0.05)'">
+                📥 EXPORTAR TEMPORADA
+            </button>
+            <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(251,191,36,0.05); border:1px solid #fbbf24; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#fbbf24'" onmouseout="this.style.background='rgba(251,191,36,0.05)'">
+                📊 DETALLE OBS.GEN
+            </button>
+        </div>
+
+        <div style="display:flex; gap:1.5rem; align-items: stretch;">
+            
+            <!-- REPORTE ARTICULO POR TEMPORADA (IZQUIERDA) -->
+            <div style="flex:2.2; display:flex;">
+                <div class="glass-panel" style="flex:1; padding:1.5rem; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
+                        <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">ARTICULO POR TEMPORADA</h3>
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                            📅 ${data.timestamp || '00/00/0000, 00:00:00'}
+                        </span>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                            <thead>
+                                <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
+                                    <th style="text-align:left; padding:1rem 0.5rem; width:130px;">AÑO/TEMPORADA</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q1</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q2</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q3</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q4</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem; background:rgba(79,70,229,0.05); color:#fff;">CANTIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tQ.map(row => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.Año}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q3 === 0 ? '0.15' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q4 === 0 ? '0.15' : '1'}">${(row.Q4 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:900; color:var(--primary); background:rgba(79,70,229,0.02); opacity: ${row.TOTAL === 0 ? '0.15' : '1'}">${(row.TOTAL || 0).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot style="border-top:2px solid var(--border); background:rgba(79,70,229,0.05);">
+                                <tr style="font-weight:900; color:#fff; font-size:0.85rem;">
+                                    <td style="padding:1rem 0.5rem;">TOTAL GENERAL</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q1||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q2||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q3||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q4||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center; color:#fbbf24; background:rgba(0,0,0,0.2);">${tQ.reduce((s,r)=>s+(r.TOTAL||0),0).toLocaleString()}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA (OBS + GENDER) -->
+            <div style="flex:1; display:flex; flex-direction:column; gap:1.5rem;">
+                
+                <!-- REPORTE OBSOLESCENCIA -->
+                <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 15px rgba(16,185,129,0.15); display:flex; flex-direction:column;">
+                    <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;">⏳ OBSOLESCENCIA</h4>
+                    <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                        <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">TIPO OBSOLENCIA</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
+                        <tbody>
+                            ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.6rem 0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:#10b981; opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
+                        </tbody>
+                        ${tO.length ? `<tfoot><tr style="background:rgba(16,185,129,0.1); color:#10b981; font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td style="text-align:center;">${tO.reduce((a,b)=>a+b.qty,0).toLocaleString()}</td></tr></tfoot>` : ''}
+                    </table>
+                </div>
+
+                <!-- REPORTE G. GENDER -->
+                <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(251,191,36,0.5); box-shadow:0 0 15px rgba(251,191,36,0.15); display:flex; flex-direction:column;">
+                    <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;">👥 G. GENDER</h4>
+                    <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                        <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">G. GENDER</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
+                        <tbody>
+                            ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.6rem 0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:#fbbf24; opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
+                        </tbody>
+                        ${tG.length ? `<tfoot><tr style="background:rgba(251,191,36,0.1); color:#fbbf24; font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td style="text-align:center;">${tG.reduce((a,b)=>a+b.qty,0).toLocaleString()}</td></tr></tfoot>` : ''}
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+      </div>
+    `;
+
+    const refreshBtn = document.getElementById('btn_refresh_global');
+    if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;
+
+    const exportBtn = document.getElementById('btn_export_analisis');
+    if (exportBtn) {
+        exportBtn.onclick = () => {
+            if (!tQ.length) return alert('No hay datos para exportar.');
+            const exportData = tQ.map(r => ({ 'AÑO/TEMPORADA': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'OTROS': r.OTROS, 'TOTAL': r.TOTAL }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte_Temporadas");
+            XLSX.writeFile(wb, `Reporte_Temporadas_${new Date().getTime()}.xlsx`);
+        };
+    }
+
+    const exportObsGenBtn = document.getElementById('btn_export_obsgen');
+    if (exportObsGenBtn) {
+        exportObsGenBtn.onclick = () => {
+            if (!tDetalle.length) return alert('No hay datos detallados para exportar.');
+            const ws = XLSX.utils.json_to_sheet(tDetalle);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Detalle_OBS_GEN");
+            XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
+        };
+    }
   };
 
   renderNav();

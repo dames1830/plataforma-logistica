@@ -15,65 +15,84 @@ export const dataStore = {
 };
 
 // =============================================
-// OPTIMIZACIÓN: CACHÉ PERSISTENTE En localStorage
+// OPTIMIZACIÓN: BASE DE DATOS LOCAL (IndexedDB)
 // =============================================
-const LS_PREFIX = 'logistics_cache_';
-const META_PREFIX = 'logistics_meta_'; // Almacenamiento pequeño para persistencia de fechas
-const LS_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de validez
+const DB_NAME = 'LogisticsPulseDB';
+const STORE_NAME = 'DataCache';
+const DB_VERSION = 1;
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas de validez
 
-const saveToLS = (area, data) => {
-    const ts = Date.now();
-    try {
-        // NIVEL 1: Metadatos (Siempre se guardan, muy pequeños)
-        localStorage.setItem(META_PREFIX + area, JSON.stringify({ ts }));
-    } catch(e) { console.warn("Error guardando meta:", e); }
-
-    try {
-        // NIVEL 2: Datos (Pueden fallar si localStorage está lleno)
-        localStorage.setItem(LS_PREFIX + area, JSON.stringify({ ts, data }));
-    } catch(e) { console.warn("Quota Full: Datos no persistidos localmente para " + area); }
+const openDB = () => {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
 };
 
-const loadFromLS = (area) => {
+const saveToDB = async (key, data) => {
     try {
-        const raw = localStorage.getItem(LS_PREFIX + area);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (Date.now() - parsed.ts > LS_TTL_MS) {
-            localStorage.removeItem(LS_PREFIX + area);
-            return null;
-        }
-        return parsed.data;
-    } catch(e) { return null; }
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({ data, ts: Date.now() }, key);
+        // Guardar meta en LS para acceso rápido UI (indicadores verdes)
+        localStorage.setItem('meta_' + key, JSON.stringify({ ts: Date.now(), hasData: true }));
+    } catch (err) { console.error("Error IndexedDB Save:", err); }
+};
+
+const loadFromDB = async (key) => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get(key);
+            req.onsuccess = () => {
+                if (req.result && (Date.now() - req.result.ts < CACHE_TTL)) {
+                    resolve(req.result.data);
+                } else resolve(null);
+            };
+            req.onerror = () => resolve(null);
+        });
+    } catch (err) { return null; }
 };
 
 export const getUploadMeta = (area) => {
     try {
-        // Intentar recuperar de la tabla de metadatos primero
-        const metaRaw = localStorage.getItem(META_PREFIX + area);
-        if (metaRaw) return JSON.parse(metaRaw);
-
-        // Fallback: intentar recuperar del caché de datos si el meta no existe
-        const raw = localStorage.getItem(LS_PREFIX + area);
-        if (!raw) return null;
-        return JSON.parse(raw);
+        const meta = localStorage.getItem('meta_' + area);
+        return meta ? JSON.parse(meta) : null;
     } catch(e) { return null; }
 };
 
-const clearLS = () => {
-    Object.keys(dataStore).forEach(k => {
-        localStorage.removeItem(LS_PREFIX + k);
-        localStorage.removeItem(META_PREFIX + k);
-    });
+const clearDB = async () => {
+    try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).clear();
+        Object.keys(dataStore).forEach(k => localStorage.removeItem('meta_' + k));
+    } catch(e) {}
 };
 
-// Inicializar dataStore desde localStorage al cargar la app
-(() => {
-    Object.keys(dataStore).forEach(area => {
-        const cached = loadFromLS(area);
-        if (cached) dataStore[area] = cached;
-    });
-})();
+// Inicializar dataStore desde IndexedDB al cargar la app
+export const initPersistentData = async () => {
+    for (const area of Object.keys(dataStore)) {
+        const cached = await loadFromDB(area);
+        if (cached) {
+            dataStore[area] = cached;
+            console.log(`[PULSE] Recuperado ${area} de DB Local.`);
+        }
+    }
+};
+
+// Iniciar carga en segundo plano
+initPersistentData();
 
 // Control Trazabilidad: Fecha seleccionada (null = Fecha Actual/Más reciente)
 export let currentDateFilter = null;
@@ -85,12 +104,28 @@ const VERSION = '11.1.37-pulse';
 const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
+const getCol = (row, names) => {
+    if (!row) return null;
+    const normalize = (str) => String(str || '').toUpperCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/[^A-Z0-9]/g, ''); // Quitar todo lo que no sea letra o número
+
+    const rowKeys = Object.keys(row);
+    for (let n of names) {
+        if (row[n] !== undefined) return row[n];
+        const target = normalize(n);
+        const found = rowKeys.find(k => normalize(k) === target);
+        if (found) return row[found];
+    }
+    return null;
+};
+
 export const setDateFilter = (newDateStr) => {
     if (currentDateFilter !== newDateStr) {
         currentDateFilter = newDateStr;
         // Limpiamos la memoria caché al viajar por el tiempo
         Object.keys(dataStore).forEach(k => dataStore[k] = null);
-        clearLS();
+        clearDB();
     }
 };
 
@@ -219,22 +254,6 @@ export const logSystemAction = async (username, action, details) => {
     } catch (e) { console.error("Error al loguear acción:", e); }
 };
 
-// Helper para extraer columnas de forma robusta
-const getCol = (row, possibleNames) => {
-    if (!row) return null;
-    const keys = Object.keys(row);
-    // Normalización extrema: Quita acentos, barras (macrones), tildes y espacios
-    const normalize = (s) => String(s || '').toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Quita diacríticos
-        .replace(/[^a-z0-9]/g, "")      // Deja solo letras y números
-        .trim();
-    
-    const names = possibleNames.map(normalize);
-    const foundKey = keys.find(k => names.includes(normalize(k)));
-    return foundKey ? row[foundKey] : null;
-};
-
 export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
     if (!file) return reject('Archivo inválido');
@@ -273,10 +292,10 @@ export const parseFile = (file, area) => {
               const dc = (s) => String(s || '').trim();
               for (let i = 3; i < rows.length; i++) {
                   const r = rows[i];
-                  if (!r || r.length < 11) continue;
+                  if (!r || r.length < 9) continue;
                   jsonData.push({
                       'NIVEL': dc(r[1]),
-                      'PRODUCTO': dc(r[8]),
+                      'PRODUCTO': dc(r[8]), // Columna I
                       'CANTIDAD': parseFloat(r[10]) || 0,
                       'UBICACION': dc(r[4]),
                       'LPN': dc(r[5]),
@@ -284,15 +303,7 @@ export const parseFile = (file, area) => {
                   });
               }
           } else {
-              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-              let headerIdx = 0;
-              for(let i=0; i<Math.min(rows.length, 10); i++) {
-                  const rowStr = JSON.stringify(rows[i]).toUpperCase();
-                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO') || rowStr.includes('CODARTICULO')) {
-                      headerIdx = i; break;
-                  }
-              }
-              jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
+              jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
           }
 
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
@@ -337,24 +348,27 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
         });
         if(response.ok) {
            dataStore[area] = payload;
-           saveToLS(area, payload);
+        await saveToDB(area, payload);
            await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
         } else {
            dataStore[area] = payload;
-           saveToLS(area, payload);
+        await saveToDB(area, payload);
         }
     } catch (err) {
         dataStore[area] = payload;
-        saveToLS(area, payload);
+        await saveToDB(area, payload);
     }
 };
 
 export const clearAreaData = async (area, username = 'sistema') => {
     dataStore[area] = null;
-    localStorage.removeItem(LS_PREFIX + area);
-    localStorage.removeItem(META_PREFIX + area);
+    localStorage.removeItem('meta_' + area);
     
     try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(area);
+        
         // Enviar array vacío al servidor para "limpiar" la persistencia remota
         await fetch(`${API_URL}/${area}`, {
             method: 'POST',
@@ -369,8 +383,13 @@ export const clearAreaData = async (area, username = 'sistema') => {
 
 export const getAreaData = async (area) => {
   if (dataStore[area] !== null) return dataStore[area];
-  const lsData = loadFromLS(area);
-  if (lsData) { dataStore[area] = lsData; return lsData; }
+  
+  // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
+  const dbData = await loadFromDB(area);
+  if (dbData) { 
+      dataStore[area] = dbData; 
+      return dbData; 
+  }
 
   try {
      let queryURL = `${API_URL}/${area}`;
@@ -380,11 +399,11 @@ export const getAreaData = async (area) => {
          const serverResponse = await response.json();
          if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
              dataStore[area] = serverResponse.data;
-             saveToLS(area, serverResponse.data);
+             await saveToDB(area, serverResponse.data); // Sincronizar cache local
              return serverResponse.data;
          }
      }
-  } catch (err) { console.warn(`Backend lento para '${area}'.`); }
+  } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
   return null;
 };
 
@@ -421,14 +440,35 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.stockActivo;
     const reserva = dataStore.stockReserva;
     const pedidos = dataStore.buffer; 
-    const solicitud = dataStore.solicitud; // OTRAS SOLICITUDES
-    const tallas = dataStore.tallas;     // REPLENISHMENT
+    const solicitud = dataStore.solicitud; 
+    const tallas = dataStore.tallas;     
     const articulos = dataStore.articulos;
     
-    if(!activo || !reserva) {
-        console.error("[VALIDACIÓN] Datos base críticos incompletos.", { activo: !!activo, reserva: !!reserva });
+    if(!activo || !reserva || !articulos) {
+        console.error("[VALIDACIÓN] Faltan datos críticos para el cálculo.", { activo: !!activo, reserva: !!reserva, maestro: !!articulos });
         return null;
     }
+
+    const articulosMap = new Map();
+    // [ESTRICTO] Coordenadas fijas: B(1), C(2), K(10), J(9)
+    articulos.forEach((row) => {
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        
+        const skuVal = String(raw[1] || '').trim();
+        const sku7 = skuVal.substring(0, 7);
+        
+        if (sku7 && !articulosMap.has(sku7)) {
+            articulosMap.set(sku7, {
+                gGender: String(raw[2] || '').trim(),
+                gender: String(raw[3] || 'OTROS').trim().toUpperCase(),
+                temporada: String(raw[9] || 'S/T').trim(),
+                tipoObsolencia: String(raw[10] || '').trim(),
+                marca: String(raw[13] || 'OTROS').trim()
+            });
+        }
+    });
+
+
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
@@ -477,52 +517,65 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
-    let demanda = {}; // sku -> { total: X, sources: [ {src, qty} ] }
-    let processedSKUs = new Set();
-    
-    // 1. PRIORIDAD: PEDIDOS (CSV)
+    // [MOD V12.1.46] NUEVA LÓGICA DE CONSOLIDACIÓN POR PRIORIDAD
+    // 1. Recolectar datos crudos de todas las fuentes
+    const rawDemand = {
+        'PEDIDOS': [],
+        'OTRAS SOLICITUDES': [],
+        'REPLENISHMENT': []
+    };
+
     if (pedidos && pedidos.length) {
         pedidos.forEach(f => {
-            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
-            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
-            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
+            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim();
+            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant'])) || 0;
+            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado'])) || 0;
             let diff = cant - asig;
-            if (diff > 0 && sku) {
-                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-                demanda[sku].total += diff;
-                demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
-                processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
-            }
+            if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
         });
     }
 
-
-    // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
-            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
-            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
-            if (sku && qty > 0) {
-                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-                demanda[sku].total += qty;
-                demanda[sku].sources.push({ src: 'OTRAS SOLICITUDES', qty: qty });
-            }
+            const raw = Object.values(row);
+            const sku = String(raw[0] || '').trim();
+            const qty = parseFloat(raw[1]) || 0;
+            if (sku && qty > 0) rawDemand['OTRAS SOLICITUDES'].push({ sku, qty });
         });
     }
 
-    // 3. PRIORIDAD: REPLENISHMENT (XLSX)
     if (tallas && tallas.length) {
         tallas.forEach(row => {
-            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
-            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
-            if (sku && qty > 0) {
-                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-                demanda[sku].total += qty;
-                demanda[sku].sources.push({ src: 'REPLENISHMENT', qty: qty });
-            }
+            const raw = Object.values(row);
+            const sku = String(raw[0] || '').trim();
+            const qty = parseFloat(raw[1]) || 0;
+            if (sku && qty > 0) rawDemand['REPLENISHMENT'].push({ sku, qty });
         });
     }
+
+    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente (Jerarquía: Pedidos > Otras > Replenish)
+    let tempMap = {}; // sku -> { total: 0, bestSrc: null }
+    const hierarchy = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+
+    hierarchy.forEach(src => {
+        rawDemand[src].forEach(item => {
+            if (!tempMap[item.sku]) {
+                tempMap[item.sku] = { total: 0, bestSrc: src };
+            }
+            tempMap[item.sku].total += item.qty;
+            // No cambiamos bestSrc porque el primero que lo puso (según jerarquía) gana
+        });
+    });
+
+    // 3. Convertir al formato final de 'demanda'
+    let demanda = {};
+    Object.keys(tempMap).forEach(sku => {
+        const item = tempMap[sku];
+        demanda[sku] = {
+            total: item.total,
+            sources: [{ src: item.bestSrc, qty: item.total }]
+        };
+    });
 
     let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
     let globalRQ = 0, totalsByNivel = {};
@@ -547,7 +600,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                if (nivelLabel.includes('2. ALTO') || nivelLabel.includes('3. PISOS') || nivelLabel.includes('4. AEREO')) {
+                const lvlUpper = nivelLabel.toUpperCase();
+                if (lvlUpper.includes('ALTO') || lvlUpper.includes('PISO') || lvlUpper.includes('AEREO') || lvlUpper.includes('AÉREO')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
@@ -565,38 +619,46 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
-        const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
-        let areaRaw = getCol(f, possibleAreaHeaders);
-        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (area === 'MATE') return;
+
+        let sku = String(rawF[1] || '').trim(); // SKU en B(1)
+        let qty = parseFloat(rawF[4]) || 0;     // Cantidad en E(4)
+        if (!sku || qty <= 0) return;
+
+        // Para la cascada de Zona Buffer seguimos distinguiendo por zonas conocidas
         const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
         const isLevel1 = activeWhitelist.some(w => area.includes(w));
 
-        const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
-        const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
-        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
-        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
-        
-        if (!sku || qty <= 0) return;
-
         if (isLevel1) {
             totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
-        } else if (area === 'DIS' || area === 'VER' || area === 'PISO') {
-            if (area === 'DIS' || area === 'PISO') {
-                registerStock(stLogicos, sku, qty, f);
-            } else if (area === 'VER') {
-                let andVal = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
-                if (andVal === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
-                else registerStock(stMerma, sku, qty, f);
-            }
+        } else {
+            // Todo lo demás que no es MATE pero tampoco es Picking, va a Lógico por defecto
+            registerStock(stLogicos, sku, qty, f);
         }
     });
 
+    const getArtInfo = (sku) => {
+        if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        const sku7 = sku.trim().substring(0, 7);
+        const info = articulosMap.get(sku7);
+        if (!info) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        
+        let m = info.marca;
+        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) m = 'BG Licenses';
+        else if (m.toUpperCase().includes('BUBBLEGUMMERS')) m = 'BG';
+        else if (m.toUpperCase().includes('BATA INDUSTRIALS')) m = 'Industrials';
+        else if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) m = '11 COMPLEMENTS';
+
+        return { gender: info.gender, marca: m };
+    };
+
     const nivelesMap = {
-        'Bajas': '1. ZONAS BAJAS',
+        'Bajas': '1. BAJAS',
         'Alto': '2. ALTO',
-        'Piso': '3. PISOS',
-        'Aereo': '4. AEREO',
+        'Piso': '3. PISO',
+        'Aereo': '4. AÉREO',
         'Logico': '5. LÓGICO',
         'Merma': '6. MERMA'
     };
@@ -673,7 +735,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: globalRQ, pct: '100.0%' });
     // (Para saber cuántos palets y SKUs corresponden a cada fuente)
     const empaqueAggr = {}; // { source: { type: { pal: Set, sku: Set, units: 0 } } }
-    const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+    const sources = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
     sources.forEach(s => {
         empaqueAggr[s] = {
             'SolidPack': { pal: new Set(), sku: new Set(), units: 0 },
@@ -684,13 +746,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     // Mapa de Stock Activo para columna QTY ACTIVO
     const activeStockMap = {};
     activo.forEach(f => {
-        let area = String(getCol(f, ['Area', 'Área', 'Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        // [MOD V12.1.21] DIS y VER ahora se muestran como stock en reportes pero restan de niveles superiores
-        const validAreas = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
-        if (!validAreas.some(w => area.includes(w))) return;
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (area === 'MATE') return; // EXCLUIR MATE SEGÚN INDICACIÓN
         
-        let sku = String(getCol(f, ['Articulo', 'Artículo', 'ArtÃculo']) || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        let sku = String(rawF[1] || '').trim(); // SKU en Columna B (índice 1)
+        let qty = parseFloat(rawF[4]) || 0;     // Cantidad en Columna E (índice 4)
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
 
@@ -781,79 +842,69 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
+    // 5. Agrupar resultados por Fuente y Tipo para el resumen SKU
+    let r = {}; 
+    sources.forEach(s => { r[s] = { 'SolidPack': { pal: 0, skus: 0, qty: 0 }, 'PreePack': { pal: 0, skus: 0, qty: 0 } }; });
+
+    Object.keys(demanda).forEach(sku => {
+        const d = demanda[sku];
+        const type = sku.trim().length >= 14 ? 'PreePack' : 'SolidPack';
+        const src = d.sources[0].src; 
+
+        if (r[src] && r[src][type]) {
+            r[src][type].qty += d.total;
+            r[src][type].skus++;
+            // Nota: Para paletas usamos el maestro si existe, sino 1
+            const sku7 = sku.trim().substring(0, 7);
+            const info = articulosMap.get(sku7);
+            r[src][type].pal += (d.total / (info?.unidadesPorPalet || 1));
+        }
+    });
+
     const resEmp = [];
     sources.forEach(s => {
         let sourcePallets = new Set();
         let sourceSkus = new Set();
         let sourceUnits = 0;
-        let hasData = false;
 
         ['SolidPack', 'PreePack'].forEach(t => {
             const data = empaqueAggr[s][t];
-            if (data.sku.size > 0) {
-                hasData = true;
-                resEmp.push({ 
-                    fuente: s, 
-                    tipo: t, 
-                    paletas: data.pal.size, 
-                    skus: data.sku.size, 
-                    parcaja: Math.round(data.units) 
-                });
-                data.pal.forEach(p => sourcePallets.add(p));
-                data.sku.forEach(sk => sourceSkus.add(sk));
-                sourceUnits += data.units;
-            }
+            // [MOD V12.1.44] ESTRUCTURA 100% FIJA: Siempre mostrar fila, sea 0 o no
+            resEmp.push({ 
+                fuente: s, 
+                tipo: t, 
+                paletas: data.pal.size || 0, 
+                skus: data.sku.size || 0, 
+                parcaja: Math.round(data.units) || 0
+            });
+            
+            data.pal.forEach(p => sourcePallets.add(p));
+            data.sku.forEach(sk => sourceSkus.add(sk));
+            sourceUnits += data.units;
         });
 
-        if (hasData) {
-            resEmp.push({
-                fuente: `TOTAL ${s}`,
-                tipo: '---',
-                paletas: sourcePallets.size,
-                skus: sourceSkus.size,
-                parcaja: Math.round(sourceUnits),
-                isSubTotal: true
-            });
-        }
+        resEmp.push({
+            fuente: `TOTAL ${s}`,
+            tipo: '',
+            paletas: sourcePallets.size,
+            skus: sourceSkus.size,
+            parcaja: Math.round(sourceUnits),
+            isSubTotal: true
+        });
     });
 
     if (resEmp.length) {
         resEmp.push({ 
             fuente: 'TOTAL GENERAL', 
-            tipo: '---', 
+            tipo: '', 
             paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, 
             skus: new Set(detallePallets.map(d=>d.SKU)).size, 
             parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 
         });
     }
 
-    // 2. MATRIZ DE DISCREPANCIAS (OPTIMIZADO CON MAPA)
-    const articulosMap = new Map();
-    if (articulos && articulos.length) {
-        articulos.forEach(a => {
-            const masterVal = String(getCol(a, ['CodArticulo', 'Articulo', 'ARTICULO', 'SKU', 'Producto', 'Codigo', 'Item']) || '').trim();
-            const sku7 = masterVal.substring(0, 7);
-            if (sku7 && !articulosMap.has(sku7)) {
-                articulosMap.set(sku7, {
-                    gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA']) || 'OTROS').toUpperCase(),
-                    marca: (() => {
-                        let m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante']) || 'Otros').trim();
-                        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) return 'BG Licenses';
-                        if (m.toUpperCase().includes('BUBBLEGUMMERS')) return 'BG';
-                        if (m.toUpperCase().includes('BATA INDUSTRIALS')) return 'Industrials';
-                        if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) return '11 COMPLEMENTS';
-                        return m;
-                    })()
-                });
-            }
-        });
-    }
+    // 2. MATRIZ DE DISCREPANCIAS (YA OPTIMIZADA AL INICIO)
 
-    const getArtInfo = (sku) => {
-        if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        const sku7 = sku.trim().substring(0, 7);
-        return articulosMap.get(sku7) || { gender: 'OTRO', marca: 'OTRO' };
-    };
 
     const buildMatrix = (filterFn) => {
         const aggr = {};
@@ -876,6 +927,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             });
             return row;
         });
+
         if (rows.length > 0) {
             const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
             sorted.forEach(g => {
@@ -954,8 +1006,140 @@ export const calculateBufferPallets = (configOverride = null) => {
         qty: sinStockRows.reduce((acc, d) => acc + (parseFloat(d['ATD RQ'] || d['ATD_RQ'] || 0) || 0), 0)
     };
 
+    // [BETA] 6. CONSOLIDACIÓN GLOBAL POR ARTÍCULO (Activo + Reserva)
+    const stockGlobalPorArticulo = new Map();
+    
+    // Sumar Activo
+    Object.keys(activeStockMap).forEach(sku => {
+        const art = String(sku).substring(0, 7);
+        if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
+        stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + (activeStockMap[sku] || 0));
+    });
+    
+    // Sumar Reserva
+    reserva.forEach(r => {
+        const sku = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
+        const qty = parseFloat(getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
+        const art = sku.substring(0, 7);
+        if (art) {
+            if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
+            stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
+        }
+    });
+
+    // Generar Reporte Temporadas Q agrupado por AÑO con columnas Q1-Q4
+    const aggrAnual = {};
+    const aggrGender = {};
+    const aggrObsolencia = {};
+
+    stockGlobalPorArticulo.forEach((qty, art) => {
+        const info = articulosMap.get(art) || { temporada: 'S/MAESTRO', gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO' };
+        
+        // Agregación Gender
+        const g = (info.gGender || 'S/MAESTRO').trim();
+        aggrGender[g] = (aggrGender[g] || 0) + qty;
+
+        // Agregación Obsolescencia
+        const o = (info.tipoObsolencia || 'S/MAESTRO').trim();
+        aggrObsolencia[o] = (aggrObsolencia[o] || 0) + qty;
+
+        const fullTemp = info.temporada || 'S/MAESTRO';
+        
+        let año = 'S/MAESTRO';
+        let qKey = 'OTROS';
+
+        // Lógica de extracción de Año y Q (Formatos: YYYY-Q, YYYY-X, YYYY)
+        if (fullTemp.includes('-')) {
+            const parts = fullTemp.split('-');
+            año = parts[0];
+            const qPart = parts[1];
+            if (['1','2','3','4'].includes(qPart)) qKey = 'Q' + qPart;
+            else if (qPart.toUpperCase().includes('Q')) {
+                const match = qPart.match(/[1-4]/);
+                qKey = match ? 'Q' + match[0] : 'OTROS';
+            }
+        } else if (/^\d{4}$/.test(fullTemp)) {
+            año = fullTemp;
+            qKey = 'OTROS';
+        } else {
+            año = fullTemp;
+        }
+
+        if (!aggrAnual[año]) {
+            aggrAnual[año] = { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OTROS: 0, Total: 0 };
+        }
+        
+        if (aggrAnual[año][qKey] !== undefined) {
+            aggrAnual[año][qKey] += qty;
+        } else {
+            aggrAnual[año].OTROS += qty;
+        }
+        aggrAnual[año].Total += qty;
+    });
+
+    const sortSpecial = (a, b) => {
+        const bottom = ['S/MAESTRO', '(EN BLANCO)', 'ND', 'OTROS', ''];
+        const labelA = String(a.label || '').trim().toUpperCase();
+        const labelB = String(b.label || '').trim().toUpperCase();
+        
+        const aIsBottom = bottom.includes(labelA);
+        const bIsBottom = bottom.includes(labelB);
+        
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        if (aIsBottom && bIsBottom) return bottom.indexOf(labelA) - bottom.indexOf(labelB);
+        
+        return b.qty - a.qty;
+    };
+
+
+    const reporteGender = Object.keys(aggrGender).map(label => ({
+        label: label,
+        qty: Math.round(aggrGender[label])
+    })).sort(sortSpecial);
+
+    const reporteObsolencia = Object.keys(aggrObsolencia).map(label => ({
+        label: label,
+        qty: Math.round(aggrObsolencia[label])
+    })).sort(sortSpecial);
+
+
+
+    const reporteTemporadasQ = Object.keys(aggrAnual).map(año => ({
+        'Año': año,
+        'Q1': Math.round(aggrAnual[año].Q1),
+        'Q2': Math.round(aggrAnual[año].Q2),
+        'Q3': Math.round(aggrAnual[año].Q3),
+        'Q4': Math.round(aggrAnual[año].Q4),
+        'OTROS': Math.round(aggrAnual[año].OTROS),
+        'TOTAL': Math.round(aggrAnual[año].Total)
+    })).sort((a, b) => {
+        const bottom = ['ND', '(en blanco)', 'S/T', 'S/MAESTRO'];
+        const aIsBottom = bottom.includes(a.Año);
+        const bIsBottom = bottom.includes(b.Año);
+        
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        if (aIsBottom && bIsBottom) return bottom.indexOf(a.Año) - bottom.indexOf(b.Año);
+        
+        // Orden descendente por Año numérico
+        return b.Año.localeCompare(a.Año);
+    });
+
+    const detalleObsGen = [];
+    stockGlobalPorArticulo.forEach((qty, art) => {
+        const info = articulosMap.get(art) || { gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO' };
+        detalleObsGen.push({
+            'Articulo': art,
+            'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/MAESTRO',
+            'G. GENDER': info.gGender || 'S/MAESTRO',
+            'CANTIDAD': Math.round(qty)
+        });
+    });
+
+
     return { 
-        version: 'v12.1.27',
+        version: 'v12.1.103-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -965,6 +1149,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         waterfall: waterfall,
         resumenMatrix: matrixResumen,
         resumenMatrixSinStock: matrixSinStock,
-        sinStockSummary: sinStockSummary
+        sinStockSummary: sinStockSummary,
+        reporteTemporadasQ: reporteTemporadasQ,
+        reporteGender: reporteGender,
+        reporteObsolencia: reporteObsolencia,
+        detalleObsGen: detalleObsGen,
+        timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
