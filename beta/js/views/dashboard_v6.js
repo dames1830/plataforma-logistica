@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.95-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.96-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.95-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.96-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2269,7 +2269,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             
             <!-- REPORTE ARTICULO POR TEMPORADA (IZQUIERDA) -->
             <div style="flex:2.2;">
-                <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(255,255,255,0.1); box-shadow:0 15px 35px rgba(0,0,0,0.4); background:rgba(15,23,42,0.6);">
+                <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
                         <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">ARTICULO POR TEMPORADA</h3>
                         <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
@@ -2281,7 +2281,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
                             <thead>
                                 <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
-                                    <th style="text-align:left; padding:1rem 0.5rem;">AÑO</th>
+                                    <th style="text-align:left; padding:1rem 0.5rem; width:130px;">AÑO/TEMPORADA</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q1</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q2</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q3</th>
@@ -2320,24 +2320,26 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="flex:1; display:flex; flex-direction:column; gap:1.5rem;">
                 
                 <!-- REPORTE OBSOLESCENCIA -->
-                <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4);">
+                <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 15px rgba(16,185,129,0.15);">
                     <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;">⏳ OBSOLESCENCIA</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">TIPO OBSOLENCIA</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
                             ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.6rem 0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:#10b981; opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
                         </tbody>
+                        ${tO.length ? `<tfoot><tr style="background:rgba(16,185,129,0.1); color:#10b981; font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td style="text-align:center;">${tO.reduce((a,b)=>a+b.qty,0).toLocaleString()}</td></tr></tfoot>` : ''}
                     </table>
                 </div>
 
                 <!-- REPORTE G. GENDER -->
-                <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4);">
+                <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(251,191,36,0.5); box-shadow:0 0 15px rgba(251,191,36,0.15);">
                     <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;">👥 G. GENDER</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">G. GENDER</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
                             ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.6rem 0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:#fbbf24; opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
                         </tbody>
+                        ${tG.length ? `<tfoot><tr style="background:rgba(251,191,36,0.1); color:#fbbf24; font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td style="text-align:center;">${tG.reduce((a,b)=>a+b.qty,0).toLocaleString()}</td></tr></tfoot>` : ''}
                     </table>
                 </div>
 

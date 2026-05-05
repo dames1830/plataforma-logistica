@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.95: FINAL: Reverted to strict indices and removed first-row skip"
+git commit -m "BETA v12.1.96: FINAL: Added totals, neon borders, sorting and renamed headers"
 git push origin main

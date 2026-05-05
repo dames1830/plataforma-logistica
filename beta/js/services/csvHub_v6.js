@@ -1087,15 +1087,26 @@ export const calculateBufferPallets = (configOverride = null) => {
         aggrAnual[año].Total += qty;
     });
 
+    const sortSpecial = (a, b) => {
+        const bottom = ['S/MAESTRO', '(en blanco)', 'ND', 'OTROS'];
+        const aIsBottom = bottom.includes(a.label);
+        const bIsBottom = bottom.includes(b.label);
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        if (aIsBottom && bIsBottom) return bottom.indexOf(a.label) - bottom.indexOf(b.label);
+        return b.qty - a.qty;
+    };
+
     const reporteGender = Object.keys(aggrGender).map(label => ({
         label: label,
         qty: Math.round(aggrGender[label])
-    })).sort((a,b) => b.qty - a.qty);
+    })).sort(sortSpecial);
 
     const reporteObsolencia = Object.keys(aggrObsolencia).map(label => ({
         label: label,
         qty: Math.round(aggrObsolencia[label])
-    })).sort((a,b) => b.qty - a.qty);
+    })).sort(sortSpecial);
+
 
 
     const reporteTemporadasQ = Object.keys(aggrAnual).map(año => ({
@@ -1120,7 +1131,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.95-BETA',
+        version: 'v12.1.96-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
