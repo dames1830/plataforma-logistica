@@ -1103,7 +1103,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.77-BETA',
+        version: 'v12.1.78-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1114,6 +1114,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         resumenMatrix: matrixResumen,
         resumenMatrixSinStock: matrixSinStock,
         sinStockSummary: sinStockSummary,
-        reporteTemporadasQ: reporteTemporadasQ
+        reporteTemporadasQ: reporteTemporadasQ,
+        timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
