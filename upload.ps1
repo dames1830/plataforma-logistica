@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.91: RESTORE: Recovered title, date, export button and muted zeros"
+git commit -m "BETA v12.1.92: FINAL: ARTICULO POR TEMPORADA layout fixed with external buttons and footer totals"
 git push origin main

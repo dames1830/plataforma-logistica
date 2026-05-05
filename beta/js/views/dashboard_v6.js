@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.91-BETA';
-const CACHE_KEY = `logistics_v12_1_91_BETA_`;
+const VERSION = '12.1.92-BETA';
+const CACHE_KEY = `logistics_v12_1_92_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.91-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.92-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.91-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.92-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2145,7 +2145,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderAnalisisSKUTab = async () => {
-    contentSubtitle.textContent = "Consolidado de Inventario Global";
+    contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
 
     // Recuperar persistencia si existe (v12.1.76)
     if (!lastBufferResult) {
@@ -2259,68 +2259,86 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="width:100%; max-width:1400px; margin:0 auto;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.2rem; padding:0 0.5rem;">
-            <div>
-                <h3 style="color:#fff; font-weight:800; margin:0; font-size:1.2rem; letter-spacing:0.5px;">Análisis Artículo Global</h3>
-                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">🗓️ ACTUALIZADO: ${data.timestamp || 'N/A'}</span>
+        <div style="display:flex; gap:1.5rem; align-items: flex-start; margin-bottom:2rem;">
+            
+            <div style="flex:1;">
+                <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(255,255,255,0.1); box-shadow:0 15px 35px rgba(0,0,0,0.4); background:rgba(15,23,42,0.6);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
+                        <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">ARTICULO POR TEMPORADA</h3>
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                            📅 ${data.timestamp || '00/00/0000, 00:00:00'}
+                        </span>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                            <thead>
+                                <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
+                                    <th style="text-align:left; padding:1rem 0.5rem;">AÑO</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q1</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q2</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q3</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem;">Q4</th>
+                                    <th style="text-align:center; padding:1rem 0.5rem; background:rgba(79,70,229,0.05); color:#fff;">CANTIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tQ.map(row => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.Año}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; opacity: ${row.Q3 === 0 ? '0.15' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; opacity: ${row.Q4 === 0 ? '0.15' : '1'}">${(row.Q4 || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:900; color:var(--primary); background:rgba(79,70,229,0.02); opacity: ${row.TOTAL === 0 ? '0.15' : '1'}">${(row.TOTAL || 0).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot style="border-top:2px solid var(--border); background:rgba(79,70,229,0.05);">
+                                <tr style="font-weight:900; color:#fff; font-size:0.85rem;">
+                                    <td style="padding:1rem 0.5rem;">TOTAL GENERAL</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q1||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q2||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q3||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q4||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center; color:#fbbf24; background:rgba(0,0,0,0.2);">${tQ.reduce((s,r)=>s+(r.TOTAL||0),0).toLocaleString()}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div style="display:flex; gap:0.6rem;">
-                <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.75rem; background:#10b981; font-weight:800; border-radius:6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
-                    📥 EXPORTAR EXCEL
+
+            <div style="display:flex; flex-direction:column; gap:0.8rem; padding-top:1rem;">
+                <button id="btn_refresh_global" class="btn" style="width:180px; padding:1rem; font-size:0.75rem; background:rgba(79,70,229,0.05); border:1px solid var(--primary); font-weight:800; border-radius:8px; color:#fff;">
+                    🔄 RE-PROCESAR TODO
                 </button>
-                <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px;">
-                    🔄 RE-PROCESAR
+                <button id="btn_export_analisis" class="btn" style="width:180px; padding:1rem; font-size:0.75rem; background:rgba(16,185,129,0.05); border:1px solid #10b981; font-weight:800; border-radius:8px; color:#fff;">
+                    📥 EXPORTAR
                 </button>
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 2fr 1fr 1.2fr; gap:1rem; align-items: start;">
-          
-          <div class="glass-panel" style="padding:1rem; overflow-x:auto;">
-            <table class="data-table" style="width:100%; font-size:0.72rem; border-collapse:collapse;">
-              <thead>
-                <tr style="border-bottom:1px solid #333; color:var(--text-muted);">
-                    <th style="text-align:left; padding:0.5rem;">AÑO</th>
-                    <th style="text-align:center; padding:0.5rem;">Q1</th>
-                    <th style="text-align:center; padding:0.5rem;">Q2</th>
-                    <th style="text-align:center; padding:0.5rem;">Q3</th>
-                    <th style="text-align:center; padding:0.5rem;">Q4</th>
-                    <th style="text-align:center; padding:0.5rem; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tQ.map(row => `
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                        <td style="padding:0.5rem; font-weight:700; color:#fff;">${row.Año}</td>
-                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q1 === 0 ? '0.2' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q2 === 0 ? '0.2' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q3 === 0 ? '0.2' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q4 === 0 ? '0.2' : '1'}">${(row.Q4 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center; font-weight:800; color:var(--primary); background:rgba(79,70,229,0.02); opacity: ${row.TOTAL === 0 ? '0.2' : '1'}">${(row.TOTAL || 0).toLocaleString()}</td>
-                    </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
+        <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:1.2rem;">
 
-          <div class="glass-panel" style="padding:1rem;">
-            <table class="data-table" style="width:100%; font-size:0.72rem; border-collapse:collapse;">
-              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">GÉNERO</th><th style="text-align:center; padding:0.5rem;">CANT.</th></tr></thead>
-              <tbody>
-                ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.5rem; font-weight:700; color:#fbbf24; opacity: ${row.qty === 0 ? '0.2' : '1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="padding:1rem; text-align:center; opacity:0.3;">Sin datos</td></tr>'}
-              </tbody>
-            </table>
-          </div>
-
-          <div class="glass-panel" style="padding:1rem;">
-            <table class="data-table" style="width:100%; font-size:0.72rem; border-collapse:collapse;">
-              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">OBSOLESCENCIA</th><th style="text-align:center; padding:0.5rem;">CANT.</th></tr></thead>
-              <tbody>
-                ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.5rem; font-weight:700; color:#10b981; opacity: ${row.qty === 0 ? '0.2' : '1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="padding:1rem; text-align:center; opacity:0.3;">Sin datos</td></tr>'}
-              </tbody>
-            </table>
-          </div>
-
+            <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4);">
+                <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">👥 GÉNERO</h4>
+                <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                    <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">DESCRIPCIÓN</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
+                    <tbody>
+                        ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.6rem 0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:#fbbf24; opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+            <div class="glass-panel" style="padding:1.2rem; background:rgba(15,23,42,0.4);">
+                <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">⏳ OBSOLESCENCIA</h4>
+                <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                    <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">ESTADO</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
+                    <tbody>
+                        ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.6rem 0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:#10b981; opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
         </div>
       </div>
     `;
@@ -2332,14 +2350,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (exportBtn) {
         exportBtn.onclick = () => {
             const exportData = [];
-            tQ.forEach(r => exportData.push({ 'Categoría': 'TEMPORADA', 'Elemento': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'TOTAL': r.TOTAL }));
-            tG.forEach(r => exportData.push({ 'Categoría': 'GÉNERO', 'Elemento': r.label, 'TOTAL': r.qty }));
-            tO.forEach(r => exportData.push({ 'Categoría': 'OBSOLESCENCIA', 'Elemento': r.label, 'TOTAL': r.qty }));
+            tQ.forEach(r => exportData.push({ 'Categoría': 'TEMPORADA', 'Año': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'CANTIDAD': r.TOTAL }));
+            tG.forEach(r => exportData.push({ 'Categoría': 'GÉNERO', 'Descripción': r.label, 'CANTIDAD': r.qty }));
+            tO.forEach(r => exportData.push({ 'Categoría': 'OBSOLESCENCIA', 'Estado': r.label, 'CANTIDAD': r.qty }));
 
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Analisis_Global");
-            XLSX.writeFile(wb, `Analisis_Global_Inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Analisis_SKU");
+            XLSX.writeFile(wb, `Analisis_SKU_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
     }
   };
