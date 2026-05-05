@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.67-BETA';
-import * as adminService from '../services/adminService.js?v=12.1.66-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.68-BETA';
+import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.66-BETA';
-const CACHE_KEY = `logistics_v12_1_66_BETA_`;
+const VERSION = '12.1.68-BETA';
+const CACHE_KEY = `logistics_v12_1_68_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -24,7 +24,9 @@ const TABS = [
     { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
-  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
+  ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
@@ -154,7 +156,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.67-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.68-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1920,7 +1922,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.66-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.68-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2093,7 +2095,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.66-BETA'
+                        version: 'v12.1.68-BETA'
                     }]
                 },
                 options: {
@@ -2150,6 +2152,38 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Consolidado de Inventario Global";
     const data = lastBufferResult;
 
+    // Lógica de Subpestañas
+    const tabData = TABS.find(t => t.id === 'analisis_sku');
+    const subId = activeAdminSub || (tabData.subTabs ? tabData.subTabs[0].id : null);
+    
+    // Renderizar selector de subpestañas
+    let subNavHtml = '';
+    if (tabData.subTabs) {
+        subNavHtml = `
+            <div class="subtabs-container" style="margin-bottom:1.5rem; display:flex; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.4rem; border-radius:12px; width:fit-content;">
+                ${tabData.subTabs.map(st => `
+                    <button class="subtab-btn ${subId === st.id ? 'active' : ''}" 
+                            style="padding:0.6rem 1.2rem; border-radius:10px; border:none; cursor:pointer; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.5rem; transition:all 0.3s;
+                                   background:${subId === st.id ? 'var(--primary)' : 'transparent'}; 
+                                   color:${subId === st.id ? '#fff' : 'rgba(255,255,255,0.5)'};"
+                            onclick="window.setActiveSubTab('${st.id}')">
+                        <span>${st.icon}</span> ${st.label}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    if (subId !== 'articulo_temp') {
+        contentArea.innerHTML = subNavHtml + `
+            <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🚧</div>
+                <h4>Módulo en Desarrollo</h4>
+                <p>Esta sección estará disponible próximamente.</p>
+            </div>`;
+        return;
+    }
+
     const renderEmptyState = () => {
       contentArea.innerHTML = `
         <div class="glass-panel" style="padding:3rem; text-align:center;">
@@ -2191,16 +2225,16 @@ export const renderDashboard = async (container, user, onLogout) => {
       return;
     }
 
-    contentArea.innerHTML = `
+    contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
-        <div class="glass-panel" style="padding:1.5rem;">
+        <div class="glass-panel" style="padding:1.5rem; max-width:1000px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div style="display:flex; align-items:center; gap:1.5rem;">
                 <h3 style="margin:0; color:var(--primary); font-weight:800; letter-spacing:1px;">ANÁLISIS ARTÍCULO POR TEMPORADA</h3>
                 <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.7rem; background:rgba(255,255,255,0.05); border:1px solid var(--border);">🔄 RE-PROCESAR</button>
             </div>
             <button class="btn" style="width:auto; padding:0.5rem 1rem;" onclick="exportToExcel(lastBufferResult.reporteTemporadasQ, 'Reporte_Temporadas_Q')">
-              <i class="fas fa-file-excel"></i> EXPORTAR
+              <i class="fas fa-file-excel"></i> EXPORTAR TEMPORADAS
             </button>
           </div>
           
@@ -2249,7 +2283,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.67-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.68-BETA</span>
           </div>
         </div>
       </div>
