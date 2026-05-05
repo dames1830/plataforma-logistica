@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.70-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.71-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.70-BETA';
-const CACHE_KEY = `logistics_v12_1_70_BETA_`;
+const VERSION = '12.1.71-BETA';
+const CACHE_KEY = `logistics_v12_1_71_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -156,7 +156,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.70-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.71-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1927,7 +1927,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.69-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.71-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2100,7 +2100,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.69-BETA'
+                        version: 'v12.1.71-BETA'
                     }]
                 },
                 options: {
@@ -2161,14 +2161,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     const subId = activeAdminSub || (tabData.subTabs ? tabData.subTabs[0].id : null);
     
     let subNavHtml = `
-        <div class="subtabs-container" style="margin-bottom:1.5rem; display:flex; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.4rem; border-radius:12px; width:fit-content;">
+        <div class="subtabs-nav" style="margin-bottom:2rem;">
             ${tabData.subTabs.map(st => `
-                <button class="subtab-btn ${subId === st.id ? 'active' : ''}" 
-                        style="padding:0.6rem 1.2rem; border-radius:10px; border:none; cursor:pointer; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.5rem; transition:all 0.3s;
-                               background:${subId === st.id ? 'var(--primary)' : 'transparent'}; 
-                               color:${subId === st.id ? '#fff' : 'rgba(255,255,255,0.5)'};"
+                <button class="subtab-item ${subId === st.id ? 'active' : ''}" 
                         onclick="window.setActiveSubTab('${st.id}')">
-                    <span>${st.icon}</span> ${st.label}
+                    <span class="subtab-icon">${st.icon}</span>
+                    <span class="subtab-label">${st.label}</span>
                 </button>
             `).join('')}
         </div>
@@ -2280,7 +2278,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.70-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.71-BETA</span>
           </div>
         </div>
       </div>
