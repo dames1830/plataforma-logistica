@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.65-BETA';
-import * as adminService from '../services/adminService.js?v=12.1.64-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.66-BETA';
+import * as adminService from '../services/adminService.js?v=12.1.66-BETA';
 
 
-const VERSION = '12.1.64-BETA';
-const CACHE_KEY = `logistics_v12_1_64_BETA_`;
+const VERSION = '12.1.66-BETA';
+const CACHE_KEY = `logistics_v12_1_66_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -154,7 +154,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.65-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.66-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1920,7 +1920,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.64-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.66-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2093,7 +2093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.64-BETA'
+                        version: 'v12.1.66-BETA'
                     }]
                 },
                 options: {
@@ -2208,48 +2208,38 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table class="data-table" style="border-collapse: collapse;">
               <thead>
                 <tr>
-                  <th style="width:40px;"></th>
                   <th style="text-align:left;">TEMPORADA / AÑO</th>
-                  <th style="text-align:right;">QTY TOTAL</th>
+                  <th style="text-align:right;">Q1</th>
+                  <th style="text-align:right;">Q2</th>
+                  <th style="text-align:right;">Q3</th>
+                  <th style="text-align:right;">Q4</th>
+                  <th style="text-align:right;">OTROS</th>
+                  <th style="text-align:right;">TOTAL</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.reporteTemporadasQ.map((row, idx) => `
-                  <tr class="row-main" style="cursor:pointer; transition:background 0.2s;" onclick="toggleSeasonRow(${idx})">
-                    <td style="text-align:center; color:var(--primary);"><i id="icon_${idx}" class="fas fa-chevron-right"></i></td>
-                    <td style="font-weight:700; color:#fff;">${row.Temporada}</td>
-                    <td style="text-align:right; font-weight:800; color:var(--primary); font-family:'Roboto Mono', monospace;">${row.Qty.toLocaleString()}</td>
-                  </tr>
-                  <tr id="detail_${idx}" style="display:none; background:rgba(0,0,0,0.2);">
-                    <td colspan="3" style="padding:0;">
-                        <div style="padding:1rem 1rem 1rem 3rem;">
-                            <table style="width:100%; font-size:0.8rem; color:var(--text-muted); border-left:2px solid var(--primary);">
-                                <thead>
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <th style="text-align:left; padding:0.5rem;">DETALLE TEMPORADA (Q)</th>
-                                        <th style="text-align:right; padding:0.5rem;">CANTIDAD TOTAL</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${row.Detalle.map(d => `
-                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                                            <td style="padding:0.5rem; color:var(--primary); font-weight:500;">${d.Label}</td>
-                                            <td style="padding:0.5rem; text-align:right; font-family:'Roboto Mono', monospace; color:#fff;">${d.Qty.toLocaleString()}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </td>
+                  <tr style="transition:background 0.2s;">
+                    <td style="font-weight:700; color:#fff;">${row.Año}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q1 > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}">${row.Q1.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q2 > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}">${row.Q2.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q3 > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}">${row.Q3.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.Q4 > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}">${row.Q4.toLocaleString()}</td>
+                    <td style="text-align:right; font-family:'Roboto Mono', monospace; color:${row.OTROS > 0 ? '#fbbf24' : 'rgba(255,255,255,0.1)'}">${row.OTROS.toLocaleString()}</td>
+                    <td style="text-align:right; font-weight:800; color:#fff; font-family:'Roboto Mono', monospace; background:rgba(255,255,255,0.02);">${row.TOTAL.toLocaleString()}</td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
                 <tr style="background:rgba(255,255,255,0.1); border-top:2px solid var(--primary);">
-                  <td></td>
                   <td style="font-weight:900; color:var(--primary);">TOTAL GENERAL</td>
-                  <td style="text-align:right; font-weight:900; color:#fff; font-size:1.1rem;">
-                    ${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Qty, 0).toLocaleString()}
+                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q1, 0).toLocaleString()}</td>
+                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q2, 0).toLocaleString()}</td>
+                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q3, 0).toLocaleString()}</td>
+                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.Q4, 0).toLocaleString()}</td>
+                  <td style="text-align:right; font-weight:700; color:#fff;">${data.reporteTemporadasQ.reduce((acc, r) => acc + r.OTROS, 0).toLocaleString()}</td>
+                  <td style="text-align:right; font-weight:900; color:var(--primary); font-size:1.1rem;">
+                    ${data.reporteTemporadasQ.reduce((acc, r) => acc + r.TOTAL, 0).toLocaleString()}
                   </td>
                 </tr>
               </tfoot>
@@ -2259,7 +2249,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.65-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.66-BETA</span>
           </div>
         </div>
       </div>

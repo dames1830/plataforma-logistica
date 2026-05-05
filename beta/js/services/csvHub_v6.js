@@ -1043,43 +1043,60 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // Generar Reporte Temporadas Q agrupado por AÑO
+    // Generar Reporte Temporadas Q agrupado por AÑO con columnas Q1-Q4
     const aggrAnual = {};
     stockGlobalPorArticulo.forEach((qty, art) => {
         const info = articulosMap.get(art) || { temporada: 'S/MAESTRO' };
         const fullTemp = info.temporada || 'S/MAESTRO';
         
-        // Extraer el Año (los primeros 4 dígitos si es formato YYYY-X)
         let año = 'S/MAESTRO';
+        let qKey = 'OTROS';
+
+        // Lógica de extracción de Año y Q (Formatos: YYYY-Q, YYYY-X, YYYY)
         if (fullTemp.includes('-')) {
-            año = fullTemp.split('-')[0];
+            const parts = fullTemp.split('-');
+            año = parts[0];
+            const qPart = parts[1];
+            if (['1','2','3','4'].includes(qPart)) qKey = 'Q' + qPart;
+            else if (qPart.toUpperCase().includes('Q')) {
+                const match = qPart.match(/[1-4]/);
+                qKey = match ? 'Q' + match[0] : 'OTROS';
+            }
         } else if (/^\d{4}$/.test(fullTemp)) {
             año = fullTemp;
+            qKey = 'OTROS';
         } else {
-            año = fullTemp; // Para RECONTINUADOS, etc.
+            año = fullTemp;
         }
 
-        if (!aggrAnual[año]) aggrAnual[año] = { Qty: 0, Temporadas: {} };
-        aggrAnual[año].Qty += qty;
+        if (!aggrAnual[año]) {
+            aggrAnual[año] = { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OTROS: 0, Total: 0 };
+        }
         
-        if (!aggrAnual[año].Temporadas[fullTemp]) aggrAnual[año].Temporadas[fullTemp] = 0;
-        aggrAnual[año].Temporadas[fullTemp] += qty;
+        if (aggrAnual[año][qKey] !== undefined) {
+            aggrAnual[año][qKey] += qty;
+        } else {
+            aggrAnual[año].OTROS += qty;
+        }
+        aggrAnual[año].Total += qty;
     });
 
     const reporteTemporadasQ = Object.keys(aggrAnual).map(año => ({
-        'Temporada': año, // Mostramos el AÑO en la columna principal
-        'Qty': Math.round(aggrAnual[año].Qty),
-        'Detalle': Object.entries(aggrAnual[año].Temporadas)
-                    .map(([t, q]) => ({ Label: t, Qty: Math.round(q) }))
-                    .sort((a, b) => b.Label.localeCompare(a.Label))
+        'Año': año,
+        'Q1': Math.round(aggrAnual[año].Q1),
+        'Q2': Math.round(aggrAnual[año].Q2),
+        'Q3': Math.round(aggrAnual[año].Q3),
+        'Q4': Math.round(aggrAnual[año].Q4),
+        'OTROS': Math.round(aggrAnual[año].OTROS),
+        'TOTAL': Math.round(aggrAnual[año].Total)
     })).sort((a, b) => {
-        if (a.Temporada === 'S/MAESTRO') return 1;
-        if (b.Temporada === 'S/MAESTRO') return -1;
-        return b.Temporada.localeCompare(a.Temporada);
+        if (a.Año === 'S/MAESTRO') return 1;
+        if (b.Año === 'S/MAESTRO') return -1;
+        return b.Año.localeCompare(a.Año);
     });
 
     return { 
-        version: 'v12.1.65-BETA',
+        version: 'v12.1.66-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
