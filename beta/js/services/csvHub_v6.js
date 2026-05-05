@@ -449,32 +449,26 @@ export const calculateBufferPallets = (configOverride = null) => {
         return null;
     }
 
-    // [ESTRICTO] Coordenadas fijas para Maestro de Artículos
     const articulosMap = new Map();
-    // Usamos header: 1 para obtener arrays y acceder por índice fijo
-    articulos.forEach((row, idx) => {
-        if (idx === 0) return; // Saltar encabezados
+    // [ESTRICTO] Coordenadas fijas: B(1), C(2), K(10), J(9)
+    articulos.forEach((row) => {
         const raw = Array.isArray(row) ? row : Object.values(row);
         
-        // B: CodArticulo (Index 1)
         const skuVal = String(raw[1] || '').trim();
         const sku7 = skuVal.substring(0, 7);
         
         if (sku7 && !articulosMap.has(sku7)) {
             articulosMap.set(sku7, {
-                // C: G. Gender (Index 2)
                 gGender: String(raw[2] || '').trim(),
-                // D: Gender RIMS (Index 3)
                 gender: String(raw[3] || 'OTROS').trim().toUpperCase(),
-                // J: Coleccion PO (Index 9)
                 temporada: String(raw[9] || 'S/T').trim(),
-                // K: Tipo Obsolencia (Index 10)
                 tipoObsolencia: String(raw[10] || '').trim(),
-                // N: Marcas (Index 13)
                 marca: String(raw[13] || 'OTROS').trim()
             });
         }
     });
+
+
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
@@ -1126,7 +1120,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.94-BETA',
+        version: 'v12.1.95-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
