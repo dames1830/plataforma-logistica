@@ -758,10 +758,9 @@ export const calculateBufferPallets = (configOverride = null) => {
         const validAreas = ['AND', 'CDBUFFER', 'MZN01', 'MZN02', 'MZN03', 'MZN04', 'PARED', 'SEL', 'DIS', 'VER'];
         if (!validAreas.some(w => area.includes(w))) return;
         
-        const rawF = Object.values(f);
-        // ESTRICTO: SKU en Columna B (index 1) según indicación
-        let sku = String(rawF[1] || '').trim();
-        let qty = parseFloat(getCol(f, ['Cantidad actual', 'Cantidad', 'Cant.'])) || 0;
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let sku = String(rawF[2] || '').trim(); // SKU en Columna C (índice 2)
+        let qty = parseFloat(rawF[4]) || 0;     // Cantidad en Columna E (índice 4)
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
 
@@ -1149,7 +1148,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.1.100-BETA',
+        version: 'v12.1.101-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
