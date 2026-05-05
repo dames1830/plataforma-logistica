@@ -491,7 +491,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             if (diff > 0 && sku) {
                 if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
                 demanda[sku].total += diff;
-                demanda[sku].sources.push({ src: 'PEDIDO', qty: diff });
+                demanda[sku].sources.push({ src: 'PEDIDOS', qty: diff });
                 processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
             }
         });
@@ -673,7 +673,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: globalRQ, pct: '100.0%' });
     // (Para saber cuántos palets y SKUs corresponden a cada fuente)
     const empaqueAggr = {}; // { source: { type: { pal: Set, sku: Set, units: 0 } } }
-    const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+    const sources = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
     sources.forEach(s => {
         empaqueAggr[s] = {
             'SolidPack': { pal: new Set(), sku: new Set(), units: 0 },
@@ -807,16 +807,25 @@ export const calculateBufferPallets = (configOverride = null) => {
             }
         });
 
-        if (hasData) {
-            resEmp.push({
-                fuente: `TOTAL ${s}`,
-                tipo: '---',
-                paletas: sourcePallets.size,
-                skus: sourceSkus.size,
-                parcaja: Math.round(sourceUnits),
-                isSubTotal: true
+        // [MOD V12.1.43] SIEMPRE incluir la fuente, aunque esté en 0
+        if (!hasData) {
+            resEmp.push({ 
+                fuente: s, 
+                tipo: 'SolidPack', 
+                paletas: 0, 
+                skus: 0, 
+                parcaja: 0 
             });
         }
+
+        resEmp.push({
+            fuente: `TOTAL ${s}`,
+            tipo: '---',
+            paletas: sourcePallets.size,
+            skus: sourceSkus.size,
+            parcaja: Math.round(sourceUnits),
+            isSubTotal: true
+        });
     });
 
     if (resEmp.length) {
