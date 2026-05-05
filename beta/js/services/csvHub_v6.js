@@ -1103,7 +1103,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.85-BETA',
+        version: 'v12.1.86-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
