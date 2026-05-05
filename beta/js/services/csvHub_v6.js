@@ -303,15 +303,7 @@ export const parseFile = (file, area) => {
                   });
               }
           } else {
-              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-              let headerIdx = 0;
-              for(let i=0; i<Math.min(rows.length, 10); i++) {
-                  const rowStr = JSON.stringify(rows[i]).toUpperCase();
-                  if(rowStr.includes('PRODUCTO') || rowStr.includes('ARTICULO') || rowStr.includes('CODARTICULO')) {
-                      headerIdx = i; break;
-                  }
-              }
-              jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerIdx, defval: "" });
+              jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
           }
 
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
@@ -540,16 +532,18 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
-            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto', 'Cod. Articulo']) || '').trim();
-            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada', 'Unidades', 'Q'])) || 0;
+            const raw = Object.values(row);
+            const sku = String(raw[0] || '').trim();
+            const qty = parseFloat(raw[1]) || 0;
             if (sku && qty > 0) rawDemand['OTRAS SOLICITUDES'].push({ sku, qty });
         });
     }
 
     if (tallas && tallas.length) {
         tallas.forEach(row => {
-            const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto', 'Cod. Articulo']) || '').trim();
-            const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada', 'Unidades', 'Q'])) || 0;
+            const raw = Object.values(row);
+            const sku = String(raw[0] || '').trim();
+            const qty = parseFloat(raw[1]) || 0;
             if (sku && qty > 0) rawDemand['REPLENISHMENT'].push({ sku, qty });
         });
     }
@@ -1073,7 +1067,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.58-BETA',
+        version: 'v12.1.60-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
