@@ -104,6 +104,22 @@ const VERSION = '11.1.37-pulse';
 const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
+const getCol = (row, names) => {
+    if (!row) return null;
+    const normalize = (str) => String(str || '').toUpperCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/[^A-Z0-9]/g, ''); // Quitar todo lo que no sea letra o número
+
+    const rowKeys = Object.keys(row);
+    for (let n of names) {
+        if (row[n] !== undefined) return row[n];
+        const target = normalize(n);
+        const found = rowKeys.find(k => normalize(k) === target);
+        if (found) return row[found];
+    }
+    return null;
+};
+
 export const setDateFilter = (newDateStr) => {
     if (currentDateFilter !== newDateStr) {
         currentDateFilter = newDateStr;
@@ -238,22 +254,6 @@ export const logSystemAction = async (username, action, details) => {
     } catch (e) { console.error("Error al loguear acción:", e); }
 };
 
-// Helper para extraer columnas de forma robusta
-const getCol = (row, possibleNames) => {
-    if (!row) return null;
-    const keys = Object.keys(row);
-    // Normalización extrema: Quita acentos, barras (macrones), tildes y espacios
-    const normalize = (s) => String(s || '').toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Quita diacríticos
-        .replace(/[^a-z0-9]/g, "")      // Deja solo letras y números
-        .trim();
-    
-    const names = possibleNames.map(normalize);
-    const foundKey = keys.find(k => names.includes(normalize(k)));
-    return foundKey ? row[foundKey] : null;
-};
-
 export const parseFile = (file, area) => {
   return new Promise((resolve, reject) => {
     if (!file) return reject('Archivo inválido');
@@ -303,19 +303,7 @@ export const parseFile = (file, area) => {
                   });
               }
           } else {
-              if (area === 'articulos') {
-                  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                  let hIdx = 0;
-                  for(let i=0; i<Math.min(rows.length, 15); i++) {
-                      const rowStr = JSON.stringify(rows[i]).toUpperCase();
-                      if(rowStr.includes('ARTICULO') || rowStr.includes('PRODUCTO') || rowStr.includes('TEMPORADA')) {
-                          hIdx = i; break;
-                      }
-                  }
-                  jsonData = XLSX.utils.sheet_to_json(sheet, { range: hIdx, defval: "" });
-              } else {
-                  jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
-              }
+              jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
           }
 
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
@@ -461,18 +449,29 @@ export const calculateBufferPallets = (configOverride = null) => {
         return null;
     }
 
-    // [OPTIMIZACIÓN V12.1.51] Búsqueda inteligente por nombre de columna
+    // [ESTRICTO] Coordenadas fijas para Maestro de Artículos
     const articulosMap = new Map();
-    articulos.forEach(a => {
-        const skuVal = String(getCol(a, ['ARTICULO', 'CodArticulo', 'Codigo', 'SKU', 'Articulo']) || '').trim();
+    // Usamos header: 1 para obtener arrays y acceder por índice fijo
+    articulos.forEach((row, idx) => {
+        if (idx === 0) return; // Saltar encabezados
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        
+        // B: CodArticulo (Index 1)
+        const skuVal = String(raw[1] || '').trim();
         const sku7 = skuVal.substring(0, 7);
+        
         if (sku7 && !articulosMap.has(sku7)) {
-            const m = String(getCol(a, ['Marcas', 'Marca', 'Brand', 'MARCA', 'Marca Comercial', 'Línea', 'LINEA', 'Fabricante', 'Manufacturer']) || 'Otros').trim();
             articulosMap.set(sku7, {
-                gender: String(getCol(a, ['Gender RIMS', 'Genero', 'Gender', 'Categoria', 'Division', 'Seccion', 'Sexo', 'GÉNERO', 'CATEGORÍA', 'SEXO']) || 'OTROS').toUpperCase(),
-                marca: m,
-                temporada: String(getCol(a, ['Temporada', 'Season', 'TEMPORADA', 'Seasonality', 'Temporada Venta', 'Venta', 'Año', 'Year']) || 'S/T').trim(),
-                empaque: String(getCol(a, ['Tipo de empaque', 'Tipo', 'Empaque']) || '').toUpperCase()
+                // C: G. Gender (Index 2)
+                gGender: String(raw[2] || '').trim(),
+                // D: Gender RIMS (Index 3)
+                gender: String(raw[3] || 'OTROS').trim().toUpperCase(),
+                // J: Coleccion PO (Index 9)
+                temporada: String(raw[9] || 'S/T').trim(),
+                // K: Tipo Obsolencia (Index 10)
+                tipoObsolencia: String(raw[10] || '').trim(),
+                // N: Marcas (Index 13)
+                marca: String(raw[13] || 'OTROS').trim()
             });
         }
     });
@@ -944,6 +943,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             });
             return row;
         });
+
         if (rows.length > 0) {
             const totalRow = { marca: 'TOTAL', breakdown: {}, total: 0 };
             sorted.forEach(g => {
@@ -1079,7 +1079,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.63-BETA',
+        version: 'v12.1.65-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
