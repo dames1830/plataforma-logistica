@@ -15,65 +15,84 @@ export const dataStore = {
 };
 
 // =============================================
-// OPTIMIZACIÓN: CACHÉ PERSISTENTE En localStorage
+// OPTIMIZACIÓN: BASE DE DATOS LOCAL (IndexedDB)
 // =============================================
-const LS_PREFIX = 'logistics_cache_';
-const META_PREFIX = 'logistics_meta_'; // Almacenamiento pequeño para persistencia de fechas
-const LS_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de validez
+const DB_NAME = 'LogisticsPulseDB';
+const STORE_NAME = 'DataCache';
+const DB_VERSION = 1;
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas de validez
 
-const saveToLS = (area, data) => {
-    const ts = Date.now();
-    try {
-        // NIVEL 1: Metadatos (Siempre se guardan, muy pequeños)
-        localStorage.setItem(META_PREFIX + area, JSON.stringify({ ts }));
-    } catch(e) { console.warn("Error guardando meta:", e); }
-
-    try {
-        // NIVEL 2: Datos (Pueden fallar si localStorage está lleno)
-        localStorage.setItem(LS_PREFIX + area, JSON.stringify({ ts, data }));
-    } catch(e) { console.warn("Quota Full: Datos no persistidos localmente para " + area); }
+const openDB = () => {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
 };
 
-const loadFromLS = (area) => {
+const saveToDB = async (key, data) => {
     try {
-        const raw = localStorage.getItem(LS_PREFIX + area);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (Date.now() - parsed.ts > LS_TTL_MS) {
-            localStorage.removeItem(LS_PREFIX + area);
-            return null;
-        }
-        return parsed.data;
-    } catch(e) { return null; }
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({ data, ts: Date.now() }, key);
+        // Guardar meta en LS para acceso rápido UI (indicadores verdes)
+        localStorage.setItem('meta_' + key, JSON.stringify({ ts: Date.now(), hasData: true }));
+    } catch (err) { console.error("Error IndexedDB Save:", err); }
+};
+
+const loadFromDB = async (key) => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get(key);
+            req.onsuccess = () => {
+                if (req.result && (Date.now() - req.result.ts < CACHE_TTL)) {
+                    resolve(req.result.data);
+                } else resolve(null);
+            };
+            req.onerror = () => resolve(null);
+        });
+    } catch (err) { return null; }
 };
 
 export const getUploadMeta = (area) => {
     try {
-        // Intentar recuperar de la tabla de metadatos primero
-        const metaRaw = localStorage.getItem(META_PREFIX + area);
-        if (metaRaw) return JSON.parse(metaRaw);
-
-        // Fallback: intentar recuperar del caché de datos si el meta no existe
-        const raw = localStorage.getItem(LS_PREFIX + area);
-        if (!raw) return null;
-        return JSON.parse(raw);
+        const meta = localStorage.getItem('meta_' + area);
+        return meta ? JSON.parse(meta) : null;
     } catch(e) { return null; }
 };
 
-const clearLS = () => {
-    Object.keys(dataStore).forEach(k => {
-        localStorage.removeItem(LS_PREFIX + k);
-        localStorage.removeItem(META_PREFIX + k);
-    });
+const clearDB = async () => {
+    try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).clear();
+        Object.keys(dataStore).forEach(k => localStorage.removeItem('meta_' + k));
+    } catch(e) {}
 };
 
-// Inicializar dataStore desde localStorage al cargar la app
-(() => {
-    Object.keys(dataStore).forEach(area => {
-        const cached = loadFromLS(area);
-        if (cached) dataStore[area] = cached;
-    });
-})();
+// Inicializar dataStore desde IndexedDB al cargar la app
+export const initPersistentData = async () => {
+    for (const area of Object.keys(dataStore)) {
+        const cached = await loadFromDB(area);
+        if (cached) {
+            dataStore[area] = cached;
+            console.log(`[PULSE] Recuperado ${area} de DB Local.`);
+        }
+    }
+};
+
+// Iniciar carga en segundo plano
+initPersistentData();
 
 // Control Trazabilidad: Fecha seleccionada (null = Fecha Actual/Más reciente)
 export let currentDateFilter = null;
@@ -90,7 +109,7 @@ export const setDateFilter = (newDateStr) => {
         currentDateFilter = newDateStr;
         // Limpiamos la memoria caché al viajar por el tiempo
         Object.keys(dataStore).forEach(k => dataStore[k] = null);
-        clearLS();
+        clearDB();
     }
 };
 
@@ -337,24 +356,27 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
         });
         if(response.ok) {
            dataStore[area] = payload;
-           saveToLS(area, payload);
+        await saveToDB(area, payload);
            await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
         } else {
            dataStore[area] = payload;
-           saveToLS(area, payload);
+        await saveToDB(area, payload);
         }
     } catch (err) {
         dataStore[area] = payload;
-        saveToLS(area, payload);
+        await saveToDB(area, payload);
     }
 };
 
 export const clearAreaData = async (area, username = 'sistema') => {
     dataStore[area] = null;
-    localStorage.removeItem(LS_PREFIX + area);
-    localStorage.removeItem(META_PREFIX + area);
+    localStorage.removeItem('meta_' + area);
     
     try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(area);
+        
         // Enviar array vacío al servidor para "limpiar" la persistencia remota
         await fetch(`${API_URL}/${area}`, {
             method: 'POST',
@@ -369,8 +391,13 @@ export const clearAreaData = async (area, username = 'sistema') => {
 
 export const getAreaData = async (area) => {
   if (dataStore[area] !== null) return dataStore[area];
-  const lsData = loadFromLS(area);
-  if (lsData) { dataStore[area] = lsData; return lsData; }
+  
+  // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
+  const dbData = await loadFromDB(area);
+  if (dbData) { 
+      dataStore[area] = dbData; 
+      return dbData; 
+  }
 
   try {
      let queryURL = `${API_URL}/${area}`;
@@ -380,11 +407,11 @@ export const getAreaData = async (area) => {
          const serverResponse = await response.json();
          if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
              dataStore[area] = serverResponse.data;
-             saveToLS(area, serverResponse.data);
+             await saveToDB(area, serverResponse.data); // Sincronizar cache local
              return serverResponse.data;
          }
      }
-  } catch (err) { console.warn(`Backend lento para '${area}'.`); }
+  } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
   return null;
 };
 
