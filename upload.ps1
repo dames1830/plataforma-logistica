@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.69: FIX: Reset sub-tab state when switching main tabs"
+git commit -m "BETA v12.1.70: UPDATE: Reorganize SKU Analysis UI for direct sub-tab access"
 git push origin main

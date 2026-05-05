@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.69-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.70-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.68-BETA';
-const CACHE_KEY = `logistics_v12_1_68_BETA_`;
+const VERSION = '12.1.70-BETA';
+const CACHE_KEY = `logistics_v12_1_70_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -156,7 +156,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.69-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.70-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2155,30 +2155,26 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "Consolidado de Inventario Global";
-    const data = lastBufferResult;
 
-    // Lógica de Subpestañas
+    // 1. Lógica de Subpestañas (Siempre visible)
     const tabData = TABS.find(t => t.id === 'analisis_sku');
     const subId = activeAdminSub || (tabData.subTabs ? tabData.subTabs[0].id : null);
     
-    // Renderizar selector de subpestañas
-    let subNavHtml = '';
-    if (tabData.subTabs) {
-        subNavHtml = `
-            <div class="subtabs-container" style="margin-bottom:1.5rem; display:flex; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.4rem; border-radius:12px; width:fit-content;">
-                ${tabData.subTabs.map(st => `
-                    <button class="subtab-btn ${subId === st.id ? 'active' : ''}" 
-                            style="padding:0.6rem 1.2rem; border-radius:10px; border:none; cursor:pointer; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.5rem; transition:all 0.3s;
-                                   background:${subId === st.id ? 'var(--primary)' : 'transparent'}; 
-                                   color:${subId === st.id ? '#fff' : 'rgba(255,255,255,0.5)'};"
-                            onclick="window.setActiveSubTab('${st.id}')">
-                        <span>${st.icon}</span> ${st.label}
-                    </button>
-                `).join('')}
-            </div>
-        `;
-    }
+    let subNavHtml = `
+        <div class="subtabs-container" style="margin-bottom:1.5rem; display:flex; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.4rem; border-radius:12px; width:fit-content;">
+            ${tabData.subTabs.map(st => `
+                <button class="subtab-btn ${subId === st.id ? 'active' : ''}" 
+                        style="padding:0.6rem 1.2rem; border-radius:10px; border:none; cursor:pointer; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.5rem; transition:all 0.3s;
+                               background:${subId === st.id ? 'var(--primary)' : 'transparent'}; 
+                               color:${subId === st.id ? '#fff' : 'rgba(255,255,255,0.5)'};"
+                        onclick="window.setActiveSubTab('${st.id}')">
+                    <span>${st.icon}</span> ${st.label}
+                </button>
+            `).join('')}
+        </div>
+    `;
 
+    // 2. Control de contenido por Subpestaña
     if (subId !== 'articulo_temp') {
         contentArea.innerHTML = subNavHtml + `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
@@ -2189,46 +2185,42 @@ export const renderDashboard = async (container, user, onLogout) => {
         return;
     }
 
-    const renderEmptyState = () => {
-      contentArea.innerHTML = `
-        <div class="glass-panel" style="padding:3rem; text-align:center;">
-          <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🔍</div>
-          <h3 style="color:#fff;">Análisis SKU Global</h3>
-          <p style="color:var(--text-muted); margin-bottom:2rem;">Presiona el botón para consolidar el Stock Activo y Reserva por Artículo y Temporada.</p>
-          <button id="btn_run_global" class="btn" style="background:var(--primary); font-weight:800; padding:1rem 2.5rem;">⚡ PROCESAR REPORTE GLOBAL</button>
-        </div>`;
-      
-      const btn = document.getElementById('btn_run_global');
-      if (btn) btn.onclick = runGlobalAnalysis;
-    };
-
     const runGlobalAnalysis = async () => {
       const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
-      const oldHtml = btn ? btn.innerHTML : '';
       if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
-      
       setTimeout(async () => {
         try {
-          const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
-          const res = calculateBufferPallets(config);
-          if (res) {
-            lastBufferResult = res;
-            renderAnalisisSKUTab(); // Refrescar vista con datos
-          } else {
-            alert('⚠️ ERROR: Asegúrate de haber cargado Stock Activo, Stock Reserva y Maestro.');
-          }
+          lastBufferResult = await generateKPIs();
+          renderAnalisisSKUTab();
         } catch (err) {
-          alert("Error: " + err.message);
-        } finally {
-          if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+          console.error(err);
+          alert('❌ Error al procesar datos.');
+          if (btn) { btn.disabled = false; btn.innerHTML = '⚡ PROCESAR REPORTE ARTÍCULO'; }
         }
-      }, 500);
+      }, 50);
     };
 
-    if (!data || !data.reporteTemporadasQ) {
-      renderEmptyState();
-      return;
+    if (!lastBufferResult) {
+        contentArea.innerHTML = subNavHtml + `
+            <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border: 1px dashed rgba(255,255,255,0.1);">
+                <div style="margin-bottom:2rem;">
+                    <img src="https://img.icons8.com/fluency/96/000000/search-property.png" style="opacity:0.6; filter:grayscale(0.5);"/>
+                </div>
+                <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">Análisis Artículo Global</h3>
+                <p style="color:var(--text-muted); max-width:500px; margin:0 auto 2.5rem;">
+                    Presiona el botón para consolidar el Stock Activo y Reserva por Artículo y Temporada.
+                </p>
+                <button id="btn_run_global" class="btn" style="max-width:400px; padding:1.2rem; font-weight:800; font-size:1rem; letter-spacing:1px; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);">
+                    ⚡ PROCESAR REPORTE ARTÍCULO
+                </button>
+            </div>
+        `;
+        const btn = document.getElementById('btn_run_global');
+        if (btn) btn.onclick = runGlobalAnalysis;
+        return;
     }
+
+    const data = lastBufferResult;
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
@@ -2288,7 +2280,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.69-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.70-BETA</span>
           </div>
         </div>
       </div>
