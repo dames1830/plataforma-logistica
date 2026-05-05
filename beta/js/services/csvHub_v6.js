@@ -477,52 +477,63 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // CONSOLIDACIÓN DE DEMANDA MULTI-FUENTE (CON JERARQUÍA)
-    let demanda = {}; // sku -> { total: X, sources: [ {src, qty} ] }
-    let processedSKUs = new Set();
-    
-    // 1. PRIORIDAD: PEDIDOS (CSV)
+    // [MOD V12.1.46] NUEVA LÓGICA DE CONSOLIDACIÓN POR PRIORIDAD
+    // 1. Recolectar datos crudos de todas las fuentes
+    const rawDemand = {
+        'PEDIDOS': [],
+        'OTRAS SOLICITUDES': [],
+        'REPLENISHMENT': []
+    };
+
     if (pedidos && pedidos.length) {
         pedidos.forEach(f => {
             let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo']) || '').trim();
             let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada'])) || 0;
             let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada'])) || 0;
             let diff = cant - asig;
-            if (diff > 0 && sku) {
-                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-                demanda[sku].total += diff;
-                demanda[sku].sources.push({ src: 'PEDIDOS', qty: diff });
-                processedSKUs.add(sku); // Bloqueamos este SKU para fuentes de menor prioridad
-            }
+            if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
         });
     }
 
-
-    // 2. PRIORIDAD: OTRAS SOLICITUDES (XLSX)
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
             const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
             const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
-            if (sku && qty > 0) {
-                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-                demanda[sku].total += qty;
-                demanda[sku].sources.push({ src: 'OTRAS SOLICITUDES', qty: qty });
-            }
+            if (sku && qty > 0) rawDemand['OTRAS SOLICITUDES'].push({ sku, qty });
         });
     }
 
-    // 3. PRIORIDAD: REPLENISHMENT (XLSX)
     if (tallas && tallas.length) {
         tallas.forEach(row => {
             const sku = String(getCol(row, ['Articulo', 'SKU', 'Codigo', 'CodArticulo', 'Producto']) || '').trim();
             const qty = parseFloat(getCol(row, ['Cantidad', 'QTY', 'Cant', 'Solicitado', 'Solicitada'])) || 0;
-            if (sku && qty > 0) {
-                if (!demanda[sku]) demanda[sku] = { total: 0, sources: [] };
-                demanda[sku].total += qty;
-                demanda[sku].sources.push({ src: 'REPLENISHMENT', qty: qty });
-            }
+            if (sku && qty > 0) rawDemand['REPLENISHMENT'].push({ sku, qty });
         });
     }
+
+    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente (Jerarquía: Pedidos > Otras > Replenish)
+    let tempMap = {}; // sku -> { total: 0, bestSrc: null }
+    const hierarchy = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+
+    hierarchy.forEach(src => {
+        rawDemand[src].forEach(item => {
+            if (!tempMap[item.sku]) {
+                tempMap[item.sku] = { total: 0, bestSrc: src };
+            }
+            tempMap[item.sku].total += item.qty;
+            // No cambiamos bestSrc porque el primero que lo puso (según jerarquía) gana
+        });
+    });
+
+    // 3. Convertir al formato final de 'demanda'
+    let demanda = {};
+    Object.keys(tempMap).forEach(sku => {
+        const item = tempMap[sku];
+        demanda[sku] = {
+            total: item.total,
+            sources: [{ src: item.bestSrc, qty: item.total }]
+        };
+    });
 
     let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
     let globalRQ = 0, totalsByNivel = {};
@@ -593,10 +604,10 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     const nivelesMap = {
-        'Bajas': '1. ZONAS BAJAS',
-        'Alto': '2. ALTO',
-        'Piso': '3. PISOS',
-        'Aereo': '4. AEREO',
+        'Alto': '1. ALTO',
+        'Piso': '2. PISO',
+        'Bajas': '3. BAJAS',
+        'Aereo': '4. AÉREO',
         'Logico': '5. LÓGICO',
         'Merma': '6. MERMA'
     };
@@ -807,7 +818,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         resEmp.push({
             fuente: `TOTAL ${s}`,
-            tipo: '---',
+            tipo: '',
             paletas: sourcePallets.size,
             skus: sourceSkus.size,
             parcaja: Math.round(sourceUnits),
@@ -818,7 +829,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     if (resEmp.length) {
         resEmp.push({ 
             fuente: 'TOTAL GENERAL', 
-            tipo: '---', 
+            tipo: '', 
             paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, 
             skus: new Set(detallePallets.map(d=>d.SKU)).size, 
             parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 

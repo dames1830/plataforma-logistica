@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.44: Full fixed structure (Sources + Solid/Pree Types)"
+git commit -m "BETA v12.1.46: Strict Priority Consolidation (Sum & Pull to Higher Hierarchy)"
 git push origin main
