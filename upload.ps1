@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.78: UI Polish: Center values, dim zeros, move buttons outside, add timestamps"
+git commit -m "BETA v12.1.79: RESTRUCTURE: Buttons outside, Title/Time inside panel"
 git push origin main
