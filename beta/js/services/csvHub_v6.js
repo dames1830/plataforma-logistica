@@ -1090,13 +1090,20 @@ export const calculateBufferPallets = (configOverride = null) => {
         'OTROS': Math.round(aggrAnual[año].OTROS),
         'TOTAL': Math.round(aggrAnual[año].Total)
     })).sort((a, b) => {
-        if (a.Año === 'S/MAESTRO') return 1;
-        if (b.Año === 'S/MAESTRO') return -1;
+        const bottom = ['ND', '(en blanco)', 'S/T', 'S/MAESTRO'];
+        const aIsBottom = bottom.includes(a.Año);
+        const bIsBottom = bottom.includes(b.Año);
+        
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        if (aIsBottom && bIsBottom) return bottom.indexOf(a.Año) - bottom.indexOf(b.Año);
+        
+        // Orden descendente por Año numérico
         return b.Año.localeCompare(a.Año);
     });
 
     return { 
-        version: 'v12.1.66-BETA',
+        version: 'v12.1.67-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
