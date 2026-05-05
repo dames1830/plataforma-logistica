@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.90-BETA';
-const CACHE_KEY = `logistics_v12_1_90_BETA_`;
+const VERSION = '12.1.91-BETA';
+const CACHE_KEY = `logistics_v12_1_91_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.90-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.91-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.90-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.91-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2259,10 +2259,19 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="width:100%; max-width:1400px; margin:0 auto;">
-        <div style="display:flex; justify-content:flex-end; margin-bottom:0.8rem;">
-            <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:4px;">
-                RE-PROCESAR TODO
-            </button>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.2rem; padding:0 0.5rem;">
+            <div>
+                <h3 style="color:#fff; font-weight:800; margin:0; font-size:1.2rem; letter-spacing:0.5px;">Análisis Artículo Global</h3>
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">🗓️ ACTUALIZADO: ${data.timestamp || 'N/A'}</span>
+            </div>
+            <div style="display:flex; gap:0.6rem;">
+                <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.75rem; background:#10b981; font-weight:800; border-radius:6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                    📥 EXPORTAR EXCEL
+                </button>
+                <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px;">
+                    🔄 RE-PROCESAR
+                </button>
+            </div>
         </div>
 
         <div style="display:grid; grid-template-columns: 2fr 1fr 1.2fr; gap:1rem; align-items: start;">
@@ -2283,11 +2292,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${tQ.map(row => `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                         <td style="padding:0.5rem; font-weight:700; color:#fff;">${row.Año}</td>
-                        <td style="padding:0.5rem; text-align:center;">${(row.Q1 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center;">${(row.Q2 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center;">${(row.Q3 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center;">${(row.Q4 || 0).toLocaleString()}</td>
-                        <td style="padding:0.5rem; text-align:center; font-weight:800; color:var(--primary); background:rgba(79,70,229,0.02);">${(row.TOTAL || 0).toLocaleString()}</td>
+                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q1 === 0 ? '0.2' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
+                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q2 === 0 ? '0.2' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
+                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q3 === 0 ? '0.2' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
+                        <td style="padding:0.5rem; text-align:center; opacity: ${row.Q4 === 0 ? '0.2' : '1'}">${(row.Q4 || 0).toLocaleString()}</td>
+                        <td style="padding:0.5rem; text-align:center; font-weight:800; color:var(--primary); background:rgba(79,70,229,0.02); opacity: ${row.TOTAL === 0 ? '0.2' : '1'}">${(row.TOTAL || 0).toLocaleString()}</td>
                     </tr>
                 `).join('')}
               </tbody>
@@ -2298,7 +2307,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table class="data-table" style="width:100%; font-size:0.72rem; border-collapse:collapse;">
               <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">GÉNERO</th><th style="text-align:center; padding:0.5rem;">CANT.</th></tr></thead>
               <tbody>
-                ${tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.5rem; font-weight:700; color:#fbbf24;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
+                ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.5rem; font-weight:700; color:#fbbf24; opacity: ${row.qty === 0 ? '0.2' : '1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="padding:1rem; text-align:center; opacity:0.3;">Sin datos</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -2307,7 +2316,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <table class="data-table" style="width:100%; font-size:0.72rem; border-collapse:collapse;">
               <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">OBSOLESCENCIA</th><th style="text-align:center; padding:0.5rem;">CANT.</th></tr></thead>
               <tbody>
-                ${tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.5rem; font-weight:700; color:#10b981;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
+                ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.5rem; color:#fff;">${row.label}</td><td style="text-align:center; padding:0.5rem; font-weight:700; color:#10b981; opacity: ${row.qty === 0 ? '0.2' : '1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="padding:1rem; text-align:center; opacity:0.3;">Sin datos</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -2318,6 +2327,21 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const refreshBtn = document.getElementById('btn_refresh_global');
     if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;
+
+    const exportBtn = document.getElementById('btn_export_analisis');
+    if (exportBtn) {
+        exportBtn.onclick = () => {
+            const exportData = [];
+            tQ.forEach(r => exportData.push({ 'Categoría': 'TEMPORADA', 'Elemento': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'TOTAL': r.TOTAL }));
+            tG.forEach(r => exportData.push({ 'Categoría': 'GÉNERO', 'Elemento': r.label, 'TOTAL': r.qty }));
+            tO.forEach(r => exportData.push({ 'Categoría': 'OBSOLESCENCIA', 'Elemento': r.label, 'TOTAL': r.qty }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Analisis_Global");
+            XLSX.writeFile(wb, `Analisis_Global_Inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+        };
+    }
   };
 
   renderNav();
