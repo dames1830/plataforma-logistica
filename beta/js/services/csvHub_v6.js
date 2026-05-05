@@ -647,6 +647,21 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
+    const getArtInfo = (sku) => {
+        if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        const sku7 = sku.trim().substring(0, 7);
+        const info = articulosMap.get(sku7);
+        if (!info) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        
+        let m = info.marca;
+        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) m = 'BG Licenses';
+        else if (m.toUpperCase().includes('BUBBLEGUMMERS')) m = 'BG';
+        else if (m.toUpperCase().includes('BATA INDUSTRIALS')) m = 'Industrials';
+        else if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) m = '11 COMPLEMENTS';
+
+        return { gender: info.gender, marca: m };
+    };
+
     const nivelesMap = {
         'Bajas': '1. BAJAS',
         'Alto': '2. ALTO',
@@ -844,14 +859,16 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     Object.keys(demanda).forEach(sku => {
         const d = demanda[sku];
-        const info = getArtInfo(sku);
-        const type = info.tipo; 
+        const type = sku.trim().length >= 14 ? 'PreePack' : 'SolidPack';
         const src = d.sources[0].src; 
 
         if (r[src] && r[src][type]) {
             r[src][type].qty += d.total;
             r[src][type].skus++;
-            r[src][type].pal += (d.total / (info.unidadesPorPalet || 1));
+            // Nota: Para paletas usamos el maestro si existe, sino 1
+            const sku7 = sku.trim().substring(0, 7);
+            const info = articulosMap.get(sku7);
+            r[src][type].pal += (d.total / (info?.unidadesPorPalet || 1));
         }
     });
 
@@ -898,20 +915,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     }
 
     // 2. MATRIZ DE DISCREPANCIAS (YA OPTIMIZADA AL INICIO)
-    const getArtInfo = (sku) => {
-        if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        const sku7 = sku.trim().substring(0, 7);
-        const info = articulosMap.get(sku7);
-        if (!info) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        
-        let m = info.marca;
-        if (m.toUpperCase().includes('BUBBLEGUMMERS LICENSES')) m = 'BG Licenses';
-        else if (m.toUpperCase().includes('BUBBLEGUMMERS')) m = 'BG';
-        else if (m.toUpperCase().includes('BATA INDUSTRIALS')) m = 'Industrials';
-        else if (m.toUpperCase().includes('11 NON COMMERCIAL COMPLEMENTS')) m = '11 COMPLEMENTS';
 
-        return { gender: info.gender, marca: m };
-    };
 
     const buildMatrix = (filterFn) => {
         const aggr = {};
@@ -1069,7 +1073,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     return { 
-        version: 'v12.1.57-BETA',
+        version: 'v12.1.58-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 

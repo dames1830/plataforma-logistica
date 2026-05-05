@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.57: RESTORE: Strict original hierarchy (Pedidos wins) and original search logic"
+git commit -m "BETA v12.1.58: FIX: Critical JS initialization error (getArtInfo)"
 git push origin main
