@@ -1,3 +1,3 @@
 git add .
-git commit -m "RELEASE v12.2.1: PRODUCTION: Detailed Season Export (Articulo, Año, Q, Cantidad)"
+git commit -m "RELEASE v12.2.2: PRODUCTION: Cache Isolation for Detailed Season Export"
 git push origin main

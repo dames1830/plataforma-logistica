@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.2.1';
-const CACHE_KEY = `logistics_v12_2_1_`;
+const VERSION = '12.2.2';
+const CACHE_KEY = `logistics_v12_2_2_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.2.1</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.2.2</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.2.1 | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.2.2 | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2149,7 +2149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // Recuperar persistencia si existe (v12.1.76)
     if (!lastBufferResult) {
-        const raw = localStorage.getItem('lastBufferKPI');
+        const raw = localStorage.getItem(CACHE_KEY + 'lastBufferKPI');
         if (raw) {
             try {
                 const parsed = JSON.parse(raw);
@@ -2158,7 +2158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 } else {
                     localStorage.removeItem('lastBufferKPI');
                 }
-            } catch(e) { localStorage.removeItem('lastBufferKPI'); }
+            } catch(e) { localStorage.removeItem(CACHE_KEY + 'lastBufferKPI'); }
         }
     }
 
@@ -2215,7 +2215,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                       detalleTemporadas: res.detalleTemporadas || [],
                       timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
                   };
-              localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferResult));
+              localStorage.setItem(CACHE_KEY + 'lastBufferKPI', JSON.stringify(lastBufferResult));
               renderAnalisisSKUTab();
           } else {
               alert('⚠️ ERROR: El análisis no generó datos.');
