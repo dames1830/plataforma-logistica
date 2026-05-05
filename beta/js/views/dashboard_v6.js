@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.88-BETA';
-const CACHE_KEY = `logistics_v12_1_88_BETA_`;
+const VERSION = '12.1.89-BETA';
+const CACHE_KEY = `logistics_v12_1_89_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -147,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.88-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.89-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1918,7 +1918,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.88-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.89-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2259,44 +2259,73 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     contentArea.innerHTML = subNavHtml + `
       <div class="animate-fade-in" style="width:100%; max-width:1400px; margin:0 auto;">
-        <!-- Botones fuera del margen (v12.1.83) -->
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:0.8rem; padding-right:1rem;">
-            <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:4px;">
-                <i class="fas fa-sync-alt"></i> RE-PROCESAR TODO
-            </button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding:0 1rem;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:0.8rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);">
+                    📅 <b>ÚLTIMA ACTUALIZACIÓN:</b> ${data.timestamp || 'No procesado'}
+                </span>
+            </div>
+            <div style="display:flex; gap:0.8rem;">
+                <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.6rem 1.2rem; font-size:0.8rem; background:var(--primary); font-weight:800; border-radius:8px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
+                    <i class="fas fa-sync-alt"></i> RE-PROCESAR TODO EL INVENTARIO
+                </button>
+            </div>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.2rem; align-items: start;">
           
-          <!-- TABLA 1: TEMPORADA -->
-          <div class="glass-panel" style="padding:1.2rem; overflow-x:auto;">
-            <h3 style="margin:0 0 1rem 0; color:var(--primary); font-weight:800; font-size:1rem;">TEMPORADA</h3>
-            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">AÑO</th><th>TOTAL</th></tr></thead>
+          <div class="glass-panel" style="padding:1.5rem; overflow-x:auto; grid-column: span 3;">
+            <h3 style="margin:0 0 1.2rem 0; color:var(--primary); font-weight:800; font-size:1.1rem; display:flex; align-items:center; gap:10px;">
+                <span>📦</span> STOCK POR TEMPORADA (AÑO / Q)
+            </h3>
+            <table class="data-table" style="width:100%; font-size:0.85rem; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:2px solid #333; color:var(--text-muted);">
+                    <th style="text-align:left; padding:0.8rem;">AÑO</th>
+                    <th style="text-align:right; padding:0.8rem;">Q1</th>
+                    <th style="text-align:right; padding:0.8rem;">Q2</th>
+                    <th style="text-align:right; padding:0.8rem;">Q3</th>
+                    <th style="text-align:right; padding:0.8rem;">Q4</th>
+                    <th style="text-align:right; padding:0.8rem; background:rgba(79,70,229,0.1); color:#fff; font-weight:900;">TOTAL</th>
+                </tr>
+              </thead>
               <tbody>
-                ${tQ.map(row => `<tr><td style="padding:0.4rem 0;">${row.Año}</td><td style="text-align:right;">${(row.TOTAL || 0).toLocaleString()}</td></tr>`).join('')}
+                ${tQ.map(row => `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <td style="padding:0.8rem; font-weight:800; color:#fff;">${row.Año}</td>
+                        <td style="padding:0.8rem; text-align:right; color:rgba(255,255,255,0.7);">${(row.Q1 || 0).toLocaleString()}</td>
+                        <td style="padding:0.8rem; text-align:right; color:rgba(255,255,255,0.7);">${(row.Q2 || 0).toLocaleString()}</td>
+                        <td style="padding:0.8rem; text-align:right; color:rgba(255,255,255,0.7);">${(row.Q3 || 0).toLocaleString()}</td>
+                        <td style="padding:0.8rem; text-align:right; color:rgba(255,255,255,0.7);">${(row.Q4 || 0).toLocaleString()}</td>
+                        <td style="padding:0.8rem; text-align:right; font-weight:900; color:var(--primary); background:rgba(79,70,229,0.05);">${(row.TOTAL || 0).toLocaleString()}</td>
+                    </tr>
+                `).join('')}
               </tbody>
             </table>
           </div>
 
           <!-- TABLA 2: GENDER -->
-          <div class="glass-panel" style="padding:1.2rem;">
-            <h3 style="margin:0 0 1rem 0; color:#fbbf24; font-weight:800; font-size:1rem;">GÉNERO</h3>
-            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">LABEL</th><th>QTY</th></tr></thead>
+          <div class="glass-panel" style="padding:1.5rem; grid-column: span 1;">
+            <h3 style="margin:0 0 1.2rem 0; color:#fbbf24; font-weight:800; font-size:1rem; display:flex; align-items:center; gap:10px;">
+                <span>👥</span> GÉNERO
+            </h3>
+            <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:0.6rem;">LABEL</th><th style="text-align:right; padding:0.6rem;">QTY</th></tr></thead>
               <tbody>
-                ${tG.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
+                ${tG.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:0.6rem; color:#fff; font-weight:600;">${row.label}</td><td style="text-align:right; padding:0.6rem; font-weight:800; color:#fbbf24;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
 
           <!-- TABLA 3: OBSOLENCIA -->
-          <div class="glass-panel" style="padding:1.2rem;">
-            <h3 style="margin:0 0 1rem 0; color:#10b981; font-weight:800; font-size:1rem;">OBSOLENCIA</h3>
-            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;">LABEL</th><th>QTY</th></tr></thead>
+          <div class="glass-panel" style="padding:1.5rem; grid-column: span 2;">
+            <h3 style="margin:0 0 1.2rem 0; color:#10b981; font-weight:800; font-size:1rem; display:flex; align-items:center; gap:10px;">
+                <span>⏳</span> OBSOLESCENCIA
+            </h3>
+            <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+              <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:0.6rem;">ESTADO</th><th style="text-align:right; padding:0.6rem;">QTY</th></tr></thead>
               <tbody>
-                ${tO.map(row => `<tr><td style="padding:0.4rem 0;">${row.label}</td><td style="text-align:right;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
+                ${tO.map(row => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:0.6rem; color:#fff; font-weight:600;">${row.label}</td><td style="text-align:right; padding:0.6rem; font-weight:800; color:#10b981;">${(row.qty || 0).toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
