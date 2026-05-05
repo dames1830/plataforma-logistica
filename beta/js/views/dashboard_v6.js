@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.71-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.72-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.68-BETA';
 
 
-const VERSION = '12.1.71-BETA';
-const CACHE_KEY = `logistics_v12_1_71_BETA_`;
+const VERSION = '12.1.72-BETA';
+const CACHE_KEY = `logistics_v12_1_72_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -47,6 +47,8 @@ let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
 let lastBufferResult = null;
+let activeAnalisisSub = 'articulo_temp';
+let activeConfigSub = 'parametros';
 
 const exportToExcel = (data, filename) => {
     if(!data || !data.length) {
@@ -156,7 +158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.71-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.72-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -620,7 +622,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  let activeAdminSub = 'trabajadores';  const renderAdminTab = () => {
+  let activeAdminSub = 'trabajadores';
+  const renderAdminTab = () => {
     const adminTabDef = TABS.find(t => t.id === 'admin_pers');
     const rolePerms = adminService.getPermissions(user.role) || {};
     
@@ -1927,7 +1930,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.71-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.72-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2100,7 +2103,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.71-BETA'
+                        version: 'v12.1.72-BETA'
                     }]
                 },
                 options: {
@@ -2156,21 +2159,26 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "Consolidado de Inventario Global";
 
-    // 1. Lógica de Subpestañas (Siempre visible)
+    // 1. Lógica de Subpestañas (Estilo unificado con Buffer)
     const tabData = TABS.find(t => t.id === 'analisis_sku');
-    const subId = activeAdminSub || (tabData.subTabs ? tabData.subTabs[0].id : null);
+    const subId = activeAnalisisSub;
     
     let subNavHtml = `
-        <div class="subtabs-nav" style="margin-bottom:2rem;">
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
             ${tabData.subTabs.map(st => `
-                <button class="subtab-item ${subId === st.id ? 'active' : ''}" 
-                        onclick="window.setActiveSubTab('${st.id}')">
-                    <span class="subtab-icon">${st.icon}</span>
-                    <span class="subtab-label">${st.label}</span>
-                </button>
+                <a class="sub-nav-item ${subId === st.id ? 'active' : ''}" 
+                   style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;"
+                   onclick="window.setActiveAnalisisSub('${st.id}')">
+                    ${st.icon} ${st.label.toUpperCase()}
+                </a>
             `).join('')}
-        </div>
+        </nav>
     `;
+
+    window.setActiveAnalisisSub = (id) => {
+        activeAnalisisSub = id;
+        renderAnalisisSKUTab();
+    };
 
     // 2. Control de contenido por Subpestaña
     if (subId !== 'articulo_temp') {
@@ -2278,7 +2286,7 @@ export const renderDashboard = async (container, user, onLogout) => {
              <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">
                 <i class="fas fa-info-circle" style="color:var(--primary);"></i> Haz clic en una temporada para ver el desglose por Artículo (Top 50).
              </p>
-             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.71-BETA</span>
+             <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">v12.1.72-BETA</span>
           </div>
         </div>
       </div>
