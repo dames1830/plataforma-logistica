@@ -59,7 +59,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.1.111-BETA";
+    const versionStr = "v12.1.114-BETA";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
@@ -70,19 +70,21 @@ class App {
 
     try {
         const timestamp = new Date().getTime();
+        const ts = Date.now();
         console.log(`[PULSE] App ${versionStr} navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}&t=${ts}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 logout();
                 this.navigate();
             });
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=${versionStr}_${timestamp}`);
+            const { renderLogin } = await import(`./views/login.js?v=${versionStr}&t=${ts}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }
+
     } catch (err) {
         console.error(`Critical Load Error ${versionStr}:`, err);
         this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo al cargar versión ${versionStr}. Error: ${err.message}</div>`;

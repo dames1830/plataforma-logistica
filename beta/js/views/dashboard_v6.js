@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.111-BETA';
-const CACHE_KEY = `logistics_v12_1_111_BETA_`;
+const VERSION = '12.1.114-BETA';
+const CACHE_KEY = `logistics_v12_1_114_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -148,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.111-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.114-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1440,9 +1440,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.2rem;">
+            <div style="display:flex; flex-wrap: wrap; gap:1.2rem;">
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
+                <div style="flex: 1 1 320px; background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#fb923c; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
                         <span style="font-size:1.1rem;">🚫</span> TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
@@ -1471,7 +1471,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- COLUMNA CENTRAL: FALTAS INJUSTIFICADAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
+                <div style="flex: 1 1 320px; background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#f87171; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
                         <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
@@ -1500,7 +1500,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- COLUMNA DERECHA: FALTAS JUSTIFICADAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
+                <div style="flex: 1 1 320px; background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
                         <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
@@ -1919,7 +1919,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.103-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.114-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -1986,54 +1986,56 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem;">
             <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
-            <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
-                <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
-                    <thead>
-                        <tr style="background:#facc15; color:#000;">
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sorted.map((report, rIdx) => {
-                            const ts = report.created_at || report.ts || Date.now();
-                            const dObj = new Date(ts);
-                            const semana = getWeekNumber(dObj);
-                            const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
-                            const repData = report.data || {};
-                            const niveles = repData.resumenNiveles || [];
-                            
-                            if (niveles.length === 0) {
-                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                    <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
-                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
-                                    </td>
-                                </tr>`;
-                            }
+            <div class="flex-container" style="display:flex; gap: 1.5rem; flex-wrap: wrap;">
+                <div class="glass-panel" style="flex: 1 1 600px; padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+                    <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
+                        <thead>
+                            <tr style="background:#facc15; color:#000;">
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sorted.map((report, rIdx) => {
+                                const ts = report.created_at || report.ts || Date.now();
+                                const dObj = new Date(ts);
+                                const semana = getWeekNumber(dObj);
+                                const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                                const repData = report.data || {};
+                                const niveles = repData.resumenNiveles || [];
+                                
+                                if (niveles.length === 0) {
+                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                        <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
+                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                            <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
+                                        </td>
+                                    </tr>`;
+                                }
 
-                            return `
-                                ${niveles.map((n, nIdx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
-                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
-                                    </tr>
-                                `).join('')}
-                                <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
+                                return `
+                                    ${niveles.map((n, nIdx) => `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
+                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
+                                        </tr>
+                                    `).join('')}
+                                    <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     `;
@@ -2092,7 +2094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.86-BETA'
+                        version: 'v12.1.114-BETA'
                     }]
                 },
                 options: {
@@ -2247,7 +2249,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
 
         return `
-            <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(99,102,241,0.4); box-shadow:0 0 15px rgba(99,102,241,0.15); max-width:1100px; margin:0 auto 2rem; position:relative; overflow:hidden;">
+            <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(99,102,241,0.4); box-shadow:0 0 15px rgba(99,102,241,0.15); flex:1; min-width:480px; margin:0; position:relative; overflow:hidden;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
                     <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.95rem; letter-spacing:1px; text-transform:uppercase;">${title}</h3>
                     <span style="font-size:0.65rem; color:var(--text-muted); opacity:0.5;">* Indicadores: ↑ Crece, ↓ Baja, ● Mantiene</span>
@@ -2316,8 +2318,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             </button>
         </div>
 
-        ${buildTableHtml('Comportamiento por día', matrixQ, metaQ, true)}
-        ${buildTableHtml('Comportamiento por Año', matrixAño, metaAño, false)}
+        <div style="display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap; width:100%;">
+            ${buildTableHtml('Comportamiento por día', matrixQ, metaQ, true)}
+            ${buildTableHtml('Comportamiento por Año', matrixAño, metaAño, false)}
+        </div>
     `;
 
     const calcBtn = document.getElementById('btn_calc_history');
