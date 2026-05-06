@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.114-BETA';
-const CACHE_KEY = `logistics_v12_1_114_BETA_`;
+const VERSION = '12.1.115-BETA';
+const CACHE_KEY = `logistics_v12_1_115_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -2201,10 +2201,17 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const daysSorted = Array.from(allDays); 
     const getTrendIcon = (val, prevVal) => {
-        if (prevVal === undefined) return '';
-        if (val === prevVal) return '<span style="color:#fbbf24; margin-left:4px; font-size:0.65rem;">●</span>';
-        if (val > prevVal) return '<span style="color:#10b981; margin-left:4px; font-size:0.75rem;">↑</span>';
-        return '<span style="color:#ef4444; margin-left:4px; font-size:0.75rem;">↓</span>';
+        if (prevVal === undefined || prevVal === 0) return '';
+        if (val === prevVal) return '<span style="color:#fbbf24; margin-left:5px; font-size:0.9rem; filter:drop-shadow(0 0 3px #fbbf24);">●</span>';
+        if (val > prevVal) return '<span style="color:#10b981; margin-left:5px; font-size:1rem; font-weight:bold; filter:drop-shadow(0 0 5px #10b981);">↑</span>';
+        return '<span style="color:#ef4444; margin-left:5px; font-size:1rem; font-weight:bold; filter:drop-shadow(0 0 5px #ef4444);">↓</span>';
+    };
+
+    const getDayStatusDot = (day, matrix) => {
+        const total = Object.values(matrix).reduce((acc, row) => acc + (row[day] || 0), 0);
+        const color = total > 0 ? '#10b981' : '#475569';
+        const shadow = total > 0 ? `box-shadow: 0 0 8px ${color};` : '';
+        return `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color}; margin-right:6px; vertical-align:middle; ${shadow}"></span>`;
     };
 
     const buildTableHtml = (title, matrix, metadata, isQView) => {
@@ -2261,7 +2268,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">SEM</th>
                                 <th style="text-align:left; padding:0.6rem 0.4rem;">AÑO/TEMPORADA</th>
                                 ${isQView ? '<th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">Q</th>' : ''}
-                                ${daysSorted.map(d => `<th style="text-align:center; padding:0.6rem 0.4rem; min-width:85px; border-left:1px solid rgba(255,255,255,0.05); opacity:0.7;">${d.toUpperCase()}</th>`).join('')}
+                                ${daysSorted.map(d => `<th style="text-align:center; padding:0.6rem 0.4rem; min-width:85px; border-left:1px solid rgba(255,255,255,0.05); opacity:0.9;">${getDayStatusDot(d, matrix)}${d.toUpperCase()}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
