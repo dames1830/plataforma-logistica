@@ -1041,7 +1041,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.1.120-BETA',
+        version: 'v12.1.121-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1084,9 +1084,14 @@ export const saveBufferReport = async (reportData, username) => {
 };
 
 export const fetchBufferHistory = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos máximo de espera
+    
     try {
         const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        const res = await fetch(`${API_URL}/buffer_history`);
+        const res = await fetch(`${API_URL}/buffer_history`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
         if (res.ok) {
             const result = await res.json();
             if (result.data) {
@@ -1095,8 +1100,12 @@ export const fetchBufferHistory = async () => {
             }
         }
     } catch (e) {
-        console.warn("Usando backup local para historial:", e);
+        if (e.name === 'AbortError') console.warn("Backend lento (>5s): Usando backup local.");
+        else console.warn("Error conexión nube:", e);
+    } finally {
+        clearTimeout(timeoutId);
     }
+    
     const local = localStorage.getItem('buffer_history_v12');
     return local ? JSON.parse(local) : [];
 };
