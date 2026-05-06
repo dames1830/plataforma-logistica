@@ -2175,6 +2175,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
                 return `${d.getDate()} ${months[d.getMonth()]}`;
             };
+            const activeDates = [];
+            filteredHistory.forEach(h => {
+                const label = formatDate(h.ts);
+                if (!activeDates.includes(label)) activeDates.push(label);
+            });
+
             const getTrendIcon = (val, prevVal) => {
                 if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:6px; font-size:0.95rem; font-weight:900;">●</span>';
                 if (val > prevVal) return '<span style="color:#10b981; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(16,185,129,0.5));">↑</span>';
