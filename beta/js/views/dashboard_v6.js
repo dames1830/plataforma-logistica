@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.104-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.105-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.104-BETA';
-const CACHE_KEY = `logistics_v12_1_104_BETA_`;
+const VERSION = '12.1.105-BETA';
+const CACHE_KEY = `logistics_v12_1_105_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -148,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.104-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.105-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2189,46 +2189,111 @@ export const renderDashboard = async (container, user, onLogout) => {
         const metaA = rowMetadata[a];
         const metaB = rowMetadata[b];
         if (metaB.semana !== metaA.semana) return metaB.semana - metaA.semana; 
+        
+        const bottom = ['S/MAESTRO', 'ND', '(EN BLANCO)', '(BLANCO)', 'S/T', 'S/TEMPORADA', ''];
+        const aIsBottom = bottom.includes(metaA.año.toUpperCase());
+        const bIsBottom = bottom.includes(metaB.año.toUpperCase());
+        
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        if (aIsBottom && bIsBottom) return bottom.indexOf(metaA.año.toUpperCase()) - bottom.indexOf(metaB.año.toUpperCase());
+
         if (metaB.año !== metaA.año) return metaB.año.localeCompare(metaA.año);
         return metaA.q.localeCompare(metaB.q);
     });
 
+    // Lógica para Totales
+    const grandTotal = {};
+    daysSorted.forEach(d => grandTotal[d] = 0);
+
+    const tableRows = [];
+    let lastYearGroup = null;
+    let yearSubtotal = {};
+
+    rowsKeys.forEach((key, idx) => {
+        const meta = rowMetadata[key];
+        const currentYearGroup = `${meta.semana}-${meta.año}`;
+        
+        // Si cambia el grupo de año y no es el primero, insertar subtotal del anterior
+        if (lastYearGroup && lastYearGroup !== currentYearGroup) {
+            tableRows.push({ isTotal: true, label: `TOTAL ${lastYearGroup.split('-')[1]}`, data: yearSubtotal });
+            yearSubtotal = {};
+            daysSorted.forEach(d => yearSubtotal[d] = 0);
+        }
+
+        if (!yearSubtotal.data_init) {
+            daysSorted.forEach(d => yearSubtotal[d] = 0);
+            yearSubtotal.data_init = true;
+        }
+
+        tableRows.push({ isTotal: false, key, meta, data: matrix[key] });
+        
+        daysSorted.forEach(d => {
+            const val = matrix[key][d] || 0;
+            yearSubtotal[d] = (yearSubtotal[d] || 0) + val;
+            grandTotal[d] = (grandTotal[d] || 0) + val;
+        });
+
+        lastYearGroup = currentYearGroup;
+
+        // Si es el último, insertar subtotal
+        if (idx === rowsKeys.length - 1) {
+            tableRows.push({ isTotal: true, label: `TOTAL ${meta.año}`, data: yearSubtotal });
+        }
+    });
+
     container.innerHTML = `
-        <div class="glass-panel animate-fade-in" style="padding:1.5rem; border:1px solid rgba(79,70,229,0.3);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
-                <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">Historial de Temporadas</h3>
-                <span style="font-size:0.7rem; color:var(--text-muted); opacity:0.6;">* Seguimiento diario por snapshot de proceso</span>
+        <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(79,70,229,0.3); max-width:1000px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
+                <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.95rem; letter-spacing:1px; text-transform:uppercase;">Historial de Temporadas</h3>
+                <span style="font-size:0.65rem; color:var(--text-muted); opacity:0.6;">* Seguimiento diario por snapshot</span>
             </div>
             <div style="overflow-x:auto;">
-                <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                     <thead>
-                        <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
-                            <th style="text-align:center; padding:1rem 0.5rem;">SEMANA</th>
-                            <th style="text-align:left; padding:1rem 0.5rem;">AÑO/TEMPORADA</th>
-                            <th style="text-align:center; padding:1rem 0.5rem;">Q</th>
-                            ${daysSorted.map(d => `<th style="text-align:center; padding:1rem 0.5rem; min-width:80px; border-left:1px solid rgba(255,255,255,0.05);">${d.toUpperCase()}</th>`).join('')}
+                        <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
+                            <th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">SEM</th>
+                            <th style="text-align:left; padding:0.6rem 0.4rem;">TEMPORADA</th>
+                            <th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">Q</th>
+                            ${daysSorted.map(d => `<th style="text-align:center; padding:0.6rem 0.4rem; min-width:70px; border-left:1px solid rgba(255,255,255,0.05);">${d.toUpperCase()}</th>`).join('')}
                         </tr>
                     </thead>
                     <tbody>
-                        ${rowsKeys.length ? rowsKeys.map(key => {
-                            const meta = rowMetadata[key];
+                        ${tableRows.map(row => {
+                            if (row.isTotal) {
+                                return `
+                                    <tr style="background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;">
+                                        <td colspan="3" style="padding:0.5rem; text-align:right; border-top:1px solid var(--primary);">${row.label}</td>
+                                        ${daysSorted.map(d => `<td style="padding:0.5rem; text-align:center; border-top:1px solid var(--primary); border-left:1px solid rgba(255,255,255,0.05);">${(row.data[d] || 0).toLocaleString()}</td>`).join('')}
+                                    </tr>
+                                    <tr style="height:4px;"></tr>
+                                `;
+                            }
+                            const meta = row.meta;
                             return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:700; color:rgba(255,255,255,0.5);">${meta.semana}</td>
-                                    <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${meta.año}</td>
-                                    <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:800; color:var(--primary);">${meta.q}</td>
+                                    <td style="padding:0.4rem; text-align:center; font-weight:700; color:rgba(255,255,255,0.3);">${meta.semana}</td>
+                                    <td style="padding:0.4rem; font-weight:700; color:#fff;">${meta.año}</td>
+                                    <td style="padding:0.4rem; text-align:center; font-weight:800; color:var(--primary);">${meta.q}</td>
                                     ${daysSorted.map(d => {
-                                        const val = matrix[key][d] || 0;
-                                        return `<td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; border-left:1px solid rgba(255,255,255,0.03); opacity:${val===0?'0.1':'1'}">${val > 0 ? val.toLocaleString() : '-'}</td>`;
+                                        const val = row.data[d] || 0;
+                                        return `<td style="padding:0.4rem; text-align:center; font-weight:600; border-left:1px solid rgba(255,255,255,0.03); opacity:${val===0?'0.1':'1'}">${val > 0 ? val.toLocaleString() : '-'}</td>`;
                                     }).join('')}
                                 </tr>
                             `;
-                        }).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No hay datos para mostrar</td></tr>'}
+                        }).join('')}
                     </tbody>
+                    <tfoot style="border-top:2px solid var(--primary); background:rgba(251,191,36,0.1); color:#fbbf24; font-weight:900;">
+                        <tr>
+                            <td colspan="3" style="padding:0.7rem; text-align:right;">TOTAL GENERAL</td>
+                            ${daysSorted.map(d => `<td style="padding:0.7rem; text-align:center; border-left:1px solid rgba(255,255,255,0.05);">${(grandTotal[d] || 0).toLocaleString()}</td>`).join('')}
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
     `;
+  };
   };
 
   const renderAnalisisSKUTab = async () => {
