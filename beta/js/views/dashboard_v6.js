@@ -2173,8 +2173,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
 
             const daysOrder = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
+            
+            const activeDays = daysOrder.filter(d => 
+                filteredHistory.some(h => daysOrder[(new Date(h.ts).getDay() + 6) % 7] === d)
+            );
 
-            // 1. TABLA COMPORTAMIENTO DÍA
+            // 1. TABLA COMPORTAMIENTO DÍA (Izquierda)
             const buildDayTable = () => {
                 let rowsHtml = '';
                 filteredHistory.forEach(item => {
@@ -2188,11 +2192,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                             if (val > 0) {
                                 rowsHtml += `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:0.6rem; text-align:center;">${week}</td>
-                                        <td style="padding:0.6rem; text-align:center; font-weight:700; color:#fff;">${row.Año}</td>
-                                        <td style="padding:0.6rem; text-align:center;">${qKey}</td>
-                                        <td style="padding:0.6rem; text-align:center; color:#fbbf24; font-weight:800;">${dayLabel}</td>
-                                        <td style="padding:0.6rem; text-align:right; font-weight:900; color:#fff;">${val.toLocaleString()}</td>
+                                        <td style="padding:0.7rem; text-align:center;">${week}</td>
+                                        <td style="padding:0.7rem; text-align:center; font-weight:700; color:#fff;">${row.Año}</td>
+                                        <td style="padding:0.7rem; text-align:center;">${qKey}</td>
+                                        <td style="padding:0.7rem; text-align:center; color:#fbbf24; font-weight:800;">${dayLabel}</td>
+                                        <td style="padding:0.7rem; text-align:right; font-weight:900; color:#fff;">${val.toLocaleString()}</td>
                                     </tr>`;
                             }
                         });
@@ -2200,28 +2204,28 @@ export const renderDashboard = async (container, user, onLogout) => {
                 });
 
                 return `
-                    <div class="glass-panel animate-fade-in" style="padding:0; border:1px solid rgba(251,191,36,0.4); flex:1; min-width:400px; margin:0; overflow:hidden; display:flex; flex-direction:column; background:rgba(15,23,42,0.6);">
-                        <div style="background:#fbbf24; color:#000; padding:0.6rem 1rem; font-weight:900; font-size:0.85rem; text-transform:uppercase;">COMPORTAMIENTO DÍA</div>
+                    <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
+                        <div style="background:#fbbf24; color:#000; padding:0.8rem 1rem; font-weight:900; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.05);">COMPORTAMIENTO DÍA</div>
                         <div style="overflow-x:auto;">
-                            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-                                <thead style="background:rgba(255,255,255,0.05); color:#fbbf24;">
+                            <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
                                     <tr>
-                                        <th style="padding:0.6rem;">SEMANA</th>
-                                        <th style="padding:0.6rem;">TEMPORADA</th>
-                                        <th style="padding:0.6rem;">Q</th>
-                                        <th style="padding:0.6rem;">DÍA</th>
-                                        <th style="padding:0.6rem; text-align:right;">CANTIDAD</th>
+                                        <th style="padding:1rem 0.5rem; text-align:center;">SEMANA</th>
+                                        <th style="padding:1rem 0.5rem; text-align:center;">TEMPORADA</th>
+                                        <th style="padding:1rem 0.5rem; text-align:center;">Q</th>
+                                        <th style="padding:1rem 0.5rem; text-align:center;">DÍA</th>
+                                        <th style="padding:1rem 0.5rem; text-align:right;">CANTIDAD</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:2rem; opacity:0.3;">Sin datos</td></tr>'}
+                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos en la Semana ' + filterWeek + '</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
                     </div>`;
             };
 
-            // 2. TABLA COMPORTAMIENTO AÑO
+            // 2. TABLA COMPORTAMIENTO AÑO (Derecha)
             const buildYearTable = () => {
                 const yearMap = {};
                 filteredHistory.forEach(item => {
@@ -2239,33 +2243,33 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const sortedKeys = Object.keys(yearMap).sort();
                 
                 return `
-                    <div class="glass-panel animate-fade-in" style="padding:0; border:1px solid rgba(251,191,36,0.4); flex:1.5; min-width:600px; margin:0; overflow:hidden; display:flex; flex-direction:column; background:rgba(15,23,42,0.6);">
-                        <div style="background:#fbbf24; color:#000; padding:0.6rem 1rem; font-weight:900; font-size:0.85rem; text-transform:uppercase;">COMPORTAMIENTO AÑO</div>
+                    <div class="glass-panel animate-fade-in" style="flex:1.8; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
+                        <div style="background:#fbbf24; color:#000; padding:0.8rem 1rem; font-weight:900; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.05);">COMPORTAMIENTO AÑO</div>
                         <div style="overflow-x:auto;">
-                            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-                                <thead style="background:rgba(255,255,255,0.05); color:#fbbf24;">
+                            <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
                                     <tr>
-                                        <th style="padding:0.6rem;">SEMANA</th>
-                                        <th style="padding:0.6rem; text-align:left;">AÑO/TEMPORADA</th>
-                                        ${daysOrder.map(d => `<th style="padding:0.6rem; text-align:center;">${d}</th>`).join('')}
-                                        <th style="padding:0.6rem; text-align:center; background:rgba(251,191,36,0.1);">TOTAL</th>
+                                        <th style="padding:1rem 0.5rem; text-align:center;">SEMANA</th>
+                                        <th style="padding:1rem 0.5rem; text-align:left; width:130px;">AÑO/TEMPORADA</th>
+                                        ${activeDays.map(d => `<th style="padding:1rem 0.5rem; text-align:center;">${d}</th>`).join('')}
+                                        <th style="padding:1rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${sortedKeys.map(k => {
                                         const entry = yearMap[k];
-                                        const rowTotal = daysOrder.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
+                                        const rowTotal = activeDays.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
                                         return `
                                             <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                                <td style="padding:0.6rem; text-align:center;">${entry.week}</td>
-                                                <td style="padding:0.6rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
-                                                ${daysOrder.map(d => {
+                                                <td style="padding:0.8rem 0.5rem; text-align:center;">${entry.week}</td>
+                                                <td style="padding:0.8rem 0.5rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
+                                                ${activeDays.map(d => {
                                                     const v = entry.days[d] || 0;
-                                                    return `<td style="padding:0.6rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
+                                                    return `<td style="padding:0.8rem 0.5rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
                                                 }).join('')}
-                                                <td style="padding:0.6rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
+                                                <td style="padding:0.8rem 0.5rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
                                             </tr>`;
-                                    }).join('') || '<tr><td colspan="10" style="text-align:center; padding:2rem; opacity:0.3;">Sin datos</td></tr>'}
+                                    }).join('') || '<tr><td colspan="' + (activeDays.length + 3) + '" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos en la Semana ' + filterWeek + '</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2273,7 +2277,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
 
             container.innerHTML = `
-                <div class="glass-panel" style="margin-bottom:1.5rem; padding:1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <div class="glass-panel" style="margin-bottom:1.5rem; padding:1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1rem; align-items:center;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FILTRAR SEMANA</label>
@@ -2287,10 +2291,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FECHA DEL STOCK</label>
                             <input type="date" id="hist_process_date" value="${now.toISOString().split('T')[0]}" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
                         </div>
-                        <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.75rem; padding:0.6rem 1.5rem; box-shadow:0 0 15px rgba(99,102,241,0.4); border-radius:8px;">PROCESAR</button>
+                        <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.75rem; padding:0.6rem 2.5rem; box-shadow:0 0 15px rgba(99,102,241,0.4); border-radius:8px;">PROCESAR</button>
                     </div>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                <div style="display:flex; gap:1.5rem; align-items: flex-start; flex-wrap:wrap;">
                     ${buildDayTable()}
                     ${buildYearTable()}
                 </div>
@@ -2310,18 +2314,28 @@ export const renderDashboard = async (container, user, onLogout) => {
             document.getElementById('btn_calc_history').onclick = async () => {
                 if (!dataStore.stockActivo || !dataStore.stockReserva) return alert('⚠️ Carga los archivos primero.');
                 const btn = document.getElementById('btn_calc_history');
+                const oldHtml = btn.innerHTML;
                 btn.disabled = true; btn.innerHTML = '⚙️...';
                 try {
                     const res = await calculateBufferPallets();
                     if (res) {
-                        const result = { ...res, ts: new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now(), created_at: new Date().toISOString() };
+                        const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
+                        const result = { ...res, ts, created_at: new Date().toISOString() };
+                        
+                        // [Instant Refresh] Guardar localmente y redibujar
+                        history.push(result);
+                        localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+                        
                         await saveBufferReport(result, user.username || 'system');
-                        alert('✅ Registrado.');
-                        renderHistorySeasonsTab(container);
+                        alert('✅ Reporte Procesado con éxito.');
+                        executeDraw();
+                        btn.disabled = false; btn.innerHTML = oldHtml;
                     }
-                } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = 'PROCESAR'; }
+                } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = oldHtml; }
             };
         };
+        executeDraw();
+    };
         executeDraw();
         executeDraw();
     };
