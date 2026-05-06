@@ -49,25 +49,6 @@ let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
 let lastBufferResult = window.lastBufferResult || null;
-if (!lastBufferResult) {
-    try {
-        const raw = localStorage.getItem('lastBufferKPI');
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && parsed.reporteTemporadasQ) lastBufferResult = parsed;
-        }
-    } catch(e) {}
-}
-
-// [BLINDAJE TOTAL v12.4.8] Separación de Memorias
-if (!window.skuHistory) {
-    window.skuHistory = [];
-    try {
-        const localRaw = localStorage.getItem('sku_history_v12');
-        if (localRaw) window.skuHistory = JSON.parse(localRaw);
-    } catch(e) {}
-}
-
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
@@ -168,7 +149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.0-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.1-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1939,7 +1920,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.0-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.1-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -1994,9 +1975,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer día...</p>
         </div>`;
     
-    const rawHistory = await fetchBufferHistory();
-    // [RESTAURACIÓN v12.5.0] Filtrar correctamente los reportes de ZONA BUFFER
-    const history = (rawHistory || []).filter(h => h.resumenNiveles || (h.data && h.data.resumenNiveles));
+    const history = await fetchBufferHistory();
     
     if (!history || history.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
@@ -2170,10 +2149,10 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderHistorySeasonsTab = async (container) => {
-    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando historial...</p></div>`;
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial...</p></div>`;
     
-    // [NUEVA MEMORIA EXCLUSIVA v12.4.9]
-    let history = (window.skuHistory || []).filter(h => h.reporteTemporadasQ);
+    const rawHistory = await fetchBufferHistory();
+    let history = (rawHistory || []).filter(h => h.reporteTemporadasQ || (h.data && h.data.reporteTemporadasQ));
 
     const user = getSession();
 
@@ -2188,9 +2167,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         window.delHistDate = async (dateLabel) => {
             if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
-                window.skuHistory = window.skuHistory.filter(h => formatDate(h.ts) !== dateLabel);
-                history = window.skuHistory;
-                localStorage.setItem('sku_history_v12', JSON.stringify(history));
+                let history = await fetchBufferHistory();
+                history = history.filter(h => formatDate(h.created_at || h.ts) !== dateLabel);
                 const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
                 await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(history) });
                 doRender();
@@ -2444,9 +2422,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                     if (res) {
                         const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
                         const result = { ...res, ts, created_at: new Date().toISOString() };
-                        window.skuHistory.push(result);
-                        history = window.skuHistory;
-                        localStorage.setItem('sku_history_v12', JSON.stringify(history));
                         await saveBufferReport(result, user.username || 'system');
                         executeDraw();
                         btn.disabled = false; btn.innerHTML = oldHtml;
