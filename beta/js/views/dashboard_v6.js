@@ -2175,24 +2175,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
                 return `${d.getDate()} ${months[d.getMonth()]}`;
             };
-
-            const activeDates = [];
-            filteredHistory.forEach(h => {
-                const label = formatDate(h.ts);
-                if (!activeDates.includes(label)) activeDates.push(label);
-            });
-
             const getTrendIcon = (val, prevVal) => {
-                if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:6px; font-size:0.9rem; font-weight:900;">●</span>';
-                if (val > prevVal) return '<span style="color:#10b981; margin-left:6px; font-size:1.2rem; font-weight:900; filter: drop-shadow(0 0 2px rgba(16,185,129,0.4));">↑</span>';
-                if (val < prevVal) return '<span style="color:#ef4444; margin-left:6px; font-size:1.2rem; font-weight:900; filter: drop-shadow(0 0 2px rgba(239,68,68,0.4));">↓</span>';
-                return '<span style="color:#fbbf24; margin-left:6px; font-size:1.2rem; font-weight:900; filter: drop-shadow(0 0 2px rgba(251,191,36,0.4));">→</span>';
+                if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:6px; font-size:0.95rem; font-weight:900;">●</span>';
+                if (val > prevVal) return '<span style="color:#10b981; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(16,185,129,0.5));">↑</span>';
+                if (val < prevVal) return '<span style="color:#ef4444; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(239,68,68,0.5));">↓</span>';
+                return '<span style="color:#fbbf24; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(251,191,36,0.5));">→</span>';
             };
 
             const buildDayTable = () => {
                 const pivotMap = {};
                 let grandTotal = 0;
-
                 filteredHistory.forEach(item => {
                     const dateLabel = formatDate(item.ts);
                     const week = getWeekNumber(new Date(item.ts));
@@ -2316,12 +2308,10 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 const colTotals = {};
                 let grandTotal = 0;
-                
                 let rowsHtml = sortedKeys.map(k => {
                     const entry = yearMap[k];
                     const rowTotal = activeDates.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
                     grandTotal += rowTotal;
-
                     return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                             <td style="padding:0.5rem 0.4rem; text-align:center;">${entry.week}</td>
@@ -2359,7 +2349,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rowsHtml || '<tr><td colspan="' + (activeDates.length + 3) + '" style="text-align:center; padding:2rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
+                                    ${rowsHtml || '<tr><td colspan="' + (activeDates.length + 2) + '" style="text-align:center; padding:2rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2418,6 +2408,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                         btn.disabled = false; btn.innerHTML = oldHtml;
                     }
                 } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = oldHtml; }
+            };
+        };
             };
         };
         executeDraw();
