@@ -2172,40 +2172,83 @@ export const renderDashboard = async (container, user, onLogout) => {
                 return getWeekNumber(hDate) === filterWeek;
             }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
 
-            const daysOrder = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
-            
-            const activeDays = daysOrder.filter(d => 
-                filteredHistory.some(h => daysOrder[(new Date(h.ts).getDay() + 6) % 7] === d)
-            );
+            const formatDate = (ts) => {
+                const d = new Date(ts);
+                const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${d.getDate()} ${months[d.getMonth()]}`;
+            };
+
+            // Detectar qué fechas únicas tienen datos en esta semana para las columnas dinámicas
+            const activeDates = [];
+            filteredHistory.forEach(h => {
+                const label = formatDate(h.ts);
+                if (!activeDates.includes(label)) activeDates.push(label);
+            });
 
             // 1. TABLA COMPORTAMIENTO DÍA (Izquierda)
             const buildDayTable = () => {
                 let rowsHtml = '';
+                let grandTotal = 0;
+                
+                // Agrupar por Temporada (Año) para los subtotales
+                const seasonGroups = {};
                 filteredHistory.forEach(item => {
-                    const dObj = new Date(item.ts || Date.now());
-                    const week = getWeekNumber(dObj);
-                    const dayLabel = daysOrder[(dObj.getDay() + 6) % 7];
-                    
                     (item.reporteTemporadasQ || []).forEach(row => {
+                        const year = row.Año;
+                        if (!seasonGroups[year]) seasonGroups[year] = { year, entries: [], total: 0 };
+                        
                         ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(qKey => {
                             const val = row[qKey] || 0;
                             if (val > 0) {
-                                rowsHtml += `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:0.7rem; text-align:center;">${week}</td>
-                                        <td style="padding:0.7rem; text-align:center; font-weight:700; color:#fff;">${row.Año}</td>
-                                        <td style="padding:0.7rem; text-align:center;">${qKey}</td>
-                                        <td style="padding:0.7rem; text-align:center; color:#fbbf24; font-weight:800;">${dayLabel}</td>
-                                        <td style="padding:0.7rem; text-align:right; font-weight:900; color:#fff;">${val.toLocaleString()}</td>
-                                    </tr>`;
+                                seasonGroups[year].entries.push({
+                                    week: getWeekNumber(new Date(item.ts)),
+                                    q: qKey,
+                                    date: formatDate(item.ts),
+                                    val: val
+                                });
+                                seasonGroups[year].total += val;
+                                grandTotal += val;
                             }
                         });
                     });
                 });
 
+                const sortedYears = Object.keys(seasonGroups).sort((a,b) => b - a);
+                
+                sortedYears.forEach(year => {
+                    const group = seasonGroups[year];
+                    group.entries.forEach(entry => {
+                        rowsHtml += `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                <td style="padding:0.7rem; text-align:center;">${entry.week}</td>
+                                <td style="padding:0.7rem; text-align:center; font-weight:700; color:#fff;">${year}</td>
+                                <td style="padding:0.7rem; text-align:center;">${entry.q}</td>
+                                <td style="padding:0.7rem; text-align:center; color:var(--primary); font-weight:800;">${entry.date}</td>
+                                <td style="padding:0.7rem; text-align:right; font-weight:900; color:#fff;">${entry.val.toLocaleString()}</td>
+                            </tr>`;
+                    });
+                    // Subtotal por Año
+                    rowsHtml += `
+                        <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
+                            <td colspan="4" style="padding:0.7rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">SUBTOTAL ${year}</td>
+                            <td style="padding:0.7rem; text-align:right; color:#fff;">${group.total.toLocaleString()}</td>
+                        </tr>`;
+                });
+
+                // Total General
+                if (grandTotal > 0) {
+                    rowsHtml += `
+                        <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
+                            <td colspan="4" style="padding:1rem; text-align:right; color:#fbbf24; letter-spacing:1px;">TOTAL GENERAL</td>
+                            <td style="padding:1rem; text-align:right; color:#fff; font-size:1rem;">${grandTotal.toLocaleString()}</td>
+                        </tr>`;
+                }
+
                 return `
-                    <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="background:#fbbf24; color:#000; padding:0.8rem 1rem; font-weight:900; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.05);">COMPORTAMIENTO DÍA</div>
+                    <div class="glass-panel animate-fade-in" style="flex:1.2; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
+                        <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO DÍA</h3>
+                        </div>
                         <div style="overflow-x:auto;">
                             <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
                                 <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
@@ -2218,7 +2261,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos en la Semana ' + filterWeek + '</td></tr>'}
+                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2231,45 +2274,47 @@ export const renderDashboard = async (container, user, onLogout) => {
                 filteredHistory.forEach(item => {
                     const dObj = new Date(item.ts || Date.now());
                     const week = getWeekNumber(dObj);
-                    const dayLabel = daysOrder[(dObj.getDay() + 6) % 7];
+                    const dateLabel = formatDate(item.ts);
                     
                     (item.reporteTemporadasQ || []).forEach(row => {
                         const key = `${week}|${row.Año}`;
                         if (!yearMap[key]) yearMap[key] = { week, season: row.Año, days: {} };
-                        yearMap[key].days[dayLabel] = (yearMap[key].days[dayLabel] || 0) + (row.TOTAL || 0);
+                        yearMap[key].days[dateLabel] = (yearMap[key].days[dateLabel] || 0) + (row.TOTAL || 0);
                     });
                 });
 
-                const sortedKeys = Object.keys(yearMap).sort();
+                const sortedKeys = Object.keys(yearMap).sort().reverse();
                 
                 return `
                     <div class="glass-panel animate-fade-in" style="flex:1.8; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="background:#fbbf24; color:#000; padding:0.8rem 1rem; font-weight:900; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.05);">COMPORTAMIENTO AÑO</div>
+                        <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO AÑO</h3>
+                        </div>
                         <div style="overflow-x:auto;">
                             <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
                                 <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
                                     <tr>
                                         <th style="padding:1rem 0.5rem; text-align:center;">SEMANA</th>
                                         <th style="padding:1rem 0.5rem; text-align:left; width:130px;">AÑO/TEMPORADA</th>
-                                        ${activeDays.map(d => `<th style="padding:1rem 0.5rem; text-align:center;">${d}</th>`).join('')}
+                                        ${activeDates.map(d => `<th style="padding:1rem 0.5rem; text-align:center;">${d}</th>`).join('')}
                                         <th style="padding:1rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${sortedKeys.map(k => {
                                         const entry = yearMap[k];
-                                        const rowTotal = activeDays.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
+                                        const rowTotal = activeDates.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
                                         return `
                                             <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                                                 <td style="padding:0.8rem 0.5rem; text-align:center;">${entry.week}</td>
                                                 <td style="padding:0.8rem 0.5rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
-                                                ${activeDays.map(d => {
+                                                ${activeDates.map(d => {
                                                     const v = entry.days[d] || 0;
                                                     return `<td style="padding:0.8rem 0.5rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
                                                 }).join('')}
                                                 <td style="padding:0.8rem 0.5rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
                                             </tr>`;
-                                    }).join('') || '<tr><td colspan="' + (activeDays.length + 3) + '" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos en la Semana ' + filterWeek + '</td></tr>'}
+                                    }).join('') || '<tr><td colspan="' + (activeDates.length + 3) + '" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2322,7 +2367,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
                         const result = { ...res, ts, created_at: new Date().toISOString() };
                         
-                        // [Instant Refresh] Guardar localmente y redibujar
                         history.push(result);
                         localStorage.setItem('buffer_history_v12', JSON.stringify(history));
                         
@@ -2334,6 +2378,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = oldHtml; }
             };
         };
+        executeDraw();
+    };
         executeDraw();
     };
 
