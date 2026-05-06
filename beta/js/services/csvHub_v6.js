@@ -366,10 +366,13 @@ export const calculateBufferPallets = async (configOverride = null) => {
         return null;
     }
 
-    // [v12.5.16] Deduplicación robusta usando getCol
-    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO'];
+    // [v12.5.16] Definición global de cabeceras para este cálculo
+    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO', 'Codigo de articulo', 'Cod. Articulo', 'CodArticulo', 'Producto'];
     const possibleLpnHeaders = ['LPN', 'CONTENEDOR'];
     const possibleUbicHeaders = ['UBICACION', 'Ubicación', 'UBICACIÓN', 'LOCALIZACIÓN', 'LOCALIZACION', 'POSICION'];
+    const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea', 'NIVEL'];
+    const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.', 'Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cant'];
+
 
     const deduplicateRobust = (arr, type) => {
         const seen = new Set();
@@ -431,9 +434,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
     // 1. Mapeo de ACTIVO (COORDENADAS: Ãrea, ArtÃculo, Cantidad actual)
     const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
-    const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
-    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
-    const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
+
     
     activo.forEach(f => {
         let areaRaw = getCol(f, possibleAreaHeaders);
@@ -476,8 +477,8 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
     if (pedidos && pedidos.length) {
         pedidos.forEach(f => {
-            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim();
-            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant'])) || 0;
+            let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
+            let cant = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
             let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado'])) || 0;
             let diff = cant - asig;
             if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
