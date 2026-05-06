@@ -243,10 +243,20 @@ export const parseBufferFiles = async (files) => {
 
 const persistToDatabase = async (area, payload, username = 'sistema') => {
     try {
-        const response = await fetch(`${API_URL}/${area}`, {
+        const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+        // [v12.5.10] Limpiar primero para evitar duplicados al re-subir
+        await fetch(`${API_URL_LOCAL}/${area}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([]) 
+        });
+        
+        const response = await fetch(`${API_URL_LOCAL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
+        });
+        const doRender = async () => {
         });
         if(response.ok) {
            dataStore[area] = payload;
@@ -1041,7 +1051,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.9-FINAL',
+        version: 'v12.5.10-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
