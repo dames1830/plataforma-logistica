@@ -1137,38 +1137,9 @@ export const deleteBufferReport = async (reportId) => {
     try {
         let history = await fetchBufferHistory();
         history = history.filter(h => h.id !== reportId);
-        localStorage.setItem('buffer_history_v12', JSON.stringify(history));
         
-        window.delHistDate = async (dateLabel) => {
-            if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
-                try {
-                    let rawHistory = await fetchBufferHistory();
-                    if (!rawHistory) return alert("Error leyendo historial.");
-                    
-                    const newHistory = rawHistory.filter(h => formatDate(h.ts || h.created_at) !== dateLabel);
-                    
-                    // [v12.5.11] Usar el endpoint correcto para sobreescribir
-                    const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-                    const res = await fetch(`${API_URL_LOCAL}/buffer_history`, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(newHistory) 
-                    });
-                    
-                    if (res.ok) {
-                        window.skuHistoryGlobal = newHistory;
-                        history = newHistory;
-                        executeDraw();
-                        alert(`✅ Registros de ${dateLabel} eliminados.`);
-                    } else {
-                        alert("Error al borrar en la nube.");
-                    }
-                } catch(e) { alert("Error: " + e.message); }
-            }
-        };
-
-        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        await fetch(`${API_URL}/buffer_history`, {
+        const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+        await fetch(`${API_URL_LOCAL}/buffer_history`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(history)
