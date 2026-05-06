@@ -59,12 +59,12 @@ if (!lastBufferResult) {
     } catch(e) {}
 }
 
-// [BLINDAJE TOTAL v12.4.7] Historial Global
-if (!window.bufferHistory) {
-    window.bufferHistory = [];
+// [BLINDAJE TOTAL v12.4.8] Separación de Memorias
+if (!window.skuHistory) {
+    window.skuHistory = [];
     try {
-        const localRaw = localStorage.getItem('buffer_history_v12');
-        if (localRaw) window.bufferHistory = JSON.parse(localRaw);
+        const localRaw = localStorage.getItem('sku_history_v12');
+        if (localRaw) window.skuHistory = JSON.parse(localRaw);
     } catch(e) {}
 }
 
@@ -168,7 +168,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.7-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.8-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1939,7 +1939,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.7-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.8-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2170,7 +2170,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando historial...</p></div>`;
     
-    let history = window.bufferHistory || [];
+    let history = window.skuHistory || [];
 
     const user = getSession();
 
@@ -2185,9 +2185,9 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         window.delHistDate = async (dateLabel) => {
             if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
-                window.bufferHistory = window.bufferHistory.filter(h => formatDate(h.ts) !== dateLabel);
-                history = window.bufferHistory;
-                localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+                window.skuHistory = window.skuHistory.filter(h => formatDate(h.ts) !== dateLabel);
+                history = window.skuHistory;
+                localStorage.setItem('sku_history_v12', JSON.stringify(history));
                 const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
                 await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(history) });
                 doRender();
@@ -2441,9 +2441,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                     if (res) {
                         const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
                         const result = { ...res, ts, created_at: new Date().toISOString() };
-                        window.bufferHistory.push(result);
-                        history = window.bufferHistory;
-                        localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+                        window.skuHistory.push(result);
+                        history = window.skuHistory;
+                        localStorage.setItem('sku_history_v12', JSON.stringify(history));
                         await saveBufferReport(result, user.username || 'system');
                         executeDraw();
                         btn.disabled = false; btn.innerHTML = oldHtml;
@@ -2471,7 +2471,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
             if (changed) {
                 history.sort((a,b) => (a.ts || 0) - (b.ts || 0));
-                localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+                localStorage.setItem('sku_history_v12', JSON.stringify(history));
                 doRender();
             }
         }
