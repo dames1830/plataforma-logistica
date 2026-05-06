@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.1.104: Add Historial Temporadas subtab to Análisis SKU"
+git commit -m "BETA v12.1.106: Fix syntax error and sync versions"
 git push origin main
