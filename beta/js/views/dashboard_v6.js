@@ -2135,7 +2135,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial...</p></div>`;
     
-    // [GLOBAL v12.5.10-FINAL] Usar memoria de sesión para no perder datos al cambiar pestañas
+    // [GLOBAL v12.5.11-FINAL] Usar memoria de sesión para no perder datos al cambiar pestañas
     if (!window.skuHistoryGlobal) {
         const rawHistory = await fetchBufferHistory();
         window.skuHistoryGlobal = (rawHistory || []).filter(h => h.reporteTemporadasQ || (h.data && h.data.reporteTemporadasQ));
@@ -2155,11 +2155,28 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         window.delHistDate = async (dateLabel) => {
             if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
-                let history = await fetchBufferHistory();
-                history = history.filter(h => formatDate(h.created_at || h.ts) !== dateLabel);
-                const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-                await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(history) });
-                doRender();
+                try {
+                    let rawHistory = await fetchBufferHistory();
+                    if (!rawHistory) return alert("Error leyendo historial.");
+                    
+                    const newHistory = rawHistory.filter(h => formatDate(h.ts || h.created_at) !== dateLabel);
+                    
+                    const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+                    const res = await fetch(`${API_URL_LOCAL}/buffer_history`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(newHistory) 
+                    });
+                    
+                    if (res.ok) {
+                        window.skuHistoryGlobal = newHistory;
+                        history = newHistory;
+                        executeDraw();
+                        alert(`✅ Registros de ${dateLabel} eliminados.`);
+                    } else {
+                        alert("Error al borrar en la nube.");
+                    }
+                } catch(e) { alert("Error: " + e.message); }
             }
         };
 

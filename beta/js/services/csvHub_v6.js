@@ -348,10 +348,25 @@ export const fetchBufferConfig = async () => {
     return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
 };
 
-export const calculateBufferPallets = (configOverride = null) => {
-    const activo = dataStore.stockActivo;
-    const reserva = dataStore.stockReserva;
-    const pedidos = dataStore.buffer; 
+export const calculateBufferPallets = async (configOverride = null) => {
+    // [DEDUPLICACIÓN v12.5.11] Evitar duplicados/cuadruplicados por carga fallida
+    const deduplicate = (arr, keys) => {
+        const seen = new Set();
+        return (arr || []).filter(item => {
+            const val = keys.map(k => String(item[k] || '')).join('|');
+            if (seen.has(val)) return false;
+            seen.add(val);
+            return true;
+        });
+    };
+
+    const activeStockRaw = await getAreaData('stockActivo');
+    const reserveStockRaw = await getAreaData('stockReserva');
+    const bufferReportsRaw = await getAreaData('buffer');
+
+    const activo = deduplicate(activeStockRaw, ['SKU', 'LPN', 'UBICACION']);
+    const reserva = deduplicate(reserveStockRaw, ['PRODUCTO', 'LPN', 'UBICACION']);
+    const pedidos = deduplicate(bufferReportsRaw, ['SKU', 'NRO_SOLICITUD', 'CANTIDAD']); 
     const solicitud = dataStore.solicitud; 
     const tallas = dataStore.tallas;     
     const articulos = dataStore.articulos;
@@ -1051,7 +1066,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.10-FINAL',
+        version: 'v12.5.11-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1127,6 +1142,35 @@ export const deleteBufferReport = async (reportId) => {
         let history = await fetchBufferHistory();
         history = history.filter(h => h.id !== reportId);
         localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+        
+        window.delHistDate = async (dateLabel) => {
+            if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
+                try {
+                    let rawHistory = await fetchBufferHistory();
+                    if (!rawHistory) return alert("Error leyendo historial.");
+                    
+                    const newHistory = rawHistory.filter(h => formatDate(h.ts || h.created_at) !== dateLabel);
+                    
+                    // [v12.5.11] Usar el endpoint correcto para sobreescribir
+                    const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+                    const res = await fetch(`${API_URL_LOCAL}/buffer_history`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(newHistory) 
+                    });
+                    
+                    if (res.ok) {
+                        window.skuHistoryGlobal = newHistory;
+                        history = newHistory;
+                        executeDraw();
+                        alert(`✅ Registros de ${dateLabel} eliminados.`);
+                    } else {
+                        alert("Error al borrar en la nube.");
+                    }
+                } catch(e) { alert("Error: " + e.message); }
+            }
+        };
+
         const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
         await fetch(`${API_URL}/buffer_history`, {
             method: 'POST',
