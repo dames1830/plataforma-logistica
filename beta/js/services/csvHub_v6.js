@@ -1,5 +1,5 @@
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
-console.log("[PULSE] csvHub_v6.js LOADED - v12.5.18-BETA - Coordenadas Restauradas");
+console.log("[PULSE] csvHub_v6.js LOADED - v12.5.19-BETA - Coordenadas Restauradas");
 export const dataStore = {
   stockActivo: null,
   stockReserva: null,
@@ -480,8 +480,9 @@ export const calculateBufferPallets = async (configOverride = null) => {
         pedidos.forEach(f => {
             let sku = String(getCol(f, __skuHeaders) || '').trim();
             let cant = parseFloat(getCol(f, __qtyHeaders)) || 0;
-            // No restamos asignado para asegurar que sume TODO el archivo
-            if (cant > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: cant });
+            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado', 'ASIG', 'CANT_ASIG', 'CANT. ASIGNADA'])) || 0;
+            let diff = cant - asig;
+            if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
         });
     }
 
@@ -1087,7 +1088,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.18-BETA',
+        version: 'v12.5.19-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
