@@ -2150,7 +2150,21 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando historial...</p></div>`;
-            const executeDraw = () => {
+    let history = [];
+    try {
+        const localRaw = localStorage.getItem('buffer_history_v12');
+        if (localRaw) history = JSON.parse(localRaw);
+    } catch(e) { console.error("Error local:", e); }
+
+    const user = getSession();
+
+    const doRender = async () => {
+        if (!Array.isArray(history)) history = [];
+        const now = new Date();
+        const currentWeek = getWeekNumber(now);
+        let filterWeek = currentWeek;
+
+        const executeDraw = () => {
             const filteredHistory = history.filter(h => {
                 const hDate = new Date(h.ts || Date.now());
                 return getWeekNumber(hDate) === filterWeek;
@@ -2168,7 +2182,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 if (!activeDates.includes(label)) activeDates.push(label);
             });
 
-            // 1. TABLA COMPORTAMIENTO DÍA (Izquierda) - PIVOTADA POR FECHA
             const buildDayTable = () => {
                 const pivotMap = {};
                 let grandTotal = 0;
@@ -2176,7 +2189,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 filteredHistory.forEach(item => {
                     const dateLabel = formatDate(item.ts);
                     const week = getWeekNumber(new Date(item.ts));
-                    
                     (item.reporteTemporadasQ || []).forEach(row => {
                         const year = row.Año;
                         ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(qKey => {
@@ -2206,8 +2218,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 sortedKeys.forEach((key, index) => {
                     const entry = pivotMap[key];
-                    
-                    // Si cambia el año, imprimir subtotal del año anterior (excepto el primero)
                     if (currentYear !== null && currentYear !== entry.year) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
@@ -2216,7 +2226,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </tr>`;
                         yearTotal = 0;
                     }
-                    
                     currentYear = entry.year;
                     yearTotal += entry.total;
 
@@ -2232,7 +2241,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.7rem; text-align:center; font-weight:900; color:#fff;">${entry.total.toLocaleString()}</td>
                         </tr>`;
                     
-                    // Si es el último, imprimir subtotal
                     if (index === sortedKeys.length - 1) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
@@ -2274,23 +2282,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>`;
             };
 
-            // 2. TABLA COMPORTAMIENTO AÑO (Derecha)
             const buildYearTable = () => {
                 const yearMap = {};
                 filteredHistory.forEach(item => {
                     const dObj = new Date(item.ts || Date.now());
                     const week = getWeekNumber(dObj);
                     const dateLabel = formatDate(item.ts);
-                    
                     (item.reporteTemporadasQ || []).forEach(row => {
                         const key = `${week}|${row.Año}`;
                         if (!yearMap[key]) yearMap[key] = { week, season: row.Año, days: {} };
                         yearMap[key].days[dateLabel] = (yearMap[key].days[dateLabel] || 0) + (row.TOTAL || 0);
                     });
                 });
-
                 const sortedKeys = Object.keys(yearMap).sort().reverse();
-                
                 return `
                     <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
                         <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -2372,10 +2376,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     if (res) {
                         const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
                         const result = { ...res, ts, created_at: new Date().toISOString() };
-                        
                         history.push(result);
                         localStorage.setItem('buffer_history_v12', JSON.stringify(history));
-                        
                         await saveBufferReport(result, user.username || 'system');
                         executeDraw();
                         btn.disabled = false; btn.innerHTML = oldHtml;
