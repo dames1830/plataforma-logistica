@@ -129,109 +129,11 @@ export const setDateFilter = (newDateStr) => {
     }
 };
 
-export const pingServer = () => {
-    fetch(`${API_BASE}/health`, { method: 'GET' })
-        .then(() => console.log('✅ Servidor backend activo.'))
-        .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
+
+export const pingServer = async () => {
+    try { await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/ping'); } catch(e) {}
 };
 
-// URL para Historial de Buffer en la DB Principal
-const BUFFER_HISTORY_URL = `${API_URL}/buffer_history`;
-
-export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
-    try {
-        const payload = {
-            data: bufferKPIObj,
-            updated_by: username,
-            ts: Date.now(),
-            created_at: new Date().toISOString()
-        };
-
-        const response = await fetch(BUFFER_HISTORY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            console.log('✅ Reporte Buffer guardado en DB Principal.');
-            saveToLocalHistory(payload);
-            return true;
-        } else {
-            console.warn(`⚠️ Error DB (${response.status}): Guardando solo localmente.`);
-            saveToLocalHistory(payload);
-            return false;
-        }
-    } catch (e) {
-        console.warn('⚠️ Fallo de conexión: Guardando solo localmente.', e);
-        saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
-        return false;
-    }
-};
-
-const saveToLocalHistory = (report) => {
-    try {
-        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
-        const history = JSON.parse(raw);
-        history.push(report);
-        // Mantener solo los últimos 20 reportes localmente
-        if (history.length > 20) history.shift();
-        localStorage.setItem('logistics_buffer_history_local', JSON.stringify(history));
-    } catch(e) { console.warn('⚠️ No se pudo guardar historial local:', e); }
-};
-
-export const loadBufferReport = async () => {
-    try {
-        const res = await fetch(`${SHARED_API}/buffer_report`);
-        if (!res.ok) return null;
-        const json = await res.json();
-        if (json.status === 'ok' && json.data) {
-            console.log(`✅ Reporte Buffer cargado del servidor.`);
-            // Si devuelve un array, tomamos el último
-            if (Array.isArray(json.data)) return json.data[json.data.length - 1];
-            return json.data;
-        }
-    } catch (e) {
-        console.warn('⚠️ No se pudo cargar el reporte del servidor:', e);
-    }
-    return null;
-};
-
-export const fetchBufferHistory = async () => {
-    let serverHistory = [];
-    try {
-        const res = await fetch(BUFFER_HISTORY_URL);
-        if (res.ok) {
-            const json = await res.json();
-            if (json.data) {
-                serverHistory = Array.isArray(json.data) ? json.data : [json.data];
-                console.log(`✅ ${serverHistory.length} reportes cargados de DB Principal.`);
-            }
-        }
-    } catch (e) {
-        console.warn('⚠️ Error obteniendo historial de DB:', e);
-    }
-    
-    try {
-        const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
-        const localHistory = JSON.parse(localRaw);
-        
-        const combined = [...serverHistory];
-        localHistory.forEach(lh => {
-            const exists = combined.some(sh => (sh.ts === lh.ts) || (sh.created_at === lh.created_at));
-            if (!exists) combined.push(lh);
-        });
-        
-        // Limpieza de Quota: Solo mantener los últimos 10 locales si hay muchos
-        if (localHistory.length > 10) {
-            localStorage.setItem('logistics_buffer_history_local', JSON.stringify(localHistory.slice(-10)));
-        }
-
-        return combined;
-    } catch(e) { 
-        return serverHistory; 
-    }
-};
 
 export const fetchAvailableDates = async () => {
     try {
