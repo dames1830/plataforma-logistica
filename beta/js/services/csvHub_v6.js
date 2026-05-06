@@ -356,20 +356,46 @@ export const calculateBufferPallets = async (configOverride = null) => {
         });
     };
 
-    const activeStockRaw = await getAreaData('stockActivo');
-    const reserveStockRaw = await getAreaData('stockReserva');
+    const activoRaw = await getAreaData('stockActivo');
+    const reservaRaw = await getAreaData('stockReserva');
     const bufferReportsRaw = await getAreaData('buffer');
+    const articulos = dataStore.articulos;
 
-    const activo = deduplicate(activeStockRaw, ['SKU', 'LPN', 'UBICACION']);
-    const reserva = deduplicate(reserveStockRaw, ['PRODUCTO', 'LPN', 'UBICACION']);
+    if(!activoRaw || !reservaRaw || !articulos) {
+        console.error("[VALIDACIÓN] Faltan datos críticos para el cálculo.", { activo: !!activoRaw, reserva: !!reservaRaw, maestro: !!articulos });
+        return null;
+    }
+
+    // [v12.5.16] Deduplicación robusta usando getCol
+    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO'];
+    const possibleLpnHeaders = ['LPN', 'CONTENEDOR'];
+    const possibleUbicHeaders = ['UBICACION', 'Ubicación', 'UBICACIÓN', 'LOCALIZACIÓN', 'LOCALIZACION', 'POSICION'];
+
+    const deduplicateRobust = (arr, type) => {
+        const seen = new Set();
+        return (arr || []).filter(item => {
+            const sku = String(getCol(item, possibleSkuHeaders) || '').trim();
+            const lpn = String(getCol(item, possibleLpnHeaders) || '').trim();
+            const ubi = String(getCol(item, possibleUbicHeaders) || '').trim();
+            
+            // Si no hay datos mínimos, no lo filtramos por duplicado aquí, lo hará el motor después
+            if (!sku && !lpn) return true; 
+
+            const val = `${sku}|${lpn}|${ubi}`;
+            if (seen.has(val)) return false;
+            seen.add(val);
+            return true;
+        });
+    };
+
+    const activo = deduplicateRobust(activoRaw, 'activo');
+    const reserva = deduplicateRobust(reservaRaw, 'reserva');
     const pedidos = deduplicate(bufferReportsRaw, ['SKU', 'NRO_SOLICITUD', 'CANTIDAD']); 
     const solicitud = dataStore.solicitud; 
     const tallas = dataStore.tallas;     
-    const articulos = dataStore.articulos;
     
-    if(!activo || !reserva || !articulos) {
-        console.error("[VALIDACIÓN] Faltan datos críticos para el cálculo.", { activo: !!activo, reserva: !!reserva, maestro: !!articulos });
-        return null;
+    if(activo.length === 0 || reserva.length === 0) {
+        console.warn("[VALIDACIÓN] Stocks vacíos tras deduplicación.");
     }
 
     const articulosMap = new Map();
@@ -1062,7 +1088,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.15-FINAL',
+        version: 'v12.5.16-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
