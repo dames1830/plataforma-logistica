@@ -392,9 +392,9 @@ export const calculateBufferPallets = async (configOverride = null) => {
         });
     };
 
-    const activo = deduplicateRobust(activoRaw, 'activo');
-    const reserva = deduplicateRobust(reservaRaw, 'reserva');
-    const pedidos = deduplicate(bufferReportsRaw, ['SKU', 'NRO_SOLICITUD', 'CANTIDAD']); 
+    const activo = activoRaw; 
+    const reserva = reservaRaw;
+    const pedidos = bufferReportsRaw; // Eliminada deduplicación que borraba filas
     const solicitud = dataStore.solicitud; 
     const tallas = dataStore.tallas;     
     
@@ -438,11 +438,11 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
     
     activo.forEach(f => {
-        let areaRaw = getCol(f, __areaHeaders);
-        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
-        let sku = String(getCol(f, __skuHeaders) || '').trim();
-        let qty = parseFloat(getCol(f, __qtyHeaders)) || 0;
+        let sku = String(rawF[1] || '').trim();
+        let qty = parseFloat(rawF[4]) || 0;
         if(!sku || qty <= 0) return;
 
         if (activeWhitelist.some(w => area.includes(w))) {
@@ -450,16 +450,16 @@ export const calculateBufferPallets = async (configOverride = null) => {
         }
     });
 
-    // 2. Mapeo de RESERVA (Detección robusta)
+    // 2. Mapeo de RESERVA (Regreso a claves normalizadas por parseFile)
     reserva.forEach(f => {
-        let nivel = String(getCol(f, __areaHeaders) || '').trim().toUpperCase();
-        let sku = String(getCol(f, __skuHeaders) || '').trim();
-        let qty = parseFloat(getCol(f, __qtyHeaders)) || 0;
-        let nroAnd = String(getCol(f, ['NRO AND', 'AND', 'Nro_And']) || '').trim().toUpperCase();
+        let nivel = String(f['NIVEL'] || '').trim().toUpperCase();
+        let sku = String(f['PRODUCTO'] || '').trim();
+        let qty = parseFloat(f['CANTIDAD']) || 0;
+        let nroAnd = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
         if(!sku || qty <= 0) return;
 
         if (nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
-        else if (nivel === 'CROSS' || nivel === 'PISO_RESERVA') registerStock(stPisos, sku, qty, f);
+        else if (nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
         else if (nivel === 'AEREO' || nivel === 'AÉREO') registerStock(stAereos, sku, qty, f);
         else if (nivel === 'PISO' || nivel === 'DIS') registerStock(stLogicos, sku, qty, f);
         else if (nivel === 'VER') {
@@ -480,9 +480,8 @@ export const calculateBufferPallets = async (configOverride = null) => {
         pedidos.forEach(f => {
             let sku = String(getCol(f, __skuHeaders) || '').trim();
             let cant = parseFloat(getCol(f, __qtyHeaders)) || 0;
-            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado'])) || 0;
-            let diff = cant - asig;
-            if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
+            // No restamos asignado para asegurar que sume TODO el archivo
+            if (cant > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: cant });
         });
     }
 
@@ -567,14 +566,15 @@ export const calculateBufferPallets = async (configOverride = null) => {
         return pending;
     };
 
-    // 0. Mapa global de Activo para descuento rápido (Normalizado)
+    // 0. Mapa global de Activo para descuento rápido (Regreso a coordenadas fijas)
     const totalActivoPorSKU = {};
     activo.forEach(f => {
-        let area = String(getCol(f, __areaHeaders) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (area === 'MATE') return;
 
-        let sku = String(getCol(f, __skuHeaders) || '').trim();
-        let qty = parseFloat(getCol(f, __qtyHeaders)) || 0;
+        let sku = String(rawF[1] || '').trim(); 
+        let qty = parseFloat(rawF[4]) || 0;     
         if (!sku || qty <= 0) return;
 
         const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
@@ -691,23 +691,24 @@ export const calculateBufferPallets = async (configOverride = null) => {
         };
     });
 
-    // Mapa de Stock Activo para columna QTY ACTIVO (Normalizado)
+    // Mapa de Stock Activo para columna QTY ACTIVO (Coordenadas fijas)
     const activeStockMap = {};
     activo.forEach(f => {
-        let area = String(getCol(f, __areaHeaders) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const rawF = Array.isArray(f) ? f : Object.values(f);
+        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (area === 'MATE') return; 
         
-        let sku = String(getCol(f, __skuHeaders) || '').trim();
-        let qty = parseFloat(getCol(f, __qtyHeaders)) || 0;
+        let sku = String(rawF[1] || '').trim(); 
+        let qty = parseFloat(rawF[4]) || 0;     
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
 
     let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
-        let items = reserva.filter(f => String(getCol(f, __ubiHeaders) || '').trim() === ubi);
+        let items = reserva.filter(f => String(f['UBICACION']).trim() === ubi);
         items.forEach(item => {
-            let sku = String(getCol(item, __skuHeaders) || '').trim();
-            let qty = parseFloat(getCol(item, __qtyHeaders) || 0);
+            let sku = String(f['PRODUCTO'] || '').trim();
+            let qty = parseFloat(f['CANTIDAD'] || 0);
             let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
             
             if (pick > 0) {
@@ -723,7 +724,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
                             detallePallets.push({ 
                                 'FUENTE': dSrc.src,
                                 'UBICACIONES': ubi, 
-                                'LPN': String(getCol(item, __lpnHeaders) || '').trim(), 
+                                'LPN': f['LPN'], 
                                 'SKU': sku, 
                                 'Articulo': sku.substring(0,7),
                                 'RQ': dSrc.qty,
