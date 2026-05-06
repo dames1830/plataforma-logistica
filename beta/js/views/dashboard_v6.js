@@ -2135,7 +2135,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial...</p></div>`;
     
-    // [GLOBAL v12.5.11-FINAL] Usar memoria de sesión para no perder datos al cambiar pestañas
+    // [GLOBAL v12.5.12-FINAL] Usar memoria de sesión para no perder datos al cambiar pestañas
     if (!window.skuHistoryGlobal) {
         const rawHistory = await fetchBufferHistory();
         window.skuHistoryGlobal = (rawHistory || []).filter(h => h.reporteTemporadasQ || (h.data && h.data.reporteTemporadasQ));

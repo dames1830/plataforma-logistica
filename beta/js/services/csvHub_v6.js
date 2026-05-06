@@ -256,15 +256,11 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        const doRender = async () => {
-        });
         if(response.ok) {
            dataStore[area] = payload;
-        await saveToDB(area, payload);
            await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
         } else {
            dataStore[area] = payload;
-        await saveToDB(area, payload);
         }
     } catch (err) {
         dataStore[area] = payload;
@@ -1066,7 +1062,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.11-FINAL',
+        version: 'v12.5.12-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
