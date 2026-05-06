@@ -2183,15 +2183,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
 
             const getTrendIcon = (val, prevVal) => {
-                if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:3px; font-size:0.6rem;">●</span>';
-                if (val > prevVal) return '<span style="color:#10b981; margin-left:3px; font-size:0.7rem;">↑</span>';
-                if (val < prevVal) return '<span style="color:#f87171; margin-left:3px; font-size:0.7rem;">↓</span>';
-                return '<span style="color:rgba(255,255,255,0.1); margin-left:3px; font-size:0.6rem;">→</span>';
+                if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:6px; font-size:0.9rem; font-weight:900;">●</span>';
+                if (val > prevVal) return '<span style="color:#10b981; margin-left:6px; font-size:1.2rem; font-weight:900; filter: drop-shadow(0 0 2px rgba(16,185,129,0.4));">↑</span>';
+                if (val < prevVal) return '<span style="color:#ef4444; margin-left:6px; font-size:1.2rem; font-weight:900; filter: drop-shadow(0 0 2px rgba(239,68,68,0.4));">↓</span>';
+                return '<span style="color:#fbbf24; margin-left:6px; font-size:1.2rem; font-weight:900; filter: drop-shadow(0 0 2px rgba(251,191,36,0.4));">→</span>';
             };
-
-            const buildDayTable = () => {
-                const pivotMap = {};
-                let grandTotal = 0;
 
             const buildDayTable = () => {
                 const pivotMap = {};
@@ -2226,14 +2222,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 let rowsHtml = '';
                 let currentYear = null;
                 let yearTotal = 0;
+                const colTotals = {};
 
                 sortedKeys.forEach((key, index) => {
                     const entry = pivotMap[key];
                     if (currentYear !== null && currentYear !== entry.year) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                                <td colspan="${activeDates.length + 3}" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
-                                <td style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
+                                <td colspan="3" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
+                                <td colspan="${activeDates.length}" style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
                             </tr>`;
                         yearTotal = 0;
                     }
@@ -2247,6 +2244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.4rem; text-align:center;">${entry.q}</td>
                             ${activeDates.map((d, i) => {
                                 const v = entry.days[d] || 0;
+                                colTotals[d] = (colTotals[d] || 0) + v;
                                 const prevD = i > 0 ? activeDates[i-1] : undefined;
                                 const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
                                 return `<td style="padding:0.4rem; text-align:center; color:var(--primary); font-weight:800; opacity:${v===0?'0.1':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
@@ -2256,8 +2254,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     if (index === sortedKeys.length - 1) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                                <td colspan="${activeDates.length + 3}" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
-                                <td style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
+                                <td colspan="3" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
+                                <td colspan="${activeDates.length}" style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
                             </tr>`;
                     }
                 });
@@ -2265,8 +2263,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 if (grandTotal > 0) {
                     rowsHtml += `
                         <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
-                            <td colspan="${activeDates.length + 3}" style="padding:0.6rem; text-align:right; color:#fbbf24; font-size:0.7rem; letter-spacing:1px;">TOTAL GENERAL</td>
-                            <td style="padding:0.6rem; text-align:center; color:#fff; font-size:0.85rem;">${grandTotal.toLocaleString()}</td>
+                            <td colspan="3" style="padding:0.6rem; text-align:right; color:#fbbf24; font-size:0.7rem; letter-spacing:1px;">TOTAL GENERAL</td>
+                            ${activeDates.map(d => `<td style="padding:0.6rem; text-align:center; color:#fff; font-size:0.85rem;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
                         </tr>`;
                 }
 
