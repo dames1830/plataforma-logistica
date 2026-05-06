@@ -2380,8 +2380,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
         executeDraw();
     };
-        executeDraw();
-    };
 
     // Lanzar carga inicial (Local)
     doRender();
