@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.13-FINAL';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.14-FINAL';
 import * as adminService from '../services/adminService.js?v=12.5.9-FINAL';
 import { getSession } from '../services/auth.js?v=12.5.9-FINAL';
 
 
-const VERSION = '12.5.13-FINAL';
-const CACHE_KEY = `logistics_v12_5_13_FINAL_`;
+const VERSION = '12.5.14-FINAL';
+const CACHE_KEY = `logistics_v12_5_14_FINAL_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -149,7 +149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.13-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.14-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1905,7 +1905,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.13-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.14-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2185,15 +2185,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         let filterWeek = currentWeek;
 
             const executeDraw = () => {
-                const filteredHistory = history.filter(h => {
+                const dayMap = new Map();
+                history.filter(h => {
                     const hDate = new Date(h.ts || Date.now());
                     return getWeekNumber(hDate) === filterWeek;
-                }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
-            const activeDates = [];
-            filteredHistory.forEach(h => {
-                const label = formatDate(h.ts);
-                if (!activeDates.includes(label)) activeDates.push(label);
-            });
+                }).forEach(h => {
+                    const label = formatDate(h.ts);
+                    dayMap.set(label, h); 
+                });
+
+                const filteredHistory = Array.from(dayMap.values()).sort((a,b) => (a.ts || 0) - (b.ts || 0));
+                const activeDates = Array.from(dayMap.keys()).sort((a,b) => {
+                    const findTs = (lbl) => (dayMap.get(lbl).ts || 0);
+                    return findTs(a) - findTs(b);
+                });
 
             const getTrendIcon = (val, prevVal) => {
                 if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:6px; font-size:0.95rem; font-weight:900;">●</span>';
