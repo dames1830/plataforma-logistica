@@ -1,3 +1,3 @@
 git add .
-git commit -m "RELEASE v12.3.0: PRODUCTION: Fix attendance date to use local time (not UTC)"
+git commit -m "BETA v12.1.104: Add Historial Temporadas subtab to Análisis SKU"
 git push origin main

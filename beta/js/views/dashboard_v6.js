@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.103-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.104-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.103-BETA';
-const CACHE_KEY = `logistics_v12_1_103_BETA_`;
+const VERSION = '12.1.104-BETA';
+const CACHE_KEY = `logistics_v12_1_104_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -25,7 +25,8 @@ const TABS = [
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
+    { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
+    { id: 'historial_temp', label: 'Historial Temporadas', icon: '📅' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
@@ -147,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.103-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.104-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2144,6 +2145,92 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
+  const renderHistorySeasonsTab = async (container) => {
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial de temporadas...</p></div>`;
+    
+    const history = await fetchBufferHistory();
+    if (!history || history.length === 0) {
+        container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Sin historial disponible</h4><p>Procesa un reporte en la pestaña principal para empezar a generar el historial.</p></div>`;
+        return;
+    }
+
+    const matrix = {};
+    const allDays = new Set();
+    const rowMetadata = {}; 
+
+    const sortedHistory = [...history].sort((a,b) => (a.ts || 0) - (b.ts || 0));
+
+    sortedHistory.forEach(item => {
+        const ts = item.ts || (item.created_at ? new Date(item.created_at).getTime() : Date.now());
+        const dObj = new Date(ts);
+        const dayLabel = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+        const semana = getWeekNumber(dObj);
+        allDays.add(dayLabel);
+
+        const data = item.data || {};
+        const reporteTQ = data.reporteTemporadasQ || [];
+
+        reporteTQ.forEach(row => {
+            const año = row.Año;
+            ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(q => {
+                const qty = row[q] || 0;
+                if (qty > 0) {
+                    const key = `${semana}-${año}-${q}`;
+                    if (!matrix[key]) matrix[key] = {};
+                    matrix[key][dayLabel] = qty;
+                    rowMetadata[key] = { semana, año, q };
+                }
+            });
+        });
+    });
+
+    const daysSorted = Array.from(allDays); 
+    const rowsKeys = Object.keys(matrix).sort((a,b) => {
+        const metaA = rowMetadata[a];
+        const metaB = rowMetadata[b];
+        if (metaB.semana !== metaA.semana) return metaB.semana - metaA.semana; 
+        if (metaB.año !== metaA.año) return metaB.año.localeCompare(metaA.año);
+        return metaA.q.localeCompare(metaB.q);
+    });
+
+    container.innerHTML = `
+        <div class="glass-panel animate-fade-in" style="padding:1.5rem; border:1px solid rgba(79,70,229,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
+                <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">Historial de Temporadas</h3>
+                <span style="font-size:0.7rem; color:var(--text-muted); opacity:0.6;">* Seguimiento diario por snapshot de proceso</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                    <thead>
+                        <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
+                            <th style="text-align:center; padding:1rem 0.5rem;">SEMANA</th>
+                            <th style="text-align:left; padding:1rem 0.5rem;">AÑO/TEMPORADA</th>
+                            <th style="text-align:center; padding:1rem 0.5rem;">Q</th>
+                            ${daysSorted.map(d => `<th style="text-align:center; padding:1rem 0.5rem; min-width:80px; border-left:1px solid rgba(255,255,255,0.05);">${d.toUpperCase()}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsKeys.length ? rowsKeys.map(key => {
+                            const meta = rowMetadata[key];
+                            return `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:700; color:rgba(255,255,255,0.5);">${meta.semana}</td>
+                                    <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${meta.año}</td>
+                                    <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:800; color:var(--primary);">${meta.q}</td>
+                                    ${daysSorted.map(d => {
+                                        const val = matrix[key][d] || 0;
+                                        return `<td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; border-left:1px solid rgba(255,255,255,0.03); opacity:${val===0?'0.1':'1'}">${val > 0 ? val.toLocaleString() : '-'}</td>`;
+                                    }).join('')}
+                                </tr>
+                            `;
+                        }).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No hay datos para mostrar</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+  };
+
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
 
@@ -2182,6 +2269,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderAnalisisSKUTab();
     };
 
+    if (subId === 'historial_temp') {
+        contentArea.innerHTML = subNavHtml;
+        const subContainer = document.createElement('div');
+        contentArea.appendChild(subContainer);
+        renderHistorySeasonsTab(subContainer);
+        return;
+    }
+
     if (subId !== 'articulo_temp') {
         contentArea.innerHTML = subNavHtml + `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
@@ -2215,6 +2310,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                   timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
               };
               localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferResult));
+              // [BETA] NUEVO: Guardar en el historial principal para el reporte de historial temporadas
+              await saveBufferReport(lastBufferResult, user.username || 'system');
               renderAnalisisSKUTab();
           } else {
               alert('⚠️ ERROR: El análisis no generó datos.');
