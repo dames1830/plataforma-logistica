@@ -168,7 +168,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.8-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.9-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1939,7 +1939,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.8-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.9-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -1994,7 +1994,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer día...</p>
         </div>`;
     
-    const history = await fetchBufferHistory();
+    const rawHistory = await fetchBufferHistory();
+    // [RESTAURACIÓN v12.4.9] Filtrar solo registros que pertenecen a ZONA BUFFER
+    const history = (rawHistory || []).filter(h => h.data && h.data.resumenNiveles);
     
     if (!history || history.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
@@ -2170,7 +2172,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando historial...</p></div>`;
     
-    let history = window.skuHistory || [];
+    // [NUEVA MEMORIA EXCLUSIVA v12.4.9]
+    let history = (window.skuHistory || []).filter(h => h.reporteTemporadasQ);
 
     const user = getSession();
 
