@@ -2294,7 +2294,57 @@ export const renderDashboard = async (container, user, onLogout) => {
                         yearMap[key].days[dateLabel] = (yearMap[key].days[dateLabel] || 0) + (row.TOTAL || 0);
                     });
                 });
-                const sortedKeys = Object.keys(yearMap).sort().reverse();
+
+                const sortedKeys = Object.keys(yearMap).sort((a,b) => {
+                    const labelA = String(yearMap[a].season);
+                    const labelB = String(yearMap[b].season);
+                    
+                    const isSpecial = (l) => l.includes('S/MAESTRO') || l.includes('ND') || l.includes('(en blanco)');
+                    if (!isSpecial(labelA) && isSpecial(labelB)) return -1;
+                    if (isSpecial(labelA) && !isSpecial(labelB)) return 1;
+                    if (isSpecial(labelA) && isSpecial(labelB)) return labelA.localeCompare(labelB);
+                    return labelB.localeCompare(labelA);
+                });
+
+                const colTotals = {};
+                let grandTotal = 0;
+
+                const getTrendIcon = (val, prevVal) => {
+                    if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.2); margin-left:4px;">●</span>';
+                    if (val > prevVal) return '<span style="color:#10b981; margin-left:4px;">↑</span>';
+                    if (val < prevVal) return '<span style="color:#f87171; margin-left:4px;">↓</span>';
+                    return '<span style="color:rgba(255,255,255,0.2); margin-left:4px;">→</span>';
+                };
+                
+                let rowsHtml = sortedKeys.map(k => {
+                    const entry = yearMap[k];
+                    const rowTotal = activeDates.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
+                    grandTotal += rowTotal;
+
+                    return `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <td style="padding:0.8rem 0.5rem; text-align:center;">${entry.week}</td>
+                            <td style="padding:0.8rem 0.5rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
+                            ${activeDates.map((d, i) => {
+                                const v = entry.days[d] || 0;
+                                colTotals[d] = (colTotals[d] || 0) + v;
+                                const prevD = i > 0 ? activeDates[i-1] : undefined;
+                                const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
+                                return `<td style="padding:0.8rem 0.5rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
+                            }).join('')}
+                            <td style="padding:0.8rem 0.5rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
+                        </tr>`;
+                }).join('');
+
+                if (grandTotal > 0) {
+                    rowsHtml += `
+                        <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
+                            <td colspan="2" style="padding:1rem; text-align:right; color:#fbbf24;">TOTAL</td>
+                            ${activeDates.map(d => `<td style="padding:1rem; text-align:center; color:#fff;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
+                            <td style="padding:1rem; text-align:center; color:#fff; font-size:1rem;">${grandTotal.toLocaleString()}</td>
+                        </tr>`;
+                }
+
                 return `
                     <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
                         <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -2311,20 +2361,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${sortedKeys.map(k => {
-                                        const entry = yearMap[k];
-                                        const rowTotal = activeDates.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
-                                        return `
-                                            <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                                <td style="padding:0.8rem 0.5rem; text-align:center;">${entry.week}</td>
-                                                <td style="padding:0.8rem 0.5rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
-                                                ${activeDates.map(d => {
-                                                    const v = entry.days[d] || 0;
-                                                    return `<td style="padding:0.8rem 0.5rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
-                                                }).join('')}
-                                                <td style="padding:0.8rem 0.5rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
-                                            </tr>`;
-                                    }).join('') || '<tr><td colspan="' + (activeDates.length + 3) + '" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
+                                    ${rowsHtml || '<tr><td colspan="' + (activeDates.length + 3) + '" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
