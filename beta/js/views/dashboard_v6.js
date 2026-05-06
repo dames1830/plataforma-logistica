@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.16-FINAL';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.18-FINAL';
 import * as adminService from '../services/adminService.js?v=12.5.15-FINAL';
 import { getSession } from '../services/auth.js?v=12.5.15-FINAL';
 
 
-const VERSION = '12.5.16-FINAL';
-const CACHE_KEY = `logistics_v12_5_16_FINAL_`;
+const VERSION = '12.5.18-FINAL';
+const CACHE_KEY = `logistics_v12_5_18_FINAL_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -2084,7 +2084,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.5.16-FINAL',
+                        version: 'v12.5.18-FINAL',
                     }]
                 },
                 options: {

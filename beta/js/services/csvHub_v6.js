@@ -1,5 +1,5 @@
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
-console.log("[PULSE] csvHub_v6.js LOADED - v12.5.16-FINAL - __skuHeaders present");
+console.log("[PULSE] csvHub_v6.js LOADED - v12.5.18-FINAL - Coordenadas Restauradas");
 export const dataStore = {
   stockActivo: null,
   stockReserva: null,
@@ -706,7 +706,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
     let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
         let items = reserva.filter(f => String(f['UBICACION']).trim() === ubi);
-        items.forEach(item => {
+        items.forEach(f => {
             let sku = String(f['PRODUCTO'] || '').trim();
             let qty = parseFloat(f['CANTIDAD'] || 0);
             let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
@@ -1087,7 +1087,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.16-FINAL',
+        version: 'v12.5.18-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
