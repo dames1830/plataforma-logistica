@@ -149,7 +149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.5-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.6-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1905,7 +1905,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.5-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.6-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2409,18 +2409,25 @@ export const renderDashboard = async (container, user, onLogout) => {
                     const res = await calculateBufferPallets();
                     if (res) {
                         const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
-                        const result = { ...res, ts, created_at: new Date().toISOString() };
                         
-                        // [URGENTE] Actualizar memoria global ANTES de la nube para que sea instantáneo y persista
+                        // [OPTIMIZACIÓN v12.5.6] No guardar el detalle masivo de artículos en el historial (pesa demasiado)
+                        const result = { 
+                            ts, 
+                            created_at: new Date().toISOString(),
+                            reporteTemporadasQ: res.reporteTemporadasQ,
+                            reporteGender: res.reporteGender,
+                            reporteObsolencia: res.reporteObsolencia,
+                            timestamp: res.timestamp || new Date().toLocaleString()
+                        };
+                        
                         if (!window.skuHistoryGlobal) window.skuHistoryGlobal = [];
                         window.skuHistoryGlobal.push(result);
                         history = window.skuHistoryGlobal;
                         
                         executeDraw();
                         
-                        // Guardar en la nube en background
                         saveBufferReport(result, user.username || 'system').then(() => {
-                            console.log("✅ Sincronizado con la nube");
+                            console.log("✅ Reporte optimizado guardado en la nube");
                         });
                         
                         btn.disabled = false; btn.innerHTML = oldHtml;
@@ -2518,8 +2525,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                   timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
               };
               window.lastBufferResult = lastBufferResult;
-              // [BETA] NUEVO: Guardar en el historial principal para el reporte de historial temporadas
-              await saveBufferReport(lastBufferResult, user.username || 'system');
+              
+              // [OPTIMIZACIÓN v12.5.6] Solo guardar el resumen en el historial, no el detalle masivo
+              const summary = {
+                  ts: Date.now(),
+                  created_at: new Date().toISOString(),
+                  reporteTemporadasQ: res.reporteTemporadasQ,
+                  reporteGender: res.reporteGender,
+                  reporteObsolencia: res.reporteObsolencia,
+                  timestamp: lastBufferResult.timestamp
+              };
+              await saveBufferReport(summary, user.username || 'system');
               renderAnalisisSKUTab();
           } else {
               alert('⚠️ ERROR: El análisis no generó datos.');
