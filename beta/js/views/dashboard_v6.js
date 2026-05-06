@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.106-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.107-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.106-BETA';
-const CACHE_KEY = `logistics_v12_1_106_BETA_`;
+const VERSION = '12.1.107-BETA';
+const CACHE_KEY = `logistics_v12_1_107_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -26,7 +26,7 @@ const TABS = [
   ] },
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
-    { id: 'historial_temp', label: 'Historial Temporadas', icon: '📅' }
+    { id: 'historial_temp', label: 'Comportamiento por día', icon: '📅' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
@@ -148,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.106-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.107-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2243,9 +2243,18 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     container.innerHTML = `
-        <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(79,70,229,0.3); max-width:1000px; margin:0 auto;">
+        <div style="margin-bottom:1.5rem; display:flex; justify-content:flex-end;">
+            <button id="btn_calc_history" class="btn" style="max-width:250px; background:var(--primary); font-weight:800; font-size:0.8rem; box-shadow:0 0 15px rgba(99,102,241,0.4); border-radius:8px; padding:0.8rem 1.5rem;">
+                ⚡ CALCULAR Y REGISTRAR HOY
+            </button>
+        </div>
+
+        <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid var(--primary); box-shadow:0 0 20px rgba(99,102,241,0.25); max-width:1000px; margin:0 auto; position:relative; overflow:hidden;">
+            <!-- EFECTO NEON TOP -->
+            <div style="position:absolute; top:0; left:0; right:0; hieght:2px; background:linear-gradient(90deg, transparent, var(--primary), transparent); opacity:0.5;"></div>
+
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
-                <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.95rem; letter-spacing:1px; text-transform:uppercase;">Historial de Temporadas</h3>
+                <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.95rem; letter-spacing:1px; text-transform:uppercase;">Comportamiento por día</h3>
                 <span style="font-size:0.65rem; color:var(--text-muted); opacity:0.6;">* Seguimiento diario por snapshot</span>
             </div>
             <div style="overflow-x:auto;">
@@ -2262,9 +2271,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                         ${tableRows.map(row => {
                             if (row.isTotal) {
                                 return `
-                                    <tr style="background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;">
-                                        <td colspan="3" style="padding:0.5rem; text-align:right; border-top:1px solid var(--primary);">${row.label}</td>
-                                        ${daysSorted.map(d => `<td style="padding:0.5rem; text-align:center; border-top:1px solid var(--primary); border-left:1px solid rgba(255,255,255,0.05);">${(row.data[d] || 0).toLocaleString()}</td>`).join('')}
+                                    <tr style="background:rgba(99,102,241,0.15); color:#fff; font-weight:900;">
+                                        <td colspan="3" style="padding:0.5rem; text-align:right; border-top:1px solid var(--primary); letter-spacing:1px; font-size:0.7rem;">${row.label}</td>
+                                        ${daysSorted.map(d => `<td style="padding:0.5rem; text-align:center; border-top:1px solid var(--primary); border-left:1px solid rgba(255,255,255,0.05); color:var(--primary);">${(row.data[d] || 0).toLocaleString()}</td>`).join('')}
                                     </tr>
                                     <tr style="height:4px;"></tr>
                                 `;
@@ -2274,7 +2283,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.4rem; text-align:center; font-weight:700; color:rgba(255,255,255,0.3);">${meta.semana}</td>
                                     <td style="padding:0.4rem; font-weight:700; color:#fff;">${meta.año}</td>
-                                    <td style="padding:0.4rem; text-align:center; font-weight:800; color:var(--primary);">${meta.q}</td>
+                                    <td style="padding:0.4rem; text-align:center; font-weight:800; color:var(--primary); opacity:0.8;">${meta.q}</td>
                                     ${daysSorted.map(d => {
                                         const val = row.data[d] || 0;
                                         return `<td style="padding:0.4rem; text-align:center; font-weight:600; border-left:1px solid rgba(255,255,255,0.03); opacity:${val===0?'0.1':'1'}">${val > 0 ? val.toLocaleString() : '-'}</td>`;
@@ -2283,16 +2292,48 @@ export const renderDashboard = async (container, user, onLogout) => {
                             `;
                         }).join('')}
                     </tbody>
-                    <tfoot style="border-top:2px solid var(--primary); background:rgba(251,191,36,0.1); color:#fbbf24; font-weight:900;">
+                    <tfoot style="border-top:2px solid var(--primary); background:rgba(251,191,36,0.15); color:#fbbf24; font-weight:900;">
                         <tr>
-                            <td colspan="3" style="padding:0.7rem; text-align:right;">TOTAL GENERAL</td>
-                            ${daysSorted.map(d => `<td style="padding:0.7rem; text-align:center; border-left:1px solid rgba(255,255,255,0.05);">${(grandTotal[d] || 0).toLocaleString()}</td>`).join('')}
+                            <td colspan="3" style="padding:0.7rem; text-align:right; letter-spacing:1px;">TOTAL GENERAL</td>
+                            ${daysSorted.map(d => `<td style="padding:0.7rem; text-align:center; border-left:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">${(grandTotal[d] || 0).toLocaleString()}</td>`).join('')}
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
     `;
+
+    const calcBtn = document.getElementById('btn_calc_history');
+    if (calcBtn) {
+        calcBtn.onclick = async () => {
+            const oldHtml = calcBtn.innerHTML;
+            if (!dataStore.stockActivo || !dataStore.stockReserva) {
+                alert('⚠️ Primero carga Stock Activo y Reserva.');
+                return;
+            }
+            calcBtn.disabled = true;
+            calcBtn.innerHTML = '⚙️ PROCESANDO...';
+            try {
+                const res = await calculateBufferPallets();
+                if (res) {
+                    const result = {
+                        reporteTemporadasQ: res.reporteTemporadasQ,
+                        reporteGender: res.reporteGender,
+                        reporteObsolencia: res.reporteObsolencia,
+                        detalleObsGen: res.detalleObsGen || [],
+                        timestamp: res.timestamp
+                    };
+                    await saveBufferReport(result, user.username || 'system');
+                    alert('✅ Historial actualizado correctamente.');
+                    renderHistorySeasonsTab(container);
+                }
+            } catch(e) { 
+                alert('❌ Error: ' + e.message); 
+                calcBtn.disabled = false;
+                calcBtn.innerHTML = oldHtml;
+            }
+        };
+    }
   };
 
   const renderAnalisisSKUTab = async () => {
