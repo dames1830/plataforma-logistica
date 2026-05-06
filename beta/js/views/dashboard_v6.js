@@ -1,11 +1,3 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.19-BETA';
-import * as adminService from '../services/adminService.js?v=12.5.15-FINAL';
-import { getSession } from '../services/auth.js?v=12.5.15-FINAL';
-
-
-const VERSION = '12.5.19-BETA';
-const CACHE_KEY = `logistics_v12_5_19_BETA_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -44,16 +36,17 @@ const TABS = [
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
+const VERSION = '12.5.21-BETA';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
-let lastBufferKPI = null;
-let bufferConfigCached = null;
-let lastBufferResult = (() => {
+let lastBufferKPI = (() => {
     try {
         const local = localStorage.getItem('last_sku_analysis_v12');
         return local ? JSON.parse(local) : (window.lastBufferResult || null);
     } catch(e) { return null; }
 })();
+let bufferConfigCached = null;
+let lastBufferResult = lastBufferKPI;
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
@@ -430,6 +423,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         if (res) {
                             lastBufferKPI = res;
                             lastBufferResult = res;
+                            localStorage.setItem('last_sku_analysis_v12', JSON.stringify(res));
                             renderBufferResults(results, res); 
                             
                             // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial

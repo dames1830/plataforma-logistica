@@ -1,5 +1,5 @@
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
-console.log("[PULSE] csvHub_v6.js LOADED - v12.5.19-BETA - Coordenadas Restauradas");
+console.log("[PULSE] csvHub_v6.js LOADED - v12.5.21-BETA - Coordenadas Restauradas");
 export const dataStore = {
   stockActivo: null,
   stockReserva: null,
@@ -704,9 +704,17 @@ export const calculateBufferPallets = async (configOverride = null) => {
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
     });
 
+    // [OPTIMIZACIÓN v12.5.21-BETA] Indexación masiva para O(1) en búsquedas
+    const reservaByUbi = new Map();
+    reserva.forEach(f => {
+        const ubi = String(f['UBICACION'] || '').trim();
+        if (!reservaByUbi.has(ubi)) reservaByUbi.set(ubi, []);
+        reservaByUbi.get(ubi).push(f);
+    });
+
     let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
-        let items = reserva.filter(f => String(f['UBICACION']).trim() === ubi);
+        const items = reservaByUbi.get(ubi) || [];
         items.forEach(f => {
             let sku = String(f['PRODUCTO'] || '').trim();
             let qty = parseFloat(f['CANTIDAD'] || 0);
@@ -761,33 +769,38 @@ export const calculateBufferPallets = async (configOverride = null) => {
     detallePallets.forEach(d => { if(d.LPN) selectedLPNs.add(d.LPN); });
 
     const detalleExplosionado = [];
-    const rowsYaIncluidas = new Set();
-    
-    detallePallets.forEach((d, idx) => {
-        detalleExplosionado.push(d);
-        rowsYaIncluidas.add(idx); // No necesitamos el ID real aquí, solo marcar posición
-    });
+    detallePallets.forEach(d => detalleExplosionado.push(d));
 
     if (selectedLPNs.size > 0) {
-        reserva.forEach((f, idx) => {
+        // [OPTIMIZACIÓN v12.5.21] Indexar reserva por LPN para explosión rápida
+        const reservaByLPN = new Map();
+        reserva.forEach(f => {
             const lpn = String(f['LPN'] || '').trim();
-            // Evitar duplicados (si el LPN ya estaba en detallePallets por demanda)
-            const yaEnDetalle = detallePallets.some(dp => dp.LPN === lpn && dp.SKU === String(f['PRODUCTO']).trim());
-            
-            if (selectedLPNs.has(lpn) && !yaEnDetalle) {
+            if (!reservaByLPN.has(lpn)) reservaByLPN.set(lpn, []);
+            reservaByLPN.get(lpn).push(f);
+        });
+
+        selectedLPNs.forEach(lpn => {
+            const items = reservaByLPN.get(lpn) || [];
+            items.forEach(f => {
                 const sku = String(f['PRODUCTO'] || '').trim();
-                detalleExplosionado.push({
-                    'FUENTE': 'ACOMPAÑANTE LPN',
-                    'UBICACIONES': String(f['UBICACION'] || '').trim(),
-                    'LPN': lpn,
-                    'Articulo': sku.substring(0,7),
-                    'SKU': sku,
-                    'RQ': 0,
-                    'QTY ACTIVO': activeStockMap[sku] || 0,
-                    'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
-                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
-                });
-            }
+                // Evitar duplicados (si el SKU ya estaba en detallePallets por demanda)
+                const yaEnDetalle = detallePallets.some(dp => dp.LPN === lpn && dp.SKU === sku);
+                
+                if (!yaEnDetalle) {
+                    detalleExplosionado.push({
+                        'FUENTE': 'ACOMPAÑANTE LPN',
+                        'UBICACIONES': String(f['UBICACION'] || '').trim(),
+                        'LPN': lpn,
+                        'Articulo': sku.substring(0,7),
+                        'SKU': sku,
+                        'RQ': 0,
+                        'QTY ACTIVO': activeStockMap[sku] || 0,
+                        'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
+                        'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
+                    });
+                }
+            });
         });
     }
 
@@ -959,18 +972,25 @@ export const calculateBufferPallets = async (configOverride = null) => {
     const stockGlobalPorArticulo = new Map();
     
     // Sumar Activo
-    Object.keys(activeStockMap).forEach(sku => {
-        const art = String(sku).substring(0, 7);
-        if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
-        stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + (activeStockMap[sku] || 0));
+    activo.forEach(f => {
+        const raw = Array.isArray(f) ? f : Object.values(f);
+        const sku = String(raw[1] || '').trim();
+        const qty = parseFloat(raw[4]) || 0;
+        if (sku && qty > 0) {
+            const art = sku.substring(0, 7);
+            if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
+            stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
+        }
     });
     
     // Sumar Reserva
     reserva.forEach(r => {
-        const sku = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
-        const qty = parseFloat(getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
-        const art = sku.substring(0, 7);
-        if (art) {
+        const raw = Array.isArray(r) ? r : Object.values(r);
+        const sku = String(raw[8] || getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
+        const qty = parseFloat(raw[10] || getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
+        
+        if (sku && qty > 0) {
+            const art = sku.substring(0, 7);
             if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
             stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
         }
@@ -1088,7 +1108,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.19-BETA',
+        version: 'v12.5.21-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1104,6 +1124,9 @@ export const calculateBufferPallets = async (configOverride = null) => {
         reporteObsolencia: reporteObsolencia,
         detalleObsGen: detalleObsGen,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+    };
+},
+StartLine:708,TargetFile:day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
 
