@@ -2167,7 +2167,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const user = getSession();
 
-        const doRender = async () => {
+        const formatDate = (ts) => {
+        const d = new Date(ts);
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        return `${d.getDate()} ${months[d.getMonth()]}`;
+    };
+
+    const doRender = async () => {
         if (!Array.isArray(history)) history = [];
 
         window.delHistDate = async (dateLabel) => {
@@ -2184,17 +2190,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         const currentWeek = getWeekNumber(now);
         let filterWeek = currentWeek;
 
-        const executeDraw = () => {
-            const filteredHistory = history.filter(h => {
-                const hDate = new Date(h.ts || Date.now());
-                return getWeekNumber(hDate) === filterWeek;
-            }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
-
-            const formatDate = (ts) => {
-                const d = new Date(ts);
-                const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                return `${d.getDate()} ${months[d.getMonth()]}`;
-            };
+            const executeDraw = () => {
+                const filteredHistory = history.filter(h => {
+                    const hDate = new Date(h.ts || Date.now());
+                    return getWeekNumber(hDate) === filterWeek;
+                }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
             const activeDates = [];
             filteredHistory.forEach(h => {
                 const label = formatDate(h.ts);
