@@ -2150,23 +2150,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando historial...</p></div>`;
-    
-    let history = [];
-    try {
-        const localRaw = localStorage.getItem('buffer_history_v12');
-        if (localRaw) history = JSON.parse(localRaw);
-    } catch(e) { console.error("Error local:", e); }
-
-    const user = getSession();
-
-    const doRender = async () => {
-        if (!Array.isArray(history)) history = [];
-        
-        const now = new Date();
-        const currentWeek = getWeekNumber(now);
-        let filterWeek = currentWeek;
-
-        const executeDraw = () => {
+            const executeDraw = () => {
             const filteredHistory = history.filter(h => {
                 const hDate = new Date(h.ts || Date.now());
                 return getWeekNumber(hDate) === filterWeek;
@@ -2178,74 +2162,96 @@ export const renderDashboard = async (container, user, onLogout) => {
                 return `${d.getDate()} ${months[d.getMonth()]}`;
             };
 
-            // Detectar qué fechas únicas tienen datos en esta semana para las columnas dinámicas
             const activeDates = [];
             filteredHistory.forEach(h => {
                 const label = formatDate(h.ts);
                 if (!activeDates.includes(label)) activeDates.push(label);
             });
 
-            // 1. TABLA COMPORTAMIENTO DÍA (Izquierda)
+            // 1. TABLA COMPORTAMIENTO DÍA (Izquierda) - PIVOTADA POR FECHA
             const buildDayTable = () => {
-                let rowsHtml = '';
+                const pivotMap = {};
                 let grandTotal = 0;
-                
-                // Agrupar por Temporada (Año) para los subtotales
-                const seasonGroups = {};
+
                 filteredHistory.forEach(item => {
+                    const dateLabel = formatDate(item.ts);
+                    const week = getWeekNumber(new Date(item.ts));
+                    
                     (item.reporteTemporadasQ || []).forEach(row => {
                         const year = row.Año;
-                        if (!seasonGroups[year]) seasonGroups[year] = { year, entries: [], total: 0 };
-                        
                         ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(qKey => {
                             const val = row[qKey] || 0;
                             if (val > 0) {
-                                seasonGroups[year].entries.push({
-                                    week: getWeekNumber(new Date(item.ts)),
-                                    q: qKey,
-                                    date: formatDate(item.ts),
-                                    val: val
-                                });
-                                seasonGroups[year].total += val;
+                                const key = `${week}|${year}|${qKey}`;
+                                if (!pivotMap[key]) pivotMap[key] = { week, year, q: qKey, days: {}, total: 0 };
+                                pivotMap[key].days[dateLabel] = (pivotMap[key].days[dateLabel] || 0) + val;
+                                pivotMap[key].total += val;
                                 grandTotal += val;
                             }
                         });
                     });
                 });
 
-                const sortedYears = Object.keys(seasonGroups).sort((a,b) => b - a);
-                
-                sortedYears.forEach(year => {
-                    const group = seasonGroups[year];
-                    group.entries.forEach(entry => {
-                        rowsHtml += `
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                <td style="padding:0.7rem; text-align:center;">${entry.week}</td>
-                                <td style="padding:0.7rem; text-align:center; font-weight:700; color:#fff;">${year}</td>
-                                <td style="padding:0.7rem; text-align:center;">${entry.q}</td>
-                                <td style="padding:0.7rem; text-align:center; color:var(--primary); font-weight:800;">${entry.date}</td>
-                                <td style="padding:0.7rem; text-align:right; font-weight:900; color:#fff;">${entry.val.toLocaleString()}</td>
-                            </tr>`;
-                    });
-                    // Subtotal por Año
-                    rowsHtml += `
-                        <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                            <td colspan="4" style="padding:0.7rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">SUBTOTAL ${year}</td>
-                            <td style="padding:0.7rem; text-align:right; color:#fff;">${group.total.toLocaleString()}</td>
-                        </tr>`;
+                const sortedKeys = Object.keys(pivotMap).sort((a,b) => {
+                    const [wA, yA, qA] = a.split('|');
+                    const [wB, yB, qB] = b.split('|');
+                    if (yB !== yA) return yB - yA;
+                    if (qA !== qB) return qA.localeCompare(qB);
+                    return 0;
                 });
 
-                // Total General
+                let rowsHtml = '';
+                let currentYear = null;
+                let yearTotal = 0;
+
+                sortedKeys.forEach((key, index) => {
+                    const entry = pivotMap[key];
+                    
+                    // Si cambia el año, imprimir subtotal del año anterior (excepto el primero)
+                    if (currentYear !== null && currentYear !== entry.year) {
+                        rowsHtml += `
+                            <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
+                                <td colspan="${activeDates.length + 3}" style="padding:0.7rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">SUBTOTAL ${currentYear}</td>
+                                <td style="padding:0.7rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
+                            </tr>`;
+                        yearTotal = 0;
+                    }
+                    
+                    currentYear = entry.year;
+                    yearTotal += entry.total;
+
+                    rowsHtml += `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <td style="padding:0.7rem; text-align:center;">${entry.week}</td>
+                            <td style="padding:0.7rem; text-align:center; font-weight:700; color:#fff;">${entry.year}</td>
+                            <td style="padding:0.7rem; text-align:center;">${entry.q}</td>
+                            ${activeDates.map(d => {
+                                const v = entry.days[d] || 0;
+                                return `<td style="padding:0.7rem; text-align:center; color:var(--primary); font-weight:800; opacity:${v===0?'0.1':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
+                            }).join('')}
+                            <td style="padding:0.7rem; text-align:center; font-weight:900; color:#fff;">${entry.total.toLocaleString()}</td>
+                        </tr>`;
+                    
+                    // Si es el último, imprimir subtotal
+                    if (index === sortedKeys.length - 1) {
+                        rowsHtml += `
+                            <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
+                                <td colspan="${activeDates.length + 3}" style="padding:0.7rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">SUBTOTAL ${currentYear}</td>
+                                <td style="padding:0.7rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
+                            </tr>`;
+                    }
+                });
+
                 if (grandTotal > 0) {
                     rowsHtml += `
                         <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
-                            <td colspan="4" style="padding:1rem; text-align:right; color:#fbbf24; letter-spacing:1px;">TOTAL GENERAL</td>
-                            <td style="padding:1rem; text-align:right; color:#fff; font-size:1rem;">${grandTotal.toLocaleString()}</td>
+                            <td colspan="${activeDates.length + 3}" style="padding:1rem; text-align:right; color:#fbbf24; letter-spacing:1px;">TOTAL GENERAL</td>
+                            <td style="padding:1rem; text-align:center; color:#fff; font-size:1rem;">${grandTotal.toLocaleString()}</td>
                         </tr>`;
                 }
 
                 return `
-                    <div class="glass-panel animate-fade-in" style="flex:1.2; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
+                    <div class="glass-panel animate-fade-in" style="flex:1.5; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
                         <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
                             <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO DÍA</h3>
                         </div>
@@ -2256,8 +2262,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <th style="padding:1rem 0.5rem; text-align:center;">SEMANA</th>
                                         <th style="padding:1rem 0.5rem; text-align:center;">TEMPORADA</th>
                                         <th style="padding:1rem 0.5rem; text-align:center;">Q</th>
-                                        <th style="padding:1rem 0.5rem; text-align:center;">DÍA</th>
-                                        <th style="padding:1rem 0.5rem; text-align:right;">CANTIDAD</th>
+                                        ${activeDates.map(d => `<th style="padding:1rem 0.5rem; text-align:center;">${d}</th>`).join('')}
+                                        <th style="padding:1rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2286,7 +2292,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const sortedKeys = Object.keys(yearMap).sort().reverse();
                 
                 return `
-                    <div class="glass-panel animate-fade-in" style="flex:1.8; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
+                    <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
                         <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
                             <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO AÑO</h3>
                         </div>
@@ -2371,11 +2377,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                         localStorage.setItem('buffer_history_v12', JSON.stringify(history));
                         
                         await saveBufferReport(result, user.username || 'system');
-                        alert('✅ Reporte Procesado con éxito.');
                         executeDraw();
                         btn.disabled = false; btn.innerHTML = oldHtml;
                     }
                 } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = oldHtml; }
+            };
             };
         };
         executeDraw();
