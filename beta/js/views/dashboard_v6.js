@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.125-BETA';
-import * as adminService from '../services/adminService.js?v=12.1.125-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.126-BETA';
+import * as adminService from '../services/adminService.js?v=12.1.126-BETA';
 
 
-const VERSION = '12.1.125-BETA';
-const CACHE_KEY = `logistics_v12_1_125_BETA_`;
+const VERSION = '12.1.126-BETA';
+const CACHE_KEY = `logistics_v12_1_126_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -148,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.125-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.126-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1919,7 +1919,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.125-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.126-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2148,20 +2148,31 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderHistorySeasonsTab = async (container) => {
-    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial (Nube/Local)...</p></div>`;
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando historial...</p></div>`;
     
-    // [FORZADO] Si en 3s no hay nube, saltar a local para no colgar la UI
-    const historyPromise = fetchBufferHistory();
-    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
-    
-    let history = await Promise.race([historyPromise, timeoutPromise]);
-    
-    if (!history) {
-        console.warn("[PULSE] Nube lenta detectada, forzando carga desde respaldo local.");
-        const local = localStorage.getItem('buffer_history_v12');
-        history = local ? JSON.parse(local) : [];
+    let history = [];
+    try {
+        // 1. Carga inmediata desde LocalStorage (Sin esperas)
+        const localRaw = localStorage.getItem('buffer_history_v12');
+        if (localRaw) {
+            try { history = JSON.parse(localRaw); } catch(e) { console.error("Error parse local:", e); }
+        }
+
+        // 2. Intento de actualizar desde la nube en background (con timeout corto)
+        const cloudPromise = fetchBufferHistory();
+        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
+        
+        const cloudData = await Promise.race([cloudPromise, timeoutPromise]);
+        if (cloudData && Array.isArray(cloudData)) {
+            history = cloudData; // Si la nube responde rápido, usamos esos datos
+        }
+    } catch (err) {
+        console.error("Error crítico en historial:", err);
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center; color:#f87171;">⚠️ Error al cargar: ${err.message}</div>`;
+        return;
     }
-    
+
+    if (!Array.isArray(history)) history = [];
     const user = getSession();
 
     // FILTROS (Por defecto semana actual)
