@@ -48,7 +48,16 @@ const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
-let lastBufferResult = null;
+let lastBufferResult = window.lastBufferResult || null;
+if (!lastBufferResult) {
+    try {
+        const raw = localStorage.getItem('lastBufferKPI');
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.reporteTemporadasQ) lastBufferResult = parsed;
+        }
+    } catch(e) {}
+}
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
@@ -149,7 +158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.0-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.2-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1920,7 +1929,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.0-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.2-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2160,6 +2169,17 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const doRender = async () => {
         if (!Array.isArray(history)) history = [];
+
+        window.delHistDate = async (dateLabel) => {
+            if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
+                history = history.filter(h => formatDate(h.ts) !== dateLabel);
+                localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+                const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+                await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(history) });
+                doRender();
+            }
+        };
+
         const now = new Date();
         const currentWeek = getWeekNumber(now);
         let filterWeek = currentWeek;
@@ -2269,7 +2289,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 return `
                     <div class="glass-panel animate-fade-in" style="flex:1.4; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
                         <div style="padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.4);">
-                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO DÍA</h3>
+                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO POR AÑO Q</h3>
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
@@ -2278,7 +2298,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">AÑO</th>
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">Q</th>
-                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">${d}</th>`).join('')}
+                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center; position:relative;">
+                                            ${d}
+                                            <span onclick="delHistDate('${d}')" style="color:#ef4444; cursor:pointer; margin-left:4px; font-size:0.6rem; vertical-align:middle;" title="Borrar este día">✕</span>
+                                        </th>`).join('')}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2351,7 +2374,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <tr>
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
                                         <th style="padding:0.6rem 0.4rem; text-align:left;">TEMPORADA</th>
-                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">${d}</th>`).join('')}
+                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">
+                                            ${d}
+                                            <span onclick="delHistDate('${d}')" style="color:#ef4444; cursor:pointer; margin-left:4px; font-size:0.6rem; vertical-align:middle;" title="Borrar este día">✕</span>
+                                        </th>`).join('')}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2434,21 +2460,6 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
 
-    // Recuperar persistencia si existe (v12.1.76)
-    if (!lastBufferResult) {
-        const raw = localStorage.getItem('lastBufferKPI');
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen) {
-                    lastBufferResult = parsed;
-                } else {
-                    localStorage.removeItem('lastBufferKPI');
-                }
-            } catch(e) { localStorage.removeItem('lastBufferKPI'); }
-        }
-    }
-
     const tabData = TABS.find(t => t.id === 'analisis_sku');
     const subId = activeAnalisisSub;
     
@@ -2509,6 +2520,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                   detalleObsGen: res.detalleObsGen || [],
                   timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
               };
+              window.lastBufferResult = lastBufferResult;
               localStorage.setItem('lastBufferKPI', JSON.stringify(lastBufferResult));
               // [BETA] NUEVO: Guardar en el historial principal para el reporte de historial temporadas
               await saveBufferReport(lastBufferResult, user.username || 'system');
