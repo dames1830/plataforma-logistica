@@ -897,8 +897,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         resEmp.push({ 
             fuente: 'TOTAL GENERAL', 
             tipo: '', 
-            paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, 
-            skus: new Set(detallePallets.map(d=>d.SKU)).size, 
+            paletas: resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.paletas, 0), 
+            skus: resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.skus, 0), 
             parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 
         });
     }
@@ -1171,7 +1171,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     console.log(`[PULSE] Analisis Finalizado: ${detalleTemporadas.length} items en temporadas.`);
     return { 
-        version: 'v12.2.7',
+        version: 'v12.2.8',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
