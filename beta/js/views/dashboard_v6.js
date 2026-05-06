@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.126-BETA';
-import * as adminService from '../services/adminService.js?v=12.1.126-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.1.127-BETA';
+import * as adminService from '../services/adminService.js?v=12.1.127-BETA';
 
 
-const VERSION = '12.1.126-BETA';
-const CACHE_KEY = `logistics_v12_1_126_BETA_`;
+const VERSION = '12.1.127-BETA';
+const CACHE_KEY = `logistics_v12_1_127_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -148,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.126-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.127-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1919,7 +1919,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.126-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.1.127-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2152,82 +2152,53 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     let history = [];
     try {
-        // 1. Carga inmediata desde LocalStorage (Sin esperas)
         const localRaw = localStorage.getItem('buffer_history_v12');
-        if (localRaw) {
-            try { history = JSON.parse(localRaw); } catch(e) { console.error("Error parse local:", e); }
-        }
+        if (localRaw) history = JSON.parse(localRaw);
+    } catch(e) { console.error("Error local:", e); }
 
-        // 2. Intento de actualizar desde la nube en background (con timeout corto)
-        const cloudPromise = fetchBufferHistory();
-        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
-        
-        const cloudData = await Promise.race([cloudPromise, timeoutPromise]);
-        if (cloudData && Array.isArray(cloudData)) {
-            history = cloudData; // Si la nube responde rápido, usamos esos datos
-        }
-    } catch (err) {
-        console.error("Error crítico en historial:", err);
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center; color:#f87171;">⚠️ Error al cargar: ${err.message}</div>`;
-        return;
-    }
-
-    if (!Array.isArray(history)) history = [];
     const user = getSession();
 
-    // FILTROS (Por defecto semana actual)
-    const now = new Date();
-    const currentWeek = getWeekNumber(now);
-    let filterWeek = currentWeek;
+    const doRender = async () => {
+        if (!Array.isArray(history)) history = [];
+        
+        const now = new Date();
+        const currentWeek = getWeekNumber(now);
+        let filterWeek = currentWeek;
 
-    const render = async () => {
-        const filteredHistory = history.filter(h => {
-            const hDate = new Date(h.ts || Date.now());
-            const hWeek = getWeekNumber(hDate);
-            return hWeek === filterWeek;
-        }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
+        const executeDraw = () => {
+            const filteredHistory = history.filter(h => {
+                const hDate = new Date(h.ts || Date.now());
+                return getWeekNumber(hDate) === filterWeek;
+            }).sort((a,b) => (a.ts || 0) - (b.ts || 0));
 
-        // AGREGACIÓN HORIZONTAL
-        const daysOrder = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
-        const matrixDay = { 'LUN':{}, 'MAR':{}, 'MIE':{}, 'JUE':{}, 'VIE':{}, 'SAB':{}, 'DOM':{} };
-        const matrixYear = {};
-        const processDates = [];
+            const daysOrder = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
+            const matrixDay = { 'LUN':{}, 'MAR':{}, 'MIE':{}, 'JUE':{}, 'VIE':{}, 'SAB':{}, 'DOM':{} };
+            const matrixYear = {};
+            const processDates = [];
 
-        filteredHistory.forEach(item => {
-            const dObj = new Date(item.ts || Date.now());
-            const label = dObj.toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
-            if (!processDates.includes(label)) processDates.push(label);
+            filteredHistory.forEach(item => {
+                const dObj = new Date(item.ts || Date.now());
+                const label = dObj.toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
+                if (!processDates.includes(label)) processDates.push(label);
 
-            const reporte = item.reporteTemporadasQ || [];
-            reporte.forEach(row => {
-                const año = row.Año;
-                if (!matrixYear[año]) matrixYear[año] = {};
-                
-                // Sumar totales por año
-                const totalRow = (row.Q1||0) + (row.Q2||0) + (row.Q3||0) + (row.Q4||0) + (row.OTROS||0);
-                matrixYear[año][label] = (matrixYear[año][label] || 0) + totalRow;
-
-                // En el reporte original no tenemos el desglose por día de la semana POR FILA de año.
-                // Usamos el resumenNiveles si existe o calculamos proporciones (v12.1.116 simplificado)
-                // Para este reporte, el usuario quiere ver la evolución de las columnas LUN-DOM que ya calculamos en calculateBufferPallets
-            });
-            
-            // Si el item tiene resumenMatrix (la malla 2D), sumamos por día
-            const mx = item.resumenMatrix || (item.data && item.data.resumenMatrix);
-            if (mx) {
-                Object.keys(mx).forEach(y => {
-                    Object.keys(mx[y]).forEach(d => {
-                        const dKey = d.toUpperCase().substring(0,3);
-                        if (matrixDay[dKey]) {
-                            matrixDay[dKey][label] = (matrixDay[dKey][label] || 0) + (mx[y][d] || 0);
-                        }
-                    });
+                (item.reporteTemporadasQ || []).forEach(row => {
+                    if (!matrixYear[row.Año]) matrixYear[row.Año] = {};
+                    const totalRow = (row.Q1||0) + (row.Q2||0) + (row.Q3||0) + (row.Q4||0) + (row.OTROS||0);
+                    matrixYear[row.Año][label] = (matrixYear[row.Año][label] || 0) + totalRow;
                 });
-            }
-        });
+                
+                const mx = item.resumenMatrix || (item.data && item.data.resumenMatrix);
+                if (mx) {
+                    Object.keys(mx).forEach(y => {
+                        Object.keys(mx[y]).forEach(d => {
+                            const dKey = d.toUpperCase().substring(0,3);
+                            if (matrixDay[dKey]) matrixDay[dKey][label] = (matrixDay[dKey][label] || 0) + (mx[y][d] || 0);
+                        });
+                    });
+                }
+            });
 
-        const buildEvolutionTable = (title, matrix, rowsOrder) => {
-            return `
+            const buildEvolutionTable = (title, matrix, rowsOrder) => `
                 <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(99,102,241,0.4); flex:1; min-width:450px; margin:0; overflow:hidden; display:flex; flex-direction:column;">
                     <h3 style="color:#fff; font-size:0.9rem; font-weight:900; margin-bottom:1rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem;">${title}</h3>
                     <div style="overflow-x:auto; width:100%;">
@@ -2249,103 +2220,80 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         if (lastV > prevV) trend = '<span style="color:#10b981; font-weight:bold;">↑</span>';
                                         else if (lastV < prevV) trend = '<span style="color:#f87171; font-weight:bold;">↓</span>';
                                     }
-
-                                    return `
-                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                            <td style="padding:0.5rem; font-weight:800; color:#fff; position:sticky; left:0; background:#1e293b; z-index:1;">${rowKey}</td>
-                                            ${values.map(v => `<td style="text-align:center; padding:0.5rem; border-left:1px solid rgba(255,255,255,0.03); opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`).join('')}
-                                            <td style="text-align:center; padding:0.5rem; background:rgba(255,255,255,0.02); font-size:0.9rem;">${trend}</td>
-                                        </tr>
-                                    `;
+                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding:0.5rem; font-weight:800; color:#fff; position:sticky; left:0; background:#1e293b; z-index:1;">${rowKey}</td>
+                                        ${values.map(v => `<td style="text-align:center; padding:0.5rem; border-left:1px solid rgba(255,255,255,0.03); opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`).join('')}
+                                        <td style="text-align:center; padding:0.5rem; background:rgba(255,255,255,0.02); font-size:0.9rem;">${trend}</td>
+                                    </tr>`;
                                 }).join('')}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            `;
-        };
+                </div>`;
 
-        container.innerHTML = `
-            <!-- CONTROLES Y FILTROS -->
-            <div class="glass-panel" style="margin-bottom:1.5rem; padding:1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-                <div style="display:flex; gap:1rem; align-items:center;">
-                    <div style="display:flex; flex-direction:column; gap:4px;">
-                        <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FILTRAR SEMANA</label>
-                        <select id="sel_hist_week" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
-                            ${Array.from({length:53}, (_, i) => `<option value="${i+1}" ${filterWeek === (i+1) ? 'selected' : ''}>Semana ${i+1}</option>`).join('')}
-                        </select>
+            container.innerHTML = `
+                <div class="glass-panel" style="margin-bottom:1.5rem; padding:1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <div style="display:flex; gap:1rem; align-items:center;">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FILTRAR SEMANA</label>
+                            <select id="sel_hist_week" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
+                                ${Array.from({length:53}, (_, i) => `<option value="${i+1}" ${filterWeek === (i+1) ? 'selected' : ''}>Semana ${i+1}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:1rem; align-items:flex-end;">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FECHA DEL STOCK</label>
+                            <input type="date" id="hist_process_date" value="${now.toISOString().split('T')[0]}" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
+                        </div>
+                        <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.75rem; padding:0.6rem 1.5rem; box-shadow:0 0 15px rgba(99,102,241,0.4); border-radius:8px;">CALCULAR EVOLUCIÓN</button>
                     </div>
                 </div>
-
-                <div style="display:flex; gap:1rem; align-items:flex-end;">
-                    <div style="display:flex; flex-direction:column; gap:4px;">
-                        <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FECHA DEL STOCK</label>
-                        <input type="date" id="hist_process_date" value="${now.toISOString().split('T')[0]}" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
-                    </div>
-                    <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.75rem; padding:0.6rem 1.5rem; box-shadow:0 0 15px rgba(99,102,241,0.4); border-radius:8px;">
-                        CALCULAR EVOLUCIÓN
-                    </button>
+                <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+                    ${buildEvolutionTable('Evolución por Día (Sem ' + filterWeek + ')', matrixDay, daysOrder)}
+                    ${buildEvolutionTable('Evolución por Año (Sem ' + filterWeek + ')', matrixYear, Object.keys(matrixYear).sort())}
                 </div>
-            </div>
+                <div style="margin-top:2rem; text-align:right;">
+                    <button id="btn_clear_hist" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.7rem; opacity:0.6; text-decoration:underline;">Limpiar historial completo (Cuidado)</button>
+                </div>`;
 
-            <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
-                ${buildEvolutionTable('Evolución por Día (Sem ' + filterWeek + ')', matrixDay, daysOrder)}
-                ${buildEvolutionTable('Evolución por Año (Sem ' + filterWeek + ')', matrixYear, Object.keys(matrixYear).sort())}
-            </div>
-
-            <div style="margin-top:2rem; text-align:right;">
-                <button id="btn_clear_hist" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.7rem; opacity:0.6; text-decoration:underline;">Limpiar historial completo (Cuidado)</button>
-            </div>
-        `;
-
-        // EVENTOS
-        document.getElementById('sel_hist_week').onchange = (e) => {
-            filterWeek = parseInt(e.target.value);
-            render();
-        };
-
-        document.getElementById('btn_clear_hist').onclick = async () => {
-            if (confirm("¿Estás seguro de que quieres borrar TODO el historial en la nube?")) {
-                localStorage.removeItem('buffer_history_v12');
-                const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-                await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([]) });
-                alert("Historial borrado.");
-                renderHistorySeasonsTab(container);
-            }
-        };
-
-        const calcBtn = document.getElementById('btn_calc_history');
-        calcBtn.onclick = async () => {
-            if (!dataStore.stockActivo || !dataStore.stockReserva) {
-                alert('⚠️ Carga los archivos de Stock Activo y Reserva primero.');
-                return;
-            }
-            const selectedDate = document.getElementById('hist_process_date').value;
-            const processTS = selectedDate ? new Date(selectedDate + 'T12:00:00').getTime() : Date.now();
-
-            calcBtn.disabled = true;
-            calcBtn.innerHTML = '⚙️ PROCESANDO...';
-            try {
-                const res = await calculateBufferPallets();
-                if (res) {
-                    const result = {
-                        ...res,
-                        ts: processTS,
-                        created_at: new Date().toISOString()
-                    };
-                    await saveBufferReport(result, user.username || 'system');
-                    alert('✅ Evolución registrada correctamente.');
+            document.getElementById('sel_hist_week').onchange = (e) => { filterWeek = parseInt(e.target.value); executeDraw(); };
+            document.getElementById('btn_clear_hist').onclick = async () => {
+                if (confirm("¿Estás seguro?")) {
+                    localStorage.removeItem('buffer_history_v12');
+                    const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+                    await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([]) });
                     renderHistorySeasonsTab(container);
                 }
-            } catch(e) {
-                alert('❌ Error: ' + e.message);
-                calcBtn.disabled = false;
-                calcBtn.innerHTML = 'CALCULAR EVOLUCIÓN';
-            }
+            };
+            document.getElementById('btn_calc_history').onclick = async () => {
+                if (!dataStore.stockActivo || !dataStore.stockReserva) return alert('⚠️ Carga los archivos primero.');
+                const btn = document.getElementById('btn_calc_history');
+                btn.disabled = true; btn.innerHTML = '⚙️...';
+                try {
+                    const res = await calculateBufferPallets();
+                    if (res) {
+                        const result = { ...res, ts: new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now(), created_at: new Date().toISOString() };
+                        await saveBufferReport(result, user.username || 'system');
+                        alert('✅ Registrado.');
+                        renderHistorySeasonsTab(container);
+                    }
+                } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = 'CALCULAR'; }
+            };
         };
+        executeDraw();
     };
 
-    render();
+    // Lanzar carga inicial (Local)
+    doRender();
+
+    // Actualizar desde nube en background
+    fetchBufferHistory().then(cloudData => {
+        if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+            history = cloudData;
+            doRender();
+        }
+    }).catch(e => console.warn("Nube lenta/error:", e));
   };
 
   const renderAnalisisSKUTab = async () => {
