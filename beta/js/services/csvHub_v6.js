@@ -1,5 +1,5 @@
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
-console.log("[PULSE] csvHub_v6.js LOADED - v12.5.18-FINAL - Coordenadas Restauradas");
+console.log("[PULSE] csvHub_v6.js LOADED - v12.5.18-BETA - Coordenadas Restauradas");
 export const dataStore = {
   stockActivo: null,
   stockReserva: null,
@@ -1087,7 +1087,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.18-FINAL',
+        version: 'v12.5.18-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
