@@ -158,7 +158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.3-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.4.4-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1929,7 +1929,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.3-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.4-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2448,11 +2448,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Lanzar carga inicial (Local)
     doRender();
 
-    // Actualizar desde nube en background
+    // Actualizar desde nube en background (Fusión Inteligente)
     fetchBufferHistory().then(cloudData => {
-        if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-            history = cloudData;
-            doRender();
+        if (cloudData && Array.isArray(cloudData)) {
+            // Fusionar por ID o Timestamp único para evitar duplicados y no perder lo local
+            const existingIds = new Set(history.map(h => h.created_at || h.ts));
+            let changed = false;
+            cloudData.forEach(ch => {
+                if (!existingIds.has(ch.created_at || ch.ts)) {
+                    history.push(ch);
+                    changed = true;
+                }
+            });
+            if (changed) {
+                history.sort((a,b) => (a.ts || 0) - (b.ts || 0));
+                localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+                doRender();
+            }
         }
     }).catch(e => console.warn("Nube lenta/error:", e));
   };
