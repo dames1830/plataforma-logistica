@@ -1041,7 +1041,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.4.5-FINAL',
+        version: 'v12.4.6-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1095,7 +1095,6 @@ export const fetchBufferHistory = async () => {
         if (res.ok) {
             const result = await res.json();
             if (result.data) {
-                localStorage.setItem('buffer_history_v12', JSON.stringify(result.data));
                 return result.data;
             }
         }
