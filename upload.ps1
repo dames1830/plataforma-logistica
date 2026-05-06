@@ -1,3 +1,3 @@
 git add .
-git commit -m "BETA v12.3.2: Final side-by-side reports and Articulo theme"
+git commit -m "RC v12.3.5: Final pivoted reports and clean syntax"
 git push origin main
