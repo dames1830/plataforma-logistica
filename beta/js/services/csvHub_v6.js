@@ -1139,7 +1139,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.1.115-BETA',
+        version: 'v12.1.116-BETA',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1156,4 +1156,68 @@ export const calculateBufferPallets = (configOverride = null) => {
         detalleObsGen: detalleObsGen,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
+};
+
+// --- PERSISTENCIA NUBE (BUFFER HISTORY) ---
+export const saveBufferReport = async (reportData, username) => {
+    try {
+        const history = await fetchBufferHistory(); 
+        history.push({
+            ...reportData,
+            user: username,
+            id: Date.now() 
+        });
+        localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+        await fetch(`${API_URL}/buffer_history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(history)
+        });
+        return true;
+    } catch (e) {
+        console.error("Error salvando reporte en nube:", e);
+        return false;
+    }
+};
+
+export const fetchBufferHistory = async () => {
+    try {
+        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+        const res = await fetch(`${API_URL}/buffer_history`);
+        if (res.ok) {
+            const result = await res.json();
+            if (result.data) {
+                localStorage.setItem('buffer_history_v12', JSON.stringify(result.data));
+                return result.data;
+            }
+        }
+    } catch (e) {
+        console.warn("Usando backup local para historial:", e);
+    }
+    const local = localStorage.getItem('buffer_history_v12');
+    return local ? JSON.parse(local) : [];
+};
+
+export const deleteBufferReport = async (reportId) => {
+    try {
+        let history = await fetchBufferHistory();
+        history = history.filter(h => h.id !== reportId);
+        localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+        await fetch(`${API_URL}/buffer_history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(history)
+        });
+        return true;
+    } catch (e) {
+        console.error("Error borrando reporte:", e);
+        return false;
+    }
+};
+
+export const loadBufferReport = async () => {
+    const history = await fetchBufferHistory();
+    return history.length > 0 ? history[history.length - 1] : null;
 };
