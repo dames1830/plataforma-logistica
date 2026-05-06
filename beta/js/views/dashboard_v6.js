@@ -2158,7 +2158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const user = getSession();
 
-    const doRender = async () => {
+        const doRender = async () => {
         if (!Array.isArray(history)) history = [];
         const now = new Date();
         const currentWeek = getWeekNumber(now);
@@ -2181,6 +2181,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const label = formatDate(h.ts);
                 if (!activeDates.includes(label)) activeDates.push(label);
             });
+
+            const getTrendIcon = (val, prevVal) => {
+                if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:3px; font-size:0.6rem;">●</span>';
+                if (val > prevVal) return '<span style="color:#10b981; margin-left:3px; font-size:0.7rem;">↑</span>';
+                if (val < prevVal) return '<span style="color:#f87171; margin-left:3px; font-size:0.7rem;">↓</span>';
+                return '<span style="color:rgba(255,255,255,0.1); margin-left:3px; font-size:0.6rem;">→</span>';
+            };
 
             const buildDayTable = () => {
                 const pivotMap = {};
@@ -2221,8 +2228,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     if (currentYear !== null && currentYear !== entry.year) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                                <td colspan="${activeDates.length + 3}" style="padding:0.7rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">SUBTOTAL ${currentYear}</td>
-                                <td style="padding:0.7rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
+                                <td colspan="${activeDates.length + 3}" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
+                                <td style="padding:0.4rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
                             </tr>`;
                         yearTotal = 0;
                     }
@@ -2231,21 +2238,23 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                     rowsHtml += `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <td style="padding:0.7rem; text-align:center;">${entry.week}</td>
-                            <td style="padding:0.7rem; text-align:center; font-weight:700; color:#fff;">${entry.year}</td>
-                            <td style="padding:0.7rem; text-align:center;">${entry.q}</td>
-                            ${activeDates.map(d => {
+                            <td style="padding:0.4rem; text-align:center;">${entry.week}</td>
+                            <td style="padding:0.4rem; text-align:center; font-weight:700; color:#fff;">${entry.year}</td>
+                            <td style="padding:0.4rem; text-align:center;">${entry.q}</td>
+                            ${activeDates.map((d, i) => {
                                 const v = entry.days[d] || 0;
-                                return `<td style="padding:0.7rem; text-align:center; color:var(--primary); font-weight:800; opacity:${v===0?'0.1':'1'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
+                                const prevD = i > 0 ? activeDates[i-1] : undefined;
+                                const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
+                                return `<td style="padding:0.4rem; text-align:center; color:var(--primary); font-weight:800; opacity:${v===0?'0.1':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
                             }).join('')}
-                            <td style="padding:0.7rem; text-align:center; font-weight:900; color:#fff;">${entry.total.toLocaleString()}</td>
+                            <td style="padding:0.4rem; text-align:center; font-weight:900; color:#fff;">${entry.total.toLocaleString()}</td>
                         </tr>`;
                     
                     if (index === sortedKeys.length - 1) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                                <td colspan="${activeDates.length + 3}" style="padding:0.7rem; text-align:right; color:var(--text-muted); font-size:0.7rem;">SUBTOTAL ${currentYear}</td>
-                                <td style="padding:0.7rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
+                                <td colspan="${activeDates.length + 3}" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
+                                <td style="padding:0.4rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
                             </tr>`;
                     }
                 });
@@ -2253,29 +2262,29 @@ export const renderDashboard = async (container, user, onLogout) => {
                 if (grandTotal > 0) {
                     rowsHtml += `
                         <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
-                            <td colspan="${activeDates.length + 3}" style="padding:1rem; text-align:right; color:#fbbf24; letter-spacing:1px;">TOTAL GENERAL</td>
-                            <td style="padding:1rem; text-align:center; color:#fff; font-size:1rem;">${grandTotal.toLocaleString()}</td>
+                            <td colspan="${activeDates.length + 3}" style="padding:0.6rem; text-align:right; color:#fbbf24; font-size:0.7rem; letter-spacing:1px;">TOTAL GENERAL</td>
+                            <td style="padding:0.6rem; text-align:center; color:#fff; font-size:0.85rem;">${grandTotal.toLocaleString()}</td>
                         </tr>`;
                 }
 
                 return `
-                    <div class="glass-panel animate-fade-in" style="flex:1.5; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO DÍA</h3>
+                    <div class="glass-panel animate-fade-in" style="flex:1.4; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
+                        <div style="padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.4);">
+                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO DÍA</h3>
                         </div>
                         <div style="overflow-x:auto;">
-                            <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
-                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
+                            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
                                     <tr>
-                                        <th style="padding:1rem 0.5rem; text-align:center;">SEMANA</th>
-                                        <th style="padding:1rem 0.5rem; text-align:center;">TEMPORADA</th>
-                                        <th style="padding:1rem 0.5rem; text-align:center;">Q</th>
-                                        ${activeDates.map(d => `<th style="padding:1rem 0.5rem; text-align:center;">${d}</th>`).join('')}
-                                        <th style="padding:1rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
+                                        <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
+                                        <th style="padding:0.6rem 0.4rem; text-align:center;">AÑO</th>
+                                        <th style="padding:0.6rem 0.4rem; text-align:center;">Q</th>
+                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">${d}</th>`).join('')}
+                                        <th style="padding:0.6rem 0.4rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
+                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:2rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2298,7 +2307,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const sortedKeys = Object.keys(yearMap).sort((a,b) => {
                     const labelA = String(yearMap[a].season);
                     const labelB = String(yearMap[b].season);
-                    
                     const isSpecial = (l) => l.includes('S/MAESTRO') || l.includes('ND') || l.includes('(en blanco)');
                     if (!isSpecial(labelA) && isSpecial(labelB)) return -1;
                     if (isSpecial(labelA) && !isSpecial(labelB)) return 1;
@@ -2308,13 +2316,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 const colTotals = {};
                 let grandTotal = 0;
-
-                const getTrendIcon = (val, prevVal) => {
-                    if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.2); margin-left:4px;">●</span>';
-                    if (val > prevVal) return '<span style="color:#10b981; margin-left:4px;">↑</span>';
-                    if (val < prevVal) return '<span style="color:#f87171; margin-left:4px;">↓</span>';
-                    return '<span style="color:rgba(255,255,255,0.2); margin-left:4px;">→</span>';
-                };
                 
                 let rowsHtml = sortedKeys.map(k => {
                     const entry = yearMap[k];
@@ -2323,45 +2324,45 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                     return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <td style="padding:0.8rem 0.5rem; text-align:center;">${entry.week}</td>
-                            <td style="padding:0.8rem 0.5rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
+                            <td style="padding:0.5rem 0.4rem; text-align:center;">${entry.week}</td>
+                            <td style="padding:0.5rem 0.4rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
                             ${activeDates.map((d, i) => {
                                 const v = entry.days[d] || 0;
                                 colTotals[d] = (colTotals[d] || 0) + v;
                                 const prevD = i > 0 ? activeDates[i-1] : undefined;
                                 const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
-                                return `<td style="padding:0.8rem 0.5rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
+                                return `<td style="padding:0.5rem 0.4rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
                             }).join('')}
-                            <td style="padding:0.8rem 0.5rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
+                            <td style="padding:0.5rem 0.4rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
                         </tr>`;
                 }).join('');
 
                 if (grandTotal > 0) {
                     rowsHtml += `
                         <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
-                            <td colspan="2" style="padding:1rem; text-align:right; color:#fbbf24;">TOTAL</td>
-                            ${activeDates.map(d => `<td style="padding:1rem; text-align:center; color:#fff;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
-                            <td style="padding:1rem; text-align:center; color:#fff; font-size:1rem;">${grandTotal.toLocaleString()}</td>
+                            <td colspan="2" style="padding:0.6rem 0.4rem; text-align:right; color:#fbbf24;">TOTAL</td>
+                            ${activeDates.map(d => `<td style="padding:0.6rem 0.4rem; text-align:center; color:#fff;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
+                            <td style="padding:0.6rem 0.4rem; text-align:center; color:#fff; font-size:0.85rem;">${grandTotal.toLocaleString()}</td>
                         </tr>`;
                 }
 
                 return `
                     <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO AÑO</h3>
+                        <div style="padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.4);">
+                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO AÑO</h3>
                         </div>
                         <div style="overflow-x:auto;">
-                            <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
-                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
+                            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
                                     <tr>
-                                        <th style="padding:1rem 0.5rem; text-align:center;">SEMANA</th>
-                                        <th style="padding:1rem 0.5rem; text-align:left; width:130px;">AÑO/TEMPORADA</th>
-                                        ${activeDates.map(d => `<th style="padding:1rem 0.5rem; text-align:center;">${d}</th>`).join('')}
-                                        <th style="padding:1rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
+                                        <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
+                                        <th style="padding:0.6rem 0.4rem; text-align:left;">TEMPORADA</th>
+                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">${d}</th>`).join('')}
+                                        <th style="padding:0.6rem 0.4rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rowsHtml || '<tr><td colspan="' + (activeDates.length + 3) + '" style="text-align:center; padding:3rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
+                                    ${rowsHtml || '<tr><td colspan="' + (activeDates.length + 3) + '" style="text-align:center; padding:2rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2369,29 +2370,29 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
 
             container.innerHTML = `
-                <div class="glass-panel" style="margin-bottom:1.5rem; padding:1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border:1px solid rgba(255,255,255,0.05);">
+                <div class="glass-panel" style="margin-bottom:1rem; padding:0.8rem 1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.3);">
                     <div style="display:flex; gap:1rem; align-items:center;">
-                        <div style="display:flex; flex-direction:column; gap:4px;">
-                            <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FILTRAR SEMANA</label>
-                            <select id="sel_hist_week" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <label style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">SEMANA</label>
+                            <select id="sel_hist_week" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.3rem; font-size:0.75rem;">
                                 ${Array.from({length:53}, (_, i) => `<option value="${i+1}" ${filterWeek === (i+1) ? 'selected' : ''}>Semana ${i+1}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <div style="display:flex; gap:1rem; align-items:flex-end;">
-                        <div style="display:flex; flex-direction:column; gap:4px;">
-                            <label style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">FECHA DEL STOCK</label>
-                            <input type="date" id="hist_process_date" value="${now.toISOString().split('T')[0]}" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.4rem; font-size:0.8rem;">
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <label style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">FECHA STOCK</label>
+                            <input type="date" id="hist_process_date" value="${now.toISOString().split('T')[0]}" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.3rem; font-size:0.75rem;">
                         </div>
-                        <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.75rem; padding:0.6rem 2.5rem; box-shadow:0 0 15px rgba(99,102,241,0.4); border-radius:8px;">PROCESAR</button>
+                        <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.7rem; padding:0.4rem 2rem; border-radius:6px;">PROCESAR</button>
                     </div>
                 </div>
-                <div style="display:flex; gap:1.5rem; align-items: flex-start; flex-wrap:wrap;">
+                <div style="display:flex; gap:1rem; align-items: flex-start; flex-wrap:wrap;">
                     ${buildDayTable()}
                     ${buildYearTable()}
                 </div>
-                <div style="margin-top:2rem; text-align:right;">
-                    <button id="btn_clear_hist" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.7rem; opacity:0.6; text-decoration:underline;">Limpiar historial completo (Cuidado)</button>
+                <div style="margin-top:1.5rem; text-align:right;">
+                    <button id="btn_clear_hist" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.65rem; opacity:0.5; text-decoration:underline;">Limpiar historial</button>
                 </div>`;
 
             document.getElementById('sel_hist_week').onchange = (e) => { filterWeek = parseInt(e.target.value); executeDraw(); };

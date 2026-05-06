@@ -1,3 +1,3 @@
 git add .
-git commit -m "FINAL v12.3.7: Trend indicators, sorting and totals complete"
+git commit -m "FINAL v12.3.8: Compact layout and Day trend indicators"
 git push origin main
