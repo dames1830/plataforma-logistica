@@ -1041,7 +1041,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     return { 
-        version: 'v12.5.6-FINAL',
+        version: 'v12.5.7-FINAL',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1064,12 +1064,14 @@ export const calculateBufferPallets = (configOverride = null) => {
 export const saveBufferReport = async (reportData, username) => {
     try {
         const history = await fetchBufferHistory(); 
+        if (!history) throw new Error("No se pudo leer el historial.");
+        
         history.push({
             ...reportData,
             user: username,
             id: Date.now() 
         });
-        localStorage.setItem('buffer_history_v12', JSON.stringify(history));
+        
         const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
         await fetch(`${API_URL}/buffer_history`, {
             method: 'POST',
@@ -1089,7 +1091,8 @@ export const fetchBufferHistory = async () => {
     
     try {
         const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        const res = await fetch(`${API_URL}/buffer_history`, { signal: controller.signal });
+        // [v12.5.7] Cache-buster t=Date.now()
+        const res = await fetch(`${API_URL}/buffer_history?t=${Date.now()}`, { signal: controller.signal });
         clearTimeout(timeoutId);
         
         if (res.ok) {
