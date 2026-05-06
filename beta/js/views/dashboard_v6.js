@@ -2410,8 +2410,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = oldHtml; }
             };
         };
-            };
-        };
         executeDraw();
     };
 
