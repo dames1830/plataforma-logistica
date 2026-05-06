@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.1.109-BETA';
-const CACHE_KEY = `logistics_v12_1_109_BETA_`;
+const VERSION = '12.1.110-BETA';
+const CACHE_KEY = `logistics_v12_1_110_BETA_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
@@ -148,7 +148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.109-BETA</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.1.110-BETA</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -2145,8 +2145,6 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  let historySubView = 'por_q'; // 'por_q' o 'por_año'
-
   const renderHistorySeasonsTab = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial...</p></div>`;
     
@@ -2156,9 +2154,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         return;
     }
 
-    const matrix = {};
+    const matrixQ = {};
+    const matrixAño = {};
     const allDays = new Set();
-    const rowMetadata = {}; 
+    const metaQ = {}; 
+    const metaAño = {};
 
     const sortedHistory = [...history].sort((a,b) => (a.ts || 0) - (b.ts || 0));
 
@@ -2175,170 +2175,183 @@ export const renderDashboard = async (container, user, onLogout) => {
         reporteTQ.forEach(row => {
             const año = row.Año;
             
-            if (historySubView === 'por_q') {
-                ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(q => {
-                    const qty = row[q] || 0;
-                    if (qty > 0) {
-                        const key = `${semana}-${año}-${q}`;
-                        if (!matrix[key]) matrix[key] = {};
-                        matrix[key][dayLabel] = qty;
-                        rowMetadata[key] = { semana, año, q };
-                    }
-                });
-            } else {
-                // Vista POR AÑO (Agrupada)
-                const key = `${semana}-${año}`;
-                const totalAño = (row.Q1||0) + (row.Q2||0) + (row.Q3||0) + (row.Q4||0) + (row.OTROS||0);
-                if (totalAño > 0) {
-                    if (!matrix[key]) matrix[key] = {};
-                    matrix[key][dayLabel] = (matrix[key][dayLabel] || 0) + totalAño;
-                    rowMetadata[key] = { semana, año };
+            // Lógica Por Q
+            ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(q => {
+                const qty = row[q] || 0;
+                if (qty > 0) {
+                    const key = `${semana}-${año}-${q}`;
+                    if (!matrixQ[key]) matrixQ[key] = {};
+                    matrixQ[key][dayLabel] = qty;
+                    metaQ[key] = { semana, año, q };
                 }
+            });
+
+            // Lógica Por Año
+            const keyA = `${semana}-${año}`;
+            const totalAño = (row.Q1||0) + (row.Q2||0) + (row.Q3||0) + (row.Q4||0) + (row.OTROS||0);
+            if (totalAño > 0) {
+                if (!matrixAño[keyA]) matrixAño[keyA] = {};
+                matrixAño[keyA][dayLabel] = (matrixAño[keyA][dayLabel] || 0) + totalAño;
+                metaAño[keyA] = { semana, año };
             }
         });
     });
 
     const daysSorted = Array.from(allDays); 
-    const rowsKeys = Object.keys(matrix).sort((a,b) => {
-        const metaA = rowMetadata[a];
-        const metaB = rowMetadata[b];
-        if (metaB.semana !== metaA.semana) return metaB.semana - metaA.semana; 
-        
-        const bottom = ['S/MAESTRO', 'ND', '(EN BLANCO)', '(BLANCO)', 'S/T', 'S/TEMPORADA', ''];
-        const aIsBottom = bottom.includes(metaA.año.toUpperCase());
-        const bIsBottom = bottom.includes(metaB.año.toUpperCase());
-        
-        if (aIsBottom && !bIsBottom) return 1;
-        if (!aIsBottom && bIsBottom) return -1;
-        if (aIsBottom && bIsBottom) return bottom.indexOf(metaA.año.toUpperCase()) - bottom.indexOf(metaB.año.toUpperCase());
-
-        if (metaB.año !== metaA.año) return metaB.año.localeCompare(metaA.año);
-        return historySubView === 'por_q' ? metaA.q.localeCompare(metaB.q) : 0;
-    });
-
-    const grandTotal = {};
-    daysSorted.forEach(d => grandTotal[d] = 0);
-
-    const tableRows = [];
-    let lastYearGroup = null;
-    let yearSubtotal = {};
-
-    rowsKeys.forEach((key, idx) => {
-        const meta = rowMetadata[key];
-        const currentYearGroup = `${meta.semana}-${meta.año}`;
-        
-        // Subtotales solo si estamos en vista por Q
-        if (historySubView === 'por_q' && lastYearGroup && lastYearGroup !== currentYearGroup) {
-            tableRows.push({ isTotal: true, label: `TOTAL ${lastYearGroup.split('-')[1]}`, data: yearSubtotal });
-            yearSubtotal = {};
-            daysSorted.forEach(d => yearSubtotal[d] = 0);
-        }
-
-        if (!yearSubtotal.data_init) {
-            daysSorted.forEach(d => yearSubtotal[d] = 0);
-            yearSubtotal.data_init = true;
-        }
-
-        tableRows.push({ isTotal: false, key, meta, data: matrix[key] });
-        
-        daysSorted.forEach(d => {
-            const val = matrix[key][d] || 0;
-            yearSubtotal[d] = (yearSubtotal[d] || 0) + val;
-            grandTotal[d] = (grandTotal[d] || 0) + val;
-        });
-
-        lastYearGroup = currentYearGroup;
-
-        if (historySubView === 'por_q' && idx === rowsKeys.length - 1) {
-            tableRows.push({ isTotal: true, label: `TOTAL ${meta.año}`, data: yearSubtotal });
-        }
-    });
-
     const getTrendIcon = (val, prevVal) => {
-        if (prevVal === undefined || prevVal === 0) return '';
+        if (prevVal === undefined) return '';
         if (val === prevVal) return '<span style="color:#fbbf24; margin-left:4px; font-size:0.65rem;">●</span>';
         if (val > prevVal) return '<span style="color:#10b981; margin-left:4px; font-size:0.75rem;">↑</span>';
         return '<span style="color:#ef4444; margin-left:4px; font-size:0.75rem;">↓</span>';
     };
 
-    container.innerHTML = `
-        <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; gap:1rem;">
-                <button class="btn" style="padding:0.5rem 1rem; font-size:0.75rem; background:${historySubView==='por_q'?'var(--primary)':'rgba(255,255,255,0.05)'}; font-weight:800;" onclick="window.setHistorySubView('por_q')">POR TEMPORADA / Q</button>
-                <button class="btn" style="padding:0.5rem 1rem; font-size:0.75rem; background:${historySubView==='por_año'?'var(--primary)':'rgba(255,255,255,0.05)'}; font-weight:800;" onclick="window.setHistorySubView('por_año')">POR AÑO</button>
+    const buildTableHtml = (title, matrix, metadata, isQView) => {
+        const keys = Object.keys(matrix).sort((a,b) => {
+            const mA = metadata[a];
+            const mB = metadata[b];
+            if (mB.semana !== mA.semana) return mB.semana - mA.semana; 
+            const bottom = ['S/MAESTRO', 'ND', '(EN BLANCO)', '(BLANCO)', 'S/T', 'S/TEMPORADA', ''];
+            const aBot = bottom.includes(mA.año.toUpperCase());
+            const bBot = bottom.includes(mB.año.toUpperCase());
+            if (aBot && !bBot) return 1;
+            if (!aBot && bBot) return -1;
+            if (mB.año !== mA.año) return mB.año.localeCompare(mA.año);
+            return isQView ? mA.q.localeCompare(mB.q) : 0;
+        });
+
+        const grandTotal = {};
+        daysSorted.forEach(d => grandTotal[d] = 0);
+        const rows = [];
+        let lastY = null;
+        let ySub = {};
+
+        keys.forEach((k, i) => {
+            const m = metadata[k];
+            const curY = `${m.semana}-${m.año}`;
+            if (isQView && lastY && lastY !== curY) {
+                rows.push({ isTotal: true, label: `TOTAL ${lastY.split('-')[1]}`, data: ySub });
+                ySub = {};
+                daysSorted.forEach(d => ySub[d] = 0);
+            }
+            if (!ySub.init) { daysSorted.forEach(d => ySub[d] = 0); ySub.init = true; }
+            rows.push({ isTotal: false, k, m, data: matrix[k] });
+            daysSorted.forEach(d => {
+                const v = matrix[k][d] || 0;
+                ySub[d] = (ySub[d] || 0) + v;
+                grandTotal[d] = (grandTotal[d] || 0) + v;
+            });
+            lastY = curY;
+            if (isQView && i === keys.length - 1) {
+                rows.push({ isTotal: true, label: `TOTAL ${m.año}`, data: ySub });
+            }
+        });
+
+        return `
+            <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(99,102,241,0.4); box-shadow:0 0 15px rgba(99,102,241,0.15); max-width:1100px; margin:0 auto 2rem; position:relative; overflow:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
+                    <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.95rem; letter-spacing:1px; text-transform:uppercase;">${title}</h3>
+                    <span style="font-size:0.65rem; color:var(--text-muted); opacity:0.5;">* Indicadores: ↑ Crece, ↓ Baja, ● Mantiene</span>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
+                        <thead>
+                            <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
+                                <th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">SEM</th>
+                                <th style="text-align:left; padding:0.6rem 0.4rem;">AÑO/TEMPORADA</th>
+                                ${isQView ? '<th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">Q</th>' : ''}
+                                ${daysSorted.map(d => `<th style="text-align:center; padding:0.6rem 0.4rem; min-width:85px; border-left:1px solid rgba(255,255,255,0.05); opacity:0.7;">${d.toUpperCase()}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.map(r => {
+                                if (r.isTotal) {
+                                    return `
+                                        <tr style="background:rgba(99,102,241,0.08); color:rgba(255,255,255,0.7); font-weight:700;">
+                                            <td colspan="${isQView?3:2}" style="padding:0.4rem; text-align:right; border-top:1px solid rgba(99,102,241,0.2); letter-spacing:1px; font-size:0.65rem;">${r.label}</td>
+                                            ${daysSorted.map((d, di) => {
+                                                const v = r.data[d] || 0;
+                                                const pD = daysSorted[di-1];
+                                                const pV = pD ? r.data[pD] : undefined;
+                                                return `<td style="padding:0.4rem; text-align:center; border-top:1px solid rgba(99,102,241,0.2); border-left:1px solid rgba(255,255,255,0.03); color:var(--primary); opacity:0.8;">${v.toLocaleString()}${getTrendIcon(v, pV)}</td>`;
+                                            }).join('')}
+                                        </tr>
+                                    `;
+                                }
+                                return `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.01)'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding:0.35rem; text-align:center; font-weight:700; color:rgba(255,255,255,0.2);">${r.m.semana}</td>
+                                        <td style="padding:0.35rem; font-weight:700; color:rgba(255,255,255,0.9);">${r.m.año}</td>
+                                        ${isQView ? `<td style="padding:0.35rem; text-align:center; font-weight:800; color:var(--primary); opacity:0.6;">${r.m.q}</td>` : ''}
+                                        ${daysSorted.map((d, di) => {
+                                            const v = r.data[d] || 0;
+                                            const pD = daysSorted[di-1];
+                                            const pV = pD ? r.data[pD] : undefined;
+                                            return `<td style="padding:0.35rem; text-align:center; font-weight:600; border-left:1px solid rgba(255,255,255,0.03); color:rgba(255,255,255,0.75); opacity:${v===0?'0.05':'1'}">${v > 0 ? v.toLocaleString() + getTrendIcon(v, pV) : '-'}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                        <tfoot style="border-top:2px solid var(--primary); background:rgba(251,191,36,0.1); color:rgba(251,191,36,0.8); font-weight:900;">
+                            <tr>
+                                <td colspan="${isQView?3:2}" style="padding:0.6rem; text-align:right; letter-spacing:1px; font-size:0.7rem;">TOTAL GENERAL</td>
+                                ${daysSorted.map((d, di) => {
+                                    const v = grandTotal[d] || 0;
+                                    const pD = daysSorted[di-1];
+                                    const pV = pD ? grandTotal[pD] : undefined;
+                                    return `<td style="padding:0.6rem; text-align:center; border-left:1px solid rgba(255,255,255,0.05); font-size:0.8rem;">${v.toLocaleString()}${getTrendIcon(v, pV)}</td>`;
+                                }).join('')}
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
+        `;
+    };
+
+    container.innerHTML = `
+        <div style="margin-bottom:1.5rem; display:flex; justify-content:flex-end;">
             <button id="btn_calc_history" class="btn" style="max-width:200px; background:var(--primary); font-weight:800; font-size:0.8rem; box-shadow:0 0 10px rgba(99,102,241,0.3); border-radius:8px; padding:0.6rem 1.2rem;">
                 Calcular
             </button>
         </div>
 
-        <div class="glass-panel animate-fade-in" style="padding:1rem; border:1px solid rgba(99,102,241,0.4); box-shadow:0 0 15px rgba(99,102,241,0.15); max-width:1100px; margin:0 auto; position:relative; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
-                <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.95rem; letter-spacing:1px; text-transform:uppercase;">${historySubView==='por_q'?'Comportamiento por día':'Comportamiento por Año'}</h3>
-                <span style="font-size:0.65rem; color:var(--text-muted); opacity:0.5;">* Indicadores: ↑ Crece, ↓ Baja, ● Mantiene</span>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-                    <thead>
-                        <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
-                            <th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">SEM</th>
-                            <th style="text-align:left; padding:0.6rem 0.4rem;">AÑO/TEMPORADA</th>
-                            ${historySubView === 'por_q' ? '<th style="text-align:center; padding:0.6rem 0.4rem; width:60px;">Q</th>' : ''}
-                            ${daysSorted.map(d => `<th style="text-align:center; padding:0.6rem 0.4rem; min-width:85px; border-left:1px solid rgba(255,255,255,0.05); opacity:0.7;">${d.toUpperCase()}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows.map(row => {
-                            if (row.isTotal) {
-                                return `
-                                    <tr style="background:rgba(99,102,241,0.08); color:rgba(255,255,255,0.7); font-weight:700;">
-                                        <td colspan="${historySubView==='por_q'?3:2}" style="padding:0.4rem; text-align:right; border-top:1px solid rgba(99,102,241,0.2); letter-spacing:1px; font-size:0.65rem;">${row.label}</td>
-                                        ${daysSorted.map((d, di) => {
-                                            const val = row.data[d] || 0;
-                                            const prevDay = daysSorted[di-1];
-                                            const prevVal = prevDay ? row.data[prevDay] : undefined;
-                                            return `<td style="padding:0.4rem; text-align:center; border-top:1px solid rgba(99,102,241,0.2); border-left:1px solid rgba(255,255,255,0.03); color:var(--primary); opacity:0.8;">${val.toLocaleString()}${getTrendIcon(val, prevVal)}</td>`;
-                                        }).join('')}
-                                    </tr>
-                                    <tr style="height:2px;"></tr>
-                                `;
-                            }
-                            const meta = row.meta;
-                            return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.01)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.35rem; text-align:center; font-weight:700; color:rgba(255,255,255,0.2);">${meta.semana}</td>
-                                    <td style="padding:0.35rem; font-weight:700; color:rgba(255,255,255,0.9);">${meta.año}</td>
-                                    ${historySubView === 'por_q' ? `<td style="padding:0.35rem; text-align:center; font-weight:800; color:var(--primary); opacity:0.6;">${meta.q}</td>` : ''}
-                                    ${daysSorted.map((d, di) => {
-                                        const val = row.data[d] || 0;
-                                        const prevDay = daysSorted[di-1];
-                                        const prevVal = prevDay ? row.data[prevDay] : undefined;
-                                        return `<td style="padding:0.35rem; text-align:center; font-weight:600; border-left:1px solid rgba(255,255,255,0.03); color:rgba(255,255,255,0.75); opacity:${val===0?'0.05':'1'}">${val > 0 ? val.toLocaleString() + getTrendIcon(val, prevVal) : '-'}</td>`;
-                                    }).join('')}
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                    <tfoot style="border-top:2px solid var(--primary); background:rgba(251,191,36,0.1); color:rgba(251,191,36,0.8); font-weight:900;">
-                        <tr>
-                            <td colspan="${historySubView==='por_q'?3:2}" style="padding:0.6rem; text-align:right; letter-spacing:1px; font-size:0.7rem;">TOTAL GENERAL</td>
-                            ${daysSorted.map((d, di) => {
-                                const val = grandTotal[d] || 0;
-                                const prevDay = daysSorted[di-1];
-                                const prevVal = prevDay ? grandTotal[prevDay] : undefined;
-                                return `<td style="padding:0.6rem; text-align:center; border-left:1px solid rgba(255,255,255,0.05); font-size:0.8rem;">${val.toLocaleString()}${getTrendIcon(val, prevVal)}</td>`;
-                            }).join('')}
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
+        ${buildTableHtml('Comportamiento por día', matrixQ, metaQ, true)}
+        ${buildTableHtml('Comportamiento por Año', matrixAño, metaAño, false)}
     `;
 
-    window.setHistorySubView = (view) => {
-        historySubView = view;
-        renderHistorySeasonsTab(container);
-    };
+    const calcBtn = document.getElementById('btn_calc_history');
+    if (calcBtn) {
+        calcBtn.onclick = async () => {
+            const oldHtml = calcBtn.innerHTML;
+            if (!dataStore.stockActivo || !dataStore.stockReserva) {
+                alert('⚠️ Primero carga Stock Activo y Reserva.');
+                return;
+            }
+            calcBtn.disabled = true;
+            calcBtn.innerHTML = '⚙️ PROCESANDO...';
+            try {
+                const res = await calculateBufferPallets();
+                if (res) {
+                    const result = {
+                        reporteTemporadasQ: res.reporteTemporadasQ,
+                        reporteGender: res.reporteGender,
+                        reporteObsolencia: res.reporteObsolencia,
+                        detalleObsGen: res.detalleObsGen || [],
+                        timestamp: res.timestamp
+                    };
+                    await saveBufferReport(result, user.username || 'system');
+                    alert('✅ Historial actualizado correctamente.');
+                    renderHistorySeasonsTab(container);
+                }
+            } catch(e) { 
+                alert('❌ Error: ' + e.message); 
+                calcBtn.disabled = false;
+                calcBtn.innerHTML = oldHtml;
+            }
+        };
+    }
+  };
 
     const calcBtn = document.getElementById('btn_calc_history');
     if (calcBtn) {
