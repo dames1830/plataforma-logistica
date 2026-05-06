@@ -1,3 +1,3 @@
 git add .
-git commit -m "RC v12.3.5: Final pivoted reports and clean syntax"
+git commit -m "FINAL v12.3.7: Trend indicators, sorting and totals complete"
 git push origin main
