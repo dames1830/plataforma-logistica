@@ -2193,6 +2193,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const pivotMap = {};
                 let grandTotal = 0;
 
+            const buildDayTable = () => {
+                const pivotMap = {};
+                let grandTotal = 0;
+
                 filteredHistory.forEach(item => {
                     const dateLabel = formatDate(item.ts);
                     const week = getWeekNumber(new Date(item.ts));
@@ -2229,7 +2233,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
                                 <td colspan="${activeDates.length + 3}" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
-                                <td style="padding:0.4rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
+                                <td style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
                             </tr>`;
                         yearTotal = 0;
                     }
@@ -2247,14 +2251,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
                                 return `<td style="padding:0.4rem; text-align:center; color:var(--primary); font-weight:800; opacity:${v===0?'0.1':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
                             }).join('')}
-                            <td style="padding:0.4rem; text-align:center; font-weight:900; color:#fff;">${entry.total.toLocaleString()}</td>
                         </tr>`;
                     
                     if (index === sortedKeys.length - 1) {
                         rowsHtml += `
                             <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
                                 <td colspan="${activeDates.length + 3}" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
-                                <td style="padding:0.4rem; text-align:center; color:#fff;">${yearTotal.toLocaleString()}</td>
+                                <td style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
                             </tr>`;
                     }
                 });
@@ -2280,7 +2283,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">AÑO</th>
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">Q</th>
                                         ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">${d}</th>`).join('')}
-                                        <th style="padding:0.6rem 0.4rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2333,7 +2335,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
                                 return `<td style="padding:0.5rem 0.4rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
                             }).join('')}
-                            <td style="padding:0.5rem 0.4rem; text-align:center; font-weight:900; color:#fbbf24; background:rgba(251,191,36,0.05);">${rowTotal.toLocaleString()}</td>
                         </tr>`;
                 }).join('');
 
@@ -2342,7 +2343,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
                             <td colspan="2" style="padding:0.6rem 0.4rem; text-align:right; color:#fbbf24;">TOTAL</td>
                             ${activeDates.map(d => `<td style="padding:0.6rem 0.4rem; text-align:center; color:#fff;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
-                            <td style="padding:0.6rem 0.4rem; text-align:center; color:#fff; font-size:0.85rem;">${grandTotal.toLocaleString()}</td>
                         </tr>`;
                 }
 
@@ -2358,7 +2358,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
                                         <th style="padding:0.6rem 0.4rem; text-align:left;">TEMPORADA</th>
                                         ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">${d}</th>`).join('')}
-                                        <th style="padding:0.6rem 0.4rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">TOTAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
