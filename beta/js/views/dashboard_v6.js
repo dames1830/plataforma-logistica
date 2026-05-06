@@ -149,7 +149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.2-FINAL</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.5.3-FINAL</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -337,18 +337,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Análisis de Reposición";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
-    const stored = localStorage.getItem('lastBufferKPI');
-    if (stored) {
-        try {
-            const parsed = JSON.parse(stored);
-            if (!parsed.detalleZonas) {
-                localStorage.removeItem('lastBufferKPI');
-                lastBufferKPI = null;
-            } else {
-                lastBufferKPI = parsed;
-            }
-        } catch(e) { localStorage.removeItem('lastBufferKPI'); }
-    }
 
     const bufferTabDef = TABS.find(t => t.id === 'buffer');
     const perms = adminService.getPermissions(user.role) || {};
@@ -437,7 +425,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                         if (res) {
                             lastBufferKPI = res;
                             lastBufferResult = res;
-                            localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
                             
                             // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
@@ -472,7 +459,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnReset.onclick = () => {
                 if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.')) {
                     Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
-                    localStorage.removeItem('lastBufferKPI');
                     window.location.reload();
                 }
             };
@@ -484,7 +470,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 renderBufferResults(results, lastBufferKPI);
             } catch (err) {
                 console.warn("[PULSE] Error cargando caché de resultados (incompatible), ignorando...", err);
-                localStorage.removeItem('lastBufferKPI');
                 results.innerHTML = '';
             }
         }
@@ -1920,7 +1905,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.2-FINAL | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.5.3-FINAL | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
