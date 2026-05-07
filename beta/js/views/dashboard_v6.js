@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.12-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.13-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.12-BETA';
+const VERSION = '12.4.13-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2700,9 +2700,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
 
         accs.forEach(a => {
-            const taskId = `Tarea${taskCounter++}`;
             finalTasks.push({
-                id: taskId,
+                id: `Tarea${taskCounter++}`,
                 marca: marca,
                 qty: a.bufferQty,
                 status: 'Creada',
@@ -2711,18 +2710,34 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         });
 
-        // Regla 300 Unidades para Normales (Calculado solo sobre Buffer)
+        // Separar normales en grandes (>=300) y pequeños (<300)
+        const bigNormals = normals.filter(a => a.bufferQty >= 300);
+        const smallNormals = normals.filter(a => a.bufferQty < 300);
+
+        // Los grandes son tareas independientes inmediatas
+        bigNormals.forEach(a => {
+            finalTasks.push({
+                id: `Tarea${taskCounter++}`,
+                marca: marca,
+                qty: a.bufferQty,
+                status: 'Creada',
+                u1: '', u2: '', inicio: '', termino: '',
+                items: [a]
+            });
+        });
+
+        // Los pequeños se agrupan estrictamente
         let currentGroup = [];
         let currentBufferQty = 0;
 
-        normals.forEach((art, index) => {
+        smallNormals.forEach((art, index) => {
             currentGroup.push(art);
             currentBufferQty += art.bufferQty;
 
-            if (currentBufferQty >= 300 || index === normals.length - 1) {
-                const taskId = `Tarea${taskCounter++}`;
+            // Si llegamos a 300 o es el último de la marca, cerramos tarea
+            if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
                 finalTasks.push({
-                    id: taskId,
+                    id: `Tarea${taskCounter++}`,
                     marca: marca,
                     qty: currentBufferQty,
                     status: 'Creada',
@@ -2760,8 +2775,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             // Subtotal
             dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
         });
-        // Separador de Tarea
-        dataRows.push(["", "", "", "", "", "", "", "", "", ""]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(dataRows);
