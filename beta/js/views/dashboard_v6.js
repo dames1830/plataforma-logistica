@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.9-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.0-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.9-BETA';
+const VERSION = '12.4.0-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -553,12 +553,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
                     <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
                     <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
-                    <span>${dataStore.buffer ? '✅' : '➖'} PEDIDOS</span>
-                    <span>${dataStore.articulos ? '✅' : '➖'} ARTICULO</span>
+                    <span>${dataStore.articulos ? '✅' : '❌'} MAESTRO (Obligatorio)</span>
                     <div style="display:flex; align-items:center;">
                         <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                         <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
-                        <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem; margin-left:1rem;">Generado el: <span style="color:var(--primary);">${timeStr}</span></span>
                     </div>
                 </div>
               </div>
