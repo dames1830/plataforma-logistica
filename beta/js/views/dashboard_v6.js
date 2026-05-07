@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.15-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.16-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.15-BETA';
+const VERSION = '12.4.16-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -283,6 +283,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
   await initPersistentData(); // [MOD V12.1.48] Esperar a IndexedDB antes de renderizar
   await adminService.initializeAdminData();
+  loadAlmacenajeTasks();
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
@@ -2631,8 +2632,21 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  let almacenajeTaskMode = 'resumen';
+  let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
   let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, items: [] }
+
+  const saveAlmacenajeTasks = () => {
+    try {
+        localStorage.setItem(CACHE_KEY + 'almacenajeTasks', JSON.stringify(almacenajeTasksCache));
+    } catch (e) { console.warn("[PULSE] Error guardando tareas de almacenaje:", e); }
+  };
+
+  const loadAlmacenajeTasks = () => {
+    try {
+        const stored = localStorage.getItem(CACHE_KEY + 'almacenajeTasks');
+        if (stored) almacenajeTasksCache = JSON.parse(stored);
+    } catch (e) { console.warn("[PULSE] Error cargando tareas de almacenaje:", e); }
+  };
 
   const processAlmacenajeTasks = async () => {
     const stock = await getAreaData('almacenaje_activo');
@@ -2751,6 +2765,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     almacenajeTasksCache = finalTasks;
+    saveAlmacenajeTasks();
     renderAlmacenajeTareas(document.getElementById('areaContent'));
   };
 
@@ -2789,20 +2804,25 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tasks = almacenajeTasksCache;
 
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
-                <h3 style="margin:0; font-size:1.1rem; color:#fff; font-weight:800;">${isDetail ? 'Tareas Detalle' : 'Tareas Resumen'}</h3>
-                <p style="margin:4px 0 0 0; font-size:0.7rem; color:var(--text-muted);">Módulo de Almacenaje - Fase 3</p>
+                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
+                <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
             </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <button onclick="window.processTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; font-size:0.7rem;">⚙️ PROCESAR TAREAS</button>
-                <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none;">📥 EXPORTAR MASIVO</button>
-                <div style="background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; display:flex; gap:4px;">
-                    <button onclick="window.setTaskMode('resumen')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${!isDetail ? 'var(--primary)' : 'transparent'}; color:${!isDetail ? '#fff' : 'var(--text-muted)'};">RESUMEN</button>
-                    <button onclick="window.setTaskMode('detalle')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${isDetail ? 'var(--primary)' : 'transparent'}; color:${isDetail ? '#fff' : 'var(--text-muted)'};">DETALLE</button>
-                </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <button onclick="window.processTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
             </div>
         </div>
+
+        <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <a class="sub-sub-nav-item ${!isDetail?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">
+                📊 RESUMEN
+            </a>
+            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">
+                🔍 DETALLE
+            </a>
+        </nav>
 
         <div style="display:grid; grid-template-columns: 220px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
             <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); overflow-y:auto;">
@@ -2819,7 +2839,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
                 <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05);">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#d1d5db;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
                             ${!isDetail ? `
                                 <tr>
@@ -2833,6 +2853,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:left;">Hora Termino</th>
                                     <th style="padding:1rem; text-align:center;">Productividad</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
+                                    <th style="padding:1rem; text-align:center;">Acción</th>
                                 </tr>
                             ` : `
                                 <tr>
@@ -2856,20 +2877,26 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     productividad = diff.toFixed(2);
                                 }
                                 return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.8rem 1rem;">${new Date().toLocaleDateString()}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
-                                    <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:700;">${t.u1 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; opacity:0.6;">${t.u2 || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
                                     <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString() : '---'}</td>
                                     <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString() : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:700;">${productividad}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:900; font-size:1rem;">${productividad}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
                                         <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
+                                    </td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">
+                                        <div style="display:flex; gap:8px; justify-content:center;">
+                                            <button onclick="window.assignTask('${t.id}')" title="Editar / Asignar" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--primary); transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">✏️</button>
+                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔄</button>
+                                        </div>
                                     </td>
                                 </tr>
                             `;}).join('') : tasks.flatMap(t => t.items.flatMap(art => [
@@ -2898,9 +2925,19 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
-    window.setTaskMode = (mode) => { almacenajeTaskMode = mode; renderAlmacenajeTareas(container); };
-    window.processTasks = () => { processAlmacenajeTasks(); };
+    window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
+    window.processTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto sobreescribirá la carga actual.")) processAlmacenajeTasks(); };
     window.exportTasks = () => { exportAlmacenajeExcel(); };
+    window.resetTask = (id) => {
+        if (confirm(`¿Reiniciar la tarea ${id}? Se borrarán los usuarios y horas asignadas.`)) {
+            const t = almacenajeTasksCache.find(x => x.id === id);
+            if (t) {
+                t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada';
+                saveAlmacenajeTasks();
+                renderAlmacenajeTareas(container);
+            }
+        }
+    };
     window.assignTask = (id) => {
         const workers = adminService.getWorkers().filter(w => w.active);
         const formatUser = (w) => {
@@ -2920,15 +2957,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="display:flex; flex-direction:column; gap:1.2rem;">
                     <div>
                         <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
-                        <select id="m_u1" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.7rem; border-radius:8px; color:#fff; outline:none;">
-                            <option value="">Seleccionar operario...</option>
+                        <select id="m_u1" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2); padding:0.8rem; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.9rem;">
+                            <option value="" style="background:#0f172a;">Seleccionar operario...</option>
                             ${options}
                         </select>
                     </div>
                     <div>
                         <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 2 (Opcional)</label>
-                        <select id="m_u2" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.7rem; border-radius:8px; color:#fff; outline:none;">
-                            <option value="">Ninguno</option>
+                        <select id="m_u2" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2); padding:0.8rem; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.9rem;">
+                            <option value="" style="background:#0f172a;">Ninguno</option>
                             ${options}
                         </select>
                     </div>
@@ -2952,7 +2989,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             t.u1 = u1;
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
-            t.inicio = new Date().toISOString();
+            if (!t.inicio) t.inicio = new Date().toISOString();
+            saveAlmacenajeTasks();
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
@@ -2960,6 +2998,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             document.getElementById('m_finish').onclick = () => {
                 t.status = 'Finalizado';
                 t.termino = new Date().toISOString();
+                saveAlmacenajeTasks();
                 document.body.removeChild(modal);
                 renderAlmacenajeTareas(container);
             };
