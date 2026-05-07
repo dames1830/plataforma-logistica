@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.14-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.15-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.14-BETA';
+const VERSION = '12.4.15-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2819,7 +2819,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
                 <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05);">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.75rem; color:#d1d5db;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
                             ${!isDetail ? `
                                 <tr>
@@ -2828,8 +2828,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:center;">Qty</th>
                                     <th style="padding:1rem; text-align:left;">Marca</th>
                                     <th style="padding:1rem; text-align:left;">Usuario1</th>
+                                    <th style="padding:1rem; text-align:left;">Usuario2</th>
                                     <th style="padding:1rem; text-align:left;">Hora Inicio</th>
                                     <th style="padding:1rem; text-align:left;">Hora Termino</th>
+                                    <th style="padding:1rem; text-align:center;">Productividad</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
                                 </tr>
                             ` : `
@@ -2847,22 +2849,30 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </thead>
                         <tbody>
                             ${tasks.length === 0 ? `<tr><td colspan="10" style="padding:3rem; text-align:center; color:var(--text-muted);">Pulsa 'PROCESAR TAREAS' para generar la carga desde el stock activo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.map(t => `
+                            ${!isDetail ? tasks.map(t => {
+                                let productividad = '---';
+                                if (t.inicio && t.termino) {
+                                    const diff = (new Date(t.termino) - new Date(t.inicio)) / (1000 * 60 * 60);
+                                    productividad = diff.toFixed(2);
+                                }
+                                return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.8rem 1rem;">${new Date().toLocaleDateString()}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
                                     <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:700;">${t.u1 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.65rem; opacity:0.6;">${t.inicio || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.65rem; opacity:0.6;">${t.termino || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; opacity:0.6;">${t.u2 || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString() : '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString() : '---'}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:700;">${productividad}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
-                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.65rem;">
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
                                 </tr>
-                            `).join('') : tasks.flatMap(t => t.items.flatMap(art => [
+                            `;}).join('') : tasks.flatMap(t => t.items.flatMap(art => [
                                 ...art.items.map(i => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); opacity:0.8;">
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
@@ -2892,40 +2902,64 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.processTasks = () => { processAlmacenajeTasks(); };
     window.exportTasks = () => { exportAlmacenajeExcel(); };
     window.assignTask = (id) => {
+        const workers = adminService.getWorkers().filter(w => w.active);
+        const formatUser = (w) => {
+            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+            return nom ? `${nom[0]}${ape}` : 's/n';
+        };
+
+        const options = workers.map(w => `<option value="${formatUser(w)}" ${formatUser(w) === 'dames' ? 'selected' : ''}>${formatUser(w)} (${w.nombre})</option>`).join('');
         const t = almacenajeTasksCache.find(x => x.id === id);
+
         const modal = document.createElement('div');
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
         modal.innerHTML = `
-            <div class="glass-panel" style="width:360px; padding:2rem; border:1px solid var(--primary);">
-                <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem;">Asignar Tarea: <span style="color:var(--primary);">${id}</span></h3>
-                <div style="display:flex; flex-direction:column; gap:1rem;">
-                    <label style="font-size:0.75rem; color:var(--text-muted);">Usuario 1 (Obligatorio)</label>
-                    <input type="text" id="m_u1" value="${t.u1}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.8rem; border-radius:8px; color:#fff; outline:none;" placeholder="Nombre del operario">
-                    <label style="font-size:0.75rem; color:var(--text-muted);">Usuario 2 (Opcional)</label>
-                    <input type="text" id="m_u2" value="${t.u2}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.8rem; border-radius:8px; color:#fff; outline:none;" placeholder="Nombre del ayudante">
-                    <div style="margin-top:1rem; display:flex; gap:10px;">
-                        <button id="m_save" class="btn" style="flex:1;">ASIGNAR E INICIAR</button>
-                        ${t.status === 'Asignado' ? `<button id="m_finish" class="btn" style="flex:1; background:#22c55e;">FINALIZAR</button>` : ''}
+            <div class="glass-panel" style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
+                <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">Asignar Tarea: <span style="color:var(--primary);">${id}</span></h3>
+                <div style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
+                        <select id="m_u1" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.7rem; border-radius:8px; color:#fff; outline:none;">
+                            <option value="">Seleccionar operario...</option>
+                            ${options}
+                        </select>
                     </div>
-                    <button id="m_close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-top:1rem;">Cerrar sin cambios</button>
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 2 (Opcional)</label>
+                        <select id="m_u2" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.7rem; border-radius:8px; color:#fff; outline:none;">
+                            <option value="">Ninguno</option>
+                            ${options}
+                        </select>
+                    </div>
+                    <div style="margin-top:1rem; display:flex; gap:10px;">
+                        <button id="m_save" class="btn" style="flex:1; padding:0.8rem; font-size:0.75rem; font-weight:800;">ASIGNAR E INICIAR</button>
+                        ${t.status === 'Asignado' ? `<button id="m_finish" class="btn" style="flex:1; background:#22c55e; padding:0.8rem; font-size:0.75rem; font-weight:800;">FINALIZAR</button>` : ''}
+                    </div>
+                    <button id="m_close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
+        
+        // Cargar valores previos si existen
+        if (t.u1) document.getElementById('m_u1').value = t.u1;
+        if (t.u2) document.getElementById('m_u2').value = t.u2;
+
         document.getElementById('m_save').onclick = () => {
             const u1 = document.getElementById('m_u1').value;
             if (!u1) { alert("Usuario 1 es obligatorio."); return; }
             t.u1 = u1;
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
-            t.inicio = new Date().toLocaleString();
+            t.inicio = new Date().toISOString();
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
         if (document.getElementById('m_finish')) {
             document.getElementById('m_finish').onclick = () => {
                 t.status = 'Finalizado';
-                t.termino = new Date().toLocaleString();
+                t.termino = new Date().toISOString();
                 document.body.removeChild(modal);
                 renderAlmacenajeTareas(container);
             };
