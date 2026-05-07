@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.10-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.12-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.10-BETA';
+const VERSION = '12.4.12-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2655,7 +2655,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (sku7 && !artMap.has(sku7)) {
             artMap.set(sku7, {
                 marca: String(raw[13] || 'S/M').trim(),
-                gender: String(raw[2] || '').trim().toUpperCase(),
+                gender: String(raw[3] || '').trim().toUpperCase(), // Columna D (Gender RIMS)
                 coleccion: String(raw[9] || 'S/C').trim()
             });
         }
@@ -2699,38 +2699,38 @@ export const renderDashboard = async (container, user, onLogout) => {
         const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
         const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
 
-        if (accs.length > 0) {
-            const taskId = `T-${new Date().getMonth()+1}${new Date().getDate()}-${taskCounter++}`;
+        accs.forEach(a => {
+            const taskId = `Tarea${taskCounter++}`;
             finalTasks.push({
                 id: taskId,
                 marca: marca,
-                qty: accs.reduce((sum, a) => sum + a.bufferQty + a.zonaQty, 0),
+                qty: a.bufferQty,
                 status: 'Creada',
                 u1: '', u2: '', inicio: '', termino: '',
-                items: accs
+                items: [a]
             });
-        }
+        });
 
-        // Regla 300 Unidades para Normales
+        // Regla 300 Unidades para Normales (Calculado solo sobre Buffer)
         let currentGroup = [];
-        let currentQty = 0;
+        let currentBufferQty = 0;
 
         normals.forEach((art, index) => {
             currentGroup.push(art);
-            currentQty += (art.bufferQty + art.zonaQty);
+            currentBufferQty += art.bufferQty;
 
-            if (currentQty >= 300 || index === normals.length - 1) {
-                const taskId = `T-${new Date().getMonth()+1}${new Date().getDate()}-${taskCounter++}`;
+            if (currentBufferQty >= 300 || index === normals.length - 1) {
+                const taskId = `Tarea${taskCounter++}`;
                 finalTasks.push({
                     id: taskId,
                     marca: marca,
-                    qty: currentQty,
+                    qty: currentBufferQty,
                     status: 'Creada',
                     u1: '', u2: '', inicio: '', termino: '',
                     items: [...currentGroup]
                 });
                 currentGroup = [];
-                currentQty = 0;
+                currentBufferQty = 0;
             }
         });
     });
@@ -2868,7 +2868,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
                     </div>
                     <div style="display:flex; gap:10px;">
-                        <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1);">📥 EXPORTAR MASIVO (EXCEL)</button>
+                        <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:0.6rem 1.5rem; font-size:0.8rem; background:var(--primary); color:#fff; font-weight:800; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">📥 EXPORTAR MASIVO (EXCEL)</button>
                     </div>
                 </div>
             </div>
