@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.3-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.4-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.3-BETA';
+const VERSION = '12.4.4-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -441,36 +441,50 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderUploadArea = (container, area, hasData = null, ext = '.csv', customLabel = null) => {
     const meta = getUploadMeta(area);
-    const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'Nunca';
+    const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'NUNCA';
     const div = document.createElement('div');
     div.id = `wrap_${area}`;
     div.style.width = '100%';
     const label = customLabel || area.toUpperCase();
     
-    if (hasData && hasData.length > 0) {
-      div.innerHTML = `
-        <div style="padding:1rem; background:rgba(34, 197, 94, 0.05); border:1px solid rgba(34, 197, 94, 0.3); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h4 style="color:var(--success); margin:0; font-size:0.95rem; font-weight:700;">✅ ${label} CARGADO</h4>
-            <p style="font-size:0.8rem; margin:4px 0 0 0; color:var(--text-muted); font-weight:500;">
-                ${hasData.length.toLocaleString()} registros. 
-                <span style="color:#fff; background:#d97706; padding:2px 10px; border-radius:6px; margin-left:10px; font-weight:800; border:1px solid #fbbf24; display:inline-block; box-shadow:0 0 10px rgba(251,191,36,0.3);">📅 Subido: ${dateStr}</span>
-            </p>
+    const isLoaded = hasData && hasData.length > 0;
+    
+    div.innerHTML = `
+      <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${isLoaded ? '#22c55e' : '#64748b'};">
+          <div style="display:flex; align-items:center; gap:1.2rem;">
+              <div style="width:36px; height:36px; background:${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${isLoaded ? '#22c55e' : 'var(--text-muted)'}; border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)'};">
+                  ${ext === '.csv' ? '📄' : '📊'}
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                  <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACÍO'}</span>
+                      ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                    <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString()} regs</span>` : ''}
+                  </div>
+              </div>
           </div>
-          <div style="display:flex; gap:0.5rem;">
-              <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
-              <button id="del_${area}" class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; background:#ef4444; border:1px solid #b91c1c;">🗑️ QUITAR</button>
+          
+          <div style="display:flex; align-items:center; gap:1.5rem;">
+              <div style="text-align:right; min-width:180px;">
+                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA CARGA</div>
+                  <div style="font-size:0.75rem; color:${isLoaded ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
+              </div>
+              
+              <div style="display:flex; gap:0.4rem;">
+                  <label title="Subir Nuevo Archivo" style="background:${isLoaded ? 'rgba(79, 70, 229, 0.1)' : 'var(--primary)'}; color:${isLoaded ? 'var(--primary)' : '#fff'}; border:1px solid ${isLoaded ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                      <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
+                      ${isLoaded ? '🔄' : '📤'}
+                  </label>
+                  ${isLoaded ? `
+                    <button id="del_${area}" title="Quitar Archivo" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444'">
+                        🗑️
+                    </button>
+                  ` : ''}
+              </div>
           </div>
-        </div>`;
-    } else {
-      div.innerHTML = `
-        <div class="upload-area" style="padding:1.5rem; text-align:center; border: 1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:0.6rem;">
-          <h3 style="margin:0; font-size:1rem; color:var(--text-main); font-weight:700;">${label}</h3>
-          <p style="font-size:0.75rem; color:#f87171; font-weight:600; margin:0;">⚠️ Sin datos en memoria</p>
-          <p style="font-size:0.8rem; color:var(--text-muted); font-weight:600; margin-top:4px;">Última carga detectada: <span style="color:#fbbf24; font-weight:800; text-decoration:underline;">${dateStr}</span></p>
-          <label class="btn" style="width:auto; padding:0.5rem 1.5rem; cursor:pointer; font-size:0.85rem;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label>
-        </div>`;
-    }
+      </div>`;
+    
     container.appendChild(div);
 
     const input = document.getElementById(`up_${area}`);
@@ -478,7 +492,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         if(e.target.files[0]) { 
             const wrap = document.getElementById(`wrap_${area}`);
             const originalContent = wrap.innerHTML;
-            wrap.innerHTML = `<div style="padding:1.5rem; text-align:center; background:rgba(255,255,255,0.05); border-radius:10px; border:1px dashed var(--primary);"><div class="spinner" style="margin:0 auto 0.5rem auto; width:20px; height:20px; border:2px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h4 style="margin:0; font-size:0.9rem; color:var(--primary);">⌛ PROCESANDO...</h4></div>`;
+            wrap.innerHTML = `<div style="background:rgba(79, 70, 229, 0.05); border:1px dashed var(--primary); border-radius:10px; padding:0.6rem 1.2rem; display:flex; align-items:center; justify-content:center; gap:1rem; height:54px;">
+                <div class="spinner" style="width:16px; height:16px; border:2px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <span style="font-size:0.8rem; color:var(--primary); font-weight:800; letter-spacing:1px;">PROCESANDO ARCHIVO...</span>
+            </div>`;
             try { 
                 await parseFile(e.target.files[0], area); 
                 renderTabContent(); 
@@ -494,7 +511,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if(delBtn) delBtn.addEventListener('click', async () => {
         if(confirm(`¿Estás seguro de que quieres quitar el archivo de ${label}?`)) {
             delBtn.disabled = true;
-            delBtn.innerHTML = '⌛...';
+            delBtn.innerHTML = '...';
             await clearAreaData(area, user.username);
             renderTabContent();
         }
@@ -550,7 +567,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }));
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
-        const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; buf.appendChild(wrap);
         renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
@@ -2354,7 +2371,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const container = document.getElementById('areaContent');
     if (activeSub && activeSub.startsWith('archivo_')) {
-        const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; container.appendChild(wrap);
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; container.appendChild(wrap);
         renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
     } else {
@@ -2388,7 +2405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const skuBuf = document.getElementById('skuContent');
     if (activeAnalisisSub === 'archivo_analisis') {
-        const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; skuBuf.appendChild(wrap);
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; skuBuf.appendChild(wrap);
         renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
         return;
