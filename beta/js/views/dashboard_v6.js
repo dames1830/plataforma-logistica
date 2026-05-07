@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.3-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.4-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.3-BETA';
+const VERSION = '12.3.4-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -95,7 +95,7 @@ window.downloadExcelDetail = () => {
     
     const aoa = [
         ["MONTACARGA"],
-        [`Procesado: ${data.timestamp || new Date().toLocaleString()}`],
+        [`${data.timestamp || new Date().toLocaleString()}`],
         [],
         ["UBICACIÓN", "LPN", "QTY RESERVA"]
     ];
@@ -109,6 +109,13 @@ window.downloadExcelDetail = () => {
     sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }); // Título centrado
     sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }); // Fecha
     
+    // Ancho de columnas (200px aprox = 28 caracteres)
+    sheetMontacarga['!cols'] = [
+        { wch: 28 },
+        { wch: 28 },
+        { wch: 28 }
+    ];
+
     XLSX.utils.book_append_sheet(wb, sheetMontacarga, "Montacarga");
     
     const date = new Date().toISOString().split('T')[0];
