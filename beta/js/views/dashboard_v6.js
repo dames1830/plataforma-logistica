@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.7-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.8-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.7-BETA';
+const VERSION = '12.4.8-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2631,26 +2631,46 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  let almacenajeTaskMode = 'resumen'; // 'resumen' o 'detalle'
   const renderAlmacenajeTareas = (container) => {
+    const isDetail = almacenajeTaskMode === 'detalle';
+    
     container.innerHTML = `
-        <div style="display:grid; grid-template-columns: 200px 1fr; gap:1.5rem; height:calc(100vh - 220px);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; font-size:1.1rem; color:#fff; font-weight:800;">${isDetail ? 'Tareas Detalle' : 'Tareas Resumen'}</h3>
+            <div style="background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; display:flex; gap:4px;">
+                <button onclick="window.setTaskMode('resumen')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${!isDetail ? 'var(--primary)' : 'transparent'}; color:${!isDetail ? '#fff' : 'var(--text-muted)'};">RESUMEN</button>
+                <button onclick="window.setTaskMode('detalle')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${isDetail ? 'var(--primary)' : 'transparent'}; color:${isDetail ? '#fff' : 'var(--text-muted)'};">DETALLE</button>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 220px 1fr; gap:1.5rem; height:calc(100vh - 260px);">
             <!-- Sidebar Izquierdo -->
-            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05);">
-                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Tareas</h4>
+            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); overflow-y:auto;">
+                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Filtros</h4>
                 <div style="font-size:0.8rem; color:var(--text-muted);">
-                    <div style="display:flex; justify-content:space-between; padding:0.5rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
-                        <span>Todos</span>
-                    </div>
-                    <div style="margin-left:0.5rem; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.8rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
-                            <span>▶ 2026</span>
-                            <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">3,034,221</span>
+                    ${isDetail ? `
+                        <div style="background:var(--primary); color:#fff; padding:8px 15px; border-radius:20px; font-weight:700; margin-bottom:10px; cursor:pointer; font-size:0.75rem;">Todos</div>
+                        ${['19/2/2026','20/2/2026','21/2/2026','23/2/2026','24/2/2026','25/2/2026','26/2/2026','27/2/2026','28/2/2026','2/3/2026','3/3/2026'].map(d => `
+                            <div style="padding:8px 15px; cursor:pointer; font-size:0.75rem; border-radius:20px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                                ${d}
+                            </div>
+                        `).join('')}
+                    ` : `
+                        <div style="display:flex; justify-content:space-between; padding:0.5rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
+                            <span>Todos</span>
                         </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
-                            <span>▶ 2025</span>
-                            <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">391,373</span>
+                        <div style="margin-left:0.5rem; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.8rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
+                                <span>▶ 2026</span>
+                                <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">3,034,221</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
+                                <span>▶ 2025</span>
+                                <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">391,373</span>
+                            </div>
                         </div>
-                    </div>
+                    `}
                 </div>
             </div>
 
@@ -2659,20 +2679,36 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.75rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
-                            <tr>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Fecha</th>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">IdTarea</th>
-                                <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty</th>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Marca</th>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario1</th>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario2</th>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Inicio</th>
-                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Termino</th>
-                                <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Status</th>
-                            </tr>
+                            ${!isDetail ? `
+                                <tr>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Fecha</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">IdTarea</th>
+                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Marca</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario1</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario2</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Inicio</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Termino</th>
+                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Status</th>
+                                </tr>
+                            ` : `
+                                <tr>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Articulo</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">UBICACION</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">SKU</th>
+                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Tallas</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Marcas</th>
+                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty Buffer</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Tareas</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">ID Tareas</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Area</th>
+                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Fecha</th>
+                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty Avance</th>
+                                </tr>
+                            `}
                         </thead>
                         <tbody>
-                            ${[...Array(11)].map((_, i) => `
+                            ${!isDetail ? [...Array(11)].map((_, i) => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.8rem 1rem;">4/5/2026</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">0405-tarea${i+1}</td>
@@ -2688,20 +2724,43 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </div>
                                     </td>
                                 </tr>
+                            `).join('') : [...Array(15)].map((_, i) => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:0.8rem 1rem;">5043001</td>
+                                    <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:600;">CDBUFFER-B-00-${String(i).padStart(3,'0')}</td>
+                                    <td style="padding:0.8rem 1rem;">5043001-1-06</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">37</td>
+                                    <td style="padding:0.8rem 1rem;">Bata Industrials</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; font-weight:700;">25</td>
+                                    <td style="padding:0.8rem 1rem;">tarea60</td>
+                                    <td style="padding:0.8rem 1rem; opacity:0.7;">1902-tarea60</td>
+                                    <td style="padding:0.8rem 1rem;">CDBUFFER-B</td>
+                                    <td style="padding:0.8rem 1rem;">19/2/2026</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:800;">25</td>
+                                </tr>
                             `).join('')}
                         </tbody>
                     </table>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
-                        <span style="color:var(--text-muted);">Total Tareas: <b style="color:#fff;">11</b></span>
-                        <span style="color:var(--text-muted);">Total Qty: <b style="color:#fff;">12,450</b></span>
+                        <span style="color:var(--text-muted);">${isDetail ? 'Items en Detalle' : 'Total Tareas'}: <b style="color:#fff;">${isDetail ? '15' : '11'}</b></span>
+                        <span style="color:var(--text-muted);">Total Qty: <b style="color:#fff;">${isDetail ? '850' : '12,450'}</b></span>
                     </div>
-                    <button class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:var(--primary); font-weight:800;">➕ NUEVA TAREA</button>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1);">📥 EXPORTAR</button>
+                        <button class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:var(--primary); font-weight:800;">➕ NUEVA TAREA</button>
+                    </div>
                 </div>
             </div>
         </div>
     `;
+    
+    window.setTaskMode = (mode) => {
+        almacenajeTaskMode = mode;
+        renderAlmacenajeTareas(container);
+    };
+  };
   };
 
   renderNav();
