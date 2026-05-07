@@ -91,6 +91,7 @@ export const initPersistentData = async () => {
         }
     }
 };
+window.initPersistentData = initPersistentData;
 
 // Iniciar carga en segundo plano
 initPersistentData();
@@ -134,6 +135,7 @@ export const setDateFilter = (newDateStr) => {
 export const pingServer = async () => {
     try { await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/ping'); } catch(e) {}
 };
+window.pingServer = pingServer;
 
 
 export const fetchAvailableDates = async () => {
