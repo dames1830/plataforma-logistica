@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.2-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.3-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.2-BETA';
+const VERSION = '12.3.3-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -100,7 +100,7 @@ window.downloadExcelDetail = () => {
         ["UBICACIÓN", "LPN", "QTY RESERVA"]
     ];
     montacargaRows.forEach(row => {
-        aoa.push([row.UBICACIÓN, row.LPN, row.QTY RESERVA]);
+        aoa.push([row.UBICACIÓN, row.LPN, row['QTY RESERVA']]);
     });
     const sheetMontacarga = XLSX.utils.aoa_to_sheet(aoa);
     
