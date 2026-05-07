@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.8-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.9-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.8-BETA';
+const VERSION = '12.3.9-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -143,15 +143,34 @@ window.downloadExcelDetail = () => {
         ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
     ];
 
-    (data.detalle || []).forEach(d => {
+    // Ordenar y agrupar datos
+    const sorted = (data.detalle || []).sort((a, b) => {
+        if (a.UBICACIONES !== b.UBICACIONES) return a.UBICACIONES.localeCompare(b.UBICACIONES);
+        return a.LPN.localeCompare(b.LPN);
+    });
+
+    let lastUbi = "", lastLPN = "";
+    let uSumA = 0, uSumR = 0, uSumB = 0;
+    let gSumA = 0, gSumR = 0, gSumB = 0;
+
+    sorted.forEach((d, i) => {
+        // Cambio de ubicación -> Insertar Total anterior
+        if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
+            aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+            uSumA = 0; uSumR = 0; uSumB = 0; // Reiniciar
+        }
+
         const sku = d.SKU;
         const art7 = sku.substring(0, 7);
         const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
         const talla = tallasMap[sku] || '-';
         
+        const showUbi = (d.UBICACIONES !== lastUbi) ? d.UBICACIONES : "";
+        const showLPN = (d.LPN !== lastLPN || d.UBICACIONES !== lastUbi) ? d.LPN : "";
+
         aoaAnalisis.push([
-            d.UBICACIONES,
-            d.LPN,
+            showUbi,
+            showLPN,
             sku,
             talla,
             maestro.marca,
@@ -160,7 +179,26 @@ window.downloadExcelDetail = () => {
             d['QTY RESERVA'],
             d['QTY BUFFER']
         ]);
+
+        uSumA += (d['QTY ACTIVO'] || 0);
+        uSumR += (d['QTY RESERVA'] || 0);
+        uSumB += (d['QTY BUFFER'] || 0);
+        gSumA += (d['QTY ACTIVO'] || 0);
+        gSumR += (d['QTY RESERVA'] || 0);
+        gSumB += (d['QTY BUFFER'] || 0);
+
+        lastUbi = d.UBICACIONES;
+        lastLPN = d.LPN;
     });
+
+    // Último total por ubicación
+    if (lastUbi !== "") {
+        aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+    }
+
+    // Fila de Total General
+    aoaAnalisis.push([]);
+    aoaAnalisis.push(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
 
     const sheetAnalisis = XLSX.utils.aoa_to_sheet(aoaAnalisis);
     
