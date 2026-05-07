@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.4-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.5-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.4-BETA';
+const VERSION = '12.3.5-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -97,20 +97,21 @@ window.downloadExcelDetail = () => {
         ["MONTACARGA"],
         [`${data.timestamp || new Date().toLocaleString()}`],
         [],
-        ["UBICACIÓN", "LPN", "QTY RESERVA"]
+        ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"]
     ];
-    montacargaRows.forEach(row => {
-        aoa.push([row.UBICACIÓN, row.LPN, row['QTY RESERVA']]);
+    montacargaRows.forEach((row, idx) => {
+        aoa.push([idx + 1, row.UBICACIÓN, row.LPN, row['QTY RESERVA']]);
     });
     const sheetMontacarga = XLSX.utils.aoa_to_sheet(aoa);
     
     // Configuración de impresión y celdas
     if (!sheetMontacarga['!merges']) sheetMontacarga['!merges'] = [];
-    sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }); // Título centrado
-    sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }); // Fecha
+    sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }); // Título centrado (4 cols)
+    sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }); // Fecha (4 cols)
     
-    // Ancho de columnas (200px aprox = 28 caracteres)
+    // Ancho de columnas (200px aprox = 28 caracteres, y el N° algo más corto)
     sheetMontacarga['!cols'] = [
+        { wch: 12 }, // N° Paletas
         { wch: 28 },
         { wch: 28 },
         { wch: 28 }
