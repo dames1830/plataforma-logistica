@@ -836,7 +836,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'RQ': 0,
                     'QTY ACTIVO': activeStockMap[sku] || 0,
                     'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
-                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
+                    'QTY BUFFER': 0
                 });
             }
         });
