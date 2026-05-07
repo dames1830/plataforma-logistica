@@ -6,7 +6,7 @@ export const renderLogin = (container, onLoginSuccess) => {
   container.innerHTML = `
     <div class="login-box glass-panel animate-fade-in" style="backdrop-filter:none !important; background:rgba(30, 41, 59, 0.95) !important;">
       <div class="login-header">
-        <h1>DAMES1830 <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v12.1.120-BETA</span></h1>
+        <h1>DAMES1830 <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v12.3.0</span></h1>
         <p>Inicia sesión para acceder a tu área</p>
       </div>
       <form id="loginForm">

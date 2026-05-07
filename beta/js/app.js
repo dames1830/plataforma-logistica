@@ -1,4 +1,4 @@
-import { getSession, logout } from './services/auth.js?v=12.1.53-BETA';
+import { getSession, logout } from './services/auth.js?v=12.2.7';
 
 class App {
   constructor(rootId) {
@@ -30,7 +30,7 @@ class App {
 
       if (lastActivity > 0 && (now - lastActivity) > this.IDLE_TIMEOUT) {
         console.warn("[PULSE] Sesión expirada por inactividad detectada.");
-        alert("Tu sesión ha expirado (5 min de inactividad).");
+        alert("Tu sesión ha expirado (20 min de inactividad).");
         this.handleInactivityLogout();
       }
     };
@@ -59,7 +59,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.5.21-BETA";
+    const versionStr = "v12.3.0";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
@@ -70,21 +70,19 @@ class App {
 
     try {
         const timestamp = new Date().getTime();
-        const ts = Date.now();
         console.log(`[PULSE] App ${versionStr} navigate - ts: ${timestamp}`);
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}&t=${ts}`);
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 logout();
                 this.navigate();
             });
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=${versionStr}&t=${ts}`);
+            const { renderLogin } = await import(`./views/login.js?v=${versionStr}_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => this.navigate());
         }
-
     } catch (err) {
         console.error(`Critical Load Error ${versionStr}:`, err);
         this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo al cargar versión ${versionStr}. Error: ${err.message}</div>`;

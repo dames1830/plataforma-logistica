@@ -1,5 +1,4 @@
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
-console.log("[PULSE] csvHub_v6.js LOADED - v12.5.21-BETA - Coordenadas Restauradas");
 export const dataStore = {
   stockActivo: null,
   stockReserva: null,
@@ -91,7 +90,6 @@ export const initPersistentData = async () => {
         }
     }
 };
-window.initPersistentData = initPersistentData;
 
 // Iniciar carga en segundo plano
 initPersistentData();
@@ -131,12 +129,109 @@ export const setDateFilter = (newDateStr) => {
     }
 };
 
-
-export const pingServer = async () => {
-    try { await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/ping'); } catch(e) {}
+export const pingServer = () => {
+    fetch(`${API_BASE}/health`, { method: 'GET' })
+        .then(() => console.log('✅ Servidor backend activo.'))
+        .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
-window.pingServer = pingServer;
 
+// URL para Historial de Buffer en la DB Principal
+const BUFFER_HISTORY_URL = `${API_URL}/buffer_history`;
+
+export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
+    try {
+        const payload = {
+            data: bufferKPIObj,
+            updated_by: username,
+            ts: Date.now(),
+            created_at: new Date().toISOString()
+        };
+
+        const response = await fetch(BUFFER_HISTORY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            console.log('✅ Reporte Buffer guardado en DB Principal.');
+            saveToLocalHistory(payload);
+            return true;
+        } else {
+            console.warn(`⚠️ Error DB (${response.status}): Guardando solo localmente.`);
+            saveToLocalHistory(payload);
+            return false;
+        }
+    } catch (e) {
+        console.warn('⚠️ Fallo de conexión: Guardando solo localmente.', e);
+        saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
+        return false;
+    }
+};
+
+const saveToLocalHistory = (report) => {
+    try {
+        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const history = JSON.parse(raw);
+        history.push(report);
+        // Mantener solo los últimos 20 reportes localmente
+        if (history.length > 20) history.shift();
+        localStorage.setItem('logistics_buffer_history_local', JSON.stringify(history));
+    } catch(e) { console.warn('⚠️ No se pudo guardar historial local:', e); }
+};
+
+export const loadBufferReport = async () => {
+    try {
+        const res = await fetch(`${SHARED_API}/buffer_report`);
+        if (!res.ok) return null;
+        const json = await res.json();
+        if (json.status === 'ok' && json.data) {
+            console.log(`✅ Reporte Buffer cargado del servidor.`);
+            // Si devuelve un array, tomamos el último
+            if (Array.isArray(json.data)) return json.data[json.data.length - 1];
+            return json.data;
+        }
+    } catch (e) {
+        console.warn('⚠️ No se pudo cargar el reporte del servidor:', e);
+    }
+    return null;
+};
+
+export const fetchBufferHistory = async () => {
+    let serverHistory = [];
+    try {
+        const res = await fetch(BUFFER_HISTORY_URL);
+        if (res.ok) {
+            const json = await res.json();
+            if (json.data) {
+                serverHistory = Array.isArray(json.data) ? json.data : [json.data];
+                console.log(`✅ ${serverHistory.length} reportes cargados de DB Principal.`);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Error obteniendo historial de DB:', e);
+    }
+    
+    try {
+        const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const localHistory = JSON.parse(localRaw);
+        
+        const combined = [...serverHistory];
+        localHistory.forEach(lh => {
+            const exists = combined.some(sh => (sh.ts === lh.ts) || (sh.created_at === lh.created_at));
+            if (!exists) combined.push(lh);
+        });
+        
+        // Limpieza de Quota: Solo mantener los últimos 10 locales si hay muchos
+        if (localHistory.length > 10) {
+            localStorage.setItem('logistics_buffer_history_local', JSON.stringify(localHistory.slice(-10)));
+        }
+
+        return combined;
+    } catch(e) { 
+        return serverHistory; 
+    }
+};
 
 export const fetchAvailableDates = async () => {
     try {
@@ -246,24 +341,18 @@ export const parseBufferFiles = async (files) => {
 
 const persistToDatabase = async (area, payload, username = 'sistema') => {
     try {
-        const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        // [v12.5.10] Limpiar primero para evitar duplicados al re-subir
-        await fetch(`${API_URL_LOCAL}/${area}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify([]) 
-        });
-        
-        const response = await fetch(`${API_URL_LOCAL}/${area}`, {
+        const response = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if(response.ok) {
            dataStore[area] = payload;
+        await saveToDB(area, payload);
            await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
         } else {
            dataStore[area] = payload;
+        await saveToDB(area, payload);
         }
     } catch (err) {
         dataStore[area] = payload;
@@ -347,61 +436,17 @@ export const fetchBufferConfig = async () => {
     return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
 };
 
-export const calculateBufferPallets = async (configOverride = null) => {
-    // [DEDUPLICACIÓN v12.5.11] Evitar duplicados/cuadruplicados por carga fallida
-    const deduplicate = (arr, keys) => {
-        const seen = new Set();
-        return (arr || []).filter(item => {
-            const val = keys.map(k => String(item[k] || '')).join('|');
-            if (seen.has(val)) return false;
-            seen.add(val);
-            return true;
-        });
-    };
-
-    const activoRaw = await getAreaData('stockActivo');
-    const reservaRaw = await getAreaData('stockReserva');
-    const bufferReportsRaw = await getAreaData('buffer');
-    const articulos = dataStore.articulos;
-
-    if(!activoRaw || !reservaRaw || !articulos) {
-        console.error("[VALIDACIÓN] Faltan datos críticos para el cálculo.", { activo: !!activoRaw, reserva: !!reservaRaw, maestro: !!articulos });
-        return null;
-    }
-
-    // [v12.5.17] Definición global ultra-robusta de cabeceras
-    const __skuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO', 'Codigo de articulo', 'Cod. Articulo', 'CodArticulo', 'Producto', 'Art', 'Cod', 'Item', 'ART.'];
-    const __lpnHeaders = ['LPN', 'CONTENEDOR', 'Lpn', 'Pallet', 'HU'];
-    const __ubiHeaders = ['UBICACION', 'Ubicación', 'UBICACIÓN', 'LOCALIZACIÓN', 'LOCALIZACION', 'POSICION', 'Ubic', 'Loc', 'Ubicación actual'];
-    const __areaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea', 'NIVEL', 'Zona', 'Sector'];
-    const __qtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.', 'Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cant', 'Stock', 'Units', 'Qty'];
-
-
-    const deduplicateRobust = (arr, type) => {
-        const seen = new Set();
-        return (arr || []).filter(item => {
-            const sku = String(getCol(item, __skuHeaders) || '').trim();
-            const lpn = String(getCol(item, __lpnHeaders) || '').trim();
-            const ubi = String(getCol(item, __ubiHeaders) || '').trim();
-            
-            // Si no hay datos mínimos, no lo filtramos por duplicado aquí, lo hará el motor después
-            if (!sku && !lpn) return true; 
-
-            const val = `${sku}|${lpn}|${ubi}`;
-            if (seen.has(val)) return false;
-            seen.add(val);
-            return true;
-        });
-    };
-
-    const activo = activoRaw; 
-    const reserva = reservaRaw;
-    const pedidos = bufferReportsRaw; // Eliminada deduplicación que borraba filas
+export const calculateBufferPallets = (configOverride = null) => {
+    const activo = dataStore.stockActivo;
+    const reserva = dataStore.stockReserva;
+    const pedidos = dataStore.buffer; 
     const solicitud = dataStore.solicitud; 
     const tallas = dataStore.tallas;     
+    const articulos = dataStore.articulos;
     
-    if(activo.length === 0 || reserva.length === 0) {
-        console.warn("[VALIDACIÓN] Stocks vacíos tras deduplicación.");
+    if(!activo || !reserva || !articulos) {
+        console.error("[VALIDACIÓN] Faltan datos críticos para el cálculo.", { activo: !!activo, reserva: !!reserva, maestro: !!articulos });
+        return null;
     }
 
     const articulosMap = new Map();
@@ -437,14 +482,16 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
     // 1. Mapeo de ACTIVO (COORDENADAS: Ãrea, ArtÃculo, Cantidad actual)
     const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
-
+    const possibleAreaHeaders = ['Ãrea', 'Area', 'Área', 'Ārea'];
+    const possibleSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
+    const possibleQtyHeaders = ['Cantidad actual', 'Cantidad', 'Cant.'];
     
     activo.forEach(f => {
-        const rawF = Array.isArray(f) ? f : Object.values(f);
-        let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        let areaRaw = getCol(f, possibleAreaHeaders);
+        let area = String(areaRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         
-        let sku = String(rawF[1] || '').trim();
-        let qty = parseFloat(rawF[4]) || 0;
+        let sku = String(getCol(f, possibleSkuHeaders) || '').trim();
+        let qty = parseFloat(getCol(f, possibleQtyHeaders)) || 0;
         if(!sku || qty <= 0) return;
 
         if (activeWhitelist.some(w => area.includes(w))) {
@@ -452,7 +499,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
         }
     });
 
-    // 2. Mapeo de RESERVA (Regreso a claves normalizadas por parseFile)
+    // 2. Mapeo de RESERVA (COORDENADAS: NIVEL, PRODUCTO, CANTIDAD)
     reserva.forEach(f => {
         let nivel = String(f['NIVEL'] || '').trim().toUpperCase();
         let sku = String(f['PRODUCTO'] || '').trim();
@@ -462,7 +509,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
         if (nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
         else if (nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
-        else if (nivel === 'AEREO' || nivel === 'AÉREO') registerStock(stAereos, sku, qty, f);
+        else if (nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
         else if (nivel === 'PISO' || nivel === 'DIS') registerStock(stLogicos, sku, qty, f);
         else if (nivel === 'VER') {
             if (nroAnd === 'MZM-TR') registerStock(stLogicos, sku, qty, f);
@@ -480,9 +527,9 @@ export const calculateBufferPallets = async (configOverride = null) => {
 
     if (pedidos && pedidos.length) {
         pedidos.forEach(f => {
-            let sku = String(getCol(f, __skuHeaders) || '').trim();
-            let cant = parseFloat(getCol(f, __qtyHeaders)) || 0;
-            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado', 'ASIG', 'CANT_ASIG', 'CANT. ASIGNADA'])) || 0;
+            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim();
+            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant'])) || 0;
+            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado'])) || 0;
             let diff = cant - asig;
             if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
         });
@@ -569,23 +616,25 @@ export const calculateBufferPallets = async (configOverride = null) => {
         return pending;
     };
 
-    // 0. Mapa global de Activo para descuento rápido (Regreso a coordenadas fijas)
+    // 0. Mapa global de Activo para descuento rápido
     const totalActivoPorSKU = {};
     activo.forEach(f => {
         const rawF = Array.isArray(f) ? f : Object.values(f);
         let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (area === 'MATE') return;
 
-        let sku = String(rawF[1] || '').trim(); 
-        let qty = parseFloat(rawF[4]) || 0;     
+        let sku = String(rawF[1] || '').trim(); // SKU en B(1)
+        let qty = parseFloat(rawF[4]) || 0;     // Cantidad en E(4)
         if (!sku || qty <= 0) return;
 
+        // Para la cascada de Zona Buffer seguimos distinguiendo por zonas conocidas
         const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
         const isLevel1 = activeWhitelist.some(w => area.includes(w));
 
         if (isLevel1) {
             totalActivoPorSKU[sku] = (totalActivoPorSKU[sku] || 0) + qty;
         } else {
+            // Todo lo demás que no es MATE pero tampoco es Picking, va a Lógico por defecto
             registerStock(stLogicos, sku, qty, f);
         }
     });
@@ -694,32 +743,24 @@ export const calculateBufferPallets = async (configOverride = null) => {
         };
     });
 
-    // Mapa de Stock Activo para columna QTY ACTIVO (Coordenadas fijas)
+    // Mapa de Stock Activo para columna QTY ACTIVO
     const activeStockMap = {};
     activo.forEach(f => {
         const rawF = Array.isArray(f) ? f : Object.values(f);
         let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (area === 'MATE') return; 
+        if (area === 'MATE') return; // EXCLUIR MATE SEGÚN INDICACIÓN
         
-        let sku = String(rawF[1] || '').trim(); 
-        let qty = parseFloat(rawF[4]) || 0;     
+        let sku = String(rawF[1] || '').trim(); // SKU en Columna B (índice 1)
+        let qty = parseFloat(rawF[4]) || 0;     // Cantidad en Columna E (índice 4)
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
-    });
-
-    // [OPTIMIZACIÓN v12.5.21-BETA] Indexación masiva para O(1) en búsquedas
-    const reservaByUbi = new Map();
-    reserva.forEach(f => {
-        const ubi = String(f['UBICACION'] || '').trim();
-        if (!reservaByUbi.has(ubi)) reservaByUbi.set(ubi, []);
-        reservaByUbi.get(ubi).push(f);
     });
 
     let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
-        const items = reservaByUbi.get(ubi) || [];
-        items.forEach(f => {
-            let sku = String(f['PRODUCTO'] || '').trim();
-            let qty = parseFloat(f['CANTIDAD'] || 0);
+        let items = reserva.filter(f => String(f['UBICACION']).trim() === ubi);
+        items.forEach(item => {
+            let sku = String(getCol(item, ['PRODUCTO', 'Articulo', 'Producto']) || '').trim();
+            let qty = parseFloat(item['CANTIDAD'] || 0);
             let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
             
             if (pick > 0) {
@@ -735,7 +776,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
                             detallePallets.push({ 
                                 'FUENTE': dSrc.src,
                                 'UBICACIONES': ubi, 
-                                'LPN': f['LPN'], 
+                                'LPN': item['LPN'], 
                                 'SKU': sku, 
                                 'Articulo': sku.substring(0,7),
                                 'RQ': dSrc.qty,
@@ -771,38 +812,33 @@ export const calculateBufferPallets = async (configOverride = null) => {
     detallePallets.forEach(d => { if(d.LPN) selectedLPNs.add(d.LPN); });
 
     const detalleExplosionado = [];
-    detallePallets.forEach(d => detalleExplosionado.push(d));
+    const rowsYaIncluidas = new Set();
+    
+    detallePallets.forEach((d, idx) => {
+        detalleExplosionado.push(d);
+        rowsYaIncluidas.add(idx); // No necesitamos el ID real aquí, solo marcar posición
+    });
 
     if (selectedLPNs.size > 0) {
-        // [OPTIMIZACIÓN v12.5.21] Indexar reserva por LPN para explosión rápida
-        const reservaByLPN = new Map();
-        reserva.forEach(f => {
+        reserva.forEach((f, idx) => {
             const lpn = String(f['LPN'] || '').trim();
-            if (!reservaByLPN.has(lpn)) reservaByLPN.set(lpn, []);
-            reservaByLPN.get(lpn).push(f);
-        });
-
-        selectedLPNs.forEach(lpn => {
-            const items = reservaByLPN.get(lpn) || [];
-            items.forEach(f => {
+            // Evitar duplicados (si el LPN ya estaba en detallePallets por demanda)
+            const yaEnDetalle = detallePallets.some(dp => dp.LPN === lpn && dp.SKU === String(f['PRODUCTO']).trim());
+            
+            if (selectedLPNs.has(lpn) && !yaEnDetalle) {
                 const sku = String(f['PRODUCTO'] || '').trim();
-                // Evitar duplicados (si el SKU ya estaba en detallePallets por demanda)
-                const yaEnDetalle = detallePallets.some(dp => dp.LPN === lpn && dp.SKU === sku);
-                
-                if (!yaEnDetalle) {
-                    detalleExplosionado.push({
-                        'FUENTE': 'ACOMPAÑANTE LPN',
-                        'UBICACIONES': String(f['UBICACION'] || '').trim(),
-                        'LPN': lpn,
-                        'Articulo': sku.substring(0,7),
-                        'SKU': sku,
-                        'RQ': 0,
-                        'QTY ACTIVO': activeStockMap[sku] || 0,
-                        'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
-                        'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
-                    });
-                }
-            });
+                detalleExplosionado.push({
+                    'FUENTE': 'ACOMPAÑANTE LPN',
+                    'UBICACIONES': String(f['UBICACION'] || '').trim(),
+                    'LPN': lpn,
+                    'Articulo': sku.substring(0,7),
+                    'SKU': sku,
+                    'RQ': 0,
+                    'QTY ACTIVO': activeStockMap[sku] || 0,
+                    'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
+                    'QTY BUFFER': parseFloat(f['CANTIDAD']) || 0
+                });
+            }
         });
     }
 
@@ -861,8 +897,8 @@ export const calculateBufferPallets = async (configOverride = null) => {
         resEmp.push({ 
             fuente: 'TOTAL GENERAL', 
             tipo: '', 
-            paletas: new Set(detallePallets.map(d=>d.UBICACIONES)).size, 
-            skus: new Set(detallePallets.map(d=>d.SKU)).size, 
+            paletas: resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.paletas, 0), 
+            skus: resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.skus, 0), 
             parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 
         });
     }
@@ -974,25 +1010,18 @@ export const calculateBufferPallets = async (configOverride = null) => {
     const stockGlobalPorArticulo = new Map();
     
     // Sumar Activo
-    activo.forEach(f => {
-        const raw = Array.isArray(f) ? f : Object.values(f);
-        const sku = String(raw[1] || '').trim();
-        const qty = parseFloat(raw[4]) || 0;
-        if (sku && qty > 0) {
-            const art = sku.substring(0, 7);
-            if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
-            stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
-        }
+    Object.keys(activeStockMap).forEach(sku => {
+        const art = String(sku).substring(0, 7);
+        if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
+        stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + (activeStockMap[sku] || 0));
     });
     
     // Sumar Reserva
     reserva.forEach(r => {
-        const raw = Array.isArray(r) ? r : Object.values(r);
-        const sku = String(raw[8] || getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
-        const qty = parseFloat(raw[10] || getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
-        
-        if (sku && qty > 0) {
-            const art = sku.substring(0, 7);
+        const sku = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
+        const qty = parseFloat(getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
+        const art = sku.substring(0, 7);
+        if (art) {
             if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
             stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
         }
@@ -1098,19 +1127,51 @@ export const calculateBufferPallets = async (configOverride = null) => {
     });
 
     const detalleObsGen = [];
+    const detalleTemporadas = [];
     stockGlobalPorArticulo.forEach((qty, art) => {
-        const info = articulosMap.get(art) || { gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO' };
+        const info = articulosMap.get(art) || { gGender: 'S/MAESTRO', tipoObsolencia: 'S/MAESTRO', temporada: 'S/MAESTRO' };
+        
+        // Detalle Obsolescencia
         detalleObsGen.push({
             'Articulo': art,
             'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/MAESTRO',
             'G. GENDER': info.gGender || 'S/MAESTRO',
             'CANTIDAD': Math.round(qty)
         });
+
+        // Detalle Temporadas
+        const fullTemp = info.temporada || 'S/MAESTRO';
+        let año = 'S/MAESTRO';
+        let qKey = 'OTROS';
+
+        if (fullTemp.includes('-')) {
+            const parts = fullTemp.split('-');
+            año = parts[0];
+            const qPart = parts[1];
+            if (['1','2','3','4'].includes(qPart)) qKey = 'Q' + qPart;
+            else if (qPart.toUpperCase().includes('Q')) {
+                const match = qPart.match(/[1-4]/);
+                qKey = match ? 'Q' + match[0] : 'OTROS';
+            }
+        } else if (/^\d{4}$/.test(fullTemp)) {
+            año = fullTemp;
+            qKey = 'OTROS';
+        } else {
+            año = fullTemp;
+        }
+
+        detalleTemporadas.push({
+            'Articulo': art,
+            'Año/Temporadas': año,
+            'Q': qKey,
+            'Cantidad': Math.round(qty)
+        });
     });
 
 
+    console.log(`[PULSE] Analisis Finalizado: ${detalleTemporadas.length} items en temporadas.`);
     return { 
-        version: 'v12.5.21-BETA',
+        version: 'v12.3.0',
         totalReserva: globalRQ,
         detalle: detalleExplosionado, 
         detalleZonas, 
@@ -1125,84 +1186,7 @@ export const calculateBufferPallets = async (configOverride = null) => {
         reporteGender: reporteGender,
         reporteObsolencia: reporteObsolencia,
         detalleObsGen: detalleObsGen,
+        detalleTemporadas: detalleTemporadas,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
-},
-StartLine:708,TargetFile:day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
-    };
-};
-
-// --- PERSISTENCIA NUBE (BUFFER HISTORY) ---
-export const saveBufferReport = async (reportData, username) => {
-    try {
-        const history = await fetchBufferHistory(); 
-        if (!history) throw new Error("No se pudo leer el historial.");
-        
-        history.push({
-            ...reportData,
-            user: username,
-            id: Date.now() 
-        });
-        
-        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        await fetch(`${API_URL}/buffer_history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(history)
-        });
-        return true;
-    } catch (e) {
-        console.error("Error salvando reporte en nube:", e);
-        return false;
-    }
-};
-
-export const fetchBufferHistory = async () => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos máximo de espera
-    
-    try {
-        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        // [v12.5.7] Cache-buster t=Date.now()
-        const res = await fetch(`${API_URL}/buffer_history?t=${Date.now()}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
-        if (res.ok) {
-            const result = await res.json();
-            if (result.data) {
-                return result.data;
-            }
-        }
-    } catch (e) {
-        if (e.name === 'AbortError') console.warn("Backend lento (>5s): Usando backup local.");
-        else console.warn("Error conexión nube:", e);
-    } finally {
-        clearTimeout(timeoutId);
-    }
-    
-    const local = localStorage.getItem('buffer_history_v12');
-    return local ? JSON.parse(local) : [];
-};
-
-export const deleteBufferReport = async (reportId) => {
-    try {
-        let history = await fetchBufferHistory();
-        history = history.filter(h => h.id !== reportId);
-        
-        const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-        await fetch(`${API_URL_LOCAL}/buffer_history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(history)
-        });
-        return true;
-    } catch (e) {
-        console.error("Error borrando reporte:", e);
-        return false;
-    }
-};
-
-export const loadBufferReport = async () => {
-    const history = await fetchBufferHistory();
-    return history.length > 0 ? history[history.length - 1] : null;
 };

@@ -371,4 +371,3 @@ export const resetProductionData = async () => {
     await save('performance_log', []);
     console.log("✅ [PULSE] Datos reiniciados satisfactoriamente.");
 };
-\nwindow.adminService = { initializeAdminData, getPermissions, initPermissions, savePermissions, resetProductionData };\n

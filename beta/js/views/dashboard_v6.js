@@ -1,6 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.19-BETA';
-import * as adminService from '../services/adminService.js?v=12.5.15-FINAL';
-import { getSession } from '../services/auth.js?v=12.5.15-FINAL';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.0';
+import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
+
+
+const VERSION = '12.3.0';
+const CACHE_KEY = `logistics_v12_3_0_`;
+console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -21,8 +25,7 @@ const TABS = [
     { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
   ] },
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
-    { id: 'historial_temp', label: 'HISTORIAL', icon: '📅' }
+    { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
@@ -39,17 +42,11 @@ const TABS = [
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
-const VERSION = '12.5.21-BETA';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
-let lastBufferKPI = (() => {
-    try {
-        const local = localStorage.getItem('last_sku_analysis_v12');
-        return local ? JSON.parse(local) : (window.lastBufferResult || null);
-    } catch(e) { return null; }
-})();
+let lastBufferKPI = null;
 let bufferConfigCached = null;
-let lastBufferResult = lastBufferKPI;
+let lastBufferResult = null;
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
@@ -150,7 +147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.3.0</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -338,6 +335,18 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentSubtitle.textContent = "Análisis de Reposición";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
+    const stored = localStorage.getItem('lastBufferKPI');
+    if (stored) {
+        try {
+            const parsed = JSON.parse(stored);
+            if (!parsed.detalleZonas) {
+                localStorage.removeItem('lastBufferKPI');
+                lastBufferKPI = null;
+            } else {
+                lastBufferKPI = parsed;
+            }
+        } catch(e) { localStorage.removeItem('lastBufferKPI'); }
+    }
 
     const bufferTabDef = TABS.find(t => t.id === 'buffer');
     const perms = adminService.getPermissions(user.role) || {};
@@ -422,11 +431,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 setTimeout(async () => {
                     try {
                         const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
-                        const res = await calculateBufferPallets(config);
+                        const res = calculateBufferPallets(config);
                         if (res) {
                             lastBufferKPI = res;
                             lastBufferResult = res;
-                            localStorage.setItem('last_sku_analysis_v12', JSON.stringify(res));
+                            try {
+                                localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                            } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer", e); }
                             renderBufferResults(results, res); 
                             
                             // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
@@ -461,6 +472,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnReset.onclick = () => {
                 if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.')) {
                     Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
+                    localStorage.removeItem('lastBufferKPI');
                     window.location.reload();
                 }
             };
@@ -472,13 +484,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                 renderBufferResults(results, lastBufferKPI);
             } catch (err) {
                 console.warn("[PULSE] Error cargando caché de resultados (incompatible), ignorando...", err);
+                localStorage.removeItem('lastBufferKPI');
                 results.innerHTML = '';
             }
         }
     }
   };
 
-  const createMatrixHTML = (matrix, title) => {
+  const createMatrixHTML = (matrix, title, timestamp = '') => {
     if (!matrix || !matrix.rows || !matrix.rows.length) return '';
     
     const brandAlias = (name) => {
@@ -495,7 +508,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     return `
         <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem;">
             <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
-                <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">${title}</h3>
+                <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">
+                    ${title} <span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>
+                </h3>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
@@ -525,6 +540,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
+    const ts = data.timestamp || new Date().toLocaleString();
+    const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = '580px';
     const widthRight = '1200px';
 
@@ -532,7 +549,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthLeft};">
             <!-- COLUMNA IZQUIERDA: ZONAS + SKU -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER ZONAS</h3></div>
+                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER ZONAS ${tsHtml}</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">ATD %</th></tr></thead>
                     <tbody style="color:#eee;">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.08); font-weight:900;':''}">
@@ -545,7 +562,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
-                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU</h3></div>
+                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU ${tsHtml}</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
                     <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente.includes('TOTAL') ? 'background:rgba(255,255,255,0.04); font-weight:700;' : ''}">
@@ -559,7 +576,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <div style="background:rgba(15,23,42,0.9); border:2px solid #ef4444; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(239,68,68,0.3);">
-                <div style="padding:0.7rem; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.3); text-align:center;"><h3 style="color:#ef4444; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK</h3></div>
+                <div style="padding:0.7rem; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.3); text-align:center;"><h3 style="color:#ef4444; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#eee;">
                     <div style="text-align:center;">
                         <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
@@ -578,8 +595,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
-            ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6')}
-            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)')}
+            ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6', ts)}
+            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
         </div>
     `;
 
@@ -1049,7 +1066,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
-  let forcedDate = new Date().toISOString().split('T')[0]; // Default hoy
+  const getLocalDateStr = () => {
+      const d = new Date();
+      return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+  };
+  let forcedDate = getLocalDateStr(); // Default hoy (Local)
   let localState = [];
 
   const renderAsistenciaSection = (container) => {
@@ -1428,9 +1449,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
 
-            <div style="display:flex; flex-wrap: wrap; gap:1.2rem;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.2rem;">
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
-                <div style="flex: 1 1 320px; background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#fb923c; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
                         <span style="font-size:1.1rem;">🚫</span> TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
@@ -1459,7 +1480,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- COLUMNA CENTRAL: FALTAS INJUSTIFICADAS -->
-                <div style="flex: 1 1 320px; background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#f87171; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
                         <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
@@ -1488,7 +1509,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- COLUMNA DERECHA: FALTAS JUSTIFICADAS -->
-                <div style="flex: 1 1 320px; background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
+                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
                         <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
@@ -1907,7 +1928,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v${VERSION} | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.3.0 | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -1974,56 +1995,54 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem;">
             <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
-            <div class="flex-container" style="display:flex; gap: 1.5rem; flex-wrap: wrap;">
-                <div class="glass-panel" style="flex: 1 1 600px; padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
-                        <thead>
-                            <tr style="background:#facc15; color:#000;">
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sorted.map((report, rIdx) => {
-                                const ts = report.created_at || report.ts || Date.now();
-                                const dObj = new Date(ts);
-                                const semana = getWeekNumber(dObj);
-                                const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
-                                const repData = report.data || {};
-                                const niveles = repData.resumenNiveles || [];
-                                
-                                if (niveles.length === 0) {
-                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                        <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
-                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                            <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
-                                        </td>
-                                    </tr>`;
-                                }
+            <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+                <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
+                    <thead>
+                        <tr style="background:#facc15; color:#000;">
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
+                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map((report, rIdx) => {
+                            const ts = report.created_at || report.ts || Date.now();
+                            const dObj = new Date(ts);
+                            const semana = getWeekNumber(dObj);
+                            const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                            const repData = report.data || {};
+                            const niveles = repData.resumenNiveles || [];
+                            
+                            if (niveles.length === 0) {
+                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                    <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
+                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
+                                    </td>
+                                </tr>`;
+                            }
 
-                                return `
-                                    ${niveles.map((n, nIdx) => `
-                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
-                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
-                                        </tr>
-                                    `).join('')}
-                                    <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                            return `
+                                ${niveles.map((n, nIdx) => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
+                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
+                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
+                                    </tr>
+                                `).join('')}
+                                <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
@@ -2032,6 +2051,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.onclick = () => {
             const item = sorted[parseInt(btn.dataset.idx)];
             lastBufferKPI = item.data;
+            try {
+                localStorage.setItem('lastBufferKPI', JSON.stringify(item.data));
+            } catch(e) { console.warn("[PULSE] Quota Full en Historial", e); }
             activeBufferSub = 'reportes';
             renderBufferTab();
         };
@@ -2081,7 +2103,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.5.18-FINAL',
+                        version: 'v12.1.86-BETA'
                     }]
                 },
                 options: {
@@ -2134,359 +2156,23 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  const renderHistorySeasonsTab = async (container) => {
-    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Cargando historial...</p></div>`;
-    
-    // [GLOBAL v12.5.12-FINAL] Usar memoria de sesión para no perder datos al cambiar pestañas
-    if (!window.skuHistoryGlobal) {
-        const rawHistory = await fetchBufferHistory();
-        window.skuHistoryGlobal = (rawHistory || []).filter(h => h.reporteTemporadasQ || (h.data && h.data.reporteTemporadasQ));
-    }
-    let history = window.skuHistoryGlobal;
-
-    const user = getSession();
-
-        const formatDate = (ts) => {
-        const d = new Date(ts);
-        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        return `${d.getDate()} ${months[d.getMonth()]}`;
-    };
-
-    const doRender = async () => {
-        if (!Array.isArray(history)) history = [];
-
-        window.delHistDate = async (dateLabel) => {
-            if (confirm(`¿Borrar todos los registros de ${dateLabel}?`)) {
-                try {
-                    let rawHistory = await fetchBufferHistory();
-                    if (!rawHistory) return alert("Error leyendo historial.");
-                    
-                    const newHistory = rawHistory.filter(h => formatDate(h.ts || h.created_at) !== dateLabel);
-                    
-                    const API_URL_LOCAL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-                    const res = await fetch(`${API_URL_LOCAL}/buffer_history`, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(newHistory) 
-                    });
-                    
-                    if (res.ok) {
-                        window.skuHistoryGlobal = newHistory;
-                        history = newHistory;
-                        executeDraw();
-                        alert(`✅ Registros de ${dateLabel} eliminados.`);
-                    } else {
-                        alert("Error al borrar en la nube.");
-                    }
-                } catch(e) { alert("Error: " + e.message); }
-            }
-        };
-
-        const now = new Date();
-        const currentWeek = getWeekNumber(now);
-        let filterWeek = currentWeek;
-
-            const executeDraw = () => {
-                const dayMap = new Map();
-                history.filter(h => {
-                    const hDate = new Date(h.ts || Date.now());
-                    return getWeekNumber(hDate) === filterWeek;
-                }).forEach(h => {
-                    const label = formatDate(h.ts);
-                    dayMap.set(label, h); 
-                });
-
-                const filteredHistory = Array.from(dayMap.values()).sort((a,b) => (a.ts || 0) - (b.ts || 0));
-                const activeDates = Array.from(dayMap.keys()).sort((a,b) => {
-                    const findTs = (lbl) => (dayMap.get(lbl).ts || 0);
-                    return findTs(a) - findTs(b);
-                });
-
-            const getTrendIcon = (val, prevVal) => {
-                if (prevVal === undefined) return '<span style="color:rgba(255,255,255,0.1); margin-left:6px; font-size:0.95rem; font-weight:900;">●</span>';
-                if (val > prevVal) return '<span style="color:#10b981; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(16,185,129,0.5));">↑</span>';
-                if (val < prevVal) return '<span style="color:#ef4444; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(239,68,68,0.5));">↓</span>';
-                return '<span style="color:#fbbf24; margin-left:6px; font-size:1.25rem; font-weight:900; filter: drop-shadow(0 0 3px rgba(251,191,36,0.5));">→</span>';
-            };
-
-            const buildDayTable = () => {
-                const pivotMap = {};
-                let grandTotal = 0;
-                filteredHistory.forEach(item => {
-                    const dateLabel = formatDate(item.ts);
-                    const week = getWeekNumber(new Date(item.ts));
-                    (item.reporteTemporadasQ || []).forEach(row => {
-                        const year = row.Año;
-                        ['Q1', 'Q2', 'Q3', 'Q4', 'OTROS'].forEach(qKey => {
-                            const val = row[qKey] || 0;
-                            if (val > 0) {
-                                const key = `${week}|${year}|${qKey}`;
-                                if (!pivotMap[key]) pivotMap[key] = { week, year, q: qKey, days: {}, total: 0 };
-                                pivotMap[key].days[dateLabel] = (pivotMap[key].days[dateLabel] || 0) + val;
-                                pivotMap[key].total += val;
-                                grandTotal += val;
-                            }
-                        });
-                    });
-                });
-
-                const sortedKeys = Object.keys(pivotMap).sort((a,b) => {
-                    const [wA, yA, qA] = a.split('|');
-                    const [wB, yB, qB] = b.split('|');
-                    if (yB !== yA) return yB - yA;
-                    if (qA !== qB) return qA.localeCompare(qB);
-                    return 0;
-                });
-
-                let rowsHtml = '';
-                let currentYear = null;
-                let yearTotal = 0;
-                const colTotals = {};
-
-                sortedKeys.forEach((key, index) => {
-                    const entry = pivotMap[key];
-                    if (currentYear !== null && currentYear !== entry.year) {
-                        rowsHtml += `
-                            <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                                <td colspan="3" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
-                                <td colspan="${activeDates.length}" style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
-                            </tr>`;
-                        yearTotal = 0;
-                    }
-                    currentYear = entry.year;
-                    yearTotal += entry.total;
-
-                    rowsHtml += `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <td style="padding:0.4rem; text-align:center;">${entry.week}</td>
-                            <td style="padding:0.4rem; text-align:center; font-weight:700; color:#fff;">${entry.year}</td>
-                            <td style="padding:0.4rem; text-align:center;">${entry.q}</td>
-                            ${activeDates.map((d, i) => {
-                                const v = entry.days[d] || 0;
-                                colTotals[d] = (colTotals[d] || 0) + v;
-                                const prevD = i > 0 ? activeDates[i-1] : undefined;
-                                const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
-                                return `<td style="padding:0.4rem; text-align:center; color:var(--primary); font-weight:800; opacity:${v===0?'0.1':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
-                            }).join('')}
-                        </tr>`;
-                    
-                    if (index === sortedKeys.length - 1) {
-                        rowsHtml += `
-                            <tr style="background:rgba(79,70,229,0.05); font-weight:900;">
-                                <td colspan="3" style="padding:0.4rem; text-align:right; color:var(--text-muted); font-size:0.65rem;">SUBTOTAL ${currentYear}</td>
-                                <td colspan="${activeDates.length}" style="padding:0.4rem; text-align:center; color:#fff; border-top:1px solid rgba(255,255,255,0.1);">${yearTotal.toLocaleString()}</td>
-                            </tr>`;
-                    }
-                });
-
-                if (grandTotal > 0) {
-                    rowsHtml += `
-                        <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
-                            <td colspan="3" style="padding:0.6rem; text-align:right; color:#fbbf24; font-size:0.7rem; letter-spacing:1px;">TOTAL GENERAL</td>
-                            ${activeDates.map(d => `<td style="padding:0.6rem; text-align:center; color:#fff; font-size:0.85rem;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
-                        </tr>`;
-                }
-
-                return `
-                    <div class="glass-panel animate-fade-in" style="flex:1.4; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.4);">
-                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO POR AÑO Q</h3>
-                        </div>
-                        <div style="overflow-x:auto;">
-                            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
-                                    <tr>
-                                        <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
-                                        <th style="padding:0.6rem 0.4rem; text-align:center;">AÑO</th>
-                                        <th style="padding:0.6rem 0.4rem; text-align:center;">Q</th>
-                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center; position:relative;">
-                                            ${d}
-                                            <span onclick="delHistDate('${d}')" style="color:#ef4444; cursor:pointer; margin-left:4px; font-size:0.6rem; vertical-align:middle;" title="Borrar este día">✕</span>
-                                        </th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:2rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>`;
-            };
-
-            const buildYearTable = () => {
-                const yearMap = {};
-                filteredHistory.forEach(item => {
-                    const dObj = new Date(item.ts || Date.now());
-                    const week = getWeekNumber(dObj);
-                    const dateLabel = formatDate(item.ts);
-                    (item.reporteTemporadasQ || []).forEach(row => {
-                        const key = `${week}|${row.Año}`;
-                        if (!yearMap[key]) yearMap[key] = { week, season: row.Año, days: {} };
-                        yearMap[key].days[dateLabel] = (yearMap[key].days[dateLabel] || 0) + (row.TOTAL || 0);
-                    });
-                });
-
-                const sortedKeys = Object.keys(yearMap).sort((a,b) => {
-                    const labelA = String(yearMap[a].season);
-                    const labelB = String(yearMap[b].season);
-                    const isSpecial = (l) => l.includes('S/MAESTRO') || l.includes('ND') || l.includes('(en blanco)');
-                    if (!isSpecial(labelA) && isSpecial(labelB)) return -1;
-                    if (isSpecial(labelA) && !isSpecial(labelB)) return 1;
-                    if (isSpecial(labelA) && isSpecial(labelB)) return labelA.localeCompare(labelB);
-                    return labelB.localeCompare(labelA);
-                });
-
-                const colTotals = {};
-                let grandTotal = 0;
-                let rowsHtml = sortedKeys.map(k => {
-                    const entry = yearMap[k];
-                    const rowTotal = activeDates.reduce((sum, d) => sum + (entry.days[d] || 0), 0);
-                    grandTotal += rowTotal;
-                    return `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <td style="padding:0.5rem 0.4rem; text-align:center;">${entry.week}</td>
-                            <td style="padding:0.5rem 0.4rem; text-align:left; font-weight:700; color:#fff;">${entry.season}</td>
-                            ${activeDates.map((d, i) => {
-                                const v = entry.days[d] || 0;
-                                colTotals[d] = (colTotals[d] || 0) + v;
-                                const prevD = i > 0 ? activeDates[i-1] : undefined;
-                                const prevV = prevD ? (entry.days[prevD] || 0) : undefined;
-                                return `<td style="padding:0.5rem 0.4rem; text-align:center; opacity:${v===0?'0.2':'1'}">${v > 0 ? v.toLocaleString() : '-'}${v > 0 ? getTrendIcon(v, prevV) : ''}</td>`;
-                            }).join('')}
-                        </tr>`;
-                }).join('');
-
-                if (grandTotal > 0) {
-                    rowsHtml += `
-                        <tr style="background:rgba(251,191,36,0.1); font-weight:900; border-top:2px solid #fbbf24;">
-                            <td colspan="2" style="padding:0.6rem 0.4rem; text-align:right; color:#fbbf24;">TOTAL</td>
-                            ${activeDates.map(d => `<td style="padding:0.6rem 0.4rem; text-align:center; color:#fff;">${(colTotals[d]||0).toLocaleString()}</td>`).join('')}
-                        </tr>`;
-                }
-
-                return `
-                    <div class="glass-panel animate-fade-in" style="flex:1; padding:0; border:1px solid rgba(79,70,229,0.5); box-shadow:0 0 25px rgba(79,70,229,0.2); background:rgba(15,23,42,0.6); overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.4);">
-                            <h3 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase;">COMPORTAMIENTO AÑO</h3>
-                        </div>
-                        <div style="overflow-x:auto;">
-                            <table class="data-table" style="width:100%; font-size:0.75rem; border-collapse:collapse;">
-                                <thead style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.65rem; border-bottom:2px solid var(--border);">
-                                    <tr>
-                                        <th style="padding:0.6rem 0.4rem; text-align:center;">SEM</th>
-                                        <th style="padding:0.6rem 0.4rem; text-align:left;">TEMPORADA</th>
-                                        ${activeDates.map(d => `<th style="padding:0.6rem 0.4rem; text-align:center;">
-                                            ${d}
-                                            <span onclick="delHistDate('${d}')" style="color:#ef4444; cursor:pointer; margin-left:4px; font-size:0.6rem; vertical-align:middle;" title="Borrar este día">✕</span>
-                                        </th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml || '<tr><td colspan="' + (activeDates.length + 2) + '" style="text-align:center; padding:2rem; opacity:0.3; color:var(--text-muted);">Sin datos</td></tr>'}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>`;
-            };
-
-            container.innerHTML = `
-                <div class="glass-panel" style="margin-bottom:1rem; padding:0.8rem 1.2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border:1px solid rgba(255,255,255,0.05); background:rgba(15,23,42,0.3);">
-                    <div style="display:flex; gap:1rem; align-items:center;">
-                        <div style="display:flex; flex-direction:column; gap:2px;">
-                            <label style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">SEMANA</label>
-                            <select id="sel_hist_week" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.3rem; font-size:0.75rem;">
-                                ${Array.from({length:53}, (_, i) => `<option value="${i+1}" ${filterWeek === (i+1) ? 'selected' : ''}>Semana ${i+1}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:1rem; align-items:flex-end;">
-                        <div style="display:flex; flex-direction:column; gap:2px;">
-                            <label style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">FECHA STOCK</label>
-                            <input type="date" id="hist_process_date" value="${now.toISOString().split('T')[0]}" style="background:#0f172a; color:#fff; border:1px solid var(--primary); border-radius:6px; padding:0.3rem; font-size:0.75rem;">
-                        </div>
-                        <button id="btn_calc_history" class="btn" style="background:var(--primary); font-weight:900; font-size:0.7rem; padding:0.4rem 2rem; border-radius:6px;">PROCESAR</button>
-                    </div>
-                </div>
-                <div style="display:flex; gap:1rem; align-items: flex-start; flex-wrap:wrap;">
-                    ${buildDayTable()}
-                    ${buildYearTable()}
-                </div>
-                <div style="margin-top:1.5rem; text-align:right;">
-                    <button id="btn_clear_hist" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.65rem; opacity:0.5; text-decoration:underline;">Limpiar historial</button>
-                </div>`;
-
-            document.getElementById('sel_hist_week').onchange = (e) => { filterWeek = parseInt(e.target.value); executeDraw(); };
-            document.getElementById('btn_clear_hist').onclick = async () => {
-                if (confirm("¿Estás seguro?")) {
-                    localStorage.removeItem('buffer_history_v12');
-                    const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-                    await fetch(`${API_URL}/buffer_history`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([]) });
-                    renderHistorySeasonsTab(container);
-                }
-            };
-            document.getElementById('btn_calc_history').onclick = async () => {
-                if (!dataStore.stockActivo || !dataStore.stockReserva) return alert('⚠️ Carga los archivos primero.');
-                const btn = document.getElementById('btn_calc_history');
-                const oldHtml = btn.innerHTML;
-                btn.disabled = true; btn.innerHTML = '⚙️...';
-                try {
-                    const res = await calculateBufferPallets();
-                    if (res) {
-                        const ts = new Date(document.getElementById('hist_process_date').value + 'T12:00:00').getTime() || Date.now();
-                        
-                        // [OPTIMIZACIÓN v12.5.6] No guardar el detalle masivo de artículos en el historial (pesa demasiado)
-                        const result = { 
-                            ts, 
-                            created_at: new Date().toISOString(),
-                            reporteTemporadasQ: res.reporteTemporadasQ,
-                            reporteGender: res.reporteGender,
-                            reporteObsolencia: res.reporteObsolencia,
-                            timestamp: res.timestamp || new Date().toLocaleString()
-                        };
-                        
-                        if (!window.skuHistoryGlobal) window.skuHistoryGlobal = [];
-                        window.skuHistoryGlobal.push(result);
-                        history = window.skuHistoryGlobal;
-                        
-                        executeDraw();
-                        
-                        // Guardar en la nube y esperar confirmación
-                        await saveBufferReport(result, user.username || 'system');
-                        console.log("✅ Reporte guardado y confirmado en la nube");
-                        
-                        btn.disabled = false; btn.innerHTML = oldHtml;
-                    }
-                } catch(e) { alert('❌ Error: ' + e.message); btn.disabled = false; btn.innerHTML = oldHtml; }
-            };
-        };
-        executeDraw();
-    };
-
-    // Lanzar carga inicial (Local)
-    doRender();
-
-    // Actualizar desde nube en background (Fusión Inteligente)
-    fetchBufferHistory().then(cloudData => {
-        if (cloudData && Array.isArray(cloudData)) {
-            // Fusionar por ID o Timestamp único para evitar duplicados y no perder lo local
-            const existingIds = new Set(history.map(h => h.created_at || h.ts));
-            let changed = false;
-            cloudData.forEach(ch => {
-                if (!existingIds.has(ch.created_at || ch.ts)) {
-                    history.push(ch);
-                    changed = true;
-                }
-            });
-            if (changed) {
-                history.sort((a,b) => (a.ts || 0) - (b.ts || 0));
-                doRender();
-            }
-        }
-    }).catch(e => console.warn("Nube lenta/error:", e));
-  };
-
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
+
+    // Recuperar persistencia si existe (v12.1.76)
+    if (!lastBufferResult) {
+        const raw = localStorage.getItem(CACHE_KEY + 'lastBufferKPI');
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen && parsed.detalleTemporadas) {
+                    lastBufferResult = parsed;
+                } else {
+                    localStorage.removeItem('lastBufferKPI');
+                }
+            } catch(e) { localStorage.removeItem(CACHE_KEY + 'lastBufferKPI'); }
+        }
+    }
 
     const tabData = TABS.find(t => t.id === 'analisis_sku');
     const subId = activeAnalisisSub;
@@ -2507,14 +2193,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         activeAnalisisSub = id;
         renderAnalisisSKUTab();
     };
-
-    if (subId === 'historial_temp') {
-        contentArea.innerHTML = subNavHtml;
-        const subContainer = document.createElement('div');
-        contentArea.appendChild(subContainer);
-        renderHistorySeasonsTab(subContainer);
-        return;
-    }
 
     if (subId !== 'articulo_temp') {
         contentArea.innerHTML = subNavHtml + `
@@ -2541,38 +2219,28 @@ export const renderDashboard = async (container, user, onLogout) => {
         try {
           const res = await calculateBufferPallets();
           if (res) {
-              lastBufferResult = {
-                  reporteTemporadasQ: res.reporteTemporadasQ,
-                  reporteGender: res.reporteGender,
-                  reporteObsolencia: res.reporteObsolencia,
-                  detalleObsGen: res.detalleObsGen || [],
-                  timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
-              };
-              window.lastBufferResult = lastBufferResult;
-              localStorage.setItem('last_sku_analysis_v12', JSON.stringify(lastBufferResult));
-              
-              // [OPTIMIZACIÓN v12.5.6] Solo guardar el resumen en el historial, no el detalle masivo
-              const summary = {
-                  ts: Date.now(),
-                  created_at: new Date().toISOString(),
-                  reporteTemporadasQ: res.reporteTemporadasQ,
-                  reporteGender: res.reporteGender,
-                  reporteObsolencia: res.reporteObsolencia,
-                  timestamp: lastBufferResult.timestamp
-              };
-              await saveBufferReport(summary, user.username || 'system');
+                  lastBufferResult = {
+                      reporteTemporadasQ: res.reporteTemporadasQ,
+                      reporteGender: res.reporteGender,
+                      reporteObsolencia: res.reporteObsolencia,
+                      detalleObsGen: res.detalleObsGen || [],
+                      detalleTemporadas: res.detalleTemporadas || [],
+                      timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+                  };
+              try {
+                  // Limpiar claves antiguas de logistics_ para liberar espacio
+                  Object.keys(localStorage).forEach(key => {
+                      if (key.startsWith('logistics_') && !key.startsWith(CACHE_KEY)) {
+                          localStorage.removeItem(key);
+                      }
+                  });
+                  localStorage.setItem(CACHE_KEY + 'lastBufferKPI', JSON.stringify(lastBufferResult));
+              } catch(e) {
+                  console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirán en esta sesión.", e);
+              }
               renderAnalisisSKUTab();
           } else {
-              let missing = [];
-              if (!dataStore.stockActivo) missing.push('STOCK ACTIVO');
-              if (!dataStore.stockReserva) missing.push('STOCK RESERVA');
-              if (!dataStore.articulos) missing.push('MAESTRO ARTÍCULOS');
-              
-              if (missing.length > 0) {
-                  alert('⚠️ ERROR: Faltan cargar los siguientes recursos: ' + missing.join(', '));
-              } else {
-                  alert('⚠️ ERROR: El análisis no generó datos. Revisa que los archivos de stock tengan información válida.');
-              }
+              alert('⚠️ ERROR: El análisis no generó datos.');
               if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
           }
         } catch (err) {
@@ -2715,12 +2383,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     const exportBtn = document.getElementById('btn_export_analisis');
     if (exportBtn) {
         exportBtn.onclick = () => {
-            if (!tQ.length) return alert('No hay datos para exportar.');
-            const exportData = tQ.map(r => ({ 'AÑO/TEMPORADA': r.Año, 'Q1': r.Q1, 'Q2': r.Q2, 'Q3': r.Q3, 'Q4': r.Q4, 'OTROS': r.OTROS, 'TOTAL': r.TOTAL }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
+            const detail = data.detalleTemporadas || [];
+            if (!detail.length) return alert('No hay datos detallados de temporadas para exportar. Pulsa Procesar.');
+            
+            const ws = XLSX.utils.json_to_sheet(detail);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Reporte_Temporadas");
-            XLSX.writeFile(wb, `Reporte_Temporadas_${new Date().getTime()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Revision_Temporadas");
+            XLSX.writeFile(wb, `Reporte_Revision_Temporadas_${new Date().getTime()}.xlsx`);
         };
     }
 
