@@ -1,18 +1,7 @@
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
-  stockActivo: null,
-  stockReserva: null,
-  inventario: null,
-  picking: null,
-  packing: null,
-  despacho: null,
-  recepcion: null,
-  almacenaje: null,
-  buffer: null,
-  solicitud: null,
-  articulos: null,
-  tallas: null,
   tabla_tallas: {} // Mapa de SKU -> Talla
+  // Otros datos se cargarán dinámicamente: [area]_activo, [area]_reserva, [area]
 };
 
 // =============================================
@@ -83,7 +72,17 @@ const clearDB = async () => {
 
 // Inicializar dataStore desde IndexedDB al cargar la app
 export const initPersistentData = async () => {
-    for (const area of Object.keys(dataStore)) {
+    // Escanear localStorage para encontrar todas las áreas que tienen metadata
+    const keys = Object.keys(localStorage);
+    const areaKeys = keys
+        .filter(k => k.startsWith('meta_'))
+        .map(k => k.replace('meta_', ''));
+    
+    // Añadir áreas estáticas conocidas por si acaso
+    const staticAreas = ['buffer', 'solicitud', 'articulos', 'tallas', 'tabla_tallas', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'no_retail'];
+    const allUniqueAreas = [...new Set([...areaKeys, ...staticAreas])];
+
+    for (const area of allUniqueAreas) {
         const cached = await loadFromDB(area);
         if (cached) {
             dataStore[area] = cached;
@@ -288,7 +287,7 @@ export const parseFile = (file, area) => {
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           
           let jsonData = [];
-          if (area === 'stockReserva') {
+          if (area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
               for (let i = 3; i < rows.length; i++) {
@@ -361,8 +360,8 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
         await saveToDB(area, payload);
     }
     
-    // [AUTO] Actualizar Tabla de Tallas si es Stock Activo o Reserva
-    if (area === 'stockActivo' || area === 'stockReserva') {
+    // [AUTO] Actualizar Tabla de Tallas si es Stock Activo o Reserva de cualquier área
+    if (area.endsWith('_activo') || area.endsWith('_reserva')) {
         updateTablaTallas();
     }
 };
@@ -412,7 +411,7 @@ export const getAreaData = async (area) => {
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
   
-  if (area === 'stockActivo' || area === 'stockReserva') {
+  if (area.endsWith('_activo') || area.endsWith('_reserva')) {
       updateTablaTallas();
   }
 
@@ -438,36 +437,34 @@ const extractTalla = (desc) => {
 export const updateTablaTallas = () => {
     const mapa = dataStore.tabla_tallas || {};
     
-    // 1. Procesar Stock Activo (Descripción en Columna C)
-    if (dataStore.stockActivo) {
-        dataStore.stockActivo.forEach(row => {
-            const sku = getCol(row, ['Articulo', 'ArtÃculo', 'Artículo', 'Sku']);
-            // Intentar por nombre de columna o por posición (Columna C es índice 2 si es array)
-            const desc = getCol(row, ['Descripcion', 'Descripción', 'Description']) || 
-                         (Array.isArray(row) ? row[2] : Object.values(row)[2]);
-            
-            if (sku && desc) {
-                const talla = extractTalla(desc);
-                if (talla) mapa[sku] = talla;
-            }
-        });
-    }
-
-    // 2. Procesar Stock Reserva (Descripción en 'DESCRIPCION')
-    if (dataStore.stockReserva) {
-        dataStore.stockReserva.forEach(row => {
-            const sku = row.PRODUCTO;
-            const desc = row.DESCRIPCION;
-            if (sku && desc) {
-                const talla = extractTalla(desc);
-                if (talla) mapa[sku] = talla;
-            }
-        });
-    }
+    // Procesar todos los stocks activos y de reserva de todas las áreas para tener un maestro de tallas completo
+    Object.keys(dataStore).forEach(area => {
+        if (area.endsWith('_activo') && dataStore[area]) {
+            dataStore[area].forEach(row => {
+                const sku = getCol(row, ['Articulo', 'ArtÃculo', 'Artículo', 'Sku']);
+                const desc = getCol(row, ['Descripcion', 'Descripción', 'Description']) || 
+                             (Array.isArray(row) ? row[2] : Object.values(row)[2]);
+                if (sku && desc) {
+                    const talla = extractTalla(desc);
+                    if (talla) mapa[sku] = talla;
+                }
+            });
+        }
+        if (area.endsWith('_reserva') && dataStore[area]) {
+            dataStore[area].forEach(row => {
+                const sku = row.PRODUCTO;
+                const desc = row.DESCRIPCION;
+                if (sku && desc) {
+                    const talla = extractTalla(desc);
+                    if (talla) mapa[sku] = talla;
+                }
+            });
+        }
+    });
 
     dataStore.tabla_tallas = mapa;
     saveToDB('tabla_tallas', mapa);
-    console.log(`[PULSE] Tabla de tallas actualizada. Total SKUs: ${Object.keys(mapa).length}`);
+    console.log(`[PULSE] Tabla de tallas unificada actualizada. Total SKUs: ${Object.keys(mapa).length}`);
 };
 
 export const generateKPIs = (data, area) => {
@@ -500,8 +497,8 @@ export const fetchBufferConfig = async () => {
 };
 
 export const calculateBufferPallets = (configOverride = null) => {
-    const activo = dataStore.stockActivo;
-    const reserva = dataStore.stockReserva;
+    const activo = dataStore.buffer_activo;
+    const reserva = dataStore.buffer_reserva;
     const pedidos = dataStore.buffer; 
     const solicitud = dataStore.solicitud; 
     const tallas = dataStore.tallas;     

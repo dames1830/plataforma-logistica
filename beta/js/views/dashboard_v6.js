@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.5-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.6-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.5-BETA';
+const VERSION = '12.4.6-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -572,8 +572,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; buf.appendChild(wrap);
-        renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
-        renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
+        renderUploadArea(wrap, 'buffer_activo', dataStore.buffer_activo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'buffer_reserva', dataStore.buffer_reserva, '.xlsx', 'STOCK RESERVA');
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
@@ -2376,8 +2376,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     const container = document.getElementById('areaContent');
     if (activeSub && activeSub.startsWith('archivo_')) {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; container.appendChild(wrap);
-        renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
-        renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
+        const actKey = `${tabId}_activo`;
+        const resKey = `${tabId}_reserva`;
+        renderUploadArea(wrap, actKey, dataStore[actKey], '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, resKey, dataStore[resKey], '.xlsx', 'STOCK RESERVA');
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2410,8 +2412,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const skuBuf = document.getElementById('skuContent');
     if (activeAnalisisSub === 'archivo_analisis') {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; skuBuf.appendChild(wrap);
-        renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
-        renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
+        renderUploadArea(wrap, 'analisis_sku_activo', dataStore.analisis_sku_activo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'analisis_sku_reserva', dataStore.analisis_sku_reserva, '.xlsx', 'STOCK RESERVA');
         return;
     }
 
