@@ -1,30 +1,39 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.2';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.3-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.2';
+const VERSION = '12.4.3-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'stock', label: 'Stock General', icon: '🏦', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'], subTabs: [
-    { id: 'stockActivo', label: 'Stock Activo', icon: '⚡' },
-    { id: 'stockReserva', label: 'Stock Reserva', icon: '📦' }
-  ] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'] },
-  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
+  ]},
+  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
+  ]},
+  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
+  ]},
+  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' }
+  ]},
+  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }
+  ]},
+  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' }
+  ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
     { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
-    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
-    { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' }
   ] },
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
@@ -348,9 +357,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     if (currentTab === 'inicio') await renderHomeTab();
-    else if (currentTab === 'stock') await renderStockTab();
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
+    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
+    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
+    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
+    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
+    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
+    else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -537,6 +551,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
         const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
+        renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
@@ -2312,46 +2328,74 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  const renderAnalisisSKUTab = async () => {
-    contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
+  const renderGenericAreaTab = async (tabId, subtitle) => {
+    contentSubtitle.textContent = subtitle;
+    const tabDef = TABS.find(t => t.id === tabId);
+    const perms = adminService.getPermissions(user.role) || {};
+    const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`${tabId}_${sub.id}`] === 1);
 
-    // Recuperar persistencia si existe (v12.1.76)
-    if (!lastBufferResult) {
-        const raw = localStorage.getItem(CACHE_KEY + 'lastBufferKPI');
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen && parsed.detalleTemporadas) {
-                    lastBufferResult = parsed;
-                } else {
-                    localStorage.removeItem('lastBufferKPI');
-                }
-            } catch(e) { localStorage.removeItem(CACHE_KEY + 'lastBufferKPI'); }
-        }
+    let activeSub = localStorage.getItem(`activeSub_${tabId}`) || allowedSubTabs[0]?.id;
+    if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = allowedSubTabs[0]?.id;
+
+    contentArea.innerHTML = `
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+                ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="areaContent"></div>`;
+
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        const s = e.currentTarget.dataset.s;
+        localStorage.setItem(`activeSub_${tabId}`, s);
+        renderGenericAreaTab(tabId, subtitle);
+    }));
+
+    const container = document.getElementById('areaContent');
+    if (activeSub && activeSub.startsWith('archivo_')) {
+        const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; container.appendChild(wrap);
+        renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
+    } else {
+        const data = await getAreaData(tabId);
+        if (!data) renderUploadArea(container, tabId);
+        else renderDashboardView(container, data);
+    }
+  };
+
+  const renderAnalisisSKUTab = async () => {
+    contentSubtitle.textContent = "Consulta profunda de Artículos";
+    const tabDef = TABS.find(t => t.id === 'analisis_sku');
+    const perms = adminService.getPermissions(user.role) || {};
+    const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`analisis_sku_${sub.id}`] === 1);
+
+    if (!allowedSubTabs.find(s => s.id === activeAnalisisSub)) activeAnalisisSub = allowedSubTabs[0]?.id;
+
+    contentArea.innerHTML = `
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeAnalisisSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+                ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="skuContent"></div>`;
+
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeAnalisisSub = e.currentTarget.dataset.s; 
+        renderAnalisisSKUTab(); 
+    }));
+
+    const skuBuf = document.getElementById('skuContent');
+    if (activeAnalisisSub === 'archivo_analisis') {
+        const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; skuBuf.appendChild(wrap);
+        renderUploadArea(wrap, 'stockActivo', dataStore.stockActivo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'stockReserva', dataStore.stockReserva, '.xlsx', 'STOCK RESERVA');
+        return;
     }
 
-    const tabData = TABS.find(t => t.id === 'analisis_sku');
-    const subId = activeAnalisisSub;
-    
-    let subNavHtml = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-            ${tabData.subTabs.map(st => `
-                <a class="sub-nav-item ${subId === st.id ? 'active' : ''}" 
-                   style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;"
-                   onclick="window.setActiveAnalisisSub('${st.id}')">
-                    ${st.icon} ${st.label.toUpperCase()}
-                </a>
-            `).join('')}
-        </nav>
-    `;
-
-    window.setActiveAnalisisSub = (id) => {
-        activeAnalisisSub = id;
-        renderAnalisisSKUTab();
-    };
-
-    if (subId !== 'articulo_temp') {
-        contentArea.innerHTML = subNavHtml + `
+    if (activeAnalisisSub !== 'articulo_temp') {
+        skuBuf.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
                 <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🚧</div>
                 <h4>Módulo en Desarrollo</h4>
