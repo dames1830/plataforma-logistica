@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.6-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.7-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.6-BETA';
+const VERSION = '12.4.7-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -27,7 +27,8 @@ const TABS = [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }
   ]},
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' }
+    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
+    { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' }
   ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
@@ -2380,6 +2381,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         const resKey = `${tabId}_reserva`;
         renderUploadArea(wrap, actKey, dataStore[actKey], '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, resKey, dataStore[resKey], '.xlsx', 'STOCK RESERVA');
+    } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
+        renderAlmacenajeTareas(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2626,6 +2629,79 @@ export const renderDashboard = async (container, user, onLogout) => {
             XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
         };
     }
+  };
+
+  const renderAlmacenajeTareas = (container) => {
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 200px 1fr; gap:1.5rem; height:calc(100vh - 220px);">
+            <!-- Sidebar Izquierdo -->
+            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05);">
+                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Tareas</h4>
+                <div style="font-size:0.8rem; color:var(--text-muted);">
+                    <div style="display:flex; justify-content:space-between; padding:0.5rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
+                        <span>Todos</span>
+                    </div>
+                    <div style="margin-left:0.5rem; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.8rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
+                            <span>▶ 2026</span>
+                            <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">3,034,221</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
+                            <span>▶ 2025</span>
+                            <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">391,373</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Principal -->
+            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
+                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05);">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.75rem; color:#d1d5db;">
+                        <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <tr>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Fecha</th>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">IdTarea</th>
+                                <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty</th>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Marca</th>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario1</th>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario2</th>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Inicio</th>
+                                <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Termino</th>
+                                <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${[...Array(11)].map((_, i) => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:0.8rem 1rem;">4/5/2026</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">0405-tarea${i+1}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">${(Math.random() * 3000 + 100).toFixed(0)}</td>
+                                    <td style="padding:0.8rem 1rem;">Bata</td>
+                                    <td style="padding:0.8rem 1rem; opacity:0.8;">usuario_${i}</td>
+                                    <td style="padding:0.8rem 1rem; opacity:0.8;">ayudante_${i}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.7rem; opacity:0.6;">4/5/2026 22:00:00</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.7rem; opacity:0.6;">5/5/2026 02:00:00</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">
+                                        <div style="display:inline-flex; align-items:center; gap:6px; color:#22c55e; font-weight:700; font-size:0.7rem; background:rgba(34, 197, 94, 0.1); padding:4px 10px; border-radius:20px;">
+                                            <span>✔</span> TERMINADA
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
+                        <span style="color:var(--text-muted);">Total Tareas: <b style="color:#fff;">11</b></span>
+                        <span style="color:var(--text-muted);">Total Qty: <b style="color:#fff;">12,450</b></span>
+                    </div>
+                    <button class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:var(--primary); font-weight:800;">➕ NUEVA TAREA</button>
+                </div>
+            </div>
+        </div>
+    `;
   };
 
   renderNav();
