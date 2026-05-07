@@ -1,14 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.16-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.19-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.18-BETA';
+const VERSION = '12.4.19-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
-let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, items: [] }
+let selectedTaskDate = null; // Filtro de fecha seleccionado
+let expandedWeeks = []; // Semanas expandidas en el historial
+let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
 
 const saveAlmacenajeTasks = () => {
   try {
@@ -2768,7 +2770,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
     });
 
-    almacenajeTasksCache = finalTasks;
+    // Agregar nuevas tareas al cache acumulativo
+    const fechaStr = new Date().toLocaleDateString();
+    
+    // Evitar duplicados del mismo día (opcional: o permitir acumular más)
+    // Para este caso, acumulamos todo.
+    const tasksWithDate = finalTasks.map(t => ({...t, fecha: fechaStr}));
+    
+    almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
     saveAlmacenajeTasks();
     renderAlmacenajeTareas(document.getElementById('areaContent'));
   };
@@ -2807,15 +2816,53 @@ export const renderDashboard = async (container, user, onLogout) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const tasks = almacenajeTasksCache;
 
-    container.innerHTML = `
+        // Lógica de Agrupación para Historial
+        const getWeekNumber = (d) => {
+            const date = new Date(d);
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            const week1 = new Date(date.getFullYear(), 0, 4);
+            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        };
+
+        const groups = {};
+        almacenajeTasksCache.forEach(t => {
+            if (!t.fecha) t.fecha = new Date().toLocaleDateString();
+            const [d, m, y] = t.fecha.split('/');
+            const dateObj = new Date(y, m-1, d);
+            const w = `Semana ${getWeekNumber(dateObj)}`;
+            if (!groups[w]) groups[w] = {};
+            if (!groups[w][t.fecha]) groups[w][t.fecha] = 0;
+            groups[w][t.fecha]++;
+        });
+
+        const sidebarHtml = Object.keys(groups).sort().reverse().map(w => {
+            const isExpanded = expandedWeeks.includes(w);
+            const days = groups[w];
+            return `
+                <div style="margin-bottom:8px;">
+                    <div onclick="window.toggleWeek('${w}')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 15px; background:rgba(255,255,255,0.03); border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:700; color:#fff;">
+                        <span>📅 ${w}</span>
+                        <span>${isExpanded ? '▼' : '▶'}</span>
+                    </div>
+                    ${isExpanded ? Object.keys(days).sort().reverse().map(d => `
+                        <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
+                            ${d} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
+                        </div>
+                    `).join('') : ''}
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
                 <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
                 <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
-                <button onclick="window.processTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
-                <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
+                <button onclick="window.processAlmacenajeTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
             </div>
         </div>
 
@@ -2828,16 +2875,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             </a>
         </nav>
 
-        <div style="display:grid; grid-template-columns: 220px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
+        <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
             <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); overflow-y:auto;">
-                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Filtros</h4>
-                <div style="font-size:0.8rem; color:var(--text-muted);">
-                    <div style="background:var(--primary); color:#fff; padding:8px 15px; border-radius:20px; font-weight:700; margin-bottom:10px; cursor:pointer; font-size:0.75rem;">Todas las Tareas</div>
-                    ${[...new Set(tasks.map(t => t.marca))].map(m => `
-                        <div style="padding:8px 15px; cursor:pointer; font-size:0.75rem; border-radius:20px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                            ${m}
-                        </div>
-                    `).join('')}
+                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Historial</h4>
+                <div style="font-size:0.8rem;">
+                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">Todas las Tareas</div>
+                    ${sidebarHtml}
                 </div>
             </div>
 
@@ -2856,6 +2899,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:left;">Hora Inicio</th>
                                     <th style="padding:1rem; text-align:left;">Hora Termino</th>
                                     <th style="padding:1rem; text-align:center;">Productividad</th>
+                                    <th style="padding:1rem; text-align:center;">Objetivo</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
                                     <th style="padding:1rem; text-align:center;">Acción</th>
                                 </tr>
@@ -2873,16 +2917,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                             `}
                         </thead>
                         <tbody>
-                            ${tasks.length === 0 ? `<tr><td colspan="10" style="padding:3rem; text-align:center; color:var(--text-muted);">Pulsa 'PROCESAR TAREAS' para generar la carga desde el stock activo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.map(t => {
+                            ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
+                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
                                 let productividad = '---';
+                                let objetivo = '---';
+                                let objStyle = 'color:var(--text-muted);';
+
                                 if (t.inicio && t.termino) {
                                     const s = new Date(t.inicio);
                                     const e = new Date(t.termino);
                                     let ms = e - s;
 
-                                    // Lógica de Descuento de Refrigerio (11:00 PM - 11:50 PM)
-                                    // Determinar la fecha base del turno (si es madrugada, retroceder un día)
                                     const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
                                     const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
                                     const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
@@ -2897,6 +2942,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const h = Math.floor(totalMinutes / 60);
                                     const m = totalMinutes % 60;
                                     productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+                                    // Lógica OBJETIVO: 300 unid / 60 min
+                                    if (totalMinutes > 0) {
+                                        const unitsPerHour = (t.qty / totalMinutes) * 60;
+                                        if (unitsPerHour >= 300) {
+                                            objetivo = 'CUMPLIÓ';
+                                            objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
+                                        } else {
+                                            objetivo = 'NO CUMPLIÓ';
+                                            objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
+                                        }
+                                    }
                                 }
                                 return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
@@ -2908,7 +2965,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
                                     <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
                                     <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:900; font-size:1rem;">${productividad}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;">
+                                        <span style="${objStyle}">${objetivo}</span>
+                                    </td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
                                         <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
@@ -3025,6 +3085,26 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
         }
         document.getElementById('m_close').onclick = () => document.body.removeChild(modal);
+    };
+
+    window.toggleWeek = (w) => {
+        if (expandedWeeks.includes(w)) {
+            expandedWeeks = expandedWeeks.filter(x => x !== w);
+        } else {
+            expandedWeeks.push(w);
+        }
+        renderAlmacenajeTareas(container);
+    };
+
+    window.setSelectedDate = (d) => {
+        selectedTaskDate = d;
+        renderAlmacenajeTareas(container);
+    };
+
+    window.setTaskMode = (mode) => {
+        almacenajeTaskMode = mode;
+        localStorage.setItem('almacenajeTaskMode', mode);
+        renderAlmacenajeTareas(container);
     };
   };
 
