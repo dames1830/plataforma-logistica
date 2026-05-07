@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.7-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.8-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.7-BETA';
+const VERSION = '12.3.8-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -128,7 +128,7 @@ window.downloadExcelDetail = () => {
             if (art7 && !maestroMap.has(art7)) {
                 maestroMap.set(art7, {
                     marca: String(raw[13] || 'OTROS').trim(),
-                    gender: String(raw[2] || '').trim()
+                    gender: String(raw[3] || '').trim() // Columna D (Índice 3) para Gender Rims
                 });
             }
         });
@@ -138,7 +138,7 @@ window.downloadExcelDetail = () => {
 
     const aoaAnalisis = [
         ["ANÁLISIS BUFFER"],
-        [`FECHA: ${data.timestamp || new Date().toLocaleString()}`],
+        [`${data.timestamp || new Date().toLocaleString()}`],
         [],
         ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
     ];
@@ -174,6 +174,25 @@ window.downloadExcelDetail = () => {
     ];
 
     XLSX.utils.book_append_sheet(wb, sheetAnalisis, "Análisis Buffer");
+
+    // 6. Pestaña TALLAS (Auditoría de Tabla Virtual)
+    const aoaTallas = [
+        ["REPORTE DE TALLAS EXTRAÍDAS"],
+        [`Generado: ${new Date().toLocaleString()}`],
+        [],
+        ["SKU", "TALLA EXTRAÍDA"]
+    ];
+    
+    Object.entries(tallasMap).sort().forEach(([sku, talla]) => {
+        aoaTallas.push([sku, talla]);
+    });
+
+    const sheetTallas = XLSX.utils.aoa_to_sheet(aoaTallas);
+    sheetTallas['!cols'] = [{ wch: 25 }, { wch: 15 }];
+    if (!sheetTallas['!merges']) sheetTallas['!merges'] = [];
+    sheetTallas['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
+    
+    XLSX.utils.book_append_sheet(wb, sheetTallas, "Tallas");
     
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
