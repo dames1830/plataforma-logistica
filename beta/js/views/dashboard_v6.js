@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.17-BETA';
+const VERSION = '12.4.18-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2399,6 +2399,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         const resKey = `${tabId}_reserva`;
         renderUploadArea(wrap, actKey, dataStore[actKey], '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, resKey, dataStore[resKey], '.xlsx', 'STOCK RESERVA');
+        if (tabId === 'almacenaje') {
+            renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
+        }
     } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
         renderAlmacenajeTareas(container);
     } else {
@@ -2896,7 +2899,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
                                 }
                                 return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.8rem 1rem;">${new Date().toLocaleDateString()}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
