@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.6-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.3.7-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.6-BETA';
+const VERSION = '12.3.7-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -118,6 +118,62 @@ window.downloadExcelDetail = () => {
     ];
 
     XLSX.utils.book_append_sheet(wb, sheetMontacarga, "Montacarga");
+
+    // 5. Pestaña ANÁLISIS BUFFER (Cruce con Maestro y Tallas)
+    const maestroMap = new Map();
+    if (dataStore.articulos) {
+        dataStore.articulos.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const art7 = String(raw[1] || '').trim().substring(0, 7);
+            if (art7 && !maestroMap.has(art7)) {
+                maestroMap.set(art7, {
+                    marca: String(raw[13] || 'OTROS').trim(),
+                    gender: String(raw[2] || '').trim()
+                });
+            }
+        });
+    }
+
+    const tallasMap = dataStore.tabla_tallas || {};
+
+    const aoaAnalisis = [
+        ["ANÁLISIS BUFFER"],
+        [`FECHA: ${data.timestamp || new Date().toLocaleString()}`],
+        [],
+        ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
+    ];
+
+    (data.detalle || []).forEach(d => {
+        const sku = d.SKU;
+        const art7 = sku.substring(0, 7);
+        const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
+        const talla = tallasMap[sku] || '-';
+        
+        aoaAnalisis.push([
+            d.UBICACIONES,
+            d.LPN,
+            sku,
+            talla,
+            maestro.marca,
+            maestro.gender,
+            d['QTY ACTIVO'],
+            d['QTY RESERVA'],
+            d['QTY BUFFER']
+        ]);
+    });
+
+    const sheetAnalisis = XLSX.utils.aoa_to_sheet(aoaAnalisis);
+    
+    // Formato y anchos para Análisis Buffer
+    if (!sheetAnalisis['!merges']) sheetAnalisis['!merges'] = [];
+    sheetAnalisis['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }); // Título
+    sheetAnalisis['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }); // Fecha
+    
+    sheetAnalisis['!cols'] = [
+        { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, sheetAnalisis, "Análisis Buffer");
     
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
