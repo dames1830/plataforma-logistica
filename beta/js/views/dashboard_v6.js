@@ -6,6 +6,23 @@ const VERSION = '12.4.16-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
+// --- PERSISTENCIA TAREAS ALMACENAJE ---
+let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
+let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, items: [] }
+
+const saveAlmacenajeTasks = () => {
+  try {
+      localStorage.setItem(CACHE_KEY + 'almacenajeTasks', JSON.stringify(almacenajeTasksCache));
+  } catch (e) { console.warn("[PULSE] Error guardando tareas de almacenaje:", e); }
+};
+
+const loadAlmacenajeTasks = () => {
+  try {
+      const stored = localStorage.getItem(CACHE_KEY + 'almacenajeTasks');
+      if (stored) almacenajeTasksCache = JSON.parse(stored);
+  } catch (e) { console.warn("[PULSE] Error cargando tareas de almacenaje:", e); }
+};
+
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
@@ -2630,22 +2647,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
         };
     }
-  };
-
-  let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
-  let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, items: [] }
-
-  const saveAlmacenajeTasks = () => {
-    try {
-        localStorage.setItem(CACHE_KEY + 'almacenajeTasks', JSON.stringify(almacenajeTasksCache));
-    } catch (e) { console.warn("[PULSE] Error guardando tareas de almacenaje:", e); }
-  };
-
-  const loadAlmacenajeTasks = () => {
-    try {
-        const stored = localStorage.getItem(CACHE_KEY + 'almacenajeTasks');
-        if (stored) almacenajeTasksCache = JSON.parse(stored);
-    } catch (e) { console.warn("[PULSE] Error cargando tareas de almacenaje:", e); }
   };
 
   const processAlmacenajeTasks = async () => {
