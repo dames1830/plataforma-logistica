@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.9-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.10-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.9-BETA';
+const VERSION = '12.4.10-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2631,134 +2631,293 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  let almacenajeTaskMode = 'resumen'; // 'resumen' o 'detalle'
+  let almacenajeTaskMode = 'resumen';
+  let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, items: [] }
+
+  const processAlmacenajeTasks = async () => {
+    const stock = await getAreaData('almacenaje_activo');
+    const maestro = dataStore.articulos;
+    if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
+    if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+
+    // 1. Filtrar áreas permitidas
+    const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
+    const filtered = stock.filter(row => {
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        return allowedAreas.some(a => area.includes(a));
+    });
+
+    // 2. Mapear Maestro para Gender RIMS y Marcas
+    const artMap = new Map();
+    maestro.forEach(row => {
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        const sku7 = String(raw[1] || '').trim().substring(0, 7);
+        if (sku7 && !artMap.has(sku7)) {
+            artMap.set(sku7, {
+                marca: String(raw[13] || 'S/M').trim(),
+                gender: String(raw[2] || '').trim().toUpperCase(),
+                coleccion: String(raw[9] || 'S/C').trim()
+            });
+        }
+    });
+
+    // 3. Agrupar por Artículo (7 dígitos)
+    const groups = {};
+    filtered.forEach(row => {
+        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
+        const sku7 = skuFull.substring(0, 7);
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
+        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
+        const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
+
+        if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
+        
+        const item = { ...row, skuFull, ubi, qty, area };
+        groups[sku7].items.push(item);
+        if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+        else groups[sku7].zonaQty += qty;
+    });
+
+    // 4. Filtrar: Solo artículos con algo en CDBUFFER
+    const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
+    
+    // 5. Agrupar por Marca para aplicar reglas de Tarea
+    const byMarca = {};
+    eligibleArticulos.forEach(art => {
+        if (!byMarca[art.marca]) byMarca[art.marca] = [];
+        byMarca[art.marca].push(art);
+    });
+
+    const finalTasks = [];
+    let taskCounter = 1;
+
+    Object.keys(byMarca).forEach(marca => {
+        const arts = byMarca[marca];
+        
+        // Regla Accesorios: Todo junto sin importar cantidad
+        const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
+        const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
+
+        if (accs.length > 0) {
+            const taskId = `T-${new Date().getMonth()+1}${new Date().getDate()}-${taskCounter++}`;
+            finalTasks.push({
+                id: taskId,
+                marca: marca,
+                qty: accs.reduce((sum, a) => sum + a.bufferQty + a.zonaQty, 0),
+                status: 'Creada',
+                u1: '', u2: '', inicio: '', termino: '',
+                items: accs
+            });
+        }
+
+        // Regla 300 Unidades para Normales
+        let currentGroup = [];
+        let currentQty = 0;
+
+        normals.forEach((art, index) => {
+            currentGroup.push(art);
+            currentQty += (art.bufferQty + art.zonaQty);
+
+            if (currentQty >= 300 || index === normals.length - 1) {
+                const taskId = `T-${new Date().getMonth()+1}${new Date().getDate()}-${taskCounter++}`;
+                finalTasks.push({
+                    id: taskId,
+                    marca: marca,
+                    qty: currentQty,
+                    status: 'Creada',
+                    u1: '', u2: '', inicio: '', termino: '',
+                    items: [...currentGroup]
+                });
+                currentGroup = [];
+                currentQty = 0;
+            }
+        });
+    });
+
+    almacenajeTasksCache = finalTasks;
+    renderAlmacenajeTareas(document.getElementById('areaContent'));
+  };
+
+  const exportAlmacenajeExcel = () => {
+    if (!almacenajeTasksCache.length) { alert("No hay tareas para exportar."); return; }
+    
+    const wb = XLSX.utils.book_new();
+    const dataRows = [
+        ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", "Qty Buffer", "Qty Zona", "Tareas"]
+    ];
+
+    almacenajeTasksCache.forEach(task => {
+        task.items.forEach(art => {
+            // CDBUFFER Rows
+            art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
+                dataRows.push([art.sku7, i.ubi, i.skuFull, i.skuFull.split('-').pop(), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
+            });
+            // ZONA Rows
+            art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
+                dataRows.push([art.sku7, i.ubi, i.skuFull, i.skuFull.split('-').pop(), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
+            });
+            // Subtotal
+            dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
+        });
+        // Separador de Tarea
+        dataRows.push(["", "", "", "", "", "", "", "", "", ""]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(dataRows);
+    XLSX.utils.book_append_sheet(wb, ws, "Tareas Día");
+    XLSX.writeFile(wb, `Plan_Almacenaje_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+  };
+
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
-    
+    const tasks = almacenajeTasksCache;
+
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="margin:0; font-size:1.1rem; color:#fff; font-weight:800;">${isDetail ? 'Tareas Detalle' : 'Tareas Resumen'}</h3>
-            <div style="background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; display:flex; gap:4px;">
-                <button onclick="window.setTaskMode('resumen')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${!isDetail ? 'var(--primary)' : 'transparent'}; color:${!isDetail ? '#fff' : 'var(--text-muted)'};">RESUMEN</button>
-                <button onclick="window.setTaskMode('detalle')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${isDetail ? 'var(--primary)' : 'transparent'}; color:${isDetail ? '#fff' : 'var(--text-muted)'};">DETALLE</button>
+            <div>
+                <h3 style="margin:0; font-size:1.1rem; color:#fff; font-weight:800;">${isDetail ? 'Tareas Detalle' : 'Tareas Resumen'}</h3>
+                <p style="margin:4px 0 0 0; font-size:0.7rem; color:var(--text-muted);">Módulo de Almacenaje - Fase 3</p>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button onclick="window.processTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; font-size:0.7rem;">⚙️ PROCESAR TAREAS</button>
+                <div style="background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; display:flex; gap:4px;">
+                    <button onclick="window.setTaskMode('resumen')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${!isDetail ? 'var(--primary)' : 'transparent'}; color:${!isDetail ? '#fff' : 'var(--text-muted)'};">RESUMEN</button>
+                    <button onclick="window.setTaskMode('detalle')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${isDetail ? 'var(--primary)' : 'transparent'}; color:${isDetail ? '#fff' : 'var(--text-muted)'};">DETALLE</button>
+                </div>
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 220px 1fr; gap:1.5rem; height:calc(100vh - 260px);">
-            <!-- Sidebar Izquierdo -->
+        <div style="display:grid; grid-template-columns: 220px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
             <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); overflow-y:auto;">
                 <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Filtros</h4>
                 <div style="font-size:0.8rem; color:var(--text-muted);">
-                    ${isDetail ? `
-                        <div style="background:var(--primary); color:#fff; padding:8px 15px; border-radius:20px; font-weight:700; margin-bottom:10px; cursor:pointer; font-size:0.75rem;">Todos</div>
-                        ${['19/2/2026','20/2/2026','21/2/2026','23/2/2026','24/2/2026','25/2/2026','26/2/2026','27/2/2026','28/2/2026','2/3/2026','3/3/2026'].map(d => `
-                            <div style="padding:8px 15px; cursor:pointer; font-size:0.75rem; border-radius:20px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                                ${d}
-                            </div>
-                        `).join('')}
-                    ` : `
-                        <div style="display:flex; justify-content:space-between; padding:0.5rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
-                            <span>Todos</span>
+                    <div style="background:var(--primary); color:#fff; padding:8px 15px; border-radius:20px; font-weight:700; margin-bottom:10px; cursor:pointer; font-size:0.75rem;">Todas las Tareas</div>
+                    ${[...new Set(tasks.map(t => t.marca))].map(m => `
+                        <div style="padding:8px 15px; cursor:pointer; font-size:0.75rem; border-radius:20px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                            ${m}
                         </div>
-                        <div style="margin-left:0.5rem; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.8rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
-                                <span>▶ 2026</span>
-                                <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">3,034,221</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; cursor:pointer;" onmouseover="this.style.color='#fff'">
-                                <span>▶ 2025</span>
-                                <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.65rem;">391,373</span>
-                            </div>
-                        </div>
-                    `}
+                    `).join('')}
                 </div>
             </div>
 
-            <!-- Panel Principal -->
             <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
                 <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.75rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
                             ${!isDetail ? `
                                 <tr>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Fecha</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">IdTarea</th>
-                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Marca</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario1</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Usuario2</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Inicio</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Hora Termino</th>
-                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Status</th>
+                                    <th style="padding:1rem; text-align:left;">Fecha</th>
+                                    <th style="padding:1rem; text-align:left;">IdTarea</th>
+                                    <th style="padding:1rem; text-align:center;">Qty</th>
+                                    <th style="padding:1rem; text-align:left;">Marca</th>
+                                    <th style="padding:1rem; text-align:left;">Usuario1</th>
+                                    <th style="padding:1rem; text-align:left;">Hora Inicio</th>
+                                    <th style="padding:1rem; text-align:left;">Hora Termino</th>
+                                    <th style="padding:1rem; text-align:center;">Status</th>
                                 </tr>
                             ` : `
                                 <tr>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Articulo</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">UBICACION</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">SKU</th>
-                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Tallas</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Marcas</th>
-                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty Buffer</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Tareas</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">ID Tareas</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Area</th>
-                                    <th style="padding:1rem; text-align:left; color:rgba(255,255,255,0.5);">Fecha</th>
-                                    <th style="padding:1rem; text-align:center; color:rgba(255,255,255,0.5);">Qty Avance</th>
+                                    <th style="padding:1rem; text-align:left;">Articulo</th>
+                                    <th style="padding:1rem; text-align:left;">UBICACION</th>
+                                    <th style="padding:1rem; text-align:left;">SKU</th>
+                                    <th style="padding:1rem; text-align:center;">Tallas</th>
+                                    <th style="padding:1rem; text-align:center;">Qty Buffer</th>
+                                    <th style="padding:1rem; text-align:center;">Qty Zona</th>
+                                    <th style="padding:1rem; text-align:left;">ID Tareas</th>
+                                    <th style="padding:1rem; text-align:center;">Status</th>
                                 </tr>
                             `}
                         </thead>
                         <tbody>
-                            ${!isDetail ? [...Array(11)].map((_, i) => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.8rem 1rem;">4/5/2026</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">0405-tarea${i+1}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">${(Math.random() * 3000 + 100).toFixed(0)}</td>
-                                    <td style="padding:0.8rem 1rem;">Bata</td>
-                                    <td style="padding:0.8rem 1rem; opacity:0.8;">usuario_${i}</td>
-                                    <td style="padding:0.8rem 1rem; opacity:0.8;">ayudante_${i}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.7rem; opacity:0.6;">4/5/2026 22:00:00</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.7rem; opacity:0.6;">5/5/2026 02:00:00</td>
+                            ${tasks.length === 0 ? `<tr><td colspan="10" style="padding:3rem; text-align:center; color:var(--text-muted);">Pulsa 'PROCESAR TAREAS' para generar la carga desde el stock activo.</td></tr>` : ''}
+                            ${!isDetail ? tasks.map(t => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:0.8rem 1rem;">${new Date().toLocaleDateString()}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
+                                    <td style="padding:0.8rem 1rem;">${t.marca}</td>
+                                    <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:700;">${t.u1 || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.65rem; opacity:0.6;">${t.inicio || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.65rem; opacity:0.6;">${t.termino || '---'}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
-                                        <div style="display:inline-flex; align-items:center; gap:6px; color:#22c55e; font-weight:700; font-size:0.7rem; background:rgba(34, 197, 94, 0.1); padding:4px 10px; border-radius:20px;">
-                                            <span>✔</span> TERMINADA
-                                        </div>
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.65rem;">
+                                            ${t.status.toUpperCase()}
+                                        </span>
                                     </td>
                                 </tr>
-                            `).join('') : [...Array(15)].map((_, i) => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.8rem 1rem;">5043001</td>
-                                    <td style="padding:0.8rem 1rem; color:var(--primary); font-weight:600;">CDBUFFER-B-00-${String(i).padStart(3,'0')}</td>
-                                    <td style="padding:0.8rem 1rem;">5043001-1-06</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">37</td>
-                                    <td style="padding:0.8rem 1rem;">Bata Industrials</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; font-weight:700;">25</td>
-                                    <td style="padding:0.8rem 1rem;">tarea60</td>
-                                    <td style="padding:0.8rem 1rem; opacity:0.7;">1902-tarea60</td>
-                                    <td style="padding:0.8rem 1rem;">CDBUFFER-B</td>
-                                    <td style="padding:0.8rem 1rem;">19/2/2026</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:800;">25</td>
-                                </tr>
-                            `).join('')}
+                            `).join('') : tasks.flatMap(t => t.items.flatMap(art => [
+                                ...art.items.map(i => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); opacity:0.8;">
+                                    <td style="padding:0.6rem 1rem;">${art.sku7}</td>
+                                    <td style="padding:0.6rem 1rem; color:var(--primary);">${i.ubi}</td>
+                                    <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${i.skuFull.split('-').pop()}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
+                                    <td style="padding:0.6rem 1rem; font-size:0.7rem;">${t.id}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.6rem;">${t.status}</td>
+                                </tr>`)
+                            ])).join('')}
                         </tbody>
                     </table>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
-                        <span style="color:var(--text-muted);">${isDetail ? 'Items en Detalle' : 'Total Tareas'}: <b style="color:#fff;">${isDetail ? '15' : '11'}</b></span>
-                        <span style="color:var(--text-muted);">Total Qty: <b style="color:#fff;">${isDetail ? '850' : '12,450'}</b></span>
+                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
+                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
                     </div>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1);">📥 EXPORTAR</button>
-                        <button class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:var(--primary); font-weight:800;">➕ NUEVA TAREA</button>
+                        <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.75rem; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1);">📥 EXPORTAR MASIVO (EXCEL)</button>
                     </div>
                 </div>
             </div>
         </div>
     `;
-    
-    window.setTaskMode = (mode) => {
-        almacenajeTaskMode = mode;
-        renderAlmacenajeTareas(container);
+
+    window.setTaskMode = (mode) => { almacenajeTaskMode = mode; renderAlmacenajeTareas(container); };
+    window.processTasks = () => { processAlmacenajeTasks(); };
+    window.exportTasks = () => { exportAlmacenajeExcel(); };
+    window.assignTask = (id) => {
+        const t = almacenajeTasksCache.find(x => x.id === id);
+        const modal = document.createElement('div');
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
+        modal.innerHTML = `
+            <div class="glass-panel" style="width:360px; padding:2rem; border:1px solid var(--primary);">
+                <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem;">Asignar Tarea: <span style="color:var(--primary);">${id}</span></h3>
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <label style="font-size:0.75rem; color:var(--text-muted);">Usuario 1 (Obligatorio)</label>
+                    <input type="text" id="m_u1" value="${t.u1}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.8rem; border-radius:8px; color:#fff; outline:none;" placeholder="Nombre del operario">
+                    <label style="font-size:0.75rem; color:var(--text-muted);">Usuario 2 (Opcional)</label>
+                    <input type="text" id="m_u2" value="${t.u2}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.8rem; border-radius:8px; color:#fff; outline:none;" placeholder="Nombre del ayudante">
+                    <div style="margin-top:1rem; display:flex; gap:10px;">
+                        <button id="m_save" class="btn" style="flex:1;">ASIGNAR E INICIAR</button>
+                        ${t.status === 'Asignado' ? `<button id="m_finish" class="btn" style="flex:1; background:#22c55e;">FINALIZAR</button>` : ''}
+                    </div>
+                    <button id="m_close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-top:1rem;">Cerrar sin cambios</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('m_save').onclick = () => {
+            const u1 = document.getElementById('m_u1').value;
+            if (!u1) { alert("Usuario 1 es obligatorio."); return; }
+            t.u1 = u1;
+            t.u2 = document.getElementById('m_u2').value;
+            t.status = 'Asignado';
+            t.inicio = new Date().toLocaleString();
+            document.body.removeChild(modal);
+            renderAlmacenajeTareas(container);
+        };
+        if (document.getElementById('m_finish')) {
+            document.getElementById('m_finish').onclick = () => {
+                t.status = 'Finalizado';
+                t.termino = new Date().toLocaleString();
+                document.body.removeChild(modal);
+                renderAlmacenajeTareas(container);
+            };
+        }
+        document.getElementById('m_close').onclick = () => document.body.removeChild(modal);
     };
   };
 
