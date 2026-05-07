@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.1-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.2-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.1-BETA';
+const VERSION = '12.3.2-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -77,6 +77,39 @@ window.downloadExcelDetail = () => {
     XLSX.utils.book_append_sheet(wb, sheetDetalle, "Detalle");
     XLSX.utils.book_append_sheet(wb, sheetSkuBajar, "Sku Bajar");
     XLSX.utils.book_append_sheet(wb, sheetLPN, "LPN Selecionados");
+
+    // 4. Pestaña MONTACARGA (Para operario, lista para imprimir)
+    const montacargaMap = new Map();
+    (data.detalle || []).forEach(d => {
+        const lpn = d.LPN;
+        if (!montacargaMap.has(lpn)) {
+            montacargaMap.set(lpn, {
+                'UBICACIÓN': d.UBICACIONES,
+                'LPN': lpn,
+                'QTY RESERVA': 0
+            });
+        }
+        montacargaMap.get(lpn)['QTY RESERVA'] += d['QTY RESERVA'];
+    });
+    const montacargaRows = Array.from(montacargaMap.values());
+    
+    const aoa = [
+        ["MONTACARGA"],
+        [`Procesado: ${data.timestamp || new Date().toLocaleString()}`],
+        [],
+        ["UBICACIÓN", "LPN", "QTY RESERVA"]
+    ];
+    montacargaRows.forEach(row => {
+        aoa.push([row.UBICACIÓN, row.LPN, row.QTY RESERVA]);
+    });
+    const sheetMontacarga = XLSX.utils.aoa_to_sheet(aoa);
+    
+    // Configuración de impresión y celdas
+    if (!sheetMontacarga['!merges']) sheetMontacarga['!merges'] = [];
+    sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }); // Título centrado
+    sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }); // Fecha
+    
+    XLSX.utils.book_append_sheet(wb, sheetMontacarga, "Montacarga");
     
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
