@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.1-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.2-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.1-BETA';
+const VERSION = '12.4.2-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -61,8 +61,13 @@ window.downloadExcelDetail = () => {
     const skusBajarData = (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0);
     const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
     
+    // [FILTRO v12.4.2] Filtrar solo ubicaciones Físicas (SEL-) y ordenar
+    const physicalDetalle = (data.detalle || [])
+        .filter(d => String(d.UBICACIONES || '').startsWith('SEL-'))
+        .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
+
     // 3. Pestaña LPN SELECIONADOS
-    const lpnData = (data.detalle || []).map(d => ({
+    const lpnData = physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES,
         'LPN': d.LPN,
         'Sku': d.SKU,
@@ -80,7 +85,7 @@ window.downloadExcelDetail = () => {
 
     // 4. Pestaña MONTACARGA (Para operario, lista para imprimir)
     const montacargaMap = new Map();
-    (data.detalle || []).forEach(d => {
+    physicalDetalle.forEach(d => {
         const lpn = d.LPN;
         if (!montacargaMap.has(lpn)) {
             montacargaMap.set(lpn, {
@@ -91,7 +96,8 @@ window.downloadExcelDetail = () => {
         }
         montacargaMap.get(lpn)['QTY RESERVA'] += d['QTY RESERVA'];
     });
-    const montacargaRows = Array.from(montacargaMap.values());
+    // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
+    const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
     
     const aoa = [
         ["MONTACARGA"],
@@ -143,11 +149,8 @@ window.downloadExcelDetail = () => {
         ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
     ];
 
-    // Ordenar y agrupar datos
-    const sorted = (data.detalle || []).sort((a, b) => {
-        if (a.UBICACIONES !== b.UBICACIONES) return a.UBICACIONES.localeCompare(b.UBICACIONES);
-        return a.LPN.localeCompare(b.LPN);
-    });
+    // Ordenar y agrupar datos (Filtrado solo SEL-)
+    const sorted = physicalDetalle;
 
     let lastUbi = "", lastLPN = "";
     let uSumA = 0, uSumR = 0, uSumB = 0;
