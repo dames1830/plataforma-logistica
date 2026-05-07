@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.16-BETA';
+const VERSION = '12.4.17-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2874,28 +2874,45 @@ export const renderDashboard = async (container, user, onLogout) => {
                             ${!isDetail ? tasks.map(t => {
                                 let productividad = '---';
                                 if (t.inicio && t.termino) {
-                                    const diff = (new Date(t.termino) - new Date(t.inicio)) / (1000 * 60 * 60);
-                                    productividad = diff.toFixed(2);
+                                    const s = new Date(t.inicio);
+                                    const e = new Date(t.termino);
+                                    let ms = e - s;
+
+                                    // Lógica de Descuento de Refrigerio (11:00 PM - 11:50 PM)
+                                    // Determinar la fecha base del turno (si es madrugada, retroceder un día)
+                                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+                                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+                                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+
+                                    const overlapStart = Math.max(s, bStart);
+                                    const overlapEnd = Math.min(e, bEnd);
+                                    const overlap = Math.max(0, overlapEnd - overlapStart);
+                                    
+                                    ms = ms - overlap;
+
+                                    const totalMinutes = Math.floor(ms / (1000 * 60));
+                                    const h = Math.floor(totalMinutes / 60);
+                                    const m = totalMinutes % 60;
+                                    productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
                                 }
                                 return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.8rem 1rem;">${new Date().toLocaleDateString()}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString() : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString() : '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center; color:#22c55e; font-weight:900; font-size:1rem;">${productividad}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
                                         <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">
+                                    <td style="padding:0.8rem 1rem; text-align:center;" onclick="event.stopPropagation()">
                                         <div style="display:flex; gap:8px; justify-content:center;">
-                                            <button onclick="window.assignTask('${t.id}')" title="Editar / Asignar" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--primary); transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">✏️</button>
                                             <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔄</button>
                                         </div>
                                     </td>
