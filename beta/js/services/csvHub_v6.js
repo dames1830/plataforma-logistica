@@ -11,7 +11,8 @@ export const dataStore = {
   buffer: null,
   solicitud: null,
   articulos: null,
-  tallas: null
+  tallas: null,
+  tabla_tallas: {} // Mapa de SKU -> Talla
 };
 
 // =============================================
@@ -299,7 +300,8 @@ export const parseFile = (file, area) => {
                       'CANTIDAD': parseFloat(r[10]) || 0,
                       'UBICACION': dc(r[4]),
                       'LPN': dc(r[5]),
-                      'NRO AND': dc(r[2])
+                      'NRO AND': dc(r[2]),
+                      'DESCRIPCION': dc(r[9]) // Columna J: Capturamos descripción para tallas
                   });
               }
           } else {
@@ -358,6 +360,11 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
         dataStore[area] = payload;
         await saveToDB(area, payload);
     }
+    
+    // [AUTO] Actualizar Tabla de Tallas si es Stock Activo o Reserva
+    if (area === 'stockActivo' || area === 'stockReserva') {
+        updateTablaTallas();
+    }
 };
 
 export const clearAreaData = async (area, username = 'sistema') => {
@@ -404,7 +411,63 @@ export const getAreaData = async (area) => {
          }
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
+  
+  if (area === 'stockActivo' || area === 'stockReserva') {
+      updateTablaTallas();
+  }
+
   return null;
+};
+
+// =============================================
+// MOTOR DE EXTRACCIÓN DE TALLAS (v12.3.6)
+// =============================================
+const extractTalla = (desc) => {
+    if (!desc) return null;
+    const d = String(desc).trim();
+    // Patrón: -[cualquier cosa]-[TALLA]
+    // Buscamos la última coincidencia del patrón guion-algo-guion
+    const parts = d.split('-');
+    if (parts.length >= 3) {
+        // Tomamos lo que viene después del último guion
+        return parts[parts.length - 1].trim();
+    }
+    return null;
+};
+
+export const updateTablaTallas = () => {
+    const mapa = dataStore.tabla_tallas || {};
+    
+    // 1. Procesar Stock Activo (Descripción en Columna C)
+    if (dataStore.stockActivo) {
+        dataStore.stockActivo.forEach(row => {
+            const sku = getCol(row, ['Articulo', 'ArtÃculo', 'Artículo', 'Sku']);
+            // Intentar por nombre de columna o por posición (Columna C es índice 2 si es array)
+            const desc = getCol(row, ['Descripcion', 'Descripción', 'Description']) || 
+                         (Array.isArray(row) ? row[2] : Object.values(row)[2]);
+            
+            if (sku && desc) {
+                const talla = extractTalla(desc);
+                if (talla) mapa[sku] = talla;
+            }
+        });
+    }
+
+    // 2. Procesar Stock Reserva (Descripción en 'DESCRIPCION')
+    if (dataStore.stockReserva) {
+        dataStore.stockReserva.forEach(row => {
+            const sku = row.PRODUCTO;
+            const desc = row.DESCRIPCION;
+            if (sku && desc) {
+                const talla = extractTalla(desc);
+                if (talla) mapa[sku] = talla;
+            }
+        });
+    }
+
+    dataStore.tabla_tallas = mapa;
+    saveToDB('tabla_tallas', mapa);
+    console.log(`[PULSE] Tabla de tallas actualizada. Total SKUs: ${Object.keys(mapa).length}`);
 };
 
 export const generateKPIs = (data, area) => {
