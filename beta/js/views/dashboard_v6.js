@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.13-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.14-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.13-BETA';
+const VERSION = '12.4.14-BETA';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2764,13 +2764,15 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     almacenajeTasksCache.forEach(task => {
         task.items.forEach(art => {
+            const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
+            
             // CDBUFFER Rows
             art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
-                dataRows.push([art.sku7, i.ubi, i.skuFull, i.skuFull.split('-').pop(), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
+                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
             });
             // ZONA Rows
             art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
-                dataRows.push([art.sku7, i.ubi, i.skuFull, i.skuFull.split('-').pop(), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
+                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
             });
             // Subtotal
             dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
@@ -2794,6 +2796,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
                 <button onclick="window.processTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; font-size:0.7rem;">⚙️ PROCESAR TAREAS</button>
+                <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none;">📥 EXPORTAR MASIVO</button>
                 <div style="background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; display:flex; gap:4px;">
                     <button onclick="window.setTaskMode('resumen')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${!isDetail ? 'var(--primary)' : 'transparent'}; color:${!isDetail ? '#fff' : 'var(--text-muted)'};">RESUMEN</button>
                     <button onclick="window.setTaskMode('detalle')" style="padding:6px 12px; border-radius:6px; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all 0.2s; background:${isDetail ? 'var(--primary)' : 'transparent'}; color:${isDetail ? '#fff' : 'var(--text-muted)'};">DETALLE</button>
@@ -2865,7 +2868,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
                                     <td style="padding:0.6rem 1rem; color:var(--primary);">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">${i.skuFull.split('-').pop()}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; font-size:0.7rem;">${t.id}</td>
@@ -2879,9 +2882,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
                         <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
                         <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="window.exportTasks()" class="btn" style="width:auto; padding:0.6rem 1.5rem; font-size:0.8rem; background:var(--primary); color:#fff; font-weight:800; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">📥 EXPORTAR MASIVO (EXCEL)</button>
                     </div>
                 </div>
             </div>
