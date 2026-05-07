@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.3.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.2';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.3.0';
+const VERSION = '12.4.2';
 const CACHE_KEY = `logistics_v12_3_0_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -61,8 +61,13 @@ window.downloadExcelDetail = () => {
     const skusBajarData = (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0);
     const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
     
+    // [FILTRO v12.4.2] Filtrar solo ubicaciones Físicas (SEL-) y ordenar
+    const physicalDetalle = (data.detalle || [])
+        .filter(d => String(d.UBICACIONES || '').startsWith('SEL-'))
+        .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
+
     // 3. Pestaña LPN SELECIONADOS
-    const lpnData = (data.detalle || []).map(d => ({
+    const lpnData = physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES,
         'LPN': d.LPN,
         'Sku': d.SKU,
@@ -77,6 +82,158 @@ window.downloadExcelDetail = () => {
     XLSX.utils.book_append_sheet(wb, sheetDetalle, "Detalle");
     XLSX.utils.book_append_sheet(wb, sheetSkuBajar, "Sku Bajar");
     XLSX.utils.book_append_sheet(wb, sheetLPN, "LPN Selecionados");
+
+    // 4. Pestaña MONTACARGA (Para operario, lista para imprimir)
+    const montacargaMap = new Map();
+    physicalDetalle.forEach(d => {
+        const lpn = d.LPN;
+        if (!montacargaMap.has(lpn)) {
+            montacargaMap.set(lpn, {
+                'UBICACIÓN': d.UBICACIONES,
+                'LPN': lpn,
+                'QTY RESERVA': 0
+            });
+        }
+        montacargaMap.get(lpn)['QTY RESERVA'] += d['QTY RESERVA'];
+    });
+    // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
+    const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
+    
+    const aoa = [
+        ["MONTACARGA"],
+        [`${data.timestamp || new Date().toLocaleString()}`],
+        [],
+        ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"]
+    ];
+    montacargaRows.forEach((row, idx) => {
+        aoa.push([idx + 1, row.UBICACIÓN, row.LPN, row['QTY RESERVA']]);
+    });
+    const sheetMontacarga = XLSX.utils.aoa_to_sheet(aoa);
+    
+    // Configuración de impresión y celdas
+    if (!sheetMontacarga['!merges']) sheetMontacarga['!merges'] = [];
+    sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }); // Título centrado (4 cols)
+    sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }); // Fecha (4 cols)
+    
+    // Ancho de columnas (200px aprox = 28 caracteres, y el N° algo más corto)
+    sheetMontacarga['!cols'] = [
+        { wch: 12 }, // N° Paletas
+        { wch: 28 },
+        { wch: 28 },
+        { wch: 28 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, sheetMontacarga, "Montacarga");
+
+    // 5. Pestaña ANÁLISIS BUFFER (Cruce con Maestro y Tallas)
+    const maestroMap = new Map();
+    if (dataStore.articulos) {
+        dataStore.articulos.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const art7 = String(raw[1] || '').trim().substring(0, 7);
+            if (art7 && !maestroMap.has(art7)) {
+                maestroMap.set(art7, {
+                    marca: String(raw[13] || 'OTROS').trim(),
+                    gender: String(raw[3] || '').trim() // Columna D (Índice 3) para Gender Rims
+                });
+            }
+        });
+    }
+
+    const tallasMap = dataStore.tabla_tallas || {};
+
+    const aoaAnalisis = [
+        ["ANÁLISIS BUFFER"],
+        [`${data.timestamp || new Date().toLocaleString()}`],
+        [],
+        ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
+    ];
+
+    // Ordenar y agrupar datos (Filtrado solo SEL-)
+    const sorted = physicalDetalle;
+
+    let lastUbi = "", lastLPN = "";
+    let uSumA = 0, uSumR = 0, uSumB = 0;
+    let gSumA = 0, gSumR = 0, gSumB = 0;
+
+    sorted.forEach((d, i) => {
+        // Cambio de ubicación -> Insertar Total anterior
+        if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
+            aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+            uSumA = 0; uSumR = 0; uSumB = 0; // Reiniciar
+        }
+
+        const sku = d.SKU;
+        const art7 = sku.substring(0, 7);
+        const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
+        const talla = tallasMap[sku] || '-';
+        
+        const showUbi = (d.UBICACIONES !== lastUbi) ? d.UBICACIONES : "";
+        const showLPN = (d.LPN !== lastLPN || d.UBICACIONES !== lastUbi) ? d.LPN : "";
+
+        aoaAnalisis.push([
+            showUbi,
+            showLPN,
+            sku,
+            talla,
+            maestro.marca,
+            maestro.gender,
+            d['QTY ACTIVO'],
+            d['QTY RESERVA'],
+            d['QTY BUFFER']
+        ]);
+
+        uSumA += (d['QTY ACTIVO'] || 0);
+        uSumR += (d['QTY RESERVA'] || 0);
+        uSumB += (d['QTY BUFFER'] || 0);
+        gSumA += (d['QTY ACTIVO'] || 0);
+        gSumR += (d['QTY RESERVA'] || 0);
+        gSumB += (d['QTY BUFFER'] || 0);
+
+        lastUbi = d.UBICACIONES;
+        lastLPN = d.LPN;
+    });
+
+    // Último total por ubicación
+    if (lastUbi !== "") {
+        aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+    }
+
+    // Fila de Total General
+    aoaAnalisis.push([]);
+    aoaAnalisis.push(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
+
+    const sheetAnalisis = XLSX.utils.aoa_to_sheet(aoaAnalisis);
+    
+    // Formato y anchos para Análisis Buffer
+    if (!sheetAnalisis['!merges']) sheetAnalisis['!merges'] = [];
+    sheetAnalisis['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }); // Título
+    sheetAnalisis['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }); // Fecha
+    
+    sheetAnalisis['!cols'] = [
+        { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, sheetAnalisis, "Análisis Buffer");
+
+    // 6. Pestaña TALLAS (Auditoría de Tabla Virtual)
+    const aoaTallas = [
+        ["REPORTE DE TALLAS EXTRAÍDAS"],
+        [`Generado: ${new Date().toLocaleString()}`],
+        [],
+        ["SKU", "TALLA EXTRAÍDA"]
+    ];
+    
+    Object.entries(tallasMap).sort().forEach(([sku, talla]) => {
+        aoaTallas.push([sku, talla]);
+    });
+
+    const sheetTallas = XLSX.utils.aoa_to_sheet(aoaTallas);
+    sheetTallas['!cols'] = [{ wch: 25 }, { wch: 15 }];
+    if (!sheetTallas['!merges']) sheetTallas['!merges'] = [];
+    sheetTallas['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
+    
+    XLSX.utils.book_append_sheet(wb, sheetTallas, "Tallas");
     
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
@@ -147,7 +304,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.3.0</span></h2>
+        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -399,12 +556,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
                     <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
                     <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
-                    <span>${dataStore.buffer ? '✅' : '➖'} PEDIDOS</span>
-                    <span>${dataStore.articulos ? '✅' : '➖'} ARTICULO</span>
+                    <span>${dataStore.articulos ? '✅' : '❌'} MAESTRO (Obligatorio)</span>
                     <div style="display:flex; align-items:center;">
                         <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
                         <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
-                        <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem; margin-left:1rem;">Generado el: <span style="color:var(--primary);">${timeStr}</span></span>
                     </div>
                 </div>
               </div>
@@ -540,6 +695,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
+    lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
     const ts = data.timestamp || new Date().toLocaleString();
     const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = '580px';
