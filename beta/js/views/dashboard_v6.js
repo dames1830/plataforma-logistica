@@ -2051,7 +2051,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
-                        `; }).join('')}
+                        </tr>`; }).join('')}
                         `;
                     }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
@@ -2329,8 +2329,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
-                        tension: 0.4,
-                        version: 'v12.4.36'
+                        tension: 0.4
                     }]
                 },
                 options: {

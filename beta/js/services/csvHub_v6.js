@@ -1066,7 +1066,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         qty: sinStockRows.reduce((acc, d) => acc + (parseFloat(d['ATD RQ'] || d['ATD_RQ'] || 0) || 0), 0)
     };
 
-    // [BETA] 6. CONSOLIDACIÓN GLOBAL POR ARTÍCULO (Activo + Reserva)
+    // 6. CONSOLIDACIÓN GLOBAL POR ARTÍCULO (Activo + Reserva)
     const stockGlobalPorArticulo = new Map();
     
     // Sumar Activo
