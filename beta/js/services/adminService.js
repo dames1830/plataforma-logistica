@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v12.4.2)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v12.4.65)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -11,7 +11,8 @@ export const adminStore = {
     permissions: {},
     attendance: {}, // Keyed by date YYYY-MM-DD
     performance: [],
-    performance_log: []
+    performance_log: [],
+    almacenaje_tasks: []
 };
 
 // Carga inicial híbrida (Local + Servidor)
@@ -24,15 +25,15 @@ export const initializeAdminData = async () => {
         adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
         adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
         adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
+        adminStore.almacenaje_tasks = JSON.parse(localStorage.getItem(PREFIX + 'almacenaje_tasks') || '[]');
     } catch (e) {
         console.warn("⚠️ Error cargando datos locales (posible corrupción):", e);
     }
 
     // 2. Sincronización con Servidor (Sincronización Inteligente)
     try {
-        const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log'];
+        const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         
-        // Función con Timeout de 4s para no bloquear la UI
         const fetchWithTimeout = (url, options, timeout = 4000) => {
             return Promise.race([
                 fetch(url, options),
@@ -47,319 +48,170 @@ export const initializeAdminData = async () => {
                     const result = await res.json();
                     if (result.data) {
                         adminStore[area] = result.data;
-                        // Intentar guardar localmente
-                        try {
-                            localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
-                        } catch(e) { 
-                            console.warn(`Quota full while syncing ${area}. Clearing old keys...`);
-                            flushOldKeys(true); // Limpieza agresiva
-                            try {
-                                localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
-                            } catch(e2) { console.error("Still no space after cleanup."); }
-                        }
+                        localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
                     }
                 }
             } catch (err) {
-                console.warn(`⚠️ Fallo parcial en área ${area}: ${err.message}`);
+                console.warn(`⚠️ Sincronización de ${area} fallida (usando local):`, err.message);
             }
         }));
-        
-        console.log("✅ Sincronización Pulse completada.");
-        // Clean old keys occasionally
-        flushOldKeys();
     } catch (e) {
-        console.warn("⚠️ Sincronización fallida: Operando en modo local (off-line).", e);
+        console.warn("⚠️ Error general de sincronización:", e);
     }
 };
 
-// Limpia claves de versiones muy antiguas para liberar espacio
-const flushOldKeys = (aggressive = false) => {
+export const save = async (area, data) => {
     try {
-        const activePrefix = 'logistics_admin_v11_';
-        const keysToRemove = [];
-        const whiteList = ['logistics_session', 'logistics_cache_', 'logistics_meta_'];
-        
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (!key) continue;
-            
-            // Si la clave es de logística pero no es la versión actual y no está en la lista blanca
-            if (key.startsWith('logistics_')) {
-                const isInWhiteList = whiteList.some(w => key.startsWith(w));
-                const isCurrentVersion = key.startsWith(activePrefix);
-                
-                if (!isCurrentVersion && !isInWhiteList) {
-                    keysToRemove.push(key);
-                }
-            }
-        }
-        keysToRemove.forEach(k => localStorage.removeItem(k));
-        if (keysToRemove.length > 0) {
-            console.log(`🧹 Almacenamiento: ${keysToRemove.length} claves antiguas eliminadas.`);
-        }
-    } catch (e) { console.error("Error in flushOldKeys:", e); }
-};
-
-const save = async (key, data) => {
-    adminStore[key] = data;
-    try {
-        localStorage.setItem(PREFIX + key, JSON.stringify(data));
-    } catch (e) {
-        console.warn(`⚠️ [PULSE] Quota Full Local. El dato se guardará solo en la base de datos.`);
-        flushOldKeys(true);
-    }
-    
-    // Persistencia en el servidor
-    try {
-        await fetch(`${API_URL}/${key}`, {
+        adminStore[area] = data;
+        localStorage.setItem(PREFIX + area, JSON.stringify(data));
+        const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ data })
         });
+        return res.ok;
     } catch (e) {
-        console.error(`❌ Error persistiendo ${key} en los servidores de Pulse:`, e);
+        console.warn(`⚠️ Error guardando ${area} en servidor:`, e);
+        return false;
     }
 };
 
-// --- TRABAJADORES ---
-export const saveWorkers = (workers) => {
-    const normalized = workers.map(w => ({ active: true, ...w }));
-    save('workers', normalized);
-};
 export const getWorkers = () => adminStore.workers;
+export const getUsers = () => adminStore.users;
+export const getPermissions = (role) => adminStore.permissions[role] || {};
 
-export const saveWorker = (worker) => {
+export const initPermissions = (tabs) => {
+    const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente', 'analista'];
+    roles.forEach(role => {
+        if (!adminStore.permissions[role]) {
+            const p = {};
+            tabs.forEach(t => {
+                p[t.id] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                if (t.subTabs) {
+                    t.subTabs.forEach(s => {
+                        p[`${t.id}_${s.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                        if (s.subTabs) {
+                           s.subTabs.forEach(ss => {
+                               p[`${s.id}_${ss.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                           });
+                        }
+                    });
+                }
+            });
+            adminStore.permissions[role] = p;
+        }
+    });
+};
+
+export const togglePermission = (role, tabId) => {
+    const p = getPermissions(role);
+    p[tabId] = p[tabId] === 1 ? 0 : 1;
+    savePermissions(role, p);
+};
+
+export const saveWorker = async (worker) => {
     const workers = getWorkers();
-    const idx = workers.findIndex(w => (w.dni || w.Dni) === (worker.dni || worker.Dni));
-    if (idx >= 0) {
-        workers[idx] = { ...workers[idx], ...worker };
-    } else {
-        workers.push({ active: true, ...worker });
-    }
-    save('workers', workers);
+    const idx = workers.findIndex(w => w.dni === worker.dni);
+    if (idx >= 0) workers[idx] = { ...workers[idx], ...worker };
+    else workers.push({ ...worker, active: true });
+    return await save('workers', workers);
+};
+
+export const saveWorkers = async (newWorkers) => {
+    const workers = getWorkers();
+    newWorkers.forEach(nw => {
+        const idx = workers.findIndex(w => w.dni === nw.dni);
+        if (idx >= 0) workers[idx] = { ...workers[idx], ...nw };
+        else workers.push({ ...nw, active: true });
+    });
+    return await save('workers', workers);
 };
 
 export const toggleWorkerStatus = (dni) => {
     const workers = getWorkers();
-    const idx = workers.findIndex(w => (w.dni || w.Dni) === dni);
+    const idx = workers.findIndex(w => w.dni === dni);
     if (idx >= 0) {
-        workers[idx].active = !workers[idx].active;
+        workers[idx].active = workers[idx].active === false ? true : false;
         save('workers', workers);
     }
 };
 
-// --- USUARIOS ---
-export const saveUser = (user) => {
+export const saveUser = async (user) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.username === user.username);
-    if (idx >= 0) {
-        const currentActive = users[idx].active !== undefined ? users[idx].active : true;
-        users[idx] = { active: currentActive, ...user };
-    } else {
-        users.push({ active: true, ...user });
-    }
-    save('users', users);
-};
-export const getUsers = () => adminStore.users;
-export const deleteUser = (username) => {
-    const filtered = getUsers().filter(u => u.username !== username);
-    save('users', filtered);
+    if (idx >= 0) users[idx] = { ...users[idx], ...user };
+    else users.push({ ...user, active: true });
+    return await save('users', users);
 };
 
 export const toggleUserStatus = (username) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.username === username);
     if (idx >= 0) {
-        users[idx].active = !users[idx].active;
+        users[idx].active = users[idx].active === false ? true : false;
         save('users', users);
     }
 };
 
-// --- PERMISOS ---
-export const initPermissions = (tabs) => {
-    const perms = adminStore.permissions;
-    const roles = ['jefe', 'supervisor', 'encargado', 'asistente'];
-    
-    tabs.forEach(tab => {
-        roles.forEach(role => {
-            if (!perms[role]) perms[role] = {};
-            if (perms[role][tab.id] === undefined) {
-                perms[role][tab.id] = (tab.roles && tab.roles.includes(role)) ? 1 : 0;
-            }
-            if (tab.subTabs) {
-                tab.subTabs.forEach(sub => {
-                    const subKey = `${tab.id}_${sub.id}`;
-                    if (perms[role][subKey] === undefined) {
-                        perms[role][subKey] = (tab.roles && tab.roles.includes(role)) ? 1 : 0;
-                    }
-                });
-            }
-        });
-    });
-    save('permissions', perms);
+export const deleteUser = (username) => {
+    const users = getUsers().filter(u => u.username !== username);
+    save('users', users);
 };
 
-export const savePermissions = (role, mods) => {
-    const perms = adminStore.permissions;
-    perms[role] = mods;
-    save('permissions', perms);
-};
-
-export const getPermissions = (role) => adminStore.permissions[role] || null;
-
-export const togglePermission = (role, tabId) => {
-    const perms = adminStore.permissions;
-    if (!perms[role]) perms[role] = {};
-    perms[role][tabId] = perms[role][tabId] === 1 ? 0 : 1;
-    save('permissions', perms);
+export const savePermissions = async (role, perms) => {
+    adminStore.permissions[role] = perms;
+    return await save('permissions', adminStore.permissions);
 };
 
 // --- ASISTENCIA ---
-export const saveAttendance = (date, records) => {
-    const all = adminStore.attendance;
-    all[date] = records;
-    save('attendance', all);
+export const saveAttendance = async (date, data) => {
+    adminStore.attendance[date] = data;
+    
+    // Al cerrar asistencia, generamos log de performance si no existe
+    if (data.finalized) {
+        const perfLog = adminStore.performance_log;
+        data.data.forEach(att => {
+            const exists = perfLog.find(l => l.date === date && l.dni === att.dni);
+            if (!exists) {
+                perfLog.push({
+                    date: date,
+                    dni: att.dni,
+                    nombre: att.nombre,
+                    apellidos: att.apellidos,
+                    asistencia: att.present ? 'P' : 'F',
+                    puntualidad: att.onTime ? 'SÍ' : 'NO',
+                    produccion: att.present ? 10 : 0,
+                    bpa: att.present ? 10 : 0,
+                    supervisor: att.present ? 10 : 0,
+                    justification: att.justification || '',
+                    rendimiento: att.present ? '100%' : '0%'
+                });
+            }
+        });
+        save('performance_log', perfLog);
+    }
+
+    return await save('attendance', adminStore.attendance);
 };
 export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
-const calculateRendimientoValue = (entry) => {
-    let score = 0;
-    if (entry.asistencia === 'P') score += 30;
-    if (entry.puntualidad === 'SÍ') score += 10;
-    const prod = parseInt(entry.produccion) || 0;
-    const bpa = parseInt(entry.bpa) || 0;
-    const sup = parseInt(entry.supervisor) || 0;
-    score += (prod / 10) * 30;
-    score += (bpa / 10) * 15;
-    score += (sup / 10) * 15;
-    return Math.round(score) + '%';
-};
-
-export const closeAttendanceAndSyncPerformance = async (date, attendanceData) => {
-    const currentPerf = getPerformance();
-    const log = getPerformanceLog();
-    
-    attendanceData.forEach(att => {
-        let entry = currentPerf.find(p => p.dni === att.dni);
-        if (!entry) {
-            entry = { 
-                dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
-                asistencia: 0, puntualidad_count: 0, puntualidad: '0%', 
-                produccion: 0, bpa: 0, supervisor: '-' 
-            };
-            currentPerf.push(entry);
-        }
-        if (att.present) {
-            entry.asistencia += 1;
-            if (att.onTime) entry.puntualidad_count = (entry.puntualidad_count || 0) + 1;
-            const pct = Math.round((entry.puntualidad_count / entry.asistencia) * 100);
-            entry.puntualidad = `${pct}%`;
-        }
-        const existingLogIdx = log.findIndex(l => l.date === date && l.dni === att.dni);
-        const isPresent = att.present;
-        
-        const baseValues = {
-            asistencia: isPresent ? 'P' : 'F',
-            puntualidad: isPresent ? (att.onTime ? 'SÍ' : 'NO') : 'NO',
-            justification: att.justification || ''
-        };
-
-        if (existingLogIdx >= 0) {
-            // CASO REAPERTURA: Mezcla inteligente
-            const old = log[existingLogIdx];
-            const updated = { ...old, ...baseValues };
-
-            // Si antes era Falta y ahora es Presente -> Dar puntos base
-            if (old.asistencia === 'F' && isPresent) {
-                updated.produccion = 10;
-                updated.bpa = 10;
-                updated.supervisor = 9;
-            }
-            // Si antes era Presente y ahora es Falta -> Quitar puntos
-            else if (old.asistencia === 'P' && !isPresent) {
-                updated.produccion = 0;
-                updated.bpa = 0;
-                updated.supervisor = 0;
-            }
-            // Si sigue presente -> PRESERVAR lo que ya tenía (manual o default)
-            else if (isPresent) {
-                updated.produccion = old.produccion !== undefined ? old.produccion : 10;
-                updated.bpa = old.bpa !== undefined ? old.bpa : 10;
-                updated.supervisor = (old.supervisor !== undefined && old.supervisor !== '-') ? old.supervisor : 9;
-            }
-
-            updated.rendimiento = calculateRendimientoValue(updated);
-            log[existingLogIdx] = updated;
-        } else {
-            // CASO NUEVO: Valores por defecto
-            const newEntry = {
-                date, dni: att.dni, nombre: att.nombre, apellidos: att.apellidos,
-                ...baseValues,
-                produccion: isPresent ? 10 : 0,
-                bpa: isPresent ? 10 : 0,
-                supervisor: isPresent ? 9 : 0
-            };
-            newEntry.rendimiento = calculateRendimientoValue(newEntry);
-            log.push(newEntry);
-        }
-    });
-
-    await save('performance', currentPerf);
-    await save('performance_log', log);
-    await saveAttendance(date, { finalized: true, data: attendanceData });
-};
-
-export const reopenAttendance = async (date) => {
-    const all = adminStore.attendance;
-    if (!all[date] || !all[date].finalized) return;
-
-    // 1. Revertir cambios en currentPerf (Acumulado)
-    const currentPerf = getPerformance();
-    const log = getPerformanceLog();
-    const dailyLog = log.filter(l => l.date === date);
-
-    dailyLog.forEach(l => {
-        const entry = currentPerf.find(p => p.dni === l.dni);
-        if (entry) {
-            if (l.asistencia === 'P') {
-                entry.asistencia = Math.max(0, entry.asistencia - 1);
-                if (l.puntualidad === 'SÍ') {
-                    entry.puntualidad_count = Math.max(0, (entry.puntualidad_count || 0) - 1);
-                }
-                const pct = entry.asistencia > 0 ? Math.round((entry.puntualidad_count / entry.asistencia) * 100) : 0;
-                entry.puntualidad = `${pct}%`;
-            }
-        }
-    });
-
-    // 2. Marcar como no finalizado
-    all[date].finalized = false;
-
-    // 3. Guardar cambios
-    await save('performance', currentPerf);
-    await save('attendance', all);
-};
-
 export const getPerformanceLog = () => adminStore.performance_log;
 
 export const updatePerformanceLogEntry = (date, dni, fields) => {
-    const log = getPerformanceLog();
+    const log = adminStore.performance_log;
     const idx = log.findIndex(l => l.date === date && l.dni === dni);
     if (idx >= 0) {
         log[idx] = { ...log[idx], ...fields };
-        log[idx].rendimiento = calculateRendimientoValue(log[idx]);
+        
+        // Recalcular rendimiento % (Producción + BPA + Supervisor) / 30
+        const p = parseFloat(log[idx].produccion) || 0;
+        const b = parseFloat(log[idx].bpa) || 0;
+        const s = parseFloat(log[idx].supervisor) || 0;
+        const rend = Math.round(((p + b + s) / 30) * 100);
+        log[idx].rendimiento = rend + '%';
+        
         save('performance_log', log);
-    }
-};
-
-export const getPerformance = () => adminStore.performance;
-export const updatePerformanceEntry = (dni, fields) => {
-    const perf = getPerformance();
-    const idx = perf.findIndex(p => p.dni === dni);
-    if (idx >= 0) {
-        perf[idx] = { ...perf[idx], ...fields };
-        save('performance', perf);
     }
 };
 
@@ -367,7 +219,22 @@ export const updatePerformanceEntry = (dni, fields) => {
 export const resetProductionData = async () => {
     console.log("⚠️ [PULSE] Iniciando reinicio maestro de datos de producción...");
     await save('attendance', {});
-    await save('performance', []);
     await save('performance_log', []);
     console.log("✅ [PULSE] Datos reiniciados satisfactoriamente.");
+};
+
+export const saveAlmacenajeTasks = async (tasks) => {
+    try {
+        adminStore.almacenaje_tasks = tasks;
+        localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
+        const res = await fetch(`${API_URL}/almacenaje_tasks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: tasks })
+        });
+        return res.ok;
+    } catch (e) {
+        console.warn("⚠️ Error guardando tareas en servidor:", e);
+        return false;
+    }
 };

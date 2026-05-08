@@ -1,4 +1,5 @@
-import { getSession, logout } from './services/auth.js?v=12.2.7';
+import { getSession, logout } from './services/auth.js?v=12.4.66';
+import * as adminService from './services/adminService.js?v=12.4.66';
 
 class App {
   constructor(rootId) {
@@ -59,7 +60,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.4.36";
+    const versionStr = "v12.4.66-BETA";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
@@ -68,9 +69,15 @@ class App {
     
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
 
+    // [IMPORTANTE] Inicializar datos de usuarios/permisos ANTES de mostrar login o dashboard
+    try {
+        await adminService.initializeAdminData();
+    } catch(e) {
+        console.warn("[PULSE] Error en sincronización inicial:", e);
+    }
+
     try {
         const timestamp = new Date().getTime();
-        console.log(`[PULSE] App ${versionStr} navigate - ts: ${timestamp}`);
         if (user) {
             const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
             this.root.innerHTML = '';
