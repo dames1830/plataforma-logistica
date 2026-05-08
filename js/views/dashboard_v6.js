@@ -2,10 +2,23 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.62';
-const CACHE_KEY = `logistics_v12_4_62_`;
+const VERSION = '12.4.63';
+const CACHE_KEY = `logistics_v12_4_63_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
+
+// --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
+const getLogicalDate = () => {
+    const now = new Date();
+    const hrs = now.getHours();
+    // Si son entre las 00:00 y las 06:00 AM, la fecha lógica es el día anterior
+    if (hrs >= 0 && hrs < 6) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - 1);
+        return d.toISOString().split('T')[0];
+    }
+    return now.toISOString().split('T')[0];
+};
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
@@ -2693,11 +2706,25 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const processAlmacenajeTasks = async () => {
+  const processAlmacenajeTasks = async (mode = 'update') => {
     const stock = await getAreaData('almacenaje_activo');
     const maestro = dataStore.articulos;
     if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
     if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+
+    const logicalDate = getLogicalDate();
+    
+    // --- Lógica de Limpieza Inteligente (Opción A) ---
+    // En cualquier modo (new o update), limpiamos lo que no está asignado para evitar duplicados del mismo cálculo
+    almacenajeTasksCache = almacenajeTasksCache.filter(t => 
+        t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado'
+    );
+
+    if (mode === 'new') {
+        // En modo 'new', si hubiera algo forzado a limpiar lo haríamos aquí, 
+        // pero la lógica anterior ya protege lo asignado/finalizado.
+        console.log(`[PULSE] Reiniciando jornada operativa: ${logicalDate}`);
+    }
 
     // 1. Filtrar áreas permitidas
     const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
@@ -2814,7 +2841,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     // Evitar duplicados del mismo día (opcional: o permitir acumular más)
     // Para este caso, acumulamos todo.
-    const tasksWithDate = finalTasks.map(t => ({...t, fecha: fechaStr}));
+    const logicalDate = getLogicalDate();
+    const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
     
     almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
     saveAlmacenajeTasks(); // Sin await para no bloquear el renderizado
@@ -2908,7 +2936,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
-                <button onclick="window.processAlmacenajeTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button onclick="window.openShiftModal()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
                 <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
             </div>
         </div>
@@ -3160,6 +3188,66 @@ export const renderDashboard = async (container, user, onLogout) => {
         selectedTaskDate = d;
         renderAlmacenajeTareas(container);
     };
+
+    window.openShiftModal = () => {
+        const logicalDate = getLogicalDate();
+        const currentPending = almacenajeTasksCache.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
+        const currentDone = almacenajeTasksCache.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
+
+        const modal = document.createElement('div');
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
+        modal.innerHTML = `
+            <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.3); pointer-events:auto !important;">
+                <div style="text-align:center; margin-bottom:1.5rem;">
+                    <div style="display:inline-block; padding:10px; background:rgba(79, 70, 229, 0.1); border-radius:50%; margin-bottom:1rem;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <h2 style="color:#fff; margin:0; font-size:1.4rem;">Control de Jornada</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin:5px 0;">Fecha Operativa: <strong style="color:var(--primary);">${logicalDate}</strong></p>
+                </div>
+
+                <div style="background:rgba(15, 23, 42, 0.6); padding:1rem; border-radius:12px; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="color:var(--text-muted); font-size:0.85rem;">Tareas Avanzadas (Inalterables):</span>
+                        <span style="color:#22c55e; font-weight:700;">${currentDone}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:var(--text-muted); font-size:0.85rem;">Tareas Pendientes actuales:</span>
+                        <span style="color:var(--primary); font-weight:700;">${currentPending}</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <button id="optUpdate" class="btn" style="padding:1rem; font-weight:700; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; pointer-events:auto !important;">
+                        CONTINUAR TURNO (Actualizar)
+                        <div style="font-size:0.7rem; font-weight:400; opacity:0.8; margin-top:4px;">Mantiene lo avanzado y refresca lo pendiente</div>
+                    </button>
+                    
+                    <button id="optNew" class="btn" style="padding:1rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; pointer-events:auto !important;">
+                        REINICIAR JORNADA
+                        <div style="font-size:0.7rem; font-weight:400; opacity:0.6; margin-top:4px;">Borra TODO lo anterior del día ${logicalDate}</div>
+                    </button>
+
+                    <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-top:10px; text-decoration:underline; pointer-events:auto !important;">Cancelar proceso</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('#optUpdate').onclick = () => {
+            document.body.removeChild(modal);
+            window.processAlmacenajeTasks('update');
+        };
+        modal.querySelector('#optNew').onclick = () => {
+            if(confirm("⚠️ ¿Estás seguro? Se perderán TODAS las tareas (incluyendo finalizadas) de la fecha operativa actual.")){
+                document.body.removeChild(modal);
+                window.processAlmacenajeTasks('new');
+            }
+        };
+        modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
+    };
+
+    window.processAlmacenajeTasks = processAlmacenajeTasks;
 
     window.setTaskMode = (mode) => {
         almacenajeTaskMode = mode;
