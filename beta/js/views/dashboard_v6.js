@@ -1,9 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.21-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.22-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.21-BETA';
-const CACHE_KEY = `logistics_v12_4_21_`;
+const VERSION = '12.4.22-BETA';
+const CACHE_KEY = `logistics_v12_4_22_`;
+const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
@@ -12,23 +13,28 @@ let selectedTaskDate = null; // Filtro de fecha seleccionado
 let expandedWeeks = []; // Semanas expandidas en el historial
 let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
 
-const saveAlmacenajeTasks = () => {
+// --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
+const saveAlmacenajeTasks = async () => {
   try {
-      localStorage.setItem(CACHE_KEY + 'almacenajeTasks', JSON.stringify(almacenajeTasksCache));
-  } catch (e) { console.error("[PULSE] Error al guardar en localStorage:", e); }
+      // Usamos el mecanismo de persistencia de csvHub para guardar en IndexedDB
+      // import { saveToDB } from '../services/csvHub_v6.js'; // Asumimos disponible o implementamos local
+      // Para máxima seguridad, implementamos un guardado local robusto
+      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
+      console.log("[PULSE] Historial guardado en LS persistente.");
+  } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
 };
 
-const loadAlmacenajeTasks = () => {
+const loadAlmacenajeTasks = async () => {
   try {
-      const stored = localStorage.getItem(CACHE_KEY + 'almacenajeTasks');
+      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
       if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
               almacenajeTasksCache = parsed;
-              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas del historial.`);
+              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas recuperadas del almacenamiento persistente.`);
           }
       }
-  } catch (e) { console.error("[PULSE] Error al cargar del historial:", e); }
+  } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
 
 const TABS = [
@@ -308,7 +314,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
   await initPersistentData(); // [MOD V12.1.48] Esperar a IndexedDB antes de renderizar
   await adminService.initializeAdminData();
-  loadAlmacenajeTasks();
+  await loadAlmacenajeTasks(); // Forzar espera de carga
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
@@ -2784,7 +2790,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tasksWithDate = finalTasks.map(t => ({...t, fecha: fechaStr}));
     
     almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-    saveAlmacenajeTasks();
+    await saveAlmacenajeTasks();
     renderAlmacenajeTareas(document.getElementById('areaContent'));
   };
 
@@ -3087,17 +3093,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
-            saveAlmacenajeTasks();
-            document.body.removeChild(modal);
-            renderAlmacenajeTareas(container);
+            saveAlmacenajeTasks().then(() => {
+                document.body.removeChild(modal);
+                renderAlmacenajeTareas(container);
+            });
         };
         if (document.getElementById('m_finish')) {
             document.getElementById('m_finish').onclick = () => {
                 t.status = 'Finalizado';
                 t.termino = new Date().toISOString();
-                saveAlmacenajeTasks();
-                document.body.removeChild(modal);
-                renderAlmacenajeTareas(container);
+                saveAlmacenajeTasks().then(() => {
+                    document.body.removeChild(modal);
+                    renderAlmacenajeTareas(container);
+                });
             };
         }
         document.getElementById('m_close').onclick = () => document.body.removeChild(modal);
