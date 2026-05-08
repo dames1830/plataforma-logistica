@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.60';
-const CACHE_KEY = `logistics_v12_4_60_`;
+const VERSION = '12.4.61';
+const CACHE_KEY = `logistics_v12_4_61_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -16,15 +16,31 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
   try {
-      await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
-      console.log("[PULSE] Tareas sincronizadas con el servidor.");
+      // 1. Persistencia LOCAL inmediata (Velocidad para el usuario)
+      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
+      console.log("[PULSE] Tareas guardadas localmente.");
+
+      // 2. Sincronización Global en SEGUNDO PLANO (sin await)
+      adminService.saveAlmacenajeTasks(almacenajeTasksCache)
+          .then(ok => { if(ok) console.log("✅ Sync Global exitosa"); })
+          .catch(e => console.error("⚠️ Fallo sync global (reintentará):", e));
+
   } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
 };
 
 const loadAlmacenajeTasks = async () => {
   try {
-      almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
-      console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas (Global).`);
+      // Priorizamos los datos sincronizados del adminStore
+      const syncedTasks = adminService.adminStore.almacenaje_tasks;
+      if (syncedTasks && Array.isArray(syncedTasks) && syncedTasks.length > 0) {
+          almacenajeTasksCache = syncedTasks;
+          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas de la nube.`);
+      } else {
+          // Fallback a local si no hay nada en la nube todavía
+          const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
+          if (stored) almacenajeTasksCache = JSON.parse(stored);
+          console.log("[PULSE] Cargando tareas desde almacenamiento local.");
+      }
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
 
@@ -306,7 +322,19 @@ export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
   await initPersistentData(); // [MOD V12.1.48] Esperar a IndexedDB antes de renderizar
   await adminService.initializeAdminData();
-  await loadAlmacenajeTasks(); // Forzar espera de carga
+  await loadAlmacenajeTasks();
+  
+  // Heartbeat de Sincronización Global (Cada 20 seg)
+  setInterval(async () => {
+      await adminService.initializeAdminData();
+      if (currentTab === 'almacenaje') {
+          almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
+          const container = document.getElementById('areaContent');
+          if (container && (localStorage.getItem('activeSub_almacenaje') === 'tareas_dia' || localStorage.getItem('activeSub_almacenaje') === 'kpi_tareas')) {
+              renderAlmacenajeTareas(container);
+          }
+      }
+  }, 20000);
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
@@ -2781,7 +2809,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tasksWithDate = finalTasks.map(t => ({...t, fecha: fechaStr}));
     
     almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-    await saveAlmacenajeTasks();
+    saveAlmacenajeTasks(); // Sin await para no bloquear el renderizado
     renderAlmacenajeTareas(document.getElementById('areaContent'));
   };
 
@@ -3094,10 +3122,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
-            saveAlmacenajeTasks().then(() => {
-                document.body.removeChild(modal);
-                renderAlmacenajeTareas(container);
-            });
+            saveAlmacenajeTasks(); // Sin await
+            document.body.removeChild(modal);
+            renderAlmacenajeTareas(container);
         };
         if (document.getElementById('m_finish')) {
             document.getElementById('m_finish').onclick = () => {
