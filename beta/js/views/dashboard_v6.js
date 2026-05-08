@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.76';
 
 
-const VERSION = '12.4.78';
-const CACHE_KEY = `logistics_v12_4_78_`;
+const VERSION = '12.4.80';
+const CACHE_KEY = `logistics_v12_4_80_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -2708,134 +2708,93 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const processAlmacenajeTasks = async (mode = 'update') => {
-    const stock = await getAreaData('almacenaje_activo');
-    const maestro = dataStore.articulos;
-    if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
-    if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+    try {
+        const stock = await getAreaData('almacenaje_activo');
+        const maestro = dataStore.articulos;
+        if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
+        if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
-    const logicalDate = getLogicalDate();
-    
-    // --- Lógica de Limpieza Inteligente (Opción A) ---
-    almacenajeTasksCache = almacenajeTasksCache.filter(t => 
-        t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado'
-    );
+        const logicalDate = getLogicalDate();
+        almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
+            t && (t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado')
+        ) : [];
 
-    // 1. Filtrar áreas permitidas
-    const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
-    const filtered = stock.filter(row => {
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
-        return allowedAreas.some(a => area.includes(a));
-    });
-    alert("📊 Filtro Áreas: Encontradas " + filtered.length + " filas de " + stock.length + " totales.");
-
-    // 2. Mapear Maestro para Gender RIMS y Marcas
-    const artMap = new Map();
-    maestro.forEach(row => {
-        const raw = Array.isArray(row) ? row : Object.values(row);
-        const sku7 = String(raw[1] || '').trim().substring(0, 7);
-        if (sku7 && !artMap.has(sku7)) {
-            artMap.set(sku7, {
-                marca: String(raw[13] || 'S/M').trim(),
-                gender: String(raw[3] || '').trim().toUpperCase(), 
-                coleccion: String(raw[9] || 'S/C').trim()
-            });
-        }
-    });
-
-    // 3. Agrupar por Artículo (7 dígitos)
-    const groups = {};
-    filtered.forEach(row => {
-        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
-        const sku7 = skuFull.substring(0, 7);
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
-        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
-        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
-        const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
-
-        if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
-        
-        const item = { ...row, skuFull, ubi, qty, area };
-        groups[sku7].items.push(item);
-        if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
-        else groups[sku7].zonaQty += qty;
-    });
-
-    // 4. Filtrar: Solo artículos con algo en CDBUFFER
-    const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
-    
-    // 5. Agrupar por Marca para aplicar reglas de Tarea
-    const byMarca = {};
-    eligibleArticulos.forEach(art => {
-        if (!byMarca[art.marca]) byMarca[art.marca] = [];
-        byMarca[art.marca].push(art);
-    });
-
-    const finalTasks = [];
-    let taskCounter = 1;
-
-    Object.keys(byMarca).forEach(marca => {
-        const arts = byMarca[marca];
-        
-        // Regla Accesorios: Todo junto sin importar cantidad
-        const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
-        const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
-
-        accs.forEach(a => {
-            finalTasks.push({
-                id: `Tarea${taskCounter++}`,
-                marca: marca,
-                qty: a.bufferQty,
-                status: 'Creada',
-                u1: '', u2: '', inicio: '', termino: '',
-                items: [a]
-            });
+        const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
+        const filtered = stock.filter(row => {
+            const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+            return allowedAreas.some(a => area.includes(a));
         });
 
-        // Separar normales en grandes (>=300) y pequeños (<300)
-        const bigNormals = normals.filter(a => a.bufferQty >= 300);
-        const smallNormals = normals.filter(a => a.bufferQty < 300);
-
-        // Los grandes son tareas independientes inmediatas
-        bigNormals.forEach(a => {
-            finalTasks.push({
-                id: `Tarea${taskCounter++}`,
-                marca: marca,
-                qty: a.bufferQty,
-                status: 'Creada',
-                u1: '', u2: '', inicio: '', termino: '',
-                items: [a]
-            });
-        });
-
-        // Los pequeños se agrupan estrictamente
-        let currentGroup = [];
-        let currentBufferQty = 0;
-
-        smallNormals.forEach((art, index) => {
-            currentGroup.push(art);
-            currentBufferQty += art.bufferQty;
-
-            // Si llegamos a 300 o es el último de la marca, cerramos tarea
-            if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
-                finalTasks.push({
-                    id: `Tarea${taskCounter++}`,
-                    marca: marca,
-                    qty: currentBufferQty,
-                    status: 'Creada',
-                    u1: '', u2: '', inicio: '', termino: '',
-                    items: [...currentGroup]
+        const artMap = new Map();
+        maestro.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku7 = String(raw[1] || '').trim().substring(0, 7);
+            if (sku7 && !artMap.has(sku7)) {
+                artMap.set(sku7, {
+                    marca: String(raw[13] || 'S/M').trim(),
+                    gender: String(raw[3] || '').trim().toUpperCase(), 
+                    coleccion: String(raw[9] || 'S/C').trim()
                 });
-                currentGroup = [];
-                currentBufferQty = 0;
             }
         });
-    });
 
-    // Agregar nuevas tareas al cache acumulativo
-    const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
-    almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-    saveAlmacenajeTasks(); 
-    renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
+        const groups = {};
+        filtered.forEach(row => {
+            const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
+            const sku7 = skuFull.substring(0, 7);
+            const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+            const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
+            const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
+            const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
+
+            if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
+            const item = { ...row, skuFull, ubi, qty, area };
+            groups[sku7].items.push(item);
+            if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+            else groups[sku7].zonaQty += qty;
+        });
+
+        const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
+        const byMarca = {};
+        eligibleArticulos.forEach(art => {
+            if (!byMarca[art.marca]) byMarca[art.marca] = [];
+            byMarca[art.marca].push(art);
+        });
+
+        const finalTasks = [];
+        let taskCounter = 1;
+        Object.keys(byMarca).forEach(marca => {
+            const arts = byMarca[marca];
+            const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
+            const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
+            accs.forEach(a => {
+                finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+            });
+            const bigNormals = normals.filter(a => a.bufferQty >= 300);
+            const smallNormals = normals.filter(a => a.bufferQty < 300);
+            bigNormals.forEach(a => {
+                finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+            });
+            let currentGroup = [];
+            let currentBufferQty = 0;
+            smallNormals.forEach((art, index) => {
+                currentGroup.push(art);
+                currentBufferQty += art.bufferQty;
+                if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
+                    finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup] });
+                    currentGroup = [];
+                    currentBufferQty = 0;
+                }
+            });
+        });
+
+        const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
+        almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
+        saveAlmacenajeTasks(); 
+        renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
+    } catch (e) {
+        alert("🚨 Error de Cálculo: " + e.message);
+    }
   };
 
   const exportAlmacenajeExcel = () => {
