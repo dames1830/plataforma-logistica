@@ -238,3 +238,20 @@ export const saveAlmacenajeTasks = async (tasks) => {
         return false;
     }
 };
+export const loadAlmacenajeTasks = async () => {
+    try {
+        const res = await fetch(`${API_URL}/almacenaje_tasks`);
+        if (res.ok) {
+            const result = await res.json();
+            if (result.data) {
+                adminStore.almacenaje_tasks = result.data;
+                localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(result.data));
+                return result.data;
+            }
+        }
+        return adminStore.almacenaje_tasks;
+    } catch (e) {
+        console.warn("⚠️ Error cargando tareas desde servidor:", e);
+        return adminStore.almacenaje_tasks;
+    }
+};
