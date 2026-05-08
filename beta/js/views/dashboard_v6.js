@@ -34,12 +34,10 @@ const saveAlmacenajeTasks = async () => {
       // Sincronizar el adminStore localmente también para consistencia inmediata
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-      // 2. Sincronización Global en SEGUNDO PLANO
-      adminService.saveAlmacenajeTasks(almacenajeTasksCache)
-          .then(ok => console.log(ok ? "✅ Sync Global OK" : "⚠️ Server no respondió, reteniendo local"))
-          .catch(e => console.warn("⚠️ Error Sync:", e));
-
-  } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
+      // 2. Sincronización Global INMEDIATA
+      await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+      console.log("✅ [PULSE] Sincronización Global de Almacenaje completada.");
+  } catch (e) { console.error("[PULSE] Error crítico al guardar en la nube:", e); }
 };
 
 const loadAlmacenajeTasks = async () => {
@@ -3283,12 +3281,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnRef.style.opacity = '0.5';
             
             try {
-                // Sincronizar con el servidor
+                // Sincronizar con el servidor (PULL GLOBAL)
                 await adminService.initializeAdminData();
                 await loadAlmacenajeTasks();
                 // Re-renderizar solo este módulo
                 renderAlmacenajeTareas(container);
-                console.log("✅ [PULSE] Módulo de Almacenaje actualizado localmente.");
+                console.log("✅ [PULSE] Datos de Almacenaje sincronizados GLOBALMENTE.");
             } catch (e) {
                 console.error("❌ [PULSE] Error en refresco local:", e);
                 btnRef.style.transform = 'rotate(0deg)';
