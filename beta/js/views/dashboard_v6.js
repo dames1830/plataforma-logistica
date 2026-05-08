@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.72';
-const CACHE_KEY = `logistics_v12_4_72_`;
+const VERSION = '12.4.73';
+const CACHE_KEY = `logistics_v12_4_73_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -2708,8 +2708,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const processAlmacenajeTasks = async (mode = 'update') => {
+    alert("🔍 Iniciando procesamiento de tareas...");
     const stock = await getAreaData('almacenaje_activo');
+    alert("📦 Stock Activo: " + (stock ? stock.length : 0) + " filas.");
     const maestro = dataStore.articulos;
+    alert("📖 Maestro Artículos: " + (maestro ? maestro.length : 0) + " filas.");
     if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
     if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
@@ -2733,6 +2736,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
         return allowedAreas.some(a => area.includes(a));
     });
+    alert("🎯 Filas filtradas por área: " + filtered.length);
 
     // 2. Mapear Maestro para Gender RIMS y Marcas
     const artMap = new Map();
@@ -2844,9 +2848,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Para este caso, acumulamos todo.
     const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
     
+    alert("🚀 Tareas finales generadas: " + finalTasks.length);
     almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-    saveAlmacenajeTasks(); // Sin await para no bloquear el renderizado
-    renderAlmacenajeTareas(document.getElementById('areaContent'));
+    saveAlmacenajeTasks(); 
+    renderAlmacenajeTareas(document.getElementById('areaContent') || document.getElementById('app'));
+    alert("✨ Proceso completado.");
   };
 
   const exportAlmacenajeExcel = () => {
