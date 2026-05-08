@@ -21,13 +21,10 @@ export const login = async (username, password) => {
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
-      } else if (result.message) {
-        // [IMPORTANTE] Mostrar el error real del servidor para diagnosticar
-        console.warn("Servidor rechazó el login:", result.message);
-        return { success: false, message: `Servidor: ${result.message}` };
       }
+      // Si el servidor responde success:false, simplemente lo logueamos y seguimos al fallback local
+      console.warn("Servidor rechazó el login, intentando con base de datos local:", result.message);
     }
-    console.warn("Respuesta de red OK pero sin éxito, intentando local...");
   } catch (err) {
     console.warn("Error de conexión al servidor, intentando login local...");
   }
