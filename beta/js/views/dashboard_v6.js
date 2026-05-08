@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.34-STABLE';
+const VERSION = '12.4.34-BETA';
 const CACHE_KEY = `logistics_v12_4_22_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
@@ -3011,13 +3011,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 return sortedItems.map(i => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
-                                    <td style="padding:0.6rem 1rem; color:${i.area.includes('CDBUFFER') ? '#6366f1' : 'var(--primary)'}; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
-                                    <td style="padding:0.6rem 1rem; font-size:0.7rem;">${t.id}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.6rem;"><span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'inherit'};">${t.status}</span></td>
+                                    <td style="padding:0.6rem 1rem;">${t.id}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;"><span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'inherit'}; font-weight:700;">${t.status}</span></td>
                                 </tr>`);
                             })).join('')}
                         </tbody>
