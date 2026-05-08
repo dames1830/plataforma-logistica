@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.48';
-const CACHE_KEY = `logistics_v12_4_48_`;
+const VERSION = '12.4.50';
+const CACHE_KEY = `logistics_v12_4_50_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 
 const getWeekNumber = (d) => {
@@ -2834,7 +2834,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
 
     const groups = {};
-    (almacenajeTasksCache || []).forEach(t => {
+    const tasksToProcess = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
+    tasksToProcess.forEach(t => {
         if (!t || typeof t !== 'object') return;
         if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
         const dateObj = new Date(t.fecha + 'T00:00:00');
@@ -2936,8 +2937,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             `}
                         </thead>
                         <tbody>
-                            ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
+                            ${tasksToProcess.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
+                            ${!isDetail ? tasksToProcess.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
@@ -2994,7 +2995,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
                                     </td>
                                 </tr>`;
-                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => (t.items || []).flatMap(art => {
+                            }).join('') : tasksToProcess.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => (t.items || []).flatMap(art => {
                                 const sortedItems = [...(art.items || [])].sort((a,b) => {
                                     const aArea = String(a.area || '');
                                     const bArea = String(b.area || '');
@@ -3025,8 +3026,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
-                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
-                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
+                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasksToProcess.length}</b></span>
+                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasksToProcess.reduce((s,t) => s+(t.qty||0), 0).toLocaleString()}</b></span>
                     </div>
                 </div>
             </div>
