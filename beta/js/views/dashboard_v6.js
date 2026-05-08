@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.20-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.21-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.20-BETA';
-const CACHE_KEY = `logistics_v12_3_0_`;
+const VERSION = '12.4.21-BETA';
+const CACHE_KEY = `logistics_v12_4_21_`;
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
@@ -15,14 +15,20 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 const saveAlmacenajeTasks = () => {
   try {
       localStorage.setItem(CACHE_KEY + 'almacenajeTasks', JSON.stringify(almacenajeTasksCache));
-  } catch (e) { console.warn("[PULSE] Error guardando tareas de almacenaje:", e); }
+  } catch (e) { console.error("[PULSE] Error al guardar en localStorage:", e); }
 };
 
 const loadAlmacenajeTasks = () => {
   try {
       const stored = localStorage.getItem(CACHE_KEY + 'almacenajeTasks');
-      if (stored) almacenajeTasksCache = JSON.parse(stored);
-  } catch (e) { console.warn("[PULSE] Error cargando tareas de almacenaje:", e); }
+      if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+              almacenajeTasksCache = parsed;
+              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas del historial.`);
+          }
+      }
+  } catch (e) { console.error("[PULSE] Error al cargar del historial:", e); }
 };
 
 const TABS = [
@@ -2771,7 +2777,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     // Agregar nuevas tareas al cache acumulativo
-    const fechaStr = new Date().toLocaleDateString();
+    const fechaStr = new Date().toISOString().split('T')[0]; // Formato ISO YYYY-MM-DD
     
     // Evitar duplicados del mismo día (opcional: o permitir acumular más)
     // Para este caso, acumulamos todo.
@@ -2827,9 +2833,10 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const groups = {};
         almacenajeTasksCache.forEach(t => {
-            if (!t.fecha) t.fecha = new Date().toLocaleDateString();
-            const [d, m, y] = t.fecha.split('/');
-            const dateObj = new Date(y, m-1, d);
+            if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
+            const dateObj = new Date(t.fecha + 'T00:00:00');
+            if (isNaN(dateObj.getTime())) return;
+
             const w = `Semana ${getWeekNumber(dateObj)}`;
             if (!groups[w]) groups[w] = {};
             if (!groups[w][t.fecha]) groups[w][t.fecha] = 0;
@@ -2845,11 +2852,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <span>📅 ${w}</span>
                         <span>${isExpanded ? '▼' : '▶'}</span>
                     </div>
-                    ${isExpanded ? Object.keys(days).sort().reverse().map(d => `
+                    ${isExpanded ? Object.keys(days).sort().reverse().map(d => {
+                        const [y, m, day] = d.split('-');
+                        const dDisplay = `${day}/${m}/${y}`;
+                        return `
                         <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
-                            ${d} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
+                            ${dDisplay} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
                         </div>
-                    `).join('') : ''}
+                        `;
+                    }).join('') : ''}
                 </div>
             `;
         }).join('');
@@ -2957,7 +2968,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 }
                                 return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.8rem 1rem;">${new Date().toLocaleDateString()}</td>
+                                    <td style="padding:0.8rem 1rem;">
+                                        ${(() => {
+                                            const [y, m, d] = t.fecha.split('-');
+                                            return `${d}/${m}/${y}`;
+                                        })()}
+                                    </td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
