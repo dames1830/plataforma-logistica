@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.71';
-const CACHE_KEY = `logistics_v12_4_71_`;
+const VERSION = '12.4.72';
+const CACHE_KEY = `logistics_v12_4_72_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -3194,35 +3194,44 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     window.openShiftModal = () => {
-        alert("🚀 Iniciando Control de Jornada...");
-        const logicalDate = getLogicalDate();
-        const currentPending = almacenajeTasksCache.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
-        const currentDone = almacenajeTasksCache.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
+        try {
+            const logicalDate = getLogicalDate();
+            // Filtro robusto para evitar errores si t es null o indefinido
+            const safeTasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => t && typeof t === 'object') : [];
+            const currentPending = safeTasks.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
+            const currentDone = safeTasks.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
 
-        const modal = document.createElement('div');
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
-        modal.innerHTML = `
-            <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.3); pointer-events:auto !important;">
-                <div style="text-align:center; margin-bottom:1.5rem;">
-                    <h2 style="color:#fff; margin:0; font-size:1.4rem;">Control de Jornada</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin:5px 0;">Fecha Operativa: <strong style="color:var(--primary);">${logicalDate}</strong></p>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button id="optUpdate" class="btn" style="padding:1rem; font-weight:700; background:linear-gradient(135deg, var(--primary), #6366f1); border:none;">
-                        CONTINUAR TURNO (Actualizar)
-                    </button>
-                    <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-top:10px; text-decoration:underline;">Cancelar</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        alert("✅ Ventana de control mostrada correctamente.");
+            const modal = document.createElement('div');
+            modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+            modal.innerHTML = `
+                <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.4); pointer-events:auto !important;">
+                    <div style="text-align:center; margin-bottom:2rem;">
+                        <h2 style="color:#fff; margin:0; font-size:1.5rem; font-weight:800;">Control de Jornada</h2>
+                        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px;">Fecha: <strong style="color:var(--primary);">${logicalDate}</strong></p>
+                    </div>
 
-        modal.querySelector('#optUpdate').onclick = () => {
-            document.body.removeChild(modal);
-            window.processAlmacenajeTasks('update');
-        };
-        modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
+                    <div style="display:flex; flex-direction:column; gap:15px;">
+                        <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
+                            CONTINUAR TURNO (Refrescar)
+                        </button>
+                        
+                        <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; margin-top:10px; text-decoration:underline;">
+                            Cerrar ventana
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#optUpdate').onclick = () => {
+                document.body.removeChild(modal);
+                window.processAlmacenajeTasks('update');
+            };
+            modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
+        } catch (err) {
+            alert("❌ Error crítico al abrir ventana: " + err.message);
+            console.error(err);
+        }
     };
 
     window.processAlmacenajeTasks = processAlmacenajeTasks;
@@ -3248,9 +3257,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btnOpen = document.getElementById('btn_open_shift_new');
     if (btnOpen) {
         btnOpen.onclick = () => {
-            alert("🖱️ Botón 'PROCESAR TAREAS' detectado!");
             if (window.openShiftModal) window.openShiftModal();
-            else alert("❌ Error: window.openShiftModal no existe.");
+            else alert("❌ Error: Función no cargada.");
         };
     }
 
