@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.43';
-const CACHE_KEY = `logistics_v12_4_43_`;
+const VERSION = '12.4.44';
+const CACHE_KEY = `logistics_v12_4_44_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -2412,7 +2412,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (tabId === 'almacenaje') {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
-    } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
+    } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
+        if (activeSub === 'kpi_tareas') almacenajeTaskMode = 'kpi';
         renderAlmacenajeTareas(container);
     } else {
         const data = await getAreaData(tabId);
