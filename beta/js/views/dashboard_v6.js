@@ -8,56 +8,6 @@ import * as analisisSkuModule from './analisis_sku_module.js?v=12.4.66';
 const VERSION = '12.4.66-BETA';
 const CACHE_KEY = `logistics_v12_4_66_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
-
-const TABS = [
-  { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
-  ]},
-  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
-  ]},
-  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
-  ]},
-  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' }
-  ]},
-  { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
-  ]},
-  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }
-  ]},
-  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
-    { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
-    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' }
-  ]},
-  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
-    { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
-    { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
-    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' }
-  ] },
-  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
-    { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
-  ] },
-  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
-    { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
-    { id: 'usuarios', label: 'Usuarios', icon: '👥' },
-    { id: 'permisos', label: 'Permisos', icon: '🛡️' },
-    { id: 'asistencia', label: 'Asistencia', icon: '📅' },
-    { id: 'performance', label: 'Performance', icon: '📈', subTabs: [
-        { id: 'historial', label: 'Historial', icon: '📅' },
-        { id: 'graficos', label: 'KPI Gráficos', icon: '📊' },
-        { id: 'reporte', label: 'KPI Reporte', icon: '📋' }
-    ]},
-    { id: 'rfs', label: 'RF´s', icon: '🔋' }
-  ] },
-  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
-];
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
@@ -438,30 +388,42 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderTabContent = async (silent = false) => {
+    console.log(`[PULSE DEBUG] Rendering Tab: ${currentTab}`);
     const tabObj = allowedTabs.find(t => t.id === currentTab);
+    if (!tabObj) {
+        console.error(`[PULSE ERROR] Tab ${currentTab} not found in allowedTabs`, allowedTabs);
+        contentArea.innerHTML = `<div style="padding:2rem; color:var(--danger);">Error: Pestaña ${currentTab} no permitida o no encontrada.</div>`;
+        return;
+    }
+
     const dateTag = currentDateFilter ? ` <span style="background:var(--warning); color:#000; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;">Snapshot: ${currentDateFilter}</span>` : '';
     contentTitle.innerHTML = tabObj.label + dateTag;
     
     if (!silent) {
-        contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando...</p></div>`;
+        contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando ${tabObj.label}...</p></div>`;
     }
 
-    if (currentTab === 'inicio') await renderHomeTab();
-    else if (currentTab === 'buffer') await bufferModule.renderBufferTab(contentArea, user, TABS, renderTabContent);
-    else if (currentTab === 'almacenaje') await almacenajeModule.renderAlmacenajeTareas(contentArea);
-    else if (currentTab === 'analisis_sku') await analisisSkuModule.renderAnalisisSKUTab(contentArea, user, TABS, '');
-    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
-    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
-    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
-    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
-    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
-    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
-    else if (currentTab === 'admin_pers') await adminModule.renderAdminTab(contentArea, user, TABS);
-    else if (currentTab === 'config') await renderConfigTab();
-    else {
-      const data = await getAreaData(currentTab);
-      if (!data) renderUploadArea(contentArea, currentTab);
-      else renderDashboardView(contentArea, data);
+    try {
+        if (currentTab === 'inicio') await renderHomeTab();
+        else if (currentTab === 'buffer') await bufferModule.renderBufferTab(contentArea, user, TABS, renderTabContent);
+        else if (currentTab === 'almacenaje') await almacenajeModule.renderAlmacenajeTareas(contentArea);
+        else if (currentTab === 'analisis_sku') await analisisSkuModule.renderAnalisisSKUTab(contentArea, user, TABS, '');
+        else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
+        else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
+        else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
+        else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
+        else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
+        else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
+        else if (currentTab === 'admin_pers') await adminModule.renderAdminTab(contentArea, user, TABS);
+        else if (currentTab === 'config') await renderConfigTab();
+        else {
+          const data = await getAreaData(currentTab);
+          if (!data) renderUploadArea(contentArea, currentTab);
+          else renderDashboardView(contentArea, data);
+        }
+    } catch (err) {
+        console.error(`[PULSE CRITICAL] Error rendering tab ${currentTab}:`, err);
+        contentArea.innerHTML = `<div style="padding:2rem; color:var(--danger);">Error crítico al cargar ${tabObj.label}: ${err.message}</div>`;
     }
   };
 
