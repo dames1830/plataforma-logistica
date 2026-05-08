@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.22-BETA';
-import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.35-BETA';
+import * as adminService from '../services/adminService.js?v=12.4.35-BETA';
 
 
-const VERSION = '12.4.34-BETA';
-const CACHE_KEY = `logistics_v12_4_22_`;
+const VERSION = '12.4.35-BETA';
+const CACHE_KEY = `logistics_v12_4_35_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
 
@@ -2155,7 +2155,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.3.0 | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.35-BETA | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2330,7 +2330,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.1.86-BETA'
+                        version: 'v12.4.35-BETA'
                     }]
                 },
                 options: {
@@ -3011,13 +3011,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 return sortedItems.map(i => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
-                                    <td style="padding:0.6rem 1rem; color:#fff; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
-                                    <td style="padding:0.6rem 1rem;">${t.id}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;"><span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'inherit'}; font-weight:700;">${t.status}</span></td>
+                                    <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
+                                            ${t.status.toUpperCase()}
+                                        </span>
+                                    </td>
                                 </tr>`);
                             })).join('')}
                         </tbody>
