@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.76';
 
 
-const VERSION = '12.4.80';
-const CACHE_KEY = `logistics_v12_4_80_`;
+const VERSION = '12.4.81';
+const CACHE_KEY = `logistics_v12_4_81_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -3110,7 +3110,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
-            saveAlmacenajeTasks(); // Sin await
+            saveAlmacenajeTasks(); 
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
