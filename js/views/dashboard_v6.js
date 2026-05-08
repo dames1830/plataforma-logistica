@@ -2,9 +2,17 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.47';
-const CACHE_KEY = `logistics_v12_4_47_`;
+const VERSION = '12.4.48';
+const CACHE_KEY = `logistics_v12_4_48_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
+
+const getWeekNumber = (d) => {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+};
+
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
@@ -1542,12 +1550,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
     
     // Filtro de SEMANAS para el Ranking de Tardanzas (v11.4.2)
-    const getWeekNumber = (d) => {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-    };
     
     const currentWeekNum = getWeekNumber(new Date());
     if (!window._selectedWeeks) window._selectedWeeks = [currentWeekNum];
@@ -2187,12 +2189,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const getWeekNumber = (d) => {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-  };
 
   const renderBufferHistory = async (container) => {
     container.innerHTML = `
@@ -3142,13 +3138,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
   };
 
-  const getWeekNumber = (d) => {
-    const date = new Date(d);
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    const week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-  };
 
   renderNav();
   renderTabContent();
