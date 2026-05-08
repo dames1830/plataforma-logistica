@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v12.4.2)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v12.4.65)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -34,7 +34,6 @@ export const initializeAdminData = async () => {
     try {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         
-        // Función con Timeout de 4s para no bloquear la UI
         const fetchWithTimeout = (url, options, timeout = 4000) => {
             return Promise.race([
                 fetch(url, options),
@@ -49,7 +48,6 @@ export const initializeAdminData = async () => {
                     const result = await res.json();
                     if (result.data) {
                         adminStore[area] = result.data;
-                        // Intentar guardar localmente
                         localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
                     }
                 }
@@ -92,6 +90,11 @@ export const initPermissions = (tabs) => {
                 if (t.subTabs) {
                     t.subTabs.forEach(s => {
                         p[`${t.id}_${s.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                        if (s.subTabs) {
+                           s.subTabs.forEach(ss => {
+                               p[`${s.id}_${ss.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                           });
+                        }
                     });
                 }
             });
@@ -100,20 +103,59 @@ export const initPermissions = (tabs) => {
     });
 };
 
+export const togglePermission = (role, tabId) => {
+    const p = getPermissions(role);
+    p[tabId] = p[tabId] === 1 ? 0 : 1;
+    savePermissions(role, p);
+};
+
 export const saveWorker = async (worker) => {
     const workers = getWorkers();
     const idx = workers.findIndex(w => w.dni === worker.dni);
-    if (idx >= 0) workers[idx] = worker;
-    else workers.push(worker);
+    if (idx >= 0) workers[idx] = { ...workers[idx], ...worker };
+    else workers.push({ ...worker, active: true });
     return await save('workers', workers);
+};
+
+export const saveWorkers = async (newWorkers) => {
+    const workers = getWorkers();
+    newWorkers.forEach(nw => {
+        const idx = workers.findIndex(w => w.dni === nw.dni);
+        if (idx >= 0) workers[idx] = { ...workers[idx], ...nw };
+        else workers.push({ ...nw, active: true });
+    });
+    return await save('workers', workers);
+};
+
+export const toggleWorkerStatus = (dni) => {
+    const workers = getWorkers();
+    const idx = workers.findIndex(w => w.dni === dni);
+    if (idx >= 0) {
+        workers[idx].active = workers[idx].active === false ? true : false;
+        save('workers', workers);
+    }
 };
 
 export const saveUser = async (user) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.username === user.username);
-    if (idx >= 0) users[idx] = user;
-    else users.push(user);
+    if (idx >= 0) users[idx] = { ...users[idx], ...user };
+    else users.push({ ...user, active: true });
     return await save('users', users);
+};
+
+export const toggleUserStatus = (username) => {
+    const users = getUsers();
+    const idx = users.findIndex(u => u.username === username);
+    if (idx >= 0) {
+        users[idx].active = users[idx].active === false ? true : false;
+        save('users', users);
+    }
+};
+
+export const deleteUser = (username) => {
+    const users = getUsers().filter(u => u.username !== username);
+    save('users', users);
 };
 
 export const savePermissions = async (role, perms) => {
@@ -124,46 +166,52 @@ export const savePermissions = async (role, perms) => {
 // --- ASISTENCIA ---
 export const saveAttendance = async (date, data) => {
     adminStore.attendance[date] = data;
+    
+    // Al cerrar asistencia, generamos log de performance si no existe
+    if (data.finalized) {
+        const perfLog = adminStore.performance_log;
+        data.data.forEach(att => {
+            const exists = perfLog.find(l => l.date === date && l.dni === att.dni);
+            if (!exists) {
+                perfLog.push({
+                    date: date,
+                    dni: att.dni,
+                    nombre: att.nombre,
+                    apellidos: att.apellidos,
+                    asistencia: att.present ? 'P' : 'F',
+                    puntualidad: att.onTime ? 'SÍ' : 'NO',
+                    produccion: att.present ? 10 : 0,
+                    bpa: att.present ? 10 : 0,
+                    supervisor: att.present ? 10 : 0,
+                    justification: att.justification || '',
+                    rendimiento: att.present ? '100%' : '0%'
+                });
+            }
+        });
+        save('performance_log', perfLog);
+    }
+
     return await save('attendance', adminStore.attendance);
 };
-export const getAttendance = (date) => adminStore.attendance[date] || [];
+export const getAttendance = (date) => adminStore.attendance[date] || null;
 
 // --- PERFORMANCE ---
-const calculateRendimientoValue = (entry) => {
-    const qty = parseFloat(entry.cantidad) || 0;
-    const meta = parseFloat(entry.meta) || 1;
-    const tiempo = parseFloat(entry.tiempo) || 1;
-    return (qty / (meta * tiempo)) * 100;
-};
+export const getPerformanceLog = () => adminStore.performance_log;
 
-export const savePerformanceLog = async (entry) => {
+export const updatePerformanceLogEntry = (date, dni, fields) => {
     const log = adminStore.performance_log;
-    log.push({
-        ...entry,
-        id: Date.now().toString(),
-        ts: new Date().toISOString(),
-        rendimiento: calculateRendimientoValue(entry)
-    });
-    return await save('performance_log', log);
-};
-
-export const updatePerformanceLog = (id, fields) => {
-    const log = adminStore.performance_log;
-    const idx = log.findIndex(l => l.id === id);
+    const idx = log.findIndex(l => l.date === date && l.dni === dni);
     if (idx >= 0) {
         log[idx] = { ...log[idx], ...fields };
-        log[idx].rendimiento = calculateRendimientoValue(log[idx]);
+        
+        // Recalcular rendimiento % (Producción + BPA + Supervisor) / 30
+        const p = parseFloat(log[idx].produccion) || 0;
+        const b = parseFloat(log[idx].bpa) || 0;
+        const s = parseFloat(log[idx].supervisor) || 0;
+        const rend = Math.round(((p + b + s) / 30) * 100);
+        log[idx].rendimiento = rend + '%';
+        
         save('performance_log', log);
-    }
-};
-
-export const getPerformance = () => adminStore.performance;
-export const updatePerformanceEntry = (dni, fields) => {
-    const perf = getPerformance();
-    const idx = perf.findIndex(p => p.dni === dni);
-    if (idx >= 0) {
-        perf[idx] = { ...perf[idx], ...fields };
-        save('performance', perf);
     }
 };
 
@@ -171,7 +219,6 @@ export const updatePerformanceEntry = (dni, fields) => {
 export const resetProductionData = async () => {
     console.log("⚠️ [PULSE] Iniciando reinicio maestro de datos de producción...");
     await save('attendance', {});
-    await save('performance', []);
     await save('performance_log', []);
     console.log("✅ [PULSE] Datos reiniciados satisfactoriamente.");
 };
@@ -180,7 +227,6 @@ export const saveAlmacenajeTasks = async (tasks) => {
     try {
         adminStore.almacenaje_tasks = tasks;
         localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-
         const res = await fetch(`${API_URL}/almacenaje_tasks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
