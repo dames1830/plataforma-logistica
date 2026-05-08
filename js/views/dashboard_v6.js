@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.42';
-import * as adminService from '../services/adminService.js?v=12.4.42';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.43';
+import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.42';
-const CACHE_KEY = `logistics_v12_4_42_`;
+const VERSION = '12.4.43';
+const CACHE_KEY = `logistics_v12_4_43_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -16,24 +16,15 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
   try {
-      // Usamos el mecanismo de persistencia de csvHub para guardar en IndexedDB
-      // import { saveToDB } from '../services/csvHub_v6.js'; // Asumimos disponible o implementamos local
-      // Para máxima seguridad, implementamos un guardado local robusto
-      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
-      console.log("[PULSE] Historial guardado en LS persistente.");
+      await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+      console.log("[PULSE] Tareas sincronizadas con el servidor.");
   } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
 };
 
 const loadAlmacenajeTasks = async () => {
   try {
-      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
-      if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-              almacenajeTasksCache = parsed;
-              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas recuperadas del almacenamiento persistente.`);
-          }
-      }
+      almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
+      console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas (Global).`);
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
 
@@ -2377,7 +2368,12 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (document.visibilityState === 'visible' && isIdle) {
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
+              
+              // Sincronizar cache local de tareas con el almacén global
+              almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
+
               if (currentTab === 'inicio') renderTabContent(true); 
+              if (currentTab === 'almacenaje' && activeSub === 'tareas_dia') renderAlmacenajeTareas(document.getElementById('areaContent'));
           }
       }, 20000); 
   };
