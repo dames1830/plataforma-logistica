@@ -388,30 +388,42 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderTabContent = async (silent = false) => {
+    console.log(`[PULSE DEBUG] Rendering Tab: ${currentTab}`);
     const tabObj = allowedTabs.find(t => t.id === currentTab);
+    if (!tabObj) {
+        console.error(`[PULSE ERROR] Tab ${currentTab} not found in allowedTabs`, allowedTabs);
+        contentArea.innerHTML = `<div style="padding:2rem; color:var(--danger);">Error: Pestaña ${currentTab} no permitida o no encontrada.</div>`;
+        return;
+    }
+
     const dateTag = currentDateFilter ? ` <span style="background:var(--warning); color:#000; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;">Snapshot: ${currentDateFilter}</span>` : '';
     contentTitle.innerHTML = tabObj.label + dateTag;
     
     if (!silent) {
-        contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando...</p></div>`;
+        contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando ${tabObj.label}...</p></div>`;
     }
 
-    if (currentTab === 'inicio') await renderHomeTab();
-    else if (currentTab === 'buffer') await bufferModule.renderBufferTab(contentArea, user, TABS, renderTabContent);
-    else if (currentTab === 'almacenaje') await almacenajeModule.renderAlmacenajeTareas(contentArea);
-    else if (currentTab === 'analisis_sku') await analisisSkuModule.renderAnalisisSKUTab(contentArea, user, TABS, '');
-    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
-    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
-    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
-    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
-    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
-    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
-    else if (currentTab === 'admin_pers') await adminModule.renderAdminTab(contentArea, user, TABS);
-    else if (currentTab === 'config') await renderConfigTab();
-    else {
-      const data = await getAreaData(currentTab);
-      if (!data) renderUploadArea(contentArea, currentTab);
-      else renderDashboardView(contentArea, data);
+    try {
+        if (currentTab === 'inicio') await renderHomeTab();
+        else if (currentTab === 'buffer') await bufferModule.renderBufferTab(contentArea, user, TABS, renderTabContent);
+        else if (currentTab === 'almacenaje') await almacenajeModule.renderAlmacenajeTareas(contentArea);
+        else if (currentTab === 'analisis_sku') await analisisSkuModule.renderAnalisisSKUTab(contentArea, user, TABS, '');
+        else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
+        else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
+        else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
+        else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
+        else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
+        else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
+        else if (currentTab === 'admin_pers') await adminModule.renderAdminTab(contentArea, user, TABS);
+        else if (currentTab === 'config') await renderConfigTab();
+        else {
+          const data = await getAreaData(currentTab);
+          if (!data) renderUploadArea(contentArea, currentTab);
+          else renderDashboardView(contentArea, data);
+        }
+    } catch (err) {
+        console.error(`[PULSE CRITICAL] Error rendering tab ${currentTab}:`, err);
+        contentArea.innerHTML = `<div style="padding:2rem; color:var(--danger);">Error crítico al cargar ${tabObj.label}: ${err.message}</div>`;
     }
   };
 
