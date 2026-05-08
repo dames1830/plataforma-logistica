@@ -1,6 +1,5 @@
-// URL del servidor backend para autenticación y datos
+// URL del servidor backend para autenticación
 const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
-const PREFIX = 'logistics_admin_v11_';
 
 // Fallback local en caso de que el servidor esté caído
 const FALLBACK_USERS = [
@@ -8,7 +7,6 @@ const FALLBACK_USERS = [
 ];
 
 export const login = async (username, password) => {
-  // 1. Intento vía API de Autenticación Central (Seguridad)
   try {
     const response = await fetch(`${AUTH_API}/auth/login`, {
       method: 'POST',
@@ -19,16 +17,33 @@ export const login = async (username, password) => {
     if (response.ok) {
       const result = await response.json();
       if (result.success) {
+        // [PULSE SECURITY OVERRIDE] Verificar contra la lista local de administración
+        try {
+          const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+          if (dynamicUsersRaw) {
+            const dynamicUsers = JSON.parse(dynamicUsersRaw);
+            const dUser = dynamicUsers.find(u => u.username === username);
+            if (dUser) {
+              if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
+              if (dUser.password !== password) return { success: false, message: 'Contraseña incorrecta. Se ha actualizado recientemente.' };
+            }
+          }
+        } catch(e) { console.warn("Error en Security Override:", e); }
+
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
       }
+      // Si el servidor falla (ej: credenciales no están en el backend),
+      // dejamos que baje a los fallbacks locales de la Beta.
     }
+    // Si llegamos aquí, el servidor respondió con error (ej: 404 o 500)
+    console.warn("Servidor respondió con error, intentando login local...");
   } catch (err) {
-    console.warn("API de Autenticación no disponible, usando base de datos distribuida...");
+    console.warn("Error de conexión al servidor, intentando login local...");
   }
 
-  // 2. Maestro / Emergencia
+  // 2. Fallback: login local solo para admin de emergencia (Maestro)
   const masterUser = FALLBACK_USERS.find(u => u.username === username && u.password === password);
   if (masterUser) {
     const sessionData = { id: masterUser.id, username: masterUser.username, role: masterUser.role, name: masterUser.name };
@@ -36,39 +51,24 @@ export const login = async (username, password) => {
     return { success: true, user: sessionData };
   }
 
-  // 3. Usuarios Dinámicos (Base de Datos Distribuida de Usuarios)
-  // Paso A: Verificar localmente primero
-  let dynamicUsers = [];
+  // 3. Fallback: Usuarios dinámicos creados en el módulo de Administración
   try {
-    const raw = localStorage.getItem(PREFIX + 'users');
-    if (raw) dynamicUsers = JSON.parse(raw);
-  } catch(e) {}
-
-  let user = dynamicUsers.find(u => u.username === username && u.password === password);
-
-  // Paso B: Si no está local, SINCRONIZAR con la nube inmediatamente
-  if (!user) {
-    try {
-        console.log("Usuario no encontrado localmente. Sincronizando con la nube...");
-        const res = await fetch(`${AUTH_API}/logistics/users`);
-        if (res.ok) {
-            const result = await res.json();
-            if (result.data && Array.isArray(result.data)) {
-                dynamicUsers = result.data;
-                localStorage.setItem(PREFIX + 'users', JSON.stringify(dynamicUsers));
-                user = dynamicUsers.find(u => u.username === username && u.password === password);
-            }
+    const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+    if (dynamicUsersRaw) {
+      const dynamicUsers = JSON.parse(dynamicUsersRaw);
+      const dUser = dynamicUsers.find(u => u.username === username && u.password === password);
+      
+      if (dUser) {
+        if (dUser.active === false) {
+           return { success: false, message: 'Cuenta desactivada. Contacte al administrador.' };
         }
-    } catch(err) {
-        console.warn("Fallo de sincronización de usuarios:", err);
+        const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
+        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+        return { success: true, user: sessionData };
+      }
     }
-  }
-
-  if (user) {
-    if (user.active === false) return { success: false, message: 'Cuenta desactivada.' };
-    const sessionData = { id: Date.now(), username: user.username, role: user.role, name: user.name };
-    localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-    return { success: true, user: sessionData };
+  } catch (err) {
+    console.error("Error leyendo usuarios dinámicos:", err);
   }
 
   return { success: false, message: 'Credenciales inválidas' };

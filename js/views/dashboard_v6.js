@@ -1,18 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.43';
-import * as adminService from '../services/adminService.js?v=12.4.43';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.36';
+import * as adminService from '../services/adminService.js?v=12.4.36';
 
 
-const VERSION = '12.4.52';
-const CACHE_KEY = `logistics_v12_4_52_`;
+const VERSION = '12.4.36';
+const CACHE_KEY = `logistics_v12_4_36_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
-
-const getWeekNumber = (d) => {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-};
-
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
@@ -24,15 +16,24 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
   try {
-      await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
-      console.log("[PULSE] Tareas sincronizadas con el servidor.");
+      // Usamos el mecanismo de persistencia de csvHub para guardar en IndexedDB
+      // import { saveToDB } from '../services/csvHub_v6.js'; // Asumimos disponible o implementamos local
+      // Para máxima seguridad, implementamos un guardado local robusto
+      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
+      console.log("[PULSE] Historial guardado en LS persistente.");
   } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
 };
 
 const loadAlmacenajeTasks = async () => {
   try {
-      almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
-      console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas (Global).`);
+      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
+      if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+              almacenajeTasksCache = parsed;
+              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas recuperadas del almacenamiento persistente.`);
+          }
+      }
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
 
@@ -1550,6 +1551,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
     
     // Filtro de SEMANAS para el Ranking de Tardanzas (v11.4.2)
+    const getWeekNumber = (d) => {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    };
     
     const currentWeekNum = getWeekNumber(new Date());
     if (!window._selectedWeeks) window._selectedWeeks = [currentWeekNum];
@@ -2189,6 +2196,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  const getWeekNumber = (d) => {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  };
 
   const renderBufferHistory = async (container) => {
     container.innerHTML = `
@@ -2364,12 +2377,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (document.visibilityState === 'visible' && isIdle) {
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
-              
-              // Sincronizar cache local de tareas con el almacén global
-              almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
-
               if (currentTab === 'inicio') renderTabContent(true); 
-              if (currentTab === 'almacenaje' && activeSub === 'tareas_dia') renderAlmacenajeTareas(document.getElementById('areaContent'));
           }
       }, 20000); 
   };
@@ -2408,18 +2416,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (tabId === 'almacenaje') {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
-    } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
-        almacenajeTaskMode = (activeSub === 'kpi_tareas') ? 'kpi' : (localStorage.getItem('almacenajeTaskMode') || 'resumen');
-        try {
-            renderAlmacenajeTareas(container);
-        } catch (err) {
-            console.error("Critical Render Error:", err);
-            container.innerHTML = `<div style="padding:2rem; color:#ef4444; background:rgba(239,68,68,0.1); border-radius:12px;">
-                <h4 style="margin:0 0 10px 0;">❌ Error de Visualización</h4>
-                <p style="margin:0; font-size:0.8rem; opacity:0.8;">${err.message}</p>
-                <button onclick="location.reload()" class="btn" style="margin-top:1rem; padding:5px 15px; font-size:0.7rem;">RECARGAR PÁGINA</button>
-            </div>`;
-        }
+    } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
+        renderAlmacenajeTareas(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2671,28 +2669,15 @@ export const renderDashboard = async (container, user, onLogout) => {
   const processAlmacenajeTasks = async () => {
     const stock = await getAreaData('almacenaje_activo');
     const maestro = dataStore.articulos;
-    
-    if (!stock || !stock.length) { 
-        alert("⚠️ No se encontró 'Stock Activo'. Asegúrate de haber subido el archivo en la pestaña 'ARCHIVO ALMACENAJE' y que aparezca el check verde."); 
-        return; 
-    }
-    if (!maestro || !maestro.length) { 
-        alert("⚠️ No se encontró 'Maestro Artículos'. Súbelo en la pestaña 'ARCHIVO ALMACENAJE'."); 
-        return; 
-    }
+    if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
+    if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
     // 1. Filtrar áreas permitidas
-    const allowedAreas = ['MZN', 'SEL', 'CDBUFFER', 'BUFFER'];
+    const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
     const filtered = stock.filter(row => {
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || row['AREA'] || row['Ã¡rea'] || row['Ubicación'] || '').trim().toUpperCase();
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
         return allowedAreas.some(a => area.includes(a));
     });
-
-    if (!filtered.length) {
-        const firstRowKeys = stock.length > 0 ? Object.keys(stock[0]).join(', ') : 'Archivo vacío';
-        alert(`❌ Error: No se detectaron áreas válidas (MZN, SEL, BUFFER) en las ${stock.length} filas del archivo.\n\nColumnas detectadas: ${firstRowKeys}\n\nVerifica que tu archivo tenga una columna llamada 'Area' o 'Ubicación'.`);
-        return;
-    }
 
     // 2. Mapear Maestro para Gender RIMS y Marcas
     const artMap = new Map();
@@ -2711,28 +2696,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     // 3. Agrupar por Artículo (7 dígitos)
     const groups = {};
     filtered.forEach(row => {
-        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || row['SKU'] || row['ArtÃ­culo'] || '').trim();
+        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
         const sku7 = skuFull.substring(0, 7);
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || row['AREA'] || row['Ã¡rea'] || row['Ubicación'] || '').trim().toUpperCase();
-        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.'] || row['CANTIDAD'] || row['Qty'] || 0);
-        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || row['UbicaciÃ³n'] || row['UBICACION'] || '').trim();
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
+        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
         const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
         if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
         
         const item = { ...row, skuFull, ubi, qty, area };
         groups[sku7].items.push(item);
-        if (area.includes('BUFFER')) groups[sku7].bufferQty += qty;
+        if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
         else groups[sku7].zonaQty += qty;
     });
 
     // 4. Filtrar: Solo artículos con algo en CDBUFFER
     const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
-    
-    if (!eligibleArticulos.length) {
-        alert("⚠️ No se generaron tareas.\n\nCausa: No hay artículos con stock en la zona 'BUFFER'.\nEl proceso de Almacenaje solo genera tareas para mover mercadería DESDE Buffer hacia la zona de picking.");
-        return;
-    }
     
     // 5. Agrupar por Marca para aplicar reglas de Tarea
     const byMarca = {};
@@ -2850,11 +2830,17 @@ export const renderDashboard = async (container, user, onLogout) => {
     const isKpi = almacenajeTaskMode === 'kpi';
     const tasks = almacenajeTasksCache;
 
+    // Lógica de Agrupación para Historial
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
 
     const groups = {};
-    const tasksToProcess = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
-    tasksToProcess.forEach(t => {
-        if (!t || typeof t !== 'object') return;
+    almacenajeTasksCache.forEach(t => {
         if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
         const dateObj = new Date(t.fecha + 'T00:00:00');
         if (isNaN(dateObj.getTime())) return;
@@ -2955,8 +2941,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             `}
                         </thead>
                         <tbody>
-                            ${tasksToProcess.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasksToProcess.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
+                            ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
+                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
@@ -3013,12 +2999,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
                                     </td>
                                 </tr>`;
-                            }).join('') : tasksToProcess.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => (t.items || []).flatMap(art => {
-                                const sortedItems = [...(art.items || [])].sort((a,b) => {
-                                    const aArea = String(a.area || '');
-                                    const bArea = String(b.area || '');
-                                    const aIsB = aArea.includes('CDBUFFER');
-                                    const bIsB = bArea.includes('CDBUFFER');
+                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
+                                const sortedItems = [...art.items].sort((a,b) => {
+                                    const aIsB = a.area.includes('CDBUFFER');
+                                    const bIsB = b.area.includes('CDBUFFER');
                                     if (aIsB && !bIsB) return -1;
                                     if (!aIsB && bIsB) return 1;
                                     return 0;
@@ -3044,8 +3028,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
-                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasksToProcess.length}</b></span>
-                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasksToProcess.reduce((s,t) => s+(t.qty||0), 0).toLocaleString()}</b></span>
+                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
+                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
                     </div>
                 </div>
             </div>
@@ -3054,12 +3038,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
-    window.processAlmacenajeTasks = () => { 
-        console.log("Trigger: Process Almacenaje");
-        if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) {
-            processAlmacenajeTasks().catch(err => alert("Error en proceso: " + err.message));
-        }
-    };
+    window.processAlmacenajeTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
     window.resetTask = (id) => {
         if (confirm(`¿Reiniciar la tarea ${id}? Se borrarán los usuarios y horas asignadas.`)) {
@@ -3158,10 +3137,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.setTaskMode = (mode) => {
         almacenajeTaskMode = mode;
         localStorage.setItem('almacenajeTaskMode', mode);
-        try { renderAlmacenajeTareas(container); } catch(e) { location.reload(); }
+        renderAlmacenajeTareas(container);
     };
   };
-
 
   renderNav();
   renderTabContent();

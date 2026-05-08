@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v12.4.37)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v12.4.2)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -11,8 +11,7 @@ export const adminStore = {
     permissions: {},
     attendance: {}, // Keyed by date YYYY-MM-DD
     performance: [],
-    performance_log: [],
-    almacenaje_tasks: []
+    performance_log: []
 };
 
 // Carga inicial híbrida (Local + Servidor)
@@ -25,14 +24,13 @@ export const initializeAdminData = async () => {
         adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
         adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
         adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
-        adminStore.almacenaje_tasks = JSON.parse(localStorage.getItem(PREFIX + 'almacenaje_tasks') || '[]');
     } catch (e) {
         console.warn("⚠️ Error cargando datos locales (posible corrupción):", e);
     }
 
     // 2. Sincronización con Servidor (Sincronización Inteligente)
     try {
-        const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
+        const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log'];
         
         // Función con Timeout de 4s para no bloquear la UI
         const fetchWithTimeout = (url, options, timeout = 4000) => {
@@ -372,20 +370,4 @@ export const resetProductionData = async () => {
     await save('performance', []);
     await save('performance_log', []);
     console.log("✅ [PULSE] Datos reiniciados satisfactoriamente.");
-};
-export const saveAlmacenajeTasks = async (tasks) => {
-    try {
-        adminStore.almacenaje_tasks = tasks;
-        localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-
-        const res = await fetch(`${API_URL}/almacenaje_tasks`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: tasks })
-        });
-        return res.ok;
-    } catch (e) {
-        console.warn("⚠️ Error guardando tareas en servidor:", e);
-        return false;
-    }
 };
