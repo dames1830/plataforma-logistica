@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.22-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.23-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.22-BETA';
+const VERSION = '12.4.23-BETA';
 const CACHE_KEY = `logistics_v12_4_22_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
@@ -59,7 +59,8 @@ const TABS = [
   ]},
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
-    { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' }
+    { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
+    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' }
   ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
@@ -2418,6 +2419,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
         renderAlmacenajeTareas(container);
+    } else if (tabId === 'almacenaje' && activeSub === 'kpi_tareas') {
+        renderAlmacenajeKPIs(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2826,6 +2829,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
+    const isKpi = almacenajeTaskMode === 'kpi';
     const tasks = almacenajeTasksCache;
 
         // Lógica de Agrupación para Historial
@@ -2884,16 +2888,21 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-            <a class="sub-sub-nav-item ${!isDetail?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">
-                📊 RESUMEN
-            </a>
-            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">
-                🔍 DETALLE
-            </a>
+            <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
+            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+            <a class="sub-sub-nav-item ${isKpi?'active':''}" onclick="window.setTaskMode('kpi')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${isKpi?'800':'500'}; border-bottom:${isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📈 KPIs</a>
         </nav>
 
+        ${isKpi ? `
+        <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
+            <div style="text-align:center;">
+                <div style="font-size:4rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.5));">📊</div>
+                <h2 style="color:#fff; margin-bottom:0.5rem;">Panel de KPI Tareas</h2>
+                <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
+            </div>
+        </div>` : `
         <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
-            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); overflow-y:auto;">
+            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); border-left: 3px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow-y:auto;">
                 <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Historial</h4>
                 <div style="font-size:0.8rem;">
                     <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">Todas las Tareas</div>
@@ -2902,7 +2911,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
-                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05);">
+                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.4); border-radius:12px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
                             ${!isDetail ? `
@@ -3002,19 +3011,30 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </div>
                                     </td>
                                 </tr>
-                            `;}).join('') : tasks.flatMap(t => t.items.flatMap(art => [
-                                ...art.items.map(i => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); opacity:0.8;">
+                            `;}).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
+                                // Ordenar items: CDBUFFER primero
+                                const sortedItems = [...art.items].sort((a,b) => {
+                                    const aIsB = a.area.includes('CDBUFFER');
+                                    const bIsB = b.area.includes('CDBUFFER');
+                                    if (aIsB && !bIsB) return -1;
+                                    if (!aIsB && bIsB) return 1;
+                                    return 0;
+                                });
+
+                                return sortedItems.map(i => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:default;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
-                                    <td style="padding:0.6rem 1rem; color:var(--primary);">${i.ubi}</td>
+                                    <td style="padding:0.6rem 1rem; color:${i.area.includes('CDBUFFER') ? '#6366f1' : 'var(--primary)'}; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; font-size:0.7rem;">${t.id}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.6rem;">${t.status}</td>
-                                </tr>`)
-                            ])).join('')}
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.6rem;">
+                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'inherit'};">${t.status}</span>
+                                    </td>
+                                </tr>`);
+                            })).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -3130,6 +3150,18 @@ export const renderDashboard = async (container, user, onLogout) => {
         localStorage.setItem('almacenajeTaskMode', mode);
         renderAlmacenajeTareas(container);
     };
+  };
+
+  const renderAlmacenajeKPIs = (container) => {
+      container.innerHTML = `
+        <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
+            <div style="text-align:center;">
+                <div style="font-size:4rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.5));">📊</div>
+                <h2 style="color:#fff; margin-bottom:0.5rem;">Panel de KPI Tareas</h2>
+                <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
+            </div>
+        </div>
+      `;
   };
 
   renderNav();
