@@ -1,4 +1,4 @@
-import { getSession, logout } from './services/auth.js?v=12.4.50';
+import { getSession, logout } from './services/auth.js?v=12.4.51';
 
 class App {
   constructor(rootId) {
@@ -59,7 +59,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.4.50";
+    const versionStr = "v12.4.51";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {

@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.50';
-const CACHE_KEY = `logistics_v12_4_50_`;
+const VERSION = '12.4.51';
+const CACHE_KEY = `logistics_v12_4_51_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 
 const getWeekNumber = (d) => {
@@ -2677,9 +2677,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     // 1. Filtrar áreas permitidas
     const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
     const filtered = stock.filter(row => {
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || row['AREA'] || '').trim().toUpperCase();
         return allowedAreas.some(a => area.includes(a));
     });
+
+    if (!filtered.length) {
+        alert("❌ Error: No se detectaron áreas válidas en el Stock Activo.\n\nEl sistema espera una columna llamada 'Area' con valores como: MZN, SEL o CDBUFFER.\nVerifica los encabezados de tu archivo.");
+        return;
+    }
 
     // 2. Mapear Maestro para Gender RIMS y Marcas
     const artMap = new Map();
@@ -2715,6 +2720,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // 4. Filtrar: Solo artículos con algo en CDBUFFER
     const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
+    
+    if (!eligibleArticulos.length) {
+        alert("⚠️ No se generaron tareas.\n\nCausa: No hay artículos con stock en la zona 'CDBUFFER'.\nEl proceso de Almacenaje solo genera tareas para mover mercadería DESDE Buffer hacia la zona de picking.");
+        return;
+    }
     
     // 5. Agrupar por Marca para aplicar reglas de Tarea
     const byMarca = {};
