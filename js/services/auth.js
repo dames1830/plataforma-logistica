@@ -21,12 +21,13 @@ export const login = async (username, password) => {
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
-      } else if (result.message && !result.message.includes('not found')) {
-        // Si el servidor nos da un error específico (ej: clave incorrecta), lo respetamos
-        return { success: false, message: result.message };
+      } else if (result.message) {
+        // [IMPORTANTE] Mostrar el error real del servidor para diagnosticar
+        console.warn("Servidor rechazó el login:", result.message);
+        return { success: false, message: `Servidor: ${result.message}` };
       }
     }
-    console.warn("Servidor no encontró al usuario, intentando login local...");
+    console.warn("Respuesta de red OK pero sin éxito, intentando local...");
   } catch (err) {
     console.warn("Error de conexión al servidor, intentando login local...");
   }
