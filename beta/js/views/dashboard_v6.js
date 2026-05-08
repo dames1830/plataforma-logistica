@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.67';
-const CACHE_KEY = `logistics_v12_4_67_`;
+const VERSION = '12.4.68';
+const CACHE_KEY = `logistics_v12_4_68_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -30,8 +30,8 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 const saveAlmacenajeTasks = async () => {
   try {
       // 1. Persistencia LOCAL inmediata (Seguridad total)
-      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
-      // Sincronizar el adminStore localmente también para consistencia inmediata
+      // 1. Persistencia LOCAL inmediata
+      localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
       // 2. Sincronización Global INMEDIATA
@@ -43,18 +43,18 @@ const saveAlmacenajeTasks = async () => {
 const loadAlmacenajeTasks = async () => {
   try {
       // Recuperar primero lo local para rapidez
-      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
+      const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
       const localTasks = stored ? JSON.parse(stored) : [];
       
       const syncedTasks = adminService.adminStore.almacenaje_tasks;
       // Solo sobreescribimos lo local si la nube tiene datos reales (no vacíos)
       if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
           almacenajeTasksCache = syncedTasks;
-          localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(syncedTasks));
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la nube.`);
+          localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
+          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la NUBE GLOBAL.`);
       } else {
           almacenajeTasksCache = localTasks;
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria local.`);
+          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria LOCAL.`);
       }
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
