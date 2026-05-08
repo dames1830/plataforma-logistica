@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.51';
-const CACHE_KEY = `logistics_v12_4_51_`;
+const VERSION = '12.4.52';
+const CACHE_KEY = `logistics_v12_4_52_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 
 const getWeekNumber = (d) => {
@@ -2671,18 +2671,26 @@ export const renderDashboard = async (container, user, onLogout) => {
   const processAlmacenajeTasks = async () => {
     const stock = await getAreaData('almacenaje_activo');
     const maestro = dataStore.articulos;
-    if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
-    if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+    
+    if (!stock || !stock.length) { 
+        alert("⚠️ No se encontró 'Stock Activo'. Asegúrate de haber subido el archivo en la pestaña 'ARCHIVO ALMACENAJE' y que aparezca el check verde."); 
+        return; 
+    }
+    if (!maestro || !maestro.length) { 
+        alert("⚠️ No se encontró 'Maestro Artículos'. Súbelo en la pestaña 'ARCHIVO ALMACENAJE'."); 
+        return; 
+    }
 
     // 1. Filtrar áreas permitidas
-    const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
+    const allowedAreas = ['MZN', 'SEL', 'CDBUFFER', 'BUFFER'];
     const filtered = stock.filter(row => {
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || row['AREA'] || '').trim().toUpperCase();
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || row['AREA'] || row['Ã¡rea'] || row['Ubicación'] || '').trim().toUpperCase();
         return allowedAreas.some(a => area.includes(a));
     });
 
     if (!filtered.length) {
-        alert("❌ Error: No se detectaron áreas válidas en el Stock Activo.\n\nEl sistema espera una columna llamada 'Area' con valores como: MZN, SEL o CDBUFFER.\nVerifica los encabezados de tu archivo.");
+        const firstRowKeys = stock.length > 0 ? Object.keys(stock[0]).join(', ') : 'Archivo vacío';
+        alert(`❌ Error: No se detectaron áreas válidas (MZN, SEL, BUFFER) en las ${stock.length} filas del archivo.\n\nColumnas detectadas: ${firstRowKeys}\n\nVerifica que tu archivo tenga una columna llamada 'Area' o 'Ubicación'.`);
         return;
     }
 
@@ -2703,18 +2711,18 @@ export const renderDashboard = async (container, user, onLogout) => {
     // 3. Agrupar por Artículo (7 dígitos)
     const groups = {};
     filtered.forEach(row => {
-        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
+        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || row['SKU'] || row['ArtÃ­culo'] || '').trim();
         const sku7 = skuFull.substring(0, 7);
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
-        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
-        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || row['AREA'] || row['Ã¡rea'] || row['Ubicación'] || '').trim().toUpperCase();
+        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.'] || row['CANTIDAD'] || row['Qty'] || 0);
+        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || row['UbicaciÃ³n'] || row['UBICACION'] || '').trim();
         const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
         if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
         
         const item = { ...row, skuFull, ubi, qty, area };
         groups[sku7].items.push(item);
-        if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+        if (area.includes('BUFFER')) groups[sku7].bufferQty += qty;
         else groups[sku7].zonaQty += qty;
     });
 
@@ -2722,7 +2730,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
     
     if (!eligibleArticulos.length) {
-        alert("⚠️ No se generaron tareas.\n\nCausa: No hay artículos con stock en la zona 'CDBUFFER'.\nEl proceso de Almacenaje solo genera tareas para mover mercadería DESDE Buffer hacia la zona de picking.");
+        alert("⚠️ No se generaron tareas.\n\nCausa: No hay artículos con stock en la zona 'BUFFER'.\nEl proceso de Almacenaje solo genera tareas para mover mercadería DESDE Buffer hacia la zona de picking.");
         return;
     }
     
@@ -3046,7 +3054,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
-    window.processAlmacenajeTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) processAlmacenajeTasks(); };
+    window.processAlmacenajeTasks = () => { 
+        console.log("Trigger: Process Almacenaje");
+        if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) {
+            processAlmacenajeTasks().catch(err => alert("Error en proceso: " + err.message));
+        }
+    };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
     window.resetTask = (id) => {
         if (confirm(`¿Reiniciar la tarea ${id}? Se borrarán los usuarios y horas asignadas.`)) {
