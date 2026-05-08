@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.76';
 
 
-const VERSION = '12.4.76';
-const CACHE_KEY = `logistics_v12_4_76_`;
+const VERSION = '12.4.77';
+const CACHE_KEY = `logistics_v12_4_77_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -2834,8 +2834,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
     almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
     saveAlmacenajeTasks(); 
-    renderAlmacenajeTareas(document.getElementById('areaContent') || document.getElementById('app'));
-    alert("✨ Proceso completado.");
+    renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
   };
 
   const exportAlmacenajeExcel = () => {
