@@ -1,6 +1,6 @@
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
   --bg-dark: #0f172a;
   --bg-card: rgba(30, 41, 59, 0.7);
   --text-main: #f8fafc;
@@ -19,7 +19,7 @@
 body {
   background: var(--bg-dark);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
   color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;
 }
