@@ -1,30 +1,75 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.2';
-import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.36';
+import * as adminService from '../services/adminService.js?v=12.4.36';
 
 
-const VERSION = '12.4.2';
-const CACHE_KEY = `logistics_v12_3_0_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
+const VERSION = '12.4.36';
+const CACHE_KEY = `logistics_v12_4_36_`;
+const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
+console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
+
+// --- PERSISTENCIA TAREAS ALMACENAJE ---
+let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
+let selectedTaskDate = null; // Filtro de fecha seleccionado
+let expandedWeeks = []; // Semanas expandidas en el historial
+let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
+
+// --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
+const saveAlmacenajeTasks = async () => {
+  try {
+      // Usamos el mecanismo de persistencia de csvHub para guardar en IndexedDB
+      // import { saveToDB } from '../services/csvHub_v6.js'; // Asumimos disponible o implementamos local
+      // Para máxima seguridad, implementamos un guardado local robusto
+      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
+      console.log("[PULSE] Historial guardado en LS persistente.");
+  } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
+};
+
+const loadAlmacenajeTasks = async () => {
+  try {
+      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
+      if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+              almacenajeTasksCache = parsed;
+              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas recuperadas del almacenamiento persistente.`);
+          }
+      }
+  } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
+};
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'stock', label: 'Stock General', icon: '🏦', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'], subTabs: [
-    { id: 'stockActivo', label: 'Stock Activo', icon: '⚡' },
-    { id: 'stockReserva', label: 'Stock Reserva', icon: '📦' }
-  ] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'] },
-  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
-  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
+  ]},
+  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
+  ]},
+  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
+  ]},
+  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' }
+  ]},
+  { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
+  ]},
+  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }
+  ]},
+  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
+    { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
+    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' }
+  ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
     { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
-    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
-    { id: 'maestros', label: 'Recursos Maestros', icon: '🗂️' }
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' }
   ] },
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
@@ -270,6 +315,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
   await initPersistentData(); // [MOD V12.1.48] Esperar a IndexedDB antes de renderizar
   await adminService.initializeAdminData();
+  await loadAlmacenajeTasks(); // Forzar espera de carga
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
@@ -348,9 +394,15 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     if (currentTab === 'inicio') await renderHomeTab();
-    else if (currentTab === 'stock') await renderStockTab();
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
+    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
+    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
+    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
+    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
+    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
+    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
+    else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -427,36 +479,50 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderUploadArea = (container, area, hasData = null, ext = '.csv', customLabel = null) => {
     const meta = getUploadMeta(area);
-    const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'Nunca';
+    const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'NUNCA';
     const div = document.createElement('div');
     div.id = `wrap_${area}`;
     div.style.width = '100%';
     const label = customLabel || area.toUpperCase();
     
-    if (hasData && hasData.length > 0) {
-      div.innerHTML = `
-        <div style="padding:1rem; background:rgba(34, 197, 94, 0.05); border:1px solid rgba(34, 197, 94, 0.3); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h4 style="color:var(--success); margin:0; font-size:0.95rem; font-weight:700;">✅ ${label} CARGADO</h4>
-            <p style="font-size:0.8rem; margin:4px 0 0 0; color:var(--text-muted); font-weight:500;">
-                ${hasData.length.toLocaleString()} registros. 
-                <span style="color:#fff; background:#d97706; padding:2px 10px; border-radius:6px; margin-left:10px; font-weight:800; border:1px solid #fbbf24; display:inline-block; box-shadow:0 0 10px rgba(251,191,36,0.3);">📅 Subido: ${dateStr}</span>
-            </p>
+    const isLoaded = hasData && hasData.length > 0;
+    
+    div.innerHTML = `
+      <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${isLoaded ? '#22c55e' : '#64748b'};">
+          <div style="display:flex; align-items:center; gap:1.2rem;">
+              <div style="width:36px; height:36px; background:${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${isLoaded ? '#22c55e' : 'var(--text-muted)'}; border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)'};">
+                  ${ext === '.csv' ? '📄' : '📊'}
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                  <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACÍO'}</span>
+                      ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                    <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString()} regs</span>` : ''}
+                  </div>
+              </div>
           </div>
-          <div style="display:flex; gap:0.5rem;">
-              <label class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;"><input type="file" id="up_${area}" accept="${ext}" style="display:none;">REUBICAR</label>
-              <button id="del_${area}" class="btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; background:#ef4444; border:1px solid #b91c1c;">🗑️ QUITAR</button>
+          
+          <div style="display:flex; align-items:center; gap:1.5rem;">
+              <div style="text-align:right; min-width:180px;">
+                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA CARGA</div>
+                  <div style="font-size:0.75rem; color:${isLoaded ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
+              </div>
+              
+              <div style="display:flex; gap:0.4rem;">
+                  <label title="Subir Nuevo Archivo" style="background:${isLoaded ? 'rgba(79, 70, 229, 0.1)' : 'var(--primary)'}; color:${isLoaded ? 'var(--primary)' : '#fff'}; border:1px solid ${isLoaded ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                      <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
+                      ${isLoaded ? '🔄' : '📤'}
+                  </label>
+                  ${isLoaded ? `
+                    <button id="del_${area}" title="Quitar Archivo" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444'">
+                        🗑️
+                    </button>
+                  ` : ''}
+              </div>
           </div>
-        </div>`;
-    } else {
-      div.innerHTML = `
-        <div class="upload-area" style="padding:1.5rem; text-align:center; border: 1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:0.6rem;">
-          <h3 style="margin:0; font-size:1rem; color:var(--text-main); font-weight:700;">${label}</h3>
-          <p style="font-size:0.75rem; color:#f87171; font-weight:600; margin:0;">⚠️ Sin datos en memoria</p>
-          <p style="font-size:0.8rem; color:var(--text-muted); font-weight:600; margin-top:4px;">Última carga detectada: <span style="color:#fbbf24; font-weight:800; text-decoration:underline;">${dateStr}</span></p>
-          <label class="btn" style="width:auto; padding:0.5rem 1.5rem; cursor:pointer; font-size:0.85rem;">SUBIR ARCHIVO <input type="file" id="up_${area}" accept="${ext}" style="display:none;"></label>
-        </div>`;
-    }
+      </div>`;
+    
     container.appendChild(div);
 
     const input = document.getElementById(`up_${area}`);
@@ -464,7 +530,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         if(e.target.files[0]) { 
             const wrap = document.getElementById(`wrap_${area}`);
             const originalContent = wrap.innerHTML;
-            wrap.innerHTML = `<div style="padding:1.5rem; text-align:center; background:rgba(255,255,255,0.05); border-radius:10px; border:1px dashed var(--primary);"><div class="spinner" style="margin:0 auto 0.5rem auto; width:20px; height:20px; border:2px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h4 style="margin:0; font-size:0.9rem; color:var(--primary);">⌛ PROCESANDO...</h4></div>`;
+            wrap.innerHTML = `<div style="background:rgba(79, 70, 229, 0.05); border:1px dashed var(--primary); border-radius:10px; padding:0.6rem 1.2rem; display:flex; align-items:center; justify-content:center; gap:1rem; height:54px;">
+                <div class="spinner" style="width:16px; height:16px; border:2px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <span style="font-size:0.8rem; color:var(--primary); font-weight:800; letter-spacing:1px;">PROCESANDO ARCHIVO...</span>
+            </div>`;
             try { 
                 await parseFile(e.target.files[0], area); 
                 renderTabContent(); 
@@ -480,7 +549,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if(delBtn) delBtn.addEventListener('click', async () => {
         if(confirm(`¿Estás seguro de que quieres quitar el archivo de ${label}?`)) {
             delBtn.disabled = true;
-            delBtn.innerHTML = '⌛...';
+            delBtn.innerHTML = '...';
             await clearAreaData(area, user.username);
             renderTabContent();
         }
@@ -536,7 +605,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     }));
     const buf = document.getElementById('bufContent');
     if (activeBufferSub === 'maestros') {
-        const wrap = document.createElement('div'); wrap.style.display = 'grid'; wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(240px, 1fr))'; wrap.style.gap = '1rem'; buf.appendChild(wrap);
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; buf.appendChild(wrap);
+        renderUploadArea(wrap, 'buffer_activo', dataStore.buffer_activo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'buffer_reserva', dataStore.buffer_reserva, '.xlsx', 'STOCK RESERVA');
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
@@ -1980,7 +2051,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
-                        `; }).join('')}
+                        </tr>`; }).join('')}
                         `;
                     }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
@@ -2084,7 +2155,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.3.0 | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.36 | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2258,8 +2329,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
-                        tension: 0.4,
-                        version: 'v12.1.86-BETA'
+                        tension: 0.4
                     }]
                 },
                 options: {
@@ -2312,46 +2382,81 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  const renderAnalisisSKUTab = async () => {
-    contentSubtitle.textContent = "ARTICULO POR TEMPORADA";
+  const renderGenericAreaTab = async (tabId, subtitle) => {
+    contentSubtitle.textContent = subtitle;
+    const tabDef = TABS.find(t => t.id === tabId);
+    const perms = adminService.getPermissions(user.role) || {};
+    const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`${tabId}_${sub.id}`] === 1);
 
-    // Recuperar persistencia si existe (v12.1.76)
-    if (!lastBufferResult) {
-        const raw = localStorage.getItem(CACHE_KEY + 'lastBufferKPI');
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.reporteTemporadasQ && parsed.reporteGender && parsed.reporteObsolencia && parsed.detalleObsGen && parsed.detalleTemporadas) {
-                    lastBufferResult = parsed;
-                } else {
-                    localStorage.removeItem('lastBufferKPI');
-                }
-            } catch(e) { localStorage.removeItem(CACHE_KEY + 'lastBufferKPI'); }
+    let activeSub = localStorage.getItem(`activeSub_${tabId}`) || allowedSubTabs[0]?.id;
+    if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = allowedSubTabs[0]?.id;
+
+    contentArea.innerHTML = `
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+                ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="areaContent"></div>`;
+
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        const s = e.currentTarget.dataset.s;
+        localStorage.setItem(`activeSub_${tabId}`, s);
+        renderGenericAreaTab(tabId, subtitle);
+    }));
+
+    const container = document.getElementById('areaContent');
+    if (activeSub && activeSub.startsWith('archivo_')) {
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; container.appendChild(wrap);
+        const actKey = `${tabId}_activo`;
+        const resKey = `${tabId}_reserva`;
+        renderUploadArea(wrap, actKey, dataStore[actKey], '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, resKey, dataStore[resKey], '.xlsx', 'STOCK RESERVA');
+        if (tabId === 'almacenaje') {
+            renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
+    } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
+        renderAlmacenajeTareas(container);
+    } else {
+        const data = await getAreaData(tabId);
+        if (!data) renderUploadArea(container, tabId);
+        else renderDashboardView(container, data);
+    }
+  };
+
+  const renderAnalisisSKUTab = async () => {
+    contentSubtitle.textContent = "Consulta profunda de Artículos";
+    const tabDef = TABS.find(t => t.id === 'analisis_sku');
+    const perms = adminService.getPermissions(user.role) || {};
+    const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`analisis_sku_${sub.id}`] === 1);
+
+    if (!allowedSubTabs.find(s => s.id === activeAnalisisSub)) activeAnalisisSub = allowedSubTabs[0]?.id;
+
+    contentArea.innerHTML = `
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeAnalisisSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+                ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="skuContent"></div>`;
+
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeAnalisisSub = e.currentTarget.dataset.s; 
+        renderAnalisisSKUTab(); 
+    }));
+
+    const skuBuf = document.getElementById('skuContent');
+    if (activeAnalisisSub === 'archivo_analisis') {
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; skuBuf.appendChild(wrap);
+        renderUploadArea(wrap, 'analisis_sku_activo', dataStore.analisis_sku_activo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'analisis_sku_reserva', dataStore.analisis_sku_reserva, '.xlsx', 'STOCK RESERVA');
+        return;
     }
 
-    const tabData = TABS.find(t => t.id === 'analisis_sku');
-    const subId = activeAnalisisSub;
-    
-    let subNavHtml = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-            ${tabData.subTabs.map(st => `
-                <a class="sub-nav-item ${subId === st.id ? 'active' : ''}" 
-                   style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;"
-                   onclick="window.setActiveAnalisisSub('${st.id}')">
-                    ${st.icon} ${st.label.toUpperCase()}
-                </a>
-            `).join('')}
-        </nav>
-    `;
-
-    window.setActiveAnalisisSub = (id) => {
-        activeAnalisisSub = id;
-        renderAnalisisSKUTab();
-    };
-
-    if (subId !== 'articulo_temp') {
-        contentArea.innerHTML = subNavHtml + `
+    if (activeAnalisisSub !== 'articulo_temp') {
+        skuBuf.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
                 <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🚧</div>
                 <h4>Módulo en Desarrollo</h4>
@@ -2559,6 +2664,481 @@ export const renderDashboard = async (container, user, onLogout) => {
             XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
         };
     }
+  };
+
+  const processAlmacenajeTasks = async () => {
+    const stock = await getAreaData('almacenaje_activo');
+    const maestro = dataStore.articulos;
+    if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
+    if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+
+    // 1. Filtrar áreas permitidas
+    const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
+    const filtered = stock.filter(row => {
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        return allowedAreas.some(a => area.includes(a));
+    });
+
+    // 2. Mapear Maestro para Gender RIMS y Marcas
+    const artMap = new Map();
+    maestro.forEach(row => {
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        const sku7 = String(raw[1] || '').trim().substring(0, 7);
+        if (sku7 && !artMap.has(sku7)) {
+            artMap.set(sku7, {
+                marca: String(raw[13] || 'S/M').trim(),
+                gender: String(raw[3] || '').trim().toUpperCase(), // Columna D (Gender RIMS)
+                coleccion: String(raw[9] || 'S/C').trim()
+            });
+        }
+    });
+
+    // 3. Agrupar por Artículo (7 dígitos)
+    const groups = {};
+    filtered.forEach(row => {
+        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
+        const sku7 = skuFull.substring(0, 7);
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
+        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
+        const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
+
+        if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
+        
+        const item = { ...row, skuFull, ubi, qty, area };
+        groups[sku7].items.push(item);
+        if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+        else groups[sku7].zonaQty += qty;
+    });
+
+    // 4. Filtrar: Solo artículos con algo en CDBUFFER
+    const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
+    
+    // 5. Agrupar por Marca para aplicar reglas de Tarea
+    const byMarca = {};
+    eligibleArticulos.forEach(art => {
+        if (!byMarca[art.marca]) byMarca[art.marca] = [];
+        byMarca[art.marca].push(art);
+    });
+
+    const finalTasks = [];
+    let taskCounter = 1;
+
+    Object.keys(byMarca).forEach(marca => {
+        const arts = byMarca[marca];
+        
+        // Regla Accesorios: Todo junto sin importar cantidad
+        const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
+        const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
+
+        accs.forEach(a => {
+            finalTasks.push({
+                id: `Tarea${taskCounter++}`,
+                marca: marca,
+                qty: a.bufferQty,
+                status: 'Creada',
+                u1: '', u2: '', inicio: '', termino: '',
+                items: [a]
+            });
+        });
+
+        // Separar normales en grandes (>=300) y pequeños (<300)
+        const bigNormals = normals.filter(a => a.bufferQty >= 300);
+        const smallNormals = normals.filter(a => a.bufferQty < 300);
+
+        // Los grandes son tareas independientes inmediatas
+        bigNormals.forEach(a => {
+            finalTasks.push({
+                id: `Tarea${taskCounter++}`,
+                marca: marca,
+                qty: a.bufferQty,
+                status: 'Creada',
+                u1: '', u2: '', inicio: '', termino: '',
+                items: [a]
+            });
+        });
+
+        // Los pequeños se agrupan estrictamente
+        let currentGroup = [];
+        let currentBufferQty = 0;
+
+        smallNormals.forEach((art, index) => {
+            currentGroup.push(art);
+            currentBufferQty += art.bufferQty;
+
+            // Si llegamos a 300 o es el último de la marca, cerramos tarea
+            if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
+                finalTasks.push({
+                    id: `Tarea${taskCounter++}`,
+                    marca: marca,
+                    qty: currentBufferQty,
+                    status: 'Creada',
+                    u1: '', u2: '', inicio: '', termino: '',
+                    items: [...currentGroup]
+                });
+                currentGroup = [];
+                currentBufferQty = 0;
+            }
+        });
+    });
+
+    // Agregar nuevas tareas al cache acumulativo
+    const fechaStr = new Date().toISOString().split('T')[0]; // Formato ISO YYYY-MM-DD
+    
+    // Evitar duplicados del mismo día (opcional: o permitir acumular más)
+    // Para este caso, acumulamos todo.
+    const tasksWithDate = finalTasks.map(t => ({...t, fecha: fechaStr}));
+    
+    almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
+    await saveAlmacenajeTasks();
+    renderAlmacenajeTareas(document.getElementById('areaContent'));
+  };
+
+  const exportAlmacenajeExcel = () => {
+    if (!almacenajeTasksCache.length) { alert("No hay tareas para exportar."); return; }
+    
+    const wb = XLSX.utils.book_new();
+    const dataRows = [
+        ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", "Qty Buffer", "Qty Zona", "Tareas"]
+    ];
+
+    almacenajeTasksCache.forEach(task => {
+        task.items.forEach(art => {
+            const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
+            
+            // CDBUFFER Rows
+            // CDBUFFER Rows
+            art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
+                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
+            });
+            // ZONA Rows
+            art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
+                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
+            });
+            // Subtotal
+            dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
+        });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(dataRows);
+    XLSX.utils.book_append_sheet(wb, ws, "Tareas Día");
+    XLSX.writeFile(wb, `Plan_Almacenaje_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+  };
+
+  const renderAlmacenajeTareas = (container) => {
+    const isDetail = almacenajeTaskMode === 'detalle';
+    const isKpi = almacenajeTaskMode === 'kpi';
+    const tasks = almacenajeTasksCache;
+
+    // Lógica de Agrupación para Historial
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
+
+    const groups = {};
+    almacenajeTasksCache.forEach(t => {
+        if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
+        const dateObj = new Date(t.fecha + 'T00:00:00');
+        if (isNaN(dateObj.getTime())) return;
+
+        const w = `Semana ${getWeekNumber(dateObj)}`;
+        if (!groups[w]) groups[w] = {};
+        if (!groups[w][t.fecha]) groups[w][t.fecha] = 0;
+        groups[w][t.fecha]++;
+    });
+
+    const sidebarHtml = Object.keys(groups).sort().reverse().map(w => {
+        const isExpanded = expandedWeeks.includes(w);
+        const days = groups[w];
+        return `
+            <div style="margin-bottom:8px;">
+                <div onclick="window.toggleWeek('${w}')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 15px; background:rgba(255,255,255,0.03); border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:700; color:#fff;">
+                    <span>📅 ${w}</span>
+                    <span>${isExpanded ? '▼' : '▶'}</span>
+                </div>
+                ${isExpanded ? Object.keys(days).sort().reverse().map(d => {
+                    const [y, m, day] = d.split('-');
+                    const dDisplay = `${day}/${m}/${y}`;
+                    return `
+                    <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
+                        ${dDisplay} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
+                    </div>
+                    `;
+                }).join('') : ''}
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div>
+                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isKpi ? 'KPI TAREAS' : isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
+                <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <button onclick="window.processAlmacenajeTasks()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
+            </div>
+        </div>
+
+        <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
+            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+            <a class="sub-sub-nav-item ${isKpi?'active':''}" onclick="window.setTaskMode('kpi')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${isKpi?'800':'500'}; border-bottom:${isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📈 KPIs</a>
+        </nav>
+
+        ${isKpi ? `
+        <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
+            <div style="text-align:center;">
+                <div style="font-size:4rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.5));">📊</div>
+                <h2 style="color:#fff; margin-bottom:0.5rem;">Panel de KPI Tareas</h2>
+                <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
+            </div>
+        </div>` : `
+        <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
+            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); border-left: 3px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow-y:auto;">
+                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Historial</h4>
+                <div style="font-size:0.8rem;">
+                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">Todas las Tareas</div>
+                    ${sidebarHtml}
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
+                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
+                        <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
+                            ${!isDetail ? `
+                                <tr>
+                                    <th style="padding:1rem; text-align:left;">Fecha</th>
+                                    <th style="padding:1rem; text-align:left;">IdTarea</th>
+                                    <th style="padding:1rem; text-align:center;">Qty</th>
+                                    <th style="padding:1rem; text-align:left;">Marca</th>
+                                    <th style="padding:1rem; text-align:left;">Usuario1</th>
+                                    <th style="padding:1rem; text-align:left;">Usuario2</th>
+                                    <th style="padding:1rem; text-align:left;">Hora Inicio</th>
+                                    <th style="padding:1rem; text-align:left;">Hora Termino</th>
+                                    <th style="padding:1rem; text-align:center;">Productividad</th>
+                                    <th style="padding:1rem; text-align:center;">Objetivo</th>
+                                    <th style="padding:1rem; text-align:center;">Status</th>
+                                    <th style="padding:1rem; text-align:center;">Acción</th>
+                                </tr>
+                            ` : `
+                                <tr>
+                                    <th style="padding:1rem; text-align:left;">Articulo</th>
+                                    <th style="padding:1rem; text-align:left;">UBICACION</th>
+                                    <th style="padding:1rem; text-align:left;">SKU</th>
+                                    <th style="padding:1rem; text-align:center;">Tallas</th>
+                                    <th style="padding:1rem; text-align:center;">Qty Buffer</th>
+                                    <th style="padding:1rem; text-align:center;">Qty Zona</th>
+                                    <th style="padding:1rem; text-align:left;">ID Tareas</th>
+                                    <th style="padding:1rem; text-align:center;">Status</th>
+                                </tr>
+                            `}
+                        </thead>
+                        <tbody>
+                            ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
+                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
+                                let productividad = '---';
+                                let objetivo = '---';
+                                let objStyle = 'color:var(--text-muted);';
+
+                                if (t.inicio && t.termino) {
+                                    const s = new Date(t.inicio);
+                                    const e = new Date(t.termino);
+                                    let ms = e - s;
+
+                                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+                                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+                                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+
+                                    const overlapStart = Math.max(s, bStart);
+                                    const overlapEnd = Math.min(e, bEnd);
+                                    const overlap = Math.max(0, overlapEnd - overlapStart);
+                                    
+                                    ms = ms - overlap;
+
+                                    const totalMinutes = Math.floor(ms / (1000 * 60));
+                                    const h = Math.floor(totalMinutes / 60);
+                                    const m = totalMinutes % 60;
+                                    productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+                                    if (totalMinutes > 0) {
+                                        const unitsPerHour = (t.qty / totalMinutes) * 60;
+                                        if (unitsPerHour >= 300) {
+                                            objetivo = 'CUMPLIÓ';
+                                            objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
+                                        } else {
+                                            objetivo = 'NO CUMPLIÓ';
+                                            objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
+                                        }
+                                    }
+                                }
+                                return `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
+                                    <td style="padding:0.8rem 1rem;">${t.marca}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
+                                            ${t.status.toUpperCase()}
+                                        </span>
+                                    </td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;" onclick="event.stopPropagation()">
+                                        <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
+                                    </td>
+                                </tr>`;
+                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
+                                const sortedItems = [...art.items].sort((a,b) => {
+                                    const aIsB = a.area.includes('CDBUFFER');
+                                    const bIsB = b.area.includes('CDBUFFER');
+                                    if (aIsB && !bIsB) return -1;
+                                    if (!aIsB && bIsB) return 1;
+                                    return 0;
+                                });
+                                return sortedItems.map(i => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                    <td style="padding:0.6rem 1rem;">${art.sku7}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
+                                    <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
+                                            ${t.status.toUpperCase()}
+                                        </span>
+                                    </td>
+                                </tr>`);
+                            })).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
+                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
+                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `}
+    `;
+
+    window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
+    window.processAlmacenajeTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) processAlmacenajeTasks(); };
+    window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
+    window.resetTask = (id) => {
+        if (confirm(`¿Reiniciar la tarea ${id}? Se borrarán los usuarios y horas asignadas.`)) {
+            const t = almacenajeTasksCache.find(x => x.id === id);
+            if (t) {
+                t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada';
+                saveAlmacenajeTasks();
+                renderAlmacenajeTareas(container);
+            }
+        }
+    };
+    window.assignTask = (id) => {
+        const workers = adminService.getWorkers().filter(w => w.active);
+        const formatUser = (w) => {
+            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+            return nom ? `${nom[0]}${ape}` : 's/n';
+        };
+
+        const options = workers.map(w => `<option value="${formatUser(w)}" ${formatUser(w) === 'dames' ? 'selected' : ''}>${formatUser(w)} (${w.nombre})</option>`).join('');
+        const t = almacenajeTasksCache.find(x => x.id === id);
+
+        const modal = document.createElement('div');
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
+        modal.innerHTML = `
+            <div class="glass-panel" style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
+                <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">Asignar Tarea: <span style="color:var(--primary);">${id}</span></h3>
+                <div style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
+                        <select id="m_u1" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2); padding:0.8rem; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.9rem;">
+                            <option value="" style="background:#0f172a;">Seleccionar operario...</option>
+                            ${options}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 2 (Opcional)</label>
+                        <select id="m_u2" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2); padding:0.8rem; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.9rem;">
+                            <option value="" style="background:#0f172a;">Ninguno</option>
+                            ${options}
+                        </select>
+                    </div>
+                    <div style="margin-top:1rem; display:flex; gap:10px;">
+                        <button id="m_save" class="btn" style="flex:1; padding:0.8rem; font-size:0.75rem; font-weight:800;">ASIGNAR E INICIAR</button>
+                        ${t.status === 'Asignado' ? `<button id="m_finish" class="btn" style="flex:1; background:#22c55e; padding:0.8rem; font-size:0.75rem; font-weight:800;">FINALIZAR</button>` : ''}
+                    </div>
+                    <button id="m_close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Cargar valores previos si existen
+        if (t.u1) document.getElementById('m_u1').value = t.u1;
+        if (t.u2) document.getElementById('m_u2').value = t.u2;
+
+        document.getElementById('m_save').onclick = () => {
+            const u1 = document.getElementById('m_u1').value;
+            if (!u1) { alert("Usuario 1 es obligatorio."); return; }
+            t.u1 = u1;
+            t.u2 = document.getElementById('m_u2').value;
+            t.status = 'Asignado';
+            if (!t.inicio) t.inicio = new Date().toISOString();
+            saveAlmacenajeTasks().then(() => {
+                document.body.removeChild(modal);
+                renderAlmacenajeTareas(container);
+            });
+        };
+        if (document.getElementById('m_finish')) {
+            document.getElementById('m_finish').onclick = () => {
+                t.status = 'Finalizado';
+                t.termino = new Date().toISOString();
+                saveAlmacenajeTasks().then(() => {
+                    document.body.removeChild(modal);
+                    renderAlmacenajeTareas(container);
+                });
+            };
+        }
+        document.getElementById('m_close').onclick = () => document.body.removeChild(modal);
+    };
+
+    window.toggleWeek = (w) => {
+        if (expandedWeeks.includes(w)) {
+            expandedWeeks = expandedWeeks.filter(x => x !== w);
+        } else {
+            expandedWeeks.push(w);
+        }
+        renderAlmacenajeTareas(container);
+    };
+
+    window.setSelectedDate = (d) => {
+        selectedTaskDate = d;
+        renderAlmacenajeTareas(container);
+    };
+
+    window.setTaskMode = (mode) => {
+        almacenajeTaskMode = mode;
+        localStorage.setItem('almacenajeTaskMode', mode);
+        renderAlmacenajeTareas(container);
+    };
   };
 
   renderNav();
