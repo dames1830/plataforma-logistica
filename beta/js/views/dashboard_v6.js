@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.23-BETA';
+const VERSION = '12.4.25-BETA';
 const CACHE_KEY = `logistics_v12_4_22_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
@@ -433,7 +433,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
         <div class="kpi-grid" id="homeKpiGrid"></div>
-    `;
+        `}    `;
 
     // Reloj dinámico
     if (window.homeClockInterval) clearInterval(window.homeClockInterval);
@@ -762,7 +762,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </table>
             </div>
         </div>
-    `;
+        `}    `;
   };
 
   const renderBufferResults = (container, data) => {
@@ -825,14 +825,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6', ts)}
             ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
         </div>
-    `;
+        `}    `;
 
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
             <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📊 EXPORTAR ZONAS</button>
             <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXCEL DETALLE</button>
-        `;
+            `}    `;
         document.getElementById('btn_exp_zonas').onclick = () => {
             if(!data.detalleZonas || !data.detalleZonas.length) alert('⚠️ ERROR: Datos no disponibles.');
             else window.downloadExcelZonas();
@@ -969,7 +969,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </form>
             </div>
         </div>
-    `;
+        `}    `;
 
     // Listeners
     document.getElementById('form_new_worker').onsubmit = (e) => {
@@ -1115,7 +1115,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
         </div>
-    `;
+        `}    `;
 
     const form = document.getElementById('form_user');
     const uName = document.getElementById('u_name');
@@ -1267,7 +1267,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.
             </p>
         </div>
-    `;
+        `}    `;
 
     // Lógica de Acordeón (Universal por data-tab-id)
     document.querySelectorAll('.main-tab-row').forEach(row => {
@@ -1418,7 +1418,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </tbody>
             </table>
         </div>
-    `;
+        `}    `;
 
     if (!existing?.finalized) {
         document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
@@ -1765,7 +1765,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
         </div>
-    `;
+        `}    `;
 
     setTimeout(() => {
         document.querySelectorAll('.week-tag').forEach(tag => {
@@ -1880,7 +1880,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </table>
             </div>
         </div>
-    `;
+        `}    `;
 
     setTimeout(() => {
         const iStart = document.getElementById('kpi_start');
@@ -2051,14 +2051,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
-                        `; }).join('')}
-                        `;
+                            `}    `; }).join('')}
+                            `}    `;
                     }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
             </table>
         </div>
         <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Haz clic en una fecha para expandir/contraer. Los campos de producción, BPA y supervisor (escala 1-10) actualizan el % de rendimiento automáticamente.</p>
-    `;
+        `}    `;
 
     // Event listeners para Colapsar/Expandir
     document.querySelectorAll('.perf-date-header').forEach(header => {
@@ -2161,7 +2161,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
             <p style="font-size:0.85rem; max-width:400px; margin:0.5rem auto;">Próximamente podrás gestionar números de serie, asignaciones diarias y estado de baterías de los terminales RF.</p>
         </div>
-    `;
+        `}    `;
   };
 
   const renderConfigTab = async () => {
@@ -2183,7 +2183,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta acción no se puede deshacer.</p>
                 <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;">⚠️ REINICIAR ASISTENCIA Y PERFORMANCE</button>
             </div>
-        `;
+            `}    `;
         document.getElementById('resetDataBtn').onclick = async () => {
             if (confirm("🚨 ¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.")) {
                 await adminService.resetProductionData();
@@ -2266,13 +2266,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </tr>
                                 `).join('')}
                                 <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
-                            `;
+                                `}    `;
                         }).join('')}
                     </tbody>
                 </table>
             </div>
         </div>
-    `;
+        `}    `;
 
     container.querySelectorAll('.btn-restore').forEach(btn => {
         btn.onclick = () => {
@@ -2314,7 +2314,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <canvas id="bufferVolumeChart" style="max-height:250px;"></canvas>
             </div>
         </div>
-    `;
+        `}    `;
 
     setTimeout(() => {
         const ctxTrend = document.getElementById('bufferTrendChart')?.getContext('2d');
@@ -2529,7 +2529,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     ⚡ PROCESAR REPORTE ARTÍCULO
                 </button>
             </div>
-        `;
+            `}    `;
         const btn = document.getElementById('btn_run_global');
         if (btn) btn.onclick = runGlobalAnalysis;
         return;
@@ -2639,7 +2639,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         </div>
       </div>
-    `;
+        `}    `;
 
     const refreshBtn = document.getElementById('btn_refresh_global');
     if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;
@@ -2869,10 +2869,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
                             ${dDisplay} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
                         </div>
-                        `;
+                            `}    `;
                     }).join('') : ''}
                 </div>
-            `;
+                `}    `;
         }).join('');
 
         container.innerHTML = `
@@ -3011,7 +3011,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </div>
                                     </td>
                                 </tr>
-                            `;}).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
+                                `}    `;}).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
                                 // Ordenar items: CDBUFFER primero
                                 const sortedItems = [...art.items].sort((a,b) => {
                                     const aIsB = a.area.includes('CDBUFFER');
@@ -3046,7 +3046,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
         </div>
-    `;
+        `}    `;
 
     window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
     window.processAlmacenajeTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) processAlmacenajeTasks(); };
@@ -3099,7 +3099,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <button id="m_close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
                 </div>
             </div>
-        `;
+            `}    `;
         document.body.appendChild(modal);
         
         // Cargar valores previos si existen
@@ -3161,7 +3161,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
             </div>
         </div>
-      `;
+          `}    `;
   };
 
   renderNav();
