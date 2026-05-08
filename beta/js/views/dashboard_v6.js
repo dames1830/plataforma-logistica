@@ -5,7 +5,7 @@ import * as adminService from '../services/adminService.js?v=12.4.60';
 const VERSION = '12.4.66';
 const CACHE_KEY = `logistics_v12_4_66_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
-console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
+console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
 const getLogicalDate = () => {
@@ -390,7 +390,10 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
+          <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
+        </div>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
