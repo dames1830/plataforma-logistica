@@ -82,6 +82,24 @@ export const getWorkers = () => adminStore.workers;
 export const getUsers = () => adminStore.users;
 export const getPermissions = (role) => adminStore.permissions[role] || {};
 
+export const initPermissions = (tabs) => {
+    const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente', 'analista'];
+    roles.forEach(role => {
+        if (!adminStore.permissions[role]) {
+            const p = {};
+            tabs.forEach(t => {
+                p[t.id] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                if (t.subTabs) {
+                    t.subTabs.forEach(s => {
+                        p[`${t.id}_${s.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                    });
+                }
+            });
+            adminStore.permissions[role] = p;
+        }
+    });
+};
+
 export const saveWorker = async (worker) => {
     const workers = getWorkers();
     const idx = workers.findIndex(w => w.dni === worker.dni);
