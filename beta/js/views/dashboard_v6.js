@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.69';
-const CACHE_KEY = `logistics_v12_4_69_`;
+const VERSION = '12.4.70';
+const CACHE_KEY = `logistics_v12_4_70_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -2939,7 +2939,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
                 </button>
-                <button onclick="window.openShiftModal()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
                 <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:8px 12px; font-size:0.75rem;" title="Limpiar Tareas Pendientes">🗑️</button>
                 <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
             </div>
@@ -3269,6 +3269,16 @@ export const renderDashboard = async (container, user, onLogout) => {
         localStorage.setItem('almacenajeTaskMode', mode);
         renderAlmacenajeTareas(container);
     };
+
+    // --- Lógica del Botón de Procesar Tareas (NUEVO VÍNCULO) ---
+    const btnOpen = document.getElementById('btn_open_shift_new');
+    if (btnOpen) {
+        btnOpen.onclick = () => {
+            console.log("🚀 [PULSE] Abriendo Modal de Procesamiento...");
+            if (window.openShiftModal) window.openShiftModal();
+            else console.error("❌ [PULSE] window.openShiftModal no está definido");
+        };
+    }
 
     // --- Lógica del Botón de Refresco Local ---
     const btnRef = document.getElementById('btn_refresh_almacenaje');
