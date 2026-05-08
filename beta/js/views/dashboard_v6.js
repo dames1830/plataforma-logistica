@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.70';
-const CACHE_KEY = `logistics_v12_4_70_`;
+const VERSION = '12.4.71';
+const CACHE_KEY = `logistics_v12_4_71_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -3194,59 +3194,33 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     window.openShiftModal = () => {
+        alert("🚀 Iniciando Control de Jornada...");
         const logicalDate = getLogicalDate();
         const currentPending = almacenajeTasksCache.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
         const currentDone = almacenajeTasksCache.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
 
         const modal = document.createElement('div');
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
         modal.innerHTML = `
             <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.3); pointer-events:auto !important;">
                 <div style="text-align:center; margin-bottom:1.5rem;">
-                    <div style="display:inline-block; padding:10px; background:rgba(79, 70, 229, 0.1); border-radius:50%; margin-bottom:1rem;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
-                    </div>
                     <h2 style="color:#fff; margin:0; font-size:1.4rem;">Control de Jornada</h2>
                     <p style="color:var(--text-muted); font-size:0.9rem; margin:5px 0;">Fecha Operativa: <strong style="color:var(--primary);">${logicalDate}</strong></p>
                 </div>
-
-                <div style="background:rgba(15, 23, 42, 0.6); padding:1rem; border-radius:12px; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.05);">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                        <span style="color:var(--text-muted); font-size:0.85rem;">Tareas Avanzadas (Inalterables):</span>
-                        <span style="color:#22c55e; font-weight:700;">${currentDone}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="color:var(--text-muted); font-size:0.85rem;">Tareas Pendientes actuales:</span>
-                        <span style="color:var(--primary); font-weight:700;">${currentPending}</span>
-                    </div>
-                </div>
-
                 <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button id="optUpdate" class="btn" style="padding:1rem; font-weight:700; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; pointer-events:auto !important;">
+                    <button id="optUpdate" class="btn" style="padding:1rem; font-weight:700; background:linear-gradient(135deg, var(--primary), #6366f1); border:none;">
                         CONTINUAR TURNO (Actualizar)
-                        <div style="font-size:0.7rem; font-weight:400; opacity:0.8; margin-top:4px;">Mantiene lo avanzado y refresca lo pendiente</div>
                     </button>
-                    
-                    <button id="optNew" class="btn" style="padding:1rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; pointer-events:auto !important;">
-                        REINICIAR JORNADA
-                        <div style="font-size:0.7rem; font-weight:400; opacity:0.6; margin-top:4px;">Borra TODO lo anterior del día ${logicalDate}</div>
-                    </button>
-
-                    <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-top:10px; text-decoration:underline; pointer-events:auto !important;">Cancelar proceso</button>
+                    <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-top:10px; text-decoration:underline;">Cancelar</button>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
+        alert("✅ Ventana de control mostrada correctamente.");
 
         modal.querySelector('#optUpdate').onclick = () => {
             document.body.removeChild(modal);
             window.processAlmacenajeTasks('update');
-        };
-        modal.querySelector('#optNew').onclick = () => {
-            if(confirm("⚠️ ¿Estás seguro? Se perderán TODAS las tareas (incluyendo finalizadas) de la fecha operativa actual.")){
-                document.body.removeChild(modal);
-                window.processAlmacenajeTasks('new');
-            }
         };
         modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
     };
@@ -3274,9 +3248,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btnOpen = document.getElementById('btn_open_shift_new');
     if (btnOpen) {
         btnOpen.onclick = () => {
-            console.log("🚀 [PULSE] Abriendo Modal de Procesamiento...");
+            alert("🖱️ Botón 'PROCESAR TAREAS' detectado!");
             if (window.openShiftModal) window.openShiftModal();
-            else console.error("❌ [PULSE] window.openShiftModal no está definido");
+            else alert("❌ Error: window.openShiftModal no existe.");
         };
     }
 
