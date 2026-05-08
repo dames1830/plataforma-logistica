@@ -21,9 +21,12 @@ export const login = async (username, password) => {
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
+      } else if (result.message && !result.message.includes('not found')) {
+        // Si el servidor nos da un error específico (ej: clave incorrecta), lo respetamos
+        return { success: false, message: result.message };
       }
     }
-    console.warn("Servidor respondió con error, intentando login local...");
+    console.warn("Servidor no encontró al usuario, intentando login local...");
   } catch (err) {
     console.warn("Error de conexión al servidor, intentando login local...");
   }
