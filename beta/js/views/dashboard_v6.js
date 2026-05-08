@@ -837,8 +837,32 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.renderUploadArea = renderUploadArea;
   };
 
+  const renderDashboardView = (container, data) => {
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">Sin datos en esta área.</div>`;
+        return;
+    }
+    const headers = Object.keys(data[0]);
+    container.innerHTML = `
+        <div style="overflow:auto; max-height:600px; border:1px solid var(--border); border-radius:10px;">
+            <table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                <thead style="position:sticky; top:0; background:rgba(30,41,59,0.9); backdrop-filter:blur(5px); color:var(--primary);">
+                    <tr>${headers.map(h => `<th style="padding:0.8rem; text-align:left; border-bottom:1px solid var(--border);">${h.toUpperCase()}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${data.slice(0, 100).map(row => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                            ${headers.map(h => `<td style="padding:0.6rem 0.8rem; color:#eee;">${row[h]}</td>`).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            ${data.length > 100 ? `<div style="padding:0.8rem; text-align:center; font-size:0.75rem; color:var(--text-muted); background:rgba(0,0,0,0.1);">Mostrando primeros 100 registros de ${data.length.toLocaleString()}</div>` : ''}
+        </div>`;
+  };
+
   const renderAnalisisSKUTab = async () => {
-    analisisSkuModule.render(contentArea);
+    await analisisSkuModule.renderAnalisisSKUTab(contentArea, user, TABS, '');
   };
 
   renderNav();
