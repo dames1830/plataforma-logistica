@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.36';
 
 
-const VERSION = '12.4.36';
-const CACHE_KEY = `logistics_v12_4_36_`;
+const VERSION = '12.4.54';
+const CACHE_KEY = `logistics_v12_4_54_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -16,24 +16,15 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
   try {
-      // Usamos el mecanismo de persistencia de csvHub para guardar en IndexedDB
-      // import { saveToDB } from '../services/csvHub_v6.js'; // Asumimos disponible o implementamos local
-      // Para máxima seguridad, implementamos un guardado local robusto
-      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
-      console.log("[PULSE] Historial guardado en LS persistente.");
+      await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+      console.log("[PULSE] Tareas sincronizadas con el servidor.");
   } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
 };
 
 const loadAlmacenajeTasks = async () => {
   try {
-      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
-      if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-              almacenajeTasksCache = parsed;
-              console.log(`[PULSE] ${almacenajeTasksCache.length} tareas recuperadas del almacenamiento persistente.`);
-          }
-      }
+      almacenajeTasksCache = adminService.adminStore.almacenaje_tasks || [];
+      console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas (Global).`);
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
 
@@ -2828,7 +2819,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
-    const tasks = almacenajeTasksCache;
+    const tasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
 
     // Lógica de Agrupación para Historial
     const getWeekNumber = (d) => {
@@ -2840,7 +2831,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     const groups = {};
-    almacenajeTasksCache.forEach(t => {
+    tasks.forEach(t => {
+        if (!t || typeof t !== 'object') return;
         if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
         const dateObj = new Date(t.fecha + 'T00:00:00');
         if (isNaN(dateObj.getTime())) return;
