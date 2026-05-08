@@ -2708,46 +2708,24 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const processAlmacenajeTasks = async (mode = 'update') => {
-    alert("🔍 Iniciando procesamiento de tareas...");
     const stock = await getAreaData('almacenaje_activo');
-    alert("📦 Stock Activo: " + (stock ? stock.length : 0) + " filas.");
     const maestro = dataStore.articulos;
-    alert("📖 Maestro Artículos: " + (maestro ? maestro.length : 0) + " filas.");
     if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
     if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
     const logicalDate = getLogicalDate();
     
     // --- Lógica de Limpieza Inteligente (Opción A) ---
-    // En cualquier modo (new o update), limpiamos lo que no está asignado para evitar duplicados del mismo cálculo
     almacenajeTasksCache = almacenajeTasksCache.filter(t => 
         t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado'
     );
 
-    if (mode === 'new') {
-        // En modo 'new', si hubiera algo forzado a limpiar lo haríamos aquí, 
-        // pero la lógica anterior ya protege lo asignado/finalizado.
-        console.log(`[PULSE] Reiniciando jornada operativa: ${logicalDate}`);
-    }
-
     // 1. Filtrar áreas permitidas
     const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
     const filtered = stock.filter(row => {
-        // Buscamos la columna de área con todas las variantes posibles
-        const areaKey = Object.keys(row).find(k => 
-            k.toUpperCase().includes('AREA') || 
-            k.toUpperCase().includes('ÃREA') || 
-            k.toUpperCase().includes('ÁREA') ||
-            k.toUpperCase().includes('ZONA')
-        );
-        const area = areaKey ? String(row[areaKey] || '').trim().toUpperCase() : '';
+        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
         return allowedAreas.some(a => area.includes(a));
     });
-    
-    if (filtered.length === 0 && stock.length > 0) {
-        alert("⚠️ No encontré filas en las áreas permitidas.\nColumnas detectadas: " + Object.keys(stock[0]).join(', '));
-    }
-    alert("🎯 Filas filtradas por área: " + filtered.length);
 
     // 2. Mapear Maestro para Gender RIMS y Marcas
     const artMap = new Map();
@@ -2757,7 +2735,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (sku7 && !artMap.has(sku7)) {
             artMap.set(sku7, {
                 marca: String(raw[13] || 'S/M').trim(),
-                gender: String(raw[3] || '').trim().toUpperCase(), // Columna D (Gender RIMS)
+                gender: String(raw[3] || '').trim().toUpperCase(), 
                 coleccion: String(raw[9] || 'S/C').trim()
             });
         }
@@ -2853,10 +2831,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     // Agregar nuevas tareas al cache acumulativo
-    const fechaStr = new Date().toISOString().split('T')[0]; // Formato ISO YYYY-MM-DD
-    
-    // Evitar duplicados del mismo día (opcional: o permitir acumular más)
-    // Para este caso, acumulamos todo.
     const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
     
     alert("🚀 Tareas finales generadas: " + finalTasks.length);
