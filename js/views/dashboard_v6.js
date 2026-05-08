@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.60';
 
 
-const VERSION = '12.4.63';
-const CACHE_KEY = `logistics_v12_4_63_`;
+const VERSION = '12.4.64';
+const CACHE_KEY = `logistics_v12_4_64_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -2841,7 +2841,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     // Evitar duplicados del mismo día (opcional: o permitir acumular más)
     // Para este caso, acumulamos todo.
-    const logicalDate = getLogicalDate();
     const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
     
     almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
