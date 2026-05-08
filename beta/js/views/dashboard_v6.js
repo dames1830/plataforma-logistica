@@ -2,7 +2,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.30-BETA';
+const VERSION = '12.4.34-STABLE';
 const CACHE_KEY = `logistics_v12_4_22_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
@@ -2808,11 +2808,25 @@ export const renderDashboard = async (container, user, onLogout) => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
             
             // CDBUFFER Rows
+            // CDBUFFER Rows
             art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
             });
-            
-            const renderAlmacenajeTareas = (container) => {
+            // ZONA Rows
+            art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
+                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
+            });
+            // Subtotal
+            dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
+        });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(dataRows);
+    XLSX.utils.book_append_sheet(wb, ws, "Tareas Día");
+    XLSX.writeFile(wb, `Plan_Almacenaje_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+  };
+
+  const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
     const tasks = almacenajeTasksCache;
