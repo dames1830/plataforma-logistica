@@ -1,11 +1,11 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.35-BETA';
-import * as adminService from '../services/adminService.js?v=12.4.35-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.36';
+import * as adminService from '../services/adminService.js?v=12.4.36';
 
 
-const VERSION = '12.4.35-BETA';
-const CACHE_KEY = `logistics_v12_4_35_`;
+const VERSION = '12.4.36';
+const CACHE_KEY = `logistics_v12_4_36_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
+console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
@@ -2155,7 +2155,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.35-BETA | © 2026 Pulse Logística</p>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.36 | © 2026 Pulse Logística</p>
                  <span style="font-size:3rem; opacity:0.3;">🔋</span>
             </div>
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
@@ -2330,7 +2330,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        version: 'v12.4.35-BETA'
+                        version: 'v12.4.36'
                     }]
                 },
                 options: {
