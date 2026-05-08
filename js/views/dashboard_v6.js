@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.46';
-const CACHE_KEY = `logistics_v12_4_46_`;
+const VERSION = '12.4.47';
+const CACHE_KEY = `logistics_v12_4_47_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -2836,14 +2836,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     const isKpi = almacenajeTaskMode === 'kpi';
     const tasks = almacenajeTasksCache;
 
-    // Lógica de Agrupación para Historial
-    const getWeekNumber = (d) => {
-        const date = new Date(d);
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-        const week1 = new Date(date.getFullYear(), 0, 4);
-        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-    };
 
     const groups = {};
     (almacenajeTasksCache || []).forEach(t => {
