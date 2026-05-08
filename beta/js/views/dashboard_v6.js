@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.36';
-import * as adminService from '../services/adminService.js?v=12.4.60';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.74';
+import * as adminService from '../services/adminService.js?v=12.4.74';
 
 
-const VERSION = '12.4.73';
-const CACHE_KEY = `logistics_v12_4_73_`;
+const VERSION = '12.4.74';
+const CACHE_KEY = `logistics_v12_4_74_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -2733,9 +2733,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     // 1. Filtrar áreas permitidas
     const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
     const filtered = stock.filter(row => {
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+        // Buscamos la columna de área con todas las variantes posibles
+        const areaKey = Object.keys(row).find(k => 
+            k.toUpperCase().includes('AREA') || 
+            k.toUpperCase().includes('ÃREA') || 
+            k.toUpperCase().includes('ÁREA') ||
+            k.toUpperCase().includes('ZONA')
+        );
+        const area = areaKey ? String(row[areaKey] || '').trim().toUpperCase() : '';
         return allowedAreas.some(a => area.includes(a));
     });
+    
+    if (filtered.length === 0 && stock.length > 0) {
+        alert("⚠️ No encontré filas en las áreas permitidas.\nColumnas detectadas: " + Object.keys(stock[0]).join(', '));
+    }
     alert("🎯 Filas filtradas por área: " + filtered.length);
 
     // 2. Mapear Maestro para Gender RIMS y Marcas
