@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.43';
 
 
-const VERSION = '12.4.44';
-const CACHE_KEY = `logistics_v12_4_44_`;
+const VERSION = '12.4.46';
+const CACHE_KEY = `logistics_v12_4_46_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
 
@@ -2413,8 +2413,17 @@ export const renderDashboard = async (container, user, onLogout) => {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
     } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
-        if (activeSub === 'kpi_tareas') almacenajeTaskMode = 'kpi';
-        renderAlmacenajeTareas(container);
+        almacenajeTaskMode = (activeSub === 'kpi_tareas') ? 'kpi' : (localStorage.getItem('almacenajeTaskMode') || 'resumen');
+        try {
+            renderAlmacenajeTareas(container);
+        } catch (err) {
+            console.error("Critical Render Error:", err);
+            container.innerHTML = `<div style="padding:2rem; color:#ef4444; background:rgba(239,68,68,0.1); border-radius:12px;">
+                <h4 style="margin:0 0 10px 0;">❌ Error de Visualización</h4>
+                <p style="margin:0; font-size:0.8rem; opacity:0.8;">${err.message}</p>
+                <button onclick="location.reload()" class="btn" style="margin-top:1rem; padding:5px 15px; font-size:0.7rem;">RECARGAR PÁGINA</button>
+            </div>`;
+        }
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2837,7 +2846,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     const groups = {};
-    almacenajeTasksCache.forEach(t => {
+    (almacenajeTasksCache || []).forEach(t => {
+        if (!t || typeof t !== 'object') return;
         if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
         const dateObj = new Date(t.fecha + 'T00:00:00');
         if (isNaN(dateObj.getTime())) return;
@@ -2996,10 +3006,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
                                     </td>
                                 </tr>`;
-                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                const sortedItems = [...art.items].sort((a,b) => {
-                                    const aIsB = a.area.includes('CDBUFFER');
-                                    const bIsB = b.area.includes('CDBUFFER');
+                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => (t.items || []).flatMap(art => {
+                                const sortedItems = [...(art.items || [])].sort((a,b) => {
+                                    const aArea = String(a.area || '');
+                                    const bArea = String(b.area || '');
+                                    const aIsB = aArea.includes('CDBUFFER');
+                                    const bIsB = bArea.includes('CDBUFFER');
                                     if (aIsB && !bIsB) return -1;
                                     if (!aIsB && bIsB) return 1;
                                     return 0;
@@ -3134,8 +3146,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.setTaskMode = (mode) => {
         almacenajeTaskMode = mode;
         localStorage.setItem('almacenajeTaskMode', mode);
-        renderAlmacenajeTareas(container);
+        try { renderAlmacenajeTareas(container); } catch(e) { location.reload(); }
     };
+  };
+
+  const getWeekNumber = (d) => {
+    const date = new Date(d);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    const week1 = new Date(date.getFullYear(), 0, 4);
+    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
   };
 
   renderNav();
