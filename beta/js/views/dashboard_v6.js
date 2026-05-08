@@ -2938,6 +2938,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
+                <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                    🔄
+                </button>
                 <button onclick="window.openShiftModal()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
                 <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:8px 12px; font-size:0.75rem;" title="Limpiar Tareas Pendientes">🗑️</button>
                 <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
@@ -3268,6 +3271,32 @@ export const renderDashboard = async (container, user, onLogout) => {
         localStorage.setItem('almacenajeTaskMode', mode);
         renderAlmacenajeTareas(container);
     };
+
+    // --- Lógica del Botón de Refresco Local ---
+    const btnRef = document.getElementById('btn_refresh_almacenaje');
+    if (btnRef) {
+        btnRef.onclick = async () => {
+            // Animación de giro
+            btnRef.style.transition = 'transform 0.6s ease-in-out';
+            btnRef.style.transform = 'rotate(360deg)';
+            btnRef.style.pointerEvents = 'none';
+            btnRef.style.opacity = '0.5';
+            
+            try {
+                // Sincronizar con el servidor
+                await adminService.initializeAdminData();
+                await loadAlmacenajeTasks();
+                // Re-renderizar solo este módulo
+                renderAlmacenajeTareas(container);
+                console.log("✅ [PULSE] Módulo de Almacenaje actualizado localmente.");
+            } catch (e) {
+                console.error("❌ [PULSE] Error en refresco local:", e);
+                btnRef.style.transform = 'rotate(0deg)';
+                btnRef.style.pointerEvents = 'auto';
+                btnRef.style.opacity = '1';
+            }
+        };
+    }
   };
 
   renderNav();
