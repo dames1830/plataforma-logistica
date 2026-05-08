@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.28-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.22-BETA';
 import * as adminService from '../services/adminService.js?v=12.1.86-BETA';
 
 
-const VERSION = '12.4.29-BETA';
+const VERSION = '12.4.30-BETA';
 const CACHE_KEY = `logistics_v12_4_22_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
@@ -433,7 +433,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
         <div class="kpi-grid" id="homeKpiGrid"></div>
-        `}    `;
+    `;
 
     // Reloj dinámico
     if (window.homeClockInterval) clearInterval(window.homeClockInterval);
@@ -762,7 +762,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </table>
             </div>
         </div>
-        `}    `;
+    `;
   };
 
   const renderBufferResults = (container, data) => {
@@ -825,14 +825,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6', ts)}
             ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
         </div>
-        `}    `;
+    `;
 
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
             <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📊 EXPORTAR ZONAS</button>
             <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXCEL DETALLE</button>
-            `}    `;
+        `;
         document.getElementById('btn_exp_zonas').onclick = () => {
             if(!data.detalleZonas || !data.detalleZonas.length) alert('⚠️ ERROR: Datos no disponibles.');
             else window.downloadExcelZonas();
@@ -969,7 +969,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </form>
             </div>
         </div>
-        `}    `;
+    `;
 
     // Listeners
     document.getElementById('form_new_worker').onsubmit = (e) => {
@@ -1115,7 +1115,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
         </div>
-        `}    `;
+    `;
 
     const form = document.getElementById('form_user');
     const uName = document.getElementById('u_name');
@@ -1267,7 +1267,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.
             </p>
         </div>
-        `}    `;
+    `;
 
     // Lógica de Acordeón (Universal por data-tab-id)
     document.querySelectorAll('.main-tab-row').forEach(row => {
@@ -1418,7 +1418,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </tbody>
             </table>
         </div>
-        `}    `;
+    `;
 
     if (!existing?.finalized) {
         document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
@@ -1765,7 +1765,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
         </div>
-        `}    `;
+    `;
 
     setTimeout(() => {
         document.querySelectorAll('.week-tag').forEach(tag => {
@@ -1880,7 +1880,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </table>
             </div>
         </div>
-        `}    `;
+    `;
 
     setTimeout(() => {
         const iStart = document.getElementById('kpi_start');
@@ -2051,14 +2051,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
                                 ${p.rendimiento}
                             </td>
-                            `}    `; }).join('')}
-                            `}    `;
+                        `; }).join('')}
+                        `;
                     }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
                 </tbody>
             </table>
         </div>
         <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Haz clic en una fecha para expandir/contraer. Los campos de producción, BPA y supervisor (escala 1-10) actualizan el % de rendimiento automáticamente.</p>
-        `}    `;
+    `;
 
     // Event listeners para Colapsar/Expandir
     document.querySelectorAll('.perf-date-header').forEach(header => {
@@ -2161,7 +2161,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
             <p style="font-size:0.85rem; max-width:400px; margin:0.5rem auto;">Próximamente podrás gestionar números de serie, asignaciones diarias y estado de baterías de los terminales RF.</p>
         </div>
-        `}    `;
+    `;
   };
 
   const renderConfigTab = async () => {
@@ -2183,7 +2183,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta acción no se puede deshacer.</p>
                 <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;">⚠️ REINICIAR ASISTENCIA Y PERFORMANCE</button>
             </div>
-            `}    `;
+        `;
         document.getElementById('resetDataBtn').onclick = async () => {
             if (confirm("🚨 ¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.")) {
                 await adminService.resetProductionData();
@@ -2266,13 +2266,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </tr>
                                 `).join('')}
                                 <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
-                                `}    `;
+                            `;
                         }).join('')}
                     </tbody>
                 </table>
             </div>
         </div>
-        `}    `;
+    `;
 
     container.querySelectorAll('.btn-restore').forEach(btn => {
         btn.onclick = () => {
@@ -2314,7 +2314,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <canvas id="bufferVolumeChart" style="max-height:250px;"></canvas>
             </div>
         </div>
-        `}    `;
+    `;
 
     setTimeout(() => {
         const ctxTrend = document.getElementById('bufferTrendChart')?.getContext('2d');
@@ -2419,8 +2419,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
         renderAlmacenajeTareas(container);
-    } else if (tabId === 'almacenaje' && activeSub === 'kpi_tareas') {
-        renderAlmacenajeKPIs(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2529,7 +2527,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     ⚡ PROCESAR REPORTE ARTÍCULO
                 </button>
             </div>
-            `}    `;
+        `;
         const btn = document.getElementById('btn_run_global');
         if (btn) btn.onclick = runGlobalAnalysis;
         return;
@@ -2639,7 +2637,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         </div>
       </div>
-        `}    `;
+    `;
 
     const refreshBtn = document.getElementById('btn_refresh_global');
     if (refreshBtn) refreshBtn.onclick = runGlobalAnalysis;
@@ -2813,72 +2811,59 @@ export const renderDashboard = async (container, user, onLogout) => {
             art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
             });
-            // ZONA Rows
-            art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
-                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
-            });
-            // Subtotal
-            dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
-        });
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(dataRows);
-    XLSX.utils.book_append_sheet(wb, ws, "Tareas Día");
-    XLSX.writeFile(wb, `Plan_Almacenaje_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
-  };
-
-  const renderAlmacenajeTareas = (container) => {
+            
+            const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
     const tasks = almacenajeTasksCache;
 
-        // Lógica de Agrupación para Historial
-        const getWeekNumber = (d) => {
-            const date = new Date(d);
-            date.setHours(0, 0, 0, 0);
-            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-            const week1 = new Date(date.getFullYear(), 0, 4);
-            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-        };
+    // Lógica de Agrupación para Historial
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
 
-        const groups = {};
-        almacenajeTasksCache.forEach(t => {
-            if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
-            const dateObj = new Date(t.fecha + 'T00:00:00');
-            if (isNaN(dateObj.getTime())) return;
+    const groups = {};
+    almacenajeTasksCache.forEach(t => {
+        if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
+        const dateObj = new Date(t.fecha + 'T00:00:00');
+        if (isNaN(dateObj.getTime())) return;
 
-            const w = `Semana ${getWeekNumber(dateObj)}`;
-            if (!groups[w]) groups[w] = {};
-            if (!groups[w][t.fecha]) groups[w][t.fecha] = 0;
-            groups[w][t.fecha]++;
-        });
+        const w = `Semana ${getWeekNumber(dateObj)}`;
+        if (!groups[w]) groups[w] = {};
+        if (!groups[w][t.fecha]) groups[w][t.fecha] = 0;
+        groups[w][t.fecha]++;
+    });
 
-        const sidebarHtml = Object.keys(groups).sort().reverse().map(w => {
-            const isExpanded = expandedWeeks.includes(w);
-            const days = groups[w];
-            return `
-                <div style="margin-bottom:8px;">
-                    <div onclick="window.toggleWeek('${w}')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 15px; background:rgba(255,255,255,0.03); border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:700; color:#fff;">
-                        <span>📅 ${w}</span>
-                        <span>${isExpanded ? '▼' : '▶'}</span>
-                    </div>
-                    ${isExpanded ? Object.keys(days).sort().reverse().map(d => {
-                        const [y, m, day] = d.split('-');
-                        const dDisplay = `${day}/${m}/${y}`;
-                        return `
-                        <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
-                            ${dDisplay} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
-                        </div>
-                            `}    `;
-                    }).join('') : ''}
+    const sidebarHtml = Object.keys(groups).sort().reverse().map(w => {
+        const isExpanded = expandedWeeks.includes(w);
+        const days = groups[w];
+        return `
+            <div style="margin-bottom:8px;">
+                <div onclick="window.toggleWeek('${w}')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 15px; background:rgba(255,255,255,0.03); border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:700; color:#fff;">
+                    <span>📅 ${w}</span>
+                    <span>${isExpanded ? '▼' : '▶'}</span>
                 </div>
-                `}    `;
-        }).join('');
+                ${isExpanded ? Object.keys(days).sort().reverse().map(d => {
+                    const [y, m, day] = d.split('-');
+                    const dDisplay = `${day}/${m}/${y}`;
+                    return `
+                    <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
+                        ${dDisplay} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
+                    </div>
+                    `;
+                }).join('') : ''}
+            </div>
+        `;
+    }).join('');
 
-        container.innerHTML = `
+    container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
-                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
+                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isKpi ? 'KPI TAREAS' : isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
                 <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
@@ -2911,7 +2896,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
-                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.4); border-radius:12px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
+                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
                             ${!isDetail ? `
@@ -2969,7 +2954,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const m = totalMinutes % 60;
                                     productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-                                    // Lógica OBJETIVO: 300 unid / 60 min
                                     if (totalMinutes > 0) {
                                         const unitsPerHour = (t.qty / totalMinutes) * 60;
                                         if (unitsPerHour >= 300) {
@@ -2983,12 +2967,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 }
                                 return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.8rem 1rem;">
-                                        ${(() => {
-                                            const [y, m, d] = t.fecha.split('-');
-                                            return `${d}/${m}/${y}`;
-                                        })()}
-                                    </td>
+                                    <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
@@ -2997,22 +2976,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
                                     <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;">
-                                        <span style="${objStyle}">${objetivo}</span>
-                                    </td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
                                         <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center;" onclick="event.stopPropagation()">
-                                        <div style="display:flex; gap:8px; justify-content:center;">
-                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔄</button>
-                                        </div>
+                                        <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
                                     </td>
-                                </tr>
-                                `} ;}).join('')} : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                // Ordenar items: CDBUFFER primero
+                                </tr>`;
+                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
                                 const sortedItems = [...art.items].sort((a,b) => {
                                     const aIsB = a.area.includes('CDBUFFER');
                                     const bIsB = b.area.includes('CDBUFFER');
@@ -3020,9 +2994,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     if (!aIsB && bIsB) return 1;
                                     return 0;
                                 });
-
                                 return sortedItems.map(i => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:default;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
                                     <td style="padding:0.6rem 1rem; color:${i.area.includes('CDBUFFER') ? '#6366f1' : 'var(--primary)'}; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
@@ -3030,9 +3003,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; font-size:0.7rem;">${t.id}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.6rem;">
-                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'inherit'};">${t.status}</span>
-                                    </td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.6rem;"><span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'inherit'};">${t.status}</span></td>
                                 </tr>`);
                             })).join('')}
                         </tbody>
@@ -3100,7 +3071,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <button id="m_close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
                 </div>
             </div>
-            `}    `;
+        `;
         document.body.appendChild(modal);
         
         // Cargar valores previos si existen
@@ -3151,18 +3122,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         localStorage.setItem('almacenajeTaskMode', mode);
         renderAlmacenajeTareas(container);
     };
-  };
-
-  const renderAlmacenajeKPIs = (container) => {
-      container.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
-            <div style="text-align:center;">
-                <div style="font-size:4rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.5));">📊</div>
-                <h2 style="color:#fff; margin-bottom:0.5rem;">Panel de KPI Tareas</h2>
-                <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
-            </div>
-        </div>
-          `}    `;
   };
 
   renderNav();
