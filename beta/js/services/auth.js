@@ -53,22 +53,35 @@ export const login = async (username, password) => {
 
   // 3. Fallback: Usuarios dinámicos creados en el módulo de Administración
   try {
-    const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
-    if (dynamicUsersRaw) {
-      const dynamicUsers = JSON.parse(dynamicUsersRaw);
-      const dUser = dynamicUsers.find(u => u.username === username && u.password === password);
-      
-      if (dUser) {
+    let dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+    let dynamicUsers = dynamicUsersRaw ? JSON.parse(dynamicUsersRaw) : [];
+
+    // [NUEVO] Si no está local, intentar descarga rápida de emergencia desde la nube
+    const dUserLocal = dynamicUsers.find(u => u.username === username && u.password === password);
+    
+    if (!dUserLocal) {
+        console.log("🔍 Usuario no encontrado localmente, consultando nube...");
+        const cloudRes = await fetch(`${AUTH_API}/logistics/users`);
+        if (cloudRes.ok) {
+            const result = await cloudRes.json();
+            if (result.data && Array.isArray(result.data)) {
+                dynamicUsers = result.data;
+                localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
+            }
+        }
+    }
+
+    const dUser = dynamicUsers.find(u => u.username === username && u.password === password);
+    if (dUser) {
         if (dUser.active === false) {
-           return { success: false, message: 'Cuenta desactivada. Contacte al administrador.' };
+            return { success: false, message: 'Cuenta desactivada. Contacte al administrador.' };
         }
         const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
-      }
     }
   } catch (err) {
-    console.error("Error leyendo usuarios dinámicos:", err);
+    console.error("Error en autenticación extendida:", err);
   }
 
   return { success: false, message: 'Credenciales inválidas' };
