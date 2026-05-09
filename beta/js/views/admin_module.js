@@ -689,11 +689,11 @@ const renderPerformanceHistory = (container, user, TABS) => {
 };
 
 const renderKPIGraphsSection = (container, user, TABS) => {
-    container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center;">Performance Charts in development (Beta Modular)</div>`;
+    container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center;">Performance Charts in development</div>`;
 };
 
 const renderKPIReportSection = (container, user, TABS) => {
-    container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center;">Performance Reports in development (Beta Modular)</div>`;
+    container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center;">Performance Reports in development</div>`;
 };
 
 const renderRFSection = (container, user, TABS) => {
