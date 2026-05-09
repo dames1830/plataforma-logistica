@@ -1,8 +1,8 @@
 import { getSession, logout } from './services/auth.js?v=12.6.0';
 import * as adminService from './services/adminService.js?v=12.6.0';
 
-const VERSION = '12.9.3';
-const CACHE_KEY = `logistics_v12_9_3_`;
+const VERSION = '12.9.4';
+const CACHE_KEY = `logistics_v12_9_4_`;
 
 class App {
   constructor(rootId) {
@@ -76,7 +76,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "12.9.3";
+    const versionStr = "12.9.4";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
