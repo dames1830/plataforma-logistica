@@ -1,11 +1,11 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.21';
-import * as adminService from '../services/adminService.js?v=12.5.21';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.6.0';
+import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.5.21';
-const CACHE_KEY = `logistics_v12_5_21_`;
+const VERSION = '12.6.0';
+const CACHE_KEY = `logistics_v12_6_0_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
-console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
+console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
 const getLogicalDate = () => {
