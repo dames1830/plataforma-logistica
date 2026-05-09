@@ -22,10 +22,12 @@ export const login = async (username, password) => {
           const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
           if (dynamicUsersRaw) {
             const dynamicUsers = JSON.parse(dynamicUsersRaw);
-            const dUser = dynamicUsers.find(u => u.username === username);
-            if (dUser) {
-              if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
-              if (dUser.password !== password) return { success: false, message: 'Contraseña incorrecta. Se ha actualizado recientemente.' };
+            if (Array.isArray(dynamicUsers)) {
+                const dUser = dynamicUsers.find(u => u.username === username);
+                if (dUser) {
+                  if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
+                  if (dUser.password !== password) return { success: false, message: 'Contraseña incorrecta. Se ha actualizado recientemente.' };
+                }
             }
           }
         } catch(e) { console.warn("Error en Security Override:", e); }
@@ -100,13 +102,17 @@ export const getSession = () => {
   if (user.username !== 'dames') {
       const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
       if (dynamicUsersRaw) {
-          const dynamicUsers = JSON.parse(dynamicUsersRaw);
-          const activeUser = dynamicUsers.find(u => u.username === user.username && u.active !== false);
-          if (!activeUser) {
-              console.warn("🚨 Sesión revocada: Usuario no autorizado.");
-              logout();
-              return null;
-          }
+          try {
+              const dynamicUsers = JSON.parse(dynamicUsersRaw);
+              if (Array.isArray(dynamicUsers)) {
+                  const activeUser = dynamicUsers.find(u => u.username === user.username && u.active !== false);
+                  if (!activeUser) {
+                      console.warn("🚨 Sesión revocada: Usuario no autorizado.");
+                      logout();
+                      return null;
+                  }
+              }
+          } catch(e) { console.warn("Error validando sesión:", e); }
       } else {
           // Si no hay lista de usuarios, nadie excepto dames puede estar logueado
           logout();
