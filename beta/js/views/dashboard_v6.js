@@ -3038,8 +3038,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
+                                    <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
+                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
+                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
@@ -3091,6 +3092,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 saveAlmacenajeTasks();
                 renderAlmacenajeTareas(container);
             }
+        }
+    };
+    window.deleteTask = (id) => {
+        if (confirm(`¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${id}?\n\nEsta acción es permanente y se borrará de todos los terminales.`)) {
+            almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
+            saveAlmacenajeTasks();
+            renderAlmacenajeTareas(container);
         }
     };
     window.assignTask = (id) => {

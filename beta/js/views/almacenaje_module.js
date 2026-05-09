@@ -181,7 +181,10 @@ const renderTaskTable = (container, tasks, isDetail) => {
                         <td style="text-align:center;">${calculateProductivity(t)}</td>
                         <td style="text-align:center;">${calculateGoal(t)}</td>
                         <td>${t.status}</td>
-                        <td onclick="event.stopPropagation()"><button onclick="window.resetTask('${t.id}')">🔄</button></td>
+                        <td style="text-align:center; display:flex; gap:6px; justify-content:center;" onclick="event.stopPropagation()">
+                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar" style="background:none; border:none; cursor:pointer;">🔄</button>
+                            <button onclick="window.deleteTask('${t.id}')" title="Eliminar" style="background:none; border:none; cursor:pointer; color:#ef4444;">🗑️</button>
+                        </td>
                     </tr>
                 `).join('') : paginated.flatMap(t => t.items.flatMap(art => art.items.map(i => `
                     <tr>
@@ -351,4 +354,11 @@ window.assignTask = (id) => {
 window.resetTask = (id) => {
     const t = almacenajeTasksCache.find(x => x.id === id);
     if (t) { t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada'; saveAlmacenajeTasksLocal(); renderAlmacenajeTareas(document.getElementById('areaContent')); }
+};
+window.deleteTask = (id) => {
+    if (confirm(`¿Eliminar tarea ${id}?`)) {
+        almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
+        saveAlmacenajeTasksLocal();
+        renderAlmacenajeTareas(document.getElementById('areaContent'));
+    }
 };
