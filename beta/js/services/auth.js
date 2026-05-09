@@ -18,22 +18,26 @@ export const login = async (username, password) => {
       const localRaw = localStorage.getItem('logistics_admin_v11_users');
       let dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
 
-      // 3. SINCRONIZACIÓN DINÁMICA: Preguntar a la nube antes de rechazar
-      // Esto permite que una PC que no conoce al usuario lo descargue al instante.
-      console.log(`[PULSE] Buscando a ${targetUsername} en la nube...`);
+      // 3. SINCRONIZACIÓN UNIVERSAL: Descarga forzada sin caché
+      console.log(`[PULSE] Sincronizando con la nube para ${targetUsername}...`);
       try {
-          // Forzamos que no use caché para traer lo ÚLTIMO que Daniel guardó
-          const cloudRes = await fetch(`${AUTH_API}/logistics/users?t=${Date.now()}`, { 
+          // Usamos tres métodos para romper el caché: timestamp, headers y modo no-store
+          const cloudRes = await fetch(`${AUTH_API}/logistics/users?nocache=${Date.now()}`, { 
+              method: 'GET',
               cache: 'no-store',
-              headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+              headers: { 
+                  'Pragma': 'no-cache', 
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Expires': '0'
+              }
           });
+          
           if (cloudRes.ok) {
               const result = await cloudRes.json();
-              if (result.data && Array.isArray(result.data)) {
-                  // Fusionar lo de la nube con lo local
+              if (result && result.data && Array.isArray(result.data)) {
                   const serverUsers = result.data;
+                  // Fusión inteligente para no perder lo que Daniel acaba de crear
                   const merged = [...serverUsers];
-                  // Preservar locales que pudieran no haber subido aún
                   if (Array.isArray(dynamicUsers)) {
                       dynamicUsers.forEach(lu => {
                           if (lu && lu.username && !merged.find(su => (su.username || '').toLowerCase() === (lu.username || '').toLowerCase())) {
@@ -43,9 +47,10 @@ export const login = async (username, password) => {
                   }
                   dynamicUsers = merged;
                   localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
+                  console.log("[PULSE] Nube sincronizada con éxito.");
               }
           }
-      } catch(e) { console.warn("Modo Offline: No se pudo conectar a la nube."); }
+      } catch(e) { console.warn("Fallo de conexión a la nube, usando memoria local."); }
 
       // 4. Validación Final (Case-Insensitive)
       if (Array.isArray(dynamicUsers)) {
