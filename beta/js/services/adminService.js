@@ -227,12 +227,8 @@ export const saveAlmacenajeTasks = async (tasks) => {
     try {
         adminStore.almacenaje_tasks = tasks;
         localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-        const res = await fetch(`${API_URL}/almacenaje_tasks`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: tasks })
-        });
-        return res.ok;
+        const success = await save('almacenaje_tasks', tasks);
+        return success;
     } catch (e) {
         console.warn("⚠️ Error guardando tareas en servidor:", e);
         return false;
@@ -243,15 +239,17 @@ export const loadAlmacenajeTasks = async () => {
         const res = await fetch(`${API_URL}/almacenaje_tasks`);
         if (res.ok) {
             const result = await res.json();
-            if (result.data) {
-                adminStore.almacenaje_tasks = result.data;
-                localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(result.data));
-                return result.data;
+            const data = result.data || [];
+            adminStore.almacenaje_tasks = data;
+            localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(data));
+            if (data.length > 0) {
+                alert(`🔍 RADAR: El servidor ha devuelto ${data.length} tareas activas.`);
             }
+            return data;
         }
         return adminStore.almacenaje_tasks;
     } catch (e) {
-        console.warn("⚠️ Error cargando tareas desde servidor:", e);
+        console.warn("⚠️ Error cargando tareas:", e);
         return adminStore.almacenaje_tasks;
     }
 };
