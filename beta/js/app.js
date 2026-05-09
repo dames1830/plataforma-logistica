@@ -1,5 +1,5 @@
-import { getSession, logout } from './services/auth.js?v=12.4.99';
-import * as adminService from './services/adminService.js?v=12.4.99';
+import { getSession, logout } from './services/auth.js?v=12.5.00';
+import * as adminService from './services/adminService.js?v=12.5.00';
 
 class App {
   constructor(rootId) {
@@ -60,8 +60,8 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.4.99-BETA";
-    alert("SISTEMA CARGADO: " + versionStr);
+    const versionStr = "v12.5.00-GOLD";
+    alert("SISTEMA PROTEGIDO: " + versionStr);
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
