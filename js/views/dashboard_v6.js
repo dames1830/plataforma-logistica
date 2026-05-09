@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.6.0';
-const CACHE_KEY = `logistics_v12_6_0_`;
+const VERSION = '12.7.0';
+const CACHE_KEY = `logistics_v12_7_0_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.6.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.0</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -3038,8 +3038,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🔄</button>
+                                    <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
+                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
+                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
@@ -3091,6 +3092,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 saveAlmacenajeTasks();
                 renderAlmacenajeTareas(container);
             }
+        }
+    };
+    window.deleteTask = (id) => {
+        if (confirm(`¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${id}?\n\nEsta acción es permanente y se borrará de todos los terminales.`)) {
+            almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
+            saveAlmacenajeTasks();
+            renderAlmacenajeTareas(container);
         }
     };
     window.assignTask = (id) => {
