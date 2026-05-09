@@ -18,25 +18,36 @@ export const login = async (username, password) => {
         return { success: true, user: sessionData };
     }
 
-    // [NIVEL 1] SINCRONIZACIÓN DE LISTA DE ADMINISTRACIÓN
+    // [NIVEL 1] SINCRONIZACIÓN DE LISTA DE ADMINISTRACIÓN (SMART MERGE)
     let dynamicUsers = [];
+    const localRaw = localStorage.getItem('logistics_admin_v11_users');
+    const local = localRaw ? JSON.parse(localRaw) : [];
+
     try {
         const cloudRes = await fetch(`${AUTH_API}/logistics/users`);
         if (cloudRes.ok) {
             const result = await cloudRes.json();
             if (result.data && Array.isArray(result.data)) {
-                dynamicUsers = result.data;
+                // Fusión inteligente: Preservar locales que no están en la nube aún
+                const server = result.data;
+                const merged = [...server];
+                
+                if (Array.isArray(local)) {
+                    local.forEach(item => {
+                        if (item && item.username && !merged.find(m => m.username === item.username)) {
+                            merged.push(item);
+                        }
+                    });
+                }
+                dynamicUsers = merged;
                 localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
             }
         } else {
-            // Fallback a local si la nube no responde
-            const local = localStorage.getItem('logistics_admin_v11_users');
-            if (local) dynamicUsers = JSON.parse(local);
+            dynamicUsers = local;
         }
     } catch(e) { 
-        console.warn("Error de red, usando caché local.");
-        const local = localStorage.getItem('logistics_admin_v11_users');
-        if (local) dynamicUsers = JSON.parse(local);
+        console.warn("Error de red en login, usando caché local.");
+        dynamicUsers = local;
     }
 
     // [NIVEL 2] VALIDACIÓN DE OPERARIOS AUTORIZADOS
