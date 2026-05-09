@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.9.11';
-const CACHE_KEY = `logistics_v12_9_11_`;
+const VERSION = '12.9.12';
+const CACHE_KEY = `logistics_v12_9_12_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -386,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.11</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.12</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -2445,9 +2445,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = allowedSubTabs[0]?.id;
 
     contentArea.innerHTML = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+        <nav style="display:flex; gap:1.2rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border);">
           ${allowedSubTabs.map(sub => `
-            <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+            <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.4rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
                 ${sub.icon} ${sub.label.toUpperCase()}
             </a>
           `).join('')}
@@ -2931,7 +2931,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }).join('');
 
     container.innerHTML = `
-        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:0.8rem; gap:12px;">
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:0.5rem; gap:12px;">
             <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
@@ -2942,9 +2942,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
 
-        <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-            <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
-            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+        <nav style="display:flex; gap:1.5rem; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
+            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
         </nav>
 
         ${isKpi ? `
@@ -3057,7 +3057,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                const filteredItems = art.items.filter(i => !i.ubi.startsWith('SEL'));
+                                const filteredItems = art.items.filter(i => i.ubi.startsWith('CDBUFFER'));
                                 const sortedItems = [...filteredItems].sort((a,b) => {
                                     const aIsB = a.area.includes('CDBUFFER');
                                     const bIsB = b.area.includes('CDBUFFER');
