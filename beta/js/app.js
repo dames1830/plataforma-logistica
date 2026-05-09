@@ -7,6 +7,19 @@ const CACHE_KEY = `logistics_v12_7_4_beta_`;
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
+    
+    // [PARCHE DE IDENTIDAD] Corregir nombre de sesión antiguo automáticamente
+    const session = localStorage.getItem('logistics_session');
+    if (session) {
+        try {
+            const user = JSON.parse(session);
+            if (user.name === 'Gerente Logística (Dames)') {
+                user.name = 'Daniel Ames';
+                localStorage.setItem('logistics_session', JSON.stringify(user));
+                console.log("✅ [IDENTIDAD] Nombre de usuario actualizado a Daniel Ames.");
+            }
+        } catch(e) {}
+    }
     this.IDLE_TIMEOUT = 20 * 60 * 1000; // 20 minutos
     this.init();
   }
