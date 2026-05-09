@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.7.6';
-const CACHE_KEY = `logistics_v12_7_6_`;
+const VERSION = '12.7.7';
+const CACHE_KEY = `logistics_v12_7_7_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -49,20 +49,21 @@ const saveAlmacenajeTasks = async () => {
 
 const loadAlmacenajeTasks = async () => {
   try {
-      // Recuperar primero lo local para rapidez
+      // 1. Prioridad absoluta a la persistencia local (lo que el usuario ya refrescó)
       const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
       const localTasks = stored ? JSON.parse(stored) : [];
       
+      // Siempre cargamos lo local primero para evitar que la pantalla se quede vacía
+      almacenajeTasksCache = localTasks;
+
+      // 2. Si la administración ya tiene datos sincronizados, los usamos para actualizar la memoria
       const syncedTasks = adminService.adminStore.almacenaje_tasks;
-      // Solo sobreescribimos lo local si la nube tiene datos reales (no vacíos)
       if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la NUBE GLOBAL.`);
-      } else {
-          almacenajeTasksCache = localTasks;
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria LOCAL.`);
       }
+      
+      console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas en vista.`);
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
 
@@ -397,7 +398,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.6</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.7</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
