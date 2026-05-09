@@ -227,8 +227,17 @@ export const saveAlmacenajeTasks = async (tasks) => {
     try {
         adminStore.almacenaje_tasks = tasks;
         localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-        const success = await save('almacenaje_tasks_beta_final', tasks);
-        return success;
+        const resumen = tasks.map(t => t.marca || 'S/M').join(', ');
+        const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: tasks })
+        });
+        if (res.ok) {
+            console.log(`✅ Sincronización Exitosa de: [${resumen}]`);
+            return true;
+        }
+        return false;
     } catch (e) {
         console.warn("⚠️ Error guardando tareas en servidor:", e);
         return false;
