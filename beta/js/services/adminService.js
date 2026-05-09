@@ -248,7 +248,9 @@ export const loadAlmacenajeTasks = async () => {
 
             adminStore.almacenaje_tasks = data;
             localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(data));
-            alert(`🔍 RADAR: El servidor informa ${data.length} tareas activas.`);
+            
+            const marcasStr = data.length > 0 ? data.map(t => t.marca || 'S/M').join(', ') : 'Ninguna';
+            alert(`🔍 RADAR: El servidor informa ${data.length} tareas activas: [${marcasStr}]`);
             return data;
         }
         alert("❌ RADAR: El servidor no respondió correctamente.");
