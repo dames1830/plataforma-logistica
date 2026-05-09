@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.97';
 
 
-const VERSION = '12.4.97';
-const CACHE_KEY = `logistics_v12_4_97_`;
+const VERSION = '12.4.98';
+const CACHE_KEY = `logistics_v12_4_98_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -2820,7 +2820,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
             
             // CDBUFFER Rows
-            // CDBUFFER Rows
             art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
             });
@@ -2841,6 +2840,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
+    
+    // SINCRONIZACIÓN CRÍTICA: Asegurar que el cache local tenga lo que el radar encontró
+    if (adminService.adminStore.almacenaje_tasks) {
+        almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
+    }
     const tasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
 
     // Lógica de Agrupación para Historial
@@ -2960,7 +2964,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </thead>
                         <tbody>
                             ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
+                            ${!isDetail ? tasks.map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
