@@ -7,13 +7,19 @@ const FALLBACK_USERS = [
 ];
 
 export const login = async (username, password) => {
-  // [ESTRATEGIA GOLD v12.5.11] Prioridad Absoluta a la Lista de Administración
+  console.log(`[PULSE] Intento de login: ${username} (v12.5.12)`);
+  
   try {
-    let dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
-    let dynamicUsers = dynamicUsersRaw ? JSON.parse(dynamicUsersRaw) : [];
+    // [NIVEL 0] ACCESO MAESTRO ABSOLUTO (DAMES)
+    // Tú siempre tienes prioridad y no dependes de ninguna lista local o externa.
+    if (username === 'dames' && password === 'Bata1830') {
+        const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Gerente Logística (Dames)' };
+        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+        return { success: true, user: sessionData };
+    }
 
-    // 1. Sincronización obligatoria para asegurar que nuevos usuarios entren en cualquier PC
-    console.log(`[PULSE] Sincronizando credenciales para ${username}...`);
+    // [NIVEL 1] SINCRONIZACIÓN DE LISTA DE ADMINISTRACIÓN
+    let dynamicUsers = [];
     try {
         const cloudRes = await fetch(`${AUTH_API}/logistics/users`);
         if (cloudRes.ok) {
@@ -22,40 +28,31 @@ export const login = async (username, password) => {
                 dynamicUsers = result.data;
                 localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
             }
+        } else {
+            // Fallback a local si la nube no responde
+            const local = localStorage.getItem('logistics_admin_v11_users');
+            if (local) dynamicUsers = JSON.parse(local);
         }
-    } catch(e) { console.warn("Sincronización de nube fallida, usando caché local."); }
+    } catch(e) { 
+        console.warn("Error de red, usando caché local.");
+        const local = localStorage.getItem('logistics_admin_v11_users');
+        if (local) dynamicUsers = JSON.parse(local);
+    }
 
-    // 2. Validación contra la lista de Administración (Nube + Local)
-    // Buscamos al usuario en la lista que TÚ manejas
+    // [NIVEL 2] VALIDACIÓN DE OPERARIOS AUTORIZADOS
     const dUser = dynamicUsers.find(u => u && u.username === username);
-    
     if (dUser) {
         if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
-        
-        // Si la contraseña coincide con lo que pusiste en el módulo de usuarios
         if (dUser.password === password) {
-            const sessionData = { 
-                id: Date.now(), 
-                username: dUser.username, 
-                role: dUser.role, 
-                name: dUser.name 
-            };
+            const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
             localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-            console.log(`[PULSE] Acceso concedido via AdminList: ${username}`);
             return { success: true, user: sessionData };
         } else {
             return { success: false, message: 'Contraseña incorrecta.' };
         }
     }
 
-    // 3. Acceso Maestro Directo (dames)
-    if (username === 'dames' && password === 'Bata1830') {
-        const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Gerente Logística (Dames)' };
-        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-        return { success: true, user: sessionData };
-    }
-
-    // 4. Intento contra el servidor de autenticación (Legacy/Otros sistemas)
+    // [NIVEL 3] VALIDACIÓN CONTRA BACKEND (LEGACY)
     const response = await fetch(`${AUTH_API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,16 +62,18 @@ export const login = async (username, password) => {
     if (response.ok) {
       const result = await response.json();
       if (result.success) {
+        // Solo dejamos entrar si el servidor confirma, pero para operarios 
+        // ya debió pasar por el Nivel 2. Esto es un respaldo.
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
         localStorage.setItem('logistics_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
       }
     }
   } catch (err) {
-    console.error("Error crítico en login:", err);
+    console.error("Error crítico en proceso de login:", err);
   }
 
-  return { success: false, message: 'Credenciales inválidas' };
+  return { success: false, message: 'Credenciales inválidas o acceso no autorizado' };
 };
 
 export const logout = () => {
