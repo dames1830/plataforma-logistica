@@ -227,7 +227,7 @@ export const saveAlmacenajeTasks = async (tasks) => {
     try {
         adminStore.almacenaje_tasks = tasks;
         localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-        const success = await save('almacenaje_tasks', tasks);
+        const success = await save('almacenaje_tasks_v2', tasks);
         return success;
     } catch (e) {
         console.warn("⚠️ Error guardando tareas en servidor:", e);
@@ -236,27 +236,24 @@ export const saveAlmacenajeTasks = async (tasks) => {
 };
 export const loadAlmacenajeTasks = async () => {
     try {
-        console.log("🔍 [PULSE] Solicitando tareas al servidor...");
-        const res = await fetch(`${API_URL}/almacenaje_tasks`);
+        console.log("🔍 [PULSE] Solicitando tareas v2 al servidor...");
+        const res = await fetch(`${API_URL}/almacenaje_tasks_v2`);
         if (res.ok) {
             const result = await res.json();
-            // Extracción inteligente: Manejar {data: []} o directamente []
             let data = [];
             if (result && Array.isArray(result.data)) data = result.data;
             else if (Array.isArray(result)) data = result;
-            else if (result && typeof result === 'object' && result.data) data = [result.data]; // Caso objeto único
+            else if (result && typeof result === 'object' && result.data) data = [result.data];
 
             adminStore.almacenaje_tasks = data;
-            localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(data));
+            localStorage.setItem(PREFIX + 'almacenaje_tasks_v2', JSON.stringify(data));
             
-            const marcasStr = data.length > 0 ? data.map(t => t.marca || 'S/M').join(', ') : 'Ninguna';
-            alert(`🔍 RADAR: El servidor informa ${data.length} tareas activas: [${marcasStr}]`);
+            const resumen = data.length > 0 ? data.map(t => `${t.marca || 'S/M'}(${t.id?.slice(-3)||'???'})`).join(', ') : 'Vacío';
+            alert(`🔍 RADAR v2: El servidor informa ${data.length} tareas: [${resumen}]`);
             return data;
         }
-        alert("❌ RADAR: El servidor no respondió correctamente.");
         return adminStore.almacenaje_tasks;
     } catch (e) {
-        alert("❌ RADAR: Error de conexión con la nube.");
         return adminStore.almacenaje_tasks;
     }
 };
