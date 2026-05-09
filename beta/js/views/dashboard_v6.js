@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.9.7';
-const CACHE_KEY = `logistics_v12_9_7_`;
+const VERSION = '12.9.8';
+const CACHE_KEY = `logistics_v12_9_8_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -186,19 +186,20 @@ window.downloadExcelDetail = async () => {
 
     // --- PESTAÑA 2: ANÁLISIS BUFFER (FORMATO PREMIUM) ---
     const wsAnalisis = workbook.addWorksheet('Análisis Buffer', {
+        properties: { tabColor: { argb: 'FF22C55E' } }, // VERDE SOLICITADO
         pageSetup: { printTitlesRow: '1:4' }
     });
-    // Anchos específicos solicitados (px / 7.5)
+    // Re-ajuste de anchos para precisión de píxeles reales (Pixels / 7.0 aprox)
     wsAnalisis.columns = [
-        { key: 'ubi', width: 25.7 }, // 193px
-        { key: 'lpn', width: 26.6 }, // 200px
-        { key: 'sku', width: 22 },   // 165px
-        { key: 'talla', width: 9.3 }, // 70px
-        { key: 'marca', width: 18.6 }, // 140px
-        { key: 'gender', width: 22 },  // 165px
-        { key: 'act', width: 15.3 },   // 115px
-        { key: 'res', width: 16.6 },   // 125px
-        { key: 'buf', width: 14.6 }    // 110px
+        { key: 'ubi', width: 27.5 }, // 193px
+        { key: 'lpn', width: 28.5 }, // 200px
+        { key: 'sku', width: 23.5 }, // 165px
+        { key: 'talla', width: 10 },   // 70px
+        { key: 'marca', width: 20 },   // 140px
+        { key: 'gender', width: 23.5 }, // 165px
+        { key: 'act', width: 16.4 },   // 115px
+        { key: 'res', width: 17.8 },   // 125px
+        { key: 'buf', width: 15.7 }    // 110px
     ];
 
     wsAnalisis.mergeCells('A1:I1');
@@ -307,7 +308,7 @@ window.downloadExcelDetail = async () => {
     addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
         'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
-    })), 'FF22C55E'); // Verde
+    }))); // Sin color para evitar confusión
 
     addStandardSheet('Tallas', Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla })));
     addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
@@ -385,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.7</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.8</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
