@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.07';
-import * as adminService from '../services/adminService.js?v=12.5.07';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.08';
+import * as adminService from '../services/adminService.js?v=12.5.08';
 
 
-const VERSION = '12.5.07';
-const CACHE_KEY = `logistics_v12_5_07_`;
+const VERSION = '12.5.08';
+const CACHE_KEY = `logistics_v12_5_08_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -1181,27 +1181,47 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     let isEditing = false;
 
-    form.onsubmit = (e) => {
+    form.onsubmit = async (e) => {
         e.preventDefault();
-        const newUser = {
-            name: uName.value,
-            username: uUser.value,
-            password: uPass.value,
-            role: uRole.value
-        };
-        adminService.saveUser(newUser).then(() => {
-            alert(isEditing ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito');
-            form.reset();
-            if (isEditing) {
-                uUser.readOnly = false;
-                uUser.style.opacity = '1';
-                uTitle.textContent = "Nuevo Usuario";
-                btnSubmit.textContent = "GUARDAR USUARIO";
-                btnCancel.style.display = 'none';
-                isEditing = false;
+        try {
+            console.log("[PULSE] Guardando usuario...", { name: uName.value, username: uUser.value });
+            const newUser = {
+                name: uName.value,
+                username: uUser.value,
+                password: uPass.value,
+                role: uRole.value
+            };
+            
+            // Deshabilitar botón durante el proceso
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = "⏳ GUARDANDO...";
+
+            const success = await adminService.saveUser(newUser);
+            
+            if (success) {
+                alert(isEditing ? '🚀 Usuario actualizado con éxito' : '🚀 Usuario creado con éxito');
+                form.reset();
+                if (isEditing) {
+                    uUser.readOnly = false;
+                    uUser.style.opacity = '1';
+                    uTitle.textContent = "Nuevo Usuario";
+                    btnSubmit.textContent = "GUARDAR USUARIO";
+                    btnCancel.style.display = 'none';
+                    isEditing = false;
+                }
+                renderAdminTab();
+            } else {
+                alert('⚠️ El usuario se guardó localmente pero falló la sincronización con el servidor.');
+                renderAdminTab();
             }
-            renderAdminTab();
-        });
+        } catch (err) {
+            console.error("[PULSE] Error al guardar usuario:", err);
+            alert("❌ Error crítico: " + err.message);
+        } finally {
+            btnSubmit.disabled = false;
+            if (!isEditing) btnSubmit.textContent = "GUARDAR USUARIO";
+            else btnSubmit.textContent = "ACTUALIZAR DATOS";
+        }
     };
 
     document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = (e) => {
