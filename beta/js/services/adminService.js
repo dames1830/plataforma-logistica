@@ -46,11 +46,14 @@ export const initializeAdminData = async () => {
                 const res = await fetchWithTimeout(`${API_URL}/${area}`);
                 if (res.ok) {
                     const result = await res.json();
-                    if (result.data) {
+                    if (result && result.data) {
+                        // Soporte para datos anidados { data: { data: [] } }
+                        const serverData = Array.isArray(result.data) ? result.data : (result.data.data || []);
+
                         if (area === 'users' || area === 'workers') {
                             // Fusión inteligente: No borrar lo que no está en el servidor aún
                             const local = JSON.parse(localStorage.getItem(PREFIX + area) || '[]');
-                            const server = result.data;
+                            const server = serverData;
                             const merged = Array.isArray(server) ? [...server] : [];
                             
                             if (Array.isArray(local)) {

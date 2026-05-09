@@ -42,8 +42,13 @@ export const login = async (username, password) => {
       
       if (cloudRes.ok) {
           const result = await cloudRes.json();
-          if (result && result.data && Array.isArray(result.data)) {
-              dynamicUsers = result.data;
+          // [AJUSTE ESTRUCTURAL] Soporte para datos anidados { data: { data: [] } }
+          const serverList = (result && result.data) 
+              ? (Array.isArray(result.data) ? result.data : (result.data.data || []))
+              : [];
+
+          if (Array.isArray(serverList)) {
+              dynamicUsers = serverList;
               localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
               
               const uCloud = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
