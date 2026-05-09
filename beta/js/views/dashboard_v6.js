@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.06';
-import * as adminService from '../services/adminService.js?v=12.5.06';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.07';
+import * as adminService from '../services/adminService.js?v=12.5.07';
 
 
-const VERSION = '12.5.06';
-const CACHE_KEY = `logistics_v12_5_06_`;
+const VERSION = '12.5.07';
+const CACHE_KEY = `logistics_v12_5_07_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -1189,18 +1189,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             password: uPass.value,
             role: uRole.value
         };
-        adminService.saveUser(newUser);
-        alert(isEditing ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito');
-        form.reset();
-        if (isEditing) {
-            uUser.readOnly = false;
-            uUser.style.opacity = '1';
-            uTitle.textContent = "Nuevo Usuario";
-            btnSubmit.textContent = "GUARDAR USUARIO";
-            btnCancel.style.display = 'none';
-            isEditing = false;
-        }
-        renderAdminTab();
+        adminService.saveUser(newUser).then(() => {
+            alert(isEditing ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito');
+            form.reset();
+            if (isEditing) {
+                uUser.readOnly = false;
+                uUser.style.opacity = '1';
+                uTitle.textContent = "Nuevo Usuario";
+                btnSubmit.textContent = "GUARDAR USUARIO";
+                btnCancel.style.display = 'none';
+                isEditing = false;
+            }
+            renderAdminTab();
+        });
     };
 
     document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = (e) => {
