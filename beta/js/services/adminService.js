@@ -227,7 +227,7 @@ export const saveAlmacenajeTasks = async (tasks) => {
     try {
         adminStore.almacenaje_tasks = tasks;
         localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-        const success = await save('almacenaje_tasks_v2', tasks);
+        const success = await save('almacenaje_tasks_beta_final', tasks);
         return success;
     } catch (e) {
         console.warn("⚠️ Error guardando tareas en servidor:", e);
@@ -236,8 +236,8 @@ export const saveAlmacenajeTasks = async (tasks) => {
 };
 export const loadAlmacenajeTasks = async () => {
     try {
-        console.log("🔍 [PULSE] Solicitando tareas v2 al servidor...");
-        const res = await fetch(`${API_URL}/almacenaje_tasks_v2`);
+        console.log("🔍 [PULSE] Solicitando tareas FINAL al servidor...");
+        const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`);
         if (res.ok) {
             const result = await res.json();
             let data = [];
@@ -246,10 +246,10 @@ export const loadAlmacenajeTasks = async () => {
             else if (result && typeof result === 'object' && result.data) data = [result.data];
 
             adminStore.almacenaje_tasks = data;
-            localStorage.setItem(PREFIX + 'almacenaje_tasks_v2', JSON.stringify(data));
+            localStorage.setItem(PREFIX + 'almacenaje_tasks_final', JSON.stringify(data));
             
-            const resumen = data.length > 0 ? data.map(t => `${t.marca || 'S/M'}(${t.id?.slice(-3)||'???'})`).join(', ') : 'Vacío';
-            alert(`🔍 RADAR v2: El servidor informa ${data.length} tareas: [${resumen}]`);
+            const resumen = data.length > 0 ? data.map(t => `${t.marca || 'S/M'}`).join(', ') : 'Vacío';
+            alert(`🔍 RADAR [PC-ASISTENTE]: El servidor informa ${data.length} tareas: [${resumen}]`);
             return data;
         }
         return adminStore.almacenaje_tasks;
