@@ -82,14 +82,26 @@ export const save = async (area, data) => {
     try {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
-        const res = await fetch(`${API_URL}/${area}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data })
-        });
-        return res.ok;
+        
+        // Intento de guardado con reintento (Fuerza Bruta)
+        let success = false;
+        for (let i = 0; i < 2; i++) {
+            try {
+                const res = await fetch(`${API_URL}/${area}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data })
+                });
+                if (res.ok) {
+                    success = true;
+                    console.log(`[PULSE] Sincronización exitosa: ${area}`);
+                    break;
+                }
+            } catch (err) { console.warn(`Intento ${i+1} fallido para ${area}`); }
+        }
+        return success;
     } catch (e) {
-        console.warn(`⚠️ Error guardando ${area} en servidor:`, e);
+        console.warn(`⚠️ Error crítico guardando ${area}:`, e);
         return false;
     }
 };
