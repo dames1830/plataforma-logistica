@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.4.76';
 
 
-const VERSION = '12.4.83';
-const CACHE_KEY = `logistics_v12_4_83_`;
+const VERSION = '12.4.84';
+const CACHE_KEY = `logistics_v12_4_84_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -37,6 +37,7 @@ const saveAlmacenajeTasks = async () => {
       // 2. Sincronización Global INMEDIATA
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
+          alert("🚀 ¡Tareas sincronizadas globalmente con éxito! El Asistente ya debería poder verlas.");
           console.log("✅ [PULSE] Sincronización Global de Almacenaje completada.");
       } else {
           alert("⚠️ Tus tareas se guardaron LOCALMENTE, pero falló la sincronización con la nube. Es posible que el Asistente no las vea.");
@@ -2797,7 +2798,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
         almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-        saveAlmacenajeTasks(); 
+        await saveAlmacenajeTasks(); 
         renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
     } catch (e) {
         alert("🚨 Error de Cálculo: " + e.message);
