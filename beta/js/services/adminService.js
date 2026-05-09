@@ -358,8 +358,7 @@ export const loadAlmacenajeTasks = async () => {
             }
 
             adminStore.almacenaje_tasks = data;
-            const resumen = data.length > 0 ? data.map(t => t.marca || 'S/M').slice(0,2).join(',') : 'Vacío';
-            alert(`🔍 RADAR [X-RAY]: Tipo:${type} | Claves:[${keys}] | Tareas:${data.length} | [${resumen}...]`);
+            console.log(`🔍 [PULSE] Radar X-RAY: Sincronizadas ${data.length} tareas.`);
             return data;
         }
         return adminStore.almacenaje_tasks;
