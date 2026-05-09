@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.9.4';
-const CACHE_KEY = `logistics_v12_9_4_`;
+const VERSION = '12.9.5';
+const CACHE_KEY = `logistics_v12_9_5_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -132,10 +132,12 @@ window.downloadExcelDetail = async () => {
     const data = lastBufferResult;
     const workbook = new ExcelJS.Workbook();
 
-    // --- PESTAÑA 1: MONTACARGA (FORMATO PREMIUM SOLICITADO) ---
-    const wsMonta = workbook.addWorksheet('Montacarga', { properties: { tabColor: { argb: 'FFADD8E6' } } });
+    // --- PESTAÑA 1: MONTACARGA (FORMATO PREMIUM) ---
+    const wsMonta = workbook.addWorksheet('Montacarga', { 
+        properties: { tabColor: { argb: 'FFADD8E6' } },
+        pageSetup: { printTitlesRow: '1:4', orientation: 'portrait' } 
+    });
     
-    // Ancho de columnas (Conversión aproximada de px a Excel width units: px / 7.5)
     wsMonta.columns = [
         { key: 'n', width: 12 },    // ~90px
         { key: 'ubi', width: 21.3 }, // ~160px
@@ -143,7 +145,6 @@ window.downloadExcelDetail = async () => {
         { key: 'qty', width: 18 }    // ~135px
     ];
 
-    // Fila 1: Título (Fuente 48, Centrada)
     wsMonta.mergeCells('A1:D1');
     const row1 = wsMonta.getRow(1);
     row1.height = 60;
@@ -151,14 +152,12 @@ window.downloadExcelDetail = async () => {
     row1.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
     row1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-    // Fila 2: Fecha (Fuente 10, Centrada)
     wsMonta.mergeCells('A2:D2');
     const row2 = wsMonta.getRow(2);
     row2.getCell(1).value = data.timestamp || new Date().toLocaleString();
     row2.getCell(1).font = { size: 10, name: 'Calibri' };
     row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-    // Fila 4: Encabezados (Fuente 14, Bordes)
     const row4 = wsMonta.getRow(4);
     row4.values = ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"];
     row4.font = { bold: true, size: 14, name: 'Calibri' };
@@ -167,7 +166,6 @@ window.downloadExcelDetail = async () => {
         if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
     });
 
-    // Datos Montacarga
     const physicalDetalle = (data.detalle || [])
         .filter(d => String(d.UBICACIONES || '').startsWith('SEL-'))
         .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
@@ -192,16 +190,73 @@ window.downloadExcelDetail = async () => {
         });
     });
 
-    // --- PESTAÑAS ADICIONALES (FORMATO ESTÁNDAR MEJORADO) ---
-    const addStandardSheet = (name, jsonData, columns) => {
+    // --- PESTAÑA 2: ANÁLISIS BUFFER (RESTAURADA) ---
+    const wsAnalisis = workbook.addWorksheet('Análisis Buffer');
+    wsAnalisis.columns = [
+        { header: 'UBICACIÓN', key: 'ubi', width: 18 },
+        { header: 'LPN', key: 'lpn', width: 22 },
+        { header: 'SKU', key: 'sku', width: 18 },
+        { header: 'TALLAS', key: 'talla', width: 10 },
+        { header: 'MARCAS', key: 'marca', width: 15 },
+        { header: 'GENDER RIMS', key: 'gender', width: 15 },
+        { header: 'QTY ACTIVO', key: 'act', width: 12 },
+        { header: 'QTY RESERVA', key: 'res', width: 12 },
+        { header: 'QTY BUFFER', key: 'buf', width: 12 }
+    ];
+
+    const maestroMap = new Map();
+    if (dataStore.articulos) {
+        dataStore.articulos.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const art7 = String(raw[1] || '').trim().substring(0, 7);
+            if (art7 && !maestroMap.has(art7)) {
+                maestroMap.set(art7, { marca: String(raw[13] || 'OTROS').trim(), gender: String(raw[3] || '').trim() });
+            }
+        });
+    }
+    const tallasMap = dataStore.tabla_tallas || {};
+
+    let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
+    let gSumA = 0, gSumR = 0, gSumB = 0;
+
+    physicalDetalle.forEach((d, i) => {
+        if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
+            const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+            totalRow.font = { bold: true };
+            uSumA = 0; uSumR = 0; uSumB = 0;
+        }
+
+        const sku = d.SKU;
+        const art7 = sku.substring(0, 7);
+        const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
+        const talla = tallasMap[sku] || '-';
+
+        wsAnalisis.addRow([
+            d.UBICACIONES !== lastUbi ? d.UBICACIONES : "",
+            d.LPN, sku, talla, maestro.marca, maestro.gender,
+            d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER']
+        ]);
+
+        uSumA += (d['QTY ACTIVO'] || 0); uSumR += (d['QTY RESERVA'] || 0); uSumB += (d['QTY BUFFER'] || 0);
+        gSumA += (d['QTY ACTIVO'] || 0); gSumR += (d['QTY RESERVA'] || 0); gSumB += (d['QTY BUFFER'] || 0);
+        lastUbi = d.UBICACIONES;
+    });
+
+    if (lastUbi !== "") {
+        const lastTotalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+        lastTotalRow.font = { bold: true };
+    }
+    wsAnalisis.addRow([]);
+    const grandTotalRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
+    grandTotalRow.font = { bold: true, size: 12 };
+    wsAnalisis.getRow(1).font = { bold: true };
+
+    // --- OTRAS PESTAÑAS ---
+    const addStandardSheet = (name, jsonData) => {
         if (!jsonData || jsonData.length === 0) return;
         const ws = workbook.addWorksheet(name);
-        if (columns) {
-            ws.columns = columns.map(c => ({ header: c.header, key: c.key, width: c.width }));
-        } else {
-            const keys = Object.keys(jsonData[0] || {});
-            ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
-        }
+        const keys = Object.keys(jsonData[0] || {});
+        ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
         ws.addRows(jsonData);
         ws.getRow(1).font = { bold: true };
         ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
@@ -213,17 +268,12 @@ window.downloadExcelDetail = async () => {
         'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
         'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
     })));
-
-    const tallasMap = dataStore.tabla_tallas || {};
-    const tallasData = Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla }));
-    addStandardSheet('Tallas', tallasData);
-
+    addStandardSheet('Tallas', Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla })));
     addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
     addStandardSheet('Sin Stock', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] === '7. SIN STOCK').map(d => ({
         'NIVEL/AREA': d['NIVEL/AREA'], 'ARTÍCULO': d['ARTÍCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
     })));
 
-    // --- GENERAR Y DESCARGAR ---
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = window.URL.createObjectURL(blob);
@@ -294,7 +344,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.4</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.5</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
