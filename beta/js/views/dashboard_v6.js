@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.9.9';
-const CACHE_KEY = `logistics_v12_9_9_`;
+const VERSION = '12.9.10';
+const CACHE_KEY = `logistics_v12_9_10_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -386,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.9</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.10</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -2933,8 +2933,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
-                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isKpi ? 'KPI TAREAS' : isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
-                <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
+                <!-- Títulos eliminados por solicitud del usuario -->
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
@@ -2942,14 +2941,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </button>
                 <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
                 <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:8px 12px; font-size:0.75rem;" title="Limpiar Tareas Pendientes">🗑️</button>
-                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
+                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
             </div>
         </div>
 
         <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
             <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
             <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
-            <a class="sub-sub-nav-item ${isKpi?'active':''}" onclick="window.setTaskMode('kpi')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${isKpi?'800':'500'}; border-bottom:${isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📈 KPIs</a>
         </nav>
 
         ${isKpi ? `
