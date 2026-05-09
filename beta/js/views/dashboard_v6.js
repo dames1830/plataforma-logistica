@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.9.5';
-const CACHE_KEY = `logistics_v12_9_5_`;
+const VERSION = '12.9.6';
+const CACHE_KEY = `logistics_v12_9_6_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -139,10 +139,7 @@ window.downloadExcelDetail = async () => {
     });
     
     wsMonta.columns = [
-        { key: 'n', width: 12 },    // ~90px
-        { key: 'ubi', width: 21.3 }, // ~160px
-        { key: 'lpn', width: 30 },   // ~225px
-        { key: 'qty', width: 18 }    // ~135px
+        { key: 'n', width: 12 }, { key: 'ubi', width: 21.3 }, { key: 'lpn', width: 30 }, { key: 'qty', width: 18 }
     ];
 
     wsMonta.mergeCells('A1:D1');
@@ -158,10 +155,10 @@ window.downloadExcelDetail = async () => {
     row2.getCell(1).font = { size: 10, name: 'Calibri' };
     row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-    const row4 = wsMonta.getRow(4);
-    row4.values = ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"];
-    row4.font = { bold: true, size: 14, name: 'Calibri' };
-    row4.eachCell((cell, colNumber) => {
+    const row4M = wsMonta.getRow(4);
+    row4M.values = ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"];
+    row4M.font = { bold: true, size: 14, name: 'Calibri' };
+    row4M.eachCell((cell, colNumber) => {
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
     });
@@ -173,16 +170,13 @@ window.downloadExcelDetail = async () => {
     const montacargaMap = new Map();
     physicalDetalle.forEach(d => {
         const lpn = d.LPN;
-        if (!montacargaMap.has(lpn)) {
-            montacargaMap.set(lpn, { ubi: d.UBICACIONES, lpn: lpn, qty: 0 });
-        }
+        if (!montacargaMap.has(lpn)) montacargaMap.set(lpn, { ubi: d.UBICACIONES, lpn: lpn, qty: 0 });
         montacargaMap.get(lpn).qty += d['QTY RESERVA'];
     });
 
     const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.ubi.localeCompare(b.ubi));
     montacargaRows.forEach((r, idx) => {
-        const rowData = [idx + 1, r.ubi, r.lpn, r.qty];
-        const row = wsMonta.addRow(rowData);
+        const row = wsMonta.addRow([idx + 1, r.ubi, r.lpn, r.qty]);
         row.font = { size: 14, name: 'Calibri' };
         row.eachCell((cell, colNumber) => {
             cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
@@ -190,28 +184,45 @@ window.downloadExcelDetail = async () => {
         });
     });
 
-    // --- PESTAÑA 2: ANÁLISIS BUFFER (RESTAURADA) ---
-    const wsAnalisis = workbook.addWorksheet('Análisis Buffer');
+    // --- PESTAÑA 2: ANÁLISIS BUFFER (FORMATO PREMIUM) ---
+    const wsAnalisis = workbook.addWorksheet('Análisis Buffer', {
+        pageSetup: { printTitlesRow: '1:4' }
+    });
     wsAnalisis.columns = [
-        { header: 'UBICACIÓN', key: 'ubi', width: 18 },
-        { header: 'LPN', key: 'lpn', width: 22 },
-        { header: 'SKU', key: 'sku', width: 18 },
-        { header: 'TALLAS', key: 'talla', width: 10 },
-        { header: 'MARCAS', key: 'marca', width: 15 },
-        { header: 'GENDER RIMS', key: 'gender', width: 15 },
-        { header: 'QTY ACTIVO', key: 'act', width: 12 },
-        { header: 'QTY RESERVA', key: 'res', width: 12 },
-        { header: 'QTY BUFFER', key: 'buf', width: 12 }
+        { key: 'ubi', width: 22 }, { key: 'lpn', width: 22 }, { key: 'sku', width: 18 }, { key: 'talla', width: 10 },
+        { key: 'marca', width: 15 }, { key: 'gender', width: 15 }, { key: 'act', width: 12 }, { key: 'res', width: 12 }, { key: 'buf', width: 12 }
     ];
+
+    wsAnalisis.mergeCells('A1:I1');
+    const row1A = wsAnalisis.getRow(1);
+    row1A.height = 60;
+    row1A.getCell(1).value = 'ANÁLISIS BUFFER';
+    row1A.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
+    row1A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    wsAnalisis.mergeCells('A2:I2');
+    const row2A = wsAnalisis.getRow(2);
+    row2A.getCell(1).value = data.timestamp || new Date().toLocaleString();
+    row2A.getCell(1).font = { size: 10, name: 'Calibri' };
+    row2A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const row4A = wsAnalisis.getRow(4);
+    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
+    row4A.height = 25;
+    row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 14, name: 'Calibri' };
+    row4A.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        cell.alignment = { vertical: 'middle' };
+    });
+    [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
     const maestroMap = new Map();
     if (dataStore.articulos) {
         dataStore.articulos.forEach(row => {
             const raw = Array.isArray(row) ? row : Object.values(row);
             const art7 = String(raw[1] || '').trim().substring(0, 7);
-            if (art7 && !maestroMap.has(art7)) {
-                maestroMap.set(art7, { marca: String(raw[13] || 'OTROS').trim(), gender: String(raw[3] || '').trim() });
-            }
+            if (art7 && !maestroMap.has(art7)) maestroMap.set(art7, { marca: String(raw[13] || 'OTROS').trim(), gender: String(raw[3] || '').trim() });
         });
     }
     const tallasMap = dataStore.tabla_tallas || {};
@@ -219,10 +230,15 @@ window.downloadExcelDetail = async () => {
     let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
     let gSumA = 0, gSumR = 0, gSumB = 0;
 
-    physicalDetalle.forEach((d, i) => {
+    physicalDetalle.forEach((d) => {
         if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
             const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-            totalRow.font = { bold: true };
+            totalRow.font = { bold: true, size: 14, name: 'Calibri' };
+            totalRow.eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } }; // Gris 35%
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+            [7, 8, 9].forEach(c => totalRow.getCell(c).alignment = { horizontal: 'center' });
             uSumA = 0; uSumR = 0; uSumB = 0;
         }
 
@@ -231,11 +247,16 @@ window.downloadExcelDetail = async () => {
         const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
         const talla = tallasMap[sku] || '-';
 
-        wsAnalisis.addRow([
+        const dataRow = wsAnalisis.addRow([
             d.UBICACIONES !== lastUbi ? d.UBICACIONES : "",
             d.LPN, sku, talla, maestro.marca, maestro.gender,
             d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER']
         ]);
+        dataRow.font = { size: 14, name: 'Calibri' };
+        dataRow.eachCell((cell, colNumber) => {
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            if (colNumber >= 7) cell.alignment = { horizontal: 'center' };
+        });
 
         uSumA += (d['QTY ACTIVO'] || 0); uSumR += (d['QTY RESERVA'] || 0); uSumB += (d['QTY BUFFER'] || 0);
         gSumA += (d['QTY ACTIVO'] || 0); gSumR += (d['QTY RESERVA'] || 0); gSumB += (d['QTY BUFFER'] || 0);
@@ -243,18 +264,29 @@ window.downloadExcelDetail = async () => {
     });
 
     if (lastUbi !== "") {
-        const lastTotalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-        lastTotalRow.font = { bold: true };
+        const lastTotal = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+        lastTotal.font = { bold: true, size: 14, name: 'Calibri' };
+        lastTotal.eachCell(cell => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } };
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+        [7, 8, 9].forEach(c => lastTotal.getCell(c).alignment = { horizontal: 'center' });
     }
     wsAnalisis.addRow([]);
-    const grandTotalRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
-    grandTotalRow.font = { bold: true, size: 12 };
-    wsAnalisis.getRow(1).font = { bold: true };
+    const gtRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
+    gtRow.height = 25;
+    gtRow.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
+    gtRow.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        cell.alignment = { vertical: 'middle' };
+    });
+    [7, 8, 9].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
     // --- OTRAS PESTAÑAS ---
-    const addStandardSheet = (name, jsonData) => {
+    const addStandardSheet = (name, jsonData, tabColor = null) => {
         if (!jsonData || jsonData.length === 0) return;
-        const ws = workbook.addWorksheet(name);
+        const ws = workbook.addWorksheet(name, { properties: { tabColor: tabColor ? { argb: tabColor } : undefined } });
         const keys = Object.keys(jsonData[0] || {});
         ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
         ws.addRows(jsonData);
@@ -267,7 +299,8 @@ window.downloadExcelDetail = async () => {
     addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
         'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
-    })));
+    })), 'FF22C55E'); // Verde
+
     addStandardSheet('Tallas', Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla })));
     addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
     addStandardSheet('Sin Stock', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] === '7. SIN STOCK').map(d => ({
@@ -344,7 +377,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.5</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.6</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
