@@ -231,10 +231,10 @@ export const saveAlmacenajeTasks = async (tasks) => {
         const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: tasks })
+            body: JSON.stringify(tasks) // Envío redundante: array puro
         });
         if (res.ok) {
-            console.log(`✅ Sincronización Exitosa de: [${resumen}]`);
+            console.log(`✅ Sincronización Exitosa (Array Puro)`);
             return true;
         }
         return false;
@@ -245,28 +245,28 @@ export const saveAlmacenajeTasks = async (tasks) => {
 };
 export const loadAlmacenajeTasks = async () => {
     try {
-        console.log("🔍 [PULSE] Solicitando tareas FINAL con Abrelatas Profundo...");
+        console.log("🔍 [PULSE] Solicitando con X-RAY...");
         const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`);
         if (res.ok) {
             const result = await res.json();
             let data = [];
             
-            // Lógica de "Abrelatas Profundo"
-            if (result) {
-                if (Array.isArray(result.data)) data = result.data;
-                else if (Array.isArray(result)) {
-                    // Si recibimos [ { data: [...] } ] (Doble Caja)
-                    if (result[0] && Array.isArray(result[0].data)) data = result[0].data;
-                    else data = result;
-                }
-                else if (result.data) data = [result.data];
+            // DIAGNÓSTICO X-RAY
+            const type = Array.isArray(result) ? "ARRAY" : typeof result;
+            const keys = result ? Object.keys(Array.isArray(result) ? (result[0] || {}) : result).join(',') : "N/A";
+            
+            if (Array.isArray(result)) {
+                if (result[0] && Array.isArray(result[0].data)) data = result[0].data;
+                else if (result[0] && typeof result[0] === 'object' && result.length > 1) data = result;
+                else if (result[0] && result[0].tasks) data = result[0].tasks;
+                else data = result;
+            } else if (result && result.data) {
+                data = Array.isArray(result.data) ? result.data : [result.data];
             }
 
             adminStore.almacenaje_tasks = data;
-            localStorage.setItem(PREFIX + 'almacenaje_tasks_final', JSON.stringify(data));
-            
-            const resumen = data.length > 0 ? data.map(t => `${t.marca || 'S/M'}`).join(', ') : 'Vacío';
-            alert(`🔍 RADAR: [SINCRO TOTAL] El servidor informa ${data.length} tareas: [${resumen}]`);
+            const resumen = data.length > 0 ? data.map(t => t.marca || 'S/M').slice(0,2).join(',') : 'Vacío';
+            alert(`🔍 RADAR [X-RAY]: Tipo:${type} | Claves:[${keys}] | Tareas:${data.length} | [${resumen}...]`);
             return data;
         }
         return adminStore.almacenaje_tasks;
