@@ -127,216 +127,115 @@ let lastBufferResult = null;
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
-window.downloadExcelDetail = () => {
+window.downloadExcelDetail = async () => {
     if (!lastBufferResult) return;
     const data = lastBufferResult;
+    const workbook = new ExcelJS.Workbook();
+
+    // --- PESTAÑA 1: MONTACARGA (FORMATO PREMIUM SOLICITADO) ---
+    const wsMonta = workbook.addWorksheet('Montacarga', { properties: { tabColor: { argb: 'FFADD8E6' } } });
     
-    // 1. Pestaña DETALLE (Resumen de todos los SKUs)
-    const sheetDetalle = XLSX.utils.json_to_sheet(data.resumenSKUDetalle || []);
-    
-    // 2. Pestaña SKU BAJAR (Solo SKUs con Diferencia > 0)
-    const skusBajarData = (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0);
-    const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
-    
-    // [FILTRO v12.4.2] Filtrar solo ubicaciones Físicas (SEL-) y ordenar
+    // Ancho de columnas (Conversión aproximada de px a Excel width units: px / 7.5)
+    wsMonta.columns = [
+        { key: 'n', width: 12 },    // ~90px
+        { key: 'ubi', width: 21.3 }, // ~160px
+        { key: 'lpn', width: 30 },   // ~225px
+        { key: 'qty', width: 18 }    // ~135px
+    ];
+
+    // Fila 1: Título (Fuente 48, Centrada)
+    wsMonta.mergeCells('A1:D1');
+    const row1 = wsMonta.getRow(1);
+    row1.height = 60;
+    row1.getCell(1).value = 'MONTACARGA';
+    row1.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
+    row1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Fila 2: Fecha (Fuente 10, Centrada)
+    wsMonta.mergeCells('A2:D2');
+    const row2 = wsMonta.getRow(2);
+    row2.getCell(1).value = data.timestamp || new Date().toLocaleString();
+    row2.getCell(1).font = { size: 10, name: 'Calibri' };
+    row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Fila 4: Encabezados (Fuente 14, Bordes)
+    const row4 = wsMonta.getRow(4);
+    row4.values = ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"];
+    row4.font = { bold: true, size: 14, name: 'Calibri' };
+    row4.eachCell((cell, colNumber) => {
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
+    });
+
+    // Datos Montacarga
     const physicalDetalle = (data.detalle || [])
         .filter(d => String(d.UBICACIONES || '').startsWith('SEL-'))
         .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
 
-    // 3. Pestaña LPN SELECIONADOS
-    const lpnData = physicalDetalle.map(d => ({
-        'Ubicacion': d.UBICACIONES,
-        'LPN': d.LPN,
-        'Sku': d.SKU,
-        'Stock Activo': d['QTY ACTIVO'],
-        'Stock Reserva': d['QTY RESERVA'],
-        'Qty Buffer': d['QTY BUFFER'],
-        'Articulo': d.Articulo
-    }));
-    const sheetLPN = XLSX.utils.json_to_sheet(lpnData);
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, sheetDetalle, "Detalle");
-    XLSX.utils.book_append_sheet(wb, sheetSkuBajar, "Sku Bajar");
-    XLSX.utils.book_append_sheet(wb, sheetLPN, "LPN Selecionados");
-
-    // 4. Pestaña MONTACARGA (Para operario, lista para imprimir)
     const montacargaMap = new Map();
     physicalDetalle.forEach(d => {
         const lpn = d.LPN;
         if (!montacargaMap.has(lpn)) {
-            montacargaMap.set(lpn, {
-                'UBICACIÓN': d.UBICACIONES,
-                'LPN': lpn,
-                'QTY RESERVA': 0
-            });
+            montacargaMap.set(lpn, { ubi: d.UBICACIONES, lpn: lpn, qty: 0 });
         }
-        montacargaMap.get(lpn)['QTY RESERVA'] += d['QTY RESERVA'];
+        montacargaMap.get(lpn).qty += d['QTY RESERVA'];
     });
-    // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
-    const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
-    
-    const versionStr = "v12.6.0";
-    const aoa = [
-        ["MONTACARGA"],
-        [`${data.timestamp || new Date().toLocaleString()}`],
-        [],
-        ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"]
-    ];
-    montacargaRows.forEach((row, idx) => {
-        aoa.push([idx + 1, row.UBICACIÓN, row.LPN, row['QTY RESERVA']]);
-    });
-    const sheetMontacarga = XLSX.utils.aoa_to_sheet(aoa);
-    
-    // Configuración de impresión y celdas
-    if (!sheetMontacarga['!merges']) sheetMontacarga['!merges'] = [];
-    sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }); // Título centrado (4 cols)
-    sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }); // Fecha (4 cols)
-    
-    // Ancho de columnas (200px aprox = 28 caracteres, y el N° algo más corto)
-    sheetMontacarga['!cols'] = [
-        { wch: 12 }, // N° Paletas
-        { wch: 28 },
-        { wch: 28 },
-        { wch: 28 }
-    ];
 
-    XLSX.utils.book_append_sheet(wb, sheetMontacarga, "Montacarga");
-
-    // 5. Pestaña ANÁLISIS BUFFER (Cruce con Maestro y Tallas)
-    const maestroMap = new Map();
-    if (dataStore.articulos) {
-        dataStore.articulos.forEach(row => {
-            const raw = Array.isArray(row) ? row : Object.values(row);
-            const art7 = String(raw[1] || '').trim().substring(0, 7);
-            if (art7 && !maestroMap.has(art7)) {
-                maestroMap.set(art7, {
-                    marca: String(raw[13] || 'OTROS').trim(),
-                    gender: String(raw[3] || '').trim() // Columna D (Índice 3) para Gender Rims
-                });
-            }
+    const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.ubi.localeCompare(b.ubi));
+    montacargaRows.forEach((r, idx) => {
+        const rowData = [idx + 1, r.ubi, r.lpn, r.qty];
+        const row = wsMonta.addRow(rowData);
+        row.font = { size: 14, name: 'Calibri' };
+        row.eachCell((cell, colNumber) => {
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
         });
-    }
+    });
+
+    // --- PESTAÑAS ADICIONALES (FORMATO ESTÁNDAR MEJORADO) ---
+    const addStandardSheet = (name, jsonData, columns) => {
+        if (!jsonData || jsonData.length === 0) return;
+        const ws = workbook.addWorksheet(name);
+        if (columns) {
+            ws.columns = columns.map(c => ({ header: c.header, key: c.key, width: c.width }));
+        } else {
+            const keys = Object.keys(jsonData[0] || {});
+            ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
+        }
+        ws.addRows(jsonData);
+        ws.getRow(1).font = { bold: true };
+        ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+    };
+
+    addStandardSheet('Detalle', data.resumenSKUDetalle);
+    addStandardSheet('Sku Bajar', (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0));
+    addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
+        'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
+        'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
+    })));
 
     const tallasMap = dataStore.tabla_tallas || {};
+    const tallasData = Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla }));
+    addStandardSheet('Tallas', tallasData);
 
-    const aoaAnalisis = [
-        ["ANÁLISIS BUFFER"],
-        [`${data.timestamp || new Date().toLocaleString()}`],
-        [],
-        ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
-    ];
+    addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
+    addStandardSheet('Sin Stock', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] === '7. SIN STOCK').map(d => ({
+        'NIVEL/AREA': d['NIVEL/AREA'], 'ARTÍCULO': d['ARTÍCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
+    })));
 
-    // Ordenar y agrupar datos (Filtrado solo SEL-)
-    const sorted = physicalDetalle;
-
-    let lastUbi = "", lastLPN = "";
-    let uSumA = 0, uSumR = 0, uSumB = 0;
-    let gSumA = 0, gSumR = 0, gSumB = 0;
-
-    sorted.forEach((d, i) => {
-        // Cambio de ubicación -> Insertar Total anterior
-        if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
-            aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-            uSumA = 0; uSumR = 0; uSumB = 0; // Reiniciar
-        }
-
-        const sku = d.SKU;
-        const art7 = sku.substring(0, 7);
-        const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
-        const talla = tallasMap[sku] || '-';
-        
-        const showUbi = (d.UBICACIONES !== lastUbi) ? d.UBICACIONES : "";
-        const showLPN = (d.LPN !== lastLPN || d.UBICACIONES !== lastUbi) ? d.LPN : "";
-
-        aoaAnalisis.push([
-            showUbi,
-            showLPN,
-            sku,
-            talla,
-            maestro.marca,
-            maestro.gender,
-            d['QTY ACTIVO'],
-            d['QTY RESERVA'],
-            d['QTY BUFFER']
-        ]);
-
-        uSumA += (d['QTY ACTIVO'] || 0);
-        uSumR += (d['QTY RESERVA'] || 0);
-        uSumB += (d['QTY BUFFER'] || 0);
-        gSumA += (d['QTY ACTIVO'] || 0);
-        gSumR += (d['QTY RESERVA'] || 0);
-        gSumB += (d['QTY BUFFER'] || 0);
-
-        lastUbi = d.UBICACIONES;
-        lastLPN = d.LPN;
-    });
-
-    // Último total por ubicación
-    if (lastUbi !== "") {
-        aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-    }
-
-    // Fila de Total General
-    aoaAnalisis.push([]);
-    aoaAnalisis.push(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
-
-    const sheetAnalisis = XLSX.utils.aoa_to_sheet(aoaAnalisis);
-    
-    // Formato y anchos para Análisis Buffer
-    if (!sheetAnalisis['!merges']) sheetAnalisis['!merges'] = [];
-    sheetAnalisis['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }); // Título
-    sheetAnalisis['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }); // Fecha
-    
-    sheetAnalisis['!cols'] = [
-        { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }
-    ];
-
-    XLSX.utils.book_append_sheet(wb, sheetAnalisis, "Análisis Buffer");
-
-    // 6. Pestaña TALLAS (Auditoría de Tabla Virtual)
-    const aoaTallas = [
-        ["REPORTE DE TALLAS EXTRAÍDAS"],
-        [`Generado: ${new Date().toLocaleString()}`],
-        [],
-        ["SKU", "TALLA EXTRAÍDA"]
-    ];
-    
-    Object.entries(tallasMap).sort().forEach(([sku, talla]) => {
-        aoaTallas.push([sku, talla]);
-    });
-
-    const sheetTallas = XLSX.utils.aoa_to_sheet(aoaTallas);
-    sheetTallas['!cols'] = [{ wch: 25 }, { wch: 15 }];
-    if (!sheetTallas['!merges']) sheetTallas['!merges'] = [];
-    sheetTallas['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
-    
-    XLSX.utils.book_append_sheet(wb, sheetTallas, "Tallas");
-
-    // [MOD V12.9.0] ABSORCIÓN DE REPORTES DE ZONAS
-    // 1. Pestaña Detalle Zonas (Toda la cascada física)
-    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK');
-    const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
-    XLSX.utils.book_append_sheet(wb, sheetZonas, "Detalle Zonas");
-    
-    // 2. Pestaña Sin Stock (Exclusivo Faltantes)
-    const sinStockData = (data.detalleZonas || [])
-        .filter(d => d['NIVEL/AREA'] === '7. SIN STOCK')
-        .map(d => ({
-            'NIVEL/AREA': d['NIVEL/AREA'],
-            'ARTÍCULO': d['ARTÍCULO'],
-            'SKU': d['SKU'],
-            'ATD RQ': d['ATD RQ']
-        }));
-    const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
-    XLSX.utils.book_append_sheet(wb, sheetOOS, "Sin Stock");
-    
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Detalle_Buffer_Completo_${date}.xlsx`);
+    // --- GENERAR Y DESCARGAR ---
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Detalle_Buffer_Completo_${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
 };
 
 window.downloadExcelZonas = () => {
-    alert("⚠️ Este reporte ahora está integrado en 'EXCEL DETALLE COMPLETO'.");
+    alert("⚠️ Este reporte ahora está integrado en 'EXCEL DETALLE'.");
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
