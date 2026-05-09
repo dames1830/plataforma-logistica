@@ -63,15 +63,14 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.5.06-GOLD";
-    // alert("SISTEMA PROTEGIDO: " + versionStr); // Eliminado para evitar bloqueo
+    const versionStr = "v12.6.0";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
       localStorage.setItem('pulse_last_activity', Date.now().toString());
     }
     
-    this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
+    this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Sistema v${versionStr}...</div>`;
 
     // [IMPORTANTE] Inicializar datos en background (NO BLOQUEANTE)
     adminService.initializeAdminData().catch(e => console.warn("[PULSE] Error en sync:", e));

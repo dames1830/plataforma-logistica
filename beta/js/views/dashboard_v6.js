@@ -176,8 +176,7 @@ window.downloadExcelDetail = () => {
     // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
     const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
     
-    const versionStr = "v12.5.06-GOLD";
-    alert("SISTEMA PROTEGIDO: " + versionStr);
+    const versionStr = "v12.6.0";
     const aoa = [
         ["MONTACARGA"],
         [`${data.timestamp || new Date().toLocaleString()}`],
@@ -401,8 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
-          <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.6.0</span></h2>
         </div>
       </div>
       <div class="user-profile">
