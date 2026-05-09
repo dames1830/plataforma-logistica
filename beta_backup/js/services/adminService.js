@@ -34,10 +34,10 @@ export const initializeAdminData = async () => {
     try {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         
-        const fetchWithTimeout = (url, options, timeout = 10000) => {
+        const fetchWithTimeout = (url, options, timeout = 4000) => {
             return Promise.race([
                 fetch(url, options),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de Sincronización (10s)')), timeout))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de Sincronización')), timeout))
             ]);
         };
 
@@ -46,30 +46,9 @@ export const initializeAdminData = async () => {
                 const res = await fetchWithTimeout(`${API_URL}/${area}`);
                 if (res.ok) {
                     const result = await res.json();
-                    if (result && result.data) {
-                        // Soporte para datos anidados { data: { data: [] } }
-                        const serverData = Array.isArray(result.data) ? result.data : (result.data.data || []);
-
-                        if (area === 'users' || area === 'workers') {
-                            // Fusión inteligente: No borrar lo que no está en el servidor aún
-                            const local = JSON.parse(localStorage.getItem(PREFIX + area) || '[]');
-                            const server = serverData;
-                            const merged = Array.isArray(server) ? [...server] : [];
-                            
-                            if (Array.isArray(local)) {
-                                local.forEach(item => {
-                                    const key = area === 'users' ? 'username' : 'dni';
-                                    if (!merged.find(m => m[key] === item[key])) {
-                                        merged.push(item);
-                                    }
-                                });
-                            }
-                            adminStore[area] = merged;
-                            localStorage.setItem(PREFIX + area, JSON.stringify(merged));
-                        } else {
-                            adminStore[area] = result.data;
-                            localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
-                        }
+                    if (result.data) {
+                        adminStore[area] = result.data;
+                        localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
                     }
                 }
             } catch (err) {
@@ -85,26 +64,14 @@ export const save = async (area, data) => {
     try {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
-        
-        // Intento de guardado con reintento (Fuerza Bruta)
-        let success = false;
-        for (let i = 0; i < 2; i++) {
-            try {
-                const res = await fetch(`${API_URL}/${area}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data })
-                });
-                if (res.ok) {
-                    success = true;
-                    console.log(`[PULSE] Sincronización exitosa: ${area}`);
-                    break;
-                }
-            } catch (err) { console.warn(`Intento ${i+1} fallido para ${area}`); }
-        }
-        return success;
+        const res = await fetch(`${API_URL}/${area}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data })
+        });
+        return res.ok;
     } catch (e) {
-        console.warn(`⚠️ Error crítico guardando ${area}:`, e);
+        console.warn(`⚠️ Error guardando ${area} en servidor:`, e);
         return false;
     }
 };
@@ -170,25 +137,16 @@ export const toggleWorkerStatus = (dni) => {
 };
 
 export const saveUser = async (user) => {
-    let users = getUsers();
-    if (!Array.isArray(users)) {
-        console.warn("⚠️ adminStore.users no es un array, reseteando...");
-        users = [];
-    }
-    const targetUsername = (user.username || '').toLowerCase();
-    const idx = users.findIndex(u => u && (u.username || '').toLowerCase() === targetUsername);
-    
-    const preparedUser = { ...user, username: targetUsername };
-    
-    if (idx >= 0) users[idx] = { ...users[idx], ...preparedUser };
-    else users.push({ ...preparedUser, active: true });
+    const users = getUsers();
+    const idx = users.findIndex(u => u.username === user.username);
+    if (idx >= 0) users[idx] = { ...users[idx], ...user };
+    else users.push({ ...user, active: true });
     return await save('users', users);
 };
 
 export const toggleUserStatus = (username) => {
-    let users = getUsers();
-    if (!Array.isArray(users)) return;
-    const idx = users.findIndex(u => u && u.username === username);
+    const users = getUsers();
+    const idx = users.findIndex(u => u.username === username);
     if (idx >= 0) {
         users[idx].active = users[idx].active === false ? true : false;
         save('users', users);
@@ -196,10 +154,8 @@ export const toggleUserStatus = (username) => {
 };
 
 export const deleteUser = (username) => {
-    let users = getUsers();
-    if (!Array.isArray(users)) return;
-    const filtered = users.filter(u => u && u.username !== username);
-    save('users', filtered);
+    const users = getUsers().filter(u => u.username !== username);
+    save('users', users);
 };
 
 export const savePermissions = async (role, perms) => {
@@ -271,50 +227,14 @@ export const saveAlmacenajeTasks = async (tasks) => {
     try {
         adminStore.almacenaje_tasks = tasks;
         localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(tasks));
-        const resumen = tasks.map(t => t.marca || 'S/M').join(', ');
-        const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`, {
+        const res = await fetch(`${API_URL}/almacenaje_tasks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tasks) // Envío redundante: array puro
+            body: JSON.stringify({ data: tasks })
         });
-        if (res.ok) {
-            console.log(`✅ Sincronización Exitosa (Array Puro)`);
-            return true;
-        }
-        return false;
+        return res.ok;
     } catch (e) {
         console.warn("⚠️ Error guardando tareas en servidor:", e);
         return false;
-    }
-};
-export const loadAlmacenajeTasks = async () => {
-    try {
-        console.log("🔍 [PULSE] Solicitando con X-RAY...");
-        const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`);
-        if (res.ok) {
-            const result = await res.json();
-            let data = [];
-            
-            // DIAGNÓSTICO X-RAY
-            const type = Array.isArray(result) ? "ARRAY" : typeof result;
-            const keys = result ? Object.keys(Array.isArray(result) ? (result[0] || {}) : result).join(',') : "N/A";
-            
-            if (Array.isArray(result)) {
-                if (result[0] && Array.isArray(result[0].data)) data = result[0].data;
-                else if (result[0] && typeof result[0] === 'object' && result.length > 1) data = result;
-                else if (result[0] && result[0].tasks) data = result[0].tasks;
-                else data = result;
-            } else if (result && result.data) {
-                data = Array.isArray(result.data) ? result.data : [result.data];
-            }
-
-            adminStore.almacenaje_tasks = data;
-            const resumen = data.length > 0 ? data.map(t => t.marca || 'S/M').slice(0,2).join(',') : 'Vacío';
-            alert(`🔍 RADAR [X-RAY]: Tipo:${type} | Claves:[${keys}] | Tareas:${data.length} | [${resumen}...]`);
-            return data;
-        }
-        return adminStore.almacenaje_tasks;
-    } catch (e) {
-        return adminStore.almacenaje_tasks;
     }
 };

@@ -1,11 +1,11 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.4.36';
-import * as adminService from '../services/adminService.js?v=12.4.60';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.6.0';
+import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.4.66';
-const CACHE_KEY = `logistics_v12_4_66_`;
+const VERSION = '12.6.0';
+const CACHE_KEY = `logistics_v12_6_0_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
-console.log(`[PULSE] Engine v${VERSION} Initialized (Production)`);
+console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
 const getLogicalDate = () => {
@@ -30,33 +30,41 @@ let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1,
 const saveAlmacenajeTasks = async () => {
   try {
       // 1. Persistencia LOCAL inmediata (Seguridad total)
-      localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
-      // Sincronizar el adminStore localmente también para consistencia inmediata
+      // 1. Persistencia LOCAL inmediata
+      localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-      // 2. Sincronización Global en SEGUNDO PLANO
-      adminService.saveAlmacenajeTasks(almacenajeTasksCache)
-          .then(ok => console.log(ok ? "✅ Sync Global OK" : "⚠️ Server no respondió, reteniendo local"))
-          .catch(e => console.warn("⚠️ Error Sync:", e));
-
-  } catch (e) { console.error("[PULSE] Error crítico al guardar:", e); }
+      // 2. Sincronización Global INMEDIATA
+      alert(`📡 Iniciando sincronización de ${almacenajeTasksCache.length} tareas...`);
+      const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+      if (success) {
+          alert(`🚀 ¡Sincronización Exitosa! ${almacenajeTasksCache.length} tareas disponibles para el Asistente.`);
+          console.log("✅ [PULSE] Sincronización Global de Almacenaje completada.");
+      } else {
+          alert("⚠️ Tus tareas se guardaron LOCALMENTE, pero falló la sincronización con la nube. Es posible que el Asistente no las vea.");
+      }
+  } catch (e) { 
+      console.error("[PULSE] Error crítico al guardar en la nube:", e);
+      alert("🚨 Error crítico al conectar con el servidor.");
+  }
 };
 
 const loadAlmacenajeTasks = async () => {
   try {
       // Recuperar primero lo local para rapidez
-      const stored = localStorage.getItem('pulse_almacenaje_tasks_v1');
+      const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
       const localTasks = stored ? JSON.parse(stored) : [];
       
       const syncedTasks = adminService.adminStore.almacenaje_tasks;
       // Solo sobreescribimos lo local si la nube tiene datos reales (no vacíos)
       if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
           almacenajeTasksCache = syncedTasks;
-          localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(syncedTasks));
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la nube.`);
+          localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
+          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la NUBE GLOBAL.`);
+          alert(`🔍 RADAR INICIAL: Se han detectado ${almacenajeTasksCache.length} tareas en la nube.`);
       } else {
           almacenajeTasksCache = localTasks;
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria local.`);
+          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria LOCAL.`);
       }
   } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
 };
@@ -168,6 +176,8 @@ window.downloadExcelDetail = () => {
     // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
     const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
     
+    const versionStr = "v12.5.06-GOLD";
+    alert("SISTEMA PROTEGIDO: " + versionStr);
     const aoa = [
         ["MONTACARGA"],
         [`${data.timestamp || new Date().toLocaleString()}`],
@@ -390,7 +400,10 @@ export const renderDashboard = async (container, user, onLogout) => {
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
-        <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
+          <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
+        </div>
       </div>
       <div class="user-profile">
         <div class="user-details" style="text-align:right;">
@@ -1168,26 +1181,47 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     let isEditing = false;
 
-    form.onsubmit = (e) => {
+    form.onsubmit = async (e) => {
         e.preventDefault();
-        const newUser = {
-            name: uName.value,
-            username: uUser.value,
-            password: uPass.value,
-            role: uRole.value
-        };
-        adminService.saveUser(newUser);
-        alert(isEditing ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito');
-        form.reset();
-        if (isEditing) {
-            uUser.readOnly = false;
-            uUser.style.opacity = '1';
-            uTitle.textContent = "Nuevo Usuario";
-            btnSubmit.textContent = "GUARDAR USUARIO";
-            btnCancel.style.display = 'none';
-            isEditing = false;
+        try {
+            console.log("[PULSE] Guardando usuario...", { name: uName.value, username: uUser.value });
+            const newUser = {
+                name: uName.value,
+                username: uUser.value,
+                password: uPass.value,
+                role: uRole.value
+            };
+            
+            // Deshabilitar botón durante el proceso
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = "⏳ GUARDANDO...";
+
+            const success = await adminService.saveUser(newUser);
+            
+            if (success) {
+                alert(isEditing ? '🚀 Usuario actualizado con éxito' : '🚀 Usuario creado con éxito');
+                form.reset();
+                if (isEditing) {
+                    uUser.readOnly = false;
+                    uUser.style.opacity = '1';
+                    uTitle.textContent = "Nuevo Usuario";
+                    btnSubmit.textContent = "GUARDAR USUARIO";
+                    btnCancel.style.display = 'none';
+                    isEditing = false;
+                }
+                renderAdminTab();
+            } else {
+                alert('⚠️ El usuario se guardó localmente pero falló la sincronización con el servidor.');
+                renderAdminTab();
+            }
+        } catch (err) {
+            console.error("[PULSE] Error al guardar usuario:", err);
+            alert("❌ Error crítico: " + err.message);
+        } finally {
+            btnSubmit.disabled = false;
+            if (!isEditing) btnSubmit.textContent = "GUARDAR USUARIO";
+            else btnSubmit.textContent = "ACTUALIZAR DATOS";
         }
-        renderAdminTab();
     };
 
     document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = (e) => {
@@ -2457,7 +2491,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
     } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
-        renderAlmacenajeTareas(container);
+        loadAlmacenajeTasks().then(() => renderAlmacenajeTareas(container));
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2707,145 +2741,93 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const processAlmacenajeTasks = async (mode = 'update') => {
-    const stock = await getAreaData('almacenaje_activo');
-    const maestro = dataStore.articulos;
-    if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
-    if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+    try {
+        const stock = await getAreaData('almacenaje_activo');
+        const maestro = dataStore.articulos;
+        if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
+        if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
-    const logicalDate = getLogicalDate();
-    
-    // --- Lógica de Limpieza Inteligente (Opción A) ---
-    // En cualquier modo (new o update), limpiamos lo que no está asignado para evitar duplicados del mismo cálculo
-    almacenajeTasksCache = almacenajeTasksCache.filter(t => 
-        t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado'
-    );
+        const logicalDate = getLogicalDate();
+        almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
+            t && (t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado')
+        ) : [];
 
-    if (mode === 'new') {
-        // En modo 'new', si hubiera algo forzado a limpiar lo haríamos aquí, 
-        // pero la lógica anterior ya protege lo asignado/finalizado.
-        console.log(`[PULSE] Reiniciando jornada operativa: ${logicalDate}`);
-    }
-
-    // 1. Filtrar áreas permitidas
-    const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
-    const filtered = stock.filter(row => {
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
-        return allowedAreas.some(a => area.includes(a));
-    });
-
-    // 2. Mapear Maestro para Gender RIMS y Marcas
-    const artMap = new Map();
-    maestro.forEach(row => {
-        const raw = Array.isArray(row) ? row : Object.values(row);
-        const sku7 = String(raw[1] || '').trim().substring(0, 7);
-        if (sku7 && !artMap.has(sku7)) {
-            artMap.set(sku7, {
-                marca: String(raw[13] || 'S/M').trim(),
-                gender: String(raw[3] || '').trim().toUpperCase(), // Columna D (Gender RIMS)
-                coleccion: String(raw[9] || 'S/C').trim()
-            });
-        }
-    });
-
-    // 3. Agrupar por Artículo (7 dígitos)
-    const groups = {};
-    filtered.forEach(row => {
-        const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
-        const sku7 = skuFull.substring(0, 7);
-        const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
-        const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
-        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
-        const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
-
-        if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
-        
-        const item = { ...row, skuFull, ubi, qty, area };
-        groups[sku7].items.push(item);
-        if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
-        else groups[sku7].zonaQty += qty;
-    });
-
-    // 4. Filtrar: Solo artículos con algo en CDBUFFER
-    const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
-    
-    // 5. Agrupar por Marca para aplicar reglas de Tarea
-    const byMarca = {};
-    eligibleArticulos.forEach(art => {
-        if (!byMarca[art.marca]) byMarca[art.marca] = [];
-        byMarca[art.marca].push(art);
-    });
-
-    const finalTasks = [];
-    let taskCounter = 1;
-
-    Object.keys(byMarca).forEach(marca => {
-        const arts = byMarca[marca];
-        
-        // Regla Accesorios: Todo junto sin importar cantidad
-        const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
-        const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
-
-        accs.forEach(a => {
-            finalTasks.push({
-                id: `Tarea${taskCounter++}`,
-                marca: marca,
-                qty: a.bufferQty,
-                status: 'Creada',
-                u1: '', u2: '', inicio: '', termino: '',
-                items: [a]
-            });
+        const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
+        const filtered = stock.filter(row => {
+            const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+            return allowedAreas.some(a => area.includes(a));
         });
 
-        // Separar normales en grandes (>=300) y pequeños (<300)
-        const bigNormals = normals.filter(a => a.bufferQty >= 300);
-        const smallNormals = normals.filter(a => a.bufferQty < 300);
-
-        // Los grandes son tareas independientes inmediatas
-        bigNormals.forEach(a => {
-            finalTasks.push({
-                id: `Tarea${taskCounter++}`,
-                marca: marca,
-                qty: a.bufferQty,
-                status: 'Creada',
-                u1: '', u2: '', inicio: '', termino: '',
-                items: [a]
-            });
-        });
-
-        // Los pequeños se agrupan estrictamente
-        let currentGroup = [];
-        let currentBufferQty = 0;
-
-        smallNormals.forEach((art, index) => {
-            currentGroup.push(art);
-            currentBufferQty += art.bufferQty;
-
-            // Si llegamos a 300 o es el último de la marca, cerramos tarea
-            if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
-                finalTasks.push({
-                    id: `Tarea${taskCounter++}`,
-                    marca: marca,
-                    qty: currentBufferQty,
-                    status: 'Creada',
-                    u1: '', u2: '', inicio: '', termino: '',
-                    items: [...currentGroup]
+        const artMap = new Map();
+        maestro.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku7 = String(raw[1] || '').trim().substring(0, 7);
+            if (sku7 && !artMap.has(sku7)) {
+                artMap.set(sku7, {
+                    marca: String(raw[13] || 'S/M').trim(),
+                    gender: String(raw[3] || '').trim().toUpperCase(), 
+                    coleccion: String(raw[9] || 'S/C').trim()
                 });
-                currentGroup = [];
-                currentBufferQty = 0;
             }
         });
-    });
 
-    // Agregar nuevas tareas al cache acumulativo
-    const fechaStr = new Date().toISOString().split('T')[0]; // Formato ISO YYYY-MM-DD
-    
-    // Evitar duplicados del mismo día (opcional: o permitir acumular más)
-    // Para este caso, acumulamos todo.
-    const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
-    
-    almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-    saveAlmacenajeTasks(); // Sin await para no bloquear el renderizado
-    renderAlmacenajeTareas(document.getElementById('areaContent'));
+        const groups = {};
+        filtered.forEach(row => {
+            const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
+            const sku7 = skuFull.substring(0, 7);
+            const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+            const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
+            const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
+            const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
+
+            if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
+            const item = { ...row, skuFull, ubi, qty, area };
+            groups[sku7].items.push(item);
+            if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+            else groups[sku7].zonaQty += qty;
+        });
+
+        const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
+        const byMarca = {};
+        eligibleArticulos.forEach(art => {
+            if (!byMarca[art.marca]) byMarca[art.marca] = [];
+            byMarca[art.marca].push(art);
+        });
+
+        const finalTasks = [];
+        let taskCounter = 1;
+        Object.keys(byMarca).forEach(marca => {
+            const arts = byMarca[marca];
+            const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
+            const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
+            accs.forEach(a => {
+                finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+            });
+            const bigNormals = normals.filter(a => a.bufferQty >= 300);
+            const smallNormals = normals.filter(a => a.bufferQty < 300);
+            bigNormals.forEach(a => {
+                finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+            });
+            let currentGroup = [];
+            let currentBufferQty = 0;
+            smallNormals.forEach((art, index) => {
+                currentGroup.push(art);
+                currentBufferQty += art.bufferQty;
+                if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
+                    finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup] });
+                    currentGroup = [];
+                    currentBufferQty = 0;
+                }
+            });
+        });
+
+        const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
+        almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
+        await saveAlmacenajeTasks(); 
+        renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
+    } catch (e) {
+        alert("🚨 Error de Cálculo: " + e.message);
+    }
   };
 
   const exportAlmacenajeExcel = () => {
@@ -2860,7 +2842,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         task.items.forEach(art => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
             
-            // CDBUFFER Rows
             // CDBUFFER Rows
             art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
@@ -2882,6 +2863,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
+    
+    // SINCRONIZACIÓN CRÍTICA: Asegurar que el cache local tenga lo que el radar encontró
+    if (adminService.adminStore.almacenaje_tasks) {
+        almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
+    }
     const tasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
 
     // Lógica de Agrupación para Historial
@@ -2935,7 +2921,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
-                <button onclick="window.openShiftModal()" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                    🔄
+                </button>
+                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
                 <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:8px 12px; font-size:0.75rem;" title="Limpiar Tareas Pendientes">🗑️</button>
                 <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
             </div>
@@ -2998,7 +2987,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </thead>
                         <tbody>
                             ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
+                            ${!isDetail ? tasks.map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
@@ -3158,7 +3147,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
-            saveAlmacenajeTasks(); // Sin await
+            saveAlmacenajeTasks(); 
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
@@ -3190,61 +3179,44 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     window.openShiftModal = () => {
-        const logicalDate = getLogicalDate();
-        const currentPending = almacenajeTasksCache.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
-        const currentDone = almacenajeTasksCache.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
+        try {
+            const logicalDate = getLogicalDate();
+            // Filtro robusto para evitar errores si t es null o indefinido
+            const safeTasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => t && typeof t === 'object') : [];
+            const currentPending = safeTasks.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
+            const currentDone = safeTasks.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
 
-        const modal = document.createElement('div');
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
-        modal.innerHTML = `
-            <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.3); pointer-events:auto !important;">
-                <div style="text-align:center; margin-bottom:1.5rem;">
-                    <div style="display:inline-block; padding:10px; background:rgba(79, 70, 229, 0.1); border-radius:50%; margin-bottom:1rem;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+            const modal = document.createElement('div');
+            modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+            modal.innerHTML = `
+                <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.4); pointer-events:auto !important;">
+                    <div style="text-align:center; margin-bottom:2rem;">
+                        <h2 style="color:#fff; margin:0; font-size:1.5rem; font-weight:800;">Control de Jornada</h2>
+                        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px;">Fecha: <strong style="color:var(--primary);">${logicalDate}</strong></p>
                     </div>
-                    <h2 style="color:#fff; margin:0; font-size:1.4rem;">Control de Jornada</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin:5px 0;">Fecha Operativa: <strong style="color:var(--primary);">${logicalDate}</strong></p>
-                </div>
 
-                <div style="background:rgba(15, 23, 42, 0.6); padding:1rem; border-radius:12px; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.05);">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                        <span style="color:var(--text-muted); font-size:0.85rem;">Tareas Avanzadas (Inalterables):</span>
-                        <span style="color:#22c55e; font-weight:700;">${currentDone}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="color:var(--text-muted); font-size:0.85rem;">Tareas Pendientes actuales:</span>
-                        <span style="color:var(--primary); font-weight:700;">${currentPending}</span>
+                    <div style="display:flex; flex-direction:column; gap:15px;">
+                        <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
+                            CONTINUAR TURNO (Refrescar)
+                        </button>
+                        
+                        <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; margin-top:10px; text-decoration:underline;">
+                            Cerrar ventana
+                        </button>
                     </div>
                 </div>
+            `;
+            document.body.appendChild(modal);
 
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button id="optUpdate" class="btn" style="padding:1rem; font-weight:700; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; pointer-events:auto !important;">
-                        CONTINUAR TURNO (Actualizar)
-                        <div style="font-size:0.7rem; font-weight:400; opacity:0.8; margin-top:4px;">Mantiene lo avanzado y refresca lo pendiente</div>
-                    </button>
-                    
-                    <button id="optNew" class="btn" style="padding:1rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; pointer-events:auto !important;">
-                        REINICIAR JORNADA
-                        <div style="font-size:0.7rem; font-weight:400; opacity:0.6; margin-top:4px;">Borra TODO lo anterior del día ${logicalDate}</div>
-                    </button>
-
-                    <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-top:10px; text-decoration:underline; pointer-events:auto !important;">Cancelar proceso</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        modal.querySelector('#optUpdate').onclick = () => {
-            document.body.removeChild(modal);
-            window.processAlmacenajeTasks('update');
-        };
-        modal.querySelector('#optNew').onclick = () => {
-            if(confirm("⚠️ ¿Estás seguro? Se perderán TODAS las tareas (incluyendo finalizadas) de la fecha operativa actual.")){
+            modal.querySelector('#optUpdate').onclick = () => {
                 document.body.removeChild(modal);
-                window.processAlmacenajeTasks('new');
-            }
-        };
-        modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
+                window.processAlmacenajeTasks('update');
+            };
+            modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
+        } catch (err) {
+            alert("❌ Error crítico al abrir ventana: " + err.message);
+            console.error(err);
+        }
     };
 
     window.processAlmacenajeTasks = processAlmacenajeTasks;
@@ -3265,6 +3237,42 @@ export const renderDashboard = async (container, user, onLogout) => {
         localStorage.setItem('almacenajeTaskMode', mode);
         renderAlmacenajeTareas(container);
     };
+
+    // --- Lógica del Botón de Procesar Tareas (NUEVO VÍNCULO) ---
+    const btnOpen = document.getElementById('btn_open_shift_new');
+    if (btnOpen) {
+        btnOpen.onclick = () => {
+            if (window.openShiftModal) window.openShiftModal();
+            else alert("❌ Error: Función no cargada.");
+        };
+    }
+
+    // --- Lógica del Botón de Refresco Local ---
+    const btnRef = document.getElementById('btn_refresh_almacenaje');
+    if (btnRef) {
+        btnRef.onclick = async () => {
+            // Animación de giro
+            btnRef.style.transition = 'transform 0.6s ease-in-out';
+            btnRef.style.transform = 'rotate(360deg)';
+            btnRef.style.pointerEvents = 'none';
+            btnRef.style.opacity = '0.5';
+            
+            try {
+                // Sincronizar con el servidor (PULL GLOBAL)
+                const serverTasks = await adminService.loadAlmacenajeTasks();
+                if (serverTasks && serverTasks.length > 0) {
+                    almacenajeTasksCache = serverTasks;
+                }
+                renderAlmacenajeTareas(container);
+            } catch (e) {
+                console.error("❌ Error en refresco:", e);
+            } finally {
+                btnRef.style.transform = 'rotate(0deg)';
+                btnRef.style.pointerEvents = 'auto';
+                btnRef.style.opacity = '1';
+            }
+        };
+    }
   };
 
   renderNav();

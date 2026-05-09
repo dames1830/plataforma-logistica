@@ -2,76 +2,69 @@
 const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
 
 // Fallback local en caso de que el servidor esté caído
-const FALLBACK_USERS = [
-  { id: 1, username: 'dames', password: 'Bata1830', role: 'admin', name: 'Gerente Logística (Dames)' }
-];
-
 export const login = async (username, password) => {
-  try {
-    const response = await fetch(`${AUTH_API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        // [PULSE SECURITY OVERRIDE] Verificar contra la lista local de administración
-        try {
-          const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
-          if (dynamicUsersRaw) {
-            const dynamicUsers = JSON.parse(dynamicUsersRaw);
-            const dUser = dynamicUsers.find(u => u.username === username);
-            if (dUser) {
-              if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
-              if (dUser.password !== password) return { success: false, message: 'Contraseña incorrecta. Se ha actualizado recientemente.' };
-            }
-          }
-        } catch(e) { console.warn("Error en Security Override:", e); }
+  const targetUsername = (username || '').toLowerCase();
+  console.log(`[ULTRA] Intento de login: ${targetUsername}`);
 
-        const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
-        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-        return { success: true, user: sessionData };
+  // 1. PRIORIDAD MAESTRO (Siempre entra, no depende de nada)
+  if (targetUsername === 'dames' && password === 'Bata1830') {
+      const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Gerente Logística (Dames)' };
+      localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+      return { success: true, user: sessionData };
+  }
+
+  try {
+      // 2. CARGA INICIAL (Rápida)
+      let localRaw = localStorage.getItem('logistics_admin_v11_users');
+      let dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
+
+      // 3. VALIDACIÓN INSTANTÁNEA (Si ya lo conocemos localmente, no esperamos a la nube)
+      const checkLocal = () => {
+          const u = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
+          if (u && u.password === password && u.active !== false) return u;
+          return null;
+      };
+
+      const userFound = checkLocal();
+      if (userFound) {
+          console.log("[ULTRA] Acceso concedido vía Local.");
+          const sessionData = { id: Date.now(), username: userFound.username, role: userFound.role, name: userFound.name };
+          localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+          return { success: true, user: sessionData };
       }
-      // Si el servidor falla (ej: credenciales no están en el backend),
-      // dejamos que baje a los fallbacks locales de la Beta.
-    }
-    // Si llegamos aquí, el servidor respondió con error (ej: 404 o 500)
-    console.warn("Servidor respondió con error, intentando login local...");
-  } catch (err) {
-    console.warn("Error de conexión al servidor, intentando login local...");
-  }
 
-  // 2. Fallback: login local solo para admin de emergencia (Maestro)
-  const masterUser = FALLBACK_USERS.find(u => u.username === username && u.password === password);
-  if (masterUser) {
-    const sessionData = { id: masterUser.id, username: masterUser.username, role: masterUser.role, name: masterUser.name };
-    localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-    return { success: true, user: sessionData };
-  }
-
-  // 3. Fallback: Usuarios dinámicos creados en el módulo de Administración
-  try {
-    const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
-    if (dynamicUsersRaw) {
-      const dynamicUsers = JSON.parse(dynamicUsersRaw);
-      const dUser = dynamicUsers.find(u => u.username === username && u.password === password);
+      // 4. SINCRONIZACIÓN FORZADA (Solo si no entró por local)
+      console.log("[ULTRA] Usuario no encontrado local, consultando nube...");
+      const cloudRes = await fetch(`${AUTH_API}/logistics/users?z=${Date.now()}`, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+      });
       
-      if (dUser) {
-        if (dUser.active === false) {
-           return { success: false, message: 'Cuenta desactivada. Contacte al administrador.' };
-        }
-        const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
-        localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-        return { success: true, user: sessionData };
+      if (cloudRes.ok) {
+          const result = await cloudRes.json();
+          // [AJUSTE ESTRUCTURAL] Soporte para datos anidados { data: { data: [] } }
+          const serverList = (result && result.data) 
+              ? (Array.isArray(result.data) ? result.data : (result.data.data || []))
+              : [];
+
+          if (Array.isArray(serverList)) {
+              dynamicUsers = serverList;
+              localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
+              
+              const uCloud = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
+              if (uCloud && uCloud.password === password && uCloud.active !== false) {
+                  console.log("[ULTRA] Acceso concedido vía Nube.");
+                  const sessionData = { id: Date.now(), username: uCloud.username, role: uCloud.role, name: uCloud.name };
+                  localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+                  return { success: true, user: sessionData };
+              }
+          }
       }
-    }
   } catch (err) {
-    console.error("Error leyendo usuarios dinámicos:", err);
+      console.error("[ULTRA] Error en proceso de login:", err);
   }
 
-  return { success: false, message: 'Credenciales inválidas' };
+  return { success: false, message: 'Usuario no reconocido o contraseña incorrecta' };
 };
 
 export const logout = () => {
@@ -80,5 +73,29 @@ export const logout = () => {
 
 export const getSession = () => {
   const session = localStorage.getItem('logistics_session');
-  return session ? JSON.parse(session) : null;
+  if (!session) return null;
+  const user = JSON.parse(session);
+  
+  // [SEGURIDAD GOLD] Si el usuario no es 'dames', verificar que siga activo en la lista oficial
+  if (user.username !== 'dames') {
+      const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+      if (dynamicUsersRaw) {
+          try {
+              const dynamicUsers = JSON.parse(dynamicUsersRaw);
+              if (Array.isArray(dynamicUsers)) {
+                  const activeUser = dynamicUsers.find(u => u.username === user.username && u.active !== false);
+                  if (!activeUser) {
+                      console.warn("🚨 Sesión revocada: Usuario no autorizado.");
+                      logout();
+                      return null;
+                  }
+              }
+          } catch(e) { console.warn("Error validando sesión:", e); }
+      } else {
+          // Si no hay lista de usuarios, nadie excepto dames puede estar logueado
+          logout();
+          return null;
+      }
+  }
+  return user;
 };
