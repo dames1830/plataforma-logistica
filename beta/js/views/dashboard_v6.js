@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.9.10';
-const CACHE_KEY = `logistics_v12_9_10_`;
+const VERSION = '12.9.11';
+const CACHE_KEY = `logistics_v12_9_11_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -386,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.10</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.11</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -2931,10 +2931,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }).join('');
 
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <div>
-                <!-- Títulos eliminados por solicitud del usuario -->
-            </div>
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:0.8rem; gap:12px;">
             <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
@@ -3060,7 +3057,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                const sortedItems = [...art.items].sort((a,b) => {
+                                const filteredItems = art.items.filter(i => !i.ubi.startsWith('SEL'));
+                                const sortedItems = [...filteredItems].sort((a,b) => {
                                     const aIsB = a.area.includes('CDBUFFER');
                                     const bIsB = b.area.includes('CDBUFFER');
                                     if (aIsB && !bIsB) return -1;
