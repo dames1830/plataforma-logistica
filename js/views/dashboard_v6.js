@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.7.3';
-const CACHE_KEY = `logistics_v12_7_3_`;
+const VERSION = '13.0.0';
+const CACHE_KEY = `logistics_v13_0_0_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -24,7 +24,7 @@ const getLogicalDate = () => {
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 let expandedWeeks = []; // Semanas expandidas en el historial
-let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
+let almacenajeTasksCache = JSON.parse(localStorage.getItem('logistics_admin_v11_almacenaje_tasks') || '[]'); // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
@@ -35,13 +35,11 @@ const saveAlmacenajeTasks = async () => {
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
       // 2. Sincronización Global INMEDIATA
-      alert(`📡 Iniciando sincronización de ${almacenajeTasksCache.length} tareas...`);
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
-          alert(`🚀 ¡Sincronización Exitosa! ${almacenajeTasksCache.length} tareas disponibles para el Asistente.`);
           console.log("✅ [PULSE] Sincronización Global de Almacenaje completada.");
       } else {
-          alert("⚠️ Tus tareas se guardaron LOCALMENTE, pero falló la sincronización con la nube. Es posible que el Asistente no las vea.");
+          console.warn("⚠️ Falló la sincronización con la nube.");
       }
   } catch (e) { 
       console.error("[PULSE] Error crítico al guardar en la nube:", e);
@@ -51,22 +49,24 @@ const saveAlmacenajeTasks = async () => {
 
 const loadAlmacenajeTasks = async () => {
   try {
-      // Recuperar primero lo local para rapidez
+      // 1. Carga inmediata desde LocalStorage (Sin esperas)
       const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
-      const localTasks = stored ? JSON.parse(stored) : [];
+      if (stored) {
+          const localTasks = JSON.parse(stored);
+          if (Array.isArray(localTasks) && localTasks.length > 0) {
+              almacenajeTasksCache = localTasks;
+          }
+      }
       
+      // 2. Sincronización pasiva con la administración (Solo si hay datos nuevos reales)
       const syncedTasks = adminService.adminStore.almacenaje_tasks;
-      // Solo sobreescribimos lo local si la nube tiene datos reales (no vacíos)
       if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la NUBE GLOBAL.`);
-          alert(`🔍 RADAR INICIAL: Se han detectado ${almacenajeTasksCache.length} tareas en la nube.`);
-      } else {
-          almacenajeTasksCache = localTasks;
-          console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria LOCAL.`);
       }
-  } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
+      
+      console.log(`[PULSE] Persistencia v12.8.0 Activa: ${almacenajeTasksCache.length} tareas.`);
+  } catch (e) { console.error("[PULSE] Error en persistencia:", e); }
 };
 
 const TABS = [
@@ -127,221 +127,207 @@ let lastBufferResult = null;
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
-window.downloadExcelDetail = () => {
+window.downloadExcelDetail = async () => {
     if (!lastBufferResult) return;
     const data = lastBufferResult;
+    const workbook = new ExcelJS.Workbook();
+
+    // --- PESTAÑA 1: MONTACARGA (FORMATO PREMIUM) ---
+    const wsMonta = workbook.addWorksheet('Montacarga', { 
+        properties: { tabColor: { argb: 'FFADD8E6' } },
+        pageSetup: { printTitlesRow: '1:4', orientation: 'portrait' } 
+    });
     
-    // 1. Pestaña DETALLE (Resumen de todos los SKUs)
-    const sheetDetalle = XLSX.utils.json_to_sheet(data.resumenSKUDetalle || []);
-    
-    // 2. Pestaña SKU BAJAR (Solo SKUs con Diferencia > 0)
-    const skusBajarData = (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0);
-    const sheetSkuBajar = XLSX.utils.json_to_sheet(skusBajarData);
-    
-    // [FILTRO v12.4.2] Filtrar solo ubicaciones Físicas (SEL-) y ordenar
+    wsMonta.columns = [
+        { key: 'n', width: 12 }, { key: 'ubi', width: 21.3 }, { key: 'lpn', width: 30 }, { key: 'qty', width: 18 }
+    ];
+
+    wsMonta.mergeCells('A1:D1');
+    const row1 = wsMonta.getRow(1);
+    row1.height = 60;
+    row1.getCell(1).value = 'MONTACARGA';
+    row1.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
+    row1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    wsMonta.mergeCells('A2:D2');
+    const row2 = wsMonta.getRow(2);
+    row2.getCell(1).value = data.timestamp || new Date().toLocaleString();
+    row2.getCell(1).font = { size: 10, name: 'Calibri' };
+    row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const row4M = wsMonta.getRow(4);
+    row4M.values = ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"];
+    row4M.font = { bold: true, size: 14, name: 'Calibri' };
+    row4M.eachCell((cell, colNumber) => {
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
+    });
+
     const physicalDetalle = (data.detalle || [])
         .filter(d => String(d.UBICACIONES || '').startsWith('SEL-'))
         .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
 
-    // 3. Pestaña LPN SELECIONADOS
-    const lpnData = physicalDetalle.map(d => ({
-        'Ubicacion': d.UBICACIONES,
-        'LPN': d.LPN,
-        'Sku': d.SKU,
-        'Stock Activo': d['QTY ACTIVO'],
-        'Stock Reserva': d['QTY RESERVA'],
-        'Qty Buffer': d['QTY BUFFER'],
-        'Articulo': d.Articulo
-    }));
-    const sheetLPN = XLSX.utils.json_to_sheet(lpnData);
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, sheetDetalle, "Detalle");
-    XLSX.utils.book_append_sheet(wb, sheetSkuBajar, "Sku Bajar");
-    XLSX.utils.book_append_sheet(wb, sheetLPN, "LPN Selecionados");
-
-    // 4. Pestaña MONTACARGA (Para operario, lista para imprimir)
     const montacargaMap = new Map();
     physicalDetalle.forEach(d => {
         const lpn = d.LPN;
-        if (!montacargaMap.has(lpn)) {
-            montacargaMap.set(lpn, {
-                'UBICACIÓN': d.UBICACIONES,
-                'LPN': lpn,
-                'QTY RESERVA': 0
-            });
-        }
-        montacargaMap.get(lpn)['QTY RESERVA'] += d['QTY RESERVA'];
+        if (!montacargaMap.has(lpn)) montacargaMap.set(lpn, { ubi: d.UBICACIONES, lpn: lpn, qty: 0 });
+        montacargaMap.get(lpn).qty += d['QTY RESERVA'];
     });
-    // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
-    const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
-    
-    const versionStr = "v12.6.0";
-    const aoa = [
-        ["MONTACARGA"],
-        [`${data.timestamp || new Date().toLocaleString()}`],
-        [],
-        ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"]
-    ];
-    montacargaRows.forEach((row, idx) => {
-        aoa.push([idx + 1, row.UBICACIÓN, row.LPN, row['QTY RESERVA']]);
+
+    const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.ubi.localeCompare(b.ubi));
+    montacargaRows.forEach((r, idx) => {
+        const row = wsMonta.addRow([idx + 1, r.ubi, r.lpn, r.qty]);
+        row.font = { size: 14, name: 'Calibri' };
+        row.eachCell((cell, colNumber) => {
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
+        });
     });
-    const sheetMontacarga = XLSX.utils.aoa_to_sheet(aoa);
-    
-    // Configuración de impresión y celdas
-    if (!sheetMontacarga['!merges']) sheetMontacarga['!merges'] = [];
-    sheetMontacarga['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }); // Título centrado (4 cols)
-    sheetMontacarga['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }); // Fecha (4 cols)
-    
-    // Ancho de columnas (200px aprox = 28 caracteres, y el N° algo más corto)
-    sheetMontacarga['!cols'] = [
-        { wch: 12 }, // N° Paletas
-        { wch: 28 },
-        { wch: 28 },
-        { wch: 28 }
+
+    // --- PESTAÑA 2: ANÁLISIS BUFFER (FORMATO PREMIUM) ---
+    const wsAnalisis = workbook.addWorksheet('Análisis Buffer', {
+        properties: { tabColor: { argb: 'FF22C55E' } }, // VERDE SOLICITADO
+        pageSetup: { printTitlesRow: '1:4' }
+    });
+    // Re-ajuste de anchos para precisión de píxeles reales (Pixels / 7.0 aprox)
+    wsAnalisis.columns = [
+        { key: 'ubi', width: 27.5 }, // 193px
+        { key: 'lpn', width: 28.5 }, // 200px
+        { key: 'sku', width: 23.5 }, // 165px
+        { key: 'talla', width: 10 },   // 70px
+        { key: 'marca', width: 20 },   // 140px
+        { key: 'gender', width: 23.5 }, // 165px
+        { key: 'act', width: 16.4 },   // 115px
+        { key: 'res', width: 17.8 },   // 125px
+        { key: 'buf', width: 15.7 }    // 110px
     ];
 
-    XLSX.utils.book_append_sheet(wb, sheetMontacarga, "Montacarga");
+    wsAnalisis.mergeCells('A1:I1');
+    const row1A = wsAnalisis.getRow(1);
+    row1A.height = 60;
+    row1A.getCell(1).value = 'ANÁLISIS BUFFER';
+    row1A.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
+    row1A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-    // 5. Pestaña ANÁLISIS BUFFER (Cruce con Maestro y Tallas)
+    wsAnalisis.mergeCells('A2:I2');
+    const row2A = wsAnalisis.getRow(2);
+    row2A.getCell(1).value = data.timestamp || new Date().toLocaleString();
+    row2A.getCell(1).font = { size: 10, name: 'Calibri' };
+    row2A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const row4A = wsAnalisis.getRow(4);
+    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
+    row4A.height = 25;
+    row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 14, name: 'Calibri' };
+    row4A.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        cell.alignment = { vertical: 'middle' };
+    });
+    [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
+
     const maestroMap = new Map();
     if (dataStore.articulos) {
         dataStore.articulos.forEach(row => {
             const raw = Array.isArray(row) ? row : Object.values(row);
             const art7 = String(raw[1] || '').trim().substring(0, 7);
-            if (art7 && !maestroMap.has(art7)) {
-                maestroMap.set(art7, {
-                    marca: String(raw[13] || 'OTROS').trim(),
-                    gender: String(raw[3] || '').trim() // Columna D (Índice 3) para Gender Rims
-                });
-            }
+            if (art7 && !maestroMap.has(art7)) maestroMap.set(art7, { marca: String(raw[13] || 'OTROS').trim(), gender: String(raw[3] || '').trim() });
         });
     }
-
     const tallasMap = dataStore.tabla_tallas || {};
 
-    const aoaAnalisis = [
-        ["ANÁLISIS BUFFER"],
-        [`${data.timestamp || new Date().toLocaleString()}`],
-        [],
-        ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"]
-    ];
-
-    // Ordenar y agrupar datos (Filtrado solo SEL-)
-    const sorted = physicalDetalle;
-
-    let lastUbi = "", lastLPN = "";
-    let uSumA = 0, uSumR = 0, uSumB = 0;
+    let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
     let gSumA = 0, gSumR = 0, gSumB = 0;
 
-    sorted.forEach((d, i) => {
-        // Cambio de ubicación -> Insertar Total anterior
+    physicalDetalle.forEach((d) => {
         if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
-            aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-            uSumA = 0; uSumR = 0; uSumB = 0; // Reiniciar
+            const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+            totalRow.font = { bold: true, size: 14, name: 'Calibri' };
+            totalRow.eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } }; // Gris 35%
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+            [7, 8, 9].forEach(c => totalRow.getCell(c).alignment = { horizontal: 'center' });
+            uSumA = 0; uSumR = 0; uSumB = 0;
         }
 
         const sku = d.SKU;
         const art7 = sku.substring(0, 7);
         const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
         const talla = tallasMap[sku] || '-';
-        
-        const showUbi = (d.UBICACIONES !== lastUbi) ? d.UBICACIONES : "";
-        const showLPN = (d.LPN !== lastLPN || d.UBICACIONES !== lastUbi) ? d.LPN : "";
 
-        aoaAnalisis.push([
-            showUbi,
-            showLPN,
-            sku,
-            talla,
-            maestro.marca,
-            maestro.gender,
-            d['QTY ACTIVO'],
-            d['QTY RESERVA'],
-            d['QTY BUFFER']
+        const dataRow = wsAnalisis.addRow([
+            d.UBICACIONES !== lastUbi ? d.UBICACIONES : "",
+            d.LPN, sku, talla, maestro.marca, maestro.gender,
+            d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER']
         ]);
+        dataRow.font = { size: 14, name: 'Calibri' };
+        dataRow.eachCell((cell, colNumber) => {
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            if (colNumber >= 7) cell.alignment = { horizontal: 'center' };
+        });
 
-        uSumA += (d['QTY ACTIVO'] || 0);
-        uSumR += (d['QTY RESERVA'] || 0);
-        uSumB += (d['QTY BUFFER'] || 0);
-        gSumA += (d['QTY ACTIVO'] || 0);
-        gSumR += (d['QTY RESERVA'] || 0);
-        gSumB += (d['QTY BUFFER'] || 0);
-
+        uSumA += (d['QTY ACTIVO'] || 0); uSumR += (d['QTY RESERVA'] || 0); uSumB += (d['QTY BUFFER'] || 0);
+        gSumA += (d['QTY ACTIVO'] || 0); gSumR += (d['QTY RESERVA'] || 0); gSumB += (d['QTY BUFFER'] || 0);
         lastUbi = d.UBICACIONES;
-        lastLPN = d.LPN;
     });
 
-    // Último total por ubicación
     if (lastUbi !== "") {
-        aoaAnalisis.push([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+        const lastTotal = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
+        lastTotal.font = { bold: true, size: 14, name: 'Calibri' };
+        lastTotal.eachCell(cell => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } };
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+        [7, 8, 9].forEach(c => lastTotal.getCell(c).alignment = { horizontal: 'center' });
     }
-
-    // Fila de Total General
-    aoaAnalisis.push([]);
-    aoaAnalisis.push(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
-
-    const sheetAnalisis = XLSX.utils.aoa_to_sheet(aoaAnalisis);
-    
-    // Formato y anchos para Análisis Buffer
-    if (!sheetAnalisis['!merges']) sheetAnalisis['!merges'] = [];
-    sheetAnalisis['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }); // Título
-    sheetAnalisis['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }); // Fecha
-    
-    sheetAnalisis['!cols'] = [
-        { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }
-    ];
-
-    XLSX.utils.book_append_sheet(wb, sheetAnalisis, "Análisis Buffer");
-
-    // 6. Pestaña TALLAS (Auditoría de Tabla Virtual)
-    const aoaTallas = [
-        ["REPORTE DE TALLAS EXTRAÍDAS"],
-        [`Generado: ${new Date().toLocaleString()}`],
-        [],
-        ["SKU", "TALLA EXTRAÍDA"]
-    ];
-    
-    Object.entries(tallasMap).sort().forEach(([sku, talla]) => {
-        aoaTallas.push([sku, talla]);
+    wsAnalisis.addRow([]);
+    const gtRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
+    gtRow.height = 25;
+    gtRow.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
+    gtRow.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        cell.alignment = { vertical: 'middle' };
     });
+    [7, 8, 9].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
-    const sheetTallas = XLSX.utils.aoa_to_sheet(aoaTallas);
-    sheetTallas['!cols'] = [{ wch: 25 }, { wch: 15 }];
-    if (!sheetTallas['!merges']) sheetTallas['!merges'] = [];
-    sheetTallas['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
-    
-    XLSX.utils.book_append_sheet(wb, sheetTallas, "Tallas");
-    
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
+    // --- OTRAS PESTAÑAS ---
+    const addStandardSheet = (name, jsonData, tabColor = null) => {
+        if (!jsonData || jsonData.length === 0) return;
+        const ws = workbook.addWorksheet(name, { properties: { tabColor: tabColor ? { argb: tabColor } : undefined } });
+        const keys = Object.keys(jsonData[0] || {});
+        ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
+        ws.addRows(jsonData);
+        ws.getRow(1).font = { bold: true };
+        ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+    };
+
+    addStandardSheet('Detalle', data.resumenSKUDetalle);
+    addStandardSheet('Sku Bajar', (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0));
+    addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
+        'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
+        'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
+    }))); // Sin color para evitar confusión
+
+    addStandardSheet('Tallas', Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla })));
+    addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
+    addStandardSheet('Sin Stock', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] === '7. SIN STOCK').map(d => ({
+        'NIVEL/AREA': d['NIVEL/AREA'], 'ARTÍCULO': d['ARTÍCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
+    })));
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Detalle_Buffer_Completo_${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
 };
 
 window.downloadExcelZonas = () => {
-    if (!lastBufferResult) return;
-    const data = lastBufferResult;
-    
-    // 1. Pestaña Detalle Zonas (SOLO lo físico, como antes)
-    const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK');
-    const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
-    
-    // 2. Pestaña Sin Stock (EXCLUSIVO lo faltante)
-    const sinStockData = (data.detalleZonas || [])
-        .filter(d => d['NIVEL/AREA'] === '7. SIN STOCK')
-        .map(d => ({
-            'NIVEL/AREA': d['NIVEL/AREA'],
-            'ARTÍCULO': d['ARTÍCULO'],
-            'SKU': d['SKU'],
-            'ATD RQ': d['ATD RQ']
-        }));
-    const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, sheetZonas, "Detalle Zonas");
-    XLSX.utils.book_append_sheet(wb, sheetOOS, "Sin Stock");
-    
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Analisis_Zonas_${date}.xlsx`);
+    alert("⚠️ Este reporte ahora está integrado en 'EXCEL DETALLE'.");
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
@@ -400,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DAMES1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.3</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.0</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -672,22 +658,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
-              <div>
-                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
-                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
-                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
-                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
-                    <span>${dataStore.articulos ? '✅' : '❌'} MAESTRO (Obligatorio)</span>
-                    <div style="display:flex; align-items:center;">
-                        <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
-                        <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
-                    </div>
-                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+              <div style="display:flex; align-items:center; gap:1rem;">
+                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);">⚡ PROCESAR ANÁLISIS</button>
+                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';">🧹 REINICIAR MEMORIA</button>
               </div>
-              <div style="text-align:right;">
-                <div id="export_actions" style="display:flex; gap:0.5rem; justify-content:flex-end;"></div>
-              </div>
+              <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
             </div>
             <div id="resultsArea" style="display:flex; gap:0.6rem; align-items:start;"></div>
           </div>`;
@@ -707,6 +683,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 setTimeout(async () => {
                     try {
+                        // VALIDACIÓN EXPLÍCITA DE ARCHIVOS
+                        if (!dataStore.buffer_activo) throw new Error("Falta cargar el archivo STOCK ACTIVO.");
+                        if (!dataStore.buffer_reserva) throw new Error("Falta cargar el archivo STOCK RESERVA.");
+                        if (!dataStore.articulos) throw new Error("Falta cargar el archivo MAESTRO.");
+
                         const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                         const res = calculateBufferPallets(config);
                         if (res) {
@@ -769,7 +750,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const createMatrixHTML = (matrix, title, timestamp = '') => {
-    if (!matrix || !matrix.rows || !matrix.rows.length) return '';
+    const hasData = matrix && matrix.rows && matrix.rows.length > 0;
     
     const brandAlias = (name) => {
         if (name === 'Bubblegummers Licenses') return 'BG Licenses';
@@ -783,10 +764,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     return `
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem;">
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem; min-height: 150px;">
             <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
                 <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">
-                    ${title} <span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>
+                    ${title} ${timestamp ? `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>` : ''}
                 </h3>
             </div>
             <div style="overflow-x:auto;">
@@ -794,12 +775,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <thead style="background:rgba(0,0,0,0.5);">
                         <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
                             <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
-                            ${matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('')}
+                            ${hasData ? matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('') : '<th style="padding:0.6rem 0.3rem; text-align:center;">ESTADO</th>'}
                             <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody style="color:#eee;">
-                        ${matrix.rows.map(r => `
+                        ${hasData ? matrix.rows.map(r => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
                                 <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${brandAlias(r.marca)}</td>
                                 ${matrix.columns.map(c => {
@@ -808,7 +789,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 }).join('')}
                                 <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(236,72,153,0.05); color:#22c55e; font-weight:900; border-left:1px solid rgba(255,255,255,0.05);">${r.total.toLocaleString()}</td>
                             </tr>
-                        `).join('')}
+                        `).join('') : `
+                            <tr>
+                                <td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos para procesar en este reporte.</td>
+                            </tr>
+                        `}
                     </tbody>
                 </table>
             </div>
@@ -881,13 +866,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
-            <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📊 EXPORTAR ZONAS</button>
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXCEL DETALLE</button>
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(34,197,94,0.3);">📥 EXCEL DETALLE</button>
         `;
-        document.getElementById('btn_exp_zonas').onclick = () => {
-            if(!data.detalleZonas || !data.detalleZonas.length) alert('⚠️ ERROR: Datos no disponibles.');
-            else window.downloadExcelZonas();
-        };
         document.getElementById('btn_exp_buffer').onclick = () => {
             if(!data.detalle || !data.detalle.length) alert('⚠️ ERROR: Datos no disponibles.');
             else window.downloadExcelDetail();
@@ -2464,9 +2444,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = allowedSubTabs[0]?.id;
 
     contentArea.innerHTML = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+        <nav style="display:flex; gap:1.2rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border);">
           ${allowedSubTabs.map(sub => `
-            <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
+            <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.4rem 0.2rem; font-size: 0.85rem; cursor:pointer;">
                 ${sub.icon} ${sub.label.toUpperCase()}
             </a>
           `).join('')}
@@ -2489,7 +2469,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
     } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
-        loadAlmacenajeTasks().then(() => renderAlmacenajeTareas(container));
+        renderAlmacenajeTareas(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -2738,14 +2718,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const processAlmacenajeTasks = async (mode = 'update') => {
+  const processAlmacenajeTasks = async (mode = 'update', manualDate = null) => {
     try {
         const stock = await getAreaData('almacenaje_activo');
         const maestro = dataStore.articulos;
         if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
         if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
-        const logicalDate = getLogicalDate();
+        const logicalDate = manualDate || getLogicalDate();
         almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
             t && (t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado')
         ) : [];
@@ -2753,6 +2733,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
         const filtered = stock.filter(row => {
             const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+            const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
+            
+            // [REGLA CRÍTICA] Omitir ubicaciones de PreePack (15 dígitos)
+            if (ubi.startsWith('CDBUFFER-C')) return false;
+
             return allowedAreas.some(a => area.includes(a));
         });
 
@@ -2793,18 +2778,36 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
 
         const finalTasks = [];
-        let taskCounter = 1;
+        
+        // --- [NUEVA LÓGICA DE HUECOS] ---
+        // 1. Mapear qué números de "TareaX" ya están ocupados hoy
+        const usedNumbers = new Set();
+        almacenajeTasksCache.forEach(t => {
+            if (t.fecha === logicalDate) {
+                const num = parseInt(t.id.replace('Tarea', ''));
+                if (!isNaN(num)) usedNumbers.add(num);
+            }
+        });
+
+        // 2. Función para obtener el siguiente ID libre
+        const getNextFreeId = () => {
+            let n = 1;
+            while (usedNumbers.has(n)) n++;
+            usedNumbers.add(n); // Reservarlo de inmediato
+            return `Tarea${n}`;
+        };
+
         Object.keys(byMarca).forEach(marca => {
             const arts = byMarca[marca];
             const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
             const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
             accs.forEach(a => {
-                finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
             });
             const bigNormals = normals.filter(a => a.bufferQty >= 300);
             const smallNormals = normals.filter(a => a.bufferQty < 300);
             bigNormals.forEach(a => {
-                finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
             });
             let currentGroup = [];
             let currentBufferQty = 0;
@@ -2812,7 +2815,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 currentGroup.push(art);
                 currentBufferQty += art.bufferQty;
                 if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
-                    finalTasks.push({ id: `Tarea${taskCounter++}`, marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup] });
+                    finalTasks.push({ id: getNextFreeId(), marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup] });
                     currentGroup = [];
                     currentBufferQty = 0;
                 }
@@ -2866,7 +2869,21 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (adminService.adminStore.almacenaje_tasks) {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
     }
-    const tasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
+    const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache] : [];
+    
+    // [ORDENAMIENTO JERÁRQUICO] 1. Fecha Descendente (Más reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
+    tasks.sort((a, b) => {
+        if (!a || !b) return 0;
+        // Primero comparar fechas
+        const dateA = a.fecha || '';
+        const dateB = b.fecha || '';
+        if (dateA !== dateB) return dateB.localeCompare(dateA); // Más reciente primero
+
+        // Si la fecha es igual, comparar número de tarea
+        const numA = parseInt(String(a.id || '').replace('Tarea', '')) || 0;
+        const numB = parseInt(String(b.id || '').replace('Tarea', '')) || 0;
+        return numA - numB;
+    });
 
     // Lógica de Agrupación para Historial
     const getWeekNumber = (d) => {
@@ -2913,26 +2930,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     }).join('');
 
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <div>
-                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isKpi ? 'KPI TAREAS' : isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
-                <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
+            <nav style="display:flex; gap:1.5rem;">
+                <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
+                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+            </nav>
             <div style="display:flex; gap:12px; align-items:center;">
-                <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
                 </button>
-                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
-                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:8px 12px; font-size:0.75rem;" title="Limpiar Tareas Pendientes">🗑️</button>
-                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
+                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">🗑️</button>
+                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
             </div>
         </div>
-
-        <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-            <a class="sub-sub-nav-item ${!isDetail && !isKpi ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail && !isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail && !isKpi?'800':'500'}; border-bottom:${!isDetail && !isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
-            <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
-            <a class="sub-sub-nav-item ${isKpi?'active':''}" onclick="window.setTaskMode('kpi')" style="padding: 0.6rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isKpi?'var(--primary)':'var(--text-muted)'}; font-weight:${isKpi?'800':'500'}; border-bottom:${isKpi?'2px solid var(--primary)':'none'}; text-decoration:none;">📈 KPIs</a>
-        </nav>
 
         ${isKpi ? `
         <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
@@ -2985,7 +2996,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </thead>
                         <tbody>
                             ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.map(t => {
+                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
@@ -3044,7 +3055,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                const sortedItems = [...art.items].sort((a,b) => {
+                                const filteredItems = art.items.filter(i => i.ubi.startsWith('CDBUFFER'));
+                                const sortedItems = [...filteredItems].sort((a,b) => {
                                     const aIsB = a.area.includes('CDBUFFER');
                                     const bIsB = b.area.includes('CDBUFFER');
                                     if (aIsB && !bIsB) return -1;
@@ -3102,7 +3114,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
     window.assignTask = (id) => {
-        const workers = adminService.getWorkers().filter(w => w.active);
+        // [ORDENAMIENTO A-Z] Ordenar operarios alfabéticamente
+        const workers = adminService.getWorkers()
+            .filter(w => w.active)
+            .sort((a, b) => (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || ''));
         const formatUser = (w) => {
             const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
             const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
@@ -3187,26 +3202,28 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.openShiftModal = () => {
         try {
             const logicalDate = getLogicalDate();
-            // Filtro robusto para evitar errores si t es null o indefinido
-            const safeTasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => t && typeof t === 'object') : [];
-            const currentPending = safeTasks.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
-            const currentDone = safeTasks.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
-
             const modal = document.createElement('div');
+            modal.id = "modal_fecha_operativa";
             modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
             modal.innerHTML = `
                 <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.4); pointer-events:auto !important;">
                     <div style="text-align:center; margin-bottom:2rem;">
-                        <h2 style="color:#fff; margin:0; font-size:1.5rem; font-weight:800;">Control de Jornada</h2>
-                        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px;">Fecha: <strong style="color:var(--primary);">${logicalDate}</strong></p>
+                        <h2 style="color:#fff; margin:0; font-size:1.5rem; font-weight:800;">Fecha Operativa</h2>
+                        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px;">Indica la fecha para este procesamiento de tareas</p>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:15px;">
-                        <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
-                            CONTINUAR TURNO (Refrescar)
+                    <div style="display:flex; flex-direction:column; gap:20px;">
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label style="color:var(--primary); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Seleccionar Fecha del Calendario:</label>
+                            <input type="date" id="manual_op_date" value="${logicalDate}" 
+                                style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px; border-radius:10px; font-size:1.1rem; font-weight:700; outline:none; color-scheme:dark;">
+                        </div>
+
+                        <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); margin-top:10px;">
+                            PROCESAR TAREAS
                         </button>
                         
-                        <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; margin-top:10px; text-decoration:underline;">
+                        <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; text-decoration:underline;">
                             Cerrar ventana
                         </button>
                     </div>
@@ -3215,12 +3232,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             document.body.appendChild(modal);
 
             modal.querySelector('#optUpdate').onclick = () => {
+                const selectedDate = modal.querySelector('#manual_op_date').value;
+                if (!selectedDate) { alert("⚠️ Por favor selecciona una fecha."); return; }
                 document.body.removeChild(modal);
-                window.processAlmacenajeTasks('update');
+                window.processAlmacenajeTasks('update', selectedDate);
             };
             modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
         } catch (err) {
-            alert("❌ Error crítico al abrir ventana: " + err.message);
+            alert("❌ Error crítico al abrir calendario: " + err.message);
             console.error(err);
         }
     };

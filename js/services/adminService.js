@@ -67,6 +67,11 @@ export const initializeAdminData = async () => {
                             adminStore[area] = merged;
                             localStorage.setItem(PREFIX + area, JSON.stringify(merged));
                         } else {
+                            // [SEGURIDAD CRÍTICA] No sobrescribir con vacíos si ya tenemos datos locales
+                            if (area === 'almacenaje_tasks' && (!Array.isArray(result.data) || result.data.length === 0)) {
+                                console.log("ℹ️ [PULSE] Ignorando sincronización vacía del servidor para Almacenaje.");
+                                return;
+                            }
                             adminStore[area] = result.data;
                             localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
                         }
@@ -358,8 +363,7 @@ export const loadAlmacenajeTasks = async () => {
             }
 
             adminStore.almacenaje_tasks = data;
-            const resumen = data.length > 0 ? data.map(t => t.marca || 'S/M').slice(0,2).join(',') : 'Vacío';
-            alert(`🔍 RADAR [X-RAY]: Tipo:${type} | Claves:[${keys}] | Tareas:${data.length} | [${resumen}...]`);
+            console.log(`🔍 [PULSE] Radar X-RAY: Sincronizadas ${data.length} tareas.`);
             return data;
         }
         return adminStore.almacenaje_tasks;

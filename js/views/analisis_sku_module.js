@@ -1,7 +1,7 @@
 import { calculateBufferPallets, dataStore } from '../services/csvHub_v6.js?v=12.4.36';
 
 let lastBufferResult = null;
-const CACHE_KEY = `logistics_v12_4_66_beta_`;
+const CACHE_KEY = `logistics_v13_0_0_prod_`;
 
 export const renderAnalisisSKUTab = async (contentArea, user, TABS, subNavHtml) => {
     let activeAnalisisSub = 'articulo_temp';

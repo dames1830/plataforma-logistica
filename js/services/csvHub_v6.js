@@ -966,13 +966,25 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 2. MATRIZ DE DISCREPANCIAS (YA OPTIMIZADA AL INICIO)
 
 
+    // [MOD V12.1.52] INICIALIZACIÓN DE MATRICES FIJAS
+    const demandMarcas = new Set();
+    const demandGenders = new Set();
+    Object.keys(demanda).forEach(sku => {
+        const info = getArtInfo(sku);
+        if (info.marca) demandMarcas.add(info.marca);
+        if (info.gender) demandGenders.add(info.gender);
+    });
+
     const buildMatrix = (filterFn) => {
         const aggr = {};
-        const keys = new Set();
+        const keys = new Set(demandGenders);
+        
+        // Inicializar marcas de la demanda con ceros para asegurar estructura fija
+        demandMarcas.forEach(m => aggr[m] = {});
+
         detalleZonas.filter(filterFn).forEach(d => {
             const info = getArtInfo(d.SKU);
             const qty = d['ATD RQ'] || 0;
-            keys.add(info.gender);
             if (!aggr[info.marca]) aggr[info.marca] = {};
             if (!aggr[info.marca][info.gender]) aggr[info.marca][info.gender] = 0;
             aggr[info.marca][info.gender] += qty;
@@ -1000,7 +1012,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         return { columns: sorted, rows: rows };
     };
 
-    const matrixResumen = buildMatrix(d => ['3. PISOS', '4. AEREO', '5. LÓGICO', '6. MERMA'].includes(d['NIVEL/AREA']));
+    const matrixResumen = buildMatrix(d => ['3. PISO', '4. AÉREO', '5. LÓGICO', '6. MERMA'].includes(d['NIVEL/AREA']));
     const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. SIN STOCK');
 
     // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
