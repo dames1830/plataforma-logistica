@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.8.0';
-const CACHE_KEY = `logistics_v12_8_0_`;
+const VERSION = '12.8.1';
+const CACHE_KEY = `logistics_v12_8_1_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.1</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -2490,7 +2490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
     } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
-        loadAlmacenajeTasks().then(() => renderAlmacenajeTareas(container));
+        renderAlmacenajeTareas(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);

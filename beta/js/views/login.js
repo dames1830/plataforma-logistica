@@ -6,7 +6,7 @@ export const renderLogin = (container, onLoginSuccess) => {
   container.innerHTML = `
     <div class="login-box glass-panel animate-fade-in" style="background:rgba(30, 41, 59, 0.98) !important; border:1px solid var(--primary); box-shadow: 0 0 40px rgba(0,0,0,0.5); pointer-events: auto !important;">
       <div class="login-header">
-        <h1>DEAM1830 <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v12.8.0</span></h1>
+        <h1>DEAM1830 <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v12.8.1</span></h1>
         <p>Inicia sesión para acceder a tu área</p>
       </div>
       <form id="loginForm" style="pointer-events: auto !important;">

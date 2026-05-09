@@ -67,6 +67,11 @@ export const initializeAdminData = async () => {
                             adminStore[area] = merged;
                             localStorage.setItem(PREFIX + area, JSON.stringify(merged));
                         } else {
+                            // [SEGURIDAD CRÍTICA] No sobrescribir con vacíos si ya tenemos datos locales
+                            if (area === 'almacenaje_tasks' && (!Array.isArray(result.data) || result.data.length === 0)) {
+                                console.log("ℹ️ [PULSE] Ignorando sincronización vacía del servidor para Almacenaje.");
+                                return;
+                            }
                             adminStore[area] = result.data;
                             localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
                         }
