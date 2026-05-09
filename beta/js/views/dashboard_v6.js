@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.8.7';
-const CACHE_KEY = `logistics_v12_8_7_`;
+const VERSION = '12.8.8';
+const CACHE_KEY = `logistics_v12_8_8_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.7</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.8</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -673,22 +673,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
         buf.innerHTML = `
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
-              <div>
-                <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
-                <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
-                    <span>${dataStore.buffer_activo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
-                    <span>${dataStore.buffer_reserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
-                    <span>${dataStore.articulos ? '✅' : '❌'} MAESTRO (Obligatorio)</span>
-                    <div style="display:flex; align-items:center;">
-                        <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
-                        <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; margin-left:1rem; font-weight:700;">⚡ PROCESAR ANÁLISIS</button>
-                    </div>
-                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+              <div style="display:flex; align-items:center; gap:1rem;">
+                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);">⚡ PROCESAR ANÁLISIS</button>
+                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';">🧹 REINICIAR MEMORIA</button>
               </div>
-              <div style="text-align:right;">
-                <div id="export_actions" style="display:flex; gap:0.5rem; justify-content:flex-end;"></div>
-              </div>
+              <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
             </div>
             <div id="resultsArea" style="display:flex; gap:0.6rem; align-items:start;"></div>
           </div>`;
@@ -708,6 +698,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 setTimeout(async () => {
                     try {
+                        // VALIDACIÓN EXPLÍCITA DE ARCHIVOS
+                        if (!dataStore.buffer_activo) throw new Error("Falta cargar el archivo STOCK ACTIVO.");
+                        if (!dataStore.buffer_reserva) throw new Error("Falta cargar el archivo STOCK RESERVA.");
+                        if (!dataStore.articulos) throw new Error("Falta cargar el archivo MAESTRO.");
+
                         const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                         const res = calculateBufferPallets(config);
                         if (res) {
@@ -770,14 +765,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const createMatrixHTML = (matrix, title, timestamp = '') => {
-    if (!matrix || !matrix.rows || !matrix.rows.length) {
-        return `
-            <div style="background:rgba(15,23,42,0.9); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; padding:2rem; text-align:center; margin-bottom:0.6rem;">
-                <h3 style="color:rgba(255,255,255,0.2); font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">${title}</h3>
-                <p style="color:var(--text-muted); font-size:0.75rem; margin-top:0.5rem;">No se encontraron datos para este reporte.</p>
-            </div>
-        `;
-    }
+    const hasData = matrix && matrix.rows && matrix.rows.length > 0;
     
     const brandAlias = (name) => {
         if (name === 'Bubblegummers Licenses') return 'BG Licenses';
@@ -791,10 +779,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     return `
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem;">
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem; min-height: 150px;">
             <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
                 <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">
-                    ${title} <span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>
+                    ${title} ${timestamp ? `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>` : ''}
                 </h3>
             </div>
             <div style="overflow-x:auto;">
@@ -802,12 +790,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <thead style="background:rgba(0,0,0,0.5);">
                         <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
                             <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
-                            ${matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('')}
+                            ${hasData ? matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('') : '<th style="padding:0.6rem 0.3rem; text-align:center;">ESTADO</th>'}
                             <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody style="color:#eee;">
-                        ${matrix.rows.map(r => `
+                        ${hasData ? matrix.rows.map(r => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
                                 <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${brandAlias(r.marca)}</td>
                                 ${matrix.columns.map(c => {
@@ -816,7 +804,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 }).join('')}
                                 <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(236,72,153,0.05); color:#22c55e; font-weight:900; border-left:1px solid rgba(255,255,255,0.05);">${r.total.toLocaleString()}</td>
                             </tr>
-                        `).join('')}
+                        `).join('') : `
+                            <tr>
+                                <td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos para procesar en este reporte.</td>
+                            </tr>
+                        `}
                     </tbody>
                 </table>
             </div>
