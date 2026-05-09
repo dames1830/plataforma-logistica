@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.7.9';
-const CACHE_KEY = `logistics_v12_7_9_`;
+const VERSION = '12.8.0';
+const CACHE_KEY = `logistics_v12_8_0_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -24,7 +24,7 @@ const getLogicalDate = () => {
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 let expandedWeeks = []; // Semanas expandidas en el historial
-let almacenajeTasksCache = []; // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
+let almacenajeTasksCache = JSON.parse(localStorage.getItem('logistics_admin_v11_almacenaje_tasks') || '[]'); // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
@@ -49,22 +49,24 @@ const saveAlmacenajeTasks = async () => {
 
 const loadAlmacenajeTasks = async () => {
   try {
-      // 1. Prioridad absoluta a la persistencia local (lo que el usuario ya refrescó)
+      // 1. Carga inmediata desde LocalStorage (Sin esperas)
       const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
-      const localTasks = stored ? JSON.parse(stored) : [];
+      if (stored) {
+          const localTasks = JSON.parse(stored);
+          if (Array.isArray(localTasks) && localTasks.length > 0) {
+              almacenajeTasksCache = localTasks;
+          }
+      }
       
-      // Siempre cargamos lo local primero para evitar que la pantalla se quede vacía
-      almacenajeTasksCache = localTasks;
-
-      // 2. Si la administración ya tiene datos sincronizados, los usamos para actualizar la memoria
+      // 2. Sincronización pasiva con la administración (Solo si hay datos nuevos reales)
       const syncedTasks = adminService.adminStore.almacenaje_tasks;
       if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
       }
       
-      console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas en vista.`);
-  } catch (e) { console.error("[PULSE] Error crítico al cargar:", e); }
+      console.log(`[PULSE] Persistencia v12.8.0 Activa: ${almacenajeTasksCache.length} tareas.`);
+  } catch (e) { console.error("[PULSE] Error en persistencia:", e); }
 };
 
 const TABS = [
@@ -398,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.9</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.0</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
