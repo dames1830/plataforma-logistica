@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.8.6';
-const CACHE_KEY = `logistics_v12_8_6_`;
+const VERSION = '12.8.7';
+const CACHE_KEY = `logistics_v12_8_7_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.6</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.7</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -677,8 +677,8 @@ export const renderDashboard = async (container, user, onLogout) => {
               <div>
                 <h4 style="color:var(--text-muted); font-weight:600; font-size:0.75rem; margin:0 0 0.5rem 0;">ESTADO DE ARCHIVOS MAESTROS:</h4>
                 <div style="display:flex; gap:1rem; font-size:0.7rem; align-items:center; flex-wrap:wrap;">
-                    <span>${dataStore.stockActivo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
-                    <span>${dataStore.stockReserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
+                    <span>${dataStore.buffer_activo ? '✅' : '❌'} ACTIVO (Obligatorio)</span>
+                    <span>${dataStore.buffer_reserva ? '✅' : '❌'} RESERVA (Obligatorio)</span>
                     <span>${dataStore.articulos ? '✅' : '❌'} MAESTRO (Obligatorio)</span>
                     <div style="display:flex; align-items:center;">
                         <button id="btn_reset_cache" title="Limpiar Memoria Si el Botón no responde" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.2rem 0.5rem; cursor:pointer; margin-left:1rem; border-radius:4px;">🧹 REINICIAR MEMORIA</button>
@@ -770,7 +770,14 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const createMatrixHTML = (matrix, title, timestamp = '') => {
-    if (!matrix || !matrix.rows || !matrix.rows.length) return '';
+    if (!matrix || !matrix.rows || !matrix.rows.length) {
+        return `
+            <div style="background:rgba(15,23,42,0.9); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; padding:2rem; text-align:center; margin-bottom:0.6rem;">
+                <h3 style="color:rgba(255,255,255,0.2); font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px;">${title}</h3>
+                <p style="color:var(--text-muted); font-size:0.75rem; margin-top:0.5rem;">No se encontraron datos para este reporte.</p>
+            </div>
+        `;
+    }
     
     const brandAlias = (name) => {
         if (name === 'Bubblegummers Licenses') return 'BG Licenses';

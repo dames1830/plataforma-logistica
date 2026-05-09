@@ -1000,7 +1000,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         return { columns: sorted, rows: rows };
     };
 
-    const matrixResumen = buildMatrix(d => ['3. PISOS', '4. AEREO', '5. LÓGICO', '6. MERMA'].includes(d['NIVEL/AREA']));
+    const matrixResumen = buildMatrix(d => ['3. PISO', '4. AÉREO', '5. LÓGICO', '6. MERMA'].includes(d['NIVEL/AREA']));
     const matrixSinStock = buildMatrix(d => d['NIVEL/AREA'] === '7. SIN STOCK');
 
     // 3. RESUMEN PARA HISTORIAL (OPTIMIZADO)
