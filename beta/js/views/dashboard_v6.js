@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.7.4-BETA';
-const CACHE_KEY = `logistics_v12_7_4_beta_`;
+const VERSION = '12.7.5-BETA';
+const CACHE_KEY = `logistics_v12_7_5_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -35,13 +35,11 @@ const saveAlmacenajeTasks = async () => {
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
       // 2. Sincronización Global INMEDIATA
-      alert(`📡 Iniciando sincronización de ${almacenajeTasksCache.length} tareas...`);
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
-          alert(`🚀 ¡Sincronización Exitosa! ${almacenajeTasksCache.length} tareas disponibles para el Asistente.`);
           console.log("✅ [PULSE] Sincronización Global de Almacenaje completada.");
       } else {
-          alert("⚠️ Tus tareas se guardaron LOCALMENTE, pero falló la sincronización con la nube. Es posible que el Asistente no las vea.");
+          console.warn("⚠️ Falló la sincronización con la nube.");
       }
   } catch (e) { 
       console.error("[PULSE] Error crítico al guardar en la nube:", e);
@@ -61,7 +59,6 @@ const loadAlmacenajeTasks = async () => {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
           console.log(`[PULSE] ${almacenajeTasksCache.length} tareas sincronizadas desde la NUBE GLOBAL.`);
-          alert(`🔍 RADAR INICIAL: Se han detectado ${almacenajeTasksCache.length} tareas en la nube.`);
       } else {
           almacenajeTasksCache = localTasks;
           console.log(`[PULSE] ${almacenajeTasksCache.length} tareas cargadas desde memoria LOCAL.`);
@@ -400,7 +397,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.4-BETA</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.7.5-BETA</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
