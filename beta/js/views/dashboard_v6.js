@@ -1,10 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.03';
-import { login } from '../services/auth.js?v=12.5.03';
-import * as adminService from '../services/adminService.js?v=12.5.03';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=12.5.04';
+import * as adminService from '../services/adminService.js?v=12.5.04';
 
 
-const VERSION = '12.5.03';
-const CACHE_KEY = `logistics_v12_5_03_`;
+const VERSION = '12.5.04';
+const CACHE_KEY = `logistics_v12_5_04_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
@@ -177,7 +176,7 @@ window.downloadExcelDetail = () => {
     // Convertir a Array y volver a ordenar por Ubicación (por si acaso el Map alteró el orden)
     const montacargaRows = Array.from(montacargaMap.values()).sort((a, b) => a.UBICACIÓN.localeCompare(b.UBICACIÓN));
     
-    const versionStr = "v12.5.01-GOLD";
+    const versionStr = "v12.5.04-GOLD";
     alert("SISTEMA PROTEGIDO: " + versionStr);
     const aoa = [
         ["MONTACARGA"],
