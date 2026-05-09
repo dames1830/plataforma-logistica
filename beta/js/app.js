@@ -1,8 +1,8 @@
-import { getSession, logout } from './services/auth.js?v=12.5.05';
-import * as adminService from './services/adminService.js?v=12.5.05';
+import { getSession, logout } from './services/auth.js?v=12.5.06';
+import * as adminService from './services/adminService.js?v=12.5.06';
 
-const VERSION = '12.5.05';
-const CACHE_KEY = `logistics_v12_5_05_`;
+const VERSION = '12.5.06';
+const CACHE_KEY = `logistics_v12_5_06_`;
 
 class App {
   constructor(rootId) {
@@ -63,7 +63,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.5.05-GOLD";
+    const versionStr = "v12.5.06-GOLD";
     // alert("SISTEMA PROTEGIDO: " + versionStr); // Eliminado para evitar bloqueo
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
