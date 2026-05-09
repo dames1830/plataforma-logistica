@@ -34,10 +34,10 @@ export const initializeAdminData = async () => {
     try {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         
-        const fetchWithTimeout = (url, options, timeout = 4000) => {
+        const fetchWithTimeout = (url, options, timeout = 10000) => {
             return Promise.race([
                 fetch(url, options),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de Sincronización')), timeout))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de Sincronización (10s)')), timeout))
             ]);
         };
 
@@ -236,20 +236,20 @@ export const saveAlmacenajeTasks = async (tasks) => {
 };
 export const loadAlmacenajeTasks = async () => {
     try {
+        console.log("🔍 [PULSE] Solicitando tareas al servidor...");
         const res = await fetch(`${API_URL}/almacenaje_tasks`);
         if (res.ok) {
             const result = await res.json();
             const data = result.data || [];
             adminStore.almacenaje_tasks = data;
             localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(data));
-            if (data.length > 0) {
-                alert(`🔍 RADAR: El servidor ha devuelto ${data.length} tareas activas.`);
-            }
+            alert(`🔍 RADAR: El servidor informa ${data.length} tareas activas.`);
             return data;
         }
+        alert("❌ RADAR: El servidor no respondió correctamente.");
         return adminStore.almacenaje_tasks;
     } catch (e) {
-        console.warn("⚠️ Error cargando tareas:", e);
+        alert("❌ RADAR: Error de conexión con la nube.");
         return adminStore.almacenaje_tasks;
     }
 };
