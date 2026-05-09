@@ -240,7 +240,12 @@ export const loadAlmacenajeTasks = async () => {
         const res = await fetch(`${API_URL}/almacenaje_tasks`);
         if (res.ok) {
             const result = await res.json();
-            const data = result.data || [];
+            // Extracción inteligente: Manejar {data: []} o directamente []
+            let data = [];
+            if (result && Array.isArray(result.data)) data = result.data;
+            else if (Array.isArray(result)) data = result;
+            else if (result && typeof result === 'object' && result.data) data = [result.data]; // Caso objeto único
+
             adminStore.almacenaje_tasks = data;
             localStorage.setItem(PREFIX + 'almacenaje_tasks', JSON.stringify(data));
             alert(`🔍 RADAR: El servidor informa ${data.length} tareas activas.`);
