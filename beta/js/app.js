@@ -1,8 +1,8 @@
-import { getSession, logout } from './services/auth.js?v=12.5.14';
-import * as adminService from './services/adminService.js?v=12.5.14';
+import { getSession, logout } from './services/auth.js?v=12.5.15';
+import * as adminService from './services/adminService.js?v=12.5.15';
 
-const VERSION = '12.5.14';
-const CACHE_KEY = `logistics_v12_5_14_`;
+const VERSION = '12.5.15';
+const CACHE_KEY = `logistics_v12_5_15_`;
 
 class App {
   constructor(rootId) {

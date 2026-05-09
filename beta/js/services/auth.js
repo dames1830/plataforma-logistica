@@ -34,7 +34,8 @@ export const login = async (username, password) => {
                 
                 if (Array.isArray(local)) {
                     local.forEach(item => {
-                        if (item && item.username && !merged.find(m => m.username === item.username)) {
+                        const targetUsername = (item.username || '').toLowerCase();
+                        if (item && item.username && !merged.find(m => (m.username || '').toLowerCase() === targetUsername)) {
                             merged.push(item);
                         }
                     });
@@ -50,15 +51,19 @@ export const login = async (username, password) => {
         dynamicUsers = local;
     }
 
-    // [NIVEL 2] VALIDACIÓN DE OPERARIOS AUTORIZADOS
-    const dUser = dynamicUsers.find(u => u && u.username === username);
+    // [NIVEL 2] VALIDACIÓN DE OPERARIOS AUTORIZADOS (CASE-INSENSITIVE)
+    const targetUsername = (username || '').toLowerCase();
+    const dUser = dynamicUsers.find(u => u && (u.username || '').toLowerCase() === targetUsername);
+    
     if (dUser) {
         if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
         if (dUser.password === password) {
             const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
             localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+            console.log(`[PULSE] Acceso concedido: ${dUser.username}`);
             return { success: true, user: sessionData };
         } else {
+            console.warn(`[PULSE] Password incorrecta para ${targetUsername}`);
             return { success: false, message: 'Contraseña incorrecta.' };
         }
     }
