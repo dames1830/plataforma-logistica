@@ -137,16 +137,21 @@ export const toggleWorkerStatus = (dni) => {
 };
 
 export const saveUser = async (user) => {
-    const users = getUsers();
-    const idx = users.findIndex(u => u.username === user.username);
+    let users = getUsers();
+    if (!Array.isArray(users)) {
+        console.warn("⚠️ adminStore.users no es un array, reseteando...");
+        users = [];
+    }
+    const idx = users.findIndex(u => u && u.username === user.username);
     if (idx >= 0) users[idx] = { ...users[idx], ...user };
     else users.push({ ...user, active: true });
     return await save('users', users);
 };
 
 export const toggleUserStatus = (username) => {
-    const users = getUsers();
-    const idx = users.findIndex(u => u.username === username);
+    let users = getUsers();
+    if (!Array.isArray(users)) return;
+    const idx = users.findIndex(u => u && u.username === username);
     if (idx >= 0) {
         users[idx].active = users[idx].active === false ? true : false;
         save('users', users);
@@ -154,8 +159,10 @@ export const toggleUserStatus = (username) => {
 };
 
 export const deleteUser = (username) => {
-    const users = getUsers().filter(u => u.username !== username);
-    save('users', users);
+    let users = getUsers();
+    if (!Array.isArray(users)) return;
+    const filtered = users.filter(u => u && u.username !== username);
+    save('users', filtered);
 };
 
 export const savePermissions = async (role, perms) => {
