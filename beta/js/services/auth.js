@@ -17,32 +17,42 @@ export const login = async (username, password) => {
     if (response.ok) {
       const result = await response.json();
       if (result.success) {
-        // [PULSE SECURITY OVERRIDE] Blindaje Maestro
+        // [PULSE SECURITY OVERRIDE] Blindaje Maestro - Sincronizado
         if (username !== 'dames') {
-          const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
-          if (dynamicUsersRaw) {
-            try {
-              const dynamicUsers = JSON.parse(dynamicUsersRaw);
-              if (Array.isArray(dynamicUsers)) {
-                  const dUser = dynamicUsers.find(u => u.username === username);
-                  if (!dUser) {
-                      console.warn("🚨 Intento de acceso bloqueado: Usuario no registrado en Administración.");
-                      return { success: false, message: 'Acceso denegado. No está registrado en el sistema local.' };
-                  }
-                  if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
-                  if (dUser.password !== password) return { success: false, message: 'Contraseña incorrecta. Se ha actualizado recientemente.' };
-              } else {
-                  return { success: false, message: 'Error de integridad: Lista de usuarios corrupta.' };
-              }
-            } catch(e) { 
-                console.error("Error en Security Override:", e);
-                return { success: false, message: 'Error de validación de seguridad.' };
+            let dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+            
+            // Si no hay lista local, intentar descarga de emergencia antes de rechazar
+            if (!dynamicUsersRaw) {
+                console.log("🔍 Nueva terminal detectada, sincronizando lista de autorizados...");
+                try {
+                    const cloudRes = await fetch(`${AUTH_API}/logistics/users`);
+                    if (cloudRes.ok) {
+                        const cloudData = await cloudRes.json();
+                        if (cloudData.data && Array.isArray(cloudData.data)) {
+                            localStorage.setItem('logistics_admin_v11_users', JSON.stringify(cloudData.data));
+                            dynamicUsersRaw = JSON.stringify(cloudData.data);
+                        }
+                    }
+                } catch(e) { console.error("Error sincronizando nube en login:", e); }
             }
-          } else {
-            // Si la lista está vacía y no es dames, RECHAZO TOTAL
-            console.warn("🚨 RECHAZO: Lista de administración vacía.");
-            return { success: false, message: 'Sistema protegido. Solo acceso Maestro disponible.' };
-          }
+
+            if (dynamicUsersRaw) {
+                try {
+                    const dynamicUsers = JSON.parse(dynamicUsersRaw);
+                    if (Array.isArray(dynamicUsers)) {
+                        const dUser = dynamicUsers.find(u => u.username === username);
+                        if (!dUser) {
+                            console.warn("🚨 Acceso denegado: No figura en la base de datos oficial.");
+                            return { success: false, message: 'Acceso denegado. No está registrado en el sistema.' };
+                        }
+                        if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
+                        // Si el login fue exitoso en el servidor, no necesitamos re-validar la contraseña aquí
+                    }
+                } catch(e) { console.error("Error en validación de seguridad:", e); }
+            } else {
+                console.warn("🚨 RECHAZO: No se pudo sincronizar la lista de autorizados.");
+                return { success: false, message: 'Seguridad activa: No se pudo validar su autorización.' };
+            }
         }
 
         const sessionData = { id: result.user.id, username: result.user.username, role: result.user.role, name: result.user.name };
