@@ -2,37 +2,55 @@
 const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
 
 // Fallback local en caso de que el servidor esté caído
-const FALLBACK_USERS = [
-  { id: 1, username: 'dames', password: 'Bata1830', role: 'admin', name: 'Gerente Logística (Dames)' }
-];export const login = async (username, password) => {
-  // [ESTRATEGIA GOLD v12.5.16] Lógica Simplificada: Lo que tú creas, manda.
+export const login = async (username, password) => {
+  // [ESTRATEGIA GOLD v12.5.17] SINCRONIZACIÓN UNIVERSAL: Acceso desde cualquier PC.
   const targetUsername = (username || '').toLowerCase();
 
-  // 1. Acceso Maestro Directo (dames)
+  // 1. Acceso Maestro Directo (dames) - Siempre disponible
   if (targetUsername === 'dames' && password === 'Bata1830') {
       const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Gerente Logística (Dames)' };
       localStorage.setItem('logistics_session', JSON.stringify(sessionData));
       return { success: true, user: sessionData };
   }
 
-  // 2. Validación contra lo que TÚ has creado en el módulo de Administración
   try {
+      // 2. Obtener lista local actual
       const localRaw = localStorage.getItem('logistics_admin_v11_users');
-      const dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
+      let dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
 
+      // 3. SINCRONIZACIÓN DINÁMICA: Preguntar a la nube antes de rechazar
+      // Esto permite que una PC que no conoce al usuario lo descargue al instante.
+      console.log(`[PULSE] Buscando a ${targetUsername} en la nube...`);
+      try {
+          const cloudRes = await fetch(`${AUTH_API}/logistics/users`, { cache: 'no-cache' });
+          if (cloudRes.ok) {
+              const result = await cloudRes.json();
+              if (result.data && Array.isArray(result.data)) {
+                  // Fusionar lo de la nube con lo local
+                  const serverUsers = result.data;
+                  const merged = [...serverUsers];
+                  // Preservar locales que pudieran no haber subido aún
+                  if (Array.isArray(dynamicUsers)) {
+                      dynamicUsers.forEach(lu => {
+                          if (lu && lu.username && !merged.find(su => (su.username || '').toLowerCase() === (lu.username || '').toLowerCase())) {
+                              merged.push(lu);
+                          }
+                      });
+                  }
+                  dynamicUsers = merged;
+                  localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
+              }
+          }
+      } catch(e) { console.warn("Modo Offline: No se pudo conectar a la nube."); }
+
+      // 4. Validación Final (Case-Insensitive)
       if (Array.isArray(dynamicUsers)) {
           const dUser = dynamicUsers.find(u => u && (u.username || '').toLowerCase() === targetUsername);
           
           if (dUser) {
               if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
-              
               if (dUser.password === password) {
-                  const sessionData = { 
-                      id: Date.now(), 
-                      username: dUser.username, 
-                      role: dUser.role, 
-                      name: dUser.name 
-                  };
+                  const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
                   localStorage.setItem('logistics_session', JSON.stringify(sessionData));
                   return { success: true, user: sessionData };
               } else {
@@ -41,10 +59,10 @@ const FALLBACK_USERS = [
           }
       }
   } catch (err) {
-      console.error("Error leyendo lista local:", err);
+      console.error("Error en flujo de autenticación:", err);
   }
 
-  return { success: false, message: 'Usuario no registrado o credenciales inválidas' };
+  return { success: false, message: 'Usuario no registrado en el sistema' };
 };
 
 export const logout = () => {
