@@ -3,10 +3,10 @@ const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
 
 // Fallback local en caso de que el servidor esté caído
 export const login = async (username, password) => {
-  // [ESTRATEGIA GOLD v12.5.17] SINCRONIZACIÓN UNIVERSAL: Acceso desde cualquier PC.
   const targetUsername = (username || '').toLowerCase();
+  console.log(`[ULTRA] Intento de login: ${targetUsername}`);
 
-  // 1. Acceso Maestro Directo (dames) - Siempre disponible
+  // 1. PRIORIDAD MAESTRO (Siempre entra, no depende de nada)
   if (targetUsername === 'dames' && password === 'Bata1830') {
       const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Gerente Logística (Dames)' };
       localStorage.setItem('logistics_session', JSON.stringify(sessionData));
@@ -14,64 +14,52 @@ export const login = async (username, password) => {
   }
 
   try {
-      // 2. Obtener lista local actual
-      const localRaw = localStorage.getItem('logistics_admin_v11_users');
+      // 2. CARGA INICIAL (Rápida)
+      let localRaw = localStorage.getItem('logistics_admin_v11_users');
       let dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
 
-      // 3. SINCRONIZACIÓN UNIVERSAL: Descarga forzada sin caché
-      console.log(`[PULSE] Sincronizando con la nube para ${targetUsername}...`);
-      try {
-          // Usamos tres métodos para romper el caché: timestamp, headers y modo no-store
-          const cloudRes = await fetch(`${AUTH_API}/logistics/users?nocache=${Date.now()}`, { 
-              method: 'GET',
-              cache: 'no-store',
-              headers: { 
-                  'Pragma': 'no-cache', 
-                  'Cache-Control': 'no-cache, no-store, must-revalidate',
-                  'Expires': '0'
-              }
-          });
-          
-          if (cloudRes.ok) {
-              const result = await cloudRes.json();
-              if (result && result.data && Array.isArray(result.data)) {
-                  const serverUsers = result.data;
-                  // Fusión inteligente para no perder lo que Daniel acaba de crear
-                  const merged = [...serverUsers];
-                  if (Array.isArray(dynamicUsers)) {
-                      dynamicUsers.forEach(lu => {
-                          if (lu && lu.username && !merged.find(su => (su.username || '').toLowerCase() === (lu.username || '').toLowerCase())) {
-                              merged.push(lu);
-                          }
-                      });
-                  }
-                  dynamicUsers = merged;
-                  localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
-                  console.log("[PULSE] Nube sincronizada con éxito.");
-              }
-          }
-      } catch(e) { console.warn("Fallo de conexión a la nube, usando memoria local."); }
+      // 3. VALIDACIÓN INSTANTÁNEA (Si ya lo conocemos localmente, no esperamos a la nube)
+      const checkLocal = () => {
+          const u = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
+          if (u && u.password === password && u.active !== false) return u;
+          return null;
+      };
 
-      // 4. Validación Final (Case-Insensitive)
-      if (Array.isArray(dynamicUsers)) {
-          const dUser = dynamicUsers.find(u => u && (u.username || '').toLowerCase() === targetUsername);
-          
-          if (dUser) {
-              if (dUser.active === false) return { success: false, message: 'Cuenta desactivada por administración.' };
-              if (dUser.password === password) {
-                  const sessionData = { id: Date.now(), username: dUser.username, role: dUser.role, name: dUser.name };
+      const userFound = checkLocal();
+      if (userFound) {
+          console.log("[ULTRA] Acceso concedido vía Local.");
+          const sessionData = { id: Date.now(), username: userFound.username, role: userFound.role, name: userFound.name };
+          localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+          return { success: true, user: sessionData };
+      }
+
+      // 4. SINCRONIZACIÓN FORZADA (Solo si no entró por local)
+      console.log("[ULTRA] Usuario no encontrado local, consultando nube...");
+      const cloudRes = await fetch(`${AUTH_API}/logistics/users?z=${Date.now()}`, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+      });
+      
+      if (cloudRes.ok) {
+          const result = await cloudRes.json();
+          if (result && result.data && Array.isArray(result.data)) {
+              dynamicUsers = result.data;
+              localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
+              
+              const uCloud = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
+              if (uCloud && uCloud.password === password && uCloud.active !== false) {
+                  console.log("[ULTRA] Acceso concedido vía Nube.");
+                  const sessionData = { id: Date.now(), username: uCloud.username, role: uCloud.role, name: uCloud.name };
                   localStorage.setItem('logistics_session', JSON.stringify(sessionData));
                   return { success: true, user: sessionData };
-              } else {
-                  return { success: false, message: 'Contraseña incorrecta.' };
               }
           }
       }
   } catch (err) {
-      console.error("Error en flujo de autenticación:", err);
+      console.error("[ULTRA] Error en proceso de login:", err);
   }
 
-  return { success: false, message: 'Usuario no registrado en el sistema' };
+  return { success: false, message: 'Usuario no reconocido o contraseña incorrecta' };
 };
 
 export const logout = () => {
