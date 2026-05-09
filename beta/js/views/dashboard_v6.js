@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.8.1';
-const CACHE_KEY = `logistics_v12_8_1_`;
+const VERSION = '12.8.2';
+const CACHE_KEY = `logistics_v12_8_2_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.1</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.2</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -2739,14 +2739,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const processAlmacenajeTasks = async (mode = 'update') => {
+  const processAlmacenajeTasks = async (mode = 'update', manualDate = null) => {
     try {
         const stock = await getAreaData('almacenaje_activo');
         const maestro = dataStore.articulos;
         if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
         if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
-        const logicalDate = getLogicalDate();
+        const logicalDate = manualDate || getLogicalDate();
         almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
             t && (t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado')
         ) : [];
@@ -3211,26 +3211,28 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.openShiftModal = () => {
         try {
             const logicalDate = getLogicalDate();
-            // Filtro robusto para evitar errores si t es null o indefinido
-            const safeTasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => t && typeof t === 'object') : [];
-            const currentPending = safeTasks.filter(t => t.fecha === logicalDate && t.status === 'Creada').length;
-            const currentDone = safeTasks.filter(t => t.fecha === logicalDate && (t.status === 'Asignado' || t.status === 'Finalizado')).length;
-
             const modal = document.createElement('div');
+            modal.id = "modal_fecha_operativa";
             modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
             modal.innerHTML = `
                 <div class="glass-panel" style="width:450px; padding:2.5rem; border:1px solid var(--primary); border-radius:20px; box-shadow: 0 0 50px rgba(79, 70, 229, 0.4); pointer-events:auto !important;">
                     <div style="text-align:center; margin-bottom:2rem;">
-                        <h2 style="color:#fff; margin:0; font-size:1.5rem; font-weight:800;">Control de Jornada</h2>
-                        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px;">Fecha: <strong style="color:var(--primary);">${logicalDate}</strong></p>
+                        <h2 style="color:#fff; margin:0; font-size:1.5rem; font-weight:800;">Fecha Operativa</h2>
+                        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px;">Indica la fecha para este procesamiento de tareas</p>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:15px;">
-                        <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
-                            CONTINUAR TURNO (Refrescar)
+                    <div style="display:flex; flex-direction:column; gap:20px;">
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label style="color:var(--primary); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Seleccionar Fecha del Calendario:</label>
+                            <input type="date" id="manual_op_date" value="${logicalDate}" 
+                                style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px; border-radius:10px; font-size:1.1rem; font-weight:700; outline:none; color-scheme:dark;">
+                        </div>
+
+                        <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); margin-top:10px;">
+                            PROCESAR TAREAS
                         </button>
                         
-                        <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; margin-top:10px; text-decoration:underline;">
+                        <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; text-decoration:underline;">
                             Cerrar ventana
                         </button>
                     </div>
@@ -3239,12 +3241,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             document.body.appendChild(modal);
 
             modal.querySelector('#optUpdate').onclick = () => {
+                const selectedDate = modal.querySelector('#manual_op_date').value;
+                if (!selectedDate) { alert("⚠️ Por favor selecciona una fecha."); return; }
                 document.body.removeChild(modal);
-                window.processAlmacenajeTasks('update');
+                window.processAlmacenajeTasks('update', selectedDate);
             };
             modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
         } catch (err) {
-            alert("❌ Error crítico al abrir ventana: " + err.message);
+            alert("❌ Error crítico al abrir calendario: " + err.message);
             console.error(err);
         }
     };
