@@ -94,19 +94,17 @@ export const renderAlmacenajeTareas = (container) => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
-                <h3 style="margin:0; font-size:1.2rem; color:var(--primary); font-weight:800; letter-spacing:0.5px;">${isKpi ? 'KPI TAREAS' : isDetail ? 'TAREAS DETALLE' : 'TAREAS RESUMEN'}</h3>
-                <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Control Operativo de Almacenaje</p>
+                <!-- Títulos eliminados por solicitud del usuario -->
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_open_shift" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:8px 16px; font-size:0.75rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
                 <button id="btn_clear_tasks" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:8px 12px; font-size:0.75rem;" title="Limpiar Tareas Pendientes">🗑️</button>
-                <button id="btn_exp_almacenaje" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXPORTAR MASIVO</button>
+                <button id="btn_exp_almacenaje" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
             </div>
         </div>
         <nav style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
             <a class="t-nav ${!isDetail && !isKpi ?'active':''}" data-m="resumen">📊 RESUMEN</a>
             <a class="t-nav ${isDetail?'active':''}" data-m="detalle">🔍 DETALLE</a>
-            <a class="t-nav ${isKpi?'active':''}" data-m="kpi">📈 KPIs</a>
         </nav>
         <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
             <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); overflow-y:auto;">
