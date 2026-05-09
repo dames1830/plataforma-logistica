@@ -93,5 +93,25 @@ export const logout = () => {
 
 export const getSession = () => {
   const session = localStorage.getItem('logistics_session');
-  return session ? JSON.parse(session) : null;
+  if (!session) return null;
+  const user = JSON.parse(session);
+  
+  // [SEGURIDAD GOLD] Si el usuario no es 'dames', verificar que siga activo en la lista oficial
+  if (user.username !== 'dames') {
+      const dynamicUsersRaw = localStorage.getItem('logistics_admin_v11_users');
+      if (dynamicUsersRaw) {
+          const dynamicUsers = JSON.parse(dynamicUsersRaw);
+          const activeUser = dynamicUsers.find(u => u.username === user.username && u.active !== false);
+          if (!activeUser) {
+              console.warn("🚨 Sesión revocada: Usuario no autorizado.");
+              logout();
+              return null;
+          }
+      } else {
+          // Si no hay lista de usuarios, nadie excepto dames puede estar logueado
+          logout();
+          return null;
+      }
+  }
+  return user;
 };
