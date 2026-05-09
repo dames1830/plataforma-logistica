@@ -22,7 +22,11 @@ export const login = async (username, password) => {
       // Esto permite que una PC que no conoce al usuario lo descargue al instante.
       console.log(`[PULSE] Buscando a ${targetUsername} en la nube...`);
       try {
-          const cloudRes = await fetch(`${AUTH_API}/logistics/users`, { cache: 'no-cache' });
+          // Forzamos que no use caché para traer lo ÚLTIMO que Daniel guardó
+          const cloudRes = await fetch(`${AUTH_API}/logistics/users?t=${Date.now()}`, { 
+              cache: 'no-store',
+              headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+          });
           if (cloudRes.ok) {
               const result = await cloudRes.json();
               if (result.data && Array.isArray(result.data)) {
