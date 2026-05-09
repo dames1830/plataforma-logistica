@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.8.2';
-const CACHE_KEY = `logistics_v12_8_2_`;
+const VERSION = '12.8.3';
+const CACHE_KEY = `logistics_v12_8_3_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,7 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.2</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.3</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -2891,6 +2891,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
     }
     const tasks = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : [];
+    
+    // [ORDENAMIENTO] Siempre ordenar numéricamente de menor a mayor
+    tasks.sort((a, b) => {
+        const numA = parseInt(String(a.id || '').replace('Tarea', '')) || 0;
+        const numB = parseInt(String(b.id || '').replace('Tarea', '')) || 0;
+        return numA - numB;
+    });
 
     // Lógica de Agrupación para Historial
     const getWeekNumber = (d) => {
@@ -3126,7 +3133,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
     window.assignTask = (id) => {
-        const workers = adminService.getWorkers().filter(w => w.active);
+        // [ORDENAMIENTO A-Z] Ordenar operarios alfabéticamente
+        const workers = adminService.getWorkers()
+            .filter(w => w.active)
+            .sort((a, b) => (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || ''));
         const formatUser = (w) => {
             const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
             const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
