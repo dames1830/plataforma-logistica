@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.5.01';
 
 
-const VERSION = '12.5.01';
-const CACHE_KEY = `logistics_v12_5_01_`;
+const VERSION = '12.5.02';
+const CACHE_KEY = `logistics_v12_5_02_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized (BETA)`);
 
