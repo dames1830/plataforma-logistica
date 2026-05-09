@@ -239,6 +239,55 @@ export const saveAttendance = async (date, data) => {
 };
 export const getAttendance = (date) => adminStore.attendance[date] || null;
 
+export const closeAttendanceAndSyncPerformance = async (date, localState) => {
+    const attendanceData = {
+        finalized: true,
+        data: localState.map(s => ({
+            dni: s.dni,
+            nombre: s.nombre,
+            apellidos: s.apellidos,
+            present: s.present,
+            onTime: s.onTime,
+            justification: s.justification || ''
+        }))
+    };
+    
+    // 1. Guardar Asistencia como Finalizada
+    await saveAttendance(date, attendanceData);
+    
+    // 2. Sincronizar Performance Log (Evitar duplicados)
+    const perfLog = adminStore.performance_log.filter(l => l.date !== date);
+    attendanceData.data.forEach(att => {
+        perfLog.push({
+            date: date,
+            dni: att.dni,
+            nombre: att.nombre,
+            apellidos: att.apellidos,
+            asistencia: att.present ? 'P' : 'F',
+            puntualidad: att.onTime ? 'SÍ' : 'NO',
+            produccion: att.present ? 10 : 0,
+            bpa: att.present ? 10 : 0,
+            supervisor: att.present ? 10 : 0,
+            justification: att.justification || '',
+            rendimiento: att.present ? '100%' : '0%'
+        });
+    });
+    
+    return await save('performance_log', perfLog);
+};
+
+export const reopenAttendance = async (date) => {
+    if (adminStore.attendance[date]) {
+        adminStore.attendance[date].finalized = false;
+        await save('attendance', adminStore.attendance);
+        
+        // Opcional: Limpiar el log de ese día para evitar duplicados al volver a cerrar
+        const filteredPerf = adminStore.performance_log.filter(l => l.date !== date);
+        return await save('performance_log', filteredPerf);
+    }
+    return false;
+};
+
 // --- PERFORMANCE ---
 export const getPerformanceLog = () => adminStore.performance_log;
 
