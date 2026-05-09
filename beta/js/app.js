@@ -1,5 +1,5 @@
-import { getSession, logout } from './services/auth.js?v=12.5.01';
-import * as adminService from './services/adminService.js?v=12.5.01';
+import { getSession, logout } from './services/auth.js?v=12.5.02';
+import * as adminService from './services/adminService.js?v=12.5.02';
 
 class App {
   constructor(rootId) {
@@ -60,8 +60,8 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "v12.5.01-GOLD";
-    alert("SISTEMA PROTEGIDO: " + versionStr);
+    const versionStr = "v12.5.02-GOLD";
+    // alert("SISTEMA PROTEGIDO: " + versionStr); // Eliminado para evitar bloqueo
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
@@ -70,12 +70,8 @@ class App {
     
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Pulse ${versionStr}...</div>`;
 
-    // [IMPORTANTE] Inicializar datos de usuarios/permisos ANTES de mostrar login o dashboard
-    try {
-        await adminService.initializeAdminData();
-    } catch(e) {
-        console.warn("[PULSE] Error en sincronización inicial:", e);
-    }
+    // [IMPORTANTE] Inicializar datos en background (NO BLOQUEANTE)
+    adminService.initializeAdminData().catch(e => console.warn("[PULSE] Error en sync:", e));
 
     try {
         const timestamp = new Date().getTime();
