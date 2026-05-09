@@ -8,7 +8,7 @@ export const login = async (username, password) => {
 
   // 1. PRIORIDAD MAESTRO (Siempre entra, no depende de nada)
   if (targetUsername === 'dames' && password === 'Bata1830') {
-      const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Gerente Logística (Dames)' };
+      const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Daniel Ames' };
       localStorage.setItem('logistics_session', JSON.stringify(sessionData));
       return { success: true, user: sessionData };
   }
