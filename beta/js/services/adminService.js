@@ -160,9 +160,13 @@ export const saveUser = async (user) => {
         console.warn("⚠️ adminStore.users no es un array, reseteando...");
         users = [];
     }
-    const idx = users.findIndex(u => u && u.username === user.username);
-    if (idx >= 0) users[idx] = { ...users[idx], ...user };
-    else users.push({ ...user, active: true });
+    const targetUsername = (user.username || '').toLowerCase();
+    const idx = users.findIndex(u => u && (u.username || '').toLowerCase() === targetUsername);
+    
+    const preparedUser = { ...user, username: targetUsername };
+    
+    if (idx >= 0) users[idx] = { ...users[idx], ...preparedUser };
+    else users.push({ ...preparedUser, active: true });
     return await save('users', users);
 };
 
