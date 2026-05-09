@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '12.8.9';
-const CACHE_KEY = `logistics_v12_8_9_`;
+const VERSION = '12.9.1';
+const CACHE_KEY = `logistics_v12_9_1_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -312,20 +312,14 @@ window.downloadExcelDetail = () => {
     sheetTallas['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
     
     XLSX.utils.book_append_sheet(wb, sheetTallas, "Tallas");
-    
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Detalle_Buffer_${date}.xlsx`);
-};
 
-window.downloadExcelZonas = () => {
-    if (!lastBufferResult) return;
-    const data = lastBufferResult;
-    
-    // 1. Pestaña Detalle Zonas (SOLO lo físico, como antes)
+    // [MOD V12.9.0] ABSORCIÓN DE REPORTES DE ZONAS
+    // 1. Pestaña Detalle Zonas (Toda la cascada física)
     const zonasFisicas = (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK');
     const sheetZonas = XLSX.utils.json_to_sheet(zonasFisicas);
+    XLSX.utils.book_append_sheet(wb, sheetZonas, "Detalle Zonas");
     
-    // 2. Pestaña Sin Stock (EXCLUSIVO lo faltante)
+    // 2. Pestaña Sin Stock (Exclusivo Faltantes)
     const sinStockData = (data.detalleZonas || [])
         .filter(d => d['NIVEL/AREA'] === '7. SIN STOCK')
         .map(d => ({
@@ -335,13 +329,14 @@ window.downloadExcelZonas = () => {
             'ATD RQ': d['ATD RQ']
         }));
     const sheetOOS = XLSX.utils.json_to_sheet(sinStockData);
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, sheetZonas, "Detalle Zonas");
     XLSX.utils.book_append_sheet(wb, sheetOOS, "Sin Stock");
     
     const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Analisis_Zonas_${date}.xlsx`);
+    XLSX.writeFile(wb, `Detalle_Buffer_Completo_${date}.xlsx`);
+};
+
+window.downloadExcelZonas = () => {
+    alert("⚠️ Este reporte ahora está integrado en 'EXCEL DETALLE COMPLETO'.");
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
@@ -400,7 +395,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.8.9</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v12.9.1</span></h2>
           <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px;">BETA</span>
         </div>
       </div>
@@ -881,13 +876,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
-            <button id="btn_exp_zonas" class="btn" style="width:auto; background:#4f46e5; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📊 EXPORTAR ZONAS</button>
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXCEL DETALLE</button>
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(34,197,94,0.3);">📥 EXCEL DETALLE</button>
         `;
-        document.getElementById('btn_exp_zonas').onclick = () => {
-            if(!data.detalleZonas || !data.detalleZonas.length) alert('⚠️ ERROR: Datos no disponibles.');
-            else window.downloadExcelZonas();
-        };
         document.getElementById('btn_exp_buffer').onclick = () => {
             if(!data.detalle || !data.detalle.length) alert('⚠️ ERROR: Datos no disponibles.');
             else window.downloadExcelDetail();
