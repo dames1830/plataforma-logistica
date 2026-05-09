@@ -47,8 +47,26 @@ export const initializeAdminData = async () => {
                 if (res.ok) {
                     const result = await res.json();
                     if (result.data) {
-                        adminStore[area] = result.data;
-                        localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                        if (area === 'users' || area === 'workers') {
+                            // Fusión inteligente: No borrar lo que no está en el servidor aún
+                            const local = JSON.parse(localStorage.getItem(PREFIX + area) || '[]');
+                            const server = result.data;
+                            const merged = Array.isArray(server) ? [...server] : [];
+                            
+                            if (Array.isArray(local)) {
+                                local.forEach(item => {
+                                    const key = area === 'users' ? 'username' : 'dni';
+                                    if (!merged.find(m => m[key] === item[key])) {
+                                        merged.push(item);
+                                    }
+                                });
+                            }
+                            adminStore[area] = merged;
+                            localStorage.setItem(PREFIX + area, JSON.stringify(merged));
+                        } else {
+                            adminStore[area] = result.data;
+                            localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                        }
                     }
                 }
             } catch (err) {
