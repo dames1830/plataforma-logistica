@@ -245,20 +245,28 @@ export const saveAlmacenajeTasks = async (tasks) => {
 };
 export const loadAlmacenajeTasks = async () => {
     try {
-        console.log("🔍 [PULSE] Solicitando tareas FINAL al servidor...");
+        console.log("🔍 [PULSE] Solicitando tareas FINAL con Abrelatas Profundo...");
         const res = await fetch(`${API_URL}/almacenaje_tasks_beta_final`);
         if (res.ok) {
             const result = await res.json();
             let data = [];
-            if (result && Array.isArray(result.data)) data = result.data;
-            else if (Array.isArray(result)) data = result;
-            else if (result && typeof result === 'object' && result.data) data = [result.data];
+            
+            // Lógica de "Abrelatas Profundo"
+            if (result) {
+                if (Array.isArray(result.data)) data = result.data;
+                else if (Array.isArray(result)) {
+                    // Si recibimos [ { data: [...] } ] (Doble Caja)
+                    if (result[0] && Array.isArray(result[0].data)) data = result[0].data;
+                    else data = result;
+                }
+                else if (result.data) data = [result.data];
+            }
 
             adminStore.almacenaje_tasks = data;
             localStorage.setItem(PREFIX + 'almacenaje_tasks_final', JSON.stringify(data));
             
             const resumen = data.length > 0 ? data.map(t => `${t.marca || 'S/M'}`).join(', ') : 'Vacío';
-            alert(`🔍 RADAR [PC-ASISTENTE]: El servidor informa ${data.length} tareas: [${resumen}]`);
+            alert(`🔍 RADAR: [SINCRO TOTAL] El servidor informa ${data.length} tareas: [${resumen}]`);
             return data;
         }
         return adminStore.almacenaje_tasks;
