@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '13.1.0-BETA';
-const CACHE_KEY = `logistics_v13_1_0_beta_master_perms_`;
+const VERSION = '13.3.0-BETA';
+const CACHE_KEY = `logistics_v13_3_0_beta_cascade_master_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -370,19 +370,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   adminService.initPermissions(TABS);
   container.className = 'dashboard-layout animate-fade-in';
   
-  let rolePermissions = adminService.getPermissions(user.role) || {};
-  // Si no hay locales para este rol (raro por init), intentar API como fallback secundario
-  if (user.role !== 'admin' && Object.keys(rolePermissions).length === 0) {
-    try {
-      const res = await fetch(`${API_BASE}/permissions/${user.role}`);
-      if (res.ok) {
-          const apiPerms = (await res.json()).modules || {};
-          rolePermissions = apiPerms;
-          // Opcional: Sincronizar localmente
-          adminService.savePermissions(user.role, apiPerms);
-      }
-    } catch (e) { console.error("Error permisos API:", e); }
-  }
+  // [CRÍTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
+  const rolePermissions = adminService.getPermissions(user.role) || {};
 
   // [CRÍTICO] Carga de permisos: Prioridad Matriz Dinámica > Roles Fijos
   const allowedTabs = TABS.filter(t => {
@@ -397,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.1.0</span> <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px; margin-left:10px;">BETA</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.3.0</span> <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px; margin-left:10px;">BETA</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1351,7 +1340,24 @@ export const renderDashboard = async (container, user, onLogout) => {
         cb.onchange = (e) => {
             const { role, tab } = e.target.dataset;
             adminService.togglePermission(role, tab);
-            console.log(`[PULSE] Permiso actualizado: ${role} -> ${tab}`);
+            
+            // [CASCADA] Si se activa una sub-pestaña, activar automáticamente la pestaña padre
+            if (e.target.checked) {
+                // Caso 1: Sub-sub-pestaña (ej: performance_historial) -> Activa sub-pestaña (admin_pers_performance)
+                if (tab === 'performance_historial' || tab === 'performance_graficos' || tab === 'performance_reporte') {
+                    const subParent = document.querySelector(`.perm-toggle[data-role="${role}"][data-tab="admin_pers_performance"]`);
+                    if (subParent && !subParent.checked) { subParent.checked = true; adminService.togglePermission(role, 'admin_pers_performance'); }
+                    const mainParent = document.querySelector(`.perm-toggle[data-role="${role}"][data-tab="admin_pers"]`);
+                    if (mainParent && !mainParent.checked) { mainParent.checked = true; adminService.togglePermission(role, 'admin_pers'); }
+                }
+                // Caso 2: Sub-pestaña general (ej: buffer_reportes) -> Activa padre (buffer)
+                else if (tab.includes('_')) {
+                    const parentId = tab.split('_')[0];
+                    const parentCb = document.querySelector(`.perm-toggle[data-role="${role}"][data-tab="${parentId}"]`);
+                    if (parentCb && !parentCb.checked) { parentCb.checked = true; adminService.togglePermission(role, parentId); }
+                }
+            }
+            console.log(`[PULSE] Permiso actualizado: ${role} -> ${tab} (Cascada Activa)`);
         };
     });
   };

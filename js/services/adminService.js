@@ -47,9 +47,13 @@ export const initializeAdminData = async () => {
                 const res = await fetchWithTimeout(`${API_URL}/${area}`);
                 if (res.ok) {
                     const result = await res.json();
-                    if (result && result.data) {
-                        // Soporte para datos anidados { data: { data: [] } }
-                        const serverData = Array.isArray(result.data) ? result.data : (result.data.data || []);
+                        // [CORRECCIÓN] Manejo inteligente de tipos: Objetos vs Arrays
+                        let serverData;
+                        if (area === 'permissions' || area === 'attendance') {
+                            serverData = (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) ? result.data : (adminStore[area] || {});
+                        } else {
+                            serverData = Array.isArray(result.data) ? result.data : (result.data.data || []);
+                        }
 
                         if (area === 'users' || area === 'workers') {
                             // Fusión inteligente: No borrar lo que no está en el servidor aún
@@ -68,9 +72,9 @@ export const initializeAdminData = async () => {
                             adminStore[area] = merged;
                             localStorage.setItem(PREFIX + area, JSON.stringify(merged));
                         } else {
-                            // [SEGURIDAD CRÍTICA] No sobrescribir con vacíos si ya tenemos datos locales
-                            if (area === 'almacenaje_tasks' && (!Array.isArray(serverData) || serverData.length === 0)) {
-                                console.log("ℹ️ [PULSE] Ignorando sincronización vacía del servidor para Almacenaje.");
+                            // [SEGURIDAD] Evitar sobrescribir con datos inválidos o vacíos si ya existe info local
+                            if (Object.keys(serverData).length === 0 && Object.keys(adminStore[area]).length > 0) {
+                                console.log(`[PULSE] Ignorando sincronización vacía del servidor para ${area}.`);
                                 return;
                             }
                             adminStore[area] = serverData;
