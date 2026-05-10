@@ -103,9 +103,15 @@ export const initPermissions = (tabs) => {
         const p = adminStore.permissions[role];
         
         tabs.forEach(t => {
-            // [HARD LOCK] Permisos obligatorios para Asistente
+            // [HARD LOCK] Lista de Hierro para Asistente (Imagen Daniel)
             if (role === 'asistente') {
-                const forced = ['almacenaje', 'zona_buffer', 'admin_section', 'admin_asistencia', 'admin_performance', 'admin_rfs'];
+                const forced = [
+                    'inicio',
+                    'almacenaje', 'almacenaje_archivo_almacenaje', 'almacenaje_tareas_dia', 'almacenaje_kpi_tareas',
+                    'buffer', 'buffer_maestros', 'buffer_reportes', 'buffer_historial_buffer', 'buffer_kpi_buffer',
+                    'admin_pers', 'admin_pers_asistencia', 'admin_pers_performance', 'admin_pers_rfs',
+                    'performance_historial', 'performance_graficos', 'performance_reporte'
+                ];
                 if (forced.includes(t.id)) p[t.id] = 1;
             }
 
