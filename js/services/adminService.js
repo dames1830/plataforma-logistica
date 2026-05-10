@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v14.1.0)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v14.2.0 - BLINDADO)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -15,9 +15,8 @@ export const adminStore = {
     almacenaje_tasks: []
 };
 
-// Carga inicial híbrida (Local + Servidor)
+// --- CARGA Y SINCRONIZACIÓN ---
 export const initializeAdminData = async () => {
-    // 1. Carga rápida desde LocalStorage
     try {
         adminStore.workers = JSON.parse(localStorage.getItem(PREFIX + 'workers') || '[]');
         adminStore.users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
@@ -25,127 +24,110 @@ export const initializeAdminData = async () => {
         adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
         adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
         adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
-        const localTasks = JSON.parse(localStorage.getItem(PREFIX + 'almacenaje_tasks') || '[]');
-        adminStore.almacenaje_tasks = Array.isArray(localTasks) ? localTasks : [];
-    } catch (e) {
-        console.warn("⚠️ Error cargando datos locales:", e);
-    }
+        adminStore.almacenaje_tasks = JSON.parse(localStorage.getItem(PREFIX + 'almacenaje_tasks') || '[]');
+    } catch (e) { console.warn("Error local:", e); }
 
-    // 2. Sincronización con Servidor
     try {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
-        const fetchWithTimeout = (url, options, timeout = 12000) => {
-            return Promise.race([
-                fetch(url, options),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
-            ]);
-        };
-
         await Promise.all(areas.map(async (area) => {
             try {
-                const res = await fetchWithTimeout(`${API_URL}/${area}`);
+                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`);
                 if (res.ok) {
                     const result = await res.json();
-                    let serverData;
+                    let serverData = result.data;
+                    if (!serverData) return;
+
+                    // Normalización de datos
                     if (area === 'permissions' || area === 'attendance') {
-                        serverData = (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) ? result.data : (adminStore[area] || {});
+                        serverData = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                     } else {
-                        serverData = Array.isArray(result.data) ? result.data : (result.data.data || []);
+                        serverData = Array.isArray(serverData) ? serverData : (serverData.data || []);
                     }
 
-                    if (area === 'users' || area === 'workers') {
-                        const local = JSON.parse(localStorage.getItem(PREFIX + area) || '[]');
-                        const merged = Array.isArray(serverData) ? [...serverData] : [];
-                        if (Array.isArray(local)) {
-                            local.forEach(item => {
-                                const key = area === 'users' ? 'username' : 'dni';
-                                if (!merged.find(m => m[key] === item[key])) merged.push(item);
-                            });
-                        }
-                        adminStore[area] = merged;
-                        localStorage.setItem(PREFIX + area, JSON.stringify(merged));
-                    } else {
-                        // [PROTECCIÓN] No sobrescribir con vacíos si hay datos locales
-                        const hasServerData = (Array.isArray(serverData) && serverData.length > 0) || (typeof serverData === 'object' && Object.keys(serverData).length > 0);
-                        if (hasServerData) {
-                            adminStore[area] = serverData;
-                            localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
-                        }
+                    // [BLINDAJE] No sobrescribir si el servidor viene vacío y nosotros tenemos datos
+                    const localData = adminStore[area];
+                    const serverIsEmpty = (Array.isArray(serverData) && serverData.length === 0) || (typeof serverData === 'object' && Object.keys(serverData).length === 0);
+                    const localIsNotEmpty = (Array.isArray(localData) && localData.length > 0) || (typeof localData === 'object' && Object.keys(localData).length > 0);
+
+                    if (serverIsEmpty && localIsNotEmpty) {
+                        console.log(`[PULSE] Manteniendo datos locales para ${area} (servidor vacío).`);
+                        return;
                     }
+
+                    adminStore[area] = serverData;
+                    localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
                 }
-            } catch (err) {
-                console.warn(`⚠️ Sync fallida para ${area}:`, err.message);
-            }
+            } catch (err) { console.warn(`Sync failed for ${area}`); }
         }));
-    } catch (e) {
-        console.warn("⚠️ Error general sync:", e);
-    }
+    } catch (e) { }
 };
 
-// Función genérica de guardado
 export const save = async (area, data) => {
     try {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
-        
-        let success = false;
-        for (let i = 0; i < 2; i++) {
-            try {
-                const res = await fetch(`${API_URL}/${area}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data })
-                });
-                if (res.ok) { success = true; break; }
-            } catch (err) { }
-        }
-        return success;
-    } catch (e) {
-        return false;
-    }
+        const res = await fetch(`${API_URL}/${area}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data })
+        });
+        return res.ok;
+    } catch (e) { return false; }
 };
 
-// --- GETTERS ---
+// --- GETTERS COMPLETOS (REPARADOS) ---
 export const getWorkers = () => adminStore.workers;
 export const getUsers = () => adminStore.users;
 export const getPermissions = (role) => adminStore.permissions[role] || {};
 export const getAttendance = (dateStr) => adminStore.attendance[dateStr];
+export const getPerformance = () => adminStore.performance;
+export const getPerformanceLog = () => adminStore.performance_log;
 export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks;
 
-// --- SETTERS / SAVERS ---
+// --- SETTERS ---
 export const saveWorkers = (data) => save('workers', data);
 export const saveUsers = (data) => save('users', data);
 export const savePermissions = (role, data) => {
     adminStore.permissions[role] = data;
     return save('permissions', adminStore.permissions);
 };
-export const saveAttendance = async (dateStr, data, username) => {
-    adminStore.attendance[dateStr] = { data, ts: Date.now(), user: username };
-    return await save('attendance', adminStore.attendance);
-};
+export const savePerformance = (data) => save('performance', data);
+export const savePerformanceLog = (data) => save('performance_log', data);
 export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
 
-// --- UTILIDADES PERMISOS ---
+// --- LÓGICA DE PERMISOS BLINDADA ---
 export const initPermissions = (tabs) => {
     const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente', 'analista'];
     roles.forEach(role => {
-        if (!adminStore.permissions[role]) {
-            const p = {};
-            tabs.forEach(t => {
+        if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
+        const p = adminStore.permissions[role];
+        
+        tabs.forEach(t => {
+            // [HARD LOCK] Permisos obligatorios para Asistente
+            if (role === 'asistente') {
+                const forced = ['almacenaje', 'zona_buffer', 'admin_section', 'admin_asistencia', 'admin_performance', 'admin_rfs'];
+                if (forced.includes(t.id)) p[t.id] = 1;
+            }
+
+            if (p[t.id] === undefined) {
                 p[t.id] = (role === 'admin' || role === 'jefe') ? 1 : 0;
-                if (t.subTabs) {
-                    t.subTabs.forEach(s => {
+            }
+            
+            if (t.subTabs) {
+                t.subTabs.forEach(s => {
+                    if (p[`${t.id}_${s.id}`] === undefined) {
                         p[`${t.id}_${s.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
-                        if (s.subTabs) {
-                           s.subTabs.forEach(ss => {
-                               p[`${s.id}_${ss.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
-                           });
-                        }
-                    });
-                }
-            });
-            adminStore.permissions[role] = p;
-        }
+                    }
+                    if (s.subTabs) {
+                        s.subTabs.forEach(ss => {
+                            if (p[`${s.id}_${ss.id}`] === undefined) {
+                                p[`${s.id}_${ss.id}`] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                            }
+                        });
+                    }
+                });
+            }
+        });
     });
 };
 
