@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v14.4.0 - CONEXIÓN TOTAL)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v14.5.0 - SINCRONIZACIÓN DIRECTA)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -31,24 +31,26 @@ export const initializeAdminData = async () => {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         await Promise.all(areas.map(async (area) => {
             try {
+                // Forzamos descarga limpia con timestamp
                 const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`);
                 if (res.ok) {
                     const result = await res.json();
                     let serverData = result.data;
-                    if (!serverData) return;
+                    
+                    if (serverData === undefined || serverData === null) return;
+
+                    // Formateo según el área
                     if (area === 'permissions' || area === 'attendance') {
                         serverData = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                     } else {
                         serverData = Array.isArray(serverData) ? serverData : (serverData.data || []);
                     }
-                    const localData = adminStore[area];
-                    const serverIsEmpty = (Array.isArray(serverData) && serverData.length === 0) || (typeof serverData === 'object' && Object.keys(serverData).length === 0);
-                    const localIsNotEmpty = (Array.isArray(localData) && localData.length > 0) || (typeof localData === 'object' && Object.keys(localData).length > 0);
-                    if (serverIsEmpty && localIsNotEmpty) return;
+
+                    // [v14.5.0] SINCRONIZACIÓN DIRECTA: Confiamos en el servidor para reflejar cambios del asistente
                     adminStore[area] = serverData;
                     localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
                 }
-            } catch (err) { }
+            } catch (err) { console.error(`Error sync ${area}:`, err); }
         }));
     } catch (e) { }
 };
@@ -95,7 +97,7 @@ export const saveAttendance = async (dateStr, data, username) => {
     return await save('attendance', adminStore.attendance);
 };
 
-// --- LISTA DE HIERRO (ACCESOS FORZADOS) ---
+// --- LISTA DE HIERRO ---
 export const FORCED_ASISTENTE = [
     'inicio',
     'almacenaje', 'almacenaje_archivo_almacenaje', 'almacenaje_tareas_dia', 'almacenaje_kpi_tareas',
@@ -106,21 +108,17 @@ export const FORCED_ASISTENTE = [
 
 export const initPermissions = (tabs) => {
     const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente', 'analista'];
-    
     roles.forEach(role => {
         if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
         const p = adminStore.permissions[role];
-        
         tabs.forEach(t => {
             if (role === 'asistente' && FORCED_ASISTENTE.includes(t.id)) p[t.id] = 1;
             if (p[t.id] === undefined) p[t.id] = (role === 'admin' || role === 'jefe') ? 1 : 0;
-            
             if (t.subTabs) {
                 t.subTabs.forEach(s => {
                     const subKey = `${t.id}_${s.id}`;
                     if (role === 'asistente' && FORCED_ASISTENTE.includes(subKey)) p[subKey] = 1;
                     if (p[subKey] === undefined) p[subKey] = (role === 'admin' || role === 'jefe') ? 1 : 0;
-                    
                     if (s.subTabs) {
                         s.subTabs.forEach(ss => {
                             const ssKey = `${s.id}_${ss.id}`;
@@ -135,7 +133,7 @@ export const initPermissions = (tabs) => {
 };
 
 export const togglePermission = (role, tabId) => {
-    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return; // Bloqueo de cambio manual
+    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return;
     const p = getPermissions(role);
     p[tabId] = p[tabId] === 1 ? 0 : 1;
     save('permissions', adminStore.permissions);
