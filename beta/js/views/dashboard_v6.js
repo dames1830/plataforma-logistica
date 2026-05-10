@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '13.0.2-BETA';
-const CACHE_KEY = `logistics_v13_0_2_beta_`;
+const VERSION = '13.0.3-BETA';
+const CACHE_KEY = `logistics_v13_0_3_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -386,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.2</span> <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px; margin-left:10px;">BETA</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.3</span> <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px; margin-left:10px;">BETA</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -2841,16 +2841,16 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // 7. Configurar anchos de columna
     ws.columns = [
-        { key: 'articulo', width: 12.13 }, // A
+        { key: 'articulo', width: 18.70 }, // A
         { key: 'ubicacion', width: 26.00 }, // B
-        { key: 'sku', width: 12.50 },      // C
-        { key: 'tallas', width: 7.00 },     // D
-        { key: 'marcas', width: 18.00 },    // E
-        { key: 'gender', width: 18.00 },    // F
-        { key: 'coleccion', width: 16.00 }, // G
-        { key: 'qty_buffer', width: 10.00 },// H
-        { key: 'qty_zona', width: 10.00 },  // I
-        { key: 'tareas', width: 10.00 }     // J
+        { key: 'sku', width: 20.00 },      // C
+        { key: 'tallas', width: 8.50 },     // D
+        { key: 'marcas', width: 25.50 },    // E
+        { key: 'gender', width: 26.50 },    // F
+        { key: 'coleccion', width: 20.14 }, // G
+        { key: 'qty_buffer', width: 14.30 },// H
+        { key: 'qty_zona', width: 14.30 },  // I
+        { key: 'tareas', width: 14.30 }     // J
     ];
 
     // 3. Toda la pestaña en fuente 16
