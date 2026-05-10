@@ -43,22 +43,17 @@ export const initializeAdminData = async () => {
                         // FUSIÓN INTELIGENTE: Si el servidor trae datos, comparar con lo que tenemos localmente
                         if (area === 'attendance') {
                             const localAt = adminStore.attendance || {};
-                            const hasLocalData = Object.keys(localAt).length > 0;
-                            
-                            if (!hasLocalData) {
-                                // SI NO HAY NADA LOCAL (PC NUEVA), USAR TODO LO DEL SERVIDOR
-                                adminStore.attendance = serverData;
-                            } else {
-                                // FUSIÓN INTELIGENTE PARA PC CON DATOS EXISTENTES
-                                for (const d in serverData) {
-                                    const sVal = serverData[d];
-                                    const lVal = localAt[d];
-                                    if (lVal && lVal.finalized && !sVal.finalized) continue;
-                                    if (lVal && sVal.ts < lVal.ts) continue;
+                            // PRIORIDAD SERVIDOR PARA CIERRES: Si el servidor dice que está cerrado, manda el servidor
+                            for (const d in serverData) {
+                                const sVal = serverData[d];
+                                const lVal = localAt[d];
+                                if (sVal && sVal.finalized) {
+                                    localAt[d] = sVal;
+                                } else if (!lVal || sVal.ts > (lVal.ts || 0)) {
                                     localAt[d] = sVal;
                                 }
-                                adminStore.attendance = localAt;
                             }
+                            adminStore.attendance = localAt;
                         } else {
                             adminStore[area] = serverData;
                         }
@@ -82,13 +77,22 @@ export const save = async (area, data) => {
     try {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
+        const payload = { data };
         const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data })
+            body: JSON.stringify(payload)
         });
-        if (!res.ok) console.error(`[PULSE] Error saving ${area}: ${res.status}`);
-        return res.ok;
+        
+        if (!res.ok) {
+            console.error(`[PULSE] Error saving ${area}: ${res.status}`);
+            return false;
+        }
+        
+        // Verificación rápida: si el guardado fue exitoso, actualizamos local
+        adminStore[area] = data;
+        localStorage.setItem(PREFIX + area, JSON.stringify(data));
+        return true;
     } catch (e) { 
         console.error(`[PULSE] Critical Save Error:`, e);
         return false; 
