@@ -142,13 +142,18 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
 };
 
 export const reopenAttendance = async (date) => {
+    // BLINDAJE DE SEGURIDAD TOTAL: Solo 'dames' puede ejecutar esto
+    const currentUser = JSON.parse(localStorage.getItem('logistics_user') || '{}');
+    if (currentUser.username !== 'dames') {
+        alert("⛔ ACCESO DENEGADO: Solo el administrador central puede reabrir asistencias.");
+        return false;
+    }
+
     if (adminStore.attendance[date]) {
-        // PRESERVAR DATA: Solo quitar el candado, mantener los marcados de P/F y puntualidad
         adminStore.attendance[date].finalized = false;
         adminStore.attendance[date].ts = Date.now();
         await save('attendance', adminStore.attendance);
     }
-    // Borramos el log de performance para que se regenere limpio al volver a cerrar
     adminStore.performance_log = adminStore.performance_log.filter(l => l.date !== date);
     await save('performance_log', adminStore.performance_log);
     return true;

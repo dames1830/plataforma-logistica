@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.4.5';
-import * as adminService from '../services/adminService.js?v=15.4.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.5.0';
+import * as adminService from '../services/adminService.js?v=15.5.0';
 
 
-const VERSION = '15.4.5';
-const CACHE_KEY = `logistics_v15_4_5_timeout_fix_`;
+const VERSION = '15.5.0';
+const CACHE_KEY = `logistics_v15_5_0_cloud_sync_icon_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.4.5</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.5.0</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1506,9 +1506,50 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
-    if (!existing?.finalized) {
-        const btnClose = document.getElementById('btn_close_asist');
-        if (btnClose) {
+        // BOTÓN CERRAR Y BOTÓN SINCRONIZAR
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'attendance-actions animate-fade-in';
+        actionsDiv.style = 'display:flex; justify-content: flex-end; align-items:center; gap:12px; margin-top:20px;';
+        
+        const btnSync = document.createElement('button');
+        btnSync.className = 'btn-secondary';
+        btnSync.title = 'Sincronizar con la Nube';
+        btnSync.style = 'padding:10px; border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05);';
+        btnSync.innerHTML = '🔄';
+        btnSync.onclick = async () => {
+            btnSync.classList.add('animate-spin');
+            btnSync.disabled = true;
+            await adminService.initializeAdminData();
+            renderAsistenciaSection(container);
+            alert("☁️ Nube sincronizada correctamente");
+        };
+
+        const btnClose = document.createElement('button');
+        btnClose.className = 'btn-primary';
+        btnClose.style = 'background:var(--primary); min-width:180px;';
+        btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
+
+        if (existing?.finalized) {
+            btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
+            btnClose.style.background = '#22c55e';
+            btnClose.disabled = true;
+            
+            const user = JSON.parse(localStorage.getItem('logistics_user') || '{}');
+            if (user.username === 'dames') {
+                const btnReopen = document.createElement('button');
+                btnReopen.className = 'btn-danger';
+                btnReopen.innerHTML = '🔓 REABRIR';
+                btnReopen.onclick = async () => {
+                    if (confirm("¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.")) {
+                        btnReopen.disabled = true;
+                        btnReopen.textContent = "⌛ ABRIENDO...";
+                        await adminService.reopenAttendance(forcedDate);
+                        renderAsistenciaSection(container);
+                    }
+                };
+                actionsDiv.appendChild(btnReopen);
+            }
+        } else {
             btnClose.onclick = async () => {
                 if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
                     btnClose.disabled = true;
@@ -1525,11 +1566,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 }
             };
         }
-    } else {
-        const btnReopen = document.getElementById('btn_reopen_asist');
-        if (btnReopen && user.username === 'dames') {
-            btnReopen.onclick = async () => {
-                if (confirm(`🚨 ¿Deseas REABRIR la asistencia?`)) {
                     btnReopen.disabled = true;
                     btnReopen.textContent = "⌛ REABRIENDO...";
                     await adminService.reopenAttendance(forcedDate);
