@@ -50,7 +50,14 @@ export const initializeAdminData = async () => {
 
                     // CORRECCIÓN CRÍTICA: performance_log DEBE SER ARRAY
                     if (area === 'attendance' || area === 'permissions') {
-                        adminStore[area] = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
+                        const newObj = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
+                        
+                        // PROTECCIÓN PARA PERMISOS: No sobrescribir con objeto vacío si ya tenemos datos locales
+                        if (area === 'permissions' && Object.keys(newObj).length === 0 && Object.keys(adminStore.permissions).length > 0) {
+                            console.warn("[PULSE] Ignoring empty permissions from cloud to protect UI");
+                        } else {
+                            adminStore[area] = newObj;
+                        }
                     } else {
                         adminStore[area] = Array.isArray(serverData) ? serverData : [];
                     }

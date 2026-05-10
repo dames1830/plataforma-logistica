@@ -1,11 +1,11 @@
 
-// ENGINE v15.8.0 - SYNC STABILITY
+// ENGINE v15.8.1 - PERMISSIONS SHIELD
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.8.0";
+    this.version = "15.8.1";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
