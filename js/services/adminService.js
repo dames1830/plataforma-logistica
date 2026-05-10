@@ -42,13 +42,12 @@ export const initializeAdminData = async () => {
                     let serverData = result.data !== undefined ? result.data : result;
                     if (serverData === undefined || serverData === null) return;
                     
-                    // AUTO-CLEAN NESTING: Si los datos vienen envueltos en {"data": ...} por versiones anteriores
-                    if (serverData && typeof serverData === 'object' && serverData.data !== undefined) {
-                        console.warn(`[PULSE] Auto-cleaning nested data for ${area}`);
+                    // AUTO-CLEAN RECURSIVO: Eliminar cualquier nivel de anidamiento {"data": {"data": ...}}
+                    while (serverData && typeof serverData === 'object' && serverData.data !== undefined && !Array.isArray(serverData)) {
+                        console.warn(`[PULSE] Deep cleaning nested data for ${area}`);
                         serverData = serverData.data;
                     }
 
-                    // CORRECCIÓN CRÍTICA: performance_log DEBE SER ARRAY
                     if (area === 'attendance' || area === 'permissions') {
                         const newObj = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                         
@@ -56,13 +55,16 @@ export const initializeAdminData = async () => {
                         if (area === 'permissions' && Object.keys(newObj).length === 0 && Object.keys(adminStore.permissions).length > 0) {
                             console.warn("[PULSE] Ignoring empty permissions from cloud to protect UI");
                         } else {
-                            adminStore[area] = newObj;
+                            // MEZCLA INTELIGENTE: No reemplazamos, sumamos lo nuevo a lo que ya tenemos
+                            adminStore[area] = { ...adminStore[area], ...newObj };
                         }
                     } else {
+                        // Para arrays, intentamos mezclar por ID o simplemente concatenar si es necesario, 
+                        // pero por ahora mantenemos el reemplazo para evitar duplicados infinitos en listas simples.
                         adminStore[area] = Array.isArray(serverData) ? serverData : [];
                     }
                     localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
-                    console.log(`[PULSE] Cloud Sync OK: ${area}`);
+                    console.log(`[PULSE] Cloud Sync OK (Merged): ${area}`);
                 }
             } catch (err) { 
                 console.warn(`[PULSE] Sync Timeout/Error for ${area}`);

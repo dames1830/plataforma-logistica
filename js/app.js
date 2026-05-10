@@ -1,11 +1,11 @@
 
-// ENGINE v15.8.2 - REOPEN STABILITY
+// ENGINE v15.8.3 - MERGE SYNC STABILITY
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.8.2";
+    this.version = "15.8.3";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
