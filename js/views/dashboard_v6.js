@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.3.0';
-import * as adminService from '../services/adminService.js?v=15.3.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.3.5';
+import * as adminService from '../services/adminService.js?v=15.3.5';
 
 
-const VERSION = '15.3.0';
-const CACHE_KEY = `logistics_v15_3_0_forced_cloud_sync_`;
+const VERSION = '15.3.5';
+const CACHE_KEY = `logistics_v15_3_5_confirm_alerts_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.3.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.3.5</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1512,9 +1512,16 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnClose.onclick = async () => {
                 if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
                     btnClose.disabled = true;
-                    btnClose.textContent = "⌛ PROCESANDO...";
-                    await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
-                    renderAsistenciaSection(container);
+                    btnClose.textContent = "⌛ ENVIANDO A LA NUBE...";
+                    const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                    if (success) {
+                        alert("✅ Información enviada a la nube");
+                        renderAsistenciaSection(container);
+                    } else {
+                        alert("❌ Error de envío - Intente nuevamente");
+                        btnClose.disabled = false;
+                        btnClose.textContent = "💾 CERRAR ASISTENCIA";
+                    }
                 }
             };
         }

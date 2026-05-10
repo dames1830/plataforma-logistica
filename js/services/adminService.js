@@ -111,8 +111,10 @@ export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks;
 // --- ASISTENCIA Y PERFORMANCE (RESTAURADO) ---
 export const closeAttendanceAndSyncPerformance = async (date, attendanceData) => {
     // 1. Marcar como cerrada
-    adminStore.attendance[date] = { data: attendanceData, ts: Date.now(), finalized: true };
-    await save('attendance', adminStore.attendance);
+    const newState = { data: attendanceData, ts: Date.now(), finalized: true };
+    adminStore.attendance[date] = newState;
+    const ok1 = await save('attendance', adminStore.attendance);
+    if (!ok1) return false;
 
     // 2. Generar logs para el historial con valores fijos (10, 10, 9)
     const newLogs = attendanceData.map(a => {
@@ -126,11 +128,10 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
         const bpa = isP ? 10 : 0;
         const sup = isP ? 9 : 0;
         
-        // Cálculo inicial con estos valores
         if (isP) {
-            score += (prod / 10) * 30; // +30%
-            score += (bpa / 10) * 15; // +15%
-            score += (sup / 10) * 15; // +13.5%
+            score += (prod / 10) * 30; 
+            score += (bpa / 10) * 15; 
+            score += (sup / 10) * 15; 
         }
         
         return {
@@ -149,8 +150,8 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
     });
     
     adminStore.performance_log = [...adminStore.performance_log.filter(l => l.date !== date), ...newLogs];
-    await save('performance_log', adminStore.performance_log);
-    return true;
+    const ok2 = await save('performance_log', adminStore.performance_log);
+    return ok1 && ok2;
 };
 
 export const reopenAttendance = async (date) => {
