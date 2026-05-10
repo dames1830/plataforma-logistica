@@ -163,8 +163,10 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
 
 export const reopenAttendance = async (date) => {
     // BLINDAJE DE SEGURIDAD TOTAL: Solo 'dames' puede ejecutar esto
-    const currentUser = JSON.parse(localStorage.getItem('logistics_user') || '{}');
-    if (currentUser.username !== 'dames') {
+    const currentUser = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+    const username = (currentUser.username || '').toLowerCase();
+    
+    if (username !== 'dames' && currentUser.role !== 'admin') {
         alert("⛔ ACCESO DENEGADO: Solo el administrador central puede reabrir asistencias.");
         return false;
     }
