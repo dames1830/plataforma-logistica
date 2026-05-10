@@ -1,8 +1,8 @@
 import { getSession, logout } from './services/auth.js?v=12.6.0';
 import * as adminService from './services/adminService.js?v=12.6.0';
 
-const VERSION = '13.0.5-BETA';
-const CACHE_KEY = `logistics_v13_0_5_beta_final_`;
+const VERSION = '13.0.9-BETA';
+const CACHE_KEY = `logistics_v13_0_9_beta_perms_`;
 
 class App {
   constructor(rootId) {
@@ -76,7 +76,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "13.0.5-BETA";
+    const versionStr = "13.0.9-BETA";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
@@ -85,10 +85,10 @@ class App {
     
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Sistema v${versionStr}...</div>`;
 
-    // [IMPORTANTE] Inicializar datos en background (NO BLOQUEANTE)
-    adminService.initializeAdminData().catch(e => console.warn("[PULSE] Error en sync:", e));
-
     try {
+        // [IMPORTANTE] Asegurar que los permisos y datos estén cargados antes de renderizar
+        await adminService.initializeAdminData();
+        
         const timestamp = new Date().getTime();
         if (user) {
             const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
