@@ -43,19 +43,22 @@ export const initializeAdminData = async () => {
                         // FUSIÓN INTELIGENTE: Si el servidor trae datos, comparar con lo que tenemos localmente
                         if (area === 'attendance') {
                             const localAt = adminStore.attendance || {};
-                            for (const d in serverData) {
-                                // Si local está finalizado y servidor no, o local es más reciente, ignorar servidor para esa fecha
-                                const sVal = serverData[d];
-                                const lVal = localAt[d];
-                                if (lVal && lVal.finalized && !sVal.finalized) {
-                                    continue; // Mantener local
+                            const hasLocalData = Object.keys(localAt).length > 0;
+                            
+                            if (!hasLocalData) {
+                                // SI NO HAY NADA LOCAL (PC NUEVA), USAR TODO LO DEL SERVIDOR
+                                adminStore.attendance = serverData;
+                            } else {
+                                // FUSIÓN INTELIGENTE PARA PC CON DATOS EXISTENTES
+                                for (const d in serverData) {
+                                    const sVal = serverData[d];
+                                    const lVal = localAt[d];
+                                    if (lVal && lVal.finalized && !sVal.finalized) continue;
+                                    if (lVal && sVal.ts < lVal.ts) continue;
+                                    localAt[d] = sVal;
                                 }
-                                if (lVal && sVal.ts < lVal.ts) {
-                                    continue; // Mantener local más nuevo
-                                }
-                                localAt[d] = sVal;
+                                adminStore.attendance = localAt;
                             }
-                            serverData = localAt;
                         } else {
                             adminStore[area] = serverData;
                         }
@@ -63,6 +66,7 @@ export const initializeAdminData = async () => {
                         adminStore[area] = Array.isArray(serverData) ? serverData : (serverData.data || []);
                     }
                     localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
+                    console.log(`[PULSE] Sync OK: ${area}`);
                 }
             } catch (err) { }
         }));
@@ -83,8 +87,12 @@ export const save = async (area, data) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data })
         });
+        if (!res.ok) console.error(`[PULSE] Error saving ${area}: ${res.status}`);
         return res.ok;
-    } catch (e) { return false; }
+    } catch (e) { 
+        console.error(`[PULSE] Critical Save Error:`, e);
+        return false; 
+    }
 };
 
 // --- GETTERS ---
