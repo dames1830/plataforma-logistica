@@ -1,11 +1,11 @@
 
-// ENGINE v15.8.4 - SAFE SYNC ENGINE
+// ENGINE v15.8.5 - UI ENHANCEMENTS ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.8.4";
+    this.version = "15.8.5";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
