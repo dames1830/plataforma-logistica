@@ -42,6 +42,12 @@ export const initializeAdminData = async () => {
                     let serverData = result.data !== undefined ? result.data : result;
                     if (serverData === undefined || serverData === null) return;
                     
+                    // AUTO-CLEAN NESTING: Si los datos vienen envueltos en {"data": ...} por versiones anteriores
+                    if (serverData && typeof serverData === 'object' && serverData.data !== undefined) {
+                        console.warn(`[PULSE] Auto-cleaning nested data for ${area}`);
+                        serverData = serverData.data;
+                    }
+
                     // CORRECCIÓN CRÍTICA: performance_log DEBE SER ARRAY
                     if (area === 'attendance' || area === 'permissions') {
                         adminStore[area] = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
@@ -68,14 +74,14 @@ export const save = async (area, data) => {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
         
-        const payload = { data };
+        // NO ENVOLVER EN {data: ...} para evitar anidamiento infinito
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 segundos máximo
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
 
         const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(data), // ENVIAR DATA DIRECTAMENTE
             signal: controller.signal
         });
         
