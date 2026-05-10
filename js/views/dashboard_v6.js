@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.8.5';
-import * as adminService from '../services/adminService.js?v=15.8.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.8.6';
+import * as adminService from '../services/adminService.js?v=15.8.6';
 
 
-const VERSION = '15.8.5';
-const CACHE_KEY = `logistics_v15_8_5_ui_highlight_`;
+const VERSION = '15.8.6';
+const CACHE_KEY = `logistics_v15_8_6_excel_print_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.5</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.6</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -2855,20 +2855,21 @@ export const renderDashboard = async (container, user, onLogout) => {
             margins: { left: 0, right: 0, top: 0, bottom: 0, header: 0, footer: 0 },
             fitToPage: true,
             fitToWidth: 1,
-            fitToHeight: 0
+            fitToHeight: 0,
+            printTitlesRow: '1:6'
         }
     });
 
     // 7. Configurar anchos de columna
     ws.columns = [
-        { key: 'articulo', width: 12.13 }, // A
+        { key: 'articulo', width: 20.50 }, // A
         { key: 'ubicacion', width: 26.00 }, // B
-        { key: 'sku', width: 12.50 },      // C
+        { key: 'sku', width: 20.50 },      // C
         { key: 'tallas', width: 7.00 },     // D
-        { key: 'marcas', width: 18.00 },    // E
+        { key: 'marcas', width: 20.50 },    // E
         { key: 'gender', width: 18.00 },    // F
         { key: 'coleccion', width: 16.00 }, // G
-        { key: 'qty_buffer', width: 10.00 },// H
+        { key: 'qty_buffer', width: 13.60 },// H
         { key: 'qty_zona', width: 14.29 },  // I
         { key: 'tareas', width: 14.29 }     // J
     ];

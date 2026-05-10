@@ -1,11 +1,11 @@
 
-// ENGINE v15.8.5 - UI ENHANCEMENTS ENGINE
+// ENGINE v15.8.6 - EXCEL REPORT ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.8.5";
+    this.version = "15.8.6";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
