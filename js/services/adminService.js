@@ -60,21 +60,25 @@ export const save = async (area, data) => {
     try {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
+        
         const payload = { data };
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 segundos máximo
+
         const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
+
         if (!res.ok) {
             console.error(`[PULSE] Error saving ${area}: ${res.status}`);
             return false;
         }
         
-        // Verificación rápida: si el guardado fue exitoso, actualizamos local
-        adminStore[area] = data;
-        localStorage.setItem(PREFIX + area, JSON.stringify(data));
         return true;
     } catch (e) { 
         console.error(`[PULSE] Critical Save Error:`, e);
