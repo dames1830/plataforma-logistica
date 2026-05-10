@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.7.0';
-import * as adminService from '../services/adminService.js?v=15.7.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.7.5';
+import * as adminService from '../services/adminService.js?v=15.7.5';
 
 
-const VERSION = '15.7.0';
-const CACHE_KEY = `logistics_v15_7_0_attendance_overhaul_`;
+const VERSION = '15.7.5';
+const CACHE_KEY = `logistics_v15_7_5_emergency_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.7.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.7.5</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1543,14 +1543,21 @@ export const renderDashboard = async (container, user, onLogout) => {
         } else {
             btnClose.onclick = async () => {
                 if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
-                    btnClose.disabled = true;
-                    btnClose.textContent = "⌛ ENVIANDO...";
-                    const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
-                    if (success) {
-                        alert("✅ Información enviada a la nube");
-                        renderAsistenciaSection(container);
-                    } else {
-                        alert("❌ Error de envío - Intente nuevamente");
+                    try {
+                        btnClose.disabled = true;
+                        btnClose.textContent = "⌛ ENVIANDO...";
+                        const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                        if (success) {
+                            alert("✅ Información enviada a la nube");
+                            renderAsistenciaSection(container);
+                        } else {
+                            alert("❌ Error de envío - Intente nuevamente");
+                            btnClose.disabled = false;
+                            btnClose.textContent = "💾 CERRAR ASISTENCIA";
+                        }
+                    } catch (err) {
+                        console.error("Critical Send Error:", err);
+                        alert("❌ Error fatal en el envío. Se ha reiniciado el botón.");
                         btnClose.disabled = false;
                         btnClose.textContent = "💾 CERRAR ASISTENCIA";
                     }
@@ -1591,8 +1598,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   let kpiSearch = '';
 
   const renderKPIGraphsSection = (container) => {
-    const rawLog = adminService.getPerformanceLog();
-    if (!rawLog || rawLog.length === 0) {
+    let rawLog = adminService.getPerformanceLog();
+    if (!Array.isArray(rawLog)) rawLog = [];
+    if (rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
             <h4>Sin datos de Performance</h4>
@@ -1847,7 +1855,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderKPIReportSection = (container) => {
-    const rawLog = adminService.getPerformanceLog();
+    let rawLog = adminService.getPerformanceLog();
+    if (!Array.isArray(rawLog)) rawLog = [];
     if (!rawLog || rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Sin datos para el reporte</h4></div>`;
         return;
@@ -1982,7 +1991,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderPerformanceHistory = (container) => {
-    const log = adminService.getPerformanceLog();
+    let log = adminService.getPerformanceLog();
+    if (!Array.isArray(log)) {
+        console.warn("[PULSE] Performance log was not an array, fixing...");
+        log = [];
+    }
     
     // Función para exportar a Excel
     window.exportPerformanceToExcel = () => {

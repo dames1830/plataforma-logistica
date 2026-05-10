@@ -31,22 +31,29 @@ export const initializeAdminData = async () => {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         await Promise.all(areas.map(async (area) => {
             try {
-                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 if (res.ok) {
                     const result = await res.json();
                     let serverData = result.data !== undefined ? result.data : result;
                     if (serverData === undefined || serverData === null) return;
                     
-                    if (area === 'attendance' || area === 'performance_log' || area === 'permissions') {
-                        // FUERZA BRUTA: La nube siempre manda en estas áreas críticas
-                        adminStore[area] = (typeof serverData === 'object') ? serverData : {};
+                    // CORRECCIÓN CRÍTICA: performance_log DEBE SER ARRAY
+                    if (area === 'attendance' || area === 'permissions') {
+                        adminStore[area] = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                     } else {
-                        adminStore[area] = Array.isArray(serverData) ? serverData : (serverData.data || []);
+                        adminStore[area] = Array.isArray(serverData) ? serverData : [];
                     }
                     localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
                     console.log(`[PULSE] Cloud Sync OK: ${area}`);
                 }
-            } catch (err) { }
+            } catch (err) { 
+                console.warn(`[PULSE] Sync Timeout/Error for ${area}`);
+            }
         }));
     } catch (e) { }
 };
