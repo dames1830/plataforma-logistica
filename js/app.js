@@ -1,11 +1,11 @@
 
-// ENGINE v14.2.5 - SAFE BOOT
+// ENGINE v14.3.0 - SAFE BOOT
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "14.2.5";
+    this.version = "14.3.0";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
