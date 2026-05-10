@@ -7,6 +7,7 @@ const CACHE_KEY = `logistics_v13_0_7_prod_final_perms_`;
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
+    this.isRendered = false;
     
     // [PARCHE DE IDENTIDAD] Corregir nombre de sesión antiguo automáticamente
     const session = localStorage.getItem('logistics_session');
@@ -76,7 +77,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "13.5.0-BETA";
+    const versionStr = "13.6.0-BETA";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
@@ -86,25 +87,41 @@ class App {
     this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Sistema v${versionStr}...</div>`;
 
     try {
-        // [IMPORTANTE] Asegurar que los permisos y datos estén cargados antes de renderizar
-        await adminService.initializeAdminData();
-        
-        const timestamp = new Date().getTime();
-        if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
-            this.root.innerHTML = '';
-            await renderDashboard(this.root, user, () => {
-                logout();
-                this.navigate();
-            });
-        } else {
-            const { renderLogin } = await import(`./views/login.js?v=${versionStr}_${timestamp}`);
-            this.root.innerHTML = '';
-            renderLogin(this.root, () => this.navigate());
-        }
+        // [MODO EMERGENCIA] Timeout de seguridad: Si en 2 seg no arranca, forzamos
+        const forceLoad = setTimeout(() => {
+            console.warn("⚠️ Bypass de emergencia activado.");
+            this.render(user, versionStr);
+        }, 2500);
+
+        // [IMPORTANTE] No esperamos a la nube para arrancar. Sincronización en background.
+        adminService.initializeAdminData().then(() => {
+            clearTimeout(forceLoad);
+            this.render(user, versionStr);
+        });
     } catch (err) {
         console.error(`Critical Load Error ${versionStr}:`, err);
-        this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo al cargar versión ${versionStr}. Error: ${err.message}</div>`;
+        this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo crítico v${versionStr}. Error: ${err.message}</div>`;
+    }
+  }
+
+  async render(user, versionStr) {
+    if (this.isRendered) return;
+    this.isRendered = true;
+    const timestamp = new Date().getTime();
+    this.root.innerHTML = '';
+    if (user) {
+        const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
+        await renderDashboard(this.root, user, () => {
+            logout();
+            this.isRendered = false;
+            this.navigate();
+        });
+    } else {
+        const { renderLogin } = await import(`./views/login.js?v=${versionStr}_${timestamp}`);
+        renderLogin(this.root, () => {
+            this.isRendered = false;
+            this.navigate();
+        });
     }
   }
 }
