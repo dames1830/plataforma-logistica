@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '13.0.0';
-const CACHE_KEY = `logistics_v13_0_0_prod_`;
+const VERSION = '13.0.2-BETA';
+const CACHE_KEY = `logistics_v13_0_2_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -386,7 +386,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.2</span> <span style="background:#f59e0b; color:#000; padding:2px 10px; border-radius:12px; font-size:0.65rem; font-weight:900; letter-spacing:1px; margin-left:10px;">BETA</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -2831,15 +2831,61 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const exportAlmacenajeExcel = () => {
+  const exportAlmacenajeExcel = async () => {
     if (!almacenajeTasksCache.length) { alert("No hay tareas para exportar."); return; }
     
-    const wb = XLSX.utils.book_new();
-    const dataRows = [
-        ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", "Qty Buffer", "Qty Zona", "Tareas"]
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet('Tareas Día', {
+        properties: { tabColor: { argb: 'FF4F46E5' } }
+    });
+
+    // 7. Configurar anchos de columna
+    ws.columns = [
+        { key: 'articulo', width: 12.13 }, // A
+        { key: 'ubicacion', width: 26.00 }, // B
+        { key: 'sku', width: 12.50 },      // C
+        { key: 'tallas', width: 7.00 },     // D
+        { key: 'marcas', width: 18.00 },    // E
+        { key: 'gender', width: 18.00 },    // F
+        { key: 'coleccion', width: 16.00 }, // G
+        { key: 'qty_buffer', width: 10.00 },// H
+        { key: 'qty_zona', width: 10.00 },  // I
+        { key: 'tareas', width: 10.00 }     // J
     ];
 
+    // 3. Toda la pestaña en fuente 16
+    ws.eachRow((row) => {
+        row.font = { size: 16, name: 'Calibri' };
+    });
+
+    // 1. Crear 5 filas (implícito al empezar en la 6 para el header)
+    // 5. En la celda A2 escribir Nombres, A3 Hora Inicio, A4 Hora Inicio
+    ws.getCell('A2').value = 'Nombres';
+    ws.getCell('A3').value = 'Hora Inicio';
+    ws.getCell('A4').value = 'Hora Inicio';
+
+    // Estilo para las etiquetas de cabecera
+    ['A2', 'A3', 'A4'].forEach(cellId => {
+        const cell = ws.getCell(cellId);
+        cell.font = { size: 16, bold: true, name: 'Calibri' };
+    });
+
+    // 2. Fila 6 Columnas A hasta la J, Fondo Negro, texto blanco en negrita
+    const headerRow = ws.getRow(6);
+    headerRow.values = ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", "Qty Buffer", "Qty Zona", "Tareas"];
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
+    headerRow.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Preparar datos
+    const dataRows = [];
     almacenajeTasksCache.forEach(task => {
+        // Filtrar tareas por fecha seleccionada si existe
+        if (selectedTaskDate && task.fecha !== selectedTaskDate) return;
+
         task.items.forEach(art => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
             
@@ -2856,9 +2902,43 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
     });
 
-    const ws = XLSX.utils.aoa_to_sheet(dataRows);
-    XLSX.utils.book_append_sheet(wb, ws, "Tareas Día");
-    XLSX.writeFile(wb, `Plan_Almacenaje_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+    // Agregar filas de datos a partir de la fila 7
+    dataRows.forEach((rowData) => {
+        const row = ws.addRow(rowData);
+        row.font = { size: 16, name: 'Calibri' };
+        
+        // 4. Centras las columnas H, I y J
+        [8, 9, 10].forEach(colIdx => {
+            row.getCell(colIdx).alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+
+        // 6. Todas las celdas que comiencen con Total, Blanco, Fondo 1 , 35 %. de la columna A hasta la J y en negrita
+        if (String(rowData[0]).startsWith('Total')) {
+            row.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
+            row.eachCell((cell) => {
+                cell.fill = { 
+                    type: 'pattern', 
+                    pattern: 'solid', 
+                    fgColor: { argb: 'FFA6A6A6' } // Gris 35% (Aprox)
+                };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+        } else {
+            row.eachCell((cell) => {
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+        }
+    });
+
+    // Escribir archivo
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Plan_Almacenaje_v13.0.2_${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const renderAlmacenajeTareas = (container) => {
