@@ -79,7 +79,7 @@ export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks;
 // --- ASISTENCIA Y PERFORMANCE (RESTAURADO) ---
 export const closeAttendanceAndSyncPerformance = async (date, attendanceData) => {
     // 1. Marcar como cerrada
-    adminStore.attendance[date] = { data: attendanceData, ts: Date.now(), closed: true };
+    adminStore.attendance[date] = { data: attendanceData, ts: Date.now(), finalized: true };
     await save('attendance', adminStore.attendance);
 
     // 2. Generar logs para el historial
