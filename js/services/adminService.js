@@ -34,8 +34,9 @@ export const initializeAdminData = async () => {
                 const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`);
                 if (res.ok) {
                     const result = await res.json();
-                    let serverData = result.data;
+                    let serverData = result.data !== undefined ? result.data : result;
                     if (serverData === undefined || serverData === null) return;
+                    
                     if (area === 'permissions' || area === 'attendance') {
                         serverData = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                     } else {
@@ -132,6 +133,12 @@ export const reopenAttendance = async (date) => {
 };
 
 export const saveAttendance = async (date, state) => {
+    // BLINDAJE: No permitir sobrescribir si ya está finalizado en memoria, 
+    // a menos que el nuevo estado sea explícitamente una reapertura.
+    if (adminStore.attendance[date]?.finalized && state.finalized === false) {
+        console.warn(`[PULSE] Intento de sobrescribir fecha cerrada: ${date}`);
+        return false;
+    }
     adminStore.attendance[date] = state;
     return await save('attendance', adminStore.attendance);
 };
