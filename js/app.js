@@ -5,7 +5,7 @@ console.log("🚀 [PULSE] Safe Engine Loading...");
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "13.2.7";
+    this.version = "14.0.0";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
