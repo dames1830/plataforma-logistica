@@ -42,10 +42,17 @@ export const initializeAdminData = async () => {
                     let serverData = result.data !== undefined ? result.data : result;
                     if (serverData === undefined || serverData === null) return;
                     
-                    // AUTO-CLEAN RECURSIVO: Eliminar cualquier nivel de anidamiento {"data": {"data": ...}}
-                    while (serverData && typeof serverData === 'object' && serverData.data !== undefined && !Array.isArray(serverData)) {
-                        console.warn(`[PULSE] Deep cleaning nested data for ${area}`);
-                        serverData = serverData.data;
+                    // DESANIDAMIENTO NO DESTRUCTIVO: Si existe una llave "data", la mezclamos con la raíz 
+                    // en lugar de descartar el resto del objeto.
+                    if (serverData && typeof serverData === 'object' && serverData.data !== undefined && !Array.isArray(serverData)) {
+                        console.warn(`[PULSE] Merging nested data for ${area}`);
+                        const nested = serverData.data;
+                        delete serverData.data;
+                        if (typeof nested === 'object' && !Array.isArray(nested)) {
+                            serverData = { ...serverData, ...nested };
+                        } else {
+                            serverData = nested; // Si no es objeto, lo tomamos como el valor final
+                        }
                     }
 
                     if (area === 'attendance' || area === 'permissions') {
