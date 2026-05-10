@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v14.5.0 - SINCRONIZACIÓN DIRECTA)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v14.5.5 - RESTAURACIÓN TOTAL)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -31,26 +31,20 @@ export const initializeAdminData = async () => {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
         await Promise.all(areas.map(async (area) => {
             try {
-                // Forzamos descarga limpia con timestamp
                 const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`);
                 if (res.ok) {
                     const result = await res.json();
                     let serverData = result.data;
-                    
                     if (serverData === undefined || serverData === null) return;
-
-                    // Formateo según el área
                     if (area === 'permissions' || area === 'attendance') {
                         serverData = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                     } else {
                         serverData = Array.isArray(serverData) ? serverData : (serverData.data || []);
                     }
-
-                    // [v14.5.0] SINCRONIZACIÓN DIRECTA: Confiamos en el servidor para reflejar cambios del asistente
                     adminStore[area] = serverData;
                     localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
                 }
-            } catch (err) { console.error(`Error sync ${area}:`, err); }
+            } catch (err) { }
         }));
     } catch (e) { }
 };
@@ -82,7 +76,40 @@ export const getPerformance = () => adminStore.performance;
 export const getPerformanceLog = () => adminStore.performance_log;
 export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks;
 
-// --- SETTERS ---
+// --- ASISTENCIA Y PERFORMANCE (RESTAURADO) ---
+export const closeAttendanceAndSyncPerformance = async (date, attendanceData) => {
+    // 1. Marcar como cerrada
+    adminStore.attendance[date] = { data: attendanceData, ts: Date.now(), closed: true };
+    await save('attendance', adminStore.attendance);
+
+    // 2. Generar logs para el historial
+    const newLogs = attendanceData.map(a => ({
+        date,
+        dni: a.dni,
+        nombre: a.nombre,
+        apellidos: a.apellidos,
+        asistencia: a.present ? 'P' : 'F',
+        puntualidad: a.onTime ? 'SÍ' : 'NO',
+        justificacion: a.justification || '',
+        rendimiento: a.present ? '40%' : '0%' 
+    }));
+    
+    adminStore.performance_log = [...adminStore.performance_log.filter(l => l.date !== date), ...newLogs];
+    await save('performance_log', adminStore.performance_log);
+    return true;
+};
+
+export const reopenAttendance = async (date) => {
+    if (adminStore.attendance[date]) {
+        delete adminStore.attendance[date];
+        await save('attendance', adminStore.attendance);
+    }
+    adminStore.performance_log = adminStore.performance_log.filter(l => l.date !== date);
+    await save('performance_log', adminStore.performance_log);
+    return true;
+};
+
+// --- OTROS SETTERS ---
 export const saveWorkers = (data) => save('workers', data);
 export const saveUsers = (data) => save('users', data);
 export const savePermissions = (role, data) => {
@@ -92,10 +119,6 @@ export const savePermissions = (role, data) => {
 export const savePerformance = (data) => save('performance', data);
 export const savePerformanceLog = (data) => save('performance_log', data);
 export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
-export const saveAttendance = async (dateStr, data, username) => {
-    adminStore.attendance[dateStr] = { data, ts: Date.now(), user: username };
-    return await save('attendance', adminStore.attendance);
-};
 
 // --- LISTA DE HIERRO ---
 export const FORCED_ASISTENTE = [
