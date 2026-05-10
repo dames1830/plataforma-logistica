@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.3.0';
-import * as adminService from '../services/adminService.js?v=14.3.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.4.0';
+import * as adminService from '../services/adminService.js?v=14.4.0';
 
 
-const VERSION = '14.3.0';
-const CACHE_KEY = `logistics_v14_3_0_crusher_lock_final_`;
+const VERSION = '14.4.0';
+const CACHE_KEY = `logistics_v14_4_0_iron_iron_lock_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.3.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.4.0</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1276,7 +1276,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                             ${allRoles.map(r => {
                                 let hasAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[t.id] === 1 || t.roles.includes(r));
-                                const isFixed = r === 'admin' || t.id === 'inicio';
+                                if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
+                                const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
                                 return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
                             }).join('')}
                         </tr>`);
@@ -1294,7 +1295,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                     ${allRoles.map(r => {
                                         let hasSubAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[subKey] === 1 || t.roles.includes(r));
-                                        return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${r === 'admin' ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
+                                        if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey)) hasSubAccess = true;
+                                        const isFixedSub = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey));
+                                        return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixedSub ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
                                     }).join('')}
                                 </tr>`);
 
@@ -1307,7 +1310,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             <td style="padding:0.5rem 0.8rem 0.5rem 4.5rem; font-size:0.7rem; color:var(--primary); border-right:1px solid var(--border);">${ss.icon} ${ss.label}</td>
                                             ${allRoles.map(r => {
                                                 let hasSSAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[ssKey] === 1 || t.roles.includes(r));
-                                                return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${r === 'admin' ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
+                                                if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey)) hasSSAccess = true;
+                                                const isFixedSS = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey));
+                                                return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${isFixedSS ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
                                             }).join('')}
                                         </tr>`);
                                     });
