@@ -143,9 +143,12 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
 
 export const reopenAttendance = async (date) => {
     if (adminStore.attendance[date]) {
-        delete adminStore.attendance[date];
+        // PRESERVAR DATA: Solo quitar el candado, mantener los marcados de P/F y puntualidad
+        adminStore.attendance[date].finalized = false;
+        adminStore.attendance[date].ts = Date.now();
         await save('attendance', adminStore.attendance);
     }
+    // Borramos el log de performance para que se regenere limpio al volver a cerrar
     adminStore.performance_log = adminStore.performance_log.filter(l => l.date !== date);
     await save('performance_log', adminStore.performance_log);
     return true;
