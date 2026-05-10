@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.9.0';
-import * as adminService from '../services/adminService.js?v=14.9.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.9.5';
+import * as adminService from '../services/adminService.js?v=14.9.5';
 
 
-const VERSION = '14.9.0';
-const CACHE_KEY = `logistics_v14_9_0_prefill_fix_`;
+const VERSION = '14.9.5';
+const CACHE_KEY = `logistics_v14_9_5_security_lock_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.9.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.9.5</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1453,18 +1453,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;">P</button>
-                                    <button onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:#fff; font-size:0.7rem; cursor:pointer;">F</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">P</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">F</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:pointer;">SÍ</button>
-                                    <button onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:pointer;">NO</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;">
+                                <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
                                     <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
                                     <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
@@ -1519,7 +1519,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     } else {
         const btnReopen = document.getElementById('btn_reopen_asist');
-        if (btnReopen && (user.role.toLowerCase() === 'admin' || user.username === 'dames')) {
+        if (btnReopen && user.username === 'dames') {
             btnReopen.onclick = async () => {
                 if (confirm(`🚨 ¿Deseas REABRIR la asistencia?`)) {
                     btnReopen.disabled = true;
