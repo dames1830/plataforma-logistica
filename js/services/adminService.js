@@ -82,17 +82,26 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
     adminStore.attendance[date] = { data: attendanceData, ts: Date.now(), finalized: true };
     await save('attendance', adminStore.attendance);
 
-    // 2. Generar logs para el historial
-    const newLogs = attendanceData.map(a => ({
-        date,
-        dni: a.dni,
-        nombre: a.nombre,
-        apellidos: a.apellidos,
-        asistencia: a.present ? 'P' : 'F',
-        puntualidad: a.onTime ? 'SÍ' : 'NO',
-        justificacion: a.justification || '',
-        rendimiento: a.present ? '40%' : '0%' 
-    }));
+    // 2. Generar logs para el historial con cálculo real
+    const newLogs = attendanceData.map(a => {
+        let score = 0;
+        if (a.present) score += 30; // 30% por estar presente
+        if (a.present && a.onTime) score += 10; // 10% adicional por puntualidad
+        
+        return {
+            date,
+            dni: a.dni,
+            nombre: a.nombre,
+            apellidos: a.apellidos,
+            asistencia: a.present ? 'P' : 'F',
+            puntualidad: a.onTime ? 'SÍ' : 'NO',
+            produccion: 0,
+            bpa: 0,
+            supervisor: 0,
+            justification: a.justification || '',
+            rendimiento: score + '%'
+        };
+    });
     
     adminStore.performance_log = [...adminStore.performance_log.filter(l => l.date !== date), ...newLogs];
     await save('performance_log', adminStore.performance_log);
