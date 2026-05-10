@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v13.2.7)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v14.1.0)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -15,7 +15,9 @@ export const adminStore = {
     almacenaje_tasks: []
 };
 
+// Carga inicial híbrida (Local + Servidor)
 export const initializeAdminData = async () => {
+    // 1. Carga rápida desde LocalStorage
     try {
         adminStore.workers = JSON.parse(localStorage.getItem(PREFIX + 'workers') || '[]');
         adminStore.users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
@@ -29,9 +31,10 @@ export const initializeAdminData = async () => {
         console.warn("⚠️ Error cargando datos locales:", e);
     }
 
+    // 2. Sincronización con Servidor
     try {
         const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
-        const fetchWithTimeout = (url, options, timeout = 10000) => {
+        const fetchWithTimeout = (url, options, timeout = 12000) => {
             return Promise.race([
                 fetch(url, options),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
@@ -62,7 +65,9 @@ export const initializeAdminData = async () => {
                         adminStore[area] = merged;
                         localStorage.setItem(PREFIX + area, JSON.stringify(merged));
                     } else {
-                        if (!(Object.keys(serverData).length === 0 && Object.keys(adminStore[area]).length > 0)) {
+                        // [PROTECCIÓN] No sobrescribir con vacíos si hay datos locales
+                        const hasServerData = (Array.isArray(serverData) && serverData.length > 0) || (typeof serverData === 'object' && Object.keys(serverData).length > 0);
+                        if (hasServerData) {
                             adminStore[area] = serverData;
                             localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
                         }
@@ -77,10 +82,12 @@ export const initializeAdminData = async () => {
     }
 };
 
+// Función genérica de guardado
 export const save = async (area, data) => {
     try {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
+        
         let success = false;
         for (let i = 0; i < 2; i++) {
             try {
@@ -98,10 +105,27 @@ export const save = async (area, data) => {
     }
 };
 
+// --- GETTERS ---
 export const getWorkers = () => adminStore.workers;
 export const getUsers = () => adminStore.users;
 export const getPermissions = (role) => adminStore.permissions[role] || {};
+export const getAttendance = (dateStr) => adminStore.attendance[dateStr];
+export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks;
 
+// --- SETTERS / SAVERS ---
+export const saveWorkers = (data) => save('workers', data);
+export const saveUsers = (data) => save('users', data);
+export const savePermissions = (role, data) => {
+    adminStore.permissions[role] = data;
+    return save('permissions', adminStore.permissions);
+};
+export const saveAttendance = async (dateStr, data, username) => {
+    adminStore.attendance[dateStr] = { data, ts: Date.now(), user: username };
+    return await save('attendance', adminStore.attendance);
+};
+export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
+
+// --- UTILIDADES PERMISOS ---
 export const initPermissions = (tabs) => {
     const roles = ['admin', 'jefe', 'supervisor', 'encargado', 'asistente', 'analista'];
     roles.forEach(role => {
@@ -129,10 +153,4 @@ export const togglePermission = (role, tabId) => {
     const p = getPermissions(role);
     p[tabId] = p[tabId] === 1 ? 0 : 1;
     save('permissions', adminStore.permissions);
-};
-
-export const getAttendance = (dateStr) => adminStore.attendance[dateStr];
-export const saveAttendance = async (dateStr, data, username) => {
-    adminStore.attendance[dateStr] = { data, ts: Date.now(), user: username };
-    return await save('attendance', adminStore.attendance);
 };
