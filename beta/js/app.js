@@ -77,7 +77,7 @@ class App {
 
   async navigate() {
     const user = getSession();
-    const versionStr = "13.6.0-BETA";
+    const versionStr = "13.7.0-BETA";
     
     // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
     if (user) {
