@@ -109,6 +109,11 @@ export const reopenAttendance = async (date) => {
     return true;
 };
 
+export const saveAttendance = async (date, state) => {
+    adminStore.attendance[date] = state;
+    return await save('attendance', adminStore.attendance);
+};
+
 // --- OTROS SETTERS ---
 export const saveWorkers = (data) => save('workers', data);
 export const saveUsers = (data) => save('users', data);
