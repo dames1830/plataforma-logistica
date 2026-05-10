@@ -37,31 +37,14 @@ export const initializeAdminData = async () => {
                     let serverData = result.data !== undefined ? result.data : result;
                     if (serverData === undefined || serverData === null) return;
                     
-                    if (area === 'permissions' || area === 'attendance') {
-                        serverData = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
-                        
-                        // FUSIÓN INTELIGENTE: Si el servidor trae datos, comparar con lo que tenemos localmente
-                        if (area === 'attendance') {
-                            const localAt = adminStore.attendance || {};
-                            // PRIORIDAD SERVIDOR PARA CIERRES: Si el servidor dice que está cerrado, manda el servidor
-                            for (const d in serverData) {
-                                const sVal = serverData[d];
-                                const lVal = localAt[d];
-                                if (sVal && sVal.finalized) {
-                                    localAt[d] = sVal;
-                                } else if (!lVal || sVal.ts > (lVal.ts || 0)) {
-                                    localAt[d] = sVal;
-                                }
-                            }
-                            adminStore.attendance = localAt;
-                        } else {
-                            adminStore[area] = serverData;
-                        }
+                    if (area === 'attendance' || area === 'performance_log' || area === 'permissions') {
+                        // FUERZA BRUTA: La nube siempre manda en estas áreas críticas
+                        adminStore[area] = (typeof serverData === 'object') ? serverData : {};
                     } else {
                         adminStore[area] = Array.isArray(serverData) ? serverData : (serverData.data || []);
                     }
                     localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
-                    console.log(`[PULSE] Sync OK: ${area}`);
+                    console.log(`[PULSE] Cloud Sync OK: ${area}`);
                 }
             } catch (err) { }
         }));
