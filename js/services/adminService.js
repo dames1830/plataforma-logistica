@@ -39,11 +39,30 @@ export const initializeAdminData = async () => {
                     
                     if (area === 'permissions' || area === 'attendance') {
                         serverData = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
+                        
+                        // FUSIÓN INTELIGENTE: Si el servidor trae datos, comparar con lo que tenemos localmente
+                        if (area === 'attendance') {
+                            const localAt = adminStore.attendance || {};
+                            for (const d in serverData) {
+                                // Si local está finalizado y servidor no, o local es más reciente, ignorar servidor para esa fecha
+                                const sVal = serverData[d];
+                                const lVal = localAt[d];
+                                if (lVal && lVal.finalized && !sVal.finalized) {
+                                    continue; // Mantener local
+                                }
+                                if (lVal && sVal.ts < lVal.ts) {
+                                    continue; // Mantener local más nuevo
+                                }
+                                localAt[d] = sVal;
+                            }
+                            serverData = localAt;
+                        } else {
+                            adminStore[area] = serverData;
+                        }
                     } else {
-                        serverData = Array.isArray(serverData) ? serverData : (serverData.data || []);
+                        adminStore[area] = Array.isArray(serverData) ? serverData : (serverData.data || []);
                     }
-                    adminStore[area] = serverData;
-                    localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
+                    localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
                 }
             } catch (err) { }
         }));
