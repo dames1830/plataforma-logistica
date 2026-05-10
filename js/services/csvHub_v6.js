@@ -441,7 +441,8 @@ export const updateTablaTallas = () => {
     Object.keys(dataStore).forEach(area => {
         if (area.endsWith('_activo') && dataStore[area]) {
             dataStore[area].forEach(row => {
-                const sku = getCol(row, ['Articulo', 'ArtÃculo', 'Artículo', 'Sku']);
+                const raw = Array.isArray(row) ? row : Object.values(row);
+                const sku = String(raw[1] || '').trim(); // Columna B
                 const desc = getCol(row, ['Descripcion', 'Descripción', 'Description']) || 
                              (Array.isArray(row) ? row[2] : Object.values(row)[2]);
                 if (sku && desc) {
@@ -458,6 +459,15 @@ export const updateTablaTallas = () => {
                     const talla = extractTalla(desc);
                     if (talla) mapa[sku] = talla;
                 }
+            });
+        }
+        // [ESTRICTO] JOIN con la tabla virtual de tallas (Maestro)
+        if (area === 'tallas' && dataStore[area]) {
+            dataStore[area].forEach(row => {
+                const raw = Array.isArray(row) ? row : Object.values(row);
+                const sku = String(raw[0] || '').trim();   // Columna A
+                const tallaReal = String(raw[1] || '').trim(); // Columna B
+                if (sku && tallaReal) mapa[sku] = tallaReal;
             });
         }
     });
