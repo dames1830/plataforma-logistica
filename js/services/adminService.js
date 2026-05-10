@@ -25,7 +25,8 @@ export const initializeAdminData = async () => {
         adminStore.attendance = JSON.parse(localStorage.getItem(PREFIX + 'attendance') || '{}');
         adminStore.performance = JSON.parse(localStorage.getItem(PREFIX + 'performance') || '[]');
         adminStore.performance_log = JSON.parse(localStorage.getItem(PREFIX + 'performance_log') || '[]');
-        adminStore.almacenaje_tasks = JSON.parse(localStorage.getItem(PREFIX + 'almacenaje_tasks') || '[]');
+        const localTasks = JSON.parse(localStorage.getItem(PREFIX + 'almacenaje_tasks') || '[]');
+        adminStore.almacenaje_tasks = Array.isArray(localTasks) ? localTasks : [];
     } catch (e) {
         console.warn("⚠️ Error cargando datos locales (posible corrupción):", e);
     }
@@ -68,12 +69,12 @@ export const initializeAdminData = async () => {
                             localStorage.setItem(PREFIX + area, JSON.stringify(merged));
                         } else {
                             // [SEGURIDAD CRÍTICA] No sobrescribir con vacíos si ya tenemos datos locales
-                            if (area === 'almacenaje_tasks' && (!Array.isArray(result.data) || result.data.length === 0)) {
+                            if (area === 'almacenaje_tasks' && (!Array.isArray(serverData) || serverData.length === 0)) {
                                 console.log("ℹ️ [PULSE] Ignorando sincronización vacía del servidor para Almacenaje.");
                                 return;
                             }
-                            adminStore[area] = result.data;
-                            localStorage.setItem(PREFIX + area, JSON.stringify(result.data));
+                            adminStore[area] = serverData;
+                            localStorage.setItem(PREFIX + area, JSON.stringify(serverData));
                         }
                     }
                 }

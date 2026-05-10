@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=12.6.0';
 
 
-const VERSION = '13.0.4';
-const CACHE_KEY = `logistics_v13_0_4_prod_strict_`;
+const VERSION = '13.0.5';
+const CACHE_KEY = `logistics_v13_0_5_prod_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -24,7 +24,12 @@ const getLogicalDate = () => {
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 let expandedWeeks = []; // Semanas expandidas en el historial
-let almacenajeTasksCache = JSON.parse(localStorage.getItem('logistics_admin_v11_almacenaje_tasks') || '[]'); // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
+let almacenajeTasksCache = [];
+try {
+    const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
+    if (stored) almacenajeTasksCache = JSON.parse(stored);
+} catch(e) { almacenajeTasksCache = []; }
+if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
@@ -65,7 +70,7 @@ const loadAlmacenajeTasks = async () => {
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
       }
       
-      console.log(`[PULSE] Persistencia v12.8.0 Activa: ${almacenajeTasksCache.length} tareas.`);
+      console.log(`[PULSE] Persistencia v13.0.4 Activa: ${almacenajeTasksCache.length} tareas.`);
   } catch (e) { console.error("[PULSE] Error en persistencia:", e); }
 };
 
@@ -386,7 +391,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.4</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v13.0.5</span></h2>
         </div>
       </div>
       <div class="user-profile">

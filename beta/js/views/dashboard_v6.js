@@ -24,7 +24,12 @@ const getLogicalDate = () => {
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 let expandedWeeks = []; // Semanas expandidas en el historial
-let almacenajeTasksCache = JSON.parse(localStorage.getItem('logistics_admin_v11_almacenaje_tasks') || '[]'); // { id, marca, qty, status, inicio, termino, u1, u2, fecha, items: [] }
+let almacenajeTasksCache = [];
+try {
+    const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
+    if (stored) almacenajeTasksCache = JSON.parse(stored);
+} catch(e) { almacenajeTasksCache = []; }
+if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const saveAlmacenajeTasks = async () => {
@@ -65,7 +70,7 @@ const loadAlmacenajeTasks = async () => {
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
       }
       
-      console.log(`[PULSE] Persistencia v12.8.0 Activa: ${almacenajeTasksCache.length} tareas.`);
+      console.log(`[PULSE] Persistencia v13.0.4 Activa: ${almacenajeTasksCache.length} tareas.`);
   } catch (e) { console.error("[PULSE] Error en persistencia:", e); }
 };
 
