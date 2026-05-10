@@ -2836,21 +2836,24 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet('Tareas Día', {
-        properties: { tabColor: { argb: 'FF4F46E5' } }
+        properties: { tabColor: { argb: 'FF4F46E5' } },
+        pageSetup: { 
+            margins: { left: 0, right: 0, top: 0, bottom: 0, header: 0, footer: 0 }
+        }
     });
 
     // 7. Configurar anchos de columna
     ws.columns = [
-        { key: 'articulo', width: 18.70 }, // A
+        { key: 'articulo', width: 12.13 }, // A
         { key: 'ubicacion', width: 26.00 }, // B
-        { key: 'sku', width: 20.00 },      // C
-        { key: 'tallas', width: 8.50 },     // D
-        { key: 'marcas', width: 25.50 },    // E
-        { key: 'gender', width: 26.50 },    // F
-        { key: 'coleccion', width: 20.14 }, // G
-        { key: 'qty_buffer', width: 14.30 },// H
-        { key: 'qty_zona', width: 14.30 },  // I
-        { key: 'tareas', width: 14.30 }     // J
+        { key: 'sku', width: 12.50 },      // C
+        { key: 'tallas', width: 7.00 },     // D
+        { key: 'marcas', width: 18.00 },    // E
+        { key: 'gender', width: 18.00 },    // F
+        { key: 'coleccion', width: 16.00 }, // G
+        { key: 'qty_buffer', width: 10.00 },// H
+        { key: 'qty_zona', width: 14.29 },  // I
+        { key: 'tareas', width: 14.29 }     // J
     ];
 
     // 3. Toda la pestaña en fuente 16
@@ -2863,9 +2866,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     ws.getCell('A2').value = 'Nombres';
     ws.getCell('A3').value = 'Hora Inicio';
     ws.getCell('A4').value = 'Hora Inicio';
+    ws.getCell('A5').value = `Fecha y Hora: ${new Date().toLocaleString('es-ES')}`;
 
     // Estilo para las etiquetas de cabecera
-    ['A2', 'A3', 'A4'].forEach(cellId => {
+    ['A2', 'A3', 'A4', 'A5'].forEach(cellId => {
         const cell = ws.getCell(cellId);
         cell.font = { size: 16, bold: true, name: 'Calibri' };
     });
