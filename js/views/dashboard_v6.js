@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.6.0';
-import * as adminService from '../services/adminService.js?v=14.6.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.6.8';
+import * as adminService from '../services/adminService.js?v=14.6.8';
 
 
-const VERSION = '14.6.0';
-const CACHE_KEY = `logistics_v14_6_0_asist_logic_fix_`;
+const VERSION = '14.6.8';
+const CACHE_KEY = `logistics_v14_6_8_asist_final_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.6.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.6.8</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1369,10 +1369,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         const existing = adminService.getAttendance(dateStr);
         if (existing) {
             localState = existing.data.map(d => ({ ...d }));
-            // Sincronizar trabajadores nuevos que no estén en el estado guardado
             workers.forEach(w => {
-                const wDni = (w.dni || w.Dni);
-                if (!localState.find(d => d.dni === wDni)) {
+                const wDni = String(w.dni || w.Dni || '');
+                if (!localState.find(d => String(d.dni) === wDni)) {
                     localState.push({
                         dni: wDni,
                         nombre: (w.nombre || w.Nombre),
@@ -1385,9 +1384,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
             return existing;
         }
-        // Si no existe, estado inicial (todos presentes)
         localState = workers.map(w => ({ 
-            dni: (w.dni || w.Dni), 
+            dni: String(w.dni || w.Dni || ''), 
             nombre: (w.nombre || w.Nombre), 
             apellidos: (w.apellidos || w.Apellidos), 
             present: true,
@@ -1446,8 +1444,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const rec = localState.find(d => String(d.dni) === dni);
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
-                        
-                        // Nombre dinámico desde la base de trabajadores
                         const displayName = `${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}`;
                         
                         return `
@@ -1457,18 +1453,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
-                                    <button class="btn-att ${!isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:${!isPresent?'#fff':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>F</button>
+                                    <button onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;">P</button>
+                                    <button onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:#fff; font-size:0.7rem; cursor:pointer;">F</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button class="btn-ontime ${isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>SÍ</button>
-                                    <button class="btn-ontime ${!isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>NO</button>
+                                    <button onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:pointer;">SÍ</button>
+                                    <button onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:pointer;">NO</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="sel-just" data-dni="${dni}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;" ${existing?.finalized || isPresent ? 'disabled' : ''}>
+                                <select onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;">
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
                                     <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
                                     <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
@@ -1482,88 +1478,50 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
+    window.updateAsist = (dni, val) => {
+        const node = localState.find(s => String(s.dni) === String(dni));
+        if (node) {
+            node.present = val;
+            if (!val) node.onTime = false;
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
+            renderAsistenciaSection(container);
+        }
+    };
+
+    window.updateOnTime = (dni, val) => {
+        const node = localState.find(s => String(s.dni) === String(dni));
+        if (node) {
+            node.onTime = val;
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
+            renderAsistenciaSection(container);
+        }
+    };
+
+    window.updateJust = (dni, val) => {
+        const node = localState.find(s => String(s.dni) === String(dni));
+        if (node) {
+            node.justification = val;
+            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
+        }
+    };
+
     if (!existing?.finalized) {
-        document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
-            const dni = e.target.dataset.dni;
-            const val = e.target.dataset.v === 'true';
-            const node = localState.find(s => s.dni === dni);
-            if (node) {
-                node.present = val;
-                if (!val) node.onTime = false;
-            }
-            // Auto-guardado preventivo para evitar pérdida por parpadeos
-            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-            renderAsistenciaUI(dni, localState);
-        });
-
-        document.querySelectorAll('.btn-ontime').forEach(btn => btn.onclick = (e) => {
-            const dni = e.target.dataset.dni;
-            const val = e.target.dataset.v === 'true';
-            const node = localState.find(s => s.dni === dni);
-            if (node && node.present) node.onTime = val;
-            
-            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-            renderAsistenciaUI(dni, localState);
-        });
-
-        document.querySelectorAll('.sel-just').forEach(sel => sel.onchange = (e) => {
-            const dni = e.target.dataset.dni;
-            const node = localState.find(s => s.dni === dni);
-            if (node) node.justification = e.target.value;
-            adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-        });
-
-        const renderAsistenciaUI = (dni, state) => {
-            const node = state.find(s => s.dni === dni);
-            const attBtns = document.querySelectorAll(`.btn-att[data-dni="${dni}"]`);
-            const otBtns = document.querySelectorAll(`.btn-ontime[data-dni="${dni}"]`);
-
-            attBtns.forEach(b => {
-                const isP = b.dataset.v === 'true';
-                b.style.background = (isP === node.present && node.present) ? 'var(--success)' : (isP === node.present && !node.present) ? '#ef4444' : 'none';
-                b.style.color = (isP === node.present && node.present) ? '#000' : '#fff';
-            });
-
-            otBtns.forEach(b => {
-                const isT = b.dataset.v === 'true';
-                b.style.opacity = node.present ? '1' : '0.3';
-                b.style.pointerEvents = node.present ? 'auto' : 'none';
-                b.style.background = (isT === node.onTime && node.onTime) ? '#06b6d4' : (isT === node.onTime && !node.onTime) ? '#f97316' : 'none';
-            });
-
-            const selJust = document.querySelector(`.sel-just[data-dni="${dni}"]`);
-            if (selJust) {
-                selJust.disabled = node.present;
-                if (node.present) {
-                    selJust.value = "";
-                    node.justification = "";
-                }
-            }
-        };
-
         const btnClose = document.getElementById('btn_close_asist');
         if (btnClose) {
             btnClose.onclick = async () => {
-                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}? Esta acción enviará los datos al historial de Performance y reiniciará las columnas de toma de datos.`)) {
-                    // Deshabilitar botón para evitar doble clic
+                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
                     btnClose.disabled = true;
                     btnClose.textContent = "⌛ PROCESANDO...";
-                    
                     await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
-                    
-                    // Lógica solicitado por el usuario: Reiniciar columnas localmente
-                    localState.forEach(s => { s.present = true; s.onTime = true; });
-                    
                     renderAsistenciaSection(container);
                 }
             };
         }
     } else {
-        // Lógica de Reapertura exclusiva para ADMIN o usuario 'dames'
         const btnReopen = document.getElementById('btn_reopen_asist');
         if (btnReopen && (user.role.toLowerCase() === 'admin' || user.username === 'dames')) {
             btnReopen.onclick = async () => {
-                if (confirm(`🚨 ¿Deseas REABRIR la asistencia para el día ${forcedDate}? \n\nEsto permitirá al asistente volver a pasar lista y descontará los registros actuales del acumulado de performance para evitar duplicados.`)) {
+                if (confirm(`🚨 ¿Deseas REABRIR la asistencia?`)) {
                     btnReopen.disabled = true;
                     btnReopen.textContent = "⌛ REABRIENDO...";
                     await adminService.reopenAttendance(forcedDate);
@@ -1572,11 +1530,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
         }
     }
-    
-    document.getElementById('asist_date_picker').onchange = (e) => {
-        forcedDate = e.target.value;
-        renderAsistenciaSection(container);
-    };
+
+    const picker = document.getElementById('asist_date_picker');
+    if (picker) {
+        picker.onchange = (e) => {
+            forcedDate = e.target.value;
+            renderAsistenciaSection(container);
+        };
+    }
   };
 
   const calculateRendimiento = (p) => {
