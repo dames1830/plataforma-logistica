@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.6.5';
-import * as adminService from '../services/adminService.js?v=15.6.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.7.0';
+import * as adminService from '../services/adminService.js?v=15.7.0';
 
 
-const VERSION = '15.6.5';
-const CACHE_KEY = `logistics_v15_6_5_button_fix_`;
+const VERSION = '15.7.0';
+const CACHE_KEY = `logistics_v15_7_0_attendance_overhaul_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.6.5</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.7.0</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1412,6 +1412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
                 <input type="date" id="asist_date_picker" value="${forcedDate}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.4rem; border-radius:6px; font-size:0.8rem; outline:none;">
             </div>
+            <div id="attendance_top_actions" style="display:flex; gap:1rem; align-items:center;"></div>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
@@ -1466,6 +1467,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
+    // --- ACCIONES DINÁMICAS (WINDOW SCOPE) ---
     window.updateAsist = (dni, val) => {
         const node = localState.find(s => String(s.dni) === String(dni));
         if (node) {
@@ -1493,72 +1495,71 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
-    // BOTONES DE ACCIÓN (CERRAR / REABRIR / SINCRONIZAR)
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'attendance-actions animate-fade-in';
-    actionsDiv.style = 'display:flex; justify-content: flex-end; align-items:center; gap:12px; margin-top:20px;';
-    
-    const btnSync = document.createElement('button');
-    btnSync.className = 'btn-secondary';
-    btnSync.title = 'Sincronizar con la Nube';
-    btnSync.style = 'padding:10px; border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); cursor:pointer; font-size:1.2rem;';
-    btnSync.innerHTML = '🔄';
-    btnSync.onclick = async () => {
-        btnSync.classList.add('animate-spin');
-        btnSync.disabled = true;
-        await adminService.initializeAdminData();
-        renderAsistenciaSection(container);
-        alert("☁️ Nube sincronizada correctamente");
-    };
+    // --- RENDERIZADO DE BOTONES DE ACCIÓN (PARTE SUPERIOR) ---
+    const topActions = document.getElementById('attendance_top_actions');
+    if (topActions) {
+        const btnSync = document.createElement('button');
+        btnSync.className = 'btn-secondary';
+        btnSync.title = 'Sincronizar con la Nube';
+        btnSync.style = 'padding:10px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); cursor:pointer; font-size:1rem; border:1px solid rgba(255,255,255,0.1); color:#fff;';
+        btnSync.innerHTML = '🔄 Sincronizar';
+        btnSync.onclick = async () => {
+            btnSync.innerHTML = '⌛...';
+            btnSync.disabled = true;
+            await adminService.initializeAdminData();
+            renderAsistenciaSection(container);
+            alert("☁️ Nube sincronizada correctamente");
+        };
 
-    const btnClose = document.createElement('button');
-    btnClose.className = 'btn-primary';
-    btnClose.style = 'background:var(--primary); min-width:180px; padding:0.6rem 1.2rem; border-radius:8px; font-weight:700; cursor:pointer;';
-    btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
+        const btnClose = document.createElement('button');
+        btnClose.className = 'btn-primary';
+        btnClose.style = 'background:var(--primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
+        btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
 
-    if (existing?.finalized) {
-        btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
-        btnClose.style.background = '#22c55e';
-        btnClose.disabled = true;
-        btnClose.style.cursor = 'default';
-        
-        const user = JSON.parse(localStorage.getItem('logistics_user') || '{}');
-        if (user.username === 'dames') {
-            const btnReopen = document.createElement('button');
-            btnReopen.className = 'btn-danger';
-            btnReopen.innerHTML = '🔓 REABRIR';
-            btnReopen.style = 'padding:0.6rem 1.2rem; border-radius:8px; font-weight:700; cursor:pointer;';
-            btnReopen.onclick = async () => {
-                if (confirm("¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.")) {
-                    btnReopen.disabled = true;
-                    btnReopen.textContent = "⌛ ABRIENDO...";
-                    await adminService.reopenAttendance(forcedDate);
-                    renderAsistenciaSection(container);
+        if (existing?.finalized) {
+            btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
+            btnClose.style.background = 'var(--success)';
+            btnClose.style.color = '#000';
+            btnClose.disabled = true;
+            btnClose.style.cursor = 'default';
+            
+            // Usamos la sesión de auth.js para verificar al usuario
+            const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+            if (session.username === 'dames') {
+                const btnReopen = document.createElement('button');
+                btnReopen.className = 'btn-danger';
+                btnReopen.innerHTML = '🔓 REABRIR';
+                btnReopen.style = 'padding:0.6rem 1.2rem; border-radius:8px; font-weight:800; cursor:pointer; background:#ef4444; font-size:0.85rem;';
+                btnReopen.onclick = async () => {
+                    if (confirm("¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.")) {
+                        btnReopen.disabled = true;
+                        btnReopen.textContent = "⌛ ABRIENDO...";
+                        await adminService.reopenAttendance(forcedDate);
+                        renderAsistenciaSection(container);
+                    }
+                };
+                topActions.appendChild(btnReopen);
+            }
+        } else {
+            btnClose.onclick = async () => {
+                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
+                    btnClose.disabled = true;
+                    btnClose.textContent = "⌛ ENVIANDO...";
+                    const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                    if (success) {
+                        alert("✅ Información enviada a la nube");
+                        renderAsistenciaSection(container);
+                    } else {
+                        alert("❌ Error de envío - Intente nuevamente");
+                        btnClose.disabled = false;
+                        btnClose.textContent = "💾 CERRAR ASISTENCIA";
+                    }
                 }
             };
-            actionsDiv.appendChild(btnReopen);
         }
-    } else {
-        btnClose.onclick = async () => {
-            if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
-                btnClose.disabled = true;
-                btnClose.textContent = "⌛ ENVIANDO A LA NUBE...";
-                const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
-                if (success) {
-                    alert("✅ Información enviada a la nube");
-                    renderAsistenciaSection(container);
-                } else {
-                    alert("❌ Error de envío - Intente nuevamente");
-                    btnClose.disabled = false;
-                    btnClose.textContent = "💾 CERRAR ASISTENCIA";
-                }
-            }
-        };
+        topActions.appendChild(btnSync);
+        topActions.appendChild(btnClose);
     }
-
-    actionsDiv.appendChild(btnSync);
-    actionsDiv.appendChild(btnClose);
-    container.appendChild(actionsDiv);
 
     const picker = document.getElementById('asist_date_picker');
     if (picker) {
