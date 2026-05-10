@@ -123,6 +123,32 @@ export const saveAttendance = async (date, state) => {
     return await save('attendance', adminStore.attendance);
 };
 
+export const updatePerformanceLogEntry = async (date, dni, updates) => {
+    const entry = adminStore.performance_log.find(p => String(p.dni) === String(dni) && p.date === date);
+    if (entry) {
+        Object.assign(entry, updates);
+        
+        // RECALCULO AUTOMATICO DE RENDIMIENTO
+        let score = 0;
+        if (entry.asistencia === 'P') score += 30;
+        if (entry.asistencia === 'P' && entry.puntualidad === 'SÍ') score += 10;
+        
+        const prod = parseFloat(entry.produccion) || 0;
+        const bpa = parseFloat(entry.bpa) || 0;
+        const sup = parseFloat(entry.supervisor) || 0;
+        
+        score += (prod / 10) * 30;
+        score += (bpa / 10) * 15;
+        score += (sup / 10) * 15;
+        
+        entry.rendimiento = Math.round(score) + '%';
+        
+        await save('performance_log', adminStore.performance_log);
+        return true;
+    }
+    return false;
+};
+
 // --- OTROS SETTERS ---
 export const saveWorkers = (data) => save('workers', data);
 export const saveUsers = (data) => save('users', data);
