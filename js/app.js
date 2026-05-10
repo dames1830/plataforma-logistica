@@ -1,131 +1,86 @@
-import { getSession, logout } from './services/auth.js?v=13.1.2';
-import * as adminService from './services/adminService.js?v=13.1.2';
 
-const VERSION = '13.0.7';
-const CACHE_KEY = `logistics_v13_0_7_prod_final_perms_`;
+// ENGINE v13.2.5 - SAFE BOOT
+console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
+    this.version = "13.2.5";
     this.isRendered = false;
-    
-    // [PARCHE DE IDENTIDAD] Corregir nombre de sesión antiguo automáticamente
-    const session = localStorage.getItem('logistics_session');
-    if (session) {
-        try {
-            const user = JSON.parse(session);
-            if (user.name === 'Gerente Logística (Dames)') {
-                user.name = 'Daniel Ames';
-                localStorage.setItem('logistics_session', JSON.stringify(user));
-                console.log("✅ [IDENTIDAD] Nombre de usuario actualizado a Daniel Ames.");
-            }
-        } catch(e) {}
-    }
-    this.IDLE_TIMEOUT = 20 * 60 * 1000; // 20 minutos
+    console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
   }
 
-  init() {
-    this.navigate();
-    this.setupInactivityTracker();
-  }
-
-  setupInactivityTracker() {
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    const updateLastActivity = () => {
-      if (getSession()) {
-        localStorage.setItem('pulse_last_activity', Date.now().toString());
-      }
-    };
-
-    const checkInactivity = () => {
-      const user = getSession();
-      if (!user) return;
-
-      const lastActivity = parseInt(localStorage.getItem('pulse_last_activity') || '0');
-      const now = Date.now();
-
-      if (lastActivity > 0 && (now - lastActivity) > this.IDLE_TIMEOUT) {
-        console.warn("[PULSE] Sesión expirada por inactividad detectada.");
-        alert("Tu sesión ha expirado (20 min de inactividad).");
-        this.handleInactivityLogout();
-      }
-    };
-
-    events.forEach(name => {
-      window.addEventListener(name, () => {
-        updateLastActivity();
-        checkInactivity();
-      }, true);
-    });
-
-    setInterval(checkInactivity, 30000); // Chequeo cada 30 segundos en background
-    
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') checkInactivity();
-    });
-
-    updateLastActivity();
-    checkInactivity();
-  }
-
-  handleInactivityLogout() {
-    logout();
-    this.navigate();
-  }
-
-  async navigate() {
-    const user = getSession();
-    const versionStr = "13.2.2";
-    
-    // [SEGURIDAD] Reiniciar contador de inactividad al navegar/entrar
-    if (user) {
-      localStorage.setItem('pulse_last_activity', Date.now().toString());
-    }
-    
-    this.root.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;">⚡ Sincronizando Sistema v${versionStr}...</div>`;
-
+  async init() {
     try {
-        // [MODO EMERGENCIA] Timeout de seguridad: Si en 2 seg no arranca, forzamos
-        const forceLoad = setTimeout(() => {
-            console.warn("⚠️ Bypass de emergencia activado.");
-            this.render(user, versionStr);
-        }, 2500);
+        // Escribir mensaje inicial de inmediato
+        if (this.root) {
+            this.root.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif;">
+                <div class="spinner" style="width:40px; height:40px; border:4px solid rgba(255,255,255,0.1); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:20px;"></div>
+                <h2 style="margin:0; font-weight:300; letter-spacing:2px;">LOGÍSTICA <span style="font-weight:800; color:#4f46e5;">DEAM1830</span></h2>
+                <p style="margin-top:10px; font-size:0.8rem; opacity:0.5;">Iniciando motor v${this.version}...</p>
+            </div>`;
+        }
+        
+        // Carga diferida de dependencias para evitar bloqueos
+        const { getSession, logout } = await import('./services/auth.js?v=' + this.version);
+        const adminService = await import('./services/adminService.js?v=' + this.version);
+        
+        const user = getSession();
+        console.log("[PULSE] Session loaded:", user ? user.username : 'No user');
 
-        // [IMPORTANTE] No esperamos a la nube para arrancar. Sincronización en background.
-        adminService.initializeAdminData().then(() => {
-            clearTimeout(forceLoad);
-            this.render(user, versionStr);
-        });
+        // Sincronización en segundo plano (No bloquea el render)
+        adminService.initializeAdminData().catch(e => console.warn("Sync error:", e));
+
+        // Renderizado
+        this.render(user, getSession, logout);
+
     } catch (err) {
-        console.error(`Critical Load Error ${versionStr}:`, err);
-        this.root.innerHTML = `<div style="color:red; padding:2rem;">Fallo crítico v${versionStr}. Error: ${err.message}</div>`;
+        console.error("[PULSE] Critical Boot Error:", err);
+        if (this.root) {
+            this.root.innerHTML = `<div style="color:#ef4444; padding:2rem; background:#1e1e1e; border:1px solid #ef4444; margin:2rem; border-radius:10px; font-family:monospace;">
+                <h2 style="margin-top:0;">🚨 ERROR DE ARRANQUE v${this.version}</h2>
+                <p>El sistema no pudo iniciar los módulos básicos.</p>
+                <div style="background:#000; padding:10px; border-radius:5px; margin-top:10px; font-size:0.8rem;">${err.message}</div>
+                <button onclick="location.reload()" style="margin-top:15px; padding:8px 20px; cursor:pointer; background:#ef4444; border:none; color:white; border-radius:5px; font-weight:bold;">REINTENTAR</button>
+            </div>`;
+        }
     }
   }
 
-  async render(user, versionStr) {
+  async render(user, getSession, logout) {
     if (this.isRendered) return;
     this.isRendered = true;
+    
     const timestamp = new Date().getTime();
-    this.root.innerHTML = '';
-    if (user) {
-        const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${versionStr}_${timestamp}`);
-        await renderDashboard(this.root, user, () => {
-            logout();
-            this.isRendered = false;
-            this.navigate();
-        });
-    } else {
-        const { renderLogin } = await import(`./views/login.js?v=${versionStr}_${timestamp}`);
-        renderLogin(this.root, () => {
-            this.isRendered = false;
-            this.navigate();
-        });
+    try {
+        if (user) {
+            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${this.version}_${timestamp}`);
+            this.root.innerHTML = '';
+            await renderDashboard(this.root, user, () => {
+                this.isRendered = false;
+                logout();
+                this.init();
+            });
+        } else {
+            const { renderLogin } = await import(`./views/login.js?v=${this.version}_${timestamp}`);
+            this.root.innerHTML = '';
+            renderLogin(this.root, () => {
+                this.isRendered = false;
+                this.init();
+            });
+        }
+    } catch (err) {
+        console.error("[PULSE] Render Error:", err);
+        this.isRendered = false;
+        this.root.innerHTML = `<div style="color:white; padding:2rem;">Error al renderizar vista: ${err.message}</div>`;
     }
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.app = new App('app');
-});
+// ARRANQUE FORZADO
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => new App('app'));
+} else {
+    new App('app');
+}
