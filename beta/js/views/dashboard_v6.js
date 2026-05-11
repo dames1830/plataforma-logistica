@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.7';
-import * as adminService from '../services/adminService.js?v=16.0.7';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.8';
+import * as adminService from '../services/adminService.js?v=16.0.8';
 
 
-const VERSION = '16.0.7-BETA';
-const CACHE_KEY = `logistics_v16_0_7_beta_clean_`;
+const VERSION = '16.0.8-BETA';
+const CACHE_KEY = `logistics_v16_0_8_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -341,6 +341,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   await adminService.initializeAdminData();
   await loadAlmacenajeTasks();
   await getAreaData('tallas'); // [AUTO] Sincronizar maestro de tallas al arranque
+  updateTablaTallas(); // [FORZAR] Reconstruir mapa de búsqueda para evitar (S/T)
   
   // Heartbeat de Sincronización Global (Cada 30 seg)
   setInterval(async () => {
