@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.6';
-import * as adminService from '../services/adminService.js?v=16.0.6';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.7';
+import * as adminService from '../services/adminService.js?v=16.0.7';
 
 
-const VERSION = '16.0.6-BETA';
-const CACHE_KEY = `logistics_v16_0_6_beta_clean_`;
+const VERSION = '16.0.7-BETA';
+const CACHE_KEY = `logistics_v16_0_7_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -75,41 +75,41 @@ const loadAlmacenajeTasks = async () => {
 };
 
 const TABS = [
-  { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'inicio', label: 'Inicio', icon: '🏠' },
+  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', subTabs: [
     { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
   ]},
-  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'picking', label: 'Picking', icon: '🛒', subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
   ]},
-  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'packing', label: 'Packing', icon: '📦', subTabs: [
     { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
   ]},
-  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'despacho', label: 'Despacho', icon: '🚚', subTabs: [
     { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' }
   ]},
-  { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', subTabs: [
     { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
   ]},
-  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'recepcion', label: 'Recepción', icon: '📥', subTabs: [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }
   ]},
-  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', subTabs: [
     { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
     { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
     { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' }
   ]},
-  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
     { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
     { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' }
   ] },
-  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', subTabs: [
     { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
   ] },
-  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+  { id: 'admin_pers', label: 'Administración', icon: '👥', subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
@@ -121,7 +121,7 @@ const TABS = [
     ]},
     { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
-  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin', 'jefe'] }
+  { id: 'config', label: 'Configuración', icon: '⚙️' }
 ];
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -1280,7 +1280,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
-                                let hasAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[t.id] === 1 || t.roles.includes(r));
+                                let hasAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[t.id] === 1);
                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
                                 const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
                                 return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
@@ -1299,7 +1299,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         ${sub.icon} ${sub.label}
                                     </td>
                                     ${allRoles.map(r => {
-                                        let hasSubAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[subKey] === 1 || t.roles.includes(r));
+                                        let hasSubAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[subKey] === 1);
                                         if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey)) hasSubAccess = true;
                                         const isFixedSub = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey));
                                         return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixedSub ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
@@ -1314,7 +1314,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <tr class="sub-row-${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.005); display:none; background:rgba(0,0,0,0.2);">
                                             <td style="padding:0.5rem 0.8rem 0.5rem 4.5rem; font-size:0.7rem; color:var(--primary); border-right:1px solid var(--border);">${ss.icon} ${ss.label}</td>
                                             ${allRoles.map(r => {
-                                                let hasSSAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[ssKey] === 1 || t.roles.includes(r));
+                                                let hasSSAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[ssKey] === 1);
                                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey)) hasSSAccess = true;
                                                 const isFixedSS = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey));
                                                 return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${isFixedSS ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
