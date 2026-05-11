@@ -64,6 +64,12 @@ export const initializeAdminData = async () => {
                         } else {
                             // MEZCLA INTELIGENTE: No reemplazamos, sumamos lo nuevo a lo que ya tenemos
                             adminStore[area] = { ...adminStore[area], ...newObj };
+                            
+                            // [SYNC GOLD] Si estamos en permisos, forzamos guardado local limpio
+                            if (area === 'permissions') {
+                                localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
+                                console.log("[PULSE] Permissions Matrix Synced & Cleaned");
+                            }
                         }
                     } else {
                         // Para arrays, intentamos mezclar por ID o simplemente concatenar si es necesario, 
@@ -317,9 +323,18 @@ export const initPermissions = (tabs) => {
     });
 };
 
-export const togglePermission = (role, tabId) => {
-    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return;
+export const togglePermission = async (role, tabId) => {
+    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return false;
     const p = getPermissions(role);
     p[tabId] = p[tabId] === 1 ? 0 : 1;
-    save('permissions', adminStore.permissions);
+    
+    console.log(`[PULSE] Toggling Permission: ${role} -> ${tabId} (${p[tabId]})`);
+    const ok = await save('permissions', adminStore.permissions);
+    
+    if (!ok) {
+        console.error("[PULSE] Failed to sync permission to cloud");
+        // Revertir localmente si falló la nube para mantener consistencia
+        p[tabId] = p[tabId] === 1 ? 0 : 1;
+    }
+    return ok;
 };
