@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.4';
-import * as adminService from '../services/adminService.js?v=15.9.4';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.5';
+import * as adminService from '../services/adminService.js?v=15.9.5';
 
 
-const VERSION = '15.9.4-BETA';
-const CACHE_KEY = `logistics_v15_9_4_beta_clean_`;
+const VERSION = '15.9.5-BETA';
+const CACHE_KEY = `logistics_v15_9_5_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -3050,6 +3050,140 @@ export const renderDashboard = async (container, user, onLogout) => {
         `;
     }).join('');
 
+    // Pre-generar fragmento de tabla (KPI o Tareas)
+    let contentHtml = '';
+    if (isKpi) {
+        // --- LOGICA KPI ---
+        const indRows = [];
+        tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
+            if (!t.inicio || !t.termino || t.status !== 'Finalizado') return;
+            const s = new Date(t.inicio);
+            const e = new Date(t.termino);
+            let ms = e - s;
+            const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+            const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+            const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+            const overlapStart = Math.max(s, bStart);
+            const overlapEnd = Math.min(e, bEnd);
+            const overlap = Math.max(0, overlapEnd - overlapStart);
+            ms = ms - overlap;
+            const totalMinutes = Math.floor(ms / (1000 * 60));
+            if (totalMinutes <= 0) return;
+            const timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
+            const uList = [t.u1, t.u2].filter(u => u && u !== '---');
+            
+            if (uList.length === 2) {
+                const q1 = Math.ceil(t.qty / 2);
+                const q2 = Math.floor(t.qty / 2);
+                [ {u:t.u1, q:q1}, {u:t.u2, q:q2} ].forEach(entry => {
+                    const uph = (entry.q / totalMinutes) * 60;
+                    const pct = Math.round((uph / 150) * 100);
+                    indRows.push({ fecha: t.fecha, user: entry.u, qty: entry.q, inicio: t.inicio, termino: t.termino, time: timeStr, pct: pct, ok: uph >= 150 });
+                });
+            } else if (uList.length === 1) {
+                const uph = (t.qty / totalMinutes) * 60;
+                const pct = Math.round((uph / 150) * 100);
+                indRows.push({ fecha: t.fecha, user: uList[0], qty: t.qty, inicio: t.inicio, termino: t.termino, time: timeStr, pct: pct, ok: uph >= 150 });
+            }
+        });
+
+        const tableBody = indRows.length === 0 ? `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad para esta selección.</td></tr>` : 
+            indRows.map(r => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
+                    <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
+                    <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
+                    <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
+                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                    <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
+                    <td style="padding:0.8rem 1rem; text-align:center;">
+                        <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
+                            <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
+                        </div>
+                        <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
+                    </td>
+                    <td style="padding:0.8rem 1rem; text-align:center;">
+                        <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
+                            ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+        contentHtml = `
+            <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2); flex:1; display:flex; flex-direction:column;">
+                <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString()}</span></h3>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                </div>
+                <div style="overflow-x:auto; flex:1;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.5); position:sticky; top:0; z-index:5;">
+                            <tr style="color:rgba(255,255,255,0.5); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.2);">
+                                <th style="padding:1rem; text-align:left;">Fecha</th><th style="padding:1rem; text-align:left;">Usuario</th><th style="padding:1rem; text-align:center;">Unid.</th><th style="padding:1rem; text-align:left;">Inicio</th><th style="padding:1rem; text-align:left;">Termino</th><th style="padding:1rem; text-align:center;">Tiempo</th><th style="padding:1rem; text-align:center;">Rendimiento</th><th style="padding:1rem; text-align:center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableBody}</tbody>
+                    </table>
+                </div>
+                <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2); display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base: 150 Unid/Hora</div>
+                    <button class="btn" onclick="window.exportAlmacenajeExcel()" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
+                </div>
+            </div>`;
+    } else {
+        // --- LOGICA TAREAS ---
+        const filteredTasks = tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate);
+        let tableHeader = !isDetail ? `
+            <tr>
+                <th style="padding:1rem; text-align:left;">Fecha</th><th style="padding:1rem; text-align:left;">IdTarea</th><th style="padding:1rem; text-align:center;">Qty</th><th style="padding:1rem; text-align:left;">Marca</th><th style="padding:1rem; text-align:left;">U1</th><th style="padding:1rem; text-align:left;">U2</th><th style="padding:1rem; text-align:left;">Inicio</th><th style="padding:1rem; text-align:left;">Termino</th><th style="padding:1rem; text-align:center;">Prod.</th><th style="padding:1rem; text-align:center;">Objetivo</th><th style="padding:1rem; text-align:center;">Status</th><th style="padding:1rem; text-align:center;">Acción</th>
+            </tr>` : `
+            <tr>
+                <th style="padding:1rem; text-align:left;">Articulo</th><th style="padding:1rem; text-align:left;">Ubi</th><th style="padding:1rem; text-align:left;">SKU</th><th style="padding:1rem; text-align:center;">Tallas</th><th style="padding:1rem; text-align:center;">Buffer</th><th style="padding:1rem; text-align:center;">Zona</th><th style="padding:1rem; text-align:left;">ID</th><th style="padding:1rem; text-align:center;">Status</th>
+            </tr>`;
+
+        let tableRows = '';
+        if (filteredTasks.length === 0) {
+            tableRows = `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas.</td></tr>`;
+        } else if (!isDetail) {
+            tableRows = filteredTasks.map(t => {
+                let prod = '---', obj = '---', objStyle = 'color:var(--text-muted);';
+                if (t.inicio && t.termino) {
+                    const s = new Date(t.inicio), e = new Date(t.termino);
+                    let ms = e - s;
+                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+                    ms -= Math.max(0, Math.min(e, bEnd) - Math.max(s, bStart));
+                    const mins = Math.floor(ms / 60000);
+                    prod = `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+                    if (mins > 0) {
+                        const uph = (t.qty / mins) * 60;
+                        obj = uph >= 300 ? 'CUMPLIÓ' : 'NO CUMPLIÓ';
+                        objStyle = uph >= 300 ? 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;' : 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
+                    }
+                }
+                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
+                    <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td><td style="padding:0.8rem 1rem; color:#fff;">${t.id}</td><td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td><td style="padding:0.8rem 1rem;">${t.marca}</td><td style="padding:0.8rem 1rem; font-weight:800;">${t.u1 || '---'}</td><td style="padding:0.8rem 1rem; font-weight:800; opacity:0.7;">${t.u2 || '---'}</td><td style="padding:0.7rem 1rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '---'}</td><td style="padding:0.7rem 1rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '---'}</td><td style="padding:0.8rem 1rem; text-align:center; font-weight:900;">${prod}</td><td style="padding:0.8rem 1rem; text-align:center;"><span style="${objStyle}">${obj}</span></td><td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${t.status==='Finalizado'?'rgba(34,197,94,0.1)':t.status==='Asignado'?'rgba(234,179,8,0.1)':'rgba(255,255,255,0.05)'}; color:${t.status==='Finalizado'?'#22c55e':t.status==='Asignado'?'#eab308':'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">${t.status.toUpperCase()}</span></td><td style="padding:0.8rem 1rem; display:flex; gap:8px;" onclick="event.stopPropagation()"><button onclick="window.resetTask('${t.id}')" style="background:none; border:none; cursor:pointer;">🔄</button><button onclick="window.deleteTask('${t.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button></td></tr>`;
+            }).join('');
+        } else {
+            tableRows = filteredTasks.flatMap(t => t.items.flatMap(art => {
+                return art.items.filter(i => i.ubi.startsWith('CDBUFFER')).map(i => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);"><td style="padding:0.6rem 1rem;">${art.sku7}</td><td style="padding:0.6rem 1rem; color:#fff !important;">${i.ubi}</td><td style="padding:0.6rem 1rem;">${i.skuFull}</td><td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td><td style="padding:0.6rem 1rem; text-align:center; font-weight:700;">${i.area.includes('CDBUFFER')?i.qty:''}</td><td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER')?i.qty:''}</td><td style="padding:0.6rem 1rem;">${t.id}</td><td style="padding:0.6rem 1rem; text-align:center;"><span style="background:${t.status==='Finalizado'?'rgba(34,197,94,0.1)':t.status==='Asignado'?'rgba(234,179,8,0.1)':'rgba(255,255,255,0.05)'}; color:${t.status==='Finalizado'?'#22c55e':t.status==='Asignado'?'#eab308':'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">${t.status.toUpperCase()}</span></td></tr>`);
+            })).join('');
+        }
+
+        contentHtml = `
+            <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
+                    <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">${tableHeader}</thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex; gap:1.5rem; font-size:0.75rem;"><span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span><span style="color:var(--text-muted);">Pares: <b style="color:#fff;">${tasks.reduce((s,t)=>s+t.qty,0).toLocaleString()}</b></span></div>
+            </div>`;
+    }
+
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
             ${!isKpi ? `
@@ -3058,12 +3192,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:var(--text-muted); font-weight:500; border-bottom:none; text-decoration:none;">🔍 DETALLE</a>
             </nav>
             <div style="display:flex; gap:12px; align-items:center;">
-                <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
-                    🔄
-                </button>
-                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
-                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">🗑️</button>
-                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
+                <button id="btn_refresh_almacenaje" title="Refrescar" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem;">🔄</button>
+                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR</button>
+                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;">🗑️</button>
+                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none;">📥 EXCEL</button>
             </div>
             ` : `
             <div style="flex:1; display:flex; justify-content:space-between; align-items:center;">
@@ -3074,248 +3206,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
-            <!-- SIDEBAR DE HISTORIAL (PERSISTENTE) -->
+            <!-- SIDEBAR -->
             <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); border-left: 3px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow-y:auto;">
                 <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">HISTORIAL FECHAS</h4>
                 <div style="font-size:0.8rem;">
-                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">TODAS LAS FECHAS</div>
+                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">TODAS LAS FECHAS</div>
                     ${sidebarHtml}
                 </div>
             </div>
-
-            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
-                ${isKpi ? `
-                <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL -->
-                <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2); flex:1; display:flex; flex-direction:column;">
-                    <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
-                        <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
-                            📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
-                        </h3>
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
-                    </div>
-                    
-                    <div style="overflow-x:auto; flex:1;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
-                            <thead style="background:rgba(0,0,0,0.5); position:sticky; top:0; z-index:5;">
-                                <tr style="color:rgba(255,255,255,0.5); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.2);">
-                                    <th style="padding:1rem; text-align:left;">Fecha</th>
-                                    <th style="padding:1rem; text-align:left;">Usuario</th>
-                                    <th style="padding:1rem; text-align:center;">Unid. Indiv.</th>
-                                    <th style="padding:1rem; text-align:left;">Inicio</th>
-                                    <th style="padding:1rem; text-align:left;">Termino</th>
-                                    <th style="padding:1rem; text-align:center;">Tiempo</th>
-                                    <th style="padding:1rem; text-align:center;">Rendimiento %</th>
-                                    <th style="padding:1rem; text-align:center;">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${(() => {
-                                    const indRows = [];
-                                    tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
-                                        if (!t.inicio || !t.termino || t.status !== 'Finalizado') return;
-
-                                        const s = new Date(t.inicio);
-                                        const e = new Date(t.termino);
-                                        let ms = e - s;
-
-                                        const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
-                                        const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
-                                        const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
-                                        const overlapStart = Math.max(s, bStart);
-                                        const overlapEnd = Math.min(e, bEnd);
-                                        const overlap = Math.max(0, overlapEnd - overlapStart);
-                                        ms = ms - overlap;
-
-                                        const totalMinutes = Math.floor(ms / (1000 * 60));
-                                        if (totalMinutes <= 0) return;
-
-                                        const timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
-                                        const uList = [t.u1, t.u2].filter(u => u && u !== '---');
-                                        
-                                        if (uList.length === 2) {
-                                            const q1 = Math.ceil(t.qty / 2);
-                                            const q2 = Math.floor(t.qty / 2);
-                                            [ {u:t.u1, q:q1}, {u:t.u2, q:q2} ].forEach(entry => {
-                                                const uph = (entry.q / totalMinutes) * 60;
-                                                const pct = Math.round((uph / 150) * 100);
-                                                indRows.push({
-                                                    fecha: t.fecha,
-                                                    user: entry.u,
-                                                    qty: entry.q,
-                                                    inicio: t.inicio,
-                                                    termino: t.termino,
-                                                    time: timeStr,
-                                                    pct: pct,
-                                                    ok: uph >= 150
-                                                });
-                                            });
-                                        } else if (uList.length === 1) {
-                                            const uph = (t.qty / totalMinutes) * 60;
-                                            const pct = Math.round((uph / 150) * 100);
-                                            indRows.push({
-                                                fecha: t.fecha,
-                                                user: uList[0],
-                                                qty: t.qty,
-                                                inicio: t.inicio,
-                                                termino: t.termino,
-                                                time: timeStr,
-                                                pct: pct,
-                                                ok: uph >= 150
-                                            });
-                                        }
-                                    });
-
-                                    if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad para esta selección.</td></tr>`;
-
-                                    return indRows.map(r => `
-                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
-                                            <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
-                                            <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
-                                            <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
-                                            <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-                                            <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-                                            <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
-                                            <td style="padding:0.8rem 1rem; text-align:center;">
-                                                <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
-                                                    <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
-                                                </div>
-                                                <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
-                                            </td>
-                                            <td style="padding:0.8rem 1rem; text-align:center;">
-                                                <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
-                                                    ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    `).join('');
-                                })()}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2); display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medición: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
-                        <button class="btn" onclick="window.exportAlmacenajeExcel()" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
-                    </div>
-                </div>
-                ` : `
-                <!-- TABLA DE TAREAS DÍA / DETALLE -->
-                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
-                        <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
-                            ${!isDetail ? `
-                                <tr>
-                                    <th style="padding:1rem; text-align:left;">Fecha</th>
-                                    <th style="padding:1rem; text-align:left;">IdTarea</th>
-                                    <th style="padding:1rem; text-align:center;">Qty</th>
-                                    <th style="padding:1rem; text-align:left;">Marca</th>
-                                    <th style="padding:1rem; text-align:left;">Usuario1</th>
-                                    <th style="padding:1rem; text-align:left;">Usuario2</th>
-                                    <th style="padding:1rem; text-align:left;">Hora Inicio</th>
-                                    <th style="padding:1rem; text-align:left;">Hora Termino</th>
-                                    <th style="padding:1rem; text-align:center;">Productividad</th>
-                                    <th style="padding:1rem; text-align:center;">Objetivo</th>
-                                    <th style="padding:1rem; text-align:center;">Status</th>
-                                    <th style="padding:1rem; text-align:center;">Acción</th>
-                                </tr>
-                            ` : `
-                                <tr>
-                                    <th style="padding:1rem; text-align:left;">Articulo</th>
-                                    <th style="padding:1rem; text-align:left;">UBICACION</th>
-                                    <th style="padding:1rem; text-align:left;">SKU</th>
-                                    <th style="padding:1rem; text-align:center;">Tallas</th>
-                                    <th style="padding:1rem; text-align:center;">Qty Buffer</th>
-                                    <th style="padding:1rem; text-align:center;">Qty Zona</th>
-                                    <th style="padding:1rem; text-align:left;">ID Tareas</th>
-                                    <th style="padding:1rem; text-align:center;">Status</th>
-                                </tr>
-                            `}
-                        </thead>
-                        <tbody>
-                            ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
-                                let productividad = '---';
-                                let objetivo = '---';
-                                let objStyle = 'color:var(--text-muted);';
-
-                                if (t.inicio && t.termino) {
-                                    const s = new Date(t.inicio);
-                                    const e = new Date(t.termino);
-                                    let ms = e - s;
-
-                                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
-                                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
-                                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
-
-                                    const overlapStart = Math.max(s, bStart);
-                                    const overlapEnd = Math.min(e, bEnd);
-                                    const overlap = Math.max(0, overlapEnd - overlapStart);
-                                    
-                                    ms = ms - overlap;
-
-                                    const totalMinutes = Math.floor(ms / (1000 * 60));
-                                    const h = Math.floor(totalMinutes / 60);
-                                    const m = totalMinutes % 60;
-                                    productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-
-                                    if (totalMinutes > 0) {
-                                        const unitsPerHour = (t.qty / totalMinutes) * 60;
-                                        if (unitsPerHour >= 300) {
-                                            objetivo = 'CUMPLIÓ';
-                                            objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
-                                        } else {
-                                            objetivo = 'NO CUMPLIÓ';
-                                            objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
-                                        }
-                                    }
-                                }
-                                return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
-                                    <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
-                                    <td style="padding:0.8rem 1rem;">${t.marca}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">
-                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
-                                            ${t.status.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
-                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
-                                    </td>
-                                </tr>`;
-                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                const filteredItems = art.items.filter(i => i.ubi.startsWith('CDBUFFER'));
-                                const sortedItems = [...filteredItems].sort((a,b) => {
-                                    const aIsB = a.area.includes('CDBUFFER');
-                                    const bIsB = b.area.includes('CDBUFFER');
-                                    if (aIsB && !bIsB) return -1;
-                                    if (!aIsB && bIsB) return 1;
-                                    return 0;
-                                });
-                                return sortedItems.map(i => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                    <td style="padding:0.6rem 1rem;">${art.sku7}</td>
-                                    <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
-                                    <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
-                                    <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">
-                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
-                                            ${t.status.toUpperCase()}
-                                        </span>
-                                    </td>
-                                </tr>`);
-                            })).join('')}
                         </tbody>
                     </table>
                 </div>
