@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.8';
-import * as adminService from '../services/adminService.js?v=16.0.8';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.9';
+import * as adminService from '../services/adminService.js?v=16.0.9';
 
 
-const VERSION = '16.0.8-BETA';
-const CACHE_KEY = `logistics_v16_0_8_beta_clean_`;
+const VERSION = '16.0.9-BETA';
+const CACHE_KEY = `logistics_v16_0_9_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -54,24 +54,25 @@ const saveAlmacenajeTasks = async () => {
 
 const loadAlmacenajeTasks = async () => {
   try {
-      // 1. Carga inmediata desde LocalStorage (Sin esperas)
+      // 1. Sincronización prioritaria con adminService (Nube)
+      const syncedTasks = adminService.adminStore.almacenaje_tasks;
+      if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
+          almacenajeTasksCache = syncedTasks;
+          localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
+          console.log(`[PULSE] Sincronización NUBE exitosa: ${almacenajeTasksCache.length} tareas.`);
+          return;
+      }
+
+      // 2. Fallback: Carga desde LocalStorage si la nube falló o está vacía
       const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
       if (stored) {
           const localTasks = JSON.parse(stored);
           if (Array.isArray(localTasks) && localTasks.length > 0) {
               almacenajeTasksCache = localTasks;
+              console.log(`[PULSE] Carga LOCAL exitosa: ${almacenajeTasksCache.length} tareas.`);
           }
       }
-      
-      // 2. Sincronización pasiva con la administración (Solo si hay datos nuevos reales)
-      const syncedTasks = adminService.adminStore.almacenaje_tasks;
-      if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
-          almacenajeTasksCache = syncedTasks;
-          localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
-      }
-      
-      console.log(`[PULSE] Persistencia v13.0.4 Activa: ${almacenajeTasksCache.length} tareas.`);
-  } catch (e) { console.error("[PULSE] Error en persistencia:", e); }
+  } catch (e) { console.error("[PULSE] Error en persistencia de tareas:", e); }
 };
 
 const TABS = [
