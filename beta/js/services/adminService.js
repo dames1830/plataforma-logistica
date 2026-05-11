@@ -238,6 +238,50 @@ export const savePerformance = (data) => save('performance', data);
 export const savePerformanceLog = (data) => save('performance_log', data);
 export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
 
+// --- HELPER WRAPPERS (RESTAURADOS) ---
+export const saveUser = async (user) => {
+    const list = [...adminStore.users.filter(u => u.username !== user.username), user];
+    return await saveUsers(list);
+};
+
+export const deleteUser = async (username) => {
+    const list = adminStore.users.filter(u => u.username !== username);
+    return await saveUsers(list);
+};
+
+export const toggleUserStatus = async (username) => {
+    const user = adminStore.users.find(u => u.username === username);
+    if (user) {
+        user.active = user.active === false ? true : false;
+        return await saveUsers(adminStore.users);
+    }
+    return false;
+};
+
+export const saveWorker = async (worker) => {
+    const dni = String(worker.dni || worker.Dni || '').trim();
+    const list = [...adminStore.workers.filter(w => String(w.dni || w.Dni || '').trim() !== dni), worker];
+    return await saveWorkers(list);
+};
+
+export const toggleWorkerStatus = async (dni) => {
+    const worker = adminStore.workers.find(w => String(w.dni || w.Dni || '').trim() === String(dni).trim());
+    if (worker) {
+        worker.active = worker.active === false ? true : false;
+        return await saveWorkers(adminStore.workers);
+    }
+    return false;
+};
+
+export const resetProductionData = async () => {
+    const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
+    for (const area of areas) {
+        await save(area, area === 'permissions' || area === 'attendance' ? {} : []);
+    }
+    localStorage.clear();
+    location.reload();
+};
+
 // --- LISTA DE HIERRO ---
 export const FORCED_ASISTENTE = [
     'inicio',
