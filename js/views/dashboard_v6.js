@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=15.8.6';
 
 
-const VERSION = '15.8.9-BETA';
-const CACHE_KEY = `logistics_v15_8_9_beta_clean_`;
+const VERSION = '15.9.1-BETA';
+const CACHE_KEY = `logistics_v15_9_1_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -3069,7 +3069,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             `}
         </div>
 
-        ${isKpi ? `
+        <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
+            <!-- SIDEBAR UNIFICADO -->
+            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); border-left: 3px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow-y:auto;">
+                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Historial</h4>
+                <div style="font-size:0.8rem;">
+                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">Todas las Tareas</div>
+                    ${sidebarHtml}
+                </div>
+            </div>
+
+            <!-- CONTENIDO PRINCIPAL -->
+            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
+                ${isKpi ? `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
             <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2);">
@@ -3184,18 +3196,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medición: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
                     <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
                 </div>
-            </div>
-        </div>` : `
-        <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
-            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); border-left: 3px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow-y:auto;">
-                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Historial</h4>
-                <div style="font-size:0.8rem;">
-                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">Todas las Tareas</div>
-                    ${sidebarHtml}
                 </div>
-            </div>
+            ` : `
 
-            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
+
                 <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
@@ -3322,8 +3326,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>
                 </div>
             </div>
-        </div>
         `}
+    </div>
+</div>
     `;
 
     window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
