@@ -1,11 +1,11 @@
 
-// ENGINE v15.8.7 - BETA PRODUCTIVITY ENGINE
+// ENGINE v15.8.8 - BETA KPI NAVIGATION FIX
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.8.7-BETA";
+    this.version = "15.8.8-BETA";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
