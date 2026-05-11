@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.8.6';
-import * as adminService from '../services/adminService.js?v=15.8.6';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.1.0';
+import * as adminService from '../services/adminService.js?v=16.1.0';
 
 
-const VERSION = '15.9.1-BETA';
-const CACHE_KEY = `logistics_v15_9_1_beta_clean_`;
+const VERSION = '16.1.0';
+const CACHE_KEY = `logistics_v16_1_0_prod_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -391,9 +391,8 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
-            LOGÍSTICA <span style="color:#818cf8">DAMES1830</span> 
-            <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION.replace('-BETA','')}</span>
-            <span style="background:#facc15; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; letter-spacing:1px; margin-left:5px;">BETA</span>
+            LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
+            <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
       </div>
