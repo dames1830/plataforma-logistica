@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.8';
-import * as adminService from '../services/adminService.js?v=15.9.8';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.9';
+import * as adminService from '../services/adminService.js?v=15.9.9';
 
 
-const VERSION = '15.9.8-BETA';
-const CACHE_KEY = `logistics_v15_9_8_beta_clean_`;
+const VERSION = '15.9.9-BETA';
+const CACHE_KEY = `logistics_v15_9_9_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -3055,8 +3055,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             ${!isKpi ? `
             <nav style="display:flex; gap:1.5rem;">
                 <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
-                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:var(--text-muted); font-weight:500; border-bottom:none; text-decoration:none;">🔍 DETALLE</a>
+                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
             </nav>
+            ${!isDetail ? `
             <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
@@ -3065,6 +3066,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">🗑️</button>
                 <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
             </div>
+            ` : ''}
             ` : `
             <div style="flex:1;"></div>
             `}
@@ -3222,7 +3224,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:left;">SKU</th>
                                     <th style="padding:1rem; text-align:center;">Tallas</th>
                                     <th style="padding:1rem; text-align:center;">Qty Buffer</th>
-                                    <th style="padding:1rem; text-align:center;">Qty Zona</th>
                                     <th style="padding:1rem; text-align:left;">ID Tareas</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
                                 </tr>
@@ -3304,7 +3305,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">
                                         <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
