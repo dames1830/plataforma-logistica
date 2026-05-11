@@ -58,23 +58,20 @@ export const initializeAdminData = async () => {
                     if (area === 'attendance' || area === 'permissions') {
                         const newObj = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                         
-                        // PROTECCIÓN PARA PERMISOS: No sobrescribir con objeto vacío si ya tenemos datos locales
-                        if (area === 'permissions' && Object.keys(newObj).length === 0 && Object.keys(adminStore.permissions).length > 0) {
-                            console.warn("[PULSE] Ignoring empty permissions from cloud to protect UI");
+                        if (Object.keys(newObj).length === 0 && Object.keys(adminStore[area]).length > 0) {
+                            console.warn(`[PULSE] Protegiendo ${area} contra sobrescritura vacía.`);
                         } else {
-                            // MEZCLA INTELIGENTE: No reemplazamos, sumamos lo nuevo a lo que ya tenemos
                             adminStore[area] = { ...adminStore[area], ...newObj };
-                            
-                            // [SYNC GOLD] Si estamos en permisos, forzamos guardado local limpio
-                            if (area === 'permissions') {
-                                localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
-                                console.log("[PULSE] Permissions Matrix Synced & Cleaned");
-                            }
                         }
                     } else {
-                        // Para arrays, intentamos mezclar por ID o simplemente concatenar si es necesario, 
-                        // pero por ahora mantenemos el reemplazo para evitar duplicados infinitos en listas simples.
-                        adminStore[area] = Array.isArray(serverData) ? serverData : [];
+                        // [ESCUDO V16.1.0] Si el servidor devuelve vacío pero nosotros tenemos datos, NO sobrescribir.
+                        // Esto previene que un fallo de red o cold start limpie la base de datos local.
+                        const newData = Array.isArray(serverData) ? serverData : [];
+                        if (newData.length === 0 && adminStore[area].length > 0) {
+                            console.warn(`[PULSE] Bloqueando intento de limpiar ${area} desde la nube.`);
+                        } else {
+                            adminStore[area] = newData;
+                        }
                     }
                     localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
                     console.log(`[PULSE] Cloud Sync OK (Merged): ${area}`);
@@ -96,14 +93,20 @@ export const save = async (area, data) => {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
         
-        // NO ENVOLVER EN {data: ...} para evitar anidamiento infinito
+        // [BLOQUEO DE EMERGENCIA] No permitir guardar listas vacías si ya hay datos en el store
+        // Esto previene que un cliente "limpio" borre la nube por accidente.
+        if (Array.isArray(data) && data.length === 0 && adminStore[area].length > 0) {
+            console.error(`[PULSE] Bloqueo de seguridad: Intento de borrar ${area} en la nube cancelado.`);
+            return false;
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000);
 
         const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data), // ENVIAR DATA DIRECTAMENTE
+            body: JSON.stringify(data), 
             signal: controller.signal
         });
         

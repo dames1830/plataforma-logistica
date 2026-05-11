@@ -1,10 +1,10 @@
-// ENGINE v16.0.9 - BETA DATA RECOVERY ENGINE
+// ENGINE v16.1.0 - BETA DATA SHIELD ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "16.0.9-BETA";
+    this.version = "16.1.0-BETA";
     this.isRendered = false;
     this.inactivityTimeout = null;
     console.log(`[PULSE] App initialized on #${rootId}`);
