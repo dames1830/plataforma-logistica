@@ -3,7 +3,8 @@ console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
-    this.version = "16.0.4-BETA";
+    this.root = document.getElementById(rootId);
+    this.version = "16.0.5-BETA";
     this.isRendered = false;
     this.inactivityTimeout = null;
     console.log(`[PULSE] App initialized on #${rootId}`);
