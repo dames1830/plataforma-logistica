@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=15.8.6';
 
 
-const VERSION = '15.8.6-BETA';
-const CACHE_KEY = `logistics_v15_8_6_beta_env_`;
+const VERSION = '15.8.7-BETA';
+const CACHE_KEY = `logistics_v15_8_7_beta_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:#facc15">BETA</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.6</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:#facc15">BETA</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.7</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -3052,11 +3052,120 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         ${isKpi ? `
-        <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
-            <div style="text-align:center;">
-                <div style="font-size:4rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.5));">📊</div>
-                <h2 style="color:#fff; margin-bottom:0.5rem;">Panel de KPI Tareas</h2>
-                <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
+        <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
+            <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
+            <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2);">
+                <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
+                        📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                    </h3>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                </div>
+                
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.5);">
+                            <tr style="color:rgba(255,255,255,0.5); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.2);">
+                                <th style="padding:1rem; text-align:left;">Fecha</th>
+                                <th style="padding:1rem; text-align:left;">Usuario</th>
+                                <th style="padding:1rem; text-align:center;">Unid. Indiv.</th>
+                                <th style="padding:1rem; text-align:left;">Inicio</th>
+                                <th style="padding:1rem; text-align:left;">Termino</th>
+                                <th style="padding:1rem; text-align:center;">Tiempo</th>
+                                <th style="padding:1rem; text-align:center;">Rendimiento %</th>
+                                <th style="padding:1rem; text-align:center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const indRows = [];
+                                tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
+                                    if (!t.inicio || !t.termino || t.status !== 'Finalizado') return;
+
+                                    const s = new Date(t.inicio);
+                                    const e = new Date(t.termino);
+                                    let ms = e - s;
+
+                                    // Descontar break si aplica
+                                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+                                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+                                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+                                    const overlapStart = Math.max(s, bStart);
+                                    const overlapEnd = Math.min(e, bEnd);
+                                    const overlap = Math.max(0, overlapEnd - overlapStart);
+                                    ms = ms - overlap;
+
+                                    const totalMinutes = Math.floor(ms / (1000 * 60));
+                                    if (totalMinutes <= 0) return;
+
+                                    const timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
+                                    const uList = [t.u1, t.u2].filter(u => u && u !== '---');
+                                    
+                                    if (uList.length === 2) {
+                                        const q1 = Math.ceil(t.qty / 2);
+                                        const q2 = Math.floor(t.qty / 2);
+                                        [ {u:t.u1, q:q1}, {u:t.u2, q:q2} ].forEach(entry => {
+                                            const uph = (entry.q / totalMinutes) * 60;
+                                            const pct = Math.round((uph / 150) * 100);
+                                            indRows.push({
+                                                fecha: t.fecha,
+                                                user: entry.u,
+                                                qty: entry.q,
+                                                inicio: t.inicio,
+                                                termino: t.termino,
+                                                time: timeStr,
+                                                pct: pct,
+                                                ok: uph >= 150
+                                            });
+                                        });
+                                    } else if (uList.length === 1) {
+                                        const uph = (t.qty / totalMinutes) * 60;
+                                        const pct = Math.round((uph / 150) * 100);
+                                        indRows.push({
+                                            fecha: t.fecha,
+                                            user: uList[0],
+                                            qty: t.qty,
+                                            inicio: t.inicio,
+                                            termino: t.termino,
+                                            time: timeStr,
+                                            pct: pct,
+                                            ok: uph >= 150
+                                        });
+                                    }
+                                });
+
+                                if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
+
+                                return indRows.map(r => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
+                                        <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
+                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
+                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
+                                            </div>
+                                            <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
+                                                ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('');
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2); display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medición: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
+                    <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
+                </div>
             </div>
         </div>` : `
         <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
