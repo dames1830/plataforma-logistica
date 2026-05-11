@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.5';
-import * as adminService from '../services/adminService.js?v=16.0.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.6';
+import * as adminService from '../services/adminService.js?v=16.0.6';
 
 
-const VERSION = '16.0.5-BETA';
-const CACHE_KEY = `logistics_v16_0_5_beta_clean_`;
+const VERSION = '16.0.6-BETA';
+const CACHE_KEY = `logistics_v16_0_6_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -76,7 +76,7 @@ const loadAlmacenajeTasks = async () => {
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
@@ -109,7 +109,7 @@ const TABS = [
     { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' }
   ] },
-  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
+  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
@@ -121,7 +121,7 @@ const TABS = [
     ]},
     { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
-  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
+  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin', 'jefe'] }
 ];
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
