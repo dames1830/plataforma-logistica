@@ -171,12 +171,22 @@ body {
 .chart-container { background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: center; align-items: center; min-height: 300px; }
 .chart-container canvas { max-width: 100%; max-height: 300px;}
 
-/* Data Table */
+/* Data Table & Global Row Hover Highlight */
 .data-table-container { width: 100%; overflow-x: auto; background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; border-bottom-right-radius: 0;}
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
 .data-table th { font-weight: 600; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(15, 23, 42, 0.6); position: sticky; top: 0; z-index: 10;}
-.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+/* Highlight para CUALQUIER fila de tabla en el sistema */
+table tr { transition: background 0.2s ease, transform 0.1s ease; }
+table tr:hover td { 
+  background: rgba(79, 70, 229, 0.12) !important; 
+  color: #fff !important;
+}
+/* Efecto sutil de elevación */
+table tr:hover {
+  box-shadow: inset 4px 0 0 var(--primary);
+}
 
 .status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
 .status-pending { background: rgba(234, 179, 8, 0.2); color: #fde047; }

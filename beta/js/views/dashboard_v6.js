@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=14.0.0';
-import * as adminService from '../services/adminService.js?v=14.0.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.8.6';
+import * as adminService from '../services/adminService.js?v=15.8.6';
 
 
-const VERSION = '14.0.0';
-const CACHE_KEY = `logistics_v14_0_0_master_release_`;
+const VERSION = '15.8.7-BETA';
+const CACHE_KEY = `logistics_v15_8_7_beta_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:var(--primary)">DEAM1830</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v14.0.0</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:#facc15">BETA</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.7</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -1276,7 +1276,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                             ${allRoles.map(r => {
                                 let hasAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[t.id] === 1 || t.roles.includes(r));
-                                const isFixed = r === 'admin' || t.id === 'inicio';
+                                if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
+                                const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
                                 return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
                             }).join('')}
                         </tr>`);
@@ -1294,7 +1295,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                     ${allRoles.map(r => {
                                         let hasSubAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[subKey] === 1 || t.roles.includes(r));
-                                        return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${r === 'admin' ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
+                                        if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey)) hasSubAccess = true;
+                                        const isFixedSub = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey));
+                                        return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixedSub ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
                                     }).join('')}
                                 </tr>`);
 
@@ -1307,7 +1310,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             <td style="padding:0.5rem 0.8rem 0.5rem 4.5rem; font-size:0.7rem; color:var(--primary); border-right:1px solid var(--border);">${ss.icon} ${ss.label}</td>
                                             ${allRoles.map(r => {
                                                 let hasSSAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[ssKey] === 1 || t.roles.includes(r));
-                                                return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${r === 'admin' ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
+                                                if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey)) hasSSAccess = true;
+                                                const isFixedSS = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey));
+                                                return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${isFixedSS ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
                                             }).join('')}
                                         </tr>`);
                                     });
@@ -1364,10 +1369,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         const existing = adminService.getAttendance(dateStr);
         if (existing) {
             localState = existing.data.map(d => ({ ...d }));
-            // Sincronizar trabajadores nuevos que no estén en el estado guardado
             workers.forEach(w => {
-                const wDni = (w.dni || w.Dni);
-                if (!localState.find(d => d.dni === wDni)) {
+                const wDni = String(w.dni || w.Dni || '');
+                if (!localState.find(d => String(d.dni) === wDni)) {
                     localState.push({
                         dni: wDni,
                         nombre: (w.nombre || w.Nombre),
@@ -1380,9 +1384,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
             return existing;
         }
-        // Si no existe, estado inicial (todos presentes)
         localState = workers.map(w => ({ 
-            dni: (w.dni || w.Dni), 
+            dni: String(w.dni || w.Dni || ''), 
             nombre: (w.nombre || w.Nombre), 
             apellidos: (w.apellidos || w.Apellidos), 
             present: true,
@@ -1409,19 +1412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
                 <input type="date" id="asist_date_picker" value="${forcedDate}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.4rem; border-radius:6px; font-size:0.8rem; outline:none;">
             </div>
-            
-            <div style="display:flex; gap:1rem;">
-                ${!existing?.finalized ? `
-                    <button id="btn_close_asist" class="btn" style="width:auto; background:var(--primary); padding:0.6rem 2.5rem; font-size:0.85rem; font-weight:800; border-radius:8px; box-shadow:0 0 15px rgba(79,70,229,0.4);">💾 CERRAR ASISTENCIA</button>
-                ` : `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem; box-shadow:0 0 15px rgba(34,197,94,0.3);">✅ ASISTENCIA CERRADA</span>
-                        ${(user.role.toLowerCase() === 'admin' || user.username === 'dames') ? `
-                            <button id="btn_reopen_asist" class="btn" style="width:auto; background:#ef4444; padding:0.6rem 1rem; font-size:0.8rem; font-weight:800; border-radius:8px; box-shadow:0 0 10px rgba(239,68,68,0.3);">🔓 REABRIR</button>
-                        ` : ''}
-                    </div>
-                `}
-            </div>
+            <div id="attendance_top_actions" style="display:flex; gap:1rem; align-items:center;"></div>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
@@ -1437,13 +1428,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </thead>
                 <tbody>
                     ${workers.map((w, idx) => {
-                        const dni = (w.dni || w.Dni);
-                        const rec = localState.find(d => d.dni === dni);
+                        const dni = String(w.dni || w.Dni || '');
+                        const rec = localState.find(d => String(d.dni) === dni);
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
-                        
-                        // Nombre dinámico desde la base de trabajadores
                         const displayName = `${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}`;
+                        const isFinalized = existing?.finalized || false;
                         
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
@@ -1452,18 +1442,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button class="btn-att ${isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>P</button>
-                                    <button class="btn-att ${!isPresent ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:${!isPresent?'#fff':'#fff'}; font-size:0.7rem; cursor:pointer;" ${existing?.finalized ? 'disabled' : ''}>F</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'#000':'#fff'}; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">P</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'#ef4444':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">F</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button class="btn-ontime ${isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>SÍ</button>
-                                    <button class="btn-ontime ${!isOnTime ? 'active' : ''}" data-dni="${w.dni || w.Dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:pointer; opacity:${isPresent?'1':'0.3'}; pointer-events:${isPresent?'auto':'none'}" ${existing?.finalized ? 'disabled' : ''}>NO</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="sel-just" data-dni="${dni}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:pointer;" ${existing?.finalized || isPresent ? 'disabled' : ''}>
+                                <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
                                     <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
                                     <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
@@ -1477,101 +1467,114 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
-    if (!existing?.finalized) {
-        document.querySelectorAll('.btn-att').forEach(btn => btn.onclick = (e) => {
-            const dni = e.target.dataset.dni;
-            const val = e.target.dataset.v === 'true';
-            const node = localState.find(s => s.dni === dni);
-            if (node) {
-                node.present = val;
-                if (!val) node.onTime = false;
-            }
-            // Auto-guardado preventivo para evitar pérdida por parpadeos
+    // --- ACCIONES DINÁMICAS (WINDOW SCOPE) ---
+    window.updateAsist = (dni, val) => {
+        const node = localState.find(s => String(s.dni) === String(dni));
+        if (node) {
+            node.present = val;
+            if (!val) node.onTime = false;
             adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-            renderAsistenciaUI(dni, localState);
-        });
+            renderAsistenciaSection(container);
+        }
+    };
 
-        document.querySelectorAll('.btn-ontime').forEach(btn => btn.onclick = (e) => {
-            const dni = e.target.dataset.dni;
-            const val = e.target.dataset.v === 'true';
-            const node = localState.find(s => s.dni === dni);
-            if (node && node.present) node.onTime = val;
-            
+    window.updateOnTime = (dni, val) => {
+        const node = localState.find(s => String(s.dni) === String(dni));
+        if (node) {
+            node.onTime = val;
             adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-            renderAsistenciaUI(dni, localState);
-        });
+            renderAsistenciaSection(container);
+        }
+    };
 
-        document.querySelectorAll('.sel-just').forEach(sel => sel.onchange = (e) => {
-            const dni = e.target.dataset.dni;
-            const node = localState.find(s => s.dni === dni);
-            if (node) node.justification = e.target.value;
+    window.updateJust = (dni, val) => {
+        const node = localState.find(s => String(s.dni) === String(dni));
+        if (node) {
+            node.justification = val;
             adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-        });
+        }
+    };
 
-        const renderAsistenciaUI = (dni, state) => {
-            const node = state.find(s => s.dni === dni);
-            const attBtns = document.querySelectorAll(`.btn-att[data-dni="${dni}"]`);
-            const otBtns = document.querySelectorAll(`.btn-ontime[data-dni="${dni}"]`);
-
-            attBtns.forEach(b => {
-                const isP = b.dataset.v === 'true';
-                b.style.background = (isP === node.present && node.present) ? 'var(--success)' : (isP === node.present && !node.present) ? '#ef4444' : 'none';
-                b.style.color = (isP === node.present && node.present) ? '#000' : '#fff';
-            });
-
-            otBtns.forEach(b => {
-                const isT = b.dataset.v === 'true';
-                b.style.opacity = node.present ? '1' : '0.3';
-                b.style.pointerEvents = node.present ? 'auto' : 'none';
-                b.style.background = (isT === node.onTime && node.onTime) ? '#06b6d4' : (isT === node.onTime && !node.onTime) ? '#f97316' : 'none';
-            });
-
-            const selJust = document.querySelector(`.sel-just[data-dni="${dni}"]`);
-            if (selJust) {
-                selJust.disabled = node.present;
-                if (node.present) {
-                    selJust.value = "";
-                    node.justification = "";
-                }
-            }
+    // --- RENDERIZADO DE BOTONES DE ACCIÓN (PARTE SUPERIOR) ---
+    const topActions = document.getElementById('attendance_top_actions');
+    if (topActions) {
+        const btnSync = document.createElement('button');
+        btnSync.className = 'btn-secondary';
+        btnSync.title = 'Sincronizar con la Nube';
+        btnSync.style = 'padding:10px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); cursor:pointer; font-size:1rem; border:1px solid rgba(255,255,255,0.1); color:#fff;';
+        btnSync.innerHTML = '🔄 Sincronizar';
+        btnSync.onclick = async () => {
+            btnSync.innerHTML = '⌛...';
+            btnSync.disabled = true;
+            await adminService.initializeAdminData();
+            renderAsistenciaSection(container);
+            alert("☁️ Nube sincronizada correctamente");
         };
 
-        const btnClose = document.getElementById('btn_close_asist');
-        if (btnClose) {
+        const btnClose = document.createElement('button');
+        btnClose.className = 'btn-primary';
+        btnClose.style = 'background:var(--primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
+        btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
+
+        if (existing?.finalized) {
+            btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
+            btnClose.style.background = 'var(--success)';
+            btnClose.style.color = '#000';
+            btnClose.disabled = true;
+            btnClose.style.cursor = 'default';
+            
+            // Usamos la sesión de auth.js para verificar al usuario
+            const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+            if (session.username === 'dames') {
+                const btnReopen = document.createElement('button');
+                btnReopen.className = 'btn-danger';
+                btnReopen.innerHTML = '🔓 REABRIR';
+                btnReopen.style = 'padding:0.6rem 1.2rem; border-radius:8px; font-weight:800; cursor:pointer; background:#ef4444; font-size:0.85rem;';
+                btnReopen.onclick = async () => {
+                    if (confirm("¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.")) {
+                        btnReopen.disabled = true;
+                        btnReopen.textContent = "⌛ ABRIENDO...";
+                        await adminService.reopenAttendance(forcedDate);
+                        renderAsistenciaSection(container);
+                    }
+                };
+                topActions.appendChild(btnReopen);
+            }
+        } else {
             btnClose.onclick = async () => {
-                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}? Esta acción enviará los datos al historial de Performance y reiniciará las columnas de toma de datos.`)) {
-                    // Deshabilitar botón para evitar doble clic
-                    btnClose.disabled = true;
-                    btnClose.textContent = "⌛ PROCESANDO...";
-                    
-                    await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
-                    
-                    // Lógica solicitado por el usuario: Reiniciar columnas localmente
-                    localState.forEach(s => { s.present = true; s.onTime = true; });
-                    
-                    renderAsistenciaSection(container);
+                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
+                    try {
+                        btnClose.disabled = true;
+                        btnClose.textContent = "⌛ ENVIANDO...";
+                        const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                        if (success) {
+                            alert("✅ Información enviada a la nube");
+                            renderAsistenciaSection(container);
+                        } else {
+                            alert("❌ Error de envío - Intente nuevamente");
+                            btnClose.disabled = false;
+                            btnClose.textContent = "💾 CERRAR ASISTENCIA";
+                        }
+                    } catch (err) {
+                        console.error("Critical Send Error:", err);
+                        alert("❌ Error fatal en el envío. Se ha reiniciado el botón.");
+                        btnClose.disabled = false;
+                        btnClose.textContent = "💾 CERRAR ASISTENCIA";
+                    }
                 }
             };
         }
-    } else {
-        // Lógica de Reapertura exclusiva para ADMIN o usuario 'dames'
-        const btnReopen = document.getElementById('btn_reopen_asist');
-        if (btnReopen && (user.role.toLowerCase() === 'admin' || user.username === 'dames')) {
-            btnReopen.onclick = async () => {
-                if (confirm(`🚨 ¿Deseas REABRIR la asistencia para el día ${forcedDate}? \n\nEsto permitirá al asistente volver a pasar lista y descontará los registros actuales del acumulado de performance para evitar duplicados.`)) {
-                    btnReopen.disabled = true;
-                    btnReopen.textContent = "⌛ REABRIENDO...";
-                    await adminService.reopenAttendance(forcedDate);
-                    renderAsistenciaSection(container);
-                }
-            };
-        }
+        topActions.appendChild(btnSync);
+        topActions.appendChild(btnClose);
     }
-    
-    document.getElementById('asist_date_picker').onchange = (e) => {
-        forcedDate = e.target.value;
-        renderAsistenciaSection(container);
-    };
+
+    const picker = document.getElementById('asist_date_picker');
+    if (picker) {
+        picker.onchange = (e) => {
+            forcedDate = e.target.value;
+            renderAsistenciaSection(container);
+        };
+    }
   };
 
   const calculateRendimiento = (p) => {
@@ -1595,8 +1598,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   let kpiSearch = '';
 
   const renderKPIGraphsSection = (container) => {
-    const rawLog = adminService.getPerformanceLog();
-    if (!rawLog || rawLog.length === 0) {
+    let rawLog = adminService.getPerformanceLog();
+    if (!Array.isArray(rawLog)) rawLog = [];
+    if (rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
             <h4>Sin datos de Performance</h4>
@@ -1851,7 +1855,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderKPIReportSection = (container) => {
-    const rawLog = adminService.getPerformanceLog();
+    let rawLog = adminService.getPerformanceLog();
+    if (!Array.isArray(rawLog)) rawLog = [];
     if (!rawLog || rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Sin datos para el reporte</h4></div>`;
         return;
@@ -1986,7 +1991,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderPerformanceHistory = (container) => {
-    const log = adminService.getPerformanceLog();
+    let log = adminService.getPerformanceLog();
+    if (!Array.isArray(log)) {
+        console.warn("[PULSE] Performance log was not an array, fixing...");
+        log = [];
+    }
     
     // Función para exportar a Excel
     window.exportPerformanceToExcel = () => {
@@ -2637,7 +2646,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </thead>
                             <tbody>
                                 ${tQ.map(row => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                                         <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.Año}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
@@ -2846,20 +2855,21 @@ export const renderDashboard = async (container, user, onLogout) => {
             margins: { left: 0, right: 0, top: 0, bottom: 0, header: 0, footer: 0 },
             fitToPage: true,
             fitToWidth: 1,
-            fitToHeight: 0
+            fitToHeight: 0,
+            printTitlesRow: '1:6'
         }
     });
 
     // 7. Configurar anchos de columna
     ws.columns = [
-        { key: 'articulo', width: 12.13 }, // A
+        { key: 'articulo', width: 20.50 }, // A
         { key: 'ubicacion', width: 26.00 }, // B
-        { key: 'sku', width: 12.50 },      // C
+        { key: 'sku', width: 20.50 },      // C
         { key: 'tallas', width: 7.00 },     // D
-        { key: 'marcas', width: 18.00 },    // E
+        { key: 'marcas', width: 20.50 },    // E
         { key: 'gender', width: 18.00 },    // F
         { key: 'coleccion', width: 16.00 }, // G
-        { key: 'qty_buffer', width: 10.00 },// H
+        { key: 'qty_buffer', width: 13.60 },// H
         { key: 'qty_zona', width: 14.29 },  // I
         { key: 'tareas', width: 14.29 }     // J
     ];
@@ -3042,11 +3052,120 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
 
         ${isKpi ? `
-        <div style="display:flex; justify-content:center; align-items:center; height:400px; background:rgba(15,23,42,0.4); border-radius:15px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 0 30px rgba(79, 70, 229, 0.1);">
-            <div style="text-align:center;">
-                <div style="font-size:4rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.5));">📊</div>
-                <h2 style="color:#fff; margin-bottom:0.5rem;">Panel de KPI Tareas</h2>
-                <p style="color:var(--text-muted);">Próximamente: Gráficos de eficiencia y cumplimiento operativo.</p>
+        <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
+            <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
+            <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2);">
+                <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
+                        📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                    </h3>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                </div>
+                
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.5);">
+                            <tr style="color:rgba(255,255,255,0.5); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.2);">
+                                <th style="padding:1rem; text-align:left;">Fecha</th>
+                                <th style="padding:1rem; text-align:left;">Usuario</th>
+                                <th style="padding:1rem; text-align:center;">Unid. Indiv.</th>
+                                <th style="padding:1rem; text-align:left;">Inicio</th>
+                                <th style="padding:1rem; text-align:left;">Termino</th>
+                                <th style="padding:1rem; text-align:center;">Tiempo</th>
+                                <th style="padding:1rem; text-align:center;">Rendimiento %</th>
+                                <th style="padding:1rem; text-align:center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const indRows = [];
+                                tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
+                                    if (!t.inicio || !t.termino || t.status !== 'Finalizado') return;
+
+                                    const s = new Date(t.inicio);
+                                    const e = new Date(t.termino);
+                                    let ms = e - s;
+
+                                    // Descontar break si aplica
+                                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+                                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+                                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+                                    const overlapStart = Math.max(s, bStart);
+                                    const overlapEnd = Math.min(e, bEnd);
+                                    const overlap = Math.max(0, overlapEnd - overlapStart);
+                                    ms = ms - overlap;
+
+                                    const totalMinutes = Math.floor(ms / (1000 * 60));
+                                    if (totalMinutes <= 0) return;
+
+                                    const timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
+                                    const uList = [t.u1, t.u2].filter(u => u && u !== '---');
+                                    
+                                    if (uList.length === 2) {
+                                        const q1 = Math.ceil(t.qty / 2);
+                                        const q2 = Math.floor(t.qty / 2);
+                                        [ {u:t.u1, q:q1}, {u:t.u2, q:q2} ].forEach(entry => {
+                                            const uph = (entry.q / totalMinutes) * 60;
+                                            const pct = Math.round((uph / 150) * 100);
+                                            indRows.push({
+                                                fecha: t.fecha,
+                                                user: entry.u,
+                                                qty: entry.q,
+                                                inicio: t.inicio,
+                                                termino: t.termino,
+                                                time: timeStr,
+                                                pct: pct,
+                                                ok: uph >= 150
+                                            });
+                                        });
+                                    } else if (uList.length === 1) {
+                                        const uph = (t.qty / totalMinutes) * 60;
+                                        const pct = Math.round((uph / 150) * 100);
+                                        indRows.push({
+                                            fecha: t.fecha,
+                                            user: uList[0],
+                                            qty: t.qty,
+                                            inicio: t.inicio,
+                                            termino: t.termino,
+                                            time: timeStr,
+                                            pct: pct,
+                                            ok: uph >= 150
+                                        });
+                                    }
+                                });
+
+                                if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
+
+                                return indRows.map(r => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
+                                        <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
+                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
+                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
+                                            </div>
+                                            <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
+                                                ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('');
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2); display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medición: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
+                    <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
+                </div>
             </div>
         </div>` : `
         <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
@@ -3129,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     }
                                 }
                                 return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:all 0.2s; cursor:pointer;" onclick="window.assignTask('${t.id}')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
                                     <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
@@ -3343,11 +3462,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.processAlmacenajeTasks = processAlmacenajeTasks;
 
     window.clearCurrentShiftTasks = () => {
-        const targetDate = selectedTaskDate || getLogicalDate();
-        if (confirm(`⚠️ ¿Borrar todas las tareas "Pendientes" del día operativo ${targetDate.split('-').reverse().join('/')}?\n\n(No se borrarán las tareas asignadas o finalizadas)`)) {
-            almacenajeTasksCache = almacenajeTasksCache.filter(t => 
-                t.fecha !== targetDate || t.status === 'Asignado' || t.status === 'Finalizado'
-            );
+        if (confirm(`⚠️ ¿Borrar TODAS las tareas con status "CREADA" de todo el historial?\n\n(Esta acción es global y no importa la fecha. No se borrarán tareas asignadas o finalizadas)`)) {
+            almacenajeTasksCache = almacenajeTasksCache.filter(t => t.status !== 'Creada');
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
         }
@@ -3379,9 +3495,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnRef.style.opacity = '0.5';
             
             try {
-                // Sincronizar con el servidor (PULL GLOBAL)
+                // Sincronizar con el servidor (PULL GLOBAL DIRECTO)
                 const serverTasks = await adminService.loadAlmacenajeTasks();
-                if (serverTasks && serverTasks.length > 0) {
+                if (Array.isArray(serverTasks)) {
                     almacenajeTasksCache = serverTasks;
                 }
                 renderAlmacenajeTareas(container);
