@@ -1,10 +1,10 @@
-// ENGINE v16.0.4 - BETA MATRIX SYNC ENGINE
+// ENGINE v16.0.6 - BETA MATRIX SYNC ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "16.0.5-BETA";
+    this.version = "16.0.6-BETA";
     this.isRendered = false;
     this.inactivityTimeout = null;
     console.log(`[PULSE] App initialized on #${rootId}`);
