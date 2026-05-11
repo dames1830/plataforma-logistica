@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.7';
-import * as adminService from '../services/adminService.js?v=15.9.7';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.8';
+import * as adminService from '../services/adminService.js?v=15.9.8';
 
 
-const VERSION = '15.9.7-BETA';
-const CACHE_KEY = `logistics_v15_9_7_beta_clean_`;
+const VERSION = '15.9.8-BETA';
+const CACHE_KEY = `logistics_v15_9_8_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -391,7 +391,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:10px;">
-            LOGÍSTICA DAMES1830 
+            LOGÍSTICA DEAM1830 
             <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:10px;">v${VERSION.replace('-BETA','')}</span>
             <span style="background:#facc15; color:#000; padding:2px 10px; border-radius:6px; font-size:12px; font-weight:900; letter-spacing:1px; margin-left:10px; box-shadow: 0 0 10px rgba(250,204,21,0.3);">BETA</span>
           </h2>
@@ -3066,10 +3066,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
             </div>
             ` : `
-            <div style="flex:1; display:flex; justify-content:space-between; align-items:center;">
-                <h4 style="margin:0; color:var(--primary); font-size:0.8rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;">📊 Panel de Rendimiento Individual</h4>
-                <div style="font-size:0.75rem; color:var(--text-muted);">Módulo de Analítica Avanzada</div>
-            </div>
+            <div style="flex:1;"></div>
             `}
         </div>
 
@@ -3091,7 +3088,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
                             📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                         </h3>
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;"></div>
                     </div>
                     
                     <div style="overflow-x:auto; flex:1;">
