@@ -411,7 +411,7 @@ export const getAreaData = async (area) => {
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
   
-  if (area.endsWith('_activo') || area.endsWith('_reserva')) {
+  if (area.endsWith('_activo') || area.endsWith('_reserva') || area === 'tallas') {
       updateTablaTallas();
   }
 
