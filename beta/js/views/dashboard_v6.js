@@ -390,7 +390,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:#facc15">BETA</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v${VERSION}</span></h2>
+          <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
+            LOGÍSTICA <span style="color:#818cf8">DAMES1830</span> 
+            <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION.replace('-BETA','')}</span>
+            <span style="background:#facc15; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; letter-spacing:1px; margin-left:5px;">BETA</span>
+          </h2>
         </div>
       </div>
       <div class="user-profile">
