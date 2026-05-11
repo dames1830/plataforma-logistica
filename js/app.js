@@ -1,11 +1,11 @@
 
-// ENGINE v15.9.1 - BETA KPI UI CLEANUP ENGINE
+// ENGINE v15.9.3 - BETA KPI UI CLEANUP ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.9.1-BETA";
+    this.version = "15.9.3-BETA";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
