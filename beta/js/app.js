@@ -1,10 +1,10 @@
-// ENGINE v15.9.9 - BETA KPI UI CLEANUP ENGINE
+// ENGINE v16.0.0 - BETA TALLA LOGIC FIX ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "15.9.9-BETA";
+    this.version = "16.0.0-BETA";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();

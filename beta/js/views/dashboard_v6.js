@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=15.9.9';
-import * as adminService from '../services/adminService.js?v=15.9.9';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.0.0';
+import * as adminService from '../services/adminService.js?v=16.0.0';
 
 
-const VERSION = '15.9.9-BETA';
-const CACHE_KEY = `logistics_v15_9_9_beta_clean_`;
+const VERSION = '16.0.0-BETA';
+const CACHE_KEY = `logistics_v16_0_0_beta_clean_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -2985,7 +2985,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
-    
+    // [ESTRICTO] Sincronización del maestro de tallas (Tabla Virtual)
+    if (Object.keys(dataStore.tabla_tallas || {}).length === 0) updateTablaTallas();
+
     // SINCRONIZACIÓN CRÍTICA: Asegurar que el cache local tenga lo que el radar encontró
     if (adminService.adminStore.almacenaje_tasks) {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
@@ -3303,7 +3305,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || '<span style="color:#64748b; font-size:0.7rem;">(S/T)</span>'}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">
