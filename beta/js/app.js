@@ -1,10 +1,10 @@
-// ENGINE v16.0.1 - BETA AUTO-SYNC TALLA ENGINE
+// ENGINE v16.0.2 - BETA ADMIN ENGINE RECOVERY
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "16.0.1-BETA";
+    this.version = "16.0.2-BETA";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
