@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=15.8.6';
 
 
-const VERSION = '15.8.7-BETA';
-const CACHE_KEY = `logistics_v15_8_7_beta_prod_`;
+const VERSION = '15.8.8-BETA';
+const CACHE_KEY = `logistics_v15_8_8_beta_fix_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -390,7 +390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     <header class="topbar">
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:#facc15">BETA</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.7</span></h2>
+          <h2 style="font-weight:700; color:#fff;">LOGÍSTICA <span style="color:#facc15">BETA</span> <span style="font-size:15px; color:rgba(255,255,255,0.5); vertical-align:middle; margin-left:10px;">v15.8.8</span></h2>
         </div>
       </div>
       <div class="user-profile">
@@ -2482,7 +2482,18 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (tabId === 'almacenaje') {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
-    } else if (tabId === 'almacenaje' && activeSub === 'tareas_dia') {
+    } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
+        // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaña seleccionada
+        if (activeSub === 'kpi_tareas') {
+            almacenajeTaskMode = 'kpi';
+            localStorage.setItem('almacenajeTaskMode', 'kpi');
+        } else {
+            // Si viene de tareas_dia, asegurar que no esté en modo KPI
+            if (almacenajeTaskMode === 'kpi') {
+                almacenajeTaskMode = 'resumen';
+                localStorage.setItem('almacenajeTaskMode', 'resumen');
+            }
+        }
         renderAlmacenajeTareas(container);
     } else {
         const data = await getAreaData(tabId);
