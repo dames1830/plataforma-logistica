@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.2.2';
-import * as adminService from '../services/adminService.js?v=17.2.2';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.2.4';
+import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.2.3';
-const CACHE_KEY = `logistics_v17_2_3_shared_`;
+const VERSION = '17.2.4';
+const CACHE_KEY = `logistics_v17_2_4_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -340,12 +340,12 @@ export const renderDashboard = async (container, user, onLogout) => {
   await adminService.initializeAdminData();
   await loadAlmacenajeTasks();
   
-  // Heartbeat de Sincronización Global (Cada 30 seg)
+  // Heartbeat de Sincronización Global (Desactivado a petición del usuario v17.2.4)
+  /* 
   setInterval(async () => {
       await adminService.initializeAdminData();
       if (currentTab === 'almacenaje') {
           const synced = adminService.adminStore.almacenaje_tasks;
-          // SOLO actualizamos si el servidor tiene datos para no borrar lo local por error
           if (Array.isArray(synced) && synced.length > 0) {
               almacenajeTasksCache = synced;
               const container = document.getElementById('areaContent');
@@ -355,6 +355,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           }
       }
   }, 30000);
+  */
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
