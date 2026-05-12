@@ -7,13 +7,13 @@ const CACHE_KEY = `logistics_v1702_final_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
-let activeAdminSub = null; // DECLARACIÃ“N RECUPERADA
+let activeAdminSub = null; // DECLARACIN RECUPERADA
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
 const getLogicalDate = () => {
     const now = new Date();
     const hrs = now.getHours();
-    // Si son entre las 00:00 y las 06:00 AM, la fecha lÃ³gica es el dÃ­a anterior
+    // Si son entre las 00:00 y las 06:00 AM, la fecha lgica es el da anterior
     if (hrs >= 0 && hrs < 6) {
         const d = new Date(now);
         d.setDate(now.getDate() - 1);
@@ -33,7 +33,7 @@ try {
 } catch(e) { almacenajeTasksCache = []; }
 if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
 
-// --- PERSISTENCIA AVANZADA (IndexedDB vÃ­a csvHub) ---
+// --- PERSISTENCIA AVANZADA (IndexedDB va csvHub) ---
 const saveAlmacenajeTasks = async () => {
   try {
       // 1. Persistencia LOCAL inmediata (Seguridad total)
@@ -41,31 +41,31 @@ const saveAlmacenajeTasks = async () => {
       localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-      // 2. SincronizaciÃ³n Global INMEDIATA
+      // 2. Sincronizacin Global INMEDIATA
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
-          console.log("âœ… [PULSE] SincronizaciÃ³n Global de Almacenaje completada.");
+          console.log(" [PULSE] Sincronizacin Global de Almacenaje completada.");
       } else {
-          console.warn("âš ï¸ FallÃ³ la sincronizaciÃ³n con la nube.");
+          console.warn(" Fall la sincronizacin con la nube.");
       }
   } catch (e) { 
-      console.error("[PULSE] Error crÃ­tico al guardar en la nube:", e);
-      alert("ðŸš¨ Error crÃ­tico al conectar con el servidor.");
+      console.error("[PULSE] Error crtico al guardar en la nube:", e);
+      alert(" Error crtico al conectar con el servidor.");
   }
 };
 
 const loadAlmacenajeTasks = async () => {
   try {
-      // 1. SincronizaciÃ³n prioritaria con adminService (Nube)
+      // 1. Sincronizacin prioritaria con adminService (Nube)
       const syncedTasks = adminService.adminStore.almacenaje_tasks;
       if (Array.isArray(syncedTasks) && syncedTasks.length > 0) {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
-          console.log(`[PULSE] SincronizaciÃ³n NUBE exitosa: ${almacenajeTasksCache.length} tareas.`);
+          console.log(`[PULSE] Sincronizacin NUBE exitosa: ${almacenajeTasksCache.length} tareas.`);
           return;
       }
 
-      // 2. Fallback: Carga desde LocalStorage si la nube fallÃ³ o estÃ¡ vacÃ­a
+      // 2. Fallback: Carga desde LocalStorage si la nube fall o est vaca
       const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
       if (stored) {
           const localTasks = JSON.parse(stored);
@@ -78,53 +78,53 @@ const loadAlmacenajeTasks = async () => {
 };
 
 const TABS = [
-  { id: 'inicio', label: 'Inicio', icon: 'ðŸ ' },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: 'ðŸ“‹', subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: 'ðŸ—‚ï¸' }
+  { id: 'inicio', label: 'Inicio', icon: '' },
+  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '', subTabs: [
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '' }
   ]},
-  { id: 'picking', label: 'Picking', icon: 'ðŸ›’', subTabs: [
-    { id: 'archivo_picking', label: 'Archivo Picking', icon: 'ðŸ—‚ï¸' }
+  { id: 'picking', label: 'Picking', icon: '', subTabs: [
+    { id: 'archivo_picking', label: 'Archivo Picking', icon: '' }
   ]},
-  { id: 'packing', label: 'Packing', icon: 'ðŸ“¦', subTabs: [
-    { id: 'archivo_packing', label: 'Archivo Packing', icon: 'ðŸ—‚ï¸' }
+  { id: 'packing', label: 'Packing', icon: '', subTabs: [
+    { id: 'archivo_packing', label: 'Archivo Packing', icon: '' }
   ]},
-  { id: 'despacho', label: 'Despacho', icon: 'ðŸšš', subTabs: [
-    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: 'ðŸ—‚ï¸' }
+  { id: 'despacho', label: 'Despacho', icon: '', subTabs: [
+    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '' }
   ]},
-  { id: 'no_retail', label: 'NO RETAIL', icon: 'ðŸ¬', subTabs: [
-    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: 'ðŸ—‚ï¸' }
+  { id: 'no_retail', label: 'NO RETAIL', icon: '', subTabs: [
+    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '' }
   ]},
-  { id: 'recepcion', label: 'RecepciÃ³n', icon: 'ðŸ“¥', subTabs: [
-    { id: 'archivo_recepcion', label: 'Archivo RecepciÃ³n', icon: 'ðŸ—‚ï¸' }
+  { id: 'recepcion', label: 'Recepcin', icon: '', subTabs: [
+    { id: 'archivo_recepcion', label: 'Archivo Recepcin', icon: '' }
   ]},
-  { id: 'almacenaje', label: 'Almacenaje', icon: 'ðŸ­', subTabs: [
-    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: 'ðŸ—‚ï¸' },
-    { id: 'tareas_dia', label: 'Tareas DÃ­a', icon: 'ðŸ“‹' },
-    { id: 'kpi_tareas', label: 'KPI Tareas', icon: 'ðŸ“Š' }
+  { id: 'almacenaje', label: 'Almacenaje', icon: '', subTabs: [
+    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '' },
+    { id: 'tareas_dia', label: 'Tareas Da', icon: '' },
+    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '' }
   ]},
-  { id: 'buffer', label: 'Zona Buffer', icon: 'â³', subTabs: [
-    { id: 'maestros', label: 'Archivo Zona Buffer', icon: 'ðŸ—‚ï¸' },
-    { id: 'reportes', label: 'AnÃ¡lisis Buffer', icon: 'ðŸ“‰' },
-    { id: 'historial_buffer', label: 'Historial Buffer', icon: 'ðŸ“…' },
-    { id: 'kpi_buffer', label: 'Buffer KPI', icon: 'ðŸ“Š' }
+  { id: 'buffer', label: 'Zona Buffer', icon: '', subTabs: [
+    { id: 'maestros', label: 'Archivo Zona Buffer', icon: '' },
+    { id: 'reportes', label: 'Anlisis Buffer', icon: '' },
+    { id: 'historial_buffer', label: 'Historial Buffer', icon: '' },
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '' }
   ] },
-  { id: 'analisis_sku', label: 'AnÃ¡lisis SKU', icon: 'ðŸ”', subTabs: [
-    { id: 'archivo_analisis', label: 'Archivo AnÃ¡lisis SKU', icon: 'ðŸ—‚ï¸' },
-    { id: 'articulo_temp', label: 'ArtÃ­culo', icon: 'ðŸ‘•' }
+  { id: 'analisis_sku', label: 'Anlisis SKU', icon: '', subTabs: [
+    { id: 'archivo_analisis', label: 'Archivo Anlisis SKU', icon: '' },
+    { id: 'articulo_temp', label: 'Artculo', icon: '' }
   ] },
-  { id: 'admin_pers', label: 'AdministraciÃ³n', icon: 'ðŸ‘¥', subTabs: [
-    { id: 'trabajadores', label: 'Trabajadores', icon: 'ðŸ‘·' },
-    { id: 'usuarios', label: 'Usuarios', icon: 'ðŸ‘¥' },
-    { id: 'permisos', label: 'Permisos', icon: 'ðŸ›¡ï¸' },
-    { id: 'asistencia', label: 'Asistencia', icon: 'ðŸ“…' },
-    { id: 'performance', label: 'Performance', icon: 'ðŸ“ˆ', subTabs: [
-        { id: 'historial', label: 'Historial', icon: 'ðŸ“…' },
-        { id: 'graficos', label: 'KPI GrÃ¡ficos', icon: 'ðŸ“Š' },
-        { id: 'reporte', label: 'KPI Reporte', icon: 'ðŸ“‹' }
+  { id: 'admin_pers', label: 'Administracin', icon: '', subTabs: [
+    { id: 'trabajadores', label: 'Trabajadores', icon: '' },
+    { id: 'usuarios', label: 'Usuarios', icon: '' },
+    { id: 'permisos', label: 'Permisos', icon: '' },
+    { id: 'asistencia', label: 'Asistencia', icon: '' },
+    { id: 'performance', label: 'Performance', icon: '', subTabs: [
+        { id: 'historial', label: 'Historial', icon: '' },
+        { id: 'graficos', label: 'KPI Grficos', icon: '' },
+        { id: 'reporte', label: 'KPI Reporte', icon: '' }
     ]},
-    { id: 'rfs', label: 'RFÂ´s', icon: 'ðŸ”‹' }
+    { id: 'rfs', label: 'RFs', icon: '' }
   ] },
-  { id: 'config', label: 'ConfiguraciÃ³n', icon: 'âš™ï¸' }
+  { id: 'config', label: 'Configuracin', icon: '' }
 ];
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -140,7 +140,7 @@ window.downloadExcelDetail = async () => {
     const data = lastBufferResult;
     const workbook = new ExcelJS.Workbook();
 
-    // --- PESTAÃ‘A 1: MONTACARGA (FORMATO PREMIUM) ---
+    // --- PESTAA 1: MONTACARGA (FORMATO PREMIUM) ---
     const wsMonta = workbook.addWorksheet('Montacarga', { 
         properties: { tabColor: { argb: 'FFADD8E6' } },
         pageSetup: { printTitlesRow: '1:4', orientation: 'portrait' } 
@@ -164,7 +164,7 @@ window.downloadExcelDetail = async () => {
     row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
     const row4M = wsMonta.getRow(4);
-    row4M.values = ["NÂ° Paletas", "UBICACIÃ“N", "LPN", "QTY RESERVA"];
+    row4M.values = ["N Paletas", "UBICACIN", "LPN", "QTY RESERVA"];
     row4M.font = { bold: true, size: 14, name: 'Calibri' };
     row4M.eachCell((cell, colNumber) => {
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
@@ -192,12 +192,12 @@ window.downloadExcelDetail = async () => {
         });
     });
 
-    // --- PESTAÃ‘A 2: ANÃLISIS BUFFER (FORMATO PREMIUM) ---
-    const wsAnalisis = workbook.addWorksheet('AnÃ¡lisis Buffer', {
+    // --- PESTAA 2: ANLISIS BUFFER (FORMATO PREMIUM) ---
+    const wsAnalisis = workbook.addWorksheet('Anlisis Buffer', {
         properties: { tabColor: { argb: 'FF22C55E' } }, // VERDE SOLICITADO
         pageSetup: { printTitlesRow: '1:4' }
     });
-    // Re-ajuste de anchos para precisiÃ³n de pÃ­xeles reales (Pixels / 7.0 aprox)
+    // Re-ajuste de anchos para precisin de pxeles reales (Pixels / 7.0 aprox)
     wsAnalisis.columns = [
         { key: 'ubi', width: 27.5 }, // 193px
         { key: 'lpn', width: 28.5 }, // 200px
@@ -213,7 +213,7 @@ window.downloadExcelDetail = async () => {
     wsAnalisis.mergeCells('A1:I1');
     const row1A = wsAnalisis.getRow(1);
     row1A.height = 60;
-    row1A.getCell(1).value = 'ANÃLISIS BUFFER';
+    row1A.getCell(1).value = 'ANLISIS BUFFER';
     row1A.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
     row1A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -224,7 +224,7 @@ window.downloadExcelDetail = async () => {
     row2A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
     const row4A = wsAnalisis.getRow(4);
-    row4A.values = ["UBICACIÃ“N", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
+    row4A.values = ["UBICACIN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
     row4A.height = 25;
     row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 14, name: 'Calibri' };
     row4A.eachCell(cell => {
@@ -300,7 +300,7 @@ window.downloadExcelDetail = async () => {
     });
     [7, 8, 9].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
-    // --- OTRAS PESTAÃ‘AS ---
+    // --- OTRAS PESTAAS ---
     const addStandardSheet = (name, jsonData, tabColor = null) => {
         if (!jsonData || jsonData.length === 0) return;
         const ws = workbook.addWorksheet(name, { properties: { tabColor: tabColor ? { argb: tabColor } : undefined } });
@@ -316,12 +316,12 @@ window.downloadExcelDetail = async () => {
     addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
         'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
-    }))); // Sin color para evitar confusiÃ³n
+    }))); // Sin color para evitar confusin
 
     addStandardSheet('Tallas', Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla })));
     addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
     addStandardSheet('Sin Stock', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] === '7. SIN STOCK').map(d => ({
-        'NIVEL/AREA': d['NIVEL/AREA'], 'ARTÃCULO': d['ARTÃCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
+        'NIVEL/AREA': d['NIVEL/AREA'], 'ARTCULO': d['ARTCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
     })));
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -335,7 +335,7 @@ window.downloadExcelDetail = async () => {
 };
 
 window.downloadExcelZonas = () => {
-    alert("âš ï¸ Este reporte ahora estÃ¡ integrado en 'EXCEL DETALLE'.");
+    alert(" Este reporte ahora est integrado en 'EXCEL DETALLE'.");
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
@@ -344,9 +344,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   await adminService.initializeAdminData();
   await loadAlmacenajeTasks();
   await getAreaData('tallas'); // [AUTO] Sincronizar maestro de tallas al arranque
-  updateTablaTallas(); // [FORZAR] Reconstruir mapa de bÃºsqueda para evitar (S/T)
+  updateTablaTallas(); // [FORZAR] Reconstruir mapa de bsqueda para evitar (S/T)
   
-  // Heartbeat de SincronizaciÃ³n Global (Cada 30 seg)
+  // Heartbeat de Sincronizacin Global (Cada 30 seg)
   setInterval(async () => {
       await adminService.initializeAdminData();
       if (currentTab === 'almacenaje') {
@@ -362,23 +362,23 @@ export const renderDashboard = async (container, user, onLogout) => {
       }
   }, 30000);
   
-  // Soporte para Reinicio Forzado vÃ­a URL (?forceReset=1)
+  // Soporte para Reinicio Forzado va URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('forceReset') === '1' && user.role === 'admin') {
-      console.log("ðŸš€ [PULSE] Detectado parÃ¡metro forceReset. Ejecutando limpieza maestro...");
+      console.log(" [PULSE] Detectado parmetro forceReset. Ejecutando limpieza maestro...");
       await adminService.resetProductionData();
-      alert("âœ… Limpieza de datos de prueba completada con Ã©xito vÃ­a URL.");
-      // Limpiar el parÃ¡metro de la URL sin recargar para no entrar en bucle
+      alert(" Limpieza de datos de prueba completada con xito va URL.");
+      // Limpiar el parmetro de la URL sin recargar para no entrar en bucle
       window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   adminService.initPermissions(TABS);
   container.className = 'dashboard-layout animate-fade-in';
   
-  // [CRÃTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
+  // [CRTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
   const rolePermissions = adminService.getPermissions(user.role) || {};
 
-  // [PROTECCIÃ“N] Evitar crash si no hay pestaÃ±as permitidas
+  // [PROTECCIN] Evitar crash si no hay pestaas permitidas
   const allowedTabs = TABS.filter(t => {
       if (user.role === 'admin') return true;
       if (t.id === 'inicio') return true;
@@ -396,7 +396,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:10px;">
-            LOGÃSTICA DEAM1830 
+            LOGSTICA DEAM1830 
             <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:10px;">v${VERSION.replace('-BETA','')}</span>
             <span style="background:#facc15; color:#000; padding:2px 10px; border-radius:6px; font-size:12px; font-weight:900; letter-spacing:1px; margin-left:10px; box-shadow: 0 0 10px rgba(250,204,21,0.3);">BETA</span>
           </h2>
@@ -428,7 +428,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">${t.icon} ${t.label}</a>`).join('');
     document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { 
         currentTab = e.currentTarget.dataset.id; 
-        activeAdminSub = null; // Resetear sub-pestaÃ±a al cambiar de secciÃ³n
+        activeAdminSub = null; // Resetear sub-pestaa al cambiar de seccin
         renderNav(); 
         renderTabContent(); 
     }));
@@ -447,13 +447,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
-    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'GestiÃ³n de Inventario');
-    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'GestiÃ³n de Picking');
-    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'GestiÃ³n de Packing');
-    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'GestiÃ³n de Despacho');
-    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'GestiÃ³n NO RETAIL');
-    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'GestiÃ³n de RecepciÃ³n');
-    else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'GestiÃ³n de Almacenaje');
+    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestin de Inventario');
+    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestin de Picking');
+    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestin de Packing');
+    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestin de Despacho');
+    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestin NO RETAIL');
+    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestin de Recepcin');
+    else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestin de Almacenaje');
     else if (currentTab === 'admin_pers') await renderAdminTab(contentArea, user, TABS);
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -467,14 +467,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const now = new Date();
     
-    contentTitle.style.display = 'none'; // Ocultar tÃ­tulo estÃ¡ndar para el Home
+    contentTitle.style.display = 'none'; // Ocultar ttulo estndar para el Home
     contentSubtitle.style.display = 'none';
 
     contentArea.innerHTML = `
         <div class="animate-fade-in" style="margin-bottom:2.5rem;">
             <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:2.5rem; border-radius:20px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); position:relative; overflow:hidden;">
                 <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary); filter:blur(100px); opacity:0.2;"></div>
-                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">Â¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
                 <div style="margin-top:0.8rem; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
                     <p style="margin:0; color:#cbd5e1; font-size:1.1rem; font-weight:500;">Bienvenido al centro de control operativo.</p>
                     <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">
@@ -486,7 +486,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="kpi-grid" id="homeKpiGrid"></div>
     `;
 
-    // Reloj dinÃ¡mico
+    // Reloj dinmico
     if (window.homeClockInterval) clearInterval(window.homeClockInterval);
     window.homeClockInterval = setInterval(() => {
         const clockEl = document.getElementById('homeClock');
@@ -513,7 +513,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderStockTab = async () => {
-    contentSubtitle.textContent = "Existencias FÃ­sicas";
+    contentSubtitle.textContent = "Existencias Fsicas";
     const perms = adminService.getPermissions(user.role) || {};
     
     contentArea.innerHTML = `<div id="stockSub" style="display:flex; flex-direction:column; gap:1.2rem;"></div>`;
@@ -524,7 +524,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (user.role === 'admin' || perms['stock_stockReserva'] === 1) renderUploadArea(sub, 'stockReserva', res, '.xlsx');
 
     if (sub.children.length === 0) {
-        sub.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para ver las Ã¡reas de Stock.</div>`;
+        sub.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para ver las reas de Stock.</div>`;
     }
   };
 
@@ -542,12 +542,12 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${isLoaded ? '#22c55e' : '#64748b'};">
           <div style="display:flex; align-items:center; gap:1.2rem;">
               <div style="width:36px; height:36px; background:${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${isLoaded ? '#22c55e' : 'var(--text-muted)'}; border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)'};">
-                  ${ext === '.csv' ? 'ðŸ“„' : 'ðŸ“Š'}
+                  ${ext === '.csv' ? '' : ''}
               </div>
               <div style="display:flex; flex-direction:column;">
                   <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
                   <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
-                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACÃO'}</span>
+                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACO'}</span>
                       ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
                                     <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString()} regs</span>` : ''}
                   </div>
@@ -556,18 +556,18 @@ export const renderDashboard = async (container, user, onLogout) => {
           
           <div style="display:flex; align-items:center; gap:1.5rem;">
               <div style="text-align:right; min-width:180px;">
-                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÃšLTIMA CARGA</div>
+                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">LTIMA CARGA</div>
                   <div style="font-size:0.75rem; color:${isLoaded ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
               </div>
               
               <div style="display:flex; gap:0.4rem;">
                   <label title="Subir Nuevo Archivo" style="background:${isLoaded ? 'rgba(79, 70, 229, 0.1)' : 'var(--primary)'}; color:${isLoaded ? 'var(--primary)' : '#fff'}; border:1px solid ${isLoaded ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                       <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
-                      ${isLoaded ? 'ðŸ”„' : 'ðŸ“¤'}
+                      ${isLoaded ? '' : ''}
                   </label>
                   ${isLoaded ? `
                     <button id="del_${area}" title="Quitar Archivo" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444'">
-                        ðŸ—‘ï¸
+                        
                     </button>
                   ` : ''}
               </div>
@@ -598,7 +598,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const delBtn = document.getElementById(`del_${area}`);
     if(delBtn) delBtn.addEventListener('click', async () => {
-        if(confirm(`Â¿EstÃ¡s seguro de que quieres quitar el archivo de ${label}?`)) {
+        if(confirm(`Ests seguro de que quieres quitar el archivo de ${label}?`)) {
             delBtn.disabled = true;
             delBtn.innerHTML = '...';
             await clearAreaData(area, user.username);
@@ -609,7 +609,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   let activeBufferSub = 'reportes';
   const renderBufferTab = async () => {
-    contentSubtitle.textContent = "AnÃ¡lisis de ReposiciÃ³n";
+    contentSubtitle.textContent = "Anlisis de Reposicin";
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
     const stored = localStorage.getItem('lastBufferKPI');
@@ -674,8 +674,8 @@ export const renderDashboard = async (container, user, onLogout) => {
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
               <div style="display:flex; align-items:center; gap:1rem;">
-                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);">âš¡ PROCESAR ANÃLISIS</button>
-                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';">ðŸ§¹ REINICIAR MEMORIA</button>
+                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);"> PROCESAR ANLISIS</button>
+                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';"> REINICIAR MEMORIA</button>
               </div>
               <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
             </div>
@@ -683,21 +683,21 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>`;
         const results = document.getElementById('resultsArea');
         
-        console.log("[PULSE] Vinculando botones de acciÃ³n...");
+        console.log("[PULSE] Vinculando botones de accin...");
         
-        // ACTIVAR BOTONES PRIMERO (Prioridad MÃ¡xima)
+        // ACTIVAR BOTONES PRIMERO (Prioridad Mxima)
         const btnCalc = document.getElementById('btn_calc');
         const btnReset = document.getElementById('btn_reset_cache');
 
         if (btnCalc) {
             btnCalc.onclick = async () => {
-                console.log("[PULSE] Click Procesar AnÃ¡lisis");
-                btnCalc.disabled = true; btnCalc.innerHTML = 'âš™ï¸ CALCULANDO...';
-                results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de AnÃ¡lisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
+                console.log("[PULSE] Click Procesar Anlisis");
+                btnCalc.disabled = true; btnCalc.innerHTML = ' CALCULANDO...';
+                results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de Anlisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
 
                 setTimeout(async () => {
                     try {
-                        // VALIDACIÃ“N EXPLÃCITA DE ARCHIVOS
+                        // VALIDACIN EXPLCITA DE ARCHIVOS
                         if (!dataStore.buffer_activo) throw new Error("Falta cargar el archivo STOCK ACTIVO.");
                         if (!dataStore.buffer_reserva) throw new Error("Falta cargar el archivo STOCK RESERVA.");
                         if (!dataStore.articulos) throw new Error("Falta cargar el archivo MAESTRO.");
@@ -714,7 +714,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             
                             // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
                             setTimeout(async () => {
-                                if (confirm("Â¿Deseas guardar este anÃ¡lisis desglosado por FUENTE en el Historial?")) {
+                                if (confirm("Deseas guardar este anlisis desglosado por FUENTE en el Historial?")) {
                                     const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
                                     let successCount = 0;
                                     for (const s of sources) {
@@ -724,17 +724,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             if (saved) successCount++;
                                         }
                                     }
-                                    if (successCount > 0) alert(`âœ… Se guardaron ${successCount} reportes en el historial.`);
+                                    if (successCount > 0) alert(` Se guardaron ${successCount} reportes en el historial.`);
                                 }
                             }, 300);
                         } else {
-                            alert('âš ï¸ ERROR: Faltan archivos maestros.');
+                            alert(' ERROR: Faltan archivos maestros.');
                         }
                     } catch (err) {
                         console.error("Error en proceso:", err);
-                        alert("Error crÃ­tico: " + err.message);
+                        alert("Error crtico: " + err.message);
                     } finally {
-                        btnCalc.disabled = false; btnCalc.innerHTML = 'âš¡ PROCESAR ANÃLISIS';
+                        btnCalc.disabled = false; btnCalc.innerHTML = ' PROCESAR ANLISIS';
                     }
                 }, 500);
             };
@@ -742,7 +742,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         if (btnReset) {
             btnReset.onclick = () => {
-                if(confirm('Â¿REINICIAR TODA LA MEMORIA?\n\nEsto borrarÃ¡ todos los archivos cargados localmente para solucionar bloqueos.')) {
+                if(confirm('REINICIAR TODA LA MEMORIA?\n\nEsto borrar todos los archivos cargados localmente para solucionar bloqueos.')) {
                     Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
                     localStorage.removeItem('lastBufferKPI');
                     window.location.reload();
@@ -750,12 +750,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
         }
 
-        // CARGAR RESULTADOS CACHEADOS AL FINAL (ProtecciÃ³n contra fallos)
+        // CARGAR RESULTADOS CACHEADOS AL FINAL (Proteccin contra fallos)
         if (lastBufferKPI) {
             try {
                 renderBufferResults(results, lastBufferKPI);
             } catch (err) {
-                console.warn("[PULSE] Error cargando cachÃ© de resultados (incompatible), ignorando...", err);
+                console.warn("[PULSE] Error cargando cach de resultados (incompatible), ignorando...", err);
                 localStorage.removeItem('lastBufferKPI');
                 results.innerHTML = '';
             }
@@ -816,7 +816,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
-    lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportaciÃ³n inmediata
+    lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportacin inmediata
     const ts = data.timestamp || new Date().toLocaleString();
     const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = '580px';
@@ -826,7 +826,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthLeft};">
             <!-- COLUMNA IZQUIERDA: ZONAS + SKU -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÃLISIS BUFFER ZONAS ${tsHtml}</h3></div>
+                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANLISIS BUFFER ZONAS ${tsHtml}</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">ATD %</th></tr></thead>
                     <tbody style="color:#eee;">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.08); font-weight:900;':''}">
@@ -839,7 +839,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
-                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÃLISIS BUFFER SKU ${tsHtml}</h3></div>
+                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANLISIS BUFFER SKU ${tsHtml}</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
                     <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente.includes('TOTAL') ? 'background:rgba(255,255,255,0.04); font-weight:700;' : ''}">
@@ -856,7 +856,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="padding:0.7rem; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.3); text-align:center;"><h3 style="color:#ef4444; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#eee;">
                     <div style="text-align:center;">
-                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad ArtÃ­culos</div>
+                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artculos</div>
                         <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary?.articulos || 0).toLocaleString()}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
@@ -873,17 +873,17 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
             ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6', ts)}
-            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÃLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
+            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
         </div>
     `;
 
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(34,197,94,0.3);">ðŸ“¥ EXCEL DETALLE</button>
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(34,197,94,0.3);"> EXCEL DETALLE</button>
         `;
         document.getElementById('btn_exp_buffer').onclick = () => {
-            if(!data.detalle || !data.detalle.length) alert('âš ï¸ ERROR: Datos no disponibles.');
+            if(!data.detalle || !data.detalle.length) alert(' ERROR: Datos no disponibles.');
             else window.downloadExcelDetail();
         };
     }
@@ -910,14 +910,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                 role: uRole.value
             };
             
-            // Deshabilitar botÃ³n durante el proceso
+            // Deshabilitar botn durante el proceso
             btnSubmit.disabled = true;
-            btnSubmit.textContent = "â³ GUARDANDO...";
+            btnSubmit.textContent = " GUARDANDO...";
 
             const success = await adminService.saveUser(newUser);
             
             if (success) {
-                alert(isEditing ? 'ðŸš€ Usuario actualizado con Ã©xito' : 'ðŸš€ Usuario creado con Ã©xito');
+                alert(isEditing ? ' Usuario actualizado con xito' : ' Usuario creado con xito');
                 form.reset();
                 if (isEditing) {
                     uUser.readOnly = false;
@@ -929,12 +929,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 }
                 renderAdminTab();
             } else {
-                alert('âš ï¸ El usuario se guardÃ³ localmente pero fallÃ³ la sincronizaciÃ³n con el servidor.');
+                alert(' El usuario se guard localmente pero fall la sincronizacin con el servidor.');
                 renderAdminTab();
             }
         } catch (err) {
             console.error("[PULSE] Error al guardar usuario:", err);
-            alert("âŒ Error crÃ­tico: " + err.message);
+            alert(" Error crtico: " + err.message);
         } finally {
             btnSubmit.disabled = false;
             if (!isEditing) btnSubmit.textContent = "GUARDAR USUARIO";
@@ -973,7 +973,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = () => {
-        if (confirm('Â¿EstÃ¡s seguro de eliminar permanentemente este usuario?')) {
+        if (confirm('Ests seguro de eliminar permanentemente este usuario?')) {
             adminService.deleteUser(btn.dataset.user);
             renderAdminTab();
         }
@@ -986,14 +986,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos DinÃ¡mica</h3>
-            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">âœ¨ Haz clic en un mÃ³dulo para expandir sus sub-pestaÃ±as</span>
+            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Dinmica</h3>
+            <span style="font-size:0.7rem; color:var(--success); font-weight:600;"> Haz clic en un mdulo para expandir sus sub-pestaas</span>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
-                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÃ“DULO / SECCIÃ“N</th>
+                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MDULO / SECCIN</th>
                         ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
@@ -1006,7 +1006,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         rows.push(`
                         <tr class="main-tab-row" data-tab-id="${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02); cursor:${hasSub ? 'pointer' : 'default'};">
                             <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff; display:flex; align-items:center; gap:8px;">
-                                ${hasSub ? '<span class="toggle-icon">â–¶</span>' : ''}
+                                ${hasSub ? '<span class="toggle-icon"></span>' : ''}
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
@@ -1017,7 +1017,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             }).join('')}
                         </tr>`);
 
-                        // Nivel 2: Filas de sub-pestaÃ±as
+                        // Nivel 2: Filas de sub-pestaas
                         if (hasSub) {
                             t.subTabs.forEach(sub => {
                                 const subKey = `${t.id}_${sub.id}`;
@@ -1025,7 +1025,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 rows.push(`
                                 <tr class="sub-row-${t.id} ${hasSubSub ? 'main-tab-row' : ''}" data-tab-id="${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.01); display:none; background:rgba(255,255,255,0.01); cursor:${hasSubSub ? 'pointer' : 'default'};">
                                     <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border); display:flex; align-items:center; gap:8px;">
-                                        ${hasSubSub ? '<span class="toggle-icon">â–¶</span>' : ''}
+                                        ${hasSubSub ? '<span class="toggle-icon"></span>' : ''}
                                         ${sub.icon} ${sub.label}
                                     </td>
                                     ${allRoles.map(r => {
@@ -1036,7 +1036,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     }).join('')}
                                 </tr>`);
 
-                                // Nivel 3: Filas de sub-sub-pestaÃ±as (Performance -> Historial/Graficos/Reporte)
+                                // Nivel 3: Filas de sub-sub-pestaas (Performance -> Historial/Graficos/Reporte)
                                 if (hasSubSub) {
                                     sub.subTabs.forEach(ss => {
                                         const ssKey = `${sub.id}_${ss.id}`;
@@ -1061,12 +1061,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div style="margin-top:1rem; padding:1rem; background:rgba(79,70,229,0.05); border-radius:8px; border:1px solid rgba(79,70,229,0.2);">
             <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
-                <b>Tip:</b> Haz clic en los mÃ³dulos con el icono â–¶ para expandir sus secciones. El anidamiento permite un control quirÃºrgico de lo que cada rol puede ver.
+                <b>Tip:</b> Haz clic en los mdulos con el icono  para expandir sus secciones. El anidamiento permite un control quirrgico de lo que cada rol puede ver.
             </p>
         </div>
     `;
 
-    // LÃ³gica de AcordeÃ³n (Universal por data-tab-id)
+    // Lgica de Acorden (Universal por data-tab-id)
     document.querySelectorAll('.main-tab-row').forEach(row => {
         row.addEventListener('click', (e) => {
             if (e.target.type === 'checkbox') return;
@@ -1076,7 +1076,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const icon = row.querySelector('.toggle-icon');
             const isVisible = subRows[0].style.display !== 'none';
             subRows.forEach(sr => sr.style.display = isVisible ? 'none' : 'table-row');
-            if(icon) icon.textContent = isVisible ? 'â–¶' : 'â–¼';
+            if(icon) icon.textContent = isVisible ? '' : '';
             row.style.background = isVisible ? 'rgba(255,255,255,0.02)' : 'rgba(79,70,229,0.05)';
         });
     });
@@ -1143,7 +1143,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="background:rgba(255,255,255,0.03); padding:0.8rem 1.2rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05); box-shadow:0 4px 15px rgba(0,0,0,0.2); display:flex; align-items:center; gap:15px;">
                 <div>
                     <h3 style="color:var(--primary); margin:0; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">Asistencia Diaria</h3>
-                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;">ðŸ—“ï¸ ${dateFormatted}</p>
+                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;"> ${dateFormatted}</p>
                 </div>
                 <input type="date" id="asist_date_picker" value="${forcedDate}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.4rem; border-radius:6px; font-size:0.8rem; outline:none;">
             </div>
@@ -1158,7 +1158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th>
                         <th style="padding:0.8rem; text-align:center;">Estado</th>
                         <th style="padding:0.8rem; text-align:center;">Puntualidad</th>
-                        <th style="padding:0.8rem; text-align:center;">JustificaciÃ³n</th>
+                        <th style="padding:0.8rem; text-align:center;">Justificacin</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1183,14 +1183,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÃ</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">S</button>
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
-                                    <option value="Descanso MÃ©dico" ${rec?.justification==='Descanso MÃ©dico'?'selected':'' } style="background:#1e293b;">DESCANSO MÃ‰DICO</option>
+                                    <option value="Descanso Mdico" ${rec?.justification==='Descanso Mdico'?'selected':'' } style="background:#1e293b;">DESCANSO MDICO</option>
                                     <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
                                     <option value="Otros" ${rec?.justification==='Otros'?'selected':'' } style="background:#1e293b;">OTROS</option>
                                 </select>
@@ -1202,7 +1202,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
-    // --- ACCIONES DINÃMICAS (WINDOW SCOPE) ---
+    // --- ACCIONES DINMICAS (WINDOW SCOPE) ---
     window.updateAsist = (dni, val) => {
         const node = localState.find(s => String(s.dni) === String(dni));
         if (node) {
@@ -1230,45 +1230,45 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
-    // --- RENDERIZADO DE BOTONES DE ACCIÃ“N (PARTE SUPERIOR) ---
+    // --- RENDERIZADO DE BOTONES DE ACCIN (PARTE SUPERIOR) ---
     const topActions = document.getElementById('attendance_top_actions');
     if (topActions) {
         const btnSync = document.createElement('button');
         btnSync.className = 'btn-secondary';
         btnSync.title = 'Sincronizar con la Nube';
         btnSync.style = 'padding:10px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); cursor:pointer; font-size:1rem; border:1px solid rgba(255,255,255,0.1); color:#fff;';
-        btnSync.innerHTML = 'ðŸ”„ Sincronizar';
+        btnSync.innerHTML = ' Sincronizar';
         btnSync.onclick = async () => {
-            btnSync.innerHTML = 'âŒ›...';
+            btnSync.innerHTML = '...';
             btnSync.disabled = true;
             await adminService.initializeAdminData();
             renderAsistenciaSection(container);
-            alert("â˜ï¸ Nube sincronizada correctamente");
+            alert(" Nube sincronizada correctamente");
         };
 
         const btnClose = document.createElement('button');
         btnClose.className = 'btn-primary';
         btnClose.style = 'background:var(--primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
-        btnClose.innerHTML = 'ðŸ’¾ CERRAR ASISTENCIA';
+        btnClose.innerHTML = ' CERRAR ASISTENCIA';
 
         if (existing?.finalized) {
-            btnClose.innerHTML = 'âœ… ASISTENCIA CERRADA';
+            btnClose.innerHTML = ' ASISTENCIA CERRADA';
             btnClose.style.background = 'var(--success)';
             btnClose.style.color = '#000';
             btnClose.disabled = true;
             btnClose.style.cursor = 'default';
             
-            // Usamos la sesiÃ³n de auth.js para verificar al usuario
+            // Usamos la sesin de auth.js para verificar al usuario
             const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
             if (session.username === 'dames') {
                 const btnReopen = document.createElement('button');
                 btnReopen.className = 'btn-danger';
-                btnReopen.innerHTML = 'ðŸ”“ REABRIR';
+                btnReopen.innerHTML = ' REABRIR';
                 btnReopen.style = 'padding:0.6rem 1.2rem; border-radius:8px; font-weight:800; cursor:pointer; background:#ef4444; font-size:0.85rem;';
                 btnReopen.onclick = async () => {
-                    if (confirm("Â¿Seguro que deseas REABRIR esta fecha? Se podrÃ¡ editar nuevamente.")) {
+                    if (confirm("Seguro que deseas REABRIR esta fecha? Se podr editar nuevamente.")) {
                         btnReopen.disabled = true;
-                        btnReopen.textContent = "âŒ› ABRIENDO...";
+                        btnReopen.textContent = " ABRIENDO...";
                         await adminService.reopenAttendance(forcedDate);
                         renderAsistenciaSection(container);
                     }
@@ -1277,24 +1277,24 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         } else {
             btnClose.onclick = async () => {
-                if (confirm(`Â¿Confirmas cerrar la asistencia para el dÃ­a ${forcedDate}?`)) {
+                if (confirm(`Confirmas cerrar la asistencia para el da ${forcedDate}?`)) {
                     try {
                         btnClose.disabled = true;
-                        btnClose.textContent = "âŒ› ENVIANDO...";
+                        btnClose.textContent = " ENVIANDO...";
                         const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
                         if (success) {
-                            alert("âœ… InformaciÃ³n enviada a la nube");
+                            alert(" Informacin enviada a la nube");
                             renderAsistenciaSection(container);
                         } else {
-                            alert("âŒ Error de envÃ­o - Intente nuevamente");
+                            alert(" Error de envo - Intente nuevamente");
                             btnClose.disabled = false;
-                            btnClose.textContent = "ðŸ’¾ CERRAR ASISTENCIA";
+                            btnClose.textContent = " CERRAR ASISTENCIA";
                         }
                     } catch (err) {
                         console.error("Critical Send Error:", err);
-                        alert("âŒ Error fatal en el envÃ­o. Se ha reiniciado el botÃ³n.");
+                        alert(" Error fatal en el envo. Se ha reiniciado el botn.");
                         btnClose.disabled = false;
-                        btnClose.textContent = "ðŸ’¾ CERRAR ASISTENCIA";
+                        btnClose.textContent = " CERRAR ASISTENCIA";
                     }
                 }
             };
@@ -1315,7 +1315,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   const calculateRendimiento = (p) => {
       let score = 0;
       if (p.asistencia === 'P') score += 30;
-      if (p.puntualidad === 'SÃ') score += 10;
+      if (p.puntualidad === 'S') score += 10;
       
       const prod = parseFloat(p.produccion) || 0;
       const bpa = parseFloat(p.bpa) || 0;
@@ -1339,7 +1339,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
             <h4>Sin datos de Performance</h4>
-            <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o mÃ¡s dÃ­as para generar estadÃ­sticas.</p>
+            <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o ms das para generar estadsticas.</p>
         </div>`;
         return;
     }
@@ -1427,29 +1427,29 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Rendimiento General</h4>
                 <h2 style="margin:0.5rem 0; font-size:2.2rem; color:${getStatusColor(globalAvg)}; font-weight:800;">${globalAvg}%</h2>
                 <span style="font-size:0.7rem; background:${getStatusColor(globalAvg)}22; color:${getStatusColor(globalAvg)}; padding:2px 8px; border-radius:10px; font-weight:700;">
-                    ${globalAvg >= 90 ? 'EXCELENTE' : (globalAvg >= 80 ? 'REGULAR' : 'CRÃTICO')}
+                    ${globalAvg >= 90 ? 'EXCELENTE' : (globalAvg >= 80 ? 'REGULAR' : 'CRTICO')}
                 </span>
             </div>
             <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid var(--primary);">
-                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">DÃ­as Registrados</h4>
+                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Das Registrados</h4>
                 <h2 style="margin:0.5rem 0; font-size:2.2rem; color:#fff; font-weight:800;">${sortedDates.length}</h2>
                 <span style="font-size:0.7rem; color:var(--text-muted);">Historial acumulado</span>
             </div>
             <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid #fcd34d;">
                 <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Top Operario</h4>
                 <h2 style="margin:0.5rem 0; font-size:1.1rem; color:#fff; line-height:1.2; font-weight:700;">${workerRanking[0]?.name || '-'}</h2>
-                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">â­ ${workerRanking[0]?.avg || 0}%</span>
+                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;"> ${workerRanking[0]?.avg || 0}%</span>
             </div>
         </div>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
             <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">ðŸ“ˆ EvoluciÃ³n de Rendimiento</h4>
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;"> Evolucin de Rendimiento</h4>
                 <div style="height:300px; position:relative; overflow:hidden;">
                     <canvas id="chartEvolution"></canvas>
                 </div>
             </div>
             <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">ðŸ† Top 5 Operarios</h4>
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;"> Top 5 Operarios</h4>
                 <div style="height:300px; position:relative; overflow:hidden;">
                     <canvas id="chartRanking"></canvas>
                 </div>
@@ -1459,8 +1459,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem;">
                 <div>
-                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">ðŸ“‰ ANALÃTICA DE INCIDENCIAS</h4>
-                    <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* AnÃ¡lisis consolidado de puntualidad y asistencia</span>
+                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;"> ANALTICA DE INCIDENCIAS</h4>
+                    <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* Anlisis consolidado de puntualidad y asistencia</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                      <span style="font-size:0.75rem; color:#fff; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Semanas:</span>
@@ -1476,15 +1476,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#fb923c; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">ðŸš«</span> TARDANZAS - SEM ${selectedWeeks.join(', ')}
+                        <span style="font-size:1.1rem;"></span> TARDANZAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(251, 146, 60, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">NÂ°</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÃAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DAS</th>
                                     <th style="padding:0.4rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARD.</th>
                                 </tr>
                             </thead>
@@ -1505,15 +1505,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA CENTRAL: FALTAS INJUSTIFICADAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#f87171; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">âš ï¸</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
+                        <span style="font-size:1.1rem;"></span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(248, 113, 113, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">NÂ°</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÃAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DAS</th>
                                     <th style="padding:0.4rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
@@ -1534,15 +1534,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA DERECHA: FALTAS JUSTIFICADAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">âœ…</span> FALTAS JUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
+                        <span style="font-size:1.1rem;"></span> FALTAS JUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(6, 182, 212, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">NÂ°</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÃAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DAS</th>
                                     <th style="padding:0.4rem; text-align:center; background:rgba(6, 182, 212, 0.1); color:#06b6d4; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
@@ -1608,7 +1608,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const exportData = data.map(d => ({ 
             'Periodo': `${kpiStart} al ${kpiEnd}`,
             'Operario': d.name, 
-            'DÃ­as Trabajados': d.diasTrabajados, 
+            'Das Trabajados': d.diasTrabajados, 
             'Justificaciones': d.justificaciones, 
             'Faltas': d.faltas, 
             'Tardanzas': d.tardanzas, 
@@ -1641,12 +1641,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             
             if (hasJustification) {
                 w.justificaciones++;
-                // Los dÃ­as con justificaciÃ³n NO se cuentan en el promedio (se divide entre menos dÃ­as)
+                // Los das con justificacin NO se cuentan en el promedio (se divide entre menos das)
             } else {
                 w.faltas++; 
                 w.sum += rend; 
                 w.count++; 
-                // Sin justificaciÃ³n: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
+                // Sin justificacin: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
             }
         }
     });
@@ -1657,7 +1657,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div class="glass-panel" style="padding:1.5rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
-                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800;">ðŸ“Š CONSOLIDADO KPI</h4>
+                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800;"> CONSOLIDADO KPI</h4>
                 <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
                     <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px;">
                          <span style="font-size:0.7rem; color:var(--text-muted);">DESDE:</span>
@@ -1665,13 +1665,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                          <span style="font-size:0.7rem; color:var(--text-muted);">HASTA:</span>
                          <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:#fff; font-size:0.75rem; outline:none;">
                     </div>
-                    <input type="text" id="kpi_search" placeholder="ðŸ” Buscar operario..." value="${kpiSearch}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; outline:none; width:200px;">
-                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px;">ðŸ“¥ EXPORTAR</button>
+                    <input type="text" id="kpi_search" placeholder=" Buscar operario..." value="${kpiSearch}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; outline:none; width:200px;">
+                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px;"> EXPORTAR</button>
                 </div>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);"><th style="padding:0.8rem; text-align:left;">OPERARIO</th><th style="padding:0.8rem; text-align:center;">DÃAS TRAB.</th><th style="padding:0.8rem; text-align:center;">JUSTIFICACIÃ“N</th><th style="padding:0.8rem; text-align:center;">FALTAS</th><th style="padding:0.8rem; text-align:center;">TARDANZAS</th><th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th></tr></thead>
+                    <thead><tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);"><th style="padding:0.8rem; text-align:left;">OPERARIO</th><th style="padding:0.8rem; text-align:center;">DAS TRAB.</th><th style="padding:0.8rem; text-align:center;">JUSTIFICACIN</th><th style="padding:0.8rem; text-align:center;">FALTAS</th><th style="padding:0.8rem; text-align:center;">TARDANZAS</th><th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th></tr></thead>
                     <tbody>${consolidado.map(w => `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td><td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados}</td><td style="padding:0.8rem; text-align:center; color:#fcd34d;">${w.justificaciones}</td><td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? '#ef4444' : 'var(--text-muted)'};">${w.faltas}</td><td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? '#f97316' : 'var(--text-muted)'};">${w.tardanzas}</td><td style="padding:0.8rem; text-align:center;"><div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">${w.avg}%</div></td></tr>`).join('')}</tbody>
                 </table>
@@ -1695,7 +1695,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const perfTabDef = TABS.find(t => t.id === 'admin_pers').subTabs.find(s => s.id === 'performance');
     const perms = adminService.getPermissions(user.role) || {};
     
-    // Triple anidamiento: AdministraciÃ³n -> Performance -> (Historial/Graficos/Reporte)
+    // Triple anidamiento: Administracin -> Performance -> (Historial/Graficos/Reporte)
     const allowedSubSubs = perfTabDef.subTabs.filter(ss => {
         if (user.role === 'admin') return true;
         return perms[`performance_${ss.id}`] === 1 || perms['performance'] === 1; // Fallback a permiso general
@@ -1732,7 +1732,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         log = [];
     }
     
-    // FunciÃ³n para exportar a Excel
+    // Funcin para exportar a Excel
     window.exportPerformanceToExcel = () => {
         if (!log.length) return alert('No hay datos para exportar.');
         try {
@@ -1745,10 +1745,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                     'Nombre Completo': nombreCompleto,
                     'Asistencia': p.asistencia,
                     'Puntualidad': p.puntualidad,
-                    'ProducciÃ³n (1-10)': p.produccion,
+                    'Produccin (1-10)': p.produccion,
                     'BPA (1-10)': p.bpa,
                     'Supervisor (1-10)': p.supervisor,
-                    'JustificaciÃ³n': (p.justification && p.justification !== '') ? 'SI' : 'NO',
+                    'Justificacin': (p.justification && p.justification !== '') ? 'SI' : 'NO',
                     'Rendimiento %': p.rendimiento
                 };
             });
@@ -1760,7 +1760,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         } catch (e) { alert("Error al generar el archivo Excel."); }
     };
 
-    // LÃ³gica de agrupamiento y Promedio
+    // Lgica de agrupamiento y Promedio
     const grouped = log.reduce((acc, p) => {
         if (!acc[p.date]) acc[p.date] = [];
         acc[p.date].push(p);
@@ -1773,7 +1773,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h3 style="color:var(--primary); margin:0;">Historial de Performance Diaria</h3>
             <button onclick="exportPerformanceToExcel()" class="btn" style="width:auto; background:#10b981; padding:0.6rem 1.2rem; font-size:0.8rem; font-weight:800; border-radius:8px; display:flex; align-items:center; gap:8px;">
-                <span>ðŸ“Š</span> EXPORTAR A EXCEL
+                <span></span> EXPORTAR A EXCEL
             </button>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
@@ -1784,10 +1784,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <th style="padding:0.8rem; text-align:left;">TRABAJADOR / DNI</th>
                         <th style="padding:0.8rem; text-align:center;">ASISTENCIA</th>
                         <th style="padding:0.8rem; text-align:center;">PUNTUALIDAD</th>
-                        <th style="padding:0.8rem; text-align:center;">PRODUCCIÃ“N</th>
+                        <th style="padding:0.8rem; text-align:center;">PRODUCCIN</th>
                         <th style="padding:0.8rem; text-align:center;">BPA</th>
                         <th style="padding:0.8rem; text-align:center;">SUPERVISOR</th>
-                        <th style="padding:0.8rem; text-align:center;">JUSTIFICACIÃ“N</th>
+                        <th style="padding:0.8rem; text-align:center;">JUSTIFICACIN</th>
                         <th style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1);">RENDIMIENTO %</th>
                     </tr>
                 </thead>
@@ -1799,7 +1799,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <!-- CABECERA DE FECHA -->
                         <tr class="perf-date-header" data-date="${date}" style="cursor:pointer; background:rgba(79,70,229,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
                             <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">
-                                <span style="margin-right:10px; color:var(--primary); font-size:1rem;">ðŸ“…</span> 
+                                <span style="margin-right:10px; color:var(--primary); font-size:1rem;"></span> 
                                 <span style="color:#60a5fa;">${date}</span> 
                                 <small style="margin-left:15px; color:rgba(255,255,255,0.3); font-weight:400;">(${entries.length} registros)</small>
                             </td>
@@ -1809,7 +1809,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </tr>
                         <!-- FILAS DE TRABAJADORES -->
                         ${entries.map((p, idx) => {
-                            // BÃºsqueda robusta por DNI (sin espacios y como string)
+                            // Bsqueda robusta por DNI (sin espacios y como string)
                             const worker = adminService.getWorkers().find(w => {
                                 const wDni = (w.dni || w.Dni || '').toString().trim();
                                 const pDni = (p.dni || '').toString().trim();
@@ -1832,8 +1832,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 </select>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÃ'?'var(--success)':'#ef4444'}; font-weight:700; outline:none; cursor:pointer;">
-                                    <option value="SÃ" ${p.puntualidad==='SÃ'?'selected':''}>SÃ</option>
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='S'?'var(--success)':'#ef4444'}; font-weight:700; outline:none; cursor:pointer;">
+                                    <option value="S" ${p.puntualidad==='S'?'selected':''}>S</option>
                                     <option value="NO" ${p.puntualidad==='NO'?'selected':''}>NO</option>
                                 </select>
                             </td>
@@ -1854,11 +1854,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                         </tr>`; }).join('')}
                         `;
-                    }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del dÃ­a para generar datos.</td></tr>'}
+                    }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del da para generar datos.</td></tr>'}
                 </tbody>
             </table>
         </div>
-        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Haz clic en una fecha para expandir/contraer. Los campos de producciÃ³n, BPA y supervisor (escala 1-10) actualizan el % de rendimiento automÃ¡ticamente.</p>
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Haz clic en una fecha para expandir/contraer. Los campos de produccin, BPA y supervisor (escala 1-10) actualizan el % de rendimiento automticamente.</p>
     `;
 
     // Event listeners para Colapsar/Expandir
@@ -1871,12 +1871,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
     });
 
-    // Mejorar ediciÃ³n y navegaciÃ³n (Keyboard Friendly)
+    // Mejorar edicin y navegacin (Keyboard Friendly)
     document.querySelectorAll('.edit-perf-log').forEach((input, index, all) => {
-        // Auto-selecciÃ³n al enfocar
+        // Auto-seleccin al enfocar
         input.onfocus = () => { if(input.select) input.select(); };
 
-        // NavegaciÃ³n por flechas o TAB
+        // Navegacin por flechas o TAB
         input.onkeydown = (e) => {
             const rowsInTable = Array.from(document.querySelectorAll('.edit-perf-log'));
             const currentIndex = rowsInTable.indexOf(e.target);
@@ -1891,7 +1891,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const prev = rowsInTable[currentIndex - colsPerRow];
                 if (prev) prev.focus();
             } else if (e.key === 'ArrowRight' && (e.target.type !== 'number' || e.target.selectionEnd === e.target.value.length)) {
-                // Navegar derecha si no es nÃºmero o si el cursor estÃ¡ al final
+                // Navegar derecha si no es nmero o si el cursor est al final
                 const next = rowsInTable[currentIndex + 1];
                 if (next) next.focus();
             } else if (e.key === 'ArrowLeft' && (e.target.type !== 'number' || e.target.selectionStart === 0)) {
@@ -1900,7 +1900,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         };
 
-        // Cambio y cÃ¡lculo instantÃ¡neo (Sin re-render total para no perder foco)
+        // Cambio y clculo instantneo (Sin re-render total para no perder foco)
         input.onchange = (e) => {
             const { date, dni, f: field } = e.target.dataset;
             let val = e.target.value;
@@ -1923,9 +1923,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 
                 // Actualizar color si es select
                 if (field === 'asistencia') e.target.style.color = val === 'P' ? 'var(--success)' : '#ef4444';
-                if (field === 'puntualidad') e.target.style.color = val === 'SÃ' ? 'var(--success)' : '#ef4444';
+                if (field === 'puntualidad') e.target.style.color = val === 'S' ? 'var(--success)' : '#ef4444';
                 
-                // Actualizar indicador de JustificaciÃ³n
+                // Actualizar indicador de Justificacin
                 const cellJust = document.getElementById(`just-${dni}-${date}`);
                 if (cellJust) {
                     const hasJ = (entry.justification && entry.justification !== '');
@@ -1951,44 +1951,44 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderRFSection = (container) => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h3 style="color:var(--primary); margin:0;">GestiÃ³n de Equipos RF</h3>
-            <button class="btn" style="width:auto; background:var(--primary); padding:0.5rem 1.2rem; font-size:0.8rem;">âž• REGISTRAR EQUIPO</button>
+            <h3 style="color:var(--primary); margin:0;">Gestin de Equipos RF</h3>
+            <button class="btn" style="width:auto; background:var(--primary); padding:0.5rem 1.2rem; font-size:0.8rem;"> REGISTRAR EQUIPO</button>
         </div>
         <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">VersiÃ³n v12.4.36 | Â© 2026 Pulse LogÃ­stica</p>
-                 <span style="font-size:3rem; opacity:0.3;">ðŸ”‹</span>
+                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versin v12.4.36 |  2026 Pulse Logstica</p>
+                 <span style="font-size:3rem; opacity:0.3;"></span>
             </div>
-            <h4 style="color:#fff;">MÃ³dulo de Equipos RF (Mantenimiento)</h4>
-            <p style="font-size:0.85rem; max-width:400px; margin:0.5rem auto;">PrÃ³ximamente podrÃ¡s gestionar nÃºmeros de serie, asignaciones diarias y estado de baterÃ­as de los terminales RF.</p>
+            <h4 style="color:#fff;">Mdulo de Equipos RF (Mantenimiento)</h4>
+            <p style="font-size:0.85rem; max-width:400px; margin:0.5rem auto;">Prximamente podrs gestionar nmeros de serie, asignaciones diarias y estado de bateras de los terminales RF.</p>
         </div>
     `;
   };
 
   const renderConfigTab = async () => {
-    contentSubtitle.textContent = "Panel de Control TÃ©cnico";
+    contentSubtitle.textContent = "Panel de Control Tcnico";
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-          <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">âš™ï¸ PARÃMETROS</a>
-          <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">ðŸŒ CONEXIÃ“N</a>
-          <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">ðŸ› ï¸ MANTENIMIENTO</a>
+          <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"> PARMETROS</a>
+          <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"> CONEXIN</a>
+          <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"> MANTENIMIENTO</a>
         </nav><div id="configContent"></div>`;
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeConfigSub = e.target.dataset.s; renderConfigTab(); }));
     
     if (activeConfigSub === 'parametros') {
-        document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">ConfiguraciÃ³n de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
+        document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">Configuracin de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
     } else if (activeConfigSub === 'mantenimiento') {
         document.getElementById('configContent').innerHTML = `
             <div class="glass-panel" style="max-width:450px; padding:1.5rem; border: 1px solid rgba(239, 68, 68, 0.2);">
                 <h4 style="color:#f87171; font-size:0.95rem; margin-top:0;">Zona de Peligro</h4>
-                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta acciÃ³n no se puede deshacer.</p>
-                <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;">âš ï¸ REINICIAR ASISTENCIA Y PERFORMANCE</button>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta accin no se puede deshacer.</p>
+                <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;"> REINICIAR ASISTENCIA Y PERFORMANCE</button>
             </div>
         `;
         document.getElementById('resetDataBtn').onclick = async () => {
-            if (confirm("ðŸš¨ Â¿ESTÃS SEGURO? Se borrarÃ¡ TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarÃ¡n.")) {
+            if (confirm(" ESTS SEGURO? Se borrar TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarn.")) {
                 await adminService.resetProductionData();
-                alert("âœ… Se han reiniciado los datos. La aplicaciÃ³n se recargarÃ¡.");
+                alert(" Se han reiniciado los datos. La aplicacin se recargar.");
                 window.location.reload();
             }
         };
@@ -2008,7 +2008,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div style="text-align:center; padding:2rem;">
             <div class="spinner"></div>
-            <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer dÃ­a...</p>
+            <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer da...</p>
         </div>`;
     
     const history = await fetchBufferHistory();
@@ -2022,7 +2022,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem;">
-            <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer dÃ­a</h3>
+            <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer da</h3>
             <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
                 <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
                     <thead>
@@ -2050,7 +2050,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
                                     <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
                                     <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">ðŸ‘ï¸</button>
+                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;"></button>
                                     </td>
                                 </tr>`;
                             }
@@ -2093,7 +2093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const history = await fetchBufferHistory();
     
     if (!history || history.length < 2) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">Se requieren al menos 2 reportes para generar comparativas y grÃ¡ficos de tendencia.</p></div>`;
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">Se requieren al menos 2 reportes para generar comparativas y grficos de tendencia.</p></div>`;
         return;
     }
 
@@ -2163,20 +2163,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     document.getElementById('logoutBtn').addEventListener('click', onLogout);
   }
   // =============================================
-  // MOTOR DE SINCRONIZACIÃ“N EN TIEMPO REAL (v11.3.6)
+  // MOTOR DE SINCRONIZACIN EN TIEMPO REAL (v11.3.6)
   // =============================================
   const startRealTimeSync = () => {
-      // Evitar mÃºltiples intervalos si se re-renderiza el dashboard
+      // Evitar mltiples intervalos si se re-renderiza el dashboard
       if (window._pulseSyncInterval) clearInterval(window._pulseSyncInterval);
       
       window._pulseSyncInterval = setInterval(async () => {
-          // No sincronizar si el usuario estÃ¡ en Asistencia (Evita el "parpadeo" reportado)
+          // No sincronizar si el usuario est en Asistencia (Evita el "parpadeo" reportado)
           if (currentTab === 'admin_pers' && activeAdminSub === 'asistencia') return;
 
           const isIdle = !document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA');
           
           if (document.visibilityState === 'visible' && isIdle) {
-              console.log("ðŸ”„ [PULSE] SincronizaciÃ³n automÃ¡tica de datos...");
+              console.log(" [PULSE] Sincronizacin automtica de datos...");
               await adminService.initializeAdminData();
               if (currentTab === 'inicio') renderTabContent(true); 
           }
@@ -2215,15 +2215,15 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, actKey, dataStore[actKey], '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, resKey, dataStore[resKey], '.xlsx', 'STOCK RESERVA');
         if (tabId === 'almacenaje') {
-            renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÃCULOS');
+            renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTCULOS');
         }
     } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
-        // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaÃ±a seleccionada
+        // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaa seleccionada
         if (activeSub === 'kpi_tareas') {
             almacenajeTaskMode = 'kpi';
             localStorage.setItem('almacenajeTaskMode', 'kpi');
         } else {
-            // Si viene de tareas_dia, asegurar que no estÃ© en modo KPI
+            // Si viene de tareas_dia, asegurar que no est en modo KPI
             if (almacenajeTaskMode === 'kpi') {
                 almacenajeTaskMode = 'resumen';
                 localStorage.setItem('almacenajeTaskMode', 'resumen');
@@ -2238,7 +2238,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderAnalisisSKUTab = async () => {
-    contentSubtitle.textContent = "Consulta profunda de ArtÃ­culos";
+    contentSubtitle.textContent = "Consulta profunda de Artculos";
     const tabDef = TABS.find(t => t.id === 'analisis_sku');
     const perms = adminService.getPermissions(user.role) || {};
     const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`analisis_sku_${sub.id}`] === 1);
@@ -2270,23 +2270,23 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (activeAnalisisSub !== 'articulo_temp') {
         skuBuf.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">ðŸš§</div>
-                <h4>MÃ³dulo en Desarrollo</h4>
-                <p>Esta secciÃ³n estarÃ¡ disponible prÃ³ximamente.</p>
+                <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;"></div>
+                <h4>Mdulo en Desarrollo</h4>
+                <p>Esta seccin estar disponible prximamente.</p>
             </div>`;
         return;
     }
 
     const runGlobalAnalysis = async () => {
       const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
-      const oldHtml = btn ? btn.innerHTML : 'âš¡ PROCESAR REPORTE ARTÃCULO';
+      const oldHtml = btn ? btn.innerHTML : ' PROCESAR REPORTE ARTCULO';
 
       if (!dataStore.stockActivo || !dataStore.stockReserva) {
-          alert('âš ï¸ ATENCIÃ“N: Primero debes cargar "STOCK ACTIVO" y "STOCK RESERVA" en el mÃ³dulo correspondiente.');
+          alert(' ATENCIN: Primero debes cargar "STOCK ACTIVO" y "STOCK RESERVA" en el mdulo correspondiente.');
           return;
       }
 
-      if (btn) { btn.disabled = true; btn.innerHTML = 'âš™ï¸ PROCESANDO...'; }
+      if (btn) { btn.disabled = true; btn.innerHTML = ' PROCESANDO...'; }
       
       setTimeout(async () => {
         try {
@@ -2309,16 +2309,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                   });
                   localStorage.setItem(CACHE_KEY + 'lastBufferKPI', JSON.stringify(lastBufferResult));
               } catch(e) {
-                  console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirÃ¡n en esta sesiÃ³n.", e);
+                  console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirn en esta sesin.", e);
               }
               renderAnalisisSKUTab();
           } else {
-              alert('âš ï¸ ERROR: El anÃ¡lisis no generÃ³ datos.');
+              alert(' ERROR: El anlisis no gener datos.');
               if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
           }
         } catch (err) {
           console.error(err);
-          alert('âŒ Error crÃ­tico: ' + err.message);
+          alert(' Error crtico: ' + err.message);
           if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
         }
       }, 100);
@@ -2332,10 +2332,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
                 <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">ARTICULO POR TEMPORADA</h3>
                 <p style="color:var(--text-muted); max-width:500px; margin:0 auto 2.5rem;">
-                    Presiona el botÃ³n para consolidar el Stock Activo y Reserva por ArtÃ­culo y Temporada.
+                    Presiona el botn para consolidar el Stock Activo y Reserva por Artculo y Temporada.
                 </p>
                 <button id="btn_run_global" class="btn" style="max-width:400px; padding:1.2rem; font-weight:800; font-size:1rem; letter-spacing:1px; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);">
-                    âš¡ PROCESAR REPORTE ARTÃCULO
+                     PROCESAR REPORTE ARTCULO
                 </button>
             </div>
         `;
@@ -2356,13 +2356,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         <!-- BOTONES ARRIBA (FUERA DEL MARGEN) -->
         <div style="display:flex; gap:1rem; margin-bottom:1.5rem; padding-left:0.5rem;">
             <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(79,70,229,0.05); border:1px solid var(--primary); font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='rgba(79,70,229,0.05)'">
-                ðŸ”„ RE-PROCESAR TODO
+                 RE-PROCESAR TODO
             </button>
             <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(16,185,129,0.05); border:1px solid #10b981; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#10b981'" onmouseout="this.style.background='rgba(16,185,129,0.05)'">
-                ðŸ“¥ EXPORTAR TEMPORADA
+                 EXPORTAR TEMPORADA
             </button>
             <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(251,191,36,0.05); border:1px solid #fbbf24; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#fbbf24'" onmouseout="this.style.background='rgba(251,191,36,0.05)'">
-                ðŸ“Š DETALLE OBS.GEN
+                 DETALLE OBS.GEN
             </button>
         </div>
 
@@ -2374,7 +2374,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
                         <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">ARTICULO POR TEMPORADA</h3>
                         <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                            ðŸ“… ${data.timestamp || '00/00/0000, 00:00:00'}
+                             ${data.timestamp || '00/00/0000, 00:00:00'}
                         </span>
                     </div>
 
@@ -2382,7 +2382,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
                             <thead>
                                 <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
-                                    <th style="text-align:left; padding:1rem 0.5rem; width:130px;">AÃ‘O/TEMPORADA</th>
+                                    <th style="text-align:left; padding:1rem 0.5rem; width:130px;">AO/TEMPORADA</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q1</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q2</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q3</th>
@@ -2393,7 +2393,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <tbody>
                                 ${tQ.map(row => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.AÃ±o}</td>
+                                        <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.Ao}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q3 === 0 ? '0.15' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
@@ -2422,7 +2422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 
                 <!-- REPORTE OBSOLESCENCIA -->
                 <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 15px rgba(16,185,129,0.15); display:flex; flex-direction:column;">
-                    <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;">â³ OBSOLESCENCIA</h4>
+                    <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;"> OBSOLESCENCIA</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">TIPO OBSOLENCIA</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
@@ -2434,7 +2434,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 <!-- REPORTE G. GENDER -->
                 <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(251,191,36,0.5); box-shadow:0 0 15px rgba(251,191,36,0.15); display:flex; flex-direction:column;">
-                    <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;">ðŸ‘¥ G. GENDER</h4>
+                    <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;"> G. GENDER</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">G. GENDER</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
@@ -2482,8 +2482,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     try {
         const stock = await getAreaData('almacenaje_activo');
         const maestro = dataStore.articulos;
-        if (!stock || !stock.length) { alert("âš ï¸ Primero debes cargar el 'Stock Activo' en la pestaÃ±a Archivo."); return; }
-        if (!maestro || !maestro.length) { alert("âš ï¸ Falta cargar el Maestro de ArtÃ­culos."); return; }
+        if (!stock || !stock.length) { alert(" Primero debes cargar el 'Stock Activo' en la pestaa Archivo."); return; }
+        if (!maestro || !maestro.length) { alert(" Falta cargar el Maestro de Artculos."); return; }
 
         const logicalDate = manualDate || getLogicalDate();
         almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
@@ -2492,10 +2492,10 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
         const filtered = stock.filter(row => {
-            const area = String(row['Ãƒrea'] || row['Area'] || row['Ãrea'] || '').trim().toUpperCase();
-            const ubi = String(row['UbicaciÃ³n actual'] || row['Ubicacion'] || row['UbicaciÃ³n'] || '').trim().toUpperCase();
+            const area = String(row['rea'] || row['Area'] || row['rea'] || '').trim().toUpperCase();
+            const ubi = String(row['Ubicacin actual'] || row['Ubicacion'] || row['Ubicacin'] || '').trim().toUpperCase();
             
-            // [REGLA CRÃTICA] Omitir ubicaciones de PreePack (15 dÃ­gitos)
+            // [REGLA CRTICA] Omitir ubicaciones de PreePack (15 dgitos)
             if (ubi.startsWith('CDBUFFER-C')) return false;
 
             return allowedAreas.some(a => area.includes(a));
@@ -2516,11 +2516,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const groups = {};
         filtered.forEach(row => {
-            const skuFull = String(row['ArtÃƒculo'] || row['Articulo'] || row['ArtÃ­culo'] || row['Sku'] || '').trim();
+            const skuFull = String(row['Artculo'] || row['Articulo'] || row['Artculo'] || row['Sku'] || '').trim();
             const sku7 = skuFull.substring(0, 7);
-            const area = String(row['Ãƒrea'] || row['Area'] || row['Ãrea'] || '').trim().toUpperCase();
+            const area = String(row['rea'] || row['Area'] || row['rea'] || '').trim().toUpperCase();
             const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
-            const ubi = String(row['UbicaciÃ³n actual'] || row['Ubicacion'] || row['UbicaciÃ³n'] || '').trim();
+            const ubi = String(row['Ubicacin actual'] || row['Ubicacion'] || row['Ubicacin'] || '').trim();
             const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
             if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
@@ -2539,8 +2539,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const finalTasks = [];
         
-        // --- [NUEVA LÃ“GICA DE HUECOS] ---
-        // 1. Mapear quÃ© nÃºmeros de "TareaX" ya estÃ¡n ocupados hoy
+        // --- [NUEVA LGICA DE HUECOS] ---
+        // 1. Mapear qu nmeros de "TareaX" ya estn ocupados hoy
         const usedNumbers = new Set();
         almacenajeTasksCache.forEach(t => {
             if (t.fecha === logicalDate) {
@@ -2549,7 +2549,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         });
 
-        // 2. FunciÃ³n para obtener el siguiente ID libre
+        // 2. Funcin para obtener el siguiente ID libre
         const getNextFreeId = () => {
             let n = 1;
             while (usedNumbers.has(n)) n++;
@@ -2587,7 +2587,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         await saveAlmacenajeTasks(); 
         renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
     } catch (e) {
-        alert("ðŸš¨ Error de CÃ¡lculo: " + e.message);
+        alert(" Error de Clculo: " + e.message);
     }
   };
 
@@ -2595,7 +2595,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (!almacenajeTasksCache.length) { alert("No hay tareas para exportar."); return; }
     
     const workbook = new ExcelJS.Workbook();
-    const ws = workbook.addWorksheet('Tareas DÃ­a', {
+    const ws = workbook.addWorksheet('Tareas Da', {
         properties: { tabColor: { argb: 'FF4F46E5' } },
         pageSetup: { 
             margins: { left: 0, right: 0, top: 0, bottom: 0, header: 0, footer: 0 },
@@ -2620,12 +2620,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         { key: 'tareas', width: 14.29 }     // J
     ];
 
-    // 3. Toda la pestaÃ±a en fuente 16
+    // 3. Toda la pestaa en fuente 16
     ws.eachRow((row) => {
         row.font = { size: 16, name: 'Calibri' };
     });
 
-    // 1. Crear 5 filas (implÃ­cito al empezar en la 6 para el header)
+    // 1. Crear 5 filas (implcito al empezar en la 6 para el header)
     // 5. En la celda A2 escribir Nombres, A3 Hora Inicio, A4 Hora Inicio
     ws.getCell('A2').value = 'Nombres';
     ws.getCell('A3').value = 'Hora Inicio';
@@ -2644,7 +2644,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // 2. Fila 6 Columnas A hasta la J, Fondo Negro, texto blanco en negrita
     const headerRow = ws.getRow(6);
-    headerRow.values = ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "ColecciÃ³n", "Qty Buffer", "Qty Zona", "Tareas"];
+    headerRow.values = ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Coleccin", "Qty Buffer", "Qty Zona", "Tareas"];
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
     headerRow.eachCell((cell) => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
@@ -2716,30 +2716,30 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderAlmacenajeTareas = (container) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
-    // [ESTRICTO] SincronizaciÃ³n del maestro de tallas (Tabla Virtual)
+    // [ESTRICTO] Sincronizacin del maestro de tallas (Tabla Virtual)
     if (Object.keys(dataStore.tabla_tallas || {}).length === 0) updateTablaTallas();
 
-    // SINCRONIZACIÃ“N CRÃTICA: Asegurar que el cache local tenga lo que el radar encontrÃ³
+    // SINCRONIZACIN CRTICA: Asegurar que el cache local tenga lo que el radar encontr
     if (adminService.adminStore.almacenaje_tasks) {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
     }
     const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache] : [];
     
-    // [ORDENAMIENTO JERÃRQUICO] 1. Fecha Descendente (MÃ¡s reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
+    // [ORDENAMIENTO JERRQUICO] 1. Fecha Descendente (Ms reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
     tasks.sort((a, b) => {
         if (!a || !b) return 0;
         // Primero comparar fechas
         const dateA = a.fecha || '';
         const dateB = b.fecha || '';
-        if (dateA !== dateB) return dateB.localeCompare(dateA); // MÃ¡s reciente primero
+        if (dateA !== dateB) return dateB.localeCompare(dateA); // Ms reciente primero
 
-        // Si la fecha es igual, comparar nÃºmero de tarea
+        // Si la fecha es igual, comparar nmero de tarea
         const numA = parseInt(String(a.id || '').replace('Tarea', '')) || 0;
         const numB = parseInt(String(b.id || '').replace('Tarea', '')) || 0;
         return numA - numB;
     });
 
-    // LÃ³gica de AgrupaciÃ³n para Historial
+    // Lgica de Agrupacin para Historial
     const getWeekNumber = (d) => {
         const date = new Date(d);
         date.setHours(0, 0, 0, 0);
@@ -2767,8 +2767,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         return `
             <div style="margin-bottom:8px;">
                 <div onclick="window.toggleWeek('${w}')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 15px; background:rgba(255,255,255,0.03); border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:700; color:#fff;">
-                    <span>ðŸ“… ${w}</span>
-                    <span>${isExpanded ? 'â–¼' : 'â–¶'}</span>
+                    <span> ${w}</span>
+                    <span>${isExpanded ? '' : ''}</span>
                 </div>
                 ${isExpanded ? Object.keys(days).sort().reverse().map(d => {
                     const [y, m, day] = d.split('-');
@@ -2787,17 +2787,17 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
             ${!isKpi ? `
             <nav style="display:flex; gap:1.5rem;">
-                <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">ðŸ“Š RESUMEN</a>
-                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">ðŸ” DETALLE</a>
+                <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;"> RESUMEN</a>
+                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;"> DETALLE</a>
             </nav>
             ${!isDetail ? `
             <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
-                    ðŸ”„
+                    
                 </button>
-                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">âš™ï¸ PROCESAR TAREAS</button>
-                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">ðŸ—‘ï¸</button>
-                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">ðŸ“¥ EXCEL TAREAS</button>
+                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;"> PROCESAR TAREAS</button>
+                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes"></button>
+                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);"> EXCEL TAREAS</button>
             </div>
             ` : ''}
             ` : `
@@ -2821,7 +2821,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2); flex:1; display:flex; flex-direction:column;">
                     <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
-                            ðŸ“Š PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                             PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                         </h3>
                         <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;"></div>
                     </div>
@@ -2897,7 +2897,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         }
                                     });
 
-                                    if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad para esta selecciÃ³n.</td></tr>`;
+                                    if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad para esta seleccin.</td></tr>`;
 
                                     return indRows.map(r => `
                                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
@@ -2915,7 +2915,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             </td>
                                             <td style="padding:0.8rem 1rem; text-align:center;">
                                                 <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
-                                                    ${r.ok ? 'CUMPLIÃ“' : 'BAJO'}
+                                                    ${r.ok ? 'CUMPLI' : 'BAJO'}
                                                 </span>
                                             </td>
                                         </tr>
@@ -2926,12 +2926,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>
                     
                     <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2); display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de mediciÃ³n: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
-                        <button class="btn" onclick="window.exportAlmacenajeExcel()" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">ðŸ“¥ EXPORTAR KPI</button>
+                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medicin: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
+                        <button class="btn" onclick="window.exportAlmacenajeExcel()" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;"> EXPORTAR KPI</button>
                     </div>
                 </div>
                 ` : `
-                <!-- TABLA DE TAREAS DÃA / DETALLE -->
+                <!-- TABLA DE TAREAS DA / DETALLE -->
                 <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
@@ -2948,7 +2948,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:center;">Productividad</th>
                                     <th style="padding:1rem; text-align:center;">Objetivo</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
-                                    <th style="padding:1rem; text-align:center;">Acción</th>
+                                    <th style="padding:1rem; text-align:center;">Accin</th>
                                 </tr>
                             ` : `
                                 <tr>
@@ -2987,16 +2987,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const hrs = Math.floor(totalMin / 60);
                                     const mins = totalMin % 60;
                                     
-                                    // Usamos concatenación tradicional para evitar problemas con backticks en el cálculo
+                                    // Usamos concatenacin tradicional para evitar problemas con backticks en el clculo
                                     productividad = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
 
                                     if (totalMin > 0) {
                                         const uph = (t.qty / totalMin) * 60;
                                         if (uph >= 300) {
-                                            objetivo = 'CUMPLIÓ';
+                                            objetivo = 'CUMPLI';
                                             objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
                                         } else {
-                                            objetivo = 'NO CUMPLIÓ';
+                                            objetivo = 'NO CUMPLI';
                                             objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
                                         }
                                     }
@@ -3019,8 +3019,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
-                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
+                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;"></button>
+                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;"></button>
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
@@ -3056,10 +3056,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
-    window.processAlmacenajeTasks = () => { if (confirm("Â¿Deseas procesar el stock actual para generar tareas? Esto se acumularÃ¡ en el historial.")) processAlmacenajeTasks(); };
+    window.processAlmacenajeTasks = () => { if (confirm("Deseas procesar el stock actual para generar tareas? Esto se acumular en el historial.")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
     window.resetTask = (id) => {
-        if (confirm(`Â¿Reiniciar la tarea ${id}? Se borrarÃ¡n los usuarios y horas asignadas.`)) {
+        if (confirm(`Reiniciar la tarea ${id}? Se borrarn los usuarios y horas asignadas.`)) {
             const t = almacenajeTasksCache.find(x => x.id === id);
             if (t) {
                 t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada';
@@ -3069,14 +3069,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
     window.deleteTask = (id) => {
-        if (confirm(`Â¿ESTÃS SEGURO DE ELIMINAR LA TAREA ${id}?\n\nEsta acciÃ³n es permanente y se borrarÃ¡ de todos los terminales.`)) {
+        if (confirm(`ESTS SEGURO DE ELIMINAR LA TAREA ${id}?\n\nEsta accin es permanente y se borrar de todos los terminales.`)) {
             almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
         }
     };
     window.assignTask = (id) => {
-        // [ORDENAMIENTO A-Z] Ordenar operarios alfabÃ©ticamente
+        // [ORDENAMIENTO A-Z] Ordenar operarios alfabticamente
         const workers = adminService.getWorkers()
             .filter(w => w.active)
             .sort((a, b) => (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || ''));
@@ -3195,13 +3195,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             modal.querySelector('#optUpdate').onclick = () => {
                 const selectedDate = modal.querySelector('#manual_op_date').value;
-                if (!selectedDate) { alert("âš ï¸ Por favor selecciona una fecha."); return; }
+                if (!selectedDate) { alert(" Por favor selecciona una fecha."); return; }
                 document.body.removeChild(modal);
                 window.processAlmacenajeTasks('update', selectedDate);
             };
             modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
         } catch (err) {
-            alert("âŒ Error crÃ­tico al abrir calendario: " + err.message);
+            alert(" Error crtico al abrir calendario: " + err.message);
             console.error(err);
         }
     };
@@ -3209,7 +3209,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.processAlmacenajeTasks = processAlmacenajeTasks;
 
     window.clearCurrentShiftTasks = () => {
-        if (confirm(`âš ï¸ Â¿Borrar TODAS las tareas con status "CREADA" de todo el historial?\n\n(Esta acciÃ³n es global y no importa la fecha. No se borrarÃ¡n tareas asignadas o finalizadas)`)) {
+        if (confirm(` Borrar TODAS las tareas con status "CREADA" de todo el historial?\n\n(Esta accin es global y no importa la fecha. No se borrarn tareas asignadas o finalizadas)`)) {
             almacenajeTasksCache = almacenajeTasksCache.filter(t => t.status !== 'Creada');
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
@@ -3222,20 +3222,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderAlmacenajeTareas(container);
     };
 
-    // --- LÃ³gica del BotÃ³n de Procesar Tareas (NUEVO VÃNCULO) ---
+    // --- Lgica del Botn de Procesar Tareas (NUEVO VNCULO) ---
     const btnOpen = document.getElementById('btn_open_shift_new');
     if (btnOpen) {
         btnOpen.onclick = () => {
             if (window.openShiftModal) window.openShiftModal();
-            else alert("âŒ Error: FunciÃ³n no cargada.");
+            else alert(" Error: Funcin no cargada.");
         };
     }
 
-    // --- LÃ³gica del BotÃ³n de Refresco Local ---
+    // --- Lgica del Botn de Refresco Local ---
     const btnRef = document.getElementById('btn_refresh_almacenaje');
     if (btnRef) {
         btnRef.onclick = async () => {
-            // AnimaciÃ³n de giro
+            // Animacin de giro
             btnRef.style.transition = 'transform 0.6s ease-in-out';
             btnRef.style.transform = 'rotate(360deg)';
             btnRef.style.pointerEvents = 'none';
@@ -3249,7 +3249,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 }
                 renderAlmacenajeTareas(container);
             } catch (e) {
-                console.error("âŒ Error en refresco:", e);
+                console.error(" Error en refresco:", e);
             } finally {
                 btnRef.style.transform = 'rotate(0deg)';
                 btnRef.style.pointerEvents = 'auto';
@@ -3289,7 +3289,7 @@ const renderAdminTab = (container, user, TABS) => {
     }
 
     if (!activeAdminSub) {
-        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para acceder a las secciones de AdministraciÃƒÂ³n.</div>`;
+        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para acceder a las secciones de Administracin.</div>`;
         return;
     }
 
@@ -3325,7 +3325,7 @@ const renderTrabajadoresSection = (container, user, TABS) => {
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
                     <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
                     <label class="btn" style="width:auto; background:var(--success); font-size:0.75rem; padding:0.4rem 0.8rem;">
-                        Ã°Å¸â€œÂ¥ IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
+                         IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
                     </label>
                 </div>
                 <div class="glass-panel" style="padding:0; overflow-x:auto;">
@@ -3347,7 +3347,7 @@ const renderTrabajadoresSection = (container, user, TABS) => {
                                     <td style="padding:0.7rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                                     <td style="padding:0.7rem; text-align:center;">
                                         <button class="btn-worker-status" data-dni="${w.dni || w.Dni}" title="${w.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1rem;">
-                                            ${w.active === false ? 'Ã¢ÂÅ’' : 'Ã¢Å“â€¦'}
+                                            ${w.active === false ? '' : ''}
                                         </button>
                                     </td>
                                     <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="dni" contenteditable="true" style="padding:0.7rem; font-weight:800; color:#fff; outline:none;">${w.dni || w.Dni || ''}</td>
@@ -3367,7 +3367,7 @@ const renderTrabajadoresSection = (container, user, TABS) => {
                 </div>
             </div>
             <div class="glass-panel" style="background:rgba(79, 70, 229, 0.05); border-color:rgba(79, 70, 229, 0.2);">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">Ã¢Å¾â€¢ Nuevo Trabajador</h4>
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;"> Nuevo Trabajador</h4>
                 <form id="form_new_worker" style="display:flex; flex-direction:column; gap:0.8rem;">
                     <div style="display:flex; flex-direction:column; gap:0.3rem;">
                         <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">DNI</label>
@@ -3477,7 +3477,7 @@ const renderUsuariosSection = (container, user, TABS) => {
                                 <th style="padding:0.8rem; text-align:left;">Estado</th>
                                 <th style="padding:0.8rem; text-align:left;">Nombre</th>
                                 <th style="padding:0.8rem; text-align:left;">Usuario</th>
-                                <th style="padding:0.8rem; text-align:left;">ContraseÃƒÂ±a</th>
+                                <th style="padding:0.8rem; text-align:left;">Contrasea</th>
                                 <th style="padding:0.8rem; text-align:left;">Rol</th>
                                 <th style="padding:0.8rem; text-align:center;">Acciones</th>
                             </tr>
@@ -3487,22 +3487,22 @@ const renderUsuariosSection = (container, user, TABS) => {
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity: ${u.active === false ? '0.5' : '1'}">
                                     <td style="padding:0.8rem; text-align:center;">
                                         <button class="btn-status" data-user="${u.username}" title="${u.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">
-                                            ${u.active === false ? 'Ã¢ÂÅ’' : 'Ã¢Å“â€¦'}
+                                            ${u.active === false ? '' : ''}
                                         </button>
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
                                     <td style="padding:0.8rem;">
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <span class="pass-display" data-pass="${u.password || '123'}" style="font-family:monospace; letter-spacing:2px;">Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢</span>
-                                            <button class="btn-view-pass" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0; filter:grayscale(1);">Ã°Å¸â€˜ÂÃ¯Â¸Â</button>
+                                            <span class="pass-display" data-pass="${u.password || '123'}" style="font-family:monospace; letter-spacing:2px;"></span>
+                                            <button class="btn-view-pass" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0; filter:grayscale(1);"></button>
                                         </div>
                                     </td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
-                                            <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1rem;">Ã¢Å“ÂÃ¯Â¸Â</button>
-                                            <button class="btn-del" data-user="${u.username}" title="Eliminar" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1rem;">Ã°Å¸â€”â€˜Ã¯Â¸Â</button>
+                                            <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1rem;"></button>
+                                            <button class="btn-del" data-user="${u.username}" title="Eliminar" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1rem;"></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -3517,15 +3517,15 @@ const renderUsuariosSection = (container, user, TABS) => {
                     <form id="form_user" style="display:flex; flex-direction:column; gap:0.8rem;" autocomplete="off">
                         <div>
                             <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">NOMBRE COMPLETO:</label>
-                            <input type="text" id="u_name" placeholder="Ej: Juan PÃƒÂ©rez" autocomplete="off" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                            <input type="text" id="u_name" placeholder="Ej: Juan Prez" autocomplete="off" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
                         </div>
                         <div>
                             <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">USUARIO (LOGIN):</label>
                             <input type="text" id="u_username" placeholder="Ej: jperez" autocomplete="one-time-code" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
                         </div>
                         <div>
-                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">CONTRASEÃƒâ€˜A:</label>
-                            <input type="password" id="u_pass" placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" autocomplete="new-password" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">CONTRASEA:</label>
+                            <input type="password" id="u_pass" placeholder="" autocomplete="new-password" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
                         </div>
                         <div>
                             <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">ROL ASIGNADO:</label>
@@ -3538,7 +3538,7 @@ const renderUsuariosSection = (container, user, TABS) => {
                             </select>
                         </div>
                         <button type="submit" id="btn_submit_user" class="btn" style="padding:0.7rem; font-weight:700; margin-top:0.5rem;">GUARDAR USUARIO</button>
-                        <button type="button" id="btn_cancel_edit" style="display:none; background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Cancelar ediciÃƒÂ³n</button>
+                        <button type="button" id="btn_cancel_edit" style="display:none; background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Cancelar edicin</button>
                     </form>
                 </div>
             </div>
@@ -3556,7 +3556,7 @@ const renderUsuariosSection = (container, user, TABS) => {
 
     let isEditing = false;
     
-    // [AUTO-LOGIN] GeneraciÃƒÂ³n automÃƒÂ¡tica de usuario basada en nombre
+    // [AUTO-LOGIN] Generacin automtica de usuario basada en nombre
     uName.addEventListener('input', () => {
         if (isEditing) return; // No autocompletar si estamos editando
         const full = uName.value.trim().toLowerCase();
@@ -3575,15 +3575,15 @@ const renderUsuariosSection = (container, user, TABS) => {
         }
     });
 
-    // [OJO PASS] Toggle visibilidad de contraseÃƒÂ±a en la tabla
+    // [OJO PASS] Toggle visibilidad de contrasea en la tabla
     container.querySelectorAll('.btn-view-pass').forEach(btn => btn.onclick = (e) => {
         const span = e.currentTarget.previousElementSibling;
         const realPass = span.dataset.pass;
-        if (span.textContent === 'Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢') {
+        if (span.textContent === '') {
             span.textContent = realPass;
             e.currentTarget.style.filter = 'none';
         } else {
-            span.textContent = 'Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢';
+            span.textContent = '';
             e.currentTarget.style.filter = 'grayscale(1)';
         }
     });
@@ -3597,7 +3597,7 @@ const renderUsuariosSection = (container, user, TABS) => {
             role: uRole.value
         };
         adminService.saveUser(newUser);
-        alert(isEditing ? 'Usuario actualizado con ÃƒÂ©xito' : 'Usuario creado con ÃƒÂ©xito');
+        alert(isEditing ? 'Usuario actualizado con xito' : 'Usuario creado con xito');
         form.reset();
         if (isEditing) {
             uUser.readOnly = false;
@@ -3640,7 +3640,7 @@ const renderUsuariosSection = (container, user, TABS) => {
     });
 
     container.querySelectorAll('.btn-del').forEach(btn => btn.onclick = () => {
-        if (confirm('Ã‚Â¿EstÃƒÂ¡s seguro de eliminar permanentemente este usuario?')) {
+        if (confirm('Ests seguro de eliminar permanentemente este usuario?')) {
             adminService.deleteUser(btn.dataset.user);
             renderAdminTab(container.parentElement.parentElement, user, TABS);
         }
@@ -3653,14 +3653,14 @@ const renderPermisosSection = (container, user, TABS) => {
     
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos DinÃƒÂ¡mica</h3>
-            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">Ã¢Å“Â¨ Haz clic en un mÃƒÂ³dulo para expandir sus sub-pestaÃƒÂ±as</span>
+            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Dinmica</h3>
+            <span style="font-size:0.7rem; color:var(--success); font-weight:600;"> Haz clic en un mdulo para expandir sus sub-pestaas</span>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
-                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÃƒâ€œDULO / SECCIÃƒâ€œN</th>
+                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MDULO / SECCIN</th>
                         ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
@@ -3671,7 +3671,7 @@ const renderPermisosSection = (container, user, TABS) => {
                         rows.push(`
                         <tr class="main-tab-row" data-tab-id="${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02); cursor:${hasSub ? 'pointer' : 'default'};">
                             <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff; display:flex; align-items:center; gap:8px;">
-                                ${hasSub ? '<span class="toggle-icon">Ã¢â€“Â¶</span>' : ''}
+                                ${hasSub ? '<span class="toggle-icon"></span>' : ''}
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
@@ -3688,7 +3688,7 @@ const renderPermisosSection = (container, user, TABS) => {
                                 rows.push(`
                                 <tr class="sub-row-${t.id} ${hasSubSub ? 'main-tab-row' : ''}" data-tab-id="${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.01); display:none; background:rgba(255,255,255,0.01); cursor:${hasSubSub ? 'pointer' : 'default'};">
                                     <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border); display:flex; align-items:center; gap:8px;">
-                                        ${hasSubSub ? '<span class="toggle-icon">Ã¢â€“Â¶</span>' : ''}
+                                        ${hasSubSub ? '<span class="toggle-icon"></span>' : ''}
                                         ${sub.icon} ${sub.label}
                                     </td>
                                     ${allRoles.map(r => {
@@ -3728,7 +3728,7 @@ const renderPermisosSection = (container, user, TABS) => {
             const icon = row.querySelector('.toggle-icon');
             const isVisible = subRows[0].style.display !== 'none';
             subRows.forEach(sr => sr.style.display = isVisible ? 'none' : 'table-row');
-            if(icon) icon.textContent = isVisible ? 'Ã¢â€“Â¶' : 'Ã¢â€“Â¼';
+            if(icon) icon.textContent = isVisible ? '' : '';
             row.style.background = isVisible ? 'rgba(255,255,255,0.02)' : 'rgba(79,70,229,0.05)';
         });
     });
@@ -3787,19 +3787,19 @@ const renderAsistenciaSection = (container, user, TABS) => {
             <div style="background:rgba(255,255,255,0.03); padding:0.8rem 1.2rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:15px;">
                 <div>
                     <h3 style="color:var(--primary); margin:0; font-size:1.1rem; text-transform:uppercase;">Asistencia Diaria</h3>
-                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600;">Ã°Å¸â€”â€œÃ¯Â¸Â ${dateFormatted}</p>
+                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600;"> ${dateFormatted}</p>
                 </div>
                 <input type="date" id="asist_date_picker" value="${forcedDate}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.4rem; border-radius:6px; outline:none;">
             </div>
             
             <div style="display:flex; gap:1rem;">
                 ${!existing?.finalized ? `
-                    <button id="btn_close_asist" class="btn" style="width:auto; padding:0.6rem 2.5rem; font-size:0.85rem; font-weight:800;">Ã°Å¸â€™Â¾ CERRAR ASISTENCIA</button>
+                    <button id="btn_close_asist" class="btn" style="width:auto; padding:0.6rem 2.5rem; font-size:0.85rem; font-weight:800;"> CERRAR ASISTENCIA</button>
                 ` : `
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem;">Ã¢Å“â€¦ ASISTENCIA CERRADA</span>
+                        <span style="background:var(--success); color:#000; padding:0.6rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.85rem;"> ASISTENCIA CERRADA</span>
                         ${(user.role.toLowerCase() === 'admin' || user.username === 'dames') ? `
-                            <button id="btn_reopen_asist" class="btn" style="width:auto; background:#ef4444; padding:0.6rem 1rem; font-size:0.8rem; font-weight:800;">Ã°Å¸â€â€œ REABRIR</button>
+                            <button id="btn_reopen_asist" class="btn" style="width:auto; background:#ef4444; padding:0.6rem 1rem; font-size:0.8rem; font-weight:800;"> REABRIR</button>
                         ` : ''}
                     </div>
                 `}
@@ -3814,7 +3814,7 @@ const renderAsistenciaSection = (container, user, TABS) => {
                         <th style="padding:0.8rem; text-align:left;">Trabajador</th>
                         <th style="padding:0.8rem; text-align:center;">Estado</th>
                         <th style="padding:0.8rem; text-align:center;">Puntualidad</th>
-                        <th style="padding:0.8rem; text-align:center;">JustificaciÃƒÂ³n</th>
+                        <th style="padding:0.8rem; text-align:center;">Justificacin</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3836,14 +3836,14 @@ const renderAsistenciaSection = (container, user, TABS) => {
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button class="btn-ontime" data-dni="${dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; opacity:${isPresent?'1':'0.3'};" ${existing?.finalized ? 'disabled' : ''}>SÃƒÂ</button>
+                                    <button class="btn-ontime" data-dni="${dni}" data-v="true" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; opacity:${isPresent?'1':'0.3'};" ${existing?.finalized ? 'disabled' : ''}>S</button>
                                     <button class="btn-ontime" data-dni="${dni}" data-v="false" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; opacity:${isPresent?'1':'0.3'};" ${existing?.finalized ? 'disabled' : ''}>NO</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <select class="sel-just" data-dni="${dni}" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:6px; outline:none;" ${existing?.finalized || isPresent ? 'disabled' : ''}>
                                     <option value="">-</option>
-                                    <option value="Descanso MÃƒÂ©dico" ${rec?.justification==='Descanso MÃƒÂ©dico'?'selected':''}>DM</option>
+                                    <option value="Descanso Mdico" ${rec?.justification==='Descanso Mdico'?'selected':''}>DM</option>
                                     <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':''}>VAC</option>
                                     <option value="Otros" ${rec?.justification==='Otros'?'selected':''}>OTR</option>
                                 </select>
@@ -3887,7 +3887,7 @@ const renderAsistenciaSection = (container, user, TABS) => {
         const btnClose = container.querySelector('#btn_close_asist');
         if (btnClose) {
             btnClose.onclick = async () => {
-                if (confirm(`Ã‚Â¿Cerrar asistencia?`)) {
+                if (confirm(`Cerrar asistencia?`)) {
                     await adminService.saveAttendance(forcedDate, { finalized: true, data: localState });
                     renderAdminTab(container.parentElement.parentElement, user, TABS);
                 }
@@ -3960,9 +3960,11 @@ const renderPerformanceHistory = (container, user, TABS) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${sortedDates.map(date => `
-                        <tr style="background:rgba(255,255,255,0.05);"><td colspan="6" style="padding:0.5rem; font-weight:700; color:var(--primary);">Ã°Å¸â€œâ€¦ ${date}</td></tr>
-                        ${grouped[date].map(p => `
+                    ${sortedDates.map(date => {
+                        return `
+                        <tr style="background:rgba(255,255,255,0.05);"><td colspan="6" style="padding:0.5rem; font-weight:700; color:var(--primary);">FECHA: ${date}</td></tr>
+                        ` + grouped[date].map(p => {
+                            return `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                                 <td style="padding:0.6rem;">${p.dni}</td>
                                 <td style="padding:0.6rem;">${p.apellidos}, ${p.nombre}</td>
@@ -3970,9 +3972,9 @@ const renderPerformanceHistory = (container, user, TABS) => {
                                 <td style="text-align:center;"><input type="number" value="${p.bpa}" data-dni="${p.dni}" data-date="${date}" data-f="bpa" class="edit-perf-log" style="width:40px; background:none; border:none; color:#fff; text-align:center;"></td>
                                 <td style="text-align:center;"><input type="number" value="${p.supervisor}" data-dni="${p.dni}" data-date="${date}" data-f="supervisor" class="edit-perf-log" style="width:40px; background:none; border:none; color:#fff; text-align:center;"></td>
                                 <td style="text-align:center; font-weight:900; color:#fcd34d;">${p.rendimiento}</td>
-                            </tr>
-                        `).join('')}
-                    `).join('')}
+                            </tr>`;
+                        }).join('');
+                    }).join('')}
                 </tbody>
             </table>
         </div>
