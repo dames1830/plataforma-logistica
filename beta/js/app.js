@@ -1,37 +1,13 @@
-// ENGINE v17.0.3-FINAL - BETA SHIELDED STABLE ENGINE
+// ENGINE v17.0.5-FINAL - BETA SHIELDED STABLE ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "1704";
+    this.version = "1705";
     this.isRendered = false;
-    this.inactivityTimeout = null;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
-    this.setupInactivityListener();
-  }
-
-  setupInactivityListener() {
-    const reset = () => this.resetInactivity();
-    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
-        document.addEventListener(evt, reset, true);
-    });
-  }
-
-  resetInactivity() {
-    if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
-    
-    // 20 Minutos = 1,200,000 ms
-    this.inactivityTimeout = setTimeout(async () => {
-        const { getSession, logout } = await import('./services/auth.js?v=' + this.version);
-        if (getSession()) {
-            console.warn("🕒 [PULSE] Sesión cerrada por inactividad (20 min).");
-            alert("Su sesión ha expirado por inactividad (20 minutos).");
-            logout();
-            location.reload();
-        }
-    }, 1200000);
   }
 
   async init() {

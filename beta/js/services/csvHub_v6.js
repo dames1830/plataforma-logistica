@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '1702-pulse';
-const CACHE_KEY = `logistics_v1702_final_shield_`;
+const VERSION = '11.1.37-pulse';
+const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 const getCol = (row, names) => {
@@ -132,7 +132,7 @@ export const setDateFilter = (newDateStr) => {
 export const pingServer = () => {
     fetch(`${API_BASE}/health`, { 
         method: 'GET',
-        headers: { 'X-Environment': 'beta' }
+        headers: { 'X-Environment': 'production' }
     })
         .then(() => console.log('✅ Servidor backend activo.'))
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
@@ -154,7 +154,7 @@ export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'beta'
+                'X-Environment': 'production'
             },
             body: JSON.stringify(payload)
         });
@@ -189,7 +189,7 @@ const saveToLocalHistory = (report) => {
 export const loadBufferReport = async () => {
     try {
         const res = await fetch(`${SHARED_API}/buffer_report`, {
-            headers: { 'X-Environment': 'beta' }
+            headers: { 'X-Environment': 'production' }
         });
         if (!res.ok) return null;
         const json = await res.json();
@@ -209,7 +209,7 @@ export const fetchBufferHistory = async () => {
     let serverHistory = [];
     try {
         const res = await fetch(BUFFER_HISTORY_URL, {
-            headers: { 'X-Environment': 'beta' }
+            headers: { 'X-Environment': 'production' }
         });
         if (res.ok) {
             const json = await res.json();
@@ -246,7 +246,7 @@ export const fetchBufferHistory = async () => {
 export const fetchAvailableDates = async () => {
     try {
         const response = await fetch(`${API_URL}/dates`, {
-            headers: { 'X-Environment': 'beta' }
+            headers: { 'X-Environment': 'production' }
         });
         if (response.ok) {
             const data = await response.json();
@@ -262,7 +262,7 @@ export const logSystemAction = async (username, action, details) => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'beta'
+                'X-Environment': 'production'
             },
             body: JSON.stringify({ username, action, details })
         });
@@ -361,7 +361,7 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'beta'
+                'X-Environment': 'production'
             },
             body: JSON.stringify(payload)
         });
@@ -398,7 +398,7 @@ export const clearAreaData = async (area, username = 'sistema') => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'beta'
+                'X-Environment': 'production'
             },
             body: JSON.stringify([])
         });
@@ -422,7 +422,7 @@ export const getAreaData = async (area) => {
      let queryURL = `${API_URL}/${area}`;
      if (currentDateFilter) queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
      const response = await fetch(queryURL, {
-         headers: { 'X-Environment': 'beta' }
+         headers: { 'X-Environment': 'production' }
      });
      if (response.ok) {
          const serverResponse = await response.json();
@@ -434,7 +434,7 @@ export const getAreaData = async (area) => {
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
   
-  if (area.endsWith('_activo') || area.endsWith('_reserva') || area === 'tallas') {
+  if (area.endsWith('_activo') || area.endsWith('_reserva')) {
       updateTablaTallas();
   }
 
@@ -520,7 +520,7 @@ export const fetchBufferConfig = async () => {
         try {
             const response = await fetch(`${API_BASE}/buffer/config`, { 
                 signal: controller.signal,
-                headers: { 'X-Environment': 'beta' }
+                headers: { 'X-Environment': 'production' }
             });
             clearTimeout(timeoutId);
             if (response.ok) return await response.json();

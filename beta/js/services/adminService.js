@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v1702 - FINAL)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v14.5.5 - RESTAURACIÓN TOTAL)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -36,7 +36,7 @@ export const initializeAdminData = async () => {
 
                 const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { 
                     signal: controller.signal,
-                    headers: { 'X-Environment': 'beta' }
+                    headers: { 'X-Environment': 'production' }
                 });
                 clearTimeout(timeoutId);
 
@@ -61,20 +61,17 @@ export const initializeAdminData = async () => {
                     if (area === 'attendance' || area === 'permissions') {
                         const newObj = (typeof serverData === 'object' && !Array.isArray(serverData)) ? serverData : {};
                         
-                        if (Object.keys(newObj).length === 0 && Object.keys(adminStore[area]).length > 0) {
-                            console.warn(`[PULSE] Protegiendo ${area} contra sobrescritura vacía.`);
+                        // PROTECCIÓN PARA PERMISOS: No sobrescribir con objeto vacío si ya tenemos datos locales
+                        if (area === 'permissions' && Object.keys(newObj).length === 0 && Object.keys(adminStore.permissions).length > 0) {
+                            console.warn("[PULSE] Ignoring empty permissions from cloud to protect UI");
                         } else {
+                            // MEZCLA INTELIGENTE: No reemplazamos, sumamos lo nuevo a lo que ya tenemos
                             adminStore[area] = { ...adminStore[area], ...newObj };
                         }
                     } else {
-                        // [ESCUDO V16.1.0] Si el servidor devuelve vacío pero nosotros tenemos datos, NO sobrescribir.
-                        // Esto previene que un fallo de red o cold start limpie la base de datos local.
-                        const newData = Array.isArray(serverData) ? serverData : [];
-                        if (newData.length === 0 && adminStore[area].length > 0) {
-                            console.warn(`[PULSE] Bloqueando intento de limpiar ${area} desde la nube.`);
-                        } else {
-                            adminStore[area] = newData;
-                        }
+                        // Para arrays, intentamos mezclar por ID o simplemente concatenar si es necesario, 
+                        // pero por ahora mantenemos el reemplazo para evitar duplicados infinitos en listas simples.
+                        adminStore[area] = Array.isArray(serverData) ? serverData : [];
                     }
                     localStorage.setItem(PREFIX + area, JSON.stringify(adminStore[area]));
                     console.log(`[PULSE] Cloud Sync OK (Merged): ${area}`);
@@ -96,13 +93,7 @@ export const save = async (area, data) => {
         adminStore[area] = data;
         localStorage.setItem(PREFIX + area, JSON.stringify(data));
         
-        // [BLOQUEO DE EMERGENCIA] No permitir guardar listas vacías si ya hay datos en el store
-        // Esto previene que un cliente "limpio" borre la nube por accidente.
-        if (Array.isArray(data) && data.length === 0 && adminStore[area].length > 0) {
-            console.error(`[PULSE] Bloqueo de seguridad: Intento de borrar ${area} en la nube cancelado.`);
-            return false;
-        }
-
+        // NO ENVOLVER EN {data: ...} para evitar anidamiento infinito
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000);
 
@@ -110,9 +101,9 @@ export const save = async (area, data) => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'beta'
+                'X-Environment': 'production'
             },
-            body: JSON.stringify(data), 
+            body: JSON.stringify(data), // ENVIAR DATA DIRECTAMENTE
             signal: controller.signal
         });
         
@@ -253,57 +244,6 @@ export const savePerformance = (data) => save('performance', data);
 export const savePerformanceLog = (data) => save('performance_log', data);
 export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
 
-// --- HELPER WRAPPERS (RESTAURADOS) ---
-export const saveUser = async (user) => {
-    // Si no tiene password por defecto, asignar 123
-    if (!user.password) user.password = '123';
-    if (user.active === undefined) user.active = true;
-    
-    // Sincronizar con el backend
-    const currentUsers = adminStore.users.filter(u => u.username !== user.username);
-    const newList = [...currentUsers, user];
-    
-    return await save('users', newList);
-};
-
-export const deleteUser = async (username) => {
-    const list = adminStore.users.filter(u => u.username !== username);
-    return await saveUsers(list);
-};
-
-export const toggleUserStatus = async (username) => {
-    const user = adminStore.users.find(u => u.username === username);
-    if (user) {
-        user.active = user.active === false ? true : false;
-        return await saveUsers(adminStore.users);
-    }
-    return false;
-};
-
-export const saveWorker = async (worker) => {
-    const dni = String(worker.dni || worker.Dni || '').trim();
-    const list = [...adminStore.workers.filter(w => String(w.dni || w.Dni || '').trim() !== dni), worker];
-    return await saveWorkers(list);
-};
-
-export const toggleWorkerStatus = async (dni) => {
-    const worker = adminStore.workers.find(w => String(w.dni || w.Dni || '').trim() === String(dni).trim());
-    if (worker) {
-        worker.active = worker.active === false ? true : false;
-        return await saveWorkers(adminStore.workers);
-    }
-    return false;
-};
-
-export const resetProductionData = async () => {
-    const areas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
-    for (const area of areas) {
-        await save(area, area === 'permissions' || area === 'attendance' ? {} : []);
-    }
-    localStorage.clear();
-    location.reload();
-};
-
 // --- LISTA DE HIERRO ---
 export const FORCED_ASISTENTE = [
     'inicio',
@@ -339,18 +279,9 @@ export const initPermissions = (tabs) => {
     });
 };
 
-export const togglePermission = async (role, tabId) => {
-    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return false;
+export const togglePermission = (role, tabId) => {
+    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return;
     const p = getPermissions(role);
     p[tabId] = p[tabId] === 1 ? 0 : 1;
-    
-    console.log(`[PULSE] Toggling Permission: ${role} -> ${tabId} (${p[tabId]})`);
-    const ok = await save('permissions', adminStore.permissions);
-    
-    if (!ok) {
-        console.error("[PULSE] Failed to sync permission to cloud");
-        // Revertir localmente si falló la nube para mantener consistencia
-        p[tabId] = p[tabId] === 1 ? 0 : 1;
-    }
-    return ok;
+    save('permissions', adminStore.permissions);
 };

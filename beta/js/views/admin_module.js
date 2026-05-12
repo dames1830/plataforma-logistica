@@ -2,7 +2,7 @@
  * Admin Module - Gestión de Personal, Asistencia y Performance
  * Extraído de dashboard_v6.js para optimización de rendimiento.
  */
-import * as adminService from '../services/adminService.js?v=1702';
+import * as adminService from '../services/adminService.js?v=12.4.66';
 
 let activeAdminSub = 'trabajadores';
 let activePerfSub = 'historial';
@@ -232,12 +232,7 @@ const renderUsuariosSection = (container, user, TABS) => {
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
-                                    <td style="padding:0.8rem;">
-                                        <div style="display:flex; align-items:center; gap:8px;">
-                                            <span class="pass-display" data-pass="${u.password || '123'}" style="font-family:monospace; letter-spacing:2px;">••••••••</span>
-                                            <button class="btn-view-pass" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0; filter:grayscale(1);">👁️</button>
-                                        </div>
-                                    </td>
+                                    <td style="padding:0.8rem; font-family:monospace; color:#fcd34d;">${u.password}</td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
@@ -295,36 +290,16 @@ const renderUsuariosSection = (container, user, TABS) => {
     const btnCancel = container.querySelector('#btn_cancel_edit');
 
     let isEditing = false;
-    
-    // [AUTO-LOGIN] Generación automática de usuario basada en nombre
-    uName.addEventListener('input', () => {
-        if (isEditing) return; // No autocompletar si estamos editando
-        const full = uName.value.trim().toLowerCase();
-        if (!full) {
-            uUser.value = '';
-            return;
-        }
-        const parts = full.split(/\s+/);
-        if (parts.length >= 2) {
-            // Primera letra del nombre + Apellido final
-            const firstLetter = parts[0].charAt(0);
-            const lastName = parts[parts.length - 1];
-            uUser.value = firstLetter + lastName;
-        } else {
-            uUser.value = parts[0];
-        }
-    });
 
-    // [OJO PASS] Toggle visibilidad de contraseña en la tabla
-    container.querySelectorAll('.btn-view-pass').forEach(btn => btn.onclick = (e) => {
-        const span = e.currentTarget.previousElementSibling;
-        const realPass = span.dataset.pass;
-        if (span.textContent === '••••••••') {
-            span.textContent = realPass;
-            e.currentTarget.style.filter = 'none';
-        } else {
-            span.textContent = '••••••••';
-            e.currentTarget.style.filter = 'grayscale(1)';
+    // LÓGICA DE USUARIO AUTOMÁTICO
+    uName.addEventListener('input', () => {
+        if (!isEditing) {
+            // Convertir a minúsculas, quitar acentos y espacios
+            const autoUser = uName.value.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+                .replace(/\s+/g, '') // Quita espacios
+                .substring(0, 15); // Limitar largo
+            uUser.value = autoUser;
         }
     });
 
