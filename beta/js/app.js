@@ -1,10 +1,10 @@
-// ENGINE v17.1.2-STABLE - BACK TO STANDARD API
-console.log("🚀 [PULSE] Restoring Cloud Connection...");
+// ENGINE v17.1.3-REUNITED - SHARED CLOUD ENVIRONMENT
+console.log("🚀 [PULSE] Reconnecting to Unified Cloud...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "1712";
+    this.version = "1713";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();

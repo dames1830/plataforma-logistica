@@ -1,7 +1,7 @@
 /**
  * Admin Service - Gestión de Personal, Usuarios y Performance (v17.1.1 - RESTAURACIÓN TOTAL)
  */
-const PREFIX = 'logistics_admin_v11_beta_';
+const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const API_URL = `${API_BASE}/logistics`;
 
@@ -36,7 +36,7 @@ export const initializeAdminData = async () => {
 
                 const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { 
                     signal: controller.signal,
-                    headers: { 'X-Environment': 'beta' }
+                    headers: { 'X-Environment': 'production' }
                 });
                 clearTimeout(timeoutId);
 
@@ -89,7 +89,7 @@ export const save = async (area, data) => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'beta'
+                'X-Environment': 'production'
             },
             body: JSON.stringify(data),
             signal: controller.signal
