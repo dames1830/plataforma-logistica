@@ -36,7 +36,7 @@ export const initializeAdminData = async () => {
 
                 const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { 
                     signal: controller.signal,
-                    headers: { 'X-Environment': 'production' }
+                    headers: { 'X-Environment': 'beta' }
                 });
                 clearTimeout(timeoutId);
 
@@ -101,7 +101,7 @@ export const save = async (area, data) => {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Environment': 'production'
+                'X-Environment': 'beta'
             },
             body: JSON.stringify(data), // ENVIAR DATA DIRECTAMENTE
             signal: controller.signal

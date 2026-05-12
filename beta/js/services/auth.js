@@ -39,7 +39,7 @@ export const login = async (username, password) => {
           cache: 'no-store',
           headers: { 
             'Cache-Control': 'no-cache',
-            'X-Environment': 'production'
+            'X-Environment': 'beta'
           }
       });
       
