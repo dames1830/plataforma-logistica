@@ -1,12 +1,14 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.0-BETA';
-import * as adminService from '../services/adminService.js?v=17.0.0-BETA';
-import { renderAdminTab } from './admin_module.js?v=17.0.0-BETA';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.1-BETA';
+import * as adminService from '../services/adminService.js?v=17.0.1-BETA';
+import { renderAdminTab } from './admin_module.js?v=17.0.1-BETA';
 
 
-const VERSION = '17.0.0-BETA';
-const CACHE_KEY = `logistics_v17_0_0_beta_shield_`;
+const VERSION = '17.0.1-BETA';
+const CACHE_KEY = `logistics_v17_0_1_beta_shield_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
+
+let activeAdminSub = null; // DECLARACIÓN RECUPERADA
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
 const getLogicalDate = () => {

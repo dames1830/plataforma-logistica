@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v17.0.0 - BETA SHIELD)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v17.0.1 - BETA SHIELD)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
