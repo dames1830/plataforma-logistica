@@ -34,7 +34,10 @@ export const initializeAdminData = async () => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { signal: controller.signal });
+                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { 
+                    signal: controller.signal,
+                    headers: { 'X-Environment': 'production' }
+                });
                 clearTimeout(timeoutId);
 
                 if (res.ok) {
@@ -96,7 +99,10 @@ export const save = async (area, data) => {
 
         const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
             body: JSON.stringify(data), // ENVIAR DATA DIRECTAMENTE
             signal: controller.signal
         });

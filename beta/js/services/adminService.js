@@ -34,7 +34,10 @@ export const initializeAdminData = async () => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { signal: controller.signal });
+                const res = await fetch(`${API_URL}/${area}?z=${Date.now()}`, { 
+                    signal: controller.signal,
+                    headers: { 'X-Environment': 'beta' }
+                });
                 clearTimeout(timeoutId);
 
                 if (res.ok) {
@@ -105,7 +108,10 @@ export const save = async (area, data) => {
 
         const res = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'beta'
+            },
             body: JSON.stringify(data), 
             signal: controller.signal
         });
@@ -249,8 +255,15 @@ export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
 
 // --- HELPER WRAPPERS (RESTAURADOS) ---
 export const saveUser = async (user) => {
-    const list = [...adminStore.users.filter(u => u.username !== user.username), user];
-    return await saveUsers(list);
+    // Si no tiene password por defecto, asignar 123
+    if (!user.password) user.password = '123';
+    if (user.active === undefined) user.active = true;
+    
+    // Sincronizar con el backend
+    const currentUsers = adminStore.users.filter(u => u.username !== user.username);
+    const newList = [...currentUsers, user];
+    
+    return await save('users', newList);
 };
 
 export const deleteUser = async (username) => {

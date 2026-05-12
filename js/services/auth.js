@@ -37,7 +37,10 @@ export const login = async (username, password) => {
       console.log("[ULTRA] Usuario no encontrado local, consultando nube...");
       const cloudRes = await fetch(`${AUTH_API}/logistics/users?z=${Date.now()}`, { 
           cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
+          headers: { 
+            'Cache-Control': 'no-cache',
+            'X-Environment': 'production'
+          }
       });
       
       if (cloudRes.ok) {
