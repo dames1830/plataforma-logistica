@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.2';
 
 
-const VERSION = '17.2.2';
-const CACHE_KEY = `logistics_v17_2_2_shared_`;
+const VERSION = '17.2.3';
+const CACHE_KEY = `logistics_v17_2_3_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -1406,7 +1406,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let localState = [];
 
   const renderAsistenciaSection = (container) => {
-    const workers = adminService.getWorkers().filter(w => w.active !== false);
+    const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE'));
     
     const loadAttendanceState = (dateStr) => {
         const existing = adminService.getAttendance(dateStr);
