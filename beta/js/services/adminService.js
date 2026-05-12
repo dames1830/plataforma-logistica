@@ -233,9 +233,51 @@ export const updatePerformanceLogEntry = async (date, dni, updates) => {
     return false;
 };
 
-// --- OTROS SETTERS ---
+// --- OTROS SETTERS (INDIVIDUALES Y LISTAS) ---
 export const saveWorkers = (data) => save('workers', data);
+export const saveWorker = async (worker) => {
+    const idx = adminStore.workers.findIndex(w => String(w.dni) === String(worker.dni));
+    if (idx !== -1) adminStore.workers[idx] = { ...adminStore.workers[idx], ...worker };
+    else adminStore.workers.push({ ...worker, active: true });
+    return await save('workers', adminStore.workers);
+};
+
+export const deleteWorker = async (dni) => {
+    adminStore.workers = adminStore.workers.filter(w => String(w.dni) !== String(dni));
+    return await save('workers', adminStore.workers);
+};
+
+export const toggleWorkerStatus = async (dni) => {
+    const worker = adminStore.workers.find(w => String(w.dni) === String(dni));
+    if (worker) {
+        worker.active = worker.active !== false ? false : true;
+        return await save('workers', adminStore.workers);
+    }
+    return false;
+};
+
 export const saveUsers = (data) => save('users', data);
+export const saveUser = async (user) => {
+    const idx = adminStore.users.findIndex(u => u.username === user.username);
+    if (idx !== -1) adminStore.users[idx] = { ...adminStore.users[idx], ...user };
+    else adminStore.users.push({ ...user, active: true });
+    return await save('users', adminStore.users);
+};
+
+export const deleteUser = async (username) => {
+    adminStore.users = adminStore.users.filter(u => u.username !== username);
+    return await save('users', adminStore.users);
+};
+
+export const toggleUserStatus = async (username) => {
+    const user = adminStore.users.find(u => u.username === username);
+    if (user) {
+        user.active = user.active !== false ? false : true;
+        return await save('users', adminStore.users);
+    }
+    return false;
+};
+
 export const savePermissions = (role, data) => {
     adminStore.permissions[role] = data;
     return save('permissions', adminStore.permissions);

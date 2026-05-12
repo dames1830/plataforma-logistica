@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.7';
-import * as adminService from '../services/adminService.js?v=17.0.7';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.8';
+import * as adminService from '../services/adminService.js?v=17.0.8';
 
 
-const VERSION = '17.0.7';
-const CACHE_KEY = `logistics_v17_0_7_beta_`;
+const VERSION = '17.0.8';
+const CACHE_KEY = `logistics_v17_0_8_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -1012,7 +1012,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     // Listeners
-    document.getElementById('form_new_worker').onsubmit = (e) => {
+    document.getElementById('form_new_worker').onsubmit = async (e) => {
         e.preventDefault();
         const nw = {
             dni: document.getElementById('nw_dni').value.trim(),
@@ -1021,13 +1021,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             puesto: document.getElementById('nw_puesto').value.toUpperCase().trim(),
             turno: document.getElementById('nw_turno').value
         };
-        adminService.saveWorker(nw);
+        await adminService.saveWorker(nw);
         renderAdminTab();
     };
 
     document.querySelectorAll('.btn-worker-status').forEach(btn => {
-        btn.onclick = () => {
-            adminService.toggleWorkerStatus(btn.dataset.dni);
+        btn.onclick = async () => {
+            await adminService.toggleWorkerStatus(btn.dataset.dni);
             renderAdminTab();
         };
     });
@@ -1276,14 +1276,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         isEditing = false;
     };
 
-    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = () => {
-        adminService.toggleUserStatus(btn.dataset.user);
+    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = async () => {
+        await adminService.toggleUserStatus(btn.dataset.user);
         renderAdminTab();
     });
 
-    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = () => {
+    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = async () => {
         if (confirm('¿Estás seguro de eliminar permanentemente este usuario?')) {
-            adminService.deleteUser(btn.dataset.user);
+            await adminService.deleteUser(btn.dataset.user);
             renderAdminTab();
         }
     });
