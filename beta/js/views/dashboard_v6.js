@@ -2948,7 +2948,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:center;">Productividad</th>
                                     <th style="padding:1rem; text-align:center;">Objetivo</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
-                                    <th style="padding:1rem; text-align:center;">AcciÃ³n</th>
+                                    <th style="padding:1rem; text-align:center;">Acción</th>
                                 </tr>
                             ` : `
                                 <tr>
@@ -2981,7 +2981,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const overlapStart = Math.max(s, bStart);
                                     const overlapEnd = Math.min(e, bEnd);
                                     const overlap = Math.max(0, overlapEnd - overlapStart);
-                                    
                                     ms = ms - overlap;
 
                                     const totalMinutes = Math.floor(ms / (1000 * 60));
@@ -2992,10 +2991,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     if (totalMinutes > 0) {
                                         const unitsPerHour = (t.qty / totalMinutes) * 60;
                                         if (unitsPerHour >= 300) {
-                                            objetivo = 'CUMPLIÃ“';
+                                            objetivo = 'CUMPLIÓ';
                                             objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
                                         } else {
-                                            objetivo = 'NO CUMPLIÃ“';
+                                            objetivo = 'NO CUMPLIÓ';
                                             objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
                                         }
                                     }
@@ -3018,8 +3017,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">ðŸ”„</button>
-                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">ðŸ—‘ï¸</button>
+                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
+                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
