@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.7';
-import * as adminService from '../services/adminService.js?v=17.1.7';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.8';
+import * as adminService from '../services/adminService.js?v=17.1.8';
 
 
-const VERSION = '17.1.7';
-const CACHE_KEY = `logistics_v17_1_7_shared_`;
+const VERSION = '17.1.8';
+const CACHE_KEY = `logistics_v17_1_8_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -1687,8 +1687,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     const evolutionLabels = sortedDates;
     const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
 
-    // Obtener todas las semanas disponibles en los datos (orden descendente)
-    const availableWeeks = [...new Set(rawLog.map(e => getWeekNumber(new Date(e.date + 'T12:00:00'))))].sort((a,b) => b-a);
 
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
