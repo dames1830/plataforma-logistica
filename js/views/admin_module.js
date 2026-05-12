@@ -217,6 +217,7 @@ const renderUsuariosSection = (container, user, TABS) => {
                                 <th style="padding:0.8rem; text-align:left;">Estado</th>
                                 <th style="padding:0.8rem; text-align:left;">Nombre</th>
                                 <th style="padding:0.8rem; text-align:left;">Usuario</th>
+                                <th style="padding:0.8rem; text-align:left;">Contraseña</th>
                                 <th style="padding:0.8rem; text-align:left;">Rol</th>
                                 <th style="padding:0.8rem; text-align:center;">Acciones</th>
                             </tr>
@@ -231,6 +232,7 @@ const renderUsuariosSection = (container, user, TABS) => {
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
+                                    <td style="padding:0.8rem; font-family:monospace; color:#fcd34d;">${u.password}</td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
@@ -288,6 +290,18 @@ const renderUsuariosSection = (container, user, TABS) => {
     const btnCancel = container.querySelector('#btn_cancel_edit');
 
     let isEditing = false;
+
+    // LÓGICA DE USUARIO AUTOMÁTICO
+    uName.addEventListener('input', () => {
+        if (!isEditing) {
+            // Convertir a minúsculas, quitar acentos y espacios
+            const autoUser = uName.value.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+                .replace(/\s+/g, '') // Quita espacios
+                .substring(0, 15); // Limitar largo
+            uUser.value = autoUser;
+        }
+    });
 
     form.onsubmit = (e) => {
         e.preventDefault();

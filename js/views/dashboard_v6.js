@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.1.0';
-import * as adminService from '../services/adminService.js?v=16.1.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.2.4';
+import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '16.1.0';
-const CACHE_KEY = `logistics_v16_1_0_prod_clean_`;
+const VERSION = '17.4.0';
+const CACHE_KEY = `logistics_v17_4_0_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -149,7 +149,6 @@ window.downloadExcelDetail = async () => {
 
     wsMonta.mergeCells('A1:D1');
     const row1 = wsMonta.getRow(1);
-    row1.height = 60;
     row1.getCell(1).value = 'MONTACARGA';
     row1.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
     row1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
@@ -341,12 +340,12 @@ export const renderDashboard = async (container, user, onLogout) => {
   await adminService.initializeAdminData();
   await loadAlmacenajeTasks();
   
-  // Heartbeat de Sincronización Global (Cada 30 seg)
+  // Heartbeat de Sincronización Global (Desactivado a petición del usuario v17.2.4)
+  /* 
   setInterval(async () => {
       await adminService.initializeAdminData();
       if (currentTab === 'almacenaje') {
           const synced = adminService.adminStore.almacenaje_tasks;
-          // SOLO actualizamos si el servidor tiene datos para no borrar lo local por error
           if (Array.isArray(synced) && synced.length > 0) {
               almacenajeTasksCache = synced;
               const container = document.getElementById('areaContent');
@@ -356,6 +355,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           }
       }
   }, 30000);
+  */
   
   // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
@@ -392,7 +392,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
       </div>
@@ -1011,7 +1011,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     // Listeners
-    document.getElementById('form_new_worker').onsubmit = (e) => {
+    document.getElementById('form_new_worker').onsubmit = async (e) => {
         e.preventDefault();
         const nw = {
             dni: document.getElementById('nw_dni').value.trim(),
@@ -1020,13 +1020,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             puesto: document.getElementById('nw_puesto').value.toUpperCase().trim(),
             turno: document.getElementById('nw_turno').value
         };
-        adminService.saveWorker(nw);
+        await adminService.saveWorker(nw);
         renderAdminTab();
     };
 
     document.querySelectorAll('.btn-worker-status').forEach(btn => {
-        btn.onclick = () => {
-            adminService.toggleWorkerStatus(btn.dataset.dni);
+        btn.onclick = async () => {
+            await adminService.toggleWorkerStatus(btn.dataset.dni);
             renderAdminTab();
         };
     });
@@ -1095,6 +1095,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <th style="padding:0.8rem; text-align:left;">Estado</th>
                                 <th style="padding:0.8rem; text-align:left;">Nombre</th>
                                 <th style="padding:0.8rem; text-align:left;">Usuario</th>
+                                <th style="padding:0.8rem; text-align:left;">Contraseña</th>
                                 <th style="padding:0.8rem; text-align:left;">Rol</th>
                                 <th style="padding:0.8rem; text-align:center;">Acciones</th>
                             </tr>
@@ -1109,6 +1110,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
+                                    <td style="padding:0.8rem; font-family:monospace;">
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <span id="pass_${u.username}" data-p="${u.password}" style="color:#fcd34d;">••••••••</span>
+                                            <button class="btn-toggle-pass" data-target="pass_${u.username}" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0;">👁️</button>
+                                        </div>
+                                    </td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
@@ -1166,6 +1173,39 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btnCancel = document.getElementById('btn_cancel_edit');
 
     let isEditing = false;
+
+    // LÓGICA DE USUARIO AUTOMÁTICO: 1ra Letra Nombre + Todo el Apellido
+    uName.addEventListener('input', () => {
+        if (!isEditing) {
+            const raw = uName.value.trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar tildes
+            const parts = raw.split(/\s+/);
+            if (parts.length >= 2) {
+                const firstInitial = parts[0].charAt(0);
+                // "Todo el apellido" = El resto de palabras juntas
+                const lastNamePart = parts.slice(1).join('');
+                uUser.value = (firstInitial + lastNamePart).replace(/[^a-z0-9]/g, ''); // Solo letras y números
+            } else {
+                uUser.value = raw.replace(/[^a-z0-9]/g, '');
+            }
+        }
+    });
+
+    // LÓGICA DE MOSTRAR/OCULTAR CONTRASEÑA
+    container.querySelectorAll('.btn-toggle-pass').forEach(btn => {
+        btn.onclick = (e) => {
+            const targetId = e.currentTarget.dataset.target;
+            const span = document.getElementById(targetId);
+            const realPass = span.dataset.p;
+            if (span.textContent === '••••••••') {
+                span.textContent = realPass;
+                e.currentTarget.textContent = '🙈';
+            } else {
+                span.textContent = '••••••••';
+                e.currentTarget.textContent = '👁️';
+            }
+        };
+    });
 
     form.onsubmit = async (e) => {
         e.preventDefault();
@@ -1235,21 +1275,21 @@ export const renderDashboard = async (container, user, onLogout) => {
         isEditing = false;
     };
 
-    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = () => {
-        adminService.toggleUserStatus(btn.dataset.user);
+    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = async () => {
+        await adminService.toggleUserStatus(btn.dataset.user);
         renderAdminTab();
     });
 
-    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = () => {
+    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = async () => {
         if (confirm('¿Estás seguro de eliminar permanentemente este usuario?')) {
-            adminService.deleteUser(btn.dataset.user);
+            await adminService.deleteUser(btn.dataset.user);
             renderAdminTab();
         }
     });
   };
 
   const renderPermisosSection = (container) => {
-    const roles = ['jefe', 'supervisor', 'encargado', 'asistente'];
+    const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente'];
     const allRoles = ['admin', ...roles];
     
     container.innerHTML = `
@@ -1262,7 +1302,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
                         <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO / SECCIÓN</th>
-                        ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
+                        ${allRoles.map(r => `<th style="padding:1rem; text-align:center; min-width:80px; border-left:1px solid rgba(255,255,255,0.05);">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -1366,7 +1406,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let localState = [];
 
   const renderAsistenciaSection = (container) => {
-    const workers = adminService.getWorkers().filter(w => w.active !== false);
+    const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE'));
     
     const loadAttendanceState = (dateStr) => {
         const existing = adminService.getAttendance(dateStr);
@@ -1622,8 +1662,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     };
     
+    // [MOD v17.1.7] Obtener todas las semanas disponibles en los datos (orden descendente)
+    const availableWeeks = [...new Set(rawLog.map(e => getWeekNumber(new Date(e.date + 'T12:00:00'))))].sort((a,b) => b-a);
+    
     const currentWeekNum = getWeekNumber(new Date());
-    if (!window._selectedWeeks) window._selectedWeeks = [currentWeekNum];
+    // Por defecto, seleccionar la semana actual SI hay datos, sino la última disponible
+    if (!window._selectedWeeks) {
+        if (availableWeeks.includes(currentWeekNum)) {
+            window._selectedWeeks = [currentWeekNum];
+        } else if (availableWeeks.length > 0) {
+            window._selectedWeeks = [availableWeeks[0]];
+        } else {
+            window._selectedWeeks = [currentWeekNum];
+        }
+    }
     const selectedWeeks = window._selectedWeeks;
     const datesMap = {};
     rawLog.forEach(entry => {
@@ -1635,8 +1687,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     const evolutionLabels = sortedDates;
     const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
 
-    // Obtener todas las semanas disponibles en los datos (orden descendente)
-    const availableWeeks = [...new Set(rawLog.map(e => getWeekNumber(new Date(e.date + 'T12:00:00'))))].sort((a,b) => b-a);
 
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
@@ -3083,7 +3133,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <!-- CONTENIDO PRINCIPAL -->
-            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto;">
                 ${isKpi ? `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
             <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
@@ -3097,8 +3147,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
-                        <thead style="background:rgba(0,0,0,0.5);">
-                            <tr style="color:rgba(255,255,255,0.5); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.2);">
+                        <thead style="background:rgba(0,0,0,0.8); position:sticky; top:0; z-index:10;">
+                            <tr style="color:rgba(255,255,255,0.7); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.3);">
                                 <th style="padding:1rem; text-align:left;">Fecha</th>
                                 <th style="padding:1rem; text-align:left;">Usuario</th>
                                 <th style="padding:1rem; text-align:center;">Unid. Indiv.</th>
@@ -3168,6 +3218,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 });
 
                                 if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
+
+                                // [MOD v17.1.5] Ordenar alfabéticamente por usuario para fácil localización
+                                indRows.sort((a, b) => a.user.localeCompare(b.user));
 
                                 return indRows.map(r => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
@@ -3514,25 +3567,44 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btnRef = document.getElementById('btn_refresh_almacenaje');
     if (btnRef) {
         btnRef.onclick = async () => {
-            // Animación de giro
-            btnRef.style.transition = 'transform 0.6s ease-in-out';
-            btnRef.style.transform = 'rotate(360deg)';
+            const oldInner = btnRef.innerHTML;
+            btnRef.innerHTML = '⌛';
             btnRef.style.pointerEvents = 'none';
             btnRef.style.opacity = '0.5';
             
             try {
-                // Sincronizar con el servidor (PULL GLOBAL DIRECTO)
-                const serverTasks = await adminService.loadAlmacenajeTasks();
+                console.log("🔄 [PULSE] Forzando descarga limpia desde la nube...");
+                // 1. Limpiar rastro local para forzar lectura de servidor
+                localStorage.removeItem('logistics_admin_v11_almacenaje_tasks');
+                
+                // 2. Sincronizar con el servidor (PULL GLOBAL DIRECTO)
+                await adminService.initializeAdminData();
+                const serverTasks = adminService.adminStore.almacenaje_tasks;
+                
                 if (Array.isArray(serverTasks)) {
-                    almacenajeTasksCache = serverTasks;
+                    almacenajeTasksCache = [...serverTasks];
+                    localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+                    console.log(`✅ [PULSE] ${serverTasks.length} tareas sincronizadas.`);
                 }
+                
                 renderAlmacenajeTareas(container);
+                
+                // Feedback de éxito
+                btnRef.innerHTML = '✅';
+                setTimeout(() => { 
+                    btnRef.innerHTML = '🔄';
+                    btnRef.style.pointerEvents = 'auto';
+                    btnRef.style.opacity = '1';
+                }, 1500);
+
             } catch (e) {
                 console.error("❌ Error en refresco:", e);
-            } finally {
-                btnRef.style.transform = 'rotate(0deg)';
-                btnRef.style.pointerEvents = 'auto';
-                btnRef.style.opacity = '1';
+                btnRef.innerHTML = '❌';
+                setTimeout(() => { 
+                    btnRef.innerHTML = '🔄';
+                    btnRef.style.pointerEvents = 'auto';
+                    btnRef.style.opacity = '1';
+                }, 1500);
             }
         };
     }
