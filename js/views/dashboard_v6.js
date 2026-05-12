@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.4.2';
-const CACHE_KEY = `logistics_v17_4_2_shared_`;
+const VERSION = '17.4.3';
+const CACHE_KEY = `logistics_v17_4_3_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -339,8 +339,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   await initPersistentData();
   await adminService.initializeAdminData();
   
-  // [FIX] Sincronización proactiva de Maestros para evitar tallas incorrectas
+  // [FIX] Sincronización proactiva de Maestros y Tabla Virtual
   await Promise.all([
+      getAreaData('tabla_tallas'),
       getAreaData('tallas'),
       getAreaData('articulos')
   ]);
@@ -3368,7 +3369,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop() || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
