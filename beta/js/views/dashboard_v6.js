@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.1.3';
 
 
-const VERSION = '17.1.4';
-const CACHE_KEY = `logistics_v17_1_4_shared_`;
+const VERSION = '17.1.5';
+const CACHE_KEY = `logistics_v17_1_5_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -3209,6 +3209,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 });
 
                                 if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
+
+                                // [MOD v17.1.5] Ordenar alfabéticamente por usuario para fácil localización
+                                indRows.sort((a, b) => a.user.localeCompare(b.user));
 
                                 return indRows.map(r => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
