@@ -1,4 +1,4 @@
-﻿import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=1702';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=1702';
 import * as adminService from '../services/adminService.js?v=1702';
 
 
@@ -887,10 +887,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             else window.downloadExcelDetail();
         };
     }
-                </div>
-            </div>
-        </div>
-    `;
 
     const form = document.getElementById('form_user');
     const uName = document.getElementById('u_name');
