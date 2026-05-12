@@ -2983,14 +2983,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const overlap = Math.max(0, overlapEnd - overlapStart);
                                     ms = ms - overlap;
 
-                                    const totalMinutes = Math.floor(ms / (1000 * 60));
-                                    const h = Math.floor(totalMinutes / 60);
-                                    const m = totalMinutes % 60;
-                                    productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                                    const totalMin = Math.floor(ms / 60000);
+                                    const hrs = Math.floor(totalMin / 60);
+                                    const mins = totalMin % 60;
+                                    
+                                    // Usamos concatenación tradicional para evitar problemas con backticks en el cálculo
+                                    productividad = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
 
-                                    if (totalMinutes > 0) {
-                                        const unitsPerHour = (t.qty / totalMinutes) * 60;
-                                        if (unitsPerHour >= 300) {
+                                    if (totalMin > 0) {
+                                        const uph = (t.qty / totalMin) * 60;
+                                        if (uph >= 300) {
                                             objetivo = 'CUMPLIÓ';
                                             objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
                                         } else {
