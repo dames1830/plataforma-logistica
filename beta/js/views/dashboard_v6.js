@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.6';
-import * as adminService from '../services/adminService.js?v=17.1.6';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.7';
+import * as adminService from '../services/adminService.js?v=17.1.7';
 
 
-const VERSION = '17.1.6';
-const CACHE_KEY = `logistics_v17_1_6_shared_`;
+const VERSION = '17.1.7';
+const CACHE_KEY = `logistics_v17_1_7_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -149,7 +149,6 @@ window.downloadExcelDetail = async () => {
 
     wsMonta.mergeCells('A1:D1');
     const row1 = wsMonta.getRow(1);
-    row1.height = 60;
     row1.getCell(1).value = 'MONTACARGA';
     row1.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
     row1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
@@ -1663,8 +1662,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     };
     
+    // [MOD v17.1.7] Obtener todas las semanas disponibles en los datos (orden descendente)
+    const availableWeeks = [...new Set(rawLog.map(e => getWeekNumber(new Date(e.date + 'T12:00:00'))))].sort((a,b) => b-a);
+    
     const currentWeekNum = getWeekNumber(new Date());
-    if (!window._selectedWeeks) window._selectedWeeks = [currentWeekNum];
+    // Por defecto, seleccionar la semana actual SI hay datos, sino la última disponible
+    if (!window._selectedWeeks) {
+        if (availableWeeks.includes(currentWeekNum)) {
+            window._selectedWeeks = [currentWeekNum];
+        } else if (availableWeeks.length > 0) {
+            window._selectedWeeks = [availableWeeks[0]];
+        } else {
+            window._selectedWeeks = [currentWeekNum];
+        }
+    }
     const selectedWeeks = window._selectedWeeks;
     const datesMap = {};
     rawLog.forEach(entry => {
