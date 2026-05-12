@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.1.3';
 
 
-const VERSION = '17.1.3';
-const CACHE_KEY = `logistics_v17_1_3_shared_`;
+const VERSION = '17.1.4';
+const CACHE_KEY = `logistics_v17_1_4_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -3555,25 +3555,44 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btnRef = document.getElementById('btn_refresh_almacenaje');
     if (btnRef) {
         btnRef.onclick = async () => {
-            // Animación de giro
-            btnRef.style.transition = 'transform 0.6s ease-in-out';
-            btnRef.style.transform = 'rotate(360deg)';
+            const oldInner = btnRef.innerHTML;
+            btnRef.innerHTML = '⌛';
             btnRef.style.pointerEvents = 'none';
             btnRef.style.opacity = '0.5';
             
             try {
-                // Sincronizar con el servidor (PULL GLOBAL DIRECTO)
-                const serverTasks = await adminService.loadAlmacenajeTasks();
+                console.log("🔄 [PULSE] Forzando descarga limpia desde la nube...");
+                // 1. Limpiar rastro local para forzar lectura de servidor
+                localStorage.removeItem('logistics_admin_v11_almacenaje_tasks');
+                
+                // 2. Sincronizar con el servidor (PULL GLOBAL DIRECTO)
+                await adminService.initializeAdminData();
+                const serverTasks = adminService.adminStore.almacenaje_tasks;
+                
                 if (Array.isArray(serverTasks)) {
-                    almacenajeTasksCache = serverTasks;
+                    almacenajeTasksCache = [...serverTasks];
+                    localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+                    console.log(`✅ [PULSE] ${serverTasks.length} tareas sincronizadas.`);
                 }
+                
                 renderAlmacenajeTareas(container);
+                
+                // Feedback de éxito
+                btnRef.innerHTML = '✅';
+                setTimeout(() => { 
+                    btnRef.innerHTML = '🔄';
+                    btnRef.style.pointerEvents = 'auto';
+                    btnRef.style.opacity = '1';
+                }, 1500);
+
             } catch (e) {
                 console.error("❌ Error en refresco:", e);
-            } finally {
-                btnRef.style.transform = 'rotate(0deg)';
-                btnRef.style.pointerEvents = 'auto';
-                btnRef.style.opacity = '1';
+                btnRef.innerHTML = '❌';
+                setTimeout(() => { 
+                    btnRef.innerHTML = '🔄';
+                    btnRef.style.pointerEvents = 'auto';
+                    btnRef.style.opacity = '1';
+                }, 1500);
             }
         };
     }
