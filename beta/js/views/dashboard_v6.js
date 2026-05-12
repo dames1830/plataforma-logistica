@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.8';
-import * as adminService from '../services/adminService.js?v=17.1.8';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.9';
+import * as adminService from '../services/adminService.js?v=17.1.9';
 
 
-const VERSION = '17.1.8';
-const CACHE_KEY = `logistics_v17_1_8_shared_`;
+const VERSION = '17.1.9';
+const CACHE_KEY = `logistics_v17_1_9_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -1289,7 +1289,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderPermisosSection = (container) => {
-    const roles = ['jefe', 'supervisor', 'encargado', 'asistente'];
+    const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'analista'];
     const allRoles = ['admin', ...roles];
     
     container.innerHTML = `
@@ -1302,7 +1302,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
                         <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO / SECCIÓN</th>
-                        ${allRoles.map(r => `<th style="padding:1rem; text-align:center;">${r.toUpperCase()}</th>`).join('')}
+                        ${allRoles.map(r => `<th style="padding:1rem; text-align:center; min-width:80px; border-left:1px solid rgba(255,255,255,0.05);">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
