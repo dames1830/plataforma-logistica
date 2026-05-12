@@ -208,19 +208,22 @@ export const updatePerformanceLogEntry = async (date, dni, updates) => {
 
 export const saveWorkers = (data) => save('workers', data);
 export const saveWorker = async (worker) => {
-    const idx = adminStore.workers.findIndex(w => String(w.dni) === String(worker.dni));
+    const workerDni = String(worker.dni || worker.Dni || '');
+    const idx = adminStore.workers.findIndex(w => String(w.dni || w.Dni || '') === workerDni);
     if (idx !== -1) adminStore.workers[idx] = { ...adminStore.workers[idx], ...worker };
     else adminStore.workers.push({ ...worker, active: true });
     return await save('workers', adminStore.workers);
 };
 
 export const deleteWorker = async (dni) => {
-    adminStore.workers = adminStore.workers.filter(w => String(w.dni) !== String(dni));
+    const targetDni = String(dni);
+    adminStore.workers = adminStore.workers.filter(w => String(w.dni || w.Dni || '') !== targetDni);
     return await save('workers', adminStore.workers);
 };
 
 export const toggleWorkerStatus = async (dni) => {
-    const worker = adminStore.workers.find(w => String(w.dni) === String(dni));
+    const targetDni = String(dni);
+    const worker = adminStore.workers.find(w => String(w.dni || w.Dni || '') === targetDni);
     if (worker) {
         worker.active = worker.active !== false ? false : true;
         return await save('workers', adminStore.workers);
