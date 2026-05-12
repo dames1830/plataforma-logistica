@@ -130,7 +130,10 @@ export const setDateFilter = (newDateStr) => {
 };
 
 export const pingServer = () => {
-    fetch(`${API_BASE}/health`, { method: 'GET' })
+    fetch(`${API_BASE}/health`, { 
+        method: 'GET',
+        headers: { 'X-Environment': 'production' }
+    })
         .then(() => console.log('✅ Servidor backend activo.'))
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
@@ -149,7 +152,10 @@ export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
 
         const response = await fetch(BUFFER_HISTORY_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
             body: JSON.stringify(payload)
         });
 
@@ -182,7 +188,9 @@ const saveToLocalHistory = (report) => {
 
 export const loadBufferReport = async () => {
     try {
-        const res = await fetch(`${SHARED_API}/buffer_report`);
+        const res = await fetch(`${SHARED_API}/buffer_report`, {
+            headers: { 'X-Environment': 'production' }
+        });
         if (!res.ok) return null;
         const json = await res.json();
         if (json.status === 'ok' && json.data) {
@@ -200,7 +208,9 @@ export const loadBufferReport = async () => {
 export const fetchBufferHistory = async () => {
     let serverHistory = [];
     try {
-        const res = await fetch(BUFFER_HISTORY_URL);
+        const res = await fetch(BUFFER_HISTORY_URL, {
+            headers: { 'X-Environment': 'production' }
+        });
         if (res.ok) {
             const json = await res.json();
             if (json.data) {
@@ -235,7 +245,9 @@ export const fetchBufferHistory = async () => {
 
 export const fetchAvailableDates = async () => {
     try {
-        const response = await fetch(`${API_URL}/dates`);
+        const response = await fetch(`${API_URL}/dates`, {
+            headers: { 'X-Environment': 'production' }
+        });
         if (response.ok) {
             const data = await response.json();
             return data.dates || [];
@@ -248,7 +260,10 @@ export const logSystemAction = async (username, action, details) => {
     try {
         await fetch(`${API_BASE}/logs`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
             body: JSON.stringify({ username, action, details })
         });
     } catch (e) { console.error("Error al loguear acción:", e); }
@@ -344,7 +359,10 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     try {
         const response = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
             body: JSON.stringify(payload)
         });
         if(response.ok) {
@@ -378,7 +396,10 @@ export const clearAreaData = async (area, username = 'sistema') => {
         // Enviar array vacío al servidor para "limpiar" la persistencia remota
         await fetch(`${API_URL}/${area}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
             body: JSON.stringify([])
         });
         await logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario.`);
@@ -400,7 +421,9 @@ export const getAreaData = async (area) => {
   try {
      let queryURL = `${API_URL}/${area}`;
      if (currentDateFilter) queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
-     const response = await fetch(queryURL);
+     const response = await fetch(queryURL, {
+         headers: { 'X-Environment': 'production' }
+     });
      if (response.ok) {
          const serverResponse = await response.json();
          if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
@@ -495,7 +518,10 @@ export const fetchBufferConfig = async () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000); 
         try {
-            const response = await fetch(`${API_BASE}/buffer/config`, { signal: controller.signal });
+            const response = await fetch(`${API_BASE}/buffer/config`, { 
+                signal: controller.signal,
+                headers: { 'X-Environment': 'production' }
+            });
             clearTimeout(timeoutId);
             if (response.ok) return await response.json();
         } catch (err) {
