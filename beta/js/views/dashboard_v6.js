@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.2.1';
-import * as adminService from '../services/adminService.js?v=17.2.1';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.2.2';
+import * as adminService from '../services/adminService.js?v=17.2.2';
 
 
-const VERSION = '17.2.1';
-const CACHE_KEY = `logistics_v17_2_1_shared_`;
+const VERSION = '17.2.2';
+const CACHE_KEY = `logistics_v17_2_2_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 

@@ -110,7 +110,13 @@ export const save = async (area, data) => {
 };
 
 // --- GETTERS ---
-export const getWorkers = () => adminStore.workers;
+export const getWorkers = () => {
+    return [...adminStore.workers].sort((a, b) => {
+        const nameA = `${a.apellidos || a.Apellidos || ''} ${a.nombre || a.Nombre || ''}`.trim().toUpperCase();
+        const nameB = `${b.apellidos || b.Apellidos || ''} ${b.nombre || b.Nombre || ''}`.trim().toUpperCase();
+        return nameA.localeCompare(nameB);
+    });
+};
 export const getUsers = () => adminStore.users;
 export const getPermissions = (role) => adminStore.permissions[role] || {};
 export const getAttendance = (dateStr) => adminStore.attendance[dateStr];
