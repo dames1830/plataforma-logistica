@@ -78,7 +78,8 @@ class App {
     const timestamp = new Date().getTime();
     try {
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${this.version}_${timestamp}`);
+            console.log("[PULSE] Attempting TEST load...");
+            const { renderDashboard } = await import(`./views/test_v1.js?v=${this.version}_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;
