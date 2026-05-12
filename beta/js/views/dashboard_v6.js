@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.3';
-import * as adminService from '../services/adminService.js?v=17.1.3';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.1.6';
+import * as adminService from '../services/adminService.js?v=17.1.6';
 
 
-const VERSION = '17.1.5';
-const CACHE_KEY = `logistics_v17_1_5_shared_`;
+const VERSION = '17.1.6';
+const CACHE_KEY = `logistics_v17_1_6_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -3124,7 +3124,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <!-- CONTENIDO PRINCIPAL -->
-            <div style="display:flex; flex-direction:column; gap:1rem; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto;">
                 ${isKpi ? `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
             <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
@@ -3138,8 +3138,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
-                        <thead style="background:rgba(0,0,0,0.5);">
-                            <tr style="color:rgba(255,255,255,0.5); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.2);">
+                        <thead style="background:rgba(0,0,0,0.8); position:sticky; top:0; z-index:10;">
+                            <tr style="color:rgba(255,255,255,0.7); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.3);">
                                 <th style="padding:1rem; text-align:left;">Fecha</th>
                                 <th style="padding:1rem; text-align:left;">Usuario</th>
                                 <th style="padding:1rem; text-align:center;">Unid. Indiv.</th>
