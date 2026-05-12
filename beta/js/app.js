@@ -1,10 +1,10 @@
-// ENGINE v17.1.0-STABLE - BETA SHIELDED ENGINE
-console.log("🚀 [PULSE] Shielded Engine Loading...");
+// ENGINE v17.1.1-SHIELDED - BETA PHYSICAL ISOLATION
+console.log("🚀 [PULSE] Physical Isolation Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "1710";
+    this.version = "1711";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();

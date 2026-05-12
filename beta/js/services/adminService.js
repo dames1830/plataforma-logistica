@@ -1,9 +1,9 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v14.5.5 - RESTAURACIÓN TOTAL)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v17.1.1 - RESTAURACIÓN TOTAL)
  */
 const PREFIX = 'logistics_admin_v11_beta_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
-const API_URL = `${API_BASE}/logistics`;
+const API_URL = `${API_BASE}/logistics_beta`;
 
 export const adminStore = {
     workers: [],
