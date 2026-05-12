@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.5';
-import * as adminService from '../services/adminService.js?v=17.0.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.7';
+import * as adminService from '../services/adminService.js?v=17.0.7';
 
 
-const VERSION = '17.0.5';
-const CACHE_KEY = `logistics_v17_0_5_beta_`;
+const VERSION = '17.0.7';
+const CACHE_KEY = `logistics_v17_0_7_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -1111,7 +1111,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
-                                    <td style="padding:0.8rem; font-family:monospace; color:#fcd34d;">${u.password}</td>
+                                    <td style="padding:0.8rem; font-family:monospace;">
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <span id="pass_${u.username}" data-p="${u.password}" style="color:#fcd34d;">••••••••</span>
+                                            <button class="btn-toggle-pass" data-target="pass_${u.username}" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0;">👁️</button>
+                                        </div>
+                                    </td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
@@ -1170,16 +1175,37 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     let isEditing = false;
 
-    // LÓGICA DE USUARIO AUTOMÁTICO
+    // LÓGICA DE USUARIO AUTOMÁTICO: 1ra Letra Nombre + Todo el Apellido
     uName.addEventListener('input', () => {
         if (!isEditing) {
-            // Convertir a minúsculas, quitar acentos y espacios
-            const autoUser = uName.value.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
-                .replace(/\s+/g, '') // Quita espacios
-                .substring(0, 15); // Limitar largo
-            uUser.value = autoUser;
+            const raw = uName.value.trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar tildes
+            const parts = raw.split(/\s+/);
+            if (parts.length >= 2) {
+                const firstInitial = parts[0].charAt(0);
+                // "Todo el apellido" = El resto de palabras juntas
+                const lastNamePart = parts.slice(1).join('');
+                uUser.value = (firstInitial + lastNamePart).replace(/[^a-z0-9]/g, ''); // Solo letras y números
+            } else {
+                uUser.value = raw.replace(/[^a-z0-9]/g, '');
+            }
         }
+    });
+
+    // LÓGICA DE MOSTRAR/OCULTAR CONTRASEÑA
+    container.querySelectorAll('.btn-toggle-pass').forEach(btn => {
+        btn.onclick = (e) => {
+            const targetId = e.currentTarget.dataset.target;
+            const span = document.getElementById(targetId);
+            const realPass = span.dataset.p;
+            if (span.textContent === '••••••••') {
+                span.textContent = realPass;
+                e.currentTarget.textContent = '🙈';
+            } else {
+                span.textContent = '••••••••';
+                e.currentTarget.textContent = '👁️';
+            }
+        };
     });
 
     form.onsubmit = async (e) => {
