@@ -1,10 +1,10 @@
-// ENGINE v17.0.5-FINAL - BETA SHIELDED STABLE ENGINE
+// ENGINE v17.0.6-FINAL - BETA SHIELDED STABLE ENGINE
 console.log("🚀 [PULSE] Safe Engine Loading...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "1705";
+    this.version = "1706";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
