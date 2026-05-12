@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=16.1.0';
-import * as adminService from '../services/adminService.js?v=16.1.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.5';
+import * as adminService from '../services/adminService.js?v=17.0.5';
 
 
-const VERSION = '16.1.0';
-const CACHE_KEY = `logistics_v16_1_0_prod_clean_`;
+const VERSION = '17.0.5';
+const CACHE_KEY = `logistics_v17_0_5_beta_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -392,7 +392,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
+            <span style="background:#fcd34d; color:#000; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:900; vertical-align:middle; margin-left:5px;">BETA</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
       </div>
