@@ -267,7 +267,7 @@ export const FORCED_ASISTENTE = [
 ];
 
 export const initPermissions = (tabs) => {
-    const roles = ['admin', 'jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'analista'];
+    const roles = ['admin', 'jefe', 'coordinador', 'supervisor', 'encargado', 'asistente'];
     roles.forEach(role => {
         if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
         const p = adminStore.permissions[role];
@@ -294,7 +294,8 @@ export const initPermissions = (tabs) => {
 
 export const togglePermission = (role, tabId) => {
     if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return;
-    const p = adminStore.permissions[role] || {};
+    if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
+    const p = adminStore.permissions[role];
     p[tabId] = p[tabId] === 1 ? 0 : 1;
     save('permissions', adminStore.permissions);
 };

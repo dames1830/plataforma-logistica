@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.1.9';
 
 
-const VERSION = '17.1.9';
-const CACHE_KEY = `logistics_v17_1_9_shared_`;
+const VERSION = '17.2.0';
+const CACHE_KEY = `logistics_v17_2_0_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -1289,7 +1289,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderPermisosSection = (container) => {
-    const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'analista'];
+    const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente'];
     const allRoles = ['admin', ...roles];
     
     container.innerHTML = `
