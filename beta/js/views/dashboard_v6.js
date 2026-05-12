@@ -1,6 +1,6 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.0';
-import * as adminService from '../services/adminService.js?v=17.0.0';
-import { renderAdminTab } from './admin_module.js?v=17.0.0';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas } from '../services/csvHub_v6.js?v=17.0.0-BETA';
+import * as adminService from '../services/adminService.js?v=17.0.0-BETA';
+import { renderAdminTab } from './admin_module.js?v=17.0.0-BETA';
 
 
 const VERSION = '17.0.0-BETA';
