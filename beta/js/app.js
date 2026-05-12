@@ -1,10 +1,10 @@
-// ENGINE v17.1.1-SHIELDED - BETA PHYSICAL ISOLATION
-console.log("🚀 [PULSE] Physical Isolation Loading...");
+// ENGINE v17.1.2-STABLE - BACK TO STANDARD API
+console.log("🚀 [PULSE] Restoring Cloud Connection...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = "1711";
+    this.version = "1712";
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();

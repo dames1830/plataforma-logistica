@@ -3,7 +3,7 @@
  */
 const PREFIX = 'logistics_admin_v11_beta_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
-const API_URL = `${API_BASE}/logistics_beta`;
+const API_URL = `${API_BASE}/logistics`;
 
 export const adminStore = {
     workers: [],
