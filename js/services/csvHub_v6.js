@@ -498,15 +498,15 @@ export const updateTablaTallas = () => {
     dataStore.tabla_tallas = mapa;
     saveToDB('tabla_tallas', mapa);
     
-    // [MOD V17.4.3] PERSISTENCIA COMPARTIDA: Subir la tabla virtual al servidor para otros usuarios
+    // [MOD V17.4.4] PERSISTENCIA GLOBAL: Cualquier usuario que genere la tabla virtual la comparte
     const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-    if (Object.keys(mapa).length > 0 && session.role === 'ADMIN_MASTER') {
+    if (Object.keys(mapa).length > 0) {
         const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
         fetch(`${API_URL}/tabla_tallas`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
             body: JSON.stringify(Object.entries(mapa).map(([sku, talla]) => ({ sku, talla })))
-        }).then(() => console.log("[PULSE] Tabla virtual sincronizada con el servidor."))
+        }).then(() => console.log("[PULSE] Tabla virtual sincronizada globalmente."))
           .catch(e => console.warn("[PULSE] Error sincronizando tabla virtual:", e));
     }
     
