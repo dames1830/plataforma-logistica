@@ -104,7 +104,7 @@ const VERSION = '11.1.37-pulse';
 const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
-const getCol = (row, names) => {
+export const getCol = (row, names) => {
     if (!row) return null;
     const normalize = (str) => String(str || '').toUpperCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
@@ -497,6 +497,19 @@ export const updateTablaTallas = () => {
 
     dataStore.tabla_tallas = mapa;
     saveToDB('tabla_tallas', mapa);
+    
+    // [MOD V17.4.4] PERSISTENCIA GLOBAL: Cualquier usuario que genere la tabla virtual la comparte
+    const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+    if (Object.keys(mapa).length > 0) {
+        const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+        fetch(`${API_URL}/tabla_tallas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+            body: JSON.stringify(Object.entries(mapa).map(([sku, talla]) => ({ sku, talla })))
+        }).then(() => console.log("[PULSE] Tabla virtual sincronizada globalmente."))
+          .catch(e => console.warn("[PULSE] Error sincronizando tabla virtual:", e));
+    }
+    
     console.log(`[PULSE] Tabla de tallas unificada actualizada. Total SKUs: ${Object.keys(mapa).length}`);
 };
 

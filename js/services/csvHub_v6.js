@@ -104,7 +104,7 @@ const VERSION = '11.1.37-pulse';
 const CACHE_KEY = `logistics_v12_1_21_`;
 const API_URL    = `${API_BASE}/logistics`;
 
-const getCol = (row, names) => {
+export const getCol = (row, names) => {
     if (!row) return null;
     const normalize = (str) => String(str || '').toUpperCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
