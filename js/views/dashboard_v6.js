@@ -83,56 +83,48 @@ export const renderDashboard = async (container, user, onLogout) => {
   // --- RENDER BASE LAYOUT ---
   container.innerHTML = `
     <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-container">
-                    <div class="logo-icon">P</div>
-                    <div class="logo-text">PULSE<span>LOGISTICA</span></div>
-                </div>
-                <div class="version-tag">v17.4.6</div>
+        <header class="topbar">
+            <div class="topbar-brand">
+                <h2>LOGÍSTICA <span style="color:var(--primary); font-weight:800;">DEAM1830</span></h2>
             </div>
-            <nav class="sidebar-nav" id="sidebarNav"></nav>
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
-                    <div class="user-details">
-                        <span class="user-name">${user.name}</span>
-                        <span class="user-role">${user.role.toUpperCase()}</span>
-                    </div>
+            <div class="user-profile">
+                <div class="user-details">
+                    <span class="user-name">${user.name}</span>
+                    <span class="user-role">${user.role.toUpperCase()}</span>
                 </div>
-                <button id="logoutBtn" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> SALIR
+                <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
-        </aside>
-        <main class="main-content">
-            <header class="content-header">
+        </header>
+
+        <nav class="top-nav-links" id="topNavLinks"></nav>
+
+        <main class="main-wrapper">
+            <header class="tab-header">
                 <div class="header-titles">
-                    <h1 id="contentTitle">Bienvenido</h1>
-                    <p id="contentSubtitle">Selecciona una opción del menú</p>
+                    <h1 id="tabTitle">Bienvenido</h1>
                 </div>
-                <div class="header-actions" id="headerActions"></div>
+                <div id="headerActions"></div>
             </header>
-            <div id="contentArea" class="content-area"></div>
+            <div id="tabContent" class="tab-content"></div>
         </main>
     </div>
   `;
 
-  const sidebarNav = document.getElementById('sidebarNav');
-  const contentTitle = document.getElementById('contentTitle');
-  const contentSubtitle = document.getElementById('contentSubtitle');
-  const contentArea = document.getElementById('contentArea');
+  const topNavLinks = document.getElementById('topNavLinks');
+  const tabTitle = document.getElementById('tabTitle');
+  const tabContent = document.getElementById('tabContent');
 
   const renderNav = () => {
-    sidebarNav.innerHTML = TABS
+    topNavLinks.innerHTML = TABS
       .filter(tab => {
           if (tab.role === 'all') return true;
           return tab.role === user.role || user.role === 'admin';
       })
       .map(tab => `
         <a class="nav-item ${currentTab === tab.id ? 'active' : ''}" data-id="${tab.id}">
-            <span class="nav-icon">${tab.icon}</span>
-            <span class="nav-label">${tab.label}</span>
+            ${tab.icon} ${tab.label}
         </a>
       `).join('');
 
@@ -150,10 +142,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tab = TABS.find(t => t.id === currentTab);
     if (!tab) return;
     
-    contentTitle.textContent = tab.label;
+    tabTitle.textContent = tab.label;
     
     if (currentTab === 'inicio') {
-        contentSubtitle.textContent = "Resumen de Operaciones en Tiempo Real";
         renderInicioTab();
     } else if (currentTab === 'zona_buffer') {
         renderBufferTab();
@@ -173,59 +164,30 @@ export const renderDashboard = async (container, user, onLogout) => {
     const workers = adminService.getWorkers();
     const activeWorkers = workers.filter(w => w.active).length;
     
-    contentArea.innerHTML = `
-        <div class="welcome-grid">
-            <div class="glass-panel welcome-card animate-fade-in">
-                <div class="card-content">
-                    <h3>Hola, ${user.name} 👋</h3>
-                    <p>Bienvenido al Panel de Control de Producción. El sistema está sincronizado con la nube.</p>
-                    <div class="status-badges">
-                        <span class="badge success"><i class="fas fa-check-circle"></i> Sistema Online</span>
-                        <span class="badge primary">v17.4.6</span>
-                    </div>
-                </div>
+    tabContent.innerHTML = `
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-title">OPERARIOS EN TURNO</span>
+                <span class="kpi-value">${activeWorkers}</span>
+                <span class="kpi-subtitle">Personal activo hoy</span>
             </div>
-            <div class="glass-panel stats-card animate-fade-in">
-                <div class="stat-item">
-                    <span class="stat-value">${activeWorkers}</span>
-                    <span class="stat-label">Operarios en Turno</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${new Date().toLocaleDateString('es-PE')}</span>
-                    <span class="stat-label">Fecha de Operación</span>
-                </div>
+            <div class="kpi-card">
+                <span class="kpi-title">FECHA DE OPERACIÓN</span>
+                <span class="kpi-value">${new Date().toLocaleDateString('es-PE')}</span>
+                <span class="kpi-subtitle">Sistema v17.4.6</span>
             </div>
         </div>
-        <div class="quick-actions animate-fade-in">
-            <h4 style="margin-bottom:1.5rem; color:#fff;">Acciones Rápidas</h4>
-            <div class="actions-grid">
-                <div class="action-card" onclick="document.querySelector('[data-id=admin_pers]').click()">
-                    <div class="action-icon">👥</div>
-                    <div class="action-info">
-                        <h5>Asistencia</h5>
-                        <p>Controlar ingresos</p>
-                    </div>
-                </div>
-                <div class="action-card" onclick="document.querySelector('[data-id=almacenaje]').click()">
-                    <div class="action-icon">🏗️</div>
-                    <div class="action-info">
-                        <h5>Almacenaje</h5>
-                        <p>Gestionar tareas</p>
-                    </div>
-                </div>
-                <div class="action-card" onclick="document.querySelector('[data-id=zona_buffer]').click()">
-                    <div class="action-icon">📦</div>
-                    <div class="action-info">
-                        <h5>Buffer</h5>
-                        <p>Procesar reportes</p>
-                    </div>
-                </div>
-                <div class="action-card" onclick="document.querySelector('[data-id=analisis_sku]').click()">
-                    <div class="action-icon">🔍</div>
-                    <div class="action-info">
-                        <h5>Analítica</h5>
-                        <p>Consulta SKU</p>
-                    </div>
+        <div class="dashboard-body">
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+            <div class="glass-panel" style="padding:1.5rem;">
+                <h4>Accesos Rápidos</h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:1rem;">
+                    <button class="btn secondary" onclick="document.querySelector('[data-id=admin_pers]').click()">ASISTENCIA</button>
+                    <button class="btn secondary" onclick="document.querySelector('[data-id=zona_buffer]').click()">BUFFER</button>
+                    <button class="btn secondary" onclick="document.querySelector('[data-id=almacenaje]').click()">ALMACENAJE</button>
+                    <button class="btn secondary" onclick="document.querySelector('[data-id=analisis_sku]').click()">ANALÍTICA</button>
                 </div>
             </div>
         </div>
@@ -241,7 +203,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     if (!allowedSubTabs.find(s => s.id === activeBufferSub)) activeBufferSub = allowedSubTabs[0]?.id;
 
-    contentArea.innerHTML = `
+    tabContent.innerHTML = `
         <nav class="sub-nav">
           ${allowedSubTabs.map(sub => `
             <a class="sub-nav-item ${activeBufferSub === sub.id ? 'active' : ''}" data-id="${sub.id}">
@@ -528,7 +490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     if (!allowedSubTabs.find(s => s.id === activeAdminSub)) activeAdminSub = allowedSubTabs[0]?.id;
 
-    contentArea.innerHTML = `
+    tabContent.innerHTML = `
         <nav class="sub-nav">
           ${allowedSubTabs.map(sub => `
             <a class="sub-nav-item ${activeAdminSub === sub.id ? 'active' : ''}" data-id="${sub.id}">
@@ -789,7 +751,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   // --- TAB: ALMACENAJE ---
   const renderGenericAreaTab = async (tabId, subtitle) => {
-    contentSubtitle.textContent = subtitle;
     const tabDef = TABS.find(t => t.id === tabId);
     const perms = adminService.getPermissions(user.role) || {};
     const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`${tabId}_${sub.id}`] === 1);
@@ -797,7 +758,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     let activeSub = localStorage.getItem(`activeSub_${tabId}`) || allowedSubTabs[0]?.id;
     if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = allowedSubTabs[0]?.id;
 
-    contentArea.innerHTML = `
+    tabContent.innerHTML = `
         <nav class="sub-nav">
           ${allowedSubTabs.map(sub => `
             <a class="sub-nav-item ${activeSub===sub.id?'active':''}" data-id="${sub.id}">
@@ -831,7 +792,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const tabDef = TABS.find(t => t.id === 'analisis_sku');
     const allowedSubTabs = tabDef.subTabs;
     
-    contentArea.innerHTML = `
+    tabContent.innerHTML = `
         <nav class="sub-nav">
           ${allowedSubTabs.map(sub => `
             <a class="sub-nav-item ${activeAnalisisSub === sub.id ? 'active' : ''}" data-id="${sub.id}">
@@ -860,7 +821,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   // --- TAB: CONFIGURACIÓN ---
   const renderConfigTab = () => {
-    contentArea.innerHTML = `
+    tabContent.innerHTML = `
         <div class="glass-panel animate-fade-in" style="max-width:600px; padding:2rem;">
             <h4>Configuración del Sistema</h4>
             <div class="config-list">
