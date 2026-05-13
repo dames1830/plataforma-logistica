@@ -13,12 +13,15 @@ export const getAlmacenajeTasks = () => almacenajeTasksCache;
 const getLogicalDate = () => {
     const now = new Date();
     const hrs = now.getHours();
+    let target = now;
     if (hrs >= 0 && hrs < 6) {
-        const d = new Date(now);
-        d.setDate(now.getDate() - 1);
-        return d.toISOString().split('T')[0];
+        target = new Date(now);
+        target.setDate(now.getDate() - 1);
     }
-    return now.toISOString().split('T')[0];
+    const y = target.getFullYear();
+    const m = String(target.getMonth() + 1).padStart(2, '0');
+    const d = String(target.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 };
 
 const saveAlmacenajeTasksLocal = async () => {
