@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.6.3-BETA';
-const CACHE_KEY = `logistics_v17_6_3_beta_shared_`;
+const VERSION = '17.6.4-BETA';
+const CACHE_KEY = `logistics_v17_6_4_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -80,7 +80,14 @@ const loadAlmacenajeTasks = async () => {
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
+    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
+    { id: 'analisis_inventario', label: 'Analisis Inventario', icon: '🔍' },
+    { id: 'inventarios_main', label: 'Inventarios', icon: '📦', subTabs: [
+        { id: 'general', label: 'General', icon: '📝' },
+        { id: 'ciclicos', label: 'Ciclicos', icon: '🔄' }
+    ]},
+    { id: 'reportes_inventario', label: 'Reportes', icon: '📋' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -404,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.3</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.4</span>
           </h2>
         </div>
       </div>
@@ -2547,6 +2554,38 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (tabId === 'almacenaje') {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
+        if (tabId === 'inventario') {
+            const btnMatriz = document.createElement('button');
+            btnMatriz.className = 'btn';
+            btnMatriz.style = 'margin-top:1rem; background:#4f46e5; font-size:0.8rem; width: auto; padding: 0.8rem 1.5rem;';
+            btnMatriz.innerHTML = '📥 EXPORTAR MATRIZ UBICACIONES ALTO';
+            btnMatriz.onclick = () => alert("Funcionalidad MATRIZ UBICACIONES ALTO en desarrollo.");
+            wrap.appendChild(btnMatriz);
+        }
+    } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
+        const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');
+        let activeSubSub = localStorage.getItem('activeSubSub_inventario_main') || 'general';
+        
+        container.innerHTML = `
+            <nav style="display:flex; gap:1.2rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                ${activeSubObj.subTabs.map(ss => `
+                    <a class="sub-sub-nav-item ${activeSubSub===ss.id?'active':''}" data-ss="${ss.id}" style="padding: 0.5rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${activeSubSub===ss.id?'var(--primary)':'var(--text-muted)'}; font-weight:${activeSubSub===ss.id?'800':'500'}; border-bottom:${activeSubSub===ss.id?'2px solid var(--primary)':'none'};">
+                        ${ss.icon} ${ss.label.toUpperCase()}
+                    </a>
+                `).join('')}
+            </nav>
+            <div id="subSubContent"></div>
+        `;
+        
+        document.querySelectorAll('.sub-sub-nav-item').forEach(b => b.addEventListener('click', (e) => {
+            activeSubSub = e.currentTarget.dataset.ss;
+            localStorage.setItem('activeSubSub_inventario_main', activeSubSub);
+            renderGenericAreaTab(tabId, subtitle);
+        }));
+
+        const subSubContent = document.getElementById('subSubContent');
+        subSubContent.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Contenido de ${activeSubSub.toUpperCase()} en desarrollo</h4></div>`;
+        
     } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
         // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaña seleccionada
         if (activeSub === 'kpi_tareas') {
