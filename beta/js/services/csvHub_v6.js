@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '17.6.5-BETA';
-const CACHE_KEY = `logistics_v17_6_5_beta_shared_`;
+const VERSION = '17.6.6-BETA';
+const CACHE_KEY = `logistics_v17_6_6_beta_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -305,9 +305,9 @@ export const parseFile = (file, area) => {
           if (area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
-              for (let i = 3; i < rows.length; i++) {
+              for (let i = 2; i < rows.length; i++) {
                   const r = rows[i];
-                  if (!r || r.length < 9) continue;
+                  if (!r || r.length < 5) continue;
                   jsonData.push({
                       'NIVEL': dc(r[1]),
                       'PRODUCTO': dc(r[8]), // Columna I
@@ -316,6 +316,16 @@ export const parseFile = (file, area) => {
                       'LPN': dc(r[5]),
                       'NRO AND': dc(r[2]),
                       'DESCRIPCION': dc(r[9]) // Columna J: Capturamos descripción para tallas
+                  });
+              }
+          } else if (area === 'matriz_ubicaciones') {
+              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+              const dc = (s) => String(s || '').trim();
+              for (let i = 0; i < rows.length; i++) {
+                  const r = rows[i];
+                  if (!r || !dc(r[0])) continue;
+                  jsonData.push({
+                      'UBICACION': dc(r[0]) // Columna A
                   });
               }
           } else {

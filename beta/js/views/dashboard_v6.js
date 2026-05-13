@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.6.5-BETA';
-const CACHE_KEY = `logistics_v17_6_5_beta_shared_`;
+const VERSION = '17.6.6-BETA';
+const CACHE_KEY = `logistics_v17_6_6_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -411,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.5</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.6</span>
           </h2>
         </div>
       </div>
@@ -2518,6 +2518,101 @@ export const renderDashboard = async (container, user, onLogout) => {
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
+  const processReporteUCA = async (resultContainer) => {
+    const btn = document.getElementById('btn_procesar_uca');
+    if (!btn) return;
+    
+    btn.disabled = true;
+    btn.innerHTML = '⌛ PROCESANDO CRUCE...';
+    
+    await new Promise(r => setTimeout(r, 600));
+
+    const reserva = dataStore.inventario_reserva || [];
+    const matriz = dataStore.matriz_ubicaciones || [];
+
+    if (reserva.length === 0 || matriz.length === 0) {
+      alert('⚠️ Faltan datos: Primero debes cargar "STOCK RESERVA" y "MATRIZ UBICACIONES ALTO" en la sección de Archivo.');
+      btn.disabled = false;
+      btn.innerHTML = '⚡ PROCESAR REPORTE UCA';
+      return;
+    }
+
+    const reservaMap = new Map();
+    reserva.forEach(row => {
+      const ubi = String(row.UBICACION || '').trim().toUpperCase();
+      if (!reservaMap.has(ubi)) reservaMap.set(ubi, []);
+      reservaMap.get(ubi).push(row);
+    });
+
+    const results = [];
+    matriz.forEach(m => {
+      const ubi = String(m.UBICACION || '').trim().toUpperCase();
+      const stockRes = reservaMap.get(ubi);
+      const hasStock = stockRes && stockRes.length > 0;
+      
+      results.push({
+        ubicacion: ubi,
+        estado: hasStock ? 'OCUPADA' : 'VACÍA',
+        lpns: hasStock ? stockRes.length : 0,
+        detalle: hasStock ? stockRes.map(s => s.LPN).join(', ') : '-'
+      });
+    });
+
+    displayReporteUCA(resultContainer, results);
+    btn.disabled = false;
+    btn.innerHTML = '✅ REPORTE GENERADO';
+    setTimeout(() => { if(btn) btn.innerHTML = '⚡ PROCESAR REPORTE UCA'; }, 3000);
+  };
+
+  const displayReporteUCA = (container, results) => {
+    const total = results.length;
+    const vacias = results.filter(r => r.estado === 'VACÍA').length;
+    const ocupadas = total - vacias;
+    const accuracy = ((vacias / total) * 100).toFixed(2);
+
+    container.innerHTML = `
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
+        <div class="glass-panel" style="padding:1.5rem; border-left:4px solid var(--primary);">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Ubicaciones Analizadas</div>
+          <div style="font-size:1.8rem; font-weight:800;">${total}</div>
+        </div>
+        <div class="glass-panel" style="padding:1.5rem; border-left:4px solid var(--success);">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Ubicaciones Vacías</div>
+          <div style="font-size:1.8rem; font-weight:800;">${vacias}</div>
+        </div>
+        <div class="glass-panel" style="padding:1.5rem; border-left:4px solid var(--warning);">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Ubicaciones Ocupadas</div>
+          <div style="font-size:1.8rem; font-weight:800;">${ocupadas}</div>
+        </div>
+        <div class="glass-panel" style="padding:1.5rem; border-left:4px solid #6366f1;">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">% Efectividad Vacío</div>
+          <div style="font-size:1.8rem; font-weight:800;">${accuracy}%</div>
+        </div>
+      </div>
+
+      <div class="data-table-container glass-panel" style="max-height:500px; overflow-y:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>UBICACIÓN</th>
+              <th>ESTADO EN SISTEMA</th>
+              <th>LPNs</th>
+              <th>DETALLE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${results.map(r => `
+              <tr>
+                <td style="font-weight:700;">${r.ubicacion}</td>
+                <td><span class="status-badge ${r.estado === 'VACÍA' ? 'status-completed' : 'status-pending'}">${r.estado}</span></td>
+                <td style="text-align:center;">${r.lpns}</td>
+                <td style="font-size:0.75rem; color:var(--text-muted); max-width:200px; overflow:hidden; text-overflow:ellipsis;">${r.detalle}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
@@ -2594,6 +2689,22 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         }
         renderAlmacenajeTareas(container);
+    } else if (tabId === 'inventario' && activeSub === 'reportes_inventario') {
+        container.innerHTML = `
+            <div class="glass-panel" style="padding:3rem; text-align:center;">
+                <h3 style="margin-bottom:1rem; color:var(--primary); font-weight:800;">ANÁLISIS DE DISCREPANCIAS (UCA)</h3>
+                <p style="color:var(--text-muted); margin-bottom:2rem; max-width:600px; margin-left:auto; margin-right:auto;">
+                    Cruce inteligente entre <strong>Stock Reserva</strong> y <strong>Matriz de Ubicaciones</strong> para determinar la efectividad del vaciado en ubicaciones de alto nivel.
+                </p>
+                <button id="btn_procesar_uca" class="btn" style="max-width:300px; margin:0 auto; padding:1rem 2rem; border-radius:12px; box-shadow: 0 10px 20px rgba(79,70,229,0.2);">
+                    ⚡ PROCESAR REPORTE UCA
+                </button>
+                <div id="ucaResultsArea" style="margin-top:3rem;"></div>
+            </div>
+        `;
+        document.getElementById('btn_procesar_uca').addEventListener('click', () => {
+            processReporteUCA(document.getElementById('ucaResultsArea'));
+        });
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
