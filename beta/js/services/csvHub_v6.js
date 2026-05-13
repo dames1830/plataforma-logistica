@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.37-pulse';
-const CACHE_KEY = `logistics_v12_1_21_`;
+const VERSION = '17.4.6-BETA';
+const CACHE_KEY = `logistics_v17_4_6_beta_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {

@@ -100,23 +100,52 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '11.1.37-pulse';
-const CACHE_KEY = `logistics_v12_1_21_`;
+const VERSION = '17.4.5';
+const CACHE_KEY = `logistics_v17_4_5_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
+
+// Cache de mapeo de columnas para acelerar getCol en bucles masivos
+const colMapCache = new Map();
 
 export const getCol = (row, names) => {
     if (!row) return null;
-    const normalize = (str) => String(str || '').toUpperCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
-        .replace(/[^A-Z0-9]/g, ''); // Quitar todo lo que no sea letra o número
+    
+    // Si names es una cadena simple, intentar acceso directo primero
+    if (typeof names === 'string') {
+        if (row[names] !== undefined) return row[names];
+        names = [names];
+    }
 
     const rowKeys = Object.keys(row);
+    if (rowKeys.length === 0) return null;
+
+    // Crear una huella digital de las columnas del objeto para cachear el mapeo
+    const rowFingerprint = rowKeys.slice(0, 5).join('|') + rowKeys.length;
+    const cacheKey = names.join('|') + '##' + rowFingerprint;
+
+    if (colMapCache.has(cacheKey)) {
+        const actualKey = colMapCache.get(cacheKey);
+        return actualKey ? row[actualKey] : null;
+    }
+
+    const normalize = (str) => String(str || '').toUpperCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Z0-9]/g, '');
+
     for (let n of names) {
-        if (row[n] !== undefined) return row[n];
+        if (row[n] !== undefined) {
+            colMapCache.set(cacheKey, n);
+            return row[n];
+        }
         const target = normalize(n);
         const found = rowKeys.find(k => normalize(k) === target);
-        if (found) return row[found];
+        if (found) {
+            colMapCache.set(cacheKey, found);
+            return row[found];
+        }
     }
+    
+    colMapCache.set(cacheKey, null);
     return null;
 };
 

@@ -1,9 +1,0 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData } from '../services/csvHub_v6.js?v=12.5.20-BETA';
-import * as adminService from '../services/adminService.js?v=12.5.15-FINAL';
-import { getSession } from '../services/auth.js?v=12.5.15-FINAL';
-
-
-const VERSION = '12.5.20-BETA';
-const CACHE_KEY = `logistics_v12_5_20_BETA_`;
-console.log(`[PULSE] Engine v${VERSION} Initialized (Beta / Cache Force)`);
-

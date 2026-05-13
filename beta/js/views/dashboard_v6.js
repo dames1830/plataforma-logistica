@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.4.5';
-const CACHE_KEY = `logistics_v17_4_4_shared_`;
+const VERSION = '17.4.6-BETA';
+const CACHE_KEY = `logistics_v17_4_6_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -400,6 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
+            <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
             <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
@@ -3047,22 +3048,46 @@ export const renderDashboard = async (container, user, onLogout) => {
     const otherZonesStockMap = new Map();
     if (isDetail) {
         const zoneAreas = ['almacenaje_activo', 'stockActivo', 'picking_activo', 'rack_activo'];
+        
+        // Helper para encontrar claves reales una sola vez por área
+        const findActualKey = (row, names) => {
+            if (!row) return null;
+            const keys = Object.keys(row);
+            const normalize = (s) => String(s || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z0-9]/g, '');
+            for (let n of names) {
+                if (row[n] !== undefined) return n;
+                const target = normalize(n);
+                const found = keys.find(k => normalize(k) === target);
+                if (found) return found;
+            }
+            return null;
+        };
+
         zoneAreas.forEach(areaKey => {
-            if (dataStore && dataStore[areaKey]) {
-                dataStore[areaKey].forEach(row => {
-                    const rowSku = getCol(row, ['Articulo', 'Artículo', 'Sku', 'ArtÃculo', 'PRODUCTO']);
-                    if (rowSku) {
-                        if (!otherZonesStockMap.has(rowSku)) otherZonesStockMap.set(rowSku, []);
-                        const ubi = getCol(row, ['Ubicación actual', 'Ubicacion', 'Ubicación', 'UBICACION']) || '---';
-                        otherZonesStockMap.get(rowSku).push({
-                            ...row,
-                            ubi: ubi,
-                            qty: parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0,
-                            areaDisplay: areaKey.replace('_activo','').toUpperCase(),
-                            skuFull: rowSku
-                        });
-                    }
-                });
+            const data = dataStore[areaKey];
+            if (data && data.length > 0) {
+                const firstRow = data[0];
+                const skuKey = findActualKey(firstRow, ['Articulo', 'Artículo', 'Sku', 'ArtÃculo', 'PRODUCTO']);
+                const ubiKey = findActualKey(firstRow, ['Ubicación actual', 'Ubicacion', 'Ubicación', 'UBICACION']);
+                const qtyKey = findActualKey(firstRow, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD']);
+
+                if (skuKey) {
+                    data.forEach(row => {
+                        const rowSku = row[skuKey];
+                        if (rowSku) {
+                            if (!otherZonesStockMap.has(rowSku)) otherZonesStockMap.set(rowSku, []);
+                            const ubi = (ubiKey && row[ubiKey]) || '---';
+                            const qty = (qtyKey && parseFloat(row[qtyKey])) || 0;
+                            otherZonesStockMap.get(rowSku).push({
+                                ...row,
+                                ubi: ubi,
+                                qty: qty,
+                                areaDisplay: areaKey.replace('_activo','').toUpperCase(),
+                                skuFull: rowSku
+                            });
+                        }
+                    });
+                }
             }
         });
     }
@@ -3382,13 +3407,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
                                 // [STABLE] Recuperar información optimizada del mapa pre-calculado
                                 const bufferItems = art.items;
+                                const bufferUbis = new Set(bufferItems.map(bi => bi.ubi));
                                 const uniqueSkus = [...new Set(bufferItems.map(i => i.skuFull))];
                                 const otherZoneItems = [];
                                 
                                 uniqueSkus.forEach(sku => {
                                     const stockItems = otherZonesStockMap.get(sku) || [];
                                     stockItems.forEach(item => {
-                                        if (!bufferItems.some(bi => bi.ubi === item.ubi)) {
+                                        if (!bufferUbis.has(item.ubi)) {
                                             otherZoneItems.push(item);
                                         }
                                     });
