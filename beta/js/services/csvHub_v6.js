@@ -709,8 +709,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                const lvlUpper = nivelLabel.toUpperCase();
-                if (lvlUpper.includes('ALTO') || lvlUpper.includes('PISO') || lvlUpper.includes('AEREO') || lvlUpper.includes('AÉREO')) {
+                if (ubi.toUpperCase().startsWith('SEL-')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
