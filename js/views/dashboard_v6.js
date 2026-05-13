@@ -1,10 +1,10 @@
 /**
- * Dashboard View Module v17.4.6 - PRODUCTION
+ * Dashboard View Module v17.4.7 - PRODUCTION
  * Centralized Logic for Logistics, Performance, and Almacenaje
  * CLEANED FROM BETA BRANDING
  */
 
-import { adminService } from '../services/adminService.js?v=17.4.6';
+import { adminService } from '../services/adminService.js?v=17.4.7';
 import { 
   dataStore, 
   getAreaData, 
@@ -12,7 +12,7 @@ import {
   fetchBufferHistory, 
   saveBufferReport, 
   updateTablaTallas 
-} from '../services/csvHub_v6.js?v=17.4.6';
+} from '../services/csvHub_v6.js?v=17.4.7';
 
 export const renderDashboard = async (container, user, onLogout) => {
   if (!container) return;
@@ -174,7 +174,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div class="kpi-card">
                 <span class="kpi-title">FECHA DE OPERACIÓN</span>
                 <span class="kpi-value">${new Date().toLocaleDateString('es-PE')}</span>
-                <span class="kpi-subtitle">Sistema v17.4.6</span>
+                <span class="kpi-subtitle">Sistema v17.4.7</span>
             </div>
         </div>
         <div class="dashboard-body">
@@ -825,7 +825,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="glass-panel animate-fade-in" style="max-width:600px; padding:2rem;">
             <h4>Configuración del Sistema</h4>
             <div class="config-list">
-                <div class="config-item"><span>Versión del Core</span><span class="badge primary">v17.4.6</span></div>
+                <div class="config-item"><span>Versión del Core</span><span class="badge primary">v17.4.7</span></div>
                 <div class="config-item"><span>Conectividad</span><span class="badge success">ONLINE</span></div>
                 <div class="config-item"><span>Entorno</span><span style="color:var(--primary); font-weight:800;">PROD</span></div>
             </div>
