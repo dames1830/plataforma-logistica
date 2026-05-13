@@ -404,7 +404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.4.6</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.1</span>
           </h2>
         </div>
       </div>
@@ -3118,10 +3118,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Lógica de Agrupación para Historial
     const getWeekNumber = (d) => {
         const date = new Date(d);
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-        const week1 = new Date(date.getFullYear(), 0, 4);
-        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
+        return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
     };
 
     const groups = {};
@@ -3137,7 +3137,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         groups[w][t.fecha]++;
     });
 
-    const sidebarHtml = Object.keys(groups).sort().reverse().map(w => {
+    const sidebarHtml = Object.keys(groups).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.replace(/\D/g, '')) || 0;
+        return numB - numA;
+    }).map(w => {
         const isExpanded = expandedWeeks.includes(w);
         const days = groups[w];
         return `
@@ -3166,7 +3170,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
                 <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:var(--text-muted); font-weight:500; border-bottom:none; text-decoration:none;">🔍 DETALLE</a>
             </nav>
-            <div style="display:flex; gap:12px; align-items:center;">
+            <div style="display:${isDetail ? 'none' : 'flex'}; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
                 </button>
