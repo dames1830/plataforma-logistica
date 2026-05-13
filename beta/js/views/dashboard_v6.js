@@ -400,7 +400,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="background:#fcd34d; color:#000; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:900; vertical-align:middle; margin-left:5px;">BETA</span>
             <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
@@ -3044,6 +3043,30 @@ export const renderDashboard = async (container, user, onLogout) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
     
+    // [OPTIMIZACIÓN] Pre-calcular mapa de stock para evitar bloqueos en el renderizado
+    const otherZonesStockMap = new Map();
+    if (isDetail) {
+        const zoneAreas = ['almacenaje_activo', 'stockActivo', 'picking_activo', 'rack_activo'];
+        zoneAreas.forEach(areaKey => {
+            if (dataStore && dataStore[areaKey]) {
+                dataStore[areaKey].forEach(row => {
+                    const rowSku = getCol(row, ['Articulo', 'Artículo', 'Sku', 'ArtÃculo', 'PRODUCTO']);
+                    if (rowSku) {
+                        if (!otherZonesStockMap.has(rowSku)) otherZonesStockMap.set(rowSku, []);
+                        const ubi = getCol(row, ['Ubicación actual', 'Ubicacion', 'Ubicación', 'UBICACION']) || '---';
+                        otherZonesStockMap.get(rowSku).push({
+                            ...row,
+                            ubi: ubi,
+                            qty: parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0,
+                            areaDisplay: areaKey.replace('_activo','').toUpperCase(),
+                            skuFull: rowSku
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
     // SINCRONIZACIÓN CRÍTICA: Asegurar que el cache local tenga lo que el radar encontró
     if (adminService.adminStore.almacenaje_tasks) {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
@@ -3357,32 +3380,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                 </tr>`;
                             }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
-                                // [BETA] Recuperar información en tiempo real del dataStore para otras zonas
+                                // [STABLE] Recuperar información optimizada del mapa pre-calculado
                                 const bufferItems = art.items;
                                 const uniqueSkus = [...new Set(bufferItems.map(i => i.skuFull))];
                                 const otherZoneItems = [];
                                 
-                                // Áreas a buscar: Priorizar almacenaje_activo y stockActivo
-                                const zoneAreas = ['almacenaje_activo', 'stockActivo', 'picking_activo', 'rack_activo'];
-                                
                                 uniqueSkus.forEach(sku => {
-                                    zoneAreas.forEach(areaKey => {
-                                        if (dataStore && dataStore[areaKey]) {
-                                            dataStore[areaKey].forEach(row => {
-                                                const rowSku = getCol(row, ['Articulo', 'Artículo', 'Sku', 'ArtÃculo', 'PRODUCTO']);
-                                                if (rowSku === sku) {
-                                                    const ubi = getCol(row, ['Ubicación actual', 'Ubicacion', 'Ubicación', 'UBICACION']) || '---';
-                                                    if (!bufferItems.some(bi => bi.ubi === ubi)) {
-                                                        otherZoneItems.push({
-                                                            ...row,
-                                                            ubi: ubi,
-                                                            qty: parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0,
-                                                            areaDisplay: areaKey.replace('_activo','').toUpperCase(),
-                                                            skuFull: rowSku
-                                                        });
-                                                    }
-                                                }
-                                            });
+                                    const stockItems = otherZonesStockMap.get(sku) || [];
+                                    stockItems.forEach(item => {
+                                        if (!bufferItems.some(bi => bi.ubi === item.ubi)) {
+                                            otherZoneItems.push(item);
                                         }
                                     });
                                 });
