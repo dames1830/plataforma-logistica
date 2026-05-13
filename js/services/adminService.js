@@ -1,5 +1,6 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v17.1.1 - RESTAURACIÓN TOTAL)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v17.4.6)
+ * Producción
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -131,7 +132,20 @@ export const closeAttendanceAndSyncPerformance = async (date, attendanceData) =>
     const ok1 = await save('attendance', adminStore.attendance);
     if (!ok1) return false;
 
-    const newLogs = attendanceData.map(a => {
+    // Convert keys to array for processing
+    const attArray = Object.keys(attendanceData).map(dni => {
+        const worker = adminStore.workers.find(w => String(w.dni || w.Dni) === String(dni));
+        return {
+            dni,
+            nombre: worker ? worker.nombre : 'S/N',
+            apellidos: worker ? worker.apellidos : 'S/A',
+            present: attendanceData[dni].asistencia === 'P',
+            onTime: attendanceData[dni].puntualidad === 'SÍ',
+            justification: attendanceData[dni].justification || ''
+        };
+    });
+
+    const newLogs = attArray.map(a => {
         let score = 0;
         if (a.present) score += 30; 
         if (a.present && a.onTime) score += 10;
@@ -172,7 +186,6 @@ export const reopenAttendance = async (date) => {
     const username = (currentUser.username || '').toLowerCase();
     
     if (username !== 'dames' && currentUser.role !== 'admin') {
-        alert("⛔ ACCESO DENEGADO");
         return false;
     }
 
@@ -186,10 +199,14 @@ export const reopenAttendance = async (date) => {
     return true;
 };
 
-export const saveAttendance = async (date, state) => {
-    if (adminStore.attendance[date]?.finalized && state.finalized === false) return false;
-    adminStore.attendance[date] = state;
-    return await save('attendance', adminStore.attendance);
+export const saveAttendanceLocal = (date, data) => {
+    adminStore.attendance[date] = { data, ts: Date.now(), finalized: false };
+    localStorage.setItem(PREFIX + 'attendance', JSON.stringify(adminStore.attendance));
+};
+
+export const getAttendanceForDate = (date) => {
+    const entry = adminStore.attendance[date];
+    return (entry && entry.data) ? entry.data : {};
 };
 
 export const updatePerformanceLogEntry = async (date, dni, updates) => {
@@ -307,4 +324,20 @@ export const togglePermission = (role, tabId) => {
     const p = adminStore.permissions[role];
     p[tabId] = p[tabId] === 1 ? 0 : 1;
     save('permissions', adminStore.permissions);
+};
+
+export const resetProductionData = async () => {
+    try {
+        adminStore.attendance = {};
+        adminStore.performance_log = [];
+        localStorage.removeItem(PREFIX + 'attendance');
+        localStorage.removeItem(PREFIX + 'performance_log');
+        
+        await save('attendance', {});
+        await save('performance_log', []);
+        return true;
+    } catch (e) {
+        console.error("[PULSE] Error resetting data:", e);
+        return false;
+    }
 };
