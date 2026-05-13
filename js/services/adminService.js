@@ -341,3 +341,18 @@ export const resetProductionData = async () => {
         return false;
     }
 };
+
+export const adminService = {
+    initializeAdminData,
+    getWorkers,
+    getUsers,
+    getPermissions,
+    getAttendanceForDate,
+    saveAttendanceLocal,
+    closeAttendanceAndSyncPerformance,
+    getPerformanceLog,
+    updatePerformanceLogEntry,
+    togglePermission,
+    resetProductionData,
+    adminStore
+};
