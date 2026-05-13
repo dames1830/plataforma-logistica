@@ -1,5 +1,5 @@
 /**
- * Admin Service - Gestión de Personal, Usuarios y Performance (v17.6.3)
+ * Admin Service - Gestión de Personal, Usuarios y Performance (v17.4.6)
  */
 const PREFIX = 'logistics_admin_v11_';
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';

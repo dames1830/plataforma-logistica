@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '17.6.3';
-const CACHE_KEY = `logistics_v17_6_3_prod_shared_`;
+const VERSION = '17.4.6';
+const CACHE_KEY = `logistics_v17_4_6_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -709,7 +709,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                 });
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
-                if (ubi.toUpperCase().startsWith('SEL-')) {
+                const lvlUpper = nivelLabel.toUpperCase();
+                if (lvlUpper.includes('ALTO') || lvlUpper.includes('PISO') || lvlUpper.includes('AEREO') || lvlUpper.includes('AÉREO')) {
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;

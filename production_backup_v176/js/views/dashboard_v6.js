@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.4.5';
-import * as adminService from '../services/adminService.js?v=17.2.4';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.6.0';
+import * as adminService from '../services/adminService.js?v=17.6.0';
 
 
-const VERSION = '17.6.3';
-const CACHE_KEY = `logistics_v17_6_3_prod_shared_`;
+const VERSION = '17.6.0';
+const CACHE_KEY = `logistics_v17.6.0__shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -403,7 +403,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.3</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.0</span>
           </h2>
         </div>
       </div>
@@ -3117,10 +3117,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Lógica de Agrupación para Historial
     const getWeekNumber = (d) => {
         const date = new Date(d);
-        const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-        dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
-        return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
     };
 
     const groups = {};
@@ -3136,11 +3136,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         groups[w][t.fecha]++;
     });
 
-    const sidebarHtml = Object.keys(groups).sort((a, b) => {
-        const numA = parseInt(a.replace(/\D/g, '')) || 0;
-        const numB = parseInt(b.replace(/\D/g, '')) || 0;
-        return numB - numA;
-    }).map(w => {
+    const sidebarHtml = Object.keys(groups).sort().reverse().map(w => {
         const isExpanded = expandedWeeks.includes(w);
         const days = groups[w];
         return `
@@ -3167,9 +3163,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             ${!isKpi ? `
             <nav style="display:flex; gap:1.5rem;">
                 <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
-                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:var(--text-muted); font-weight:500; border-bottom:none; text-decoration:none;">🔍 DETALLE</a>
             </nav>
-            <div style="display:${isDetail ? 'none' : 'flex'}; gap:12px; align-items:center;">
+            <div style="display:flex; gap:12px; align-items:center;">
                 <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                     🔄
                 </button>
@@ -3453,6 +3449,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <td style="padding:0.6rem 1rem;">${art.sku7}</td>
                                         <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${isBuffer ? '800' : '500'};">
                                             ${i.ubi}
+                                            ${!isBuffer ? `<span style="font-size:0.6rem; margin-left:8px; background:rgba(251,191,36,0.1); padding:2px 6px; border-radius:4px; color:#fbbf24;">${i.areaDisplay || 'ZONA'}</span>` : ''}
                                         </td>
                                         <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
