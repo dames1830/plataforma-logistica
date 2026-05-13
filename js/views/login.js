@@ -7,7 +7,7 @@ export const renderLogin = (container, onLoginSuccess) => {
     <div class="login-box glass-panel animate-fade-in" style="background:rgba(30, 41, 59, 0.98) !important; border:1px solid var(--primary); box-shadow: 0 0 40px rgba(0,0,0,0.5); pointer-events: auto !important;">
       <div class="login-header">
         <h1>DEAM1830 
-          <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v17.6.3</span>
+          <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v17.6.4</span>
         </h1>
         <p>Plataforma de Gestión Logística</p>
       </div>

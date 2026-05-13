@@ -4,8 +4,10 @@ console.log("🚀 [PULSE] Reconnecting to Unified Cloud...");
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = '17.6.3';
+    this.version = '17.6.4';
     this.isRendered = false;
+    this.inactivityTimer = null;
+    this.boundReset = null;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();
   }
@@ -32,6 +34,33 @@ class App {
     }
   }
 
+  setupInactivityTimer(logout) {
+    this.clearInactivityTimer();
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    this.boundReset = () => this.resetInactivityTimer(logout);
+    events.forEach(e => window.addEventListener(e, this.boundReset));
+    this.resetInactivityTimer(logout);
+  }
+
+  clearInactivityTimer() {
+    if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+    if (this.boundReset) {
+      const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+      events.forEach(e => window.removeEventListener(e, this.boundReset));
+    }
+  }
+
+  resetInactivityTimer(logout) {
+    if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+    this.inactivityTimer = setTimeout(() => {
+      console.log("🕒 Sesión cerrada por inactividad (20m)");
+      this.clearInactivityTimer();
+      logout();
+      this.isRendered = false;
+      this.init();
+    }, 20 * 60 * 1000);
+  }
+
   async render(user, getSession, logout) {
     if (this.isRendered) return;
     this.isRendered = true;
@@ -39,14 +68,17 @@ class App {
     const timestamp = new Date().getTime();
     try {
         if (user) {
+            this.setupInactivityTimer(logout);
             const { renderDashboard } = await import(`./views/dashboard_v6.js?v=${this.version}_${timestamp}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
+                this.clearInactivityTimer();
                 this.isRendered = false;
                 logout();
                 this.init();
             });
         } else {
+            this.clearInactivityTimer();
             const { renderLogin } = await import(`./views/login.js?v=${this.version}_${timestamp}`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => {
