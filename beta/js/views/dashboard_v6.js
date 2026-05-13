@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.2.4';
-const CACHE_KEY = `logistics_v17_2_4_shared_`;
+const VERSION = '17.4.4';
+const CACHE_KEY = `logistics_v17_4_4_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -336,11 +336,19 @@ window.downloadExcelZonas = () => {
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
-  await initPersistentData(); // [MOD V12.1.48] Esperar a IndexedDB antes de renderizar
+  await initPersistentData();
   await adminService.initializeAdminData();
+  
+  // [FIX] Sincronización proactiva de Maestros y Tabla Virtual
+  await Promise.all([
+      getAreaData('tabla_tallas'),
+      getAreaData('tallas'),
+      getAreaData('articulos')
+  ]);
+  
   await loadAlmacenajeTasks();
   
-  // Heartbeat de Sincronización Global (Desactivado a petición del usuario v17.2.4)
+  // Heartbeat de Sincronización Global (Desactivado a petición del usuario v17.4.2)
   /* 
   setInterval(async () => {
       await adminService.initializeAdminData();
@@ -3362,7 +3370,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.6rem 1rem;">${art.sku7}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${i.area.includes('CDBUFFER') ? '800' : '500'};">${i.ubi}</td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop()}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${(dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || i.skuFull.split('-').pop() || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:#fff;">${i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; opacity:0.6;">${!i.area.includes('CDBUFFER') ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>

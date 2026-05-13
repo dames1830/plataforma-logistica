@@ -400,6 +400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
+            <span style="background:#fcd34d; color:#000; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:900; vertical-align:middle; margin-left:5px;">BETA</span>
             <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
