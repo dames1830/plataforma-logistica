@@ -1,4 +1,4 @@
-import { login } from '../services/auth.js?v=17.4.6-BETA';
+import { login } from '../services/auth.js?v=17.4.6';
 
 export const renderLogin = (container, onLoginSuccess) => {
   container.className = 'login-container';
@@ -8,7 +8,7 @@ export const renderLogin = (container, onLoginSuccess) => {
       <div class="login-header">
         <h1>DEAM1830 
           <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:900; vertical-align:middle; margin-left:4px;">BETA</span>
-          <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v17.4.6-BETA</span>
+          <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v17.4.6</span>
         </h1>
         <p>Entorno de Pruebas y Desarrollo</p>
       </div>

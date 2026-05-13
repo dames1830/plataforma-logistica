@@ -401,7 +401,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v${VERSION}</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.4.6</span>
           </h2>
         </div>
       </div>
@@ -3420,7 +3420,26 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     });
                                 });
 
-                                const allItems = [...bufferItems, ...otherZoneItems];
+                                const allItems = [...bufferItems, ...otherZoneItems]
+                                    .filter(i => {
+                                        const ubi = String(i.ubi || '').toUpperCase();
+                                        // 1. REGLA CDBUFFER: Solo si es CDBUFFER pero NO CDBUFFER-C
+                                        if (ubi.startsWith('CDBUFFER')) {
+                                            return !ubi.startsWith('CDBUFFER-C');
+                                        }
+                                        // 2. REGLA ZONAS PERMITIDAS: SEL, MZN01, MZN02, MZN03, MZN04
+                                        const allowedPrefixes = ['SEL-', 'MZN01-', 'MZN02-', 'MZN03-', 'MZN04-'];
+                                        return allowedPrefixes.some(p => ubi.startsWith(p));
+                                    })
+                                    .sort((a, b) => {
+                                        // PRIORIDAD: CDBUFFER PRIMERO
+                                        const isABuffer = a.ubi.startsWith('CDBUFFER');
+                                        const isBBuffer = b.ubi.startsWith('CDBUFFER');
+                                        if (isABuffer && !isBBuffer) return -1;
+                                        if (!isABuffer && isBBuffer) return 1;
+                                        return 0;
+                                    });
+
                                 return allItems.map(i => {
                                     const isBuffer = i.ubi.startsWith('CDBUFFER');
                                     return `
