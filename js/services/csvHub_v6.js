@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '18.0.0';
-const CACHE_KEY = `logistics_v18_0_0_shared_`;
+const VERSION = '18.5.0-RELEASE';
+const CACHE_KEY = `logistics_v18_5_0_release_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -302,30 +302,44 @@ export const parseFile = (file, area) => {
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           
           let jsonData = [];
-          if (area.endsWith('_reserva')) {
+          if (area === 'stockReserva' || area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
+              const cleanUbi = (s) => dc(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
               for (let i = 2; i < rows.length; i++) {
                   const r = rows[i];
                   if (!r || r.length < 5) continue;
+                  
+                  // Mapeo flexible: Intentar por índice o por contenido si r[1] no es el nivel
+                  const nivelRaw = dc(r[1]).toUpperCase();
+                  const esAlto = nivelRaw.includes('ALTO') || nivelRaw === 'A';
+                  
                   jsonData.push({
-                      'NIVEL': dc(r[1]),
+                      'NIVEL': nivelRaw,
+                      'ES_ALTO': esAlto,
                       'PRODUCTO': dc(r[8]), // Columna I
                       'CANTIDAD': parseFloat(r[10]) || 0,
-                      'UBICACION': dc(r[4]),
-                      'LPN': dc(r[5]),
-                      'NRO AND': dc(r[2]),
-                      'DESCRIPCION': dc(r[9]) // Columna J: Capturamos descripción para tallas
+                      'UBICACION': dc(r[4]), // Columna E
+                      'UBI_KEY': cleanUbi(r[4]),
+                      'LPN': dc(r[5]),       // Columna F
+                      'DESCRIPCION': dc(r[9]) 
                   });
               }
           } else if (area === 'matriz_ubicaciones') {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
+              const cleanUbi = (s) => dc(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+              // Empezar en 0 pero filtrar cualquier fila que parezca un encabezado (UBICACION / UBICACIÓN)
               for (let i = 0; i < rows.length; i++) {
                   const r = rows[i];
                   if (!r || !dc(r[0])) continue;
+                  const firstCell = dc(r[0]).toUpperCase();
+                  if (firstCell.includes('UBICAC') || firstCell.includes('MATRIZ')) continue;
+                  
                   jsonData.push({
-                      'UBICACION': dc(r[0]) // Columna A
+                      'UBICACION': dc(r[0]),
+                      'UBI_KEY': cleanUbi(r[0])
                   });
               }
           } else {

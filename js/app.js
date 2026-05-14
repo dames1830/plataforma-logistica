@@ -1,10 +1,10 @@
-// ENGINE v18.0.0-PROD - PRODUCTION ENVIRONMENT
-console.log("🚀 [PULSE] System Online - Production Mode");
+// ENGINE v17.1.3-REUNITED - SHARED CLOUD ENVIRONMENT
+console.log("🚀 [PULSE] Reconnecting to Unified Cloud...");
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = '18.0.0';
+    this.version = '18.5.0-RELEASE';
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();

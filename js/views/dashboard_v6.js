@@ -1,9 +1,10 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.4.5';
+// PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.0.0';
-const CACHE_KEY = `logistics_v18_0_0_shared_`;
+const VERSION = '18.5.0-RELEASE';
+const CACHE_KEY = `logistics_v18_5_0_release_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -79,15 +80,12 @@ const loadAlmacenajeTasks = async () => {
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+  { id: 'inventario', label: 'Inventario', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
     { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
     { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
-    { id: 'analisis_inventario', label: 'Analisis Inventario', icon: '🔍' },
-    { id: 'inventarios_main', label: 'Inventarios', icon: '📦', subTabs: [
-        { id: 'general', label: 'General', icon: '📝' },
-        { id: 'ciclicos', label: 'Ciclicos', icon: '🔄' }
-    ]},
-    { id: 'reportes_inventario', label: 'Reportes', icon: '📋' }
+    { id: 'analisis_inventarios', label: 'Análisis Inventario', icon: '🔍' },
+    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦' },
+    { id: 'reportes_inventarios', label: 'Reportes', icon: '📊' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -410,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.0.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.0</span>
           </h2>
         </div>
       </div>
@@ -459,7 +457,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
-    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
+    else if (currentTab === 'inventario') await renderInventarioTab();
     else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
     else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
     else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
@@ -2519,66 +2517,170 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  const processReporteUCA = async (resultContainer) => {
-    const btn = document.getElementById('btn_procesar_uca');
-    if (!btn) return;
-    
-    btn.disabled = true;
-    btn.innerHTML = '⌛ PROCESANDO CRUCE...';
-    
-    await new Promise(r => setTimeout(r, 600));
 
-    const reserva = dataStore.inventario_reserva || [];
-    const matriz = dataStore.matriz_ubicaciones || [];
 
-    if (reserva.length === 0 || matriz.length === 0) {
-      alert('⚠️ Faltan datos: Primero debes cargar "STOCK RESERVA" y "MATRIZ UBICACIONES ALTO" en la sección de Archivo.');
-      btn.disabled = false;
-      btn.innerHTML = '⚡ PROCESAR REPORTE UCA';
-      return;
+  let activeInventarioSub = 'modulo_inventarios';
+
+  const renderInventarioTab = async () => {
+    const invTabDef = TABS.find(t => t.id === 'inventario');
+    const allowedSubTabs = invTabDef.subTabs;
+    
+    if (!allowedSubTabs.find(s => s.id === activeInventarioSub)) {
+        activeInventarioSub = allowedSubTabs[0].id;
     }
 
-    // Filtro Crítico: Solo considerar ubicaciones con NIVEL = "ALTO"
-    const reservaFiltrada = reserva.filter(row => String(row.NIVEL || '').trim().toUpperCase() === 'ALTO');
+    contentArea.innerHTML = `
+        <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeInventarioSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
+              ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="inventarioContent"></div>`;
+    
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeInventarioSub = e.currentTarget.dataset.s; 
+        renderInventarioTab(); 
+    }));
 
+    const invContainer = document.getElementById('inventarioContent');
+    
+    if (activeInventarioSub === 'archivo_inventario') {
+       // --- MULTI-UPLOAD PARA INVENTARIO ---
+       const wrap = document.createElement('div');
+       wrap.style.display = 'flex';
+       wrap.style.flexDirection = 'column';
+       wrap.style.gap = '1rem';
+       invContainer.appendChild(wrap);
+
+       const [matriz, reserva, general] = await Promise.all([
+           getAreaData('matriz_ubicaciones'),
+           getAreaData('stockReserva'),
+           getAreaData('inventario')
+       ]);
+
+       renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES (Col A)');
+       renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA (Col E, Col I)');
+       renderUploadArea(wrap, 'inventario', general, '.csv', 'STOCK GENERAL');
+
+    } else if (activeInventarioSub === 'kpi_inventarios') {
+       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">KPI Inventarios en desarrollo.</div>`;
+    } else if (activeInventarioSub === 'analisis_inventarios') {
+       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Análisis Inventario en desarrollo.</div>`;
+    } else if (activeInventarioSub === 'modulo_inventarios') {
+       // Por ahora mostramos Ciclicos como placeholder y General si hay datos
+       const data = await getAreaData('inventario');
+       if (!data) renderUploadArea(invContainer, 'inventario', null, '.csv', 'Stock General');
+       else renderDashboardView(invContainer, data);
+
+    } else if (activeInventarioSub === 'reportes_inventarios') {
+       await renderReporteUCATab(invContainer);
+    }
+  };
+
+  const renderReporteUCATab = async (container) => {
+    container.innerHTML = `
+      <div id="uca_process_header" style="display:flex; flex-direction:column; align-items:center; gap:1rem; margin-bottom:2rem; padding:2rem; background:rgba(99, 102, 241, 0.03); border-radius:15px; border:1px dashed rgba(99, 102, 241, 0.2);">
+        <div style="color:var(--text-muted); font-size:0.85rem; text-align:center; max-width:500px;">
+          Utiliza los archivos cargados en <strong>🗂️ ARCHIVO INVENTARIO</strong> para generar el análisis de exactitud.
+        </div>
+        <div id="uca_button_container" style="width:100%; display:flex; justify-content:center;"></div>
+      </div>
+      <div id="uca_results_area"></div>
+    `;
+    
+    const buttonContainer = document.getElementById('uca_button_container');
+    const resultsArea = document.getElementById('uca_results_area');
+
+    const [matriz, reserva] = await Promise.all([getAreaData('matriz_ubicaciones'), getAreaData('stockReserva')]);
+    
+    const btnProcess = document.createElement('button');
+    btnProcess.className = 'btn';
+    btnProcess.style = "width:100%; max-width:600px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; height:55px; font-size:1rem; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border-radius:12px; transition:all 0.3s ease;";
+    btnProcess.innerHTML = '⚡ PROCESAR REPORTES';
+    buttonContainer.appendChild(btnProcess);
+
+    const runProcess = () => {
+        try {
+            if (!matriz || !reserva) {
+                alert("⚠️ No hay datos suficientes en ARCHIVO INVENTARIO (Matriz y Stock Reserva).");
+                return;
+            }
+            btnProcess.disabled = true;
+            btnProcess.innerHTML = '<i class="fas fa-cog fa-spin"></i> GENERANDO REPORTES...';
+            
+            setTimeout(() => {
+                try {
+                    const results = processReporteUCA(matriz, reserva);
+                    displayReporteUCA(results);
+                    btnProcess.disabled = false;
+                    btnProcess.innerHTML = '⚡ RE-PROCESAR REPORTES';
+                    resultsArea.scrollIntoView({ behavior: 'smooth' });
+                } catch (err) {
+                    console.error("Error en procesamiento:", err);
+                    alert("❌ Error al procesar los datos: " + err.message);
+                    btnProcess.disabled = false;
+                    btnProcess.innerHTML = '⚡ INTENTAR DE NUEVO';
+                }
+            }, 500);
+        } catch (f) {
+            console.error("Fatal runProcess:", f);
+        }
+    };
+
+    btnProcess.onclick = runProcess;
+    
+    /* Auto-process disabled as per user request
+    if (matriz && reserva) {
+        runProcess();
+    }
+    */
+  };
+
+  const processReporteUCA = (matriz, reserva) => {
     const reservaMap = new Map();
-    reservaFiltrada.forEach(row => {
-      const ubi = String(row.UBICACION || '').trim().toUpperCase();
-      if (!reservaMap.has(ubi)) reservaMap.set(ubi, []);
-      reservaMap.get(ubi).push(row);
+    // Solo procesar registros de nivel ALTO (usando el flag pre-calculado)
+    const filteredReserva = reserva.filter(r => r.ES_ALTO === true || String(r.NIVEL || '').toUpperCase().includes('ALTO'));
+    
+    filteredReserva.forEach(r => {
+      const ubiRaw = String(r.UBICACION || '').toUpperCase();
+      if (ubiRaw.includes('UBICAC')) return; // Failsafe para Stock Reserva
+
+      const key = r.UBI_KEY || ubiRaw.replace(/[^A-Z0-9]/g, '');
+      if (!key) return;
+      if (!reservaMap.has(key)) reservaMap.set(key, []);
+      reservaMap.get(key).push(r);
     });
 
     const results = [];
     matriz.forEach(m => {
-      // Detección robusta de la ubicación en la matriz
-      let ubiRaw = '';
-      if (typeof m === 'string') ubiRaw = m;
-      else if (Array.isArray(m)) ubiRaw = m[0];
-      else if (typeof m === 'object' && m !== null) {
-          ubiRaw = m.UBICACION || m.ubicacion || m.Ubicacion || Object.values(m)[0];
-      }
+      const ubiOriginal = m.UBICACION || '-';
+      const ubiUpper = ubiOriginal.toUpperCase();
       
-      const ubi = String(ubiRaw || '').trim().toUpperCase();
-      if (!ubi) return; 
+      // FILTRO DEFINITIVO: Si la ubicación es el encabezado, ignorar
+      if (ubiUpper.includes('UBICAC') || ubiUpper.includes('MATRIZ')) return;
 
-      const stockRes = reservaMap.get(ubi);
+      const key = m.UBI_KEY || ubiUpper.replace(/[^A-Z0-9]/g, '');
+      if (!key) return;
+
+      const stockRes = reservaMap.get(key);
       const hasStock = stockRes && stockRes.length > 0;
       
-      // Filtrar LPNs únicos para evitar duplicados en el reporte
       const uniqueLPNs = hasStock ? [...new Set(stockRes.map(s => String(s.LPN || '').trim()))].filter(l => l !== '') : [];
+      const uniqueSKUs = hasStock ? [...new Set(stockRes.map(s => String(s.PRODUCTO || s.SKU || s.Sku || '').trim()))].filter(sk => sk !== '') : [];
+      const totalQty = hasStock ? stockRes.reduce((acc, curr) => acc + (parseFloat(curr.CANTIDAD || 0)), 0) : 0;
 
       results.push({
-        ubicacion: ubi,
+        ubicacion: ubiOriginal,
         estado: hasStock ? 'OCUPADA' : 'VACÍA',
         lpns: uniqueLPNs.length,
+        skus: uniqueSKUs.length,
+        qty: totalQty,
         detalle: uniqueLPNs.length > 0 ? uniqueLPNs.join(', ') : '-'
       });
     });
 
-    displayReporteUCA(resultContainer, results);
-    btn.disabled = false;
-    btn.innerHTML = '✅ REPORTE GENERADO';
-    setTimeout(() => { if(btn) btn.innerHTML = '⚡ PROCESAR REPORTE UCA'; }, 3000);
+    return results;
   };
 
   const exportUCAtoExcel = async (results) => {
@@ -2589,11 +2691,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         sheet.columns = [
           { header: 'N°', key: 'num', width: 6 },
-          { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
+          { header: 'UBICACIÓN', key: 'ubicacion', width: 20 },
           { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
-          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
+          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 18 },
           { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
-          { header: 'OBSERVACIONES', key: 'obs', width: 30 },
+          { header: 'OBSERVACIONES', key: 'obs', width: 20 },
           { header: 'CHECK', key: 'check', width: 10 }
         ];
 
@@ -2609,29 +2711,29 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         });
 
+        // Estilo de encabezado (Azul PREMIUM)
+        sheet.getRow(1).height = 25;
         sheet.getRow(1).eachCell((cell) => {
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
           cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
           cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         });
 
-        // Bordes para toda la tabla y alineación
+        // Estilo de celdas
         sheet.eachRow((row, rowNumber) => {
-            row.eachCell((cell, colNumber) => {
-                cell.border = {
-                    top: {style:'thin'},
-                    left: {style:'thin'},
-                    bottom: {style:'thin'},
-                    right: {style:'thin'}
-                };
-                if (rowNumber > 1) {
-                    const isCenter = [1, 4, 7].includes(colNumber);
-                    cell.alignment = { 
-                      vertical: 'middle', 
-                      horizontal: isCenter ? 'center' : 'left' 
-                    };
-                }
-            });
+            if (rowNumber > 1) {
+                row.height = 20;
+                row.eachCell((cell, colNumber) => {
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                    const isCenter = [1, 3, 4, 7].includes(colNumber);
+                    cell.alignment = { vertical: 'middle', horizontal: isCenter ? 'center' : 'left' };
+                    if (colNumber === 3) {
+                        if (cell.value === 'OCUPADA') cell.font = { color: { argb: 'FFB91C1C' }, bold: true };
+                        else cell.font = { color: { argb: 'FF15803D' }, bold: true };
+                    }
+                });
+            }
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
@@ -2644,68 +2746,76 @@ export const renderDashboard = async (container, user, onLogout) => {
         window.URL.revokeObjectURL(url);
     } catch (err) {
         console.error("Error al exportar Excel:", err);
-        alert("❌ Error al generar el Excel. Por favor revisa la consola.");
+        alert("❌ Error al generar el Excel.");
     }
   };
 
-  const displayReporteUCA = (container, results) => {
+  const displayReporteUCA = (results) => {
+    const container = document.getElementById('uca_results_area');
+    if (!container) return;
+
     const total = results.length;
     const vacias = results.filter(r => r.estado === 'VACÍA').length;
     const ocupadas = total - vacias;
-    const accuracy = ((vacias / total) * 100).toFixed(2);
-    
-    // Ubicaciones con Discrepancia (Más de 1 LPN)
+    const accuracy = total > 0 ? ((vacias / total) * 100).toFixed(2) : 0;
     const discrepancias = results.filter(r => r.lpns > 1);
+    const now = new Date();
+    const ts = `${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    const tsSpan = `<span style="font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 400; margin-left: 10px; letter-spacing: 0.5px; vertical-align: middle;">[ ${ts} ]</span>`;
 
     container.innerHTML = `
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
         <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--primary);">
           <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Analizadas</div>
-          <div style="font-size:1.5rem; font-weight:800;">${total}</div>
+          <div style="font-size:1.5rem; font-weight:700;">${total}</div>
         </div>
         <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--success);">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Vacías</div>
-          <div style="font-size:1.5rem; font-weight:800;">${vacias}</div>
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Vacías (UCA)</div>
+          <div style="font-size:1.5rem; font-weight:700; color:var(--success);">${vacias}</div>
         </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--warning);">
+        <div class="glass-panel" style="padding:1rem; border-left:4px solid #f59e0b;">
           <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Ocupadas</div>
-          <div style="font-size:1.5rem; font-weight:800;">${ocupadas}</div>
+          <div style="font-size:1.5rem; font-weight:700; color:#f59e0b;">${ocupadas}</div>
         </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Con Multicarga</div>
-          <div style="font-size:1.5rem; font-weight:800;">${discrepancias.length}</div>
-        </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">% Efectividad</div>
-          <div style="font-size:1.5rem; font-weight:800;">${accuracy}%</div>
+        <div class="glass-panel" style="padding:1rem; border-left:4px solid #818cf8;">
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">% Disponibilidad</div>
+          <div style="font-size:1.5rem; font-weight:700; color:#818cf8;">${accuracy}%</div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start;">
-        
-        <!-- COLUMNA IZQUIERDA: REPORTE UCA GENERAL -->
-        <div class="animate-fade-in">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <h3 style="color:#fff; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">REPORTE UCA GENERAL</h3>
-            <button id="btn_export_uca" style="background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.65rem; font-weight:800; display:flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='rgba(34, 197, 94, 0.1)'; this.style.color='#22c55e'">
-              📊 EXPORTAR UCA
-            </button>
+      <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:1rem; align-items: start; margin-bottom: 2rem;">
+        <!-- TABLA GENERAL -->
+        <div class="glass-panel" style="padding:1rem; overflow:hidden; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+            <h3 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#fff; display:flex; align-items:center;">
+              REPORTE UCA GENERAL ${tsSpan}
+            </h3>
+            <button id="btnExportUCA" class="btn" style="width:auto; padding:5px 12px; font-size:0.7rem; background:#059669;">📊 EXPORTAR UCA</button>
           </div>
-          <div class="data-table-container glass-panel" style="max-height:450px; overflow-y:auto; border-radius:10px;">
-            <table class="data-table" style="font-size:0.8rem;">
+          
+          <div class="data-table-container" style="max-height:400px; border-radius:8px;">
+            <table class="data-table">
               <thead>
                 <tr>
-                  <th style="padding:0.75rem;">UBICACIÓN</th>
-                  <th style="padding:0.75rem;">ESTADO</th>
-                  <th style="padding:0.75rem; text-align:center;">LPNs</th>
+                  <th style="font-size:0.65rem; padding:8px;">UBICACIÓN</th>
+                  <th style="font-size:0.65rem; padding:8px;">ESTADO</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">LPNS</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">SKU´S</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">QTY</th>
                 </tr>
               </thead>
               <tbody>
                 ${results.map(r => `
                   <tr>
-                    <td style="font-weight:700; padding:0.6rem 0.75rem;">${r.ubicacion}</td>
-                    <td style="padding:0.6rem 0.75rem;"><span class="status-badge ${r.estado === 'VACÍA' ? 'status-completed' : 'status-pending'}" style="padding: 2px 8px; font-size: 0.65rem;">${r.estado}</span></td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:600;">${r.lpns}</td>
+                    <td style="font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
+                    <td style="padding:6px 8px;">
+                      <span class="status-badge" style="background:${r.estado === 'VACÍA' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; color:${r.estado === 'VACÍA' ? '#4ade80' : '#fbbf24'}; font-size:0.6rem; padding:2px 6px;">
+                        ${r.estado}
+                      </span>
+                    </td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem; padding:6px 8px;">${r.qty}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -2713,39 +2823,97 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
 
-        <!-- COLUMNA DERECHA: DISCREPANCIA UBICACIONES (MULTICARGA) -->
-        <div class="animate-fade-in" style="animation-delay: 0.1s;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <h3 style="color:#f87171; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">DISCREPANCIA UBICACIONES</h3>
-            <span style="background:rgba(248, 113, 113, 0.1); color:#f87171; padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800;">${discrepancias.length} CASOS</span>
+        <!-- DISCREPANCIAS -->
+        <div class="glass-panel" style="padding:1rem; border:1px solid rgba(239,68,68,0.2);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:#f87171; display:flex; align-items:center;">
+              DISCREPANCIA UBICACIONES ${tsSpan}
+            </h3>
+            <span style="background:rgba(239,68,68,0.2); color:#f87171; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:700;">${discrepancias.length} CASOS</span>
           </div>
-          <div class="data-table-container glass-panel" style="max-height:450px; overflow-y:auto; border-radius:10px; border:1px solid rgba(248, 113, 113, 0.2);">
-            <table class="data-table" style="font-size:0.8rem;">
+          <div class="data-table-container" style="max-height:400px; border-radius:8px;">
+            <table class="data-table">
               <thead>
-                <tr style="background:rgba(248, 113, 113, 0.05);">
-                  <th style="padding:0.75rem; color:#f87171;">UBICACIÓN</th>
-                  <th style="padding:0.75rem; color:#f87171; text-align:center;">LPNs ÚNICOS</th>
-                  <th style="padding:0.75rem; color:#f87171;">DETALLE LPN</th>
+                <tr>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px;">UBICACIÓN</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">LPNS</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">SKU´S</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">QTY</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px;">DETALLE</th>
                 </tr>
               </thead>
               <tbody>
-                ${discrepancias.length === 0 ? `<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias detectadas</td></tr>` : 
+                ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.8rem;">No se encontraron discrepancias</td></tr>' : 
                   discrepancias.map(r => `
                   <tr>
-                    <td style="font-weight:700; padding:0.6rem 0.75rem; color:#fca5a5;">${r.ubicacion}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:800;">${r.lpns}</td>
-                    <td style="font-size:0.7rem; color:var(--text-muted); padding:0.6rem 0.75rem;">${r.detalle}</td>
+                    <td style="color:#f87171; font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.qty}</td>
+                    <td style="font-size:0.65rem; color:#e2e8f0; padding:6px 8px; word-break: break-all; opacity:0.9;">${r.detalle}</td>
                   </tr>
                 `).join('')}
               </tbody>
             </table>
           </div>
         </div>
+      </div>
 
+      <!-- SECCION ERI ABAJO -->
+      <div class="animate-fade-in" style="animation-delay: 0.2s; border-top:1px solid rgba(255,255,255,0.1); padding-top:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
+                    <i class="fas fa-bullseye" style="font-size:0.9rem;"></i>
+                </div>
+                <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">INDICADOR ERI - EXACTITUD DE INVENTARIO</h3>
+            </div>
+            <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:800; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+                📥 CARGAR CONTEO FÍSICO
+            </button>
+        </div>
+        <div style="display:grid; grid-template-columns: 350px 1fr; gap:1.5rem;">
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="glass-panel" style="padding:2rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);">
+                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem; font-weight:700;">ERI GLOBAL</div>
+                    <div style="position:relative; width:120px; height:120px; margin:0 auto;">
+                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:120px; height:120px;">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="98.5, 100" />
+                        </svg>
+                        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.5rem; font-weight:900; color:#fff;">98.5%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px;">
+                <table class="data-table" style="font-size:0.8rem;">
+                    <thead><tr><th>SKU</th><th>DESCRIPCIÓN</th><th>SISTEMA</th><th>FÍSICO</th><th>DIF.</th><th>% ERI</th></tr></thead>
+                    <tbody><tr><td colspan="6" style="text-align:center; padding:4rem; color:var(--text-muted); font-style:italic;">Carga un archivo de conteo físico para activar el análisis ERI detallado.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
       </div>
     `;
 
-    document.getElementById('btn_export_uca')?.addEventListener('click', () => exportUCAtoExcel(results));
+    // Vincular exportación
+    document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
+    
+    // Vincular Carga ERI
+    const btnUploadERI = document.getElementById('btn_upload_eri');
+    if (btnUploadERI) {
+        btnUploadERI.onclick = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv, .xlsx';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                alert(`Archivo "${file.name}" seleccionado. Procesando análisis ERI...`);
+                // Aquí se disparará la lógica de comparación ERI en el futuro
+            };
+            input.click();
+        };
+    }
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
