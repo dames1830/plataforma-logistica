@@ -2718,8 +2718,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                     cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
                     const isCenter = [1, 3, 4, 7].includes(colNumber);
                     cell.alignment = { vertical: 'middle', horizontal: isCenter ? 'center' : 'left' };
-                    
-                    // Colorear Ocupadas/Vacías
                     if (colNumber === 3) {
                         if (cell.value === 'OCUPADA') cell.font = { color: { argb: 'FFB91C1C' }, bold: true };
                         else cell.font = { color: { argb: 'FF15803D' }, bold: true };
@@ -2742,7 +2740,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-   const displayReporteUCA = (results) => {
+  const displayReporteUCA = (results) => {
     const container = document.getElementById('uca-results-container');
     if (!container) return;
 
@@ -2776,7 +2774,6 @@ export const renderDashboard = async (container, user, onLogout) => {
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
-        <!-- TABLA GENERAL -->
         <div class="glass-panel" style="padding:1.5rem; overflow:hidden; display:flex; flex-direction:column;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:10px;">
             <h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#fff; display:flex; align-items:center;">
@@ -2815,7 +2812,6 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
 
-        <!-- DISCREPANCIAS -->
         <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(239,68,68,0.2);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
             <h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase; color:#f87171; display:flex; align-items:center;">
