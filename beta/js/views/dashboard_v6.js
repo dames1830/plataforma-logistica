@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.7.1-BETA';
-const CACHE_KEY = `logistics_v17_7_1_beta_shared_`;
+const VERSION = '17.7.2-BETA';
+const CACHE_KEY = `logistics_v17_7_2_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -411,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.7.1</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.7.2</span>
           </h2>
         </div>
       </div>
@@ -2584,63 +2584,69 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const exportUCAtoExcel = async (results) => {
     if (!results || results.length === 0) return;
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Reporte UCA');
-    
-    sheet.columns = [
-      { header: 'N°', key: 'num', width: 6 },
-      { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
-      { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
-      { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
-      { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
-      { header: 'OBSERVACIONES', key: 'obs', width: 30 },
-      { header: 'CHECK', key: 'check', width: 10 }
-    ];
+    try {
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Reporte UCA');
+        
+        sheet.columns = [
+          { header: 'N°', key: 'num', width: 6 },
+          { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
+          { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
+          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
+          { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
+          { header: 'OBSERVACIONES', key: 'obs', width: 30 },
+          { header: 'CHECK', key: 'check', width: 10 }
+        ];
 
-    results.forEach((r, idx) => {
-        sheet.addRow({
-            num: idx + 1,
-            ubicacion: r.ubicacion,
-            estado: r.estado,
-            lpns: r.lpns,
-            detalle: r.detalle,
-            obs: '',
-            check: '☐'
+        results.forEach((r, idx) => {
+            sheet.addRow({
+                num: idx + 1,
+                ubicacion: r.ubicacion,
+                estado: r.estado,
+                lpns: r.lpns,
+                detalle: r.detalle,
+                obs: '',
+                check: '☐'
+            });
         });
-    });
 
-    sheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    });
+        sheet.getRow(1).eachCell((cell) => {
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
 
-    // Bordes para toda la tabla y alineación
-    sheet.eachRow((row, rowNumber) => {
-        row.eachCell((cell) => {
-            cell.border = {
-                top: {style:'thin'},
-                left: {style:'thin'},
-                bottom: {style:'thin'},
-                right: {style:'thin'}
-            };
-            if (rowNumber > 1) {
-                cell.alignment = { 
-                  vertical: 'middle', 
-                  horizontal: ['num', 'lpns', 'check'].includes(cell.column.key) ? 'center' : 'left' 
+        // Bordes para toda la tabla y alineación
+        sheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell, colNumber) => {
+                cell.border = {
+                    top: {style:'thin'},
+                    left: {style:'thin'},
+                    bottom: {style:'thin'},
+                    right: {style:'thin'}
                 };
-            }
+                if (rowNumber > 1) {
+                    const isCenter = [1, 4, 7].includes(colNumber);
+                    cell.alignment = { 
+                      vertical: 'middle', 
+                      horizontal: isCenter ? 'center' : 'left' 
+                    };
+                }
+            });
         });
-    });
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Reporte_UCA_${new Date().toISOString().split('T')[0]}.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_UCA_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("Error al exportar Excel:", err);
+        alert("❌ Error al generar el Excel. Por favor revisa la consola.");
+    }
   };
 
   const displayReporteUCA = (container, results) => {
