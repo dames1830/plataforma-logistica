@@ -2581,37 +2581,41 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderReporteUCATab = async (container) => {
     container.innerHTML = `
-      <div id="uca_upload_area" style="display:flex; flex-direction:column; gap:1rem; margin-bottom:2rem;"></div>
+      <div id="uca_process_header" style="display:flex; flex-direction:column; align-items:center; gap:1rem; margin-bottom:2rem; padding:2rem; background:rgba(99, 102, 241, 0.03); border-radius:15px; border:1px dashed rgba(99, 102, 241, 0.2);">
+        <div style="color:var(--text-muted); font-size:0.85rem; text-align:center; max-width:500px;">
+          Utiliza los archivos cargados en <strong>🗂️ ARCHIVO INVENTARIO</strong> para generar el análisis de exactitud.
+        </div>
+        <div id="uca_button_container" style="width:100%; display:flex; justify-content:center;"></div>
+      </div>
       <div id="uca_results_area"></div>
     `;
     
-    const uploadArea = document.getElementById('uca_upload_area');
+    const buttonContainer = document.getElementById('uca_button_container');
     const resultsArea = document.getElementById('uca_results_area');
 
     const [matriz, reserva] = await Promise.all([getAreaData('matriz_ubicaciones'), getAreaData('stockReserva')]);
     
-    renderUploadArea(uploadArea, 'matriz_ubicaciones', matriz, '.xlsx', 'Matriz Ubicaciones (Col A)');
-    renderUploadArea(uploadArea, 'stockReserva', reserva, '.xlsx', 'Stock Reserva (Col E, Col I)');
-
     const btnProcess = document.createElement('button');
     btnProcess.className = 'btn';
-    btnProcess.style = "margin-bottom:2rem; width:100%; max-width:400px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);";
+    btnProcess.style = "width:100%; max-width:600px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; height:55px; font-size:1rem; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border-radius:12px; transition:all 0.3s ease;";
     btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
-    uploadArea.appendChild(btnProcess);
+    buttonContainer.appendChild(btnProcess);
 
     const runProcess = () => {
         if (!matriz || !reserva) {
-            alert("⚠️ Por favor carga ambos archivos (Matriz y Stock Reserva) para generar el reporte.");
+            alert("⚠️ No hay datos suficientes. Asegúrate de haber cargado 'Matriz Ubicaciones' y 'Stock Reserva' en la pestaña ARCHIVO INVENTARIO.");
             return;
         }
         btnProcess.disabled = true;
-        btnProcess.innerHTML = '⚙️ PROCESANDO...';
+        btnProcess.innerHTML = '<i class="fas fa-cog fa-spin"></i> GENERANDO REPORTES...';
         setTimeout(() => {
             const results = processReporteUCA(matriz, reserva);
             displayReporteUCA(resultsArea, results);
             btnProcess.disabled = false;
-            btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
-        }, 500);
+            btnProcess.innerHTML = '⚡ RE-PROCESAR REPORTE UCA / ERI';
+            // Scroll to results
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        }, 800);
     };
 
     btnProcess.onclick = runProcess;
