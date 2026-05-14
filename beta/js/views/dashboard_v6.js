@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.16-BETA';
+const VERSION = '18.5.17-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.16</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.17</span>
           </h2>
         </div>
       </div>
@@ -2630,33 +2630,81 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
     else if (activeModuloInvSub === 'reportes') {
         content.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:2rem;">
-                <div class="glass-panel" style="padding:1.2rem; border-radius:10px; border:1px solid rgba(79, 70, 229, 0.2);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <h4 style="color:#fff; margin:0; font-size:0.85rem; font-weight:800; letter-spacing:0.5px;">📊 REPORTE UCA</h4>
-                        <button id="btn_run_uca" class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:var(--primary);">⚡ GENERAR UCA</button>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-top:0.5rem;">
+                
+                <!-- CARD: REPORTE UCA -->
+                <div class="glass-panel action-card-premium" style="padding:2rem; border-radius:20px; border:1px solid rgba(99, 102, 241, 0.3); background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%); position:relative; overflow:hidden; transition:all 0.3s ease; display:flex; flex-direction:column; justify-content:space-between; min-height:280px;">
+                    <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:var(--primary); filter:blur(60px); opacity:0.15;"></div>
+                    
+                    <div>
+                        <div style="width:50px; height:50px; background:rgba(99, 102, 241, 0.2); border-radius:14px; display:flex; align-items:center; justify-content:center; color:#818cf8; border:1px solid rgba(99, 102, 241, 0.3); margin-bottom:1.5rem;">
+                            <i class="fas fa-warehouse" style="font-size:1.4rem;"></i>
+                        </div>
+                        <h3 style="color:#fff; margin:0; font-size:1.2rem; font-weight:900; letter-spacing:0.5px;">REPORTE UCA</h3>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin-top:8px; line-height:1.5;">Análisis de ocupación y disponibilidad. Compara la <b>Matriz de Ubicaciones</b> contra el <b>Stock Reserva</b> para identificar huecos físicos.</p>
                     </div>
-                    <div id="uca_results_area"></div>
+
+                    <div style="margin-top:2rem;">
+                        <button id="btn_run_uca" class="btn-premium-pulse" style="width:100%; background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:#fff; border:none; padding:12px; border-radius:12px; font-weight:800; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transition:all 0.2s;">
+                            <span>⚡ EJECUTAR ANÁLISIS UCA</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div id="eri_eru_section" class="glass-panel" style="padding:1.2rem; border-radius:10px; border:1px solid rgba(16, 185, 129, 0.2);">
-                    <h4 style="color:#fff; margin:0; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; margin-bottom:1rem;">🎯 EXACTITUD ERI / ERU</h4>
-                    <div id="eri_eru_results_area">
-                        ${window._lastERI ? '' : `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.75rem; font-style:italic;">Carga un conteo físico en 'Cíclicos' para ver resultados.</div>`}
+                <!-- CARD: ERI / ERU -->
+                <div class="glass-panel action-card-premium" style="padding:2rem; border-radius:20px; border:1px solid rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%); position:relative; overflow:hidden; transition:all 0.3s ease; display:flex; flex-direction:column; justify-content:space-between; min-height:280px;">
+                    <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:#10b981; filter:blur(60px); opacity:0.15;"></div>
+                    
+                    <div>
+                        <div style="width:50px; height:50px; background:rgba(16, 185, 129, 0.2); border-radius:14px; display:flex; align-items:center; justify-content:center; color:#10b981; border:1px solid rgba(16, 185, 129, 0.3); margin-bottom:1.5rem;">
+                            <i class="fas fa-bullseye" style="font-size:1.4rem;"></i>
+                        </div>
+                        <h3 style="color:#fff; margin:0; font-size:1.2rem; font-weight:900; letter-spacing:0.5px;">EXACTITUD ERI / ERU</h3>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin-top:8px; line-height:1.5;">Indicadores de precisión de inventario. Cruza el <b>Stock Activo</b> contra el <b>Conteo Físico</b> para medir la confiabilidad del almacén.</p>
+                    </div>
+
+                    <div style="margin-top:2rem;">
+                        <input type="file" id="up_conteo_premium" accept=".csv, .xlsx" style="display:none;">
+                        <button onclick="document.getElementById('up_conteo_premium').click()" class="btn-premium-pulse" style="width:100%; background:linear-gradient(135deg, #059669 0%, #10b981 100%); color:#fff; border:none; padding:12px; border-radius:12px; font-weight:800; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); transition:all 0.2s;">
+                            <span>🎯 INICIAR AUDITORÍA ERI</span>
+                        </button>
                     </div>
                 </div>
+
             </div>
+
+            <!-- AREA DE RESULTADOS (Se inyecta dinámicamente) -->
+            <div id="uca_results_area" style="margin-top:2rem;"></div>
+            <div id="eri_eru_results_area" style="margin-top:1rem;"></div>
         `;
 
+        // Lógica de los nuevos botones premium
         document.getElementById('btn_run_uca').onclick = () => {
             if (matriz && reserva) {
                 const res = processReporteUCA(matriz, reserva);
                 displayReporteUCA(res);
             } else {
-                alert("⚠️ Faltan datos en 'ARCHIVO INVENTARIO' para generar el reporte UCA.");
+                alert("⚠️ Faltan datos en 'ARCHIVO INVENTARIO' (Matriz o Reserva) para generar el reporte UCA.");
             }
         };
 
+        const inputPremium = document.getElementById('up_conteo_premium');
+        if (inputPremium) {
+            inputPremium.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const data = await parseFile(file, 'inventario_eri');
+                    if (data && data.length > 0) {
+                        await processERIAnalysis(data);
+                        // Mostrar resultados inmediatamente
+                        renderModuloInventarios(container);
+                    }
+                } catch(err) { alert(err); }
+            };
+        }
+
+        // Si ya hay datos de ERI cargados, mostrarlos abajo de las tarjetas
         if (window._lastERI) {
             renderERIERULayout(document.getElementById('eri_eru_results_area'));
             updateERIUI('ERI');
