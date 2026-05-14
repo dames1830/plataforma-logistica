@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.6.9-BETA';
-const CACHE_KEY = `logistics_v17_6_9_beta_shared_`;
+const VERSION = '17.7.0-BETA';
+const CACHE_KEY = `logistics_v17_7_0_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -411,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.9</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.7.0</span>
           </h2>
         </div>
       </div>
@@ -2565,11 +2565,14 @@ export const renderDashboard = async (container, user, onLogout) => {
       const stockRes = reservaMap.get(ubi);
       const hasStock = stockRes && stockRes.length > 0;
       
+      // Filtrar LPNs únicos para evitar duplicados en el reporte
+      const uniqueLPNs = hasStock ? [...new Set(stockRes.map(s => String(s.LPN || '').trim()))].filter(l => l !== '') : [];
+
       results.push({
         ubicacion: ubi,
         estado: hasStock ? 'OCUPADA' : 'VACÍA',
-        lpns: hasStock ? stockRes.length : 0,
-        detalle: hasStock ? stockRes.map(s => s.LPN).join(', ') : '-'
+        lpns: uniqueLPNs.length,
+        detalle: uniqueLPNs.length > 0 ? uniqueLPNs.join(', ') : '-'
       });
     });
 
@@ -2585,18 +2588,49 @@ export const renderDashboard = async (container, user, onLogout) => {
     const sheet = workbook.addWorksheet('Reporte UCA');
     
     sheet.columns = [
+      { header: 'N°', key: 'num', width: 6 },
       { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
       { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
-      { header: 'LPNs', key: 'lpns', width: 10 },
-      { header: 'DETALLE', key: 'detalle', width: 40 }
+      { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
+      { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
+      { header: 'OBSERVACIONES', key: 'obs', width: 30 },
+      { header: 'CHECK', key: 'check', width: 10 }
     ];
 
-    results.forEach(r => sheet.addRow(r));
+    results.forEach((r, idx) => {
+        sheet.addRow({
+            num: idx + 1,
+            ubicacion: r.ubicacion,
+            estado: r.estado,
+            lpns: r.lpns,
+            detalle: r.detalle,
+            obs: '',
+            check: '☐'
+        });
+    });
 
     sheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Bordes para toda la tabla y alineación
+    sheet.eachRow((row, rowNumber) => {
+        row.eachCell((cell) => {
+            cell.border = {
+                top: {style:'thin'},
+                left: {style:'thin'},
+                bottom: {style:'thin'},
+                right: {style:'thin'}
+            };
+            if (rowNumber > 1) {
+                cell.alignment = { 
+                  vertical: 'middle', 
+                  horizontal: ['num', 'lpns', 'check'].includes(cell.column.key) ? 'center' : 'left' 
+                };
+            }
+        });
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
