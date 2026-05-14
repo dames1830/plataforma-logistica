@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.23-BETA';
+const VERSION = '18.5.24-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3224,54 +3224,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // Vincular exportación
     document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
-  };
-    
-    // Vincular Carga ERI
-    const btnUploadERI = document.getElementById('btn_upload_eri');
-    if (btnUploadERI) {
-        btnUploadERI.onclick = () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv, .xlsx';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const btn = e.target;
-                const originalText = btnUploadERI.innerHTML;
-                btnUploadERI.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
-                btnUploadERI.disabled = true;
-
-                try {
-                    // Pasamos 'inventario_eri' como área para que parseFile no falle
-                    const data = await parseFile(file, 'inventario_eri');
-                    if (data && data.length > 0) {
-                        const cleanData = data.filter(row => {
-                            if (!row || !row[0]) return false;
-                            const firstCol = row[0].toString().toUpperCase();
-                            return firstCol !== 'SKU' && firstCol !== 'PRODUCTO' && firstCol !== '';
-                        });
-                        
-                        if (cleanData.length === 0) {
-                            alert("⚠️ El archivo parece estar vacío o solo contiene encabezados.");
-                            return;
-                        }
-
-                        await processERIAnalysis(cleanData);
-                    } else {
-                        alert("⚠️ El archivo no contiene datos legibles.");
-                    }
-                } catch (err) {
-                    console.error("Detalle del error:", err);
-                    alert(`❌ Error al leer el archivo: ${err.message || err}`);
-                } finally {
-                    btnUploadERI.innerHTML = originalText;
-                    btnUploadERI.disabled = false;
-                }
-            };
-            input.click();
-        };
-    }
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
