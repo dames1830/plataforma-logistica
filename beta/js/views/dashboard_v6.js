@@ -2539,8 +2539,11 @@ export const renderDashboard = async (container, user, onLogout) => {
       return;
     }
 
+    // Filtro Crítico: Solo considerar ubicaciones con NIVEL = "ALTO"
+    const reservaFiltrada = reserva.filter(row => String(row.NIVEL || '').trim().toUpperCase() === 'ALTO');
+
     const reservaMap = new Map();
-    reserva.forEach(row => {
+    reservaFiltrada.forEach(row => {
       const ubi = String(row.UBICACION || '').trim().toUpperCase();
       if (!reservaMap.has(ubi)) reservaMap.set(ubi, []);
       reservaMap.get(ubi).push(row);
