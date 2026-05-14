@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.2.0-BETA';
+const VERSION = '18.2.1-BETA';
 const CACHE_KEY = `logistics_v18_2_0_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -81,9 +81,14 @@ const loadAlmacenajeTasks = async () => {
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   { id: 'inventario', label: 'Inventario', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'general', label: 'General', icon: '📝' },
-    { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
-    { id: 'reportes', label: 'Reportes', icon: '📊' }
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
+    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
+    { id: 'analisis_inventarios', label: 'Análisis Inventario', icon: '🔍' },
+    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦', subTabs: [
+      { id: 'inv_general', label: 'General', icon: '📝' },
+      { id: 'inv_ciclicos', label: 'Cíclicos', icon: '🔄' },
+      { id: 'inv_reportes', label: 'Reportes', icon: '📊' }
+    ]}
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -407,7 +412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.2.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.2.1</span>
           </h2>
         </div>
       </div>
@@ -2518,7 +2523,9 @@ export const renderDashboard = async (container, user, onLogout) => {
 
 
 
-  let activeInventarioSub = 'general';
+  let activeInventarioSub = 'modulo_inventarios';
+  let activeInventarioModuloSub = 'inv_reportes';
+
   const renderInventarioTab = async () => {
     const invTabDef = TABS.find(t => t.id === 'inventario');
     const allowedSubTabs = invTabDef.subTabs;
@@ -2543,14 +2550,44 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const invContainer = document.getElementById('inventarioContent');
     
-    if (activeInventarioSub === 'general') {
+    if (activeInventarioSub === 'archivo_inventario') {
        const data = await getAreaData('inventario');
        if (!data) renderUploadArea(invContainer, 'inventario', null, '.csv', 'Stock General');
        else renderDashboardView(invContainer, data);
-    } else if (activeInventarioSub === 'ciclicos') {
-       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Módulo de Inventarios Cíclicos en desarrollo.</div>`;
-    } else if (activeInventarioSub === 'reportes') {
-       await renderReporteUCATab(invContainer);
+    } else if (activeInventarioSub === 'kpi_inventarios') {
+       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">KPI Inventarios en desarrollo.</div>`;
+    } else if (activeInventarioSub === 'analisis_inventarios') {
+       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Análisis Inventario en desarrollo.</div>`;
+    } else if (activeInventarioSub === 'modulo_inventarios') {
+       const moduloDef = allowedSubTabs.find(s => s.id === 'modulo_inventarios');
+       const subSubTabs = moduloDef.subTabs;
+
+       invContainer.innerHTML = `
+         <div style="display:flex; gap:1rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
+           ${subSubTabs.map(ss => `
+             <button class="sub-sub-item ${activeInventarioModuloSub===ss.id?'active':''}" data-ss="${ss.id}" style="background:none; border:none; color:${activeInventarioModuloSub===ss.id?'var(--primary)':'var(--text-muted)'}; font-size:0.75rem; font-weight:700; cursor:pointer; padding:5px 10px; border-radius:4px; transition:all 0.2s;">
+               ${ss.icon} ${ss.label.toUpperCase()}
+             </button>
+           `).join('')}
+         </div>
+         <div id="moduloInventariosContent"></div>
+       `;
+
+       document.querySelectorAll('.sub-sub-item').forEach(btn => btn.addEventListener('click', (e) => {
+           activeInventarioModuloSub = e.currentTarget.dataset.ss;
+           renderInventarioTab();
+       }));
+
+       const modContent = document.getElementById('moduloInventariosContent');
+       if (activeInventarioModuloSub === 'inv_general') {
+           const data = await getAreaData('inventario');
+           if (!data) renderUploadArea(modContent, 'inventario', null, '.csv', 'Stock General');
+           else renderDashboardView(modContent, data);
+       } else if (activeInventarioModuloSub === 'inv_ciclicos') {
+           modContent.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Módulo de Inventarios Cíclicos en desarrollo.</div>`;
+       } else if (activeInventarioModuloSub === 'inv_reportes') {
+           await renderReporteUCATab(modContent);
+       }
     }
   };
 
