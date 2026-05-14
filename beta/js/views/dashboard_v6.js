@@ -3208,6 +3208,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.8rem;">No se encontraron discrepancias</td></tr>' : 
                   discrepancias.map(r => `
                   <tr>
+                    <td style="color:#f87171; font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.qty}</td>
+                    <td style="font-size:0.65rem; color:#e2e8f0; padding:6px 8px; word-break: break-all; opacity:0.9;">${r.detalle}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     `;
 
