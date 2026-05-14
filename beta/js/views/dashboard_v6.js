@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.3.5-BETA';
-const CACHE_KEY = `logistics_v18_3_5_beta_shared_`;
+const VERSION = '18.3.6-BETA';
+const CACHE_KEY = `logistics_v18_3_6_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.3.5</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.3.6</span>
           </h2>
         </div>
       </div>
@@ -2633,7 +2633,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     const filteredReserva = reserva.filter(r => r.ES_ALTO === true || String(r.NIVEL || '').toUpperCase().includes('ALTO'));
     
     filteredReserva.forEach(r => {
-      const key = r.UBI_KEY || String(r.UBICACION || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const ubiRaw = String(r.UBICACION || '').toUpperCase();
+      if (ubiRaw.includes('UBICAC')) return; // Failsafe para Stock Reserva
+
+      const key = r.UBI_KEY || ubiRaw.replace(/[^A-Z0-9]/g, '');
       if (!key) return;
       if (!reservaMap.has(key)) reservaMap.set(key, []);
       reservaMap.get(key).push(r);
@@ -2641,8 +2644,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const results = [];
     matriz.forEach(m => {
-      const key = m.UBI_KEY || String(m.UBICACION || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
       const ubiOriginal = m.UBICACION || '-';
+      const ubiUpper = ubiOriginal.toUpperCase();
+      
+      // FILTRO DEFINITIVO: Si la ubicación es el encabezado, ignorar
+      if (ubiUpper.includes('UBICAC') || ubiUpper.includes('MATRIZ')) return;
+
+      const key = m.UBI_KEY || ubiUpper.replace(/[^A-Z0-9]/g, '');
       if (!key) return;
 
       const stockRes = reservaMap.get(key);
@@ -2740,8 +2748,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     const ocupadas = total - vacias;
     const accuracy = total > 0 ? ((vacias / total) * 100).toFixed(2) : 0;
     const discrepancias = results.filter(r => r.lpns > 1);
+    const now = new Date();
+    const timestampStr = `${now.toLocaleDateString()} - ${now.toLocaleTimeString()}`;
 
     container.innerHTML = `
+      <div style="margin-bottom: 1rem; text-align: right;">
+        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.25); font-weight: 500; letter-spacing: 0.5px;">🕒 Generado el: ${timestampStr}</span>
+      </div>
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
         <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--primary);">
           <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Analizadas</div>
