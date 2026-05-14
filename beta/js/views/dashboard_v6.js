@@ -2518,6 +2518,8 @@ export const renderDashboard = async (container, user, onLogout) => {
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
+  };
+
   const processReporteUCA = async (resultContainer) => {
     const btn = document.getElementById('btn_procesar_uca');
     if (!btn) return;
