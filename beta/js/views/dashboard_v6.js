@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.28-BETA';
+const VERSION = '18.5.29-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.28</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.29</span>
           </h2>
         </div>
       </div>
@@ -2794,7 +2794,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     if (eriVal) eriVal.innerText = `${data.finalERI}%`;
     if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
-    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th></tr>`;
+    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th>UBICACIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
     
     if (eriBody && Array.isArray(data.eriResults)) {
         // Filtrar encabezados residuales
@@ -2802,9 +2802,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         eriBody.innerHTML = cleanERI.map(r => `
             <tr>
                 <td style="font-weight:700; color:#818cf8; padding:8px;">${r.sku}</td>
+                <td style="font-size:0.65rem; color:rgba(255,255,255,0.6);">${r.ubi}</td>
                 <td style="text-align:center; opacity:0.8;">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
                 <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;">
+                    <span style="background:rgba(129,140,248,0.1); color:#818cf8; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.65rem;">${r.eri}%</span>
+                </td>
             </tr>
         `).join('');
     }
@@ -2823,7 +2827,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     if (eruVal) eruVal.innerText = `${data.finalERU}%`;
     if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
-    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">ESTADO</th></tr>`;
+    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th>SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
     
     if (eruBody && Array.isArray(data.eruResults)) {
         // Filtrar encabezados residuales
@@ -2831,13 +2835,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         eruBody.innerHTML = cleanERU.map(r => `
             <tr>
                 <td style="font-weight:600; color:#10b981; padding:8px;">${r.ubi}</td>
+                <td style="font-size:0.65rem; color:rgba(255,255,255,0.6);">${r.sku}</td>
                 <td style="text-align:center; opacity:0.8;">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
                 <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
                 <td style="text-align:center;">
-                    <span style="padding:2px 8px; border-radius:6px; font-size:0.55rem; font-weight:900; background:${r.diff===0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.diff===0?'#10b981':'#ef4444'}; border:1px solid ${r.diff===0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
-                        ${r.diff===0?'PERFECTO':'ERROR'}
-                    </span>
+                    <span style="background:rgba(16,185,129,0.1); color:#10b981; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.65rem;">${r.eri}%</span>
                 </td>
             </tr>
         `).join('');
@@ -3084,8 +3087,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             const diff = vals.fis - vals.sis;
             if (diff === 0) eriCorrect++;
             const acc = vals.sis === vals.fis ? 100 : (1 - (Math.abs(diff) / Math.max(vals.sis, vals.fis || 1))) * 100;
+            
+            // Buscar ubicaciones donde aparece este SKU en el conteo
+            const ubis = results.filter(r => r.sku === sku).map(r => r.ubi);
+            const ubiText = ubis.length > 1 ? "VARIAS" : (ubis[0] || 'N/A');
+
             eriResults.push({
                 sku,
+                ubi: ubiText,
                 desc: descMap.get(sku.toUpperCase()) || 'N/A',
                 sis: vals.sis,
                 fis: vals.fis,
