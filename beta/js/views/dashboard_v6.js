@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.25-BETA';
+const VERSION = '18.5.26-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.25</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.26</span>
           </h2>
         </div>
       </div>
@@ -2699,32 +2699,51 @@ export const renderDashboard = async (container, user, onLogout) => {
             const eriArea = document.getElementById('eri_results_area_unif');
             const eruArea = document.getElementById('eru_results_area_unif');
             
-            // Reutilizamos parte de la lógica de renderERIERULayout pero dividida
-            eriArea.innerHTML = `
-                <div class="glass-panel" style="padding:1rem; border:1px solid rgba(245, 158, 11, 0.2); background:rgba(245, 158, 11, 0.03);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <span style="font-size:0.75rem; font-weight:800; color:#f59e0b;">ERI (POR SKUS)</span>
-                        <span id="eri_val_unif" style="font-size:1.1rem; font-weight:900; color:#fff;">0%</span>
+            // Bloque ERU (IZQUIERDA)
+            eruArea.innerHTML = `
+                <div class="glass-panel" style="padding:1.2rem; border:1px solid rgba(16, 185, 129, 0.3); background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent);">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.2rem;">
+                        <div style="position:relative; width:65px; height:65px;">
+                            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:65px; height:65px;">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                <path id="eru_circle_unif" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="0, 100" />
+                            </svg>
+                            <div id="eru_val_unif" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.85rem; font-weight:900; color:#fff;">0%</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">EXACTITUD</div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#10b981;">UBICACIONES (ERU)</div>
+                        </div>
                     </div>
-                    <div class="data-table-container" style="max-height:250px; overflow-y:auto; border-radius:8px;">
-                        <table class="data-table" style="font-size:0.7rem;">
-                            <thead id="eri_head_unif"></thead>
-                            <tbody id="eri_body_unif"></tbody>
+                    <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                        <table class="data-table" style="font-size:0.75rem;">
+                            <thead id="eru_head_unif" style="position:sticky; top:0; z-index:10; background:#1a1d21;"></thead>
+                            <tbody id="eru_body_unif"></tbody>
                         </table>
                     </div>
                 </div>
             `;
 
-            eruArea.innerHTML = `
-                <div class="glass-panel" style="padding:1rem; border:1px solid rgba(16, 185, 129, 0.2); background:rgba(16, 185, 129, 0.03);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <span style="font-size:0.75rem; font-weight:800; color:#10b981;">ERU (POR UBICACIONES)</span>
-                        <span id="eru_val_unif" style="font-size:1.1rem; font-weight:900; color:#fff;">0%</span>
+            // Bloque ERI (DERECHA)
+            eriArea.innerHTML = `
+                <div class="glass-panel" style="padding:1.2rem; border:1px solid rgba(129, 140, 248, 0.3); background:radial-gradient(circle at top right, rgba(129, 140, 248, 0.05), transparent);">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.2rem;">
+                        <div style="position:relative; width:65px; height:65px;">
+                            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:65px; height:65px;">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                <path id="eri_circle_unif" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#818cf8" stroke-width="3" stroke-dasharray="0, 100" />
+                            </svg>
+                            <div id="eri_val_unif" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.85rem; font-weight:900; color:#fff;">0%</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">EXACTITUD</div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#818cf8;">INVENTARIO (ERI)</div>
+                        </div>
                     </div>
-                    <div class="data-table-container" style="max-height:250px; overflow-y:auto; border-radius:8px;">
-                        <table class="data-table" style="font-size:0.7rem;">
-                            <thead id="eru_head_unif"></thead>
-                            <tbody id="eru_body_unif"></tbody>
+                    <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                        <table class="data-table" style="font-size:0.75rem;">
+                            <thead id="eri_head_unif" style="position:sticky; top:0; z-index:10; background:#1a1d21;"></thead>
+                            <tbody id="eri_body_unif"></tbody>
                         </table>
                     </div>
                 </div>
@@ -2747,34 +2766,46 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // Actualizar ERI (SKUs)
     const eriVal = document.getElementById('eri_val_unif');
+    const eriCircle = document.getElementById('eri_circle_unif');
     const eriHead = document.getElementById('eri_head_unif');
     const eriBody = document.getElementById('eri_body_unif');
+    
     if (eriVal) eriVal.innerText = `${data.finalERI}%`;
-    if (eriHead) eriHead.innerHTML = `<tr><th>SKU</th><th style="text-align:center;">SIS</th><th style="text-align:center;">FIS</th><th style="text-align:center;">DIF</th></tr>`;
+    if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
+    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th></tr>`;
+    
     if (eriBody && Array.isArray(data.eriResults)) {
-        eriBody.innerHTML = data.eriResults.map(r => `
+        // Filtrar encabezados residuales
+        const cleanERI = data.eriResults.filter(r => r.sku && !r.sku.toString().toUpperCase().includes('SKU'));
+        eriBody.innerHTML = cleanERI.map(r => `
             <tr>
-                <td title="${r.desc}">${r.sku}</td>
-                <td style="text-align:center;">${r.sis}</td>
-                <td style="text-align:center;">${r.fis}</td>
-                <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:800;">${r.diff}</td>
+                <td style="font-weight:700; color:#818cf8; padding:8px;">${r.sku}</td>
+                <td style="text-align:center; opacity:0.8;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
             </tr>
         `).join('');
     }
 
     // Actualizar ERU (Ubicaciones)
     const eruVal = document.getElementById('eru_val_unif');
+    const eruCircle = document.getElementById('eru_circle_unif');
     const eruHead = document.getElementById('eru_head_unif');
     const eruBody = document.getElementById('eru_body_unif');
+    
     if (eruVal) eruVal.innerText = `${data.finalERU}%`;
-    if (eruHead) eruHead.innerHTML = `<tr><th>UBICACIÓN</th><th style="text-align:center;">ESTADO</th></tr>`;
+    if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
+    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th style="text-align:center;">ESTADO</th></tr>`;
+    
     if (eruBody && Array.isArray(data.eruResults)) {
-        eruBody.innerHTML = data.eruResults.map(r => `
+        // Filtrar encabezados residuales
+        const cleanERU = data.eruResults.filter(r => r.ubi && !r.ubi.toString().toUpperCase().includes('UBICAC'));
+        eruBody.innerHTML = cleanERU.map(r => `
             <tr>
-                <td>${r.ubi}</td>
+                <td style="font-weight:600; color:#10b981; padding:8px;">${r.ubi}</td>
                 <td style="text-align:center;">
-                    <span style="padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:800; background:${r.diff===0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.diff===0?'#10b981':'#ef4444'}; border:1px solid ${r.diff===0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
-                        ${r.diff===0?'OK':'ERROR'}
+                    <span style="padding:2px 8px; border-radius:6px; font-size:0.6rem; font-weight:900; background:${r.diff===0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.diff===0?'#10b981':'#ef4444'}; border:1px solid ${r.diff===0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
+                        ${r.diff===0?'PERFECTO':'ERROR'}
                     </span>
                 </td>
             </tr>
