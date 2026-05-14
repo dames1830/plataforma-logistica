@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '18.3.0-BETA';
-const CACHE_KEY = `logistics_v18_3_0_beta_shared_`;
+const VERSION = '18.3.1-BETA';
+const CACHE_KEY = `logistics_v18_3_1_beta_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -302,7 +302,7 @@ export const parseFile = (file, area) => {
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           
           let jsonData = [];
-          if (area.endsWith('_reserva')) {
+          if (area === 'stockReserva' || area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
               for (let i = 2; i < rows.length; i++) {
@@ -312,10 +312,10 @@ export const parseFile = (file, area) => {
                       'NIVEL': dc(r[1]),
                       'PRODUCTO': dc(r[8]), // Columna I
                       'CANTIDAD': parseFloat(r[10]) || 0,
-                      'UBICACION': dc(r[4]),
-                      'LPN': dc(r[5]),
+                      'UBICACION': dc(r[4]), // Columna E
+                      'LPN': dc(r[5]),       // Columna F
                       'NRO AND': dc(r[2]),
-                      'DESCRIPCION': dc(r[9]) // Columna J: Capturamos descripción para tallas
+                      'DESCRIPCION': dc(r[9]) // Columna J
                   });
               }
           } else if (area === 'matriz_ubicaciones') {
