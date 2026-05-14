@@ -2515,17 +2515,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  const processReporteUCA = async (resultContainer) => {
-    const btn = document.getElementById('btn_procesar_uca');
-    if (!btn) return;
-    
-    btn.disabled = true;
-    btn.innerHTML = '⌛ PROCESANDO CRUCE...';
-    
-    await new Promise(r => setTimeout(r, 600));
 
-    const reserva = dataStore.inventario_reserva || [];
-    const matriz = dataStore.matriz_ubicaciones || [];
 
   let activeInventarioSub = 'general';
   const renderInventarioTab = async () => {
