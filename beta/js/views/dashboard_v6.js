@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.13-BETA';
+const VERSION = '18.5.14-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.13</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.14</span>
           </h2>
         </div>
       </div>
@@ -3065,7 +3065,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="width:36px; height:36px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
                     <i class="fas fa-bullseye" style="font-size:0.9rem;"></i>
                 </div>
-                <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">INDICADOR ERI - EXACTITUD DE INVENTARIO</h3>
+                <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">INDICADORES DE EXACTITUD (ERI / ERU)</h3>
             </div>
             <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:800; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
                 📥 CARGAR CONTEO FÍSICO
