@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.19-BETA';
+const VERSION = '18.5.20-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.19</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.20</span>
           </h2>
         </div>
       </div>
@@ -2749,7 +2749,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const eriVal = document.getElementById('eri_val_unif');
     const eriHead = document.getElementById('eri_head_unif');
     const eriBody = document.getElementById('eri_body_unif');
-    if (eriVal) eriVal.innerText = `${data.eriGlobal}%`;
+    if (eriVal) eriVal.innerText = `${data.finalERI}%`;
     if (eriHead) eriHead.innerHTML = `<tr><th>SKU</th><th style="text-align:center;">SIS</th><th style="text-align:center;">FIS</th><th style="text-align:center;">DIF</th></tr>`;
     if (eriBody) {
         eriBody.innerHTML = data.eriRows.map(r => `
@@ -2766,7 +2766,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const eruVal = document.getElementById('eru_val_unif');
     const eruHead = document.getElementById('eru_head_unif');
     const eruBody = document.getElementById('eru_body_unif');
-    if (eruVal) eruVal.innerText = `${data.eruGlobal}%`;
+    if (eruVal) eruVal.innerText = `${data.finalERU}%`;
     if (eruHead) eruHead.innerHTML = `<tr><th>UBICACIÓN</th><th style="text-align:center;">ESTADO</th></tr>`;
     if (eruBody) {
         eruBody.innerHTML = data.eruRows.map(r => `
@@ -2783,63 +2783,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderERIERULayout = (container) => {
-    container.innerHTML = `
-        <div style="display:grid; grid-template-columns: 180px 180px 1fr; gap:1.2rem; margin-top:0.5rem;">
-            <div id="card_eri" style="cursor:pointer; transition:transform 0.2s;" onclick="document.querySelector('#btn_mode_eri').click()">
-                <div class="glass-panel" style="padding:1rem; text-align:center; border:1px solid #6366f1; background:rgba(99, 102, 241, 0.05); display:flex; flex-direction:column; align-items:center;">
-                    <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:800;">ERI GLOBAL</div>
-                    <div style="position:relative; width:70px; height:70px;">
-                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:70px; height:70px;">
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
-                            <path id="eri_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="0, 100" />
-                        </svg>
-                        <div id="eri_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.9rem; font-weight:900; color:#fff;">0%</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="card_eru" style="cursor:pointer; transition:transform 0.2s;" onclick="document.querySelector('#btn_mode_eru').click()">
-                <div class="glass-panel" style="padding:1rem; text-align:center; border:1px solid #10b981; background:rgba(16, 185, 129, 0.05); display:flex; flex-direction:column; align-items:center;">
-                    <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:800;">ERU GLOBAL</div>
-                    <div style="position:relative; width:70px; height:70px;">
-                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:70px; height:70px;">
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
-                            <path id="eru_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="0, 100" />
-                        </svg>
-                        <div id="eru_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.9rem; font-weight:900; color:#fff;">0%</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="data-table-container" style="max-height:300px; overflow-y:auto; border-radius:8px; display:flex; flex-direction:column; border:1px solid rgba(255,255,255,0.05);">
-                <div style="padding:6px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:8px; background:rgba(0,0,0,0.2);">
-                    <button id="btn_mode_eri" style="flex:1; padding:4px; font-size:0.6rem; font-weight:800; border-radius:4px; border:none; background:#6366f1; color:#fff; cursor:pointer;">ERI (SKUs)</button>
-                    <button id="btn_mode_eru" style="flex:1; padding:4px; font-size:0.6rem; font-weight:800; border-radius:4px; border:none; background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:pointer;">ERU (UBI)</button>
-                </div>
-                <table class="data-table" style="font-size:0.75rem;">
-                    <thead id="eri_eru_table_head"><tr><th>ITEM</th><th style="text-align:center;">SIS</th><th style="text-align:center;">FIS</th><th style="text-align:center;">DIF</th><th style="text-align:center;">%</th></tr></thead>
-                    <tbody id="eri_eru_table_body"></tbody>
-                </table>
-            </div>
-        </div>
-    `;
-
-    setTimeout(() => {
-        const bERI = document.getElementById('btn_mode_eri');
-        const bERU = document.getElementById('btn_mode_eru');
-        if(bERI && bERU) {
-            bERI.addEventListener('click', () => {
-                bERI.style.background = '#6366f1'; bERI.style.color = '#fff';
-                bERU.style.background = 'rgba(255,255,255,0.05)'; bERU.style.color = 'var(--text-muted)';
-                updateERIUI('ERI');
-            });
-            bERU.addEventListener('click', () => {
-                bERU.style.background = '#10b981'; bERU.style.color = '#fff';
-                bERI.style.background = 'rgba(255,255,255,0.05)'; bERI.style.color = 'var(--text-muted)';
-                updateERIUI('ERU');
-            });
-        }
-    }, 100);
+      // Función obsoleta - Eliminada para evitar duplicados en el dashboard unificado
+      console.log("[PULSE] renderERIERULayout llamado pero desactivado por v18.5.20");
   };
 
   const processReporteUCA = (matriz, reserva) => {
