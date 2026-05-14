@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '18.3.2-BETA';
-const CACHE_KEY = `logistics_v18_3_2_beta_shared_`;
+const VERSION = '18.3.3-BETA';
+const CACHE_KEY = `logistics_v18_3_3_beta_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -305,27 +305,37 @@ export const parseFile = (file, area) => {
           if (area === 'stockReserva' || area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
+              const cleanUbi = (s) => dc(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
               for (let i = 2; i < rows.length; i++) {
                   const r = rows[i];
                   if (!r || r.length < 5) continue;
+                  
+                  // Mapeo flexible: Intentar por índice o por contenido si r[1] no es el nivel
+                  const nivelRaw = dc(r[1]).toUpperCase();
+                  const esAlto = nivelRaw.includes('ALTO') || nivelRaw === 'A';
+                  
                   jsonData.push({
-                      'NIVEL': dc(r[1]),
+                      'NIVEL': nivelRaw,
+                      'ES_ALTO': esAlto,
                       'PRODUCTO': dc(r[8]), // Columna I
                       'CANTIDAD': parseFloat(r[10]) || 0,
                       'UBICACION': dc(r[4]), // Columna E
+                      'UBI_KEY': cleanUbi(r[4]),
                       'LPN': dc(r[5]),       // Columna F
-                      'NRO AND': dc(r[2]),
-                      'DESCRIPCION': dc(r[9]) // Columna J
+                      'DESCRIPCION': dc(r[9]) 
                   });
               }
           } else if (area === 'matriz_ubicaciones') {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
+              const cleanUbi = (s) => dc(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
               for (let i = 0; i < rows.length; i++) {
                   const r = rows[i];
                   if (!r || !dc(r[0])) continue;
                   jsonData.push({
-                      'UBICACION': dc(r[0]) // Columna A
+                      'UBICACION': dc(r[0]),
+                      'UBI_KEY': cleanUbi(r[0])
                   });
               }
           } else {

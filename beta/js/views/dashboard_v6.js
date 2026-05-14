@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.3.2-BETA';
-const CACHE_KEY = `logistics_v18_3_2_beta_shared_`;
+const VERSION = '18.3.3-BETA';
+const CACHE_KEY = `logistics_v18_3_3_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.3.2</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.3.3</span>
           </h2>
         </div>
       </div>
@@ -2628,22 +2628,23 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const processReporteUCA = (matriz, reserva) => {
     const reservaMap = new Map();
-    // Solo procesar registros de nivel ALTO
-    const filteredReserva = reserva.filter(r => String(r.NIVEL || '').trim().toUpperCase() === 'ALTO');
+    // Solo procesar registros de nivel ALTO (usando el flag pre-calculado)
+    const filteredReserva = reserva.filter(r => r.ES_ALTO === true || String(r.NIVEL || '').toUpperCase().includes('ALTO'));
     
     filteredReserva.forEach(r => {
-      const ubi = String(r.UBICACION || '').trim().toUpperCase();
-      if (!ubi) return;
-      if (!reservaMap.has(ubi)) reservaMap.set(ubi, []);
-      reservaMap.get(ubi).push(r);
+      const key = r.UBI_KEY || String(r.UBICACION || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (!key) return;
+      if (!reservaMap.has(key)) reservaMap.set(key, []);
+      reservaMap.get(key).push(r);
     });
 
     const results = [];
     matriz.forEach(m => {
-      const ubi = String(m.UBICACION || '').trim().toUpperCase();
-      if (!ubi) return;
+      const key = m.UBI_KEY || String(m.UBICACION || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const ubiOriginal = m.UBICACION || '-';
+      if (!key) return;
 
-      const stockRes = reservaMap.get(ubi);
+      const stockRes = reservaMap.get(key);
       const hasStock = stockRes && stockRes.length > 0;
       
       const uniqueLPNs = hasStock ? [...new Set(stockRes.map(s => String(s.LPN || '').trim()))].filter(l => l !== '') : [];
@@ -2651,7 +2652,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       const totalQty = hasStock ? stockRes.reduce((acc, curr) => acc + (parseFloat(curr.CANTIDAD || 0)), 0) : 0;
 
       results.push({
-        ubicacion: ubi,
+        ubicacion: ubiOriginal,
         estado: hasStock ? 'OCUPADA' : 'VACÍA',
         lpns: uniqueLPNs.length,
         skus: uniqueSKUs.length,
