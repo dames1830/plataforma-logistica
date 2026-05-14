@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '18.3.3-BETA';
-const CACHE_KEY = `logistics_v18_3_3_beta_shared_`;
+const VERSION = '18.3.4-BETA';
+const CACHE_KEY = `logistics_v18_3_4_beta_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -330,9 +330,10 @@ export const parseFile = (file, area) => {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
               const cleanUbi = (s) => dc(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+              // Empezar en 1 para saltar el encabezado si existe
               for (let i = 0; i < rows.length; i++) {
                   const r = rows[i];
-                  if (!r || !dc(r[0])) continue;
+                  if (!r || !dc(r[0]) || dc(r[0]).toUpperCase() === 'UBICACION') continue;
                   jsonData.push({
                       'UBICACION': dc(r[0]),
                       'UBI_KEY': cleanUbi(r[0])

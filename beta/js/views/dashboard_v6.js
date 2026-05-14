@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.3.3-BETA';
-const CACHE_KEY = `logistics_v18_3_3_beta_shared_`;
+const VERSION = '18.3.4-BETA';
+const CACHE_KEY = `logistics_v18_3_4_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.3.3</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.3.4</span>
           </h2>
         </div>
       </div>
@@ -2598,7 +2598,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btnProcess = document.createElement('button');
     btnProcess.className = 'btn';
     btnProcess.style = "width:100%; max-width:600px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; height:55px; font-size:1rem; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border-radius:12px; transition:all 0.3s ease;";
-    btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
+    btnProcess.innerHTML = '⚡ PROCESAR REPORTES';
     buttonContainer.appendChild(btnProcess);
 
     const runProcess = () => {
@@ -2620,10 +2620,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     btnProcess.onclick = runProcess;
     
-    // Auto-process if data exists
+    /* Auto-process disabled as per user request
     if (matriz && reserva) {
         runProcess();
     }
+    */
   };
 
   const processReporteUCA = (matriz, reserva) => {
@@ -2672,12 +2673,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         sheet.columns = [
           { header: 'N°', key: 'num', width: 6 },
-          { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
+          { header: 'UBICACIÓN', key: 'ubicacion', width: 20 },
           { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
-          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
-          { header: 'SKU´s', key: 'skus', width: 10 },
-          { header: 'CANTIDAD (QTY)', key: 'qty', width: 15 },
-          { header: 'DETALLE LPNs', key: 'detalle', width: 50 }
+          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 18 },
+          { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
+          { header: 'OBSERVACIONES', key: 'obs', width: 20 },
+          { header: 'CHECK', key: 'check', width: 10 }
         ];
 
         results.forEach((r, idx) => {
@@ -2686,26 +2687,37 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ubicacion: r.ubicacion,
                 estado: r.estado,
                 lpns: r.lpns,
-                skus: r.skus,
-                qty: r.qty,
-                detalle: r.detalle
+                detalle: r.detalle,
+                obs: '',
+                check: ''
             });
         });
 
+        // Estilo de encabezado (Azul PREMIUM)
+        sheet.getRow(1).height = 25;
         sheet.getRow(1).eachCell((cell) => {
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
           cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
           cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         });
 
+        // Estilo de celdas
         sheet.eachRow((row, rowNumber) => {
-            row.eachCell((cell, colNumber) => {
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-                if (rowNumber > 1) {
-                    const isCenter = [1, 4, 5, 6].includes(colNumber);
+            if (rowNumber > 1) {
+                row.height = 20;
+                row.eachCell((cell, colNumber) => {
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                    const isCenter = [1, 3, 4, 7].includes(colNumber);
                     cell.alignment = { vertical: 'middle', horizontal: isCenter ? 'center' : 'left' };
-                }
-            });
+                    
+                    // Colorear Ocupadas/Vacías
+                    if (colNumber === 3) {
+                        if (cell.value === 'OCUPADA') cell.font = { color: { argb: 'FFB91C1C' }, bold: true };
+                        else cell.font = { color: { argb: 'FF15803D' }, bold: true };
+                    }
+                });
+            }
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
