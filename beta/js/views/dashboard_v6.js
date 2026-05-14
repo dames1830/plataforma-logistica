@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.4.0-BETA';
-const CACHE_KEY = `logistics_v18_4_0_beta_shared_`;
+const VERSION = '18.4.1-BETA';
+const CACHE_KEY = `logistics_v18_4_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.4.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.4.1</span>
           </h2>
         </div>
       </div>
@@ -2602,20 +2602,31 @@ export const renderDashboard = async (container, user, onLogout) => {
     buttonContainer.appendChild(btnProcess);
 
     const runProcess = () => {
-        if (!matriz || !reserva) {
-            alert("⚠️ No hay datos suficientes. Asegúrate de haber cargado 'Matriz Ubicaciones' y 'Stock Reserva' en la pestaña ARCHIVO INVENTARIO.");
-            return;
+        try {
+            if (!matriz || !reserva) {
+                alert("⚠️ No hay datos suficientes en ARCHIVO INVENTARIO (Matriz y Stock Reserva).");
+                return;
+            }
+            btnProcess.disabled = true;
+            btnProcess.innerHTML = '<i class="fas fa-cog fa-spin"></i> GENERANDO REPORTES...';
+            
+            setTimeout(() => {
+                try {
+                    const results = processReporteUCA(matriz, reserva);
+                    displayReporteUCA(results);
+                    btnProcess.disabled = false;
+                    btnProcess.innerHTML = '⚡ RE-PROCESAR REPORTES';
+                    resultsArea.scrollIntoView({ behavior: 'smooth' });
+                } catch (err) {
+                    console.error("Error en procesamiento:", err);
+                    alert("❌ Error al procesar los datos: " + err.message);
+                    btnProcess.disabled = false;
+                    btnProcess.innerHTML = '⚡ INTENTAR DE NUEVO';
+                }
+            }, 500);
+        } catch (f) {
+            console.error("Fatal runProcess:", f);
         }
-        btnProcess.disabled = true;
-        btnProcess.innerHTML = '<i class="fas fa-cog fa-spin"></i> GENERANDO REPORTES...';
-        setTimeout(() => {
-            const results = processReporteUCA(matriz, reserva);
-            displayReporteUCA(resultsArea, results);
-            btnProcess.disabled = false;
-            btnProcess.innerHTML = '⚡ RE-PROCESAR REPORTE UCA / ERI';
-            // Scroll to results
-            resultsArea.scrollIntoView({ behavior: 'smooth' });
-        }, 800);
     };
 
     btnProcess.onclick = runProcess;
@@ -2741,7 +2752,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const displayReporteUCA = (results) => {
-    const container = document.getElementById('uca-results-container');
+    const container = document.getElementById('uca_results_area');
     if (!container) return;
 
     const total = results.length;
