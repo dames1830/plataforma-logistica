@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.4.1-BETA';
-const CACHE_KEY = `logistics_v18_4_1_beta_shared_`;
+const VERSION = '18.4.2-BETA';
+const CACHE_KEY = `logistics_v18_4_2_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.4.1</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.4.2</span>
           </h2>
         </div>
       </div>
@@ -2784,38 +2784,39 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
-        <div class="glass-panel" style="padding:1.5rem; overflow:hidden; display:flex; flex-direction:column;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:10px;">
-            <h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#fff; display:flex; align-items:center;">
+      <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:1rem; align-items: start; margin-bottom: 2rem;">
+        <!-- TABLA GENERAL -->
+        <div class="glass-panel" style="padding:1rem; overflow:hidden; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+            <h3 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#fff; display:flex; align-items:center;">
               REPORTE UCA GENERAL ${tsSpan}
             </h3>
-            <button id="btnExportUCA" class="btn" style="width:auto; padding:6px 16px; font-size:0.75rem; background:#059669;">📊 EXPORTAR UCA</button>
+            <button id="btnExportUCA" class="btn" style="width:auto; padding:5px 12px; font-size:0.7rem; background:#059669;">📊 EXPORTAR UCA</button>
           </div>
           
-          <div class="data-table-container" style="max-height:500px; border-radius:8px;">
+          <div class="data-table-container" style="max-height:400px; border-radius:8px;">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="font-size:0.7rem;">UBICACIÓN</th>
-                  <th style="font-size:0.7rem;">ESTADO</th>
-                  <th style="font-size:0.7rem; text-align:center;">LPNS</th>
-                  <th style="font-size:0.7rem; text-align:center;">SKU´S</th>
-                  <th style="font-size:0.7rem; text-align:center;">QTY</th>
+                  <th style="font-size:0.65rem; padding:8px;">UBICACIÓN</th>
+                  <th style="font-size:0.65rem; padding:8px;">ESTADO</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">LPNS</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">SKU´S</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">QTY</th>
                 </tr>
               </thead>
               <tbody>
                 ${results.map(r => `
                   <tr>
-                    <td style="font-weight:600; font-size:0.85rem;">${r.ubicacion}</td>
-                    <td>
-                      <span class="status-badge" style="background:${r.estado === 'VACÍA' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; color:${r.estado === 'VACÍA' ? '#4ade80' : '#fbbf24'}; font-size:0.65rem;">
+                    <td style="font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
+                    <td style="padding:6px 8px;">
+                      <span class="status-badge" style="background:${r.estado === 'VACÍA' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; color:${r.estado === 'VACÍA' ? '#4ade80' : '#fbbf24'}; font-size:0.6rem; padding:2px 6px;">
                         ${r.estado}
                       </span>
                     </td>
-                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.lpns}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.skus}</td>
-                    <td style="text-align:center; font-weight:700; color:#818cf8; font-size:0.85rem;">${r.qty}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem; padding:6px 8px;">${r.qty}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -2823,33 +2824,34 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
 
-        <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(239,68,68,0.2);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
-            <h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase; color:#f87171; display:flex; align-items:center;">
+        <!-- DISCREPANCIAS -->
+        <div class="glass-panel" style="padding:1rem; border:1px solid rgba(239,68,68,0.2);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:#f87171; display:flex; align-items:center;">
               DISCREPANCIA UBICACIONES ${tsSpan}
             </h3>
-            <span style="background:rgba(239,68,68,0.2); color:#f87171; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${discrepancias.length} CASOS</span>
+            <span style="background:rgba(239,68,68,0.2); color:#f87171; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:700;">${discrepancias.length} CASOS</span>
           </div>
-          <div class="data-table-container" style="max-height:350px; border-radius:8px;">
+          <div class="data-table-container" style="max-height:400px; border-radius:8px;">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="color:#f87171; font-size:0.7rem;">UBICACIÓN</th>
-                  <th style="color:#f87171; font-size:0.7rem; text-align:center;">LPNS</th>
-                  <th style="color:#f87171; font-size:0.7rem; text-align:center;">SKU´S</th>
-                  <th style="color:#f87171; font-size:0.7rem; text-align:center;">QTY</th>
-                  <th style="color:#f87171; font-size:0.7rem;">DETALLE</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px;">UBICACIÓN</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">LPNS</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">SKU´S</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">QTY</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px;">DETALLE</th>
                 </tr>
               </thead>
               <tbody>
-                ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">No se encontraron discrepancias</td></tr>' : 
+                ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.8rem;">No se encontraron discrepancias</td></tr>' : 
                   discrepancias.map(r => `
                   <tr>
-                    <td style="color:#f87171; font-weight:600; font-size:0.8rem;">${r.ubicacion}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.lpns}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.skus}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.qty}</td>
-                    <td style="font-size:0.65rem; color:var(--text-muted); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.detalle}</td>
+                    <td style="color:#f87171; font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.qty}</td>
+                    <td style="font-size:0.6rem; color:var(--text-muted); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:6px 8px;">${r.detalle}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -2858,15 +2860,16 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
       </div>
 
-      <div class="animate-fade-in" style="animation-delay: 0.2s; border-top:1px solid rgba(255,255,255,0.1); padding-top:2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <!-- SECCION ERI ABAJO -->
+      <div class="animate-fade-in" style="animation-delay: 0.2s; border-top:1px solid rgba(255,255,255,0.1); padding-top:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
             <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:40px; height:40px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
-                    <i class="fas fa-bullseye"></i>
+                <div style="width:36px; height:36px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
+                    <i class="fas fa-bullseye" style="font-size:0.9rem;"></i>
                 </div>
-                <h3 style="color:#fff; margin:0; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">INDICADOR ERI - EXACTITUD DE INVENTARIO</h3>
+                <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">INDICADOR ERI - EXACTITUD DE INVENTARIO</h3>
             </div>
-            <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+            <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:800; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
                 📥 CARGAR CONTEO FÍSICO
             </button>
         </div>
