@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.10-BETA';
+const VERSION = '18.5.11-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.10</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.11</span>
           </h2>
         </div>
       </div>
@@ -2838,19 +2838,26 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const globalERI_Val = totalItems > 0 ? ((correctItems / totalItems) * 100).toFixed(1) : 0;
 
-        // --- [MOD V18.5.9] LOGICA ERI (POR SKU TOTAL) ---
+        // --- [MOD V18.5.11] LOGICA ERI (POR SKU TOTAL - SOLO LO CONTADO) ---
+        const countedSkus = new Set();
+        fisicoMap.forEach((qty, key) => countedSkus.add(key.split('|')[0].toUpperCase()));
+
         const eriBySku = new Map();
-        // Sumar todo el sistema por SKU
+        countedSkus.forEach(sku => eriBySku.set(sku, { sis: 0, fis: 0 }));
+
+        // Sumar todo el sistema por SKU pero SOLO de lo contado
         sistemaMap.forEach((qty, key) => {
-            const sku = key.split('|')[0];
-            if (!eriBySku.has(sku)) eriBySku.set(sku, { sis: 0, fis: 0 });
-            eriBySku.get(sku).sis += qty;
+            const sku = key.split('|')[0].toUpperCase();
+            if (countedSkus.has(sku)) {
+                eriBySku.get(sku).sis += qty;
+            }
         });
-        // Sumar todo el fisico por SKU (Solo de lo que se conto)
+        // Sumar todo el fisico por SKU
         fisicoMap.forEach((qty, key) => {
-            const sku = key.split('|')[0];
-            if (!eriBySku.has(sku)) eriBySku.set(sku, { sis: 0, fis: 0 });
-            eriBySku.get(sku).fis += qty;
+            const sku = key.split('|')[0].toUpperCase();
+            if (countedSkus.has(sku)) {
+                eriBySku.get(sku).fis += qty;
+            }
         });
 
         const eriResults = [];
@@ -2861,7 +2868,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const acc = vals.sis === vals.fis ? 100 : (1 - (Math.abs(diff) / Math.max(vals.sis, vals.fis || 1))) * 100;
             eriResults.push({
                 sku,
-                desc: descMap.get(sku) || 'N/A',
+                desc: descMap.get(sku.toUpperCase()) || 'N/A',
                 sis: vals.sis,
                 fis: vals.fis,
                 diff,
@@ -2870,8 +2877,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
         const finalERI = eriResults.length > 0 ? ((eriCorrect / eriResults.length) * 100).toFixed(1) : 0;
 
-        // --- [MOD V18.5.9] LOGICA ERU (POR UBICACION) ---
-        const eruResults = results; // Ya esta por posicion
+        // --- [MOD V18.5.11] LOGICA ERU (POR UBICACION) ---
+        const eruResults = results.map(r => ({
+            ...r,
+            desc: descMap.get(r.sku.toUpperCase()) || 'N/A'
+        })); 
         const locationStats = new Map();
         eruResults.forEach(r => {
             if (!locationStats.has(r.ubi)) locationStats.set(r.ubi, { items: 0, correct: 0 });
