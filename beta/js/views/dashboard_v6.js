@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.8-BETA';
+const VERSION = '18.5.9-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.8</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.9</span>
           </h2>
         </div>
       </div>
@@ -2836,57 +2836,106 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         });
 
-        const globalERI = totalItems > 0 ? ((correctItems / totalItems) * 100).toFixed(1) : 0;
+        const globalERI_Val = totalItems > 0 ? ((correctItems / totalItems) * 100).toFixed(1) : 0;
 
-        // [MOD V18.5.8] Calculo ERU (Exactitud de Ubicacion)
+        // --- [MOD V18.5.9] LOGICA ERI (POR SKU TOTAL) ---
+        const eriBySku = new Map();
+        // Sumar todo el sistema por SKU
+        sistemaMap.forEach((qty, key) => {
+            const sku = key.split('|')[0];
+            if (!eriBySku.has(sku)) eriBySku.set(sku, { sis: 0, fis: 0 });
+            eriBySku.get(sku).sis += qty;
+        });
+        // Sumar todo el fisico por SKU (Solo de lo que se conto)
+        fisicoMap.forEach((qty, key) => {
+            const sku = key.split('|')[0];
+            if (!eriBySku.has(sku)) eriBySku.set(sku, { sis: 0, fis: 0 });
+            eriBySku.get(sku).fis += qty;
+        });
+
+        const eriResults = [];
+        let eriCorrect = 0;
+        eriBySku.forEach((vals, sku) => {
+            const diff = vals.fis - vals.sis;
+            if (diff === 0) eriCorrect++;
+            const acc = vals.sis === vals.fis ? 100 : (1 - (Math.abs(diff) / Math.max(vals.sis, vals.fis || 1))) * 100;
+            eriResults.push({
+                sku,
+                desc: descMap.get(sku) || 'N/A',
+                sis: vals.sis,
+                fis: vals.fis,
+                diff,
+                eri: Math.max(0, acc).toFixed(1)
+            });
+        });
+        const finalERI = eriResults.length > 0 ? ((eriCorrect / eriResults.length) * 100).toFixed(1) : 0;
+
+        // --- [MOD V18.5.9] LOGICA ERU (POR UBICACION) ---
+        const eruResults = results; // Ya esta por posicion
         const locationStats = new Map();
-        results.forEach(r => {
+        eruResults.forEach(r => {
             if (!locationStats.has(r.ubi)) locationStats.set(r.ubi, { items: 0, correct: 0 });
             const s = locationStats.get(r.ubi);
             s.items++;
             if (parseFloat(r.diff) === 0) s.correct++;
         });
-        const totalUbis = locationStats.size;
         const correctUbis = Array.from(locationStats.values()).filter(s => s.items === s.correct).length;
-        const globalERU = totalUbis > 0 ? ((correctUbis / totalUbis) * 100).toFixed(1) : 0;
+        const finalERU = locationStats.size > 0 ? ((correctUbis / locationStats.size) * 100).toFixed(1) : 0;
 
-        updateERIUI(results, globalERI, globalERU);
+        // Guardar para toggles
+        window._lastERI = { eriResults, finalERI, eruResults, finalERU };
+        updateERIUI('ERI');
 
     } catch (err) {
-        console.error("Error en analisis ERI:", err);
-        alert("Ocurrió un error al procesar el análisis ERI.");
+        console.error("Error en analisis ERI/ERU:", err);
+        alert("Ocurrió un error al procesar el análisis.");
     }
   };
 
-  const updateERIUI = (results, globalERI, globalERU) => {
-    const tableBody = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('tbody');
+  const updateERIUI = (mode) => {
+    const data = window._lastERI;
+    if (!data) return;
+
+    const tableBody = document.querySelector('#eri_eru_table_body');
+    const tableHead = document.querySelector('#eri_eru_table_head');
     const eriLabel = document.querySelector('#eri_global_val');
     const eruLabel = document.querySelector('#eru_global_val');
     const eriCircle = document.querySelector('#eri_circle_path');
     const eruCircle = document.querySelector('#eru_circle_path');
 
-    if (tableBody) {
-        tableBody.innerHTML = results.map(r => `
+    // Actualizar circulos siempre
+    if (eriLabel) eriLabel.textContent = `${data.finalERI}%`;
+    if (eruLabel) eruLabel.textContent = `${data.finalERU}%`;
+    if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
+    if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
+
+    if (!tableBody || !tableHead) return;
+
+    if (mode === 'ERI') {
+        tableHead.innerHTML = `<tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA TOTAL</th><th style="text-align:center;">FÍSICO TOTAL</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERI</th></tr>`;
+        tableBody.innerHTML = data.eriResults.map(r => `
             <tr>
-                <td style="font-weight:700;">${r.sku}<br><span style="font-size:0.6rem; color:var(--text-muted);">${r.ubi}</span></td>
-                <td style="font-size:0.7rem; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
+                <td style="font-weight:700; color:#818cf8;">${r.sku}</td>
+                <td style="font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
                 <td style="text-align:center;">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
                 <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? '#4ade80' : '#f87171'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
-                <td style="text-align:center;">
-                    <span style="background:${parseFloat(r.eri) >= 95 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${parseFloat(r.eri) >= 95 ? '#4ade80' : '#f87171'}; padding:2px 6px; border-radius:4px; font-weight:700;">
-                        ${r.eri}%
-                    </span>
-                </td>
+                <td style="text-align:center;"><span style="background:rgba(129,140,248,0.1); color:#818cf8; padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
+            </tr>
+        `).join('');
+    } else {
+        tableHead.innerHTML = `<tr><th>SKU / UBICACIÓN</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERU</th></tr>`;
+        tableBody.innerHTML = data.eruResults.map(r => `
+            <tr>
+                <td style="font-weight:700;">${r.sku}<br><span style="font-size:0.6rem; color:#10b981;">${r.ubi}</span></td>
+                <td style="font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
+                <td style="text-align:center;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? '#4ade80' : '#f87171'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;"><span style="background:rgba(16,185,129,0.1); color:#10b981; padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
             </tr>
         `).join('');
     }
-
-    if (eriLabel) eriLabel.textContent = `${globalERI}%`;
-    if (eruLabel) eruLabel.textContent = `${globalERU}%`;
-    
-    if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${globalERI}, 100`);
-    if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${globalERU}, 100`);
   };
 
   const displayReporteUCA = (results) => {
@@ -3012,37 +3061,65 @@ export const renderDashboard = async (container, user, onLogout) => {
             </button>
         </div>
         <div style="display:grid; grid-template-columns: 200px 200px 1fr; gap:1.5rem;">
-            <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
-                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERI GLOBAL</div>
-                <div style="position:relative; width:90px; height:90px;">
-                    <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
-                        <path id="eri_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-dasharray="0, 100" />
-                    </svg>
-                    <div id="eri_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+            <div id="card_eri" style="cursor:pointer; transition:transform 0.2s;" class="glass-panel" onclick="this.closest('#app').__vue__ ? null : document.querySelector('#btn_mode_eri').click()">
+                <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERI GLOBAL</div>
+                    <div style="position:relative; width:90px; height:90px;">
+                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
+                            <path id="eri_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-dasharray="0, 100" />
+                        </svg>
+                        <div id="eri_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+                    </div>
+                    <div style="font-size:0.6rem; color:#6366f1; margin-top:0.8rem; font-weight:600;">EXACTITUD POR SKU</div>
                 </div>
-                <div style="font-size:0.6rem; color:#6366f1; margin-top:0.8rem; font-weight:600;">EXACTITUD SKU</div>
             </div>
 
-            <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #10b981; background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
-                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERU GLOBAL</div>
-                <div style="position:relative; width:90px; height:90px;">
-                    <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
-                        <path id="eru_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.5" stroke-dasharray="0, 100" />
-                    </svg>
-                    <div id="eru_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+            <div id="card_eru" style="cursor:pointer; transition:transform 0.2s;" class="glass-panel" onclick="this.closest('#app').__vue__ ? null : document.querySelector('#btn_mode_eru').click()">
+                <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #10b981; background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERU GLOBAL</div>
+                    <div style="position:relative; width:90px; height:90px;">
+                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
+                            <path id="eru_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.5" stroke-dasharray="0, 100" />
+                        </svg>
+                        <div id="eru_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+                    </div>
+                    <div style="font-size:0.6rem; color:#10b981; margin-top:0.8rem; font-weight:600;">EXACTITUD UBICACIÓN</div>
                 </div>
-                <div style="font-size:0.6rem; color:#10b981; margin-top:0.8rem; font-weight:600;">EXACTITUD UBICACIÓN</div>
             </div>
-            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px;">
+
+            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px; display:flex; flex-direction:column;">
+                <div style="padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:10px; background:rgba(0,0,0,0.2);">
+                    <button id="btn_mode_eri" style="flex:1; padding:6px; font-size:0.65rem; font-weight:800; border-radius:4px; border:none; background:#6366f1; color:#fff; cursor:pointer;">REPORTE ERI (TOTALES SKU)</button>
+                    <button id="btn_mode_eru" style="flex:1; padding:6px; font-size:0.65rem; font-weight:800; border-radius:4px; border:none; background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:pointer;">REPORTE ERU (POR UBICACIÓN)</button>
+                </div>
                 <table class="data-table" style="font-size:0.8rem;">
-                    <thead><tr><th>SKU</th><th>DESCRIPCIÓN</th><th>SISTEMA</th><th>FÍSICO</th><th>DIF.</th><th>% ERI</th></tr></thead>
-                    <tbody><tr><td colspan="6" style="text-align:center; padding:4rem; color:var(--text-muted); font-style:italic;">Carga un archivo de conteo físico para activar el análisis ERI detallado.</td></tr></tbody>
+                    <thead id="eri_eru_table_head"><tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">%</th></tr></thead>
+                    <tbody id="eri_eru_table_body"><tr><td colspan="6" style="text-align:center; padding:4rem; color:var(--text-muted); font-style:italic;">Carga un archivo de conteo físico para activar el análisis.</td></tr></tbody>
                 </table>
             </div>
         </div>
       </div>
+    `;
+
+    // Eventos de Toggle
+    setTimeout(() => {
+        const bERI = document.getElementById('btn_mode_eri');
+        const bERU = document.getElementById('btn_mode_eru');
+        if(bERI && bERU) {
+            bERI.addEventListener('click', () => {
+                bERI.style.background = '#6366f1'; bERI.style.color = '#fff';
+                bERU.style.background = 'rgba(255,255,255,0.05)'; bERU.style.color = 'var(--text-muted)';
+                updateERIUI('ERI');
+            });
+            bERU.addEventListener('click', () => {
+                bERU.style.background = '#10b981'; bERU.style.color = '#fff';
+                bERI.style.background = 'rgba(255,255,255,0.05)'; bERI.style.color = 'var(--text-muted)';
+                updateERIUI('ERU');
+            });
+        }
+    }, 100);
     `;
 
     // Vincular exportación
