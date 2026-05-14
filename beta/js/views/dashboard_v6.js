@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.6.7-BETA';
-const CACHE_KEY = `logistics_v17_6_7_beta_shared_`;
+const VERSION = '17.6.8-BETA';
+const CACHE_KEY = `logistics_v17_6_8_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -411,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.7</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.8</span>
           </h2>
         </div>
       </div>
@@ -2551,7 +2551,17 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const results = [];
     matriz.forEach(m => {
-      const ubi = String(m.UBICACION || '').trim().toUpperCase();
+      // Detección robusta de la ubicación en la matriz
+      let ubiRaw = '';
+      if (typeof m === 'string') ubiRaw = m;
+      else if (Array.isArray(m)) ubiRaw = m[0];
+      else if (typeof m === 'object' && m !== null) {
+          ubiRaw = m.UBICACION || m.ubicacion || m.Ubicacion || Object.values(m)[0];
+      }
+      
+      const ubi = String(ubiRaw || '').trim().toUpperCase();
+      if (!ubi) return; 
+
       const stockRes = reservaMap.get(ubi);
       const hasStock = stockRes && stockRes.length > 0;
       
