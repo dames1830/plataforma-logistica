@@ -2593,14 +2593,17 @@ export const renderDashboard = async (container, user, onLogout) => {
     renderUploadArea(uploadArea, 'matriz_ubicaciones', matriz, '.xlsx', 'Matriz Ubicaciones (Col A)');
     renderUploadArea(uploadArea, 'stockReserva', reserva, '.xlsx', 'Stock Reserva (Col E, Col I)');
 
-    if (matriz && reserva) {
-      const btnProcess = document.createElement('button');
-      btnProcess.className = 'btn';
-      btnProcess.style = "margin-bottom:2rem; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px;";
-      btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
-      uploadArea.appendChild(btnProcess);
+    const btnProcess = document.createElement('button');
+    btnProcess.className = 'btn';
+    btnProcess.style = "margin-bottom:2rem; width:100%; max-width:400px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);";
+    btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
+    uploadArea.appendChild(btnProcess);
 
-      btnProcess.onclick = () => {
+    const runProcess = () => {
+        if (!matriz || !reserva) {
+            alert("⚠️ Por favor carga ambos archivos (Matriz y Stock Reserva) para generar el reporte.");
+            return;
+        }
         btnProcess.disabled = true;
         btnProcess.innerHTML = '⚙️ PROCESANDO...';
         setTimeout(() => {
@@ -2609,10 +2612,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnProcess.disabled = false;
             btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
         }, 500);
-      };
-      
-      const results = processReporteUCA(matriz, reserva);
-      displayReporteUCA(resultsArea, results);
+    };
+
+    btnProcess.onclick = runProcess;
+    
+    // Auto-process if data exists
+    if (matriz && reserva) {
+        runProcess();
     }
   };
 
