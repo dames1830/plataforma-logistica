@@ -4,7 +4,7 @@ console.log("🚀 [PULSE] Reconnecting to Unified Cloud...");
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = '18.1.1-BETA';
+    this.version = '18.2.0-BETA';
     this.isRendered = false;
     console.log(`[PULSE] App initialized on #${rootId}`);
     this.init();

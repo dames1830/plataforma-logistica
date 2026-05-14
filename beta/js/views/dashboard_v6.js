@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.1.1-BETA';
-const CACHE_KEY = `logistics_v18_1_1_beta_shared_`;
+const VERSION = '18.2.0-BETA';
+const CACHE_KEY = `logistics_v18_2_0_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -79,15 +79,10 @@ const loadAlmacenajeTasks = async () => {
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
-    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
-    { id: 'analisis_inventario', label: 'Analisis Inventario', icon: '🔍' },
-    { id: 'inventarios_main', label: 'Inventarios', icon: '📦', subTabs: [
-        { id: 'general', label: 'General', icon: '📝' },
-        { id: 'ciclicos', label: 'Ciclicos', icon: '🔄' }
-    ]},
-    { id: 'reportes_inventario', label: 'Reportes', icon: '📋' }
+  { id: 'inventario', label: 'Inventario', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+    { id: 'general', label: 'General', icon: '📝' },
+    { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
+    { id: 'reportes', label: 'Reportes', icon: '📊' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -411,7 +406,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.1.1</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.2.0</span>
           </h2>
         </div>
       </div>
@@ -460,7 +455,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (currentTab === 'inicio') await renderHomeTab();
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
-    else if (currentTab === 'inventario') await renderGenericAreaTab('inventario', 'Gestión de Inventario');
+    else if (currentTab === 'inventario') await renderInventarioTab();
     else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
     else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
     else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
@@ -2532,43 +2527,96 @@ export const renderDashboard = async (container, user, onLogout) => {
     const reserva = dataStore.inventario_reserva || [];
     const matriz = dataStore.matriz_ubicaciones || [];
 
-    if (reserva.length === 0 || matriz.length === 0) {
-      alert('⚠️ Faltan datos: Primero debes cargar "STOCK RESERVA" y "MATRIZ UBICACIONES ALTO" en la sección de Archivo.');
-      btn.disabled = false;
-      btn.innerHTML = '⚡ PROCESAR REPORTE UCA';
-      return;
+  let activeInventarioSub = 'general';
+  const renderInventarioTab = async () => {
+    const invTabDef = TABS.find(t => t.id === 'inventario');
+    const allowedSubTabs = invTabDef.subTabs;
+    
+    if (!allowedSubTabs.find(s => s.id === activeInventarioSub)) {
+        activeInventarioSub = allowedSubTabs[0].id;
     }
 
-    // Filtro Crítico: Solo considerar ubicaciones con NIVEL = "ALTO"
-    const reservaFiltrada = reserva.filter(row => String(row.NIVEL || '').trim().toUpperCase() === 'ALTO');
+    contentArea.innerHTML = `
+        <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
+          ${allowedSubTabs.map(sub => `
+            <a class="sub-nav-item ${activeInventarioSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
+              ${sub.icon} ${sub.label.toUpperCase()}
+            </a>
+          `).join('')}
+        </nav><div id="inventarioContent"></div>`;
+    
+    document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeInventarioSub = e.currentTarget.dataset.s; 
+        renderInventarioTab(); 
+    }));
 
+    const invContainer = document.getElementById('inventarioContent');
+    
+    if (activeInventarioSub === 'general') {
+       const data = await getAreaData('inventario');
+       if (!data) renderUploadArea(invContainer, 'inventario', null, '.csv', 'Stock General');
+       else renderDashboardView(invContainer, data);
+    } else if (activeInventarioSub === 'ciclicos') {
+       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Módulo de Inventarios Cíclicos en desarrollo.</div>`;
+    } else if (activeInventarioSub === 'reportes') {
+       await renderReporteUCATab(invContainer);
+    }
+  };
+
+  const renderReporteUCATab = async (container) => {
+    container.innerHTML = `
+      <div id="uca_upload_area" style="display:flex; flex-direction:column; gap:1rem; margin-bottom:2rem;"></div>
+      <div id="uca_results_area"></div>
+    `;
+    
+    const uploadArea = document.getElementById('uca_upload_area');
+    const resultsArea = document.getElementById('uca_results_area');
+
+    const [matriz, reserva] = await Promise.all([getAreaData('matriz_ubicaciones'), getAreaData('stockReserva')]);
+    
+    renderUploadArea(uploadArea, 'matriz_ubicaciones', matriz, '.xlsx', 'Matriz Ubicaciones (Col A)');
+    renderUploadArea(uploadArea, 'stockReserva', reserva, '.xlsx', 'Stock Reserva (Col E, Col I)');
+
+    if (matriz && reserva) {
+      const btnProcess = document.createElement('button');
+      btnProcess.className = 'btn';
+      btnProcess.style = "margin-bottom:2rem; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px;";
+      btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
+      uploadArea.appendChild(btnProcess);
+
+      btnProcess.onclick = () => {
+        btnProcess.disabled = true;
+        btnProcess.innerHTML = '⚙️ PROCESANDO...';
+        setTimeout(() => {
+            const results = processReporteUCA(matriz, reserva);
+            displayReporteUCA(resultsArea, results);
+            btnProcess.disabled = false;
+            btnProcess.innerHTML = '⚡ PROCESAR REPORTE UCA / ERI';
+        }, 500);
+      };
+      
+      const results = processReporteUCA(matriz, reserva);
+      displayReporteUCA(resultsArea, results);
+    }
+  };
+
+  const processReporteUCA = (matriz, reserva) => {
     const reservaMap = new Map();
-    reservaFiltrada.forEach(row => {
-      const ubi = String(row.UBICACION || '').trim().toUpperCase();
+    reserva.forEach(r => {
+      const ubi = String(r.UBICACION || '').trim();
       if (!reservaMap.has(ubi)) reservaMap.set(ubi, []);
-      reservaMap.get(ubi).push(row);
+      reservaMap.get(ubi).push(r);
     });
 
     const results = [];
     matriz.forEach(m => {
-      // Detección robusta de la ubicación en la matriz
-      let ubiRaw = '';
-      if (typeof m === 'string') ubiRaw = m;
-      else if (Array.isArray(m)) ubiRaw = m[0];
-      else if (typeof m === 'object' && m !== null) {
-          ubiRaw = m.UBICACION || m.ubicacion || m.Ubicacion || Object.values(m)[0];
-      }
-      
-      const ubi = String(ubiRaw || '').trim().toUpperCase();
-      if (!ubi) return; 
+      const ubi = String(m.UBICACION || '').trim();
+      if (!ubi) return;
 
       const stockRes = reservaMap.get(ubi);
       const hasStock = stockRes && stockRes.length > 0;
       
-      // Filtrar LPNs únicos para evitar duplicados en el reporte
       const uniqueLPNs = hasStock ? [...new Set(stockRes.map(s => String(s.LPN || '').trim()))].filter(l => l !== '') : [];
-      
-      // NUEVO: Conteo de SKUs únicos y Suma de Cantidades
       const uniqueSKUs = hasStock ? [...new Set(stockRes.map(s => String(s.PRODUCTO || s.SKU || s.Sku || '').trim()))].filter(sk => sk !== '') : [];
       const totalQty = hasStock ? stockRes.reduce((acc, curr) => acc + (parseFloat(curr.CANTIDAD || curr.Cant || curr.Qty || curr.CANT || 0)), 0) : 0;
 
@@ -2582,10 +2630,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       });
     });
 
-    displayReporteUCA(resultContainer, results);
-    btn.disabled = false;
-    btn.innerHTML = '✅ REPORTE GENERADO';
-    setTimeout(() => { if(btn) btn.innerHTML = '⚡ PROCESAR REPORTE UCA'; }, 3000);
+    return results;
   };
 
   const exportUCAtoExcel = async (results) => {
@@ -2601,9 +2646,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
           { header: 'SKU´s', key: 'skus', width: 10 },
           { header: 'CANTIDAD (QTY)', key: 'qty', width: 15 },
-          { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
-          { header: 'OBSERVACIONES', key: 'obs', width: 30 },
-          { header: 'CHECK', key: 'check', width: 10 }
+          { header: 'DETALLE LPNs', key: 'detalle', width: 50 }
         ];
 
         results.forEach((r, idx) => {
@@ -2614,9 +2657,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 lpns: r.lpns,
                 skus: r.skus,
                 qty: r.qty,
-                detalle: r.detalle,
-                obs: '',
-                check: '☐'
+                detalle: r.detalle
             });
         });
 
@@ -2626,22 +2667,12 @@ export const renderDashboard = async (container, user, onLogout) => {
           cell.alignment = { vertical: 'middle', horizontal: 'center' };
         });
 
-        // Bordes para toda la tabla y alineación
         sheet.eachRow((row, rowNumber) => {
             row.eachCell((cell, colNumber) => {
-                cell.border = {
-                    top: {style:'thin'},
-                    left: {style:'thin'},
-                    bottom: {style:'thin'},
-                    right: {style:'thin'}
-                };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
                 if (rowNumber > 1) {
-                    // Índices: 1 (num), 4 (lpns), 5 (skus), 6 (qty), 9 (check)
-                    const isCenter = [1, 4, 5, 6, 9].includes(colNumber);
-                    cell.alignment = { 
-                      vertical: 'middle', 
-                      horizontal: isCenter ? 'center' : 'left' 
-                    };
+                    const isCenter = [1, 4, 5, 6].includes(colNumber);
+                    cell.alignment = { vertical: 'middle', horizontal: isCenter ? 'center' : 'left' };
                 }
             });
         });
@@ -2656,7 +2687,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         window.URL.revokeObjectURL(url);
     } catch (err) {
         console.error("Error al exportar Excel:", err);
-        alert("❌ Error al generar el Excel. Por favor revisa la consola.");
+        alert("❌ Error al generar el Excel.");
     }
   };
 
@@ -2664,9 +2695,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const total = results.length;
     const vacias = results.filter(r => r.estado === 'VACÍA').length;
     const ocupadas = total - vacias;
-    const accuracy = ((vacias / total) * 100).toFixed(2);
-    
-    // Ubicaciones con Discrepancia (Más de 1 LPN)
+    const accuracy = total > 0 ? ((vacias / total) * 100).toFixed(2) : 0;
     const discrepancias = results.filter(r => r.lpns > 1);
 
     container.innerHTML = `
@@ -2693,13 +2722,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start;">
-        
-        <!-- COLUMNA IZQUIERDA: REPORTE UCA GENERAL -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start; margin-bottom:2rem;">
         <div class="animate-fade-in">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
             <h3 style="color:#fff; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">REPORTE UCA GENERAL</h3>
-            <button id="btn_export_uca" style="background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.65rem; font-weight:800; display:flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='rgba(34, 197, 94, 0.1)'; this.style.color='#22c55e'">
+            <button id="btn_export_uca" style="background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.65rem; font-weight:800; display:flex; align-items:center; gap:6px; transition:all 0.2s;">
               📊 EXPORTAR UCA
             </button>
           </div>
@@ -2729,7 +2756,6 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
 
-        <!-- COLUMNA DERECHA: DISCREPANCIA UBICACIONES (MULTICARGA) -->
         <div class="animate-fade-in" style="animation-delay: 0.1s;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
             <h3 style="color:#f87171; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">DISCREPANCIA UBICACIONES</h3>
@@ -2743,11 +2769,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                   <th style="padding:0.75rem; color:#f87171; text-align:center;">LPNs</th>
                   <th style="padding:0.75rem; color:#f87171; text-align:center;">SKU´s</th>
                   <th style="padding:0.75rem; color:#f87171; text-align:center;">Qty</th>
-                  <th style="padding:0.75rem; color:#f87171;">DETALLE LPN</th>
+                  <th style="padding:0.75rem; color:#f87171;">DETALLE</th>
                 </tr>
               </thead>
               <tbody>
-                ${discrepancias.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias detectadas</td></tr>` : 
+                ${discrepancias.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias</td></tr>` : 
                   discrepancias.map(r => `
                   <tr>
                     <td style="font-weight:700; padding:0.6rem 0.75rem; color:#fca5a5;">${r.ubicacion}</td>
@@ -2761,7 +2787,40 @@ export const renderDashboard = async (container, user, onLogout) => {
             </table>
           </div>
         </div>
+      </div>
 
+      <div class="animate-fade-in" style="animation-delay: 0.2s; border-top:1px solid rgba(255,255,255,0.1); padding-top:2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h3 style="color:#fff; margin:0; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">INDICADOR ERI - EXACTITUD DE INVENTARIO</h3>
+            </div>
+            <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+                📥 CARGAR CONTEO FÍSICO
+            </button>
+        </div>
+        <div style="display:grid; grid-template-columns: 350px 1fr; gap:1.5rem;">
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="glass-panel" style="padding:2rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);">
+                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem; font-weight:700;">ERI GLOBAL</div>
+                    <div style="position:relative; width:120px; height:120px; margin:0 auto;">
+                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:120px; height:120px;">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="98.5, 100" />
+                        </svg>
+                        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.5rem; font-weight:900; color:#fff;">98.5%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px;">
+                <table class="data-table" style="font-size:0.8rem;">
+                    <thead><tr><th>SKU</th><th>DESCRIPCIÓN</th><th>SISTEMA</th><th>FÍSICO</th><th>DIF.</th><th>% ERI</th></tr></thead>
+                    <tbody><tr><td colspan="6" style="text-align:center; padding:4rem; color:var(--text-muted); font-style:italic;">Carga un archivo de conteo físico para activar el análisis ERI detallado.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
       </div>
     `;
 
