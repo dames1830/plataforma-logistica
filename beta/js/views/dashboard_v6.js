@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.6.8-BETA';
-const CACHE_KEY = `logistics_v17_6_8_beta_shared_`;
+const VERSION = '17.6.9-BETA';
+const CACHE_KEY = `logistics_v17_6_9_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -411,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.8</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.9</span>
           </h2>
         </div>
       </div>
@@ -2579,6 +2579,36 @@ export const renderDashboard = async (container, user, onLogout) => {
     setTimeout(() => { if(btn) btn.innerHTML = '⚡ PROCESAR REPORTE UCA'; }, 3000);
   };
 
+  const exportUCAtoExcel = async (results) => {
+    if (!results || results.length === 0) return;
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Reporte UCA');
+    
+    sheet.columns = [
+      { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
+      { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
+      { header: 'LPNs', key: 'lpns', width: 10 },
+      { header: 'DETALLE', key: 'detalle', width: 40 }
+    ];
+
+    results.forEach(r => sheet.addRow(r));
+
+    sheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Reporte_UCA_${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const displayReporteUCA = (container, results) => {
     const total = results.length;
     const vacias = results.filter(r => r.estado === 'VACÍA').length;
@@ -2605,13 +2635,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
       </div>
 
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:700;">DETALLE DE DISCREPANCIAS</h3>
+        <button id="btn_export_uca" style="background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:8px; transition:all 0.2s;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='rgba(34, 197, 94, 0.1)'; this.style.color='#22c55e'">
+          📊 EXPORTAR EXCEL
+        </button>
+      </div>
+
       <div class="data-table-container glass-panel" style="max-height:500px; overflow-y:auto;">
         <table class="data-table">
           <thead>
             <tr>
               <th>UBICACIÓN</th>
               <th>ESTADO EN SISTEMA</th>
-              <th>LPNs</th>
+              <th style="text-align:center;">LPNs</th>
               <th>DETALLE</th>
             </tr>
           </thead>
@@ -2628,6 +2665,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         </table>
       </div>
     `;
+
+    document.getElementById('btn_export_uca')?.addEventListener('click', () => exportUCAtoExcel(results));
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
