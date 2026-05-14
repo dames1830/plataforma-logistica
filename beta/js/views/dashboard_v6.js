@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.4.6-BETA';
-const CACHE_KEY = `logistics_v18_4_6_beta_shared_`;
+const VERSION = '18.4.7-BETA';
+const CACHE_KEY = `logistics_v18_4_7_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.4.6</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.4.7</span>
           </h2>
         </div>
       </div>
@@ -2896,7 +2896,25 @@ export const renderDashboard = async (container, user, onLogout) => {
       </div>
     `;
 
-    document.getElementById('btn_export_uca')?.addEventListener('click', () => exportUCAtoExcel(results));
+    // Vincular exportación
+    document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
+    
+    // Vincular Carga ERI
+    const btnUploadERI = document.getElementById('btn_upload_eri');
+    if (btnUploadERI) {
+        btnUploadERI.onclick = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv, .xlsx';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                alert(`Archivo "${file.name}" seleccionado. Procesando análisis ERI...`);
+                // Aquí se disparará la lógica de comparación ERI en el futuro
+            };
+            input.click();
+        };
+    }
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
