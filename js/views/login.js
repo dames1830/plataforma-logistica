@@ -1,4 +1,4 @@
-import { login } from '../services/auth.js?v=17.4.6';
+import { login } from '../services/auth.js?v=18.0.0';
 
 export const renderLogin = (container, onLoginSuccess) => {
   container.className = 'login-container';
@@ -7,10 +7,9 @@ export const renderLogin = (container, onLoginSuccess) => {
     <div class="login-box glass-panel animate-fade-in" style="background:rgba(30, 41, 59, 0.98) !important; border:1px solid var(--primary); box-shadow: 0 0 40px rgba(0,0,0,0.5); pointer-events: auto !important;">
       <div class="login-header">
         <h1>DEAM1830 
-          <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:900; vertical-align:middle; margin-left:4px;">BETA</span>
-          <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v17.4.6</span>
+          <span style="font-size:16px; opacity:0.5; vertical-align:middle; margin-left:8px;">v18.0.0</span>
         </h1>
-        <p>Entorno de Pruebas y Desarrollo</p>
+        <p>Entorno de Producción</p>
       </div>
       <form id="loginForm" style="pointer-events: auto !important;">
         <div class="input-group" style="pointer-events: auto !important;">
