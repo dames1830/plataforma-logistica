@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.2-BETA';
+const VERSION = '18.5.3-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.2</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.3</span>
           </h2>
         </div>
       </div>
@@ -3019,12 +3019,24 @@ export const renderDashboard = async (container, user, onLogout) => {
                 try {
                     const data = await parseFile(file);
                     if (data && data.length > 0) {
-                        // Limpiar encabezados si existen
-                        const cleanData = data.filter(row => (row[0]||'').toString().toUpperCase() !== 'SKU');
+                        // Limpiar encabezados si existen (Si la fila 0 tiene texto en vez de números)
+                        const cleanData = data.filter(row => {
+                            const firstCol = (row[0]||'').toString().toUpperCase();
+                            return firstCol !== 'SKU' && firstCol !== 'PRODUCTO' && firstCol !== '';
+                        });
+                        
+                        if (cleanData.length === 0) {
+                            alert("⚠️ El archivo parece estar vacío o solo contiene encabezados.");
+                            return;
+                        }
+
                         await processERIAnalysis(cleanData);
+                    } else {
+                        alert("⚠️ El archivo no contiene datos legibles.");
                     }
                 } catch (err) {
-                    alert("Error al leer el archivo de conteo.");
+                    console.error("Detalle del error:", err);
+                    alert(`❌ Error al leer el archivo: ${err.message || err}`);
                 } finally {
                     btnUploadERI.innerHTML = originalText;
                     btnUploadERI.disabled = false;
