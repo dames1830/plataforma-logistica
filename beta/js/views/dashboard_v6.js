@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.26-BETA';
+const VERSION = '18.5.27-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.26</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.27</span>
           </h2>
         </div>
       </div>
@@ -2711,8 +2711,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <div id="eru_val_unif" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.85rem; font-weight:900; color:#fff;">0%</div>
                         </div>
                         <div>
-                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">EXACTITUD</div>
-                            <div style="font-size:0.9rem; font-weight:900; color:#10b981;">UBICACIONES (ERU)</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">
+                                EXACTITUD <span id="eru_timestamp" style="margin-left:10px; color:rgba(255,255,255,0.3); font-weight:400;"></span>
+                            </div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#10b981;">DE REGISTRO DE UBICACIÓN (ERU)</div>
                         </div>
                     </div>
                     <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
@@ -2736,8 +2738,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <div id="eri_val_unif" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.85rem; font-weight:900; color:#fff;">0%</div>
                         </div>
                         <div>
-                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">EXACTITUD</div>
-                            <div style="font-size:0.9rem; font-weight:900; color:#818cf8;">INVENTARIO (ERI)</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">
+                                EXACTITUD <span id="eri_timestamp" style="margin-left:10px; color:rgba(255,255,255,0.3); font-weight:400;"></span>
+                            </div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#818cf8;">DE REGISTRO DE INVENTARIO (ERI)</div>
                         </div>
                     </div>
                     <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
@@ -2792,10 +2796,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     const eruCircle = document.getElementById('eru_circle_unif');
     const eruHead = document.getElementById('eru_head_unif');
     const eruBody = document.getElementById('eru_body_unif');
+    const eruTime = document.getElementById('eru_timestamp');
+    const eriTime = document.getElementById('eri_timestamp');
     
+    const now = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    if (eruTime) eruTime.innerText = now;
+    if (eriTime) eriTime.innerText = now;
+
     if (eruVal) eruVal.innerText = `${data.finalERU}%`;
     if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
-    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th style="text-align:center;">ESTADO</th></tr>`;
+    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">ESTADO</th></tr>`;
     
     if (eruBody && Array.isArray(data.eruResults)) {
         // Filtrar encabezados residuales
@@ -2803,8 +2813,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         eruBody.innerHTML = cleanERU.map(r => `
             <tr>
                 <td style="font-weight:600; color:#10b981; padding:8px;">${r.ubi}</td>
+                <td style="text-align:center; opacity:0.8;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
                 <td style="text-align:center;">
-                    <span style="padding:2px 8px; border-radius:6px; font-size:0.6rem; font-weight:900; background:${r.diff===0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.diff===0?'#10b981':'#ef4444'}; border:1px solid ${r.diff===0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
+                    <span style="padding:2px 8px; border-radius:6px; font-size:0.55rem; font-weight:900; background:${r.diff===0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.diff===0?'#10b981':'#ef4444'}; border:1px solid ${r.diff===0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
                         ${r.diff===0?'PERFECTO':'ERROR'}
                     </span>
                 </td>
