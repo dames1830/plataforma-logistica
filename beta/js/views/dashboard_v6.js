@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.24-BETA';
+const VERSION = '18.5.25-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.22</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.25</span>
           </h2>
         </div>
       </div>
@@ -2751,13 +2751,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     const eriBody = document.getElementById('eri_body_unif');
     if (eriVal) eriVal.innerText = `${data.finalERI}%`;
     if (eriHead) eriHead.innerHTML = `<tr><th>SKU</th><th style="text-align:center;">SIS</th><th style="text-align:center;">FIS</th><th style="text-align:center;">DIF</th></tr>`;
-    if (eriBody) {
-        eriBody.innerHTML = data.eriRows.map(r => `
+    if (eriBody && Array.isArray(data.eriResults)) {
+        eriBody.innerHTML = data.eriResults.map(r => `
             <tr>
                 <td title="${r.desc}">${r.sku}</td>
                 <td style="text-align:center;">${r.sis}</td>
                 <td style="text-align:center;">${r.fis}</td>
-                <td style="text-align:center; color:${r.dif===0?'#10b981':'#ef4444'}; font-weight:800;">${r.dif}</td>
+                <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:800;">${r.diff}</td>
             </tr>
         `).join('');
     }
@@ -2768,13 +2768,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     const eruBody = document.getElementById('eru_body_unif');
     if (eruVal) eruVal.innerText = `${data.finalERU}%`;
     if (eruHead) eruHead.innerHTML = `<tr><th>UBICACIÓN</th><th style="text-align:center;">ESTADO</th></tr>`;
-    if (eruBody) {
-        eruBody.innerHTML = data.eruRows.map(r => `
+    if (eruBody && Array.isArray(data.eruResults)) {
+        eruBody.innerHTML = data.eruResults.map(r => `
             <tr>
                 <td>${r.ubi}</td>
                 <td style="text-align:center;">
-                    <span style="padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:800; background:${r.match?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.match?'#10b981':'#ef4444'}; border:1px solid ${r.match?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
-                        ${r.match?'OK':'ERROR'}
+                    <span style="padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:800; background:${r.diff===0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}; color:${r.diff===0?'#10b981':'#ef4444'}; border:1px solid ${r.diff===0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};">
+                        ${r.diff===0?'OK':'ERROR'}
                     </span>
                 </td>
             </tr>
