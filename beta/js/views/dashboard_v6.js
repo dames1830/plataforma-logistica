@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.12-BETA';
+const VERSION = '18.5.13-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.12</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.13</span>
           </h2>
         </div>
       </div>
@@ -2785,13 +2785,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim();
             const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
             
-            // Col C (index 2) suele ser descripción en el Stock Activo del usuario
-            // Refuerzo: Si getCol falla, usamos directamente row[2] si es array
+            // [MOD V18.5.13] Escaneo inteligente de descripción
             let desc = 'S/D';
             if (typeof row === 'object' && !Array.isArray(row)) {
-                desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION']) || 'S/D';
+                desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
             } else if (Array.isArray(row)) {
-                desc = row[2] || 'S/D';
+                // Si la Col C (2) falla, buscamos en otras columnas probables (E, G, H...)
+                desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
             }
             desc = desc.toString().trim();
 
@@ -2889,15 +2889,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             ...r,
             desc: descMap.get(r.sku.toUpperCase()) || 'N/A'
         })); 
-        const locationStats = new Map();
-        eruResults.forEach(r => {
-            if (!locationStats.has(r.ubi)) locationStats.set(r.ubi, { items: 0, correct: 0 });
-            const s = locationStats.get(r.ubi);
-            s.items++;
-            if (parseFloat(r.diff) === 0) s.correct++;
-        });
-        const correctUbis = Array.from(locationStats.values()).filter(s => s.items === s.correct).length;
-        const finalERU = locationStats.size > 0 ? ((correctUbis / locationStats.size) * 100).toFixed(1) : 0;
+        // [MOD V18.5.13] ERU Global ahora es el PROMEDIO de acierto para que sea más visual
+        const eruAccSum = eruResults.reduce((acc, r) => acc + parseFloat(r.eri || 0), 0);
+        const finalERU = eruResults.length > 0 ? (eruAccSum / eruResults.length).toFixed(1) : 0;
 
         // Guardar para toggles
         window._lastERI = { eriResults, finalERI, eruResults, finalERU };
