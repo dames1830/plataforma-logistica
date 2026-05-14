@@ -3,8 +3,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.0-RELEASE';
-const CACHE_KEY = `logistics_v18_5_0_release_shared_`;
+const VERSION = '18.6.0';
+const CACHE_KEY = `logistics_v18_6_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -84,8 +84,7 @@ const TABS = [
     { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
     { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
     { id: 'analisis_inventarios', label: 'Análisis Inventario', icon: '🔍' },
-    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦' },
-    { id: 'reportes_inventarios', label: 'Reportes', icon: '📊' }
+    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -408,7 +407,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.6.0</span>
           </h2>
         </div>
       </div>
@@ -2519,7 +2518,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
 
 
-  let activeInventarioSub = 'modulo_inventarios';
+  let activeInventarioSub = localStorage.getItem('activeSub_inventario') || 'archivo_inventario';
+  let activeModuloInvSub = 'general'; // Nivel 3
 
   const renderInventarioTab = async () => {
     const invTabDef = TABS.find(t => t.id === 'inventario');
@@ -2532,109 +2532,323 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentArea.innerHTML = `
         <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
           ${allowedSubTabs.map(sub => `
-            <a class="sub-nav-item ${activeInventarioSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
+            <a class="sub-nav-item ${activeInventarioSub===sub.id?'active':''}" data-id="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
               ${sub.icon} ${sub.label.toUpperCase()}
             </a>
           `).join('')}
-        </nav><div id="inventarioContent"></div>`;
+        </nav><div id="inventarioLevel2Content"></div>`;
     
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
-        activeInventarioSub = e.currentTarget.dataset.s; 
+        activeInventarioSub = e.currentTarget.dataset.id; 
+        localStorage.setItem('activeSub_inventario', activeInventarioSub);
         renderInventarioTab(); 
     }));
 
-    const invContainer = document.getElementById('inventarioContent');
+    const l2Container = document.getElementById('inventarioLevel2Content');
     
     if (activeInventarioSub === 'archivo_inventario') {
-       // --- MULTI-UPLOAD PARA INVENTARIO ---
-       const wrap = document.createElement('div');
-       wrap.style.display = 'flex';
-       wrap.style.flexDirection = 'column';
-       wrap.style.gap = '1rem';
-       invContainer.appendChild(wrap);
-
-       const [matriz, reserva, general] = await Promise.all([
+       const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '1rem'; l2Container.appendChild(wrap);
+       const [matriz, reserva, stock] = await Promise.all([
            getAreaData('matriz_ubicaciones'),
            getAreaData('stockReserva'),
            getAreaData('inventario')
        ]);
-
        renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES (Col A)');
        renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA (Col E, Col I)');
-       renderUploadArea(wrap, 'inventario', general, '.csv', 'STOCK GENERAL');
+       renderUploadArea(wrap, 'inventario', stock, '.csv', 'STOCK GENERAL');
 
     } else if (activeInventarioSub === 'kpi_inventarios') {
-       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">KPI Inventarios en desarrollo.</div>`;
+       l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">📊 KPI Inventarios en desarrollo.</div>`;
     } else if (activeInventarioSub === 'analisis_inventarios') {
-       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Análisis Inventario en desarrollo.</div>`;
+       l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">🔍 Análisis Inventario en desarrollo.</div>`;
     } else if (activeInventarioSub === 'modulo_inventarios') {
-       // Por ahora mostramos Ciclicos como placeholder y General si hay datos
-       const data = await getAreaData('inventario');
-       if (!data) renderUploadArea(invContainer, 'inventario', null, '.csv', 'Stock General');
-       else renderDashboardView(invContainer, data);
-
-    } else if (activeInventarioSub === 'reportes_inventarios') {
-       await renderReporteUCATab(invContainer);
+       renderModuloInventarios(l2Container);
     }
   };
 
-  const renderReporteUCATab = async (container) => {
+  const renderModuloInventarios = async (container) => {
+    const l3Tabs = [
+        { id: 'general', label: 'General', icon: '📝' },
+        { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
+        { id: 'reportes', label: 'Reportes', icon: '📊' }
+    ];
+
     container.innerHTML = `
-      <div id="uca_process_header" style="display:flex; flex-direction:column; align-items:center; gap:1rem; margin-bottom:2rem; padding:2rem; background:rgba(99, 102, 241, 0.03); border-radius:15px; border:1px dashed rgba(99, 102, 241, 0.2);">
-        <div style="color:var(--text-muted); font-size:0.85rem; text-align:center; max-width:500px;">
-          Utiliza los archivos cargados en <strong>🗂️ ARCHIVO INVENTARIO</strong> para generar el análisis de exactitud.
+        <div style="background:rgba(15,23,42,0.3); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.05);">
+            <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                ${l3Tabs.map(t => `
+                    <a class="l3-nav-item ${activeModuloInvSub===t.id?'active':''}" data-id="${t.id}" style="padding: 0.5rem 0.2rem; font-size: 0.75rem; cursor:pointer; color:${activeModuloInvSub===t.id?'#818cf8':'var(--text-muted)'}; font-weight:${activeModuloInvSub===t.id?'800':'400'}; border-bottom:${activeModuloInvSub===t.id?'2px solid #818cf8':'none'};">
+                        ${t.icon} ${t.label.toUpperCase()}
+                    </a>
+                `).join('')}
+            </nav>
+            <div id="moduloInvContent"></div>
         </div>
-        <div id="uca_button_container" style="width:100%; display:flex; justify-content:center;"></div>
-      </div>
-      <div id="uca_results_area"></div>
     `;
-    
-    const buttonContainer = document.getElementById('uca_button_container');
-    const resultsArea = document.getElementById('uca_results_area');
 
-    const [matriz, reserva] = await Promise.all([getAreaData('matriz_ubicaciones'), getAreaData('stockReserva')]);
-    
-    const btnProcess = document.createElement('button');
-    btnProcess.className = 'btn';
-    btnProcess.style = "width:100%; max-width:600px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; height:55px; font-size:1rem; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border-radius:12px; transition:all 0.3s ease;";
-    btnProcess.innerHTML = '⚡ PROCESAR REPORTES';
-    buttonContainer.appendChild(btnProcess);
+    document.querySelectorAll('.l3-nav-item').forEach(b => b.addEventListener('click', (e) => { 
+        activeModuloInvSub = e.currentTarget.dataset.id; 
+        renderModuloInventarios(container); 
+    }));
 
-    const runProcess = () => {
-        try {
-            if (!matriz || !reserva) {
-                alert("⚠️ No hay datos suficientes en ARCHIVO INVENTARIO (Matriz y Stock Reserva).");
-                return;
-            }
-            btnProcess.disabled = true;
-            btnProcess.innerHTML = '<i class="fas fa-cog fa-spin"></i> GENERANDO REPORTES...';
-            
-            setTimeout(() => {
+    const content = document.getElementById('moduloInvContent');
+    const [matriz, reserva, stock, articulos] = await Promise.all([
+        getAreaData('matriz_ubicaciones'),
+        getAreaData('stockReserva'),
+        getAreaData('inventario'),
+        getAreaData('articulos')
+    ]);
+
+    if (activeModuloInvSub === 'general') {
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; content.appendChild(wrap);
+        renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
+        // Agregamos info visual de que se nutre de Archivo Inventario
+        wrap.innerHTML += `<div style="margin-top:1rem; padding:0.8rem; background:rgba(129, 140, 248, 0.05); border-radius:8px; border:1px dashed rgba(129, 140, 248, 0.2); font-size:0.7rem; color:#818cf8; text-align:center;">ℹ️ Este módulo utiliza automáticamente la Matriz y Stock cargados en 'ARCHIVO INVENTARIO'.</div>`;
+    } 
+    else if (activeModuloInvSub === 'ciclicos') {
+        content.innerHTML = `
+            <div style="max-width:500px; margin:0 auto;" id="ciclico_upload_area"></div>
+        `;
+        renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico', null, '.csv, .xlsx', 'CARGAR CONTEO FÍSICO');
+        
+        const input = document.getElementById('up_conteo_ciclico');
+        if (input) {
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
                 try {
-                    const results = processReporteUCA(matriz, reserva);
-                    displayReporteUCA(results);
-                    btnProcess.disabled = false;
-                    btnProcess.innerHTML = '⚡ RE-PROCESAR REPORTES';
-                    resultsArea.scrollIntoView({ behavior: 'smooth' });
-                } catch (err) {
-                    console.error("Error en procesamiento:", err);
-                    alert("❌ Error al procesar los datos: " + err.message);
-                    btnProcess.disabled = false;
-                    btnProcess.innerHTML = '⚡ INTENTAR DE NUEVO';
-                }
-            }, 500);
-        } catch (f) {
-            console.error("Fatal runProcess:", f);
+                    const data = await parseFile(file, 'inventario_eri');
+                    if (data && data.length > 0) {
+                        await processERIAnalysis(data);
+                        activeModuloInvSub = 'reportes';
+                        renderModuloInventarios(container);
+                    }
+                } catch(err) { alert(err); }
+            };
         }
-    };
-
-    btnProcess.onclick = runProcess;
-    
-    /* Auto-process disabled as per user request
-    if (matriz && reserva) {
-        runProcess();
     }
-    */
+    else if (activeModuloInvSub === 'reportes') {
+        content.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:2.5rem;">
+                
+                <!-- SECTION 1: REPORTE UCA (TOP - FULL WIDTH) -->
+                <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(99, 102, 241, 0.2); background:rgba(15, 23, 42, 0.2);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">📊 REPORTE UCA (DISPONIBILIDAD)</h3>
+                        <button id="btn_run_uca" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, #4f46e5, #7c3aed); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(79, 70, 229, 0.3);">⚡ GENERAR UCA</button>
+                    </div>
+                    <div id="uca_results_area"></div>
+                </div>
+
+                <!-- SECTION 2: INDICADORES DE EXACTITUD (BOTTOM - SPLIT) -->
+                <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(16, 185, 129, 0.2); background:rgba(15, 23, 42, 0.2);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">🎯 INDICADORES DE EXACTITUD (AUDITORÍA)</h3>
+                        <div style="display:flex; gap:10px;">
+                            <input type="file" id="up_conteo_unificado" accept=".csv, .xlsx" style="display:none;">
+                            <button onclick="document.getElementById('up_conteo_unificado').click()" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(16, 185, 129, 0.3);">📉 PROCESAR ERI / ERU</button>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                        <!-- ERU (IZQUIERDA) -->
+                        <div id="eru_results_area_unif">
+                            <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed rgba(255,255,255,0.05);">Esperando Auditoría ERU...</div>
+                        </div>
+
+                        <!-- ERI (DERECHA) -->
+                        <div id="eri_results_area_unif">
+                            <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed rgba(255,255,255,0.05);">Esperando Auditoría ERI...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        // Lógica UCA
+        document.getElementById('btn_run_uca').onclick = () => {
+            if (matriz && reserva) {
+                const res = processReporteUCA(matriz, reserva);
+                displayReporteUCA(res);
+            } else {
+                alert("⚠️ Datos insuficientes en 'ARCHIVO INVENTARIO' para UCA.");
+            }
+        };
+
+        // Lógica ERI/ERU
+        const inputUnif = document.getElementById('up_conteo_unificado');
+        if (inputUnif) {
+            inputUnif.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const btn = document.querySelector('button[onclick*="up_conteo_unificado"]');
+                const originalHTML = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+                    btn.disabled = true;
+                    btn.style.opacity = '0.7';
+                }
+
+                try {
+                    const data = await parseFile(file, 'inventario_eri');
+                    if (data && data.length > 0) {
+                        await processERIAnalysis(data);
+                        renderERI_ERU_Unified();
+                    }
+                } catch(err) { 
+                    alert("Error al procesar el archivo: " + err); 
+                } finally {
+                    if (btn) {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                    inputUnif.value = ''; // Limpiar para permitir re-subir el mismo archivo
+                }
+            };
+        }
+
+        // Función interna para renderizar ERI/ERU uno al lado del otro
+        const renderERI_ERU_Unified = () => {
+            if (!window._lastERI) return;
+            const eriArea = document.getElementById('eri_results_area_unif');
+            const eruArea = document.getElementById('eru_results_area_unif');
+            
+            // Bloque ERU (IZQUIERDA)
+            eruArea.innerHTML = `
+                <div class="glass-panel" style="padding:1.2rem; border:1px solid rgba(16, 185, 129, 0.3); background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent);">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.2rem;">
+                        <div style="position:relative; width:65px; height:65px;">
+                            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:65px; height:65px;">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                <path id="eru_circle_unif" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="0, 100" />
+                            </svg>
+                            <div id="eru_val_unif" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.85rem; font-weight:900; color:#fff;">0%</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">
+                                EXACTITUD <span id="eru_timestamp" style="margin-left:10px; color:rgba(255,255,255,0.3); font-weight:400;"></span>
+                            </div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#10b981;">DE REGISTRO DE UBICACIÓN (ERU)</div>
+                        </div>
+                    </div>
+                    <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                        <table class="data-table" style="font-size:0.75rem;">
+                            <thead id="eru_head_unif" style="position:sticky; top:0; z-index:10; background:#1a1d21;"></thead>
+                            <tbody id="eru_body_unif"></tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // Bloque ERI (DERECHA)
+            eriArea.innerHTML = `
+                <div class="glass-panel" style="padding:1.2rem; border:1px solid rgba(129, 140, 248, 0.3); background:radial-gradient(circle at top right, rgba(129, 140, 248, 0.05), transparent);">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.2rem;">
+                        <div style="position:relative; width:65px; height:65px;">
+                            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:65px; height:65px;">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                <path id="eri_circle_unif" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#818cf8" stroke-width="3" stroke-dasharray="0, 100" />
+                            </svg>
+                            <div id="eri_val_unif" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.85rem; font-weight:900; color:#fff;">0%</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">
+                                EXACTITUD <span id="eri_timestamp" style="margin-left:10px; color:rgba(255,255,255,0.3); font-weight:400;"></span>
+                            </div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#818cf8;">DE REGISTRO DE INVENTARIO (ERI)</div>
+                        </div>
+                    </div>
+                    <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                        <table class="data-table" style="font-size:0.75rem;">
+                            <thead id="eri_head_unif" style="position:sticky; top:0; z-index:10; background:#1a1d21;"></thead>
+                            <tbody id="eri_body_unif"></tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            // Inyectamos los datos reales usando la lógica existente
+            updateERIUI_Unified();
+        };
+
+        // Exportamos la función de refresco al ámbito global/superior temporalmente
+        window.renderERI_ERU_Unified_Global = () => renderERI_ERU_Unified();
+
+        if (window._lastERI) renderERI_ERU_Unified();
+    }
+  };
+
+  const updateERIUI_Unified = () => {
+    const data = window._lastERI;
+    if (!data) return;
+
+    // Actualizar ERI (SKUs)
+    const eriVal = document.getElementById('eri_val_unif');
+    const eriCircle = document.getElementById('eri_circle_unif');
+    const eriHead = document.getElementById('eri_head_unif');
+    const eriBody = document.getElementById('eri_body_unif');
+    
+    if (eriVal) eriVal.innerText = `${data.finalERI}%`;
+    if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
+    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th>UBICACIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
+    
+    if (eriBody && Array.isArray(data.eriResults)) {
+        // Filtrar encabezados residuales
+        const cleanERI = data.eriResults.filter(r => r.sku && !r.sku.toString().toUpperCase().includes('SKU'));
+        eriBody.innerHTML = cleanERI.map(r => `
+            <tr>
+                <td style="font-weight:700; color:#818cf8; padding:8px;">${r.sku}</td>
+                <td style="font-size:0.65rem; color:rgba(255,255,255,0.6);">${r.ubi}</td>
+                <td style="text-align:center; opacity:0.8;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;">
+                    <span style="background:rgba(129,140,248,0.1); color:#818cf8; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.65rem;">${r.eri}%</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Actualizar ERU (Ubicaciones)
+    const eruVal = document.getElementById('eru_val_unif');
+    const eruCircle = document.getElementById('eru_circle_unif');
+    const eruHead = document.getElementById('eru_head_unif');
+    const eruBody = document.getElementById('eru_body_unif');
+    const eruTime = document.getElementById('eru_timestamp');
+    const eriTime = document.getElementById('eri_timestamp');
+    
+    const now = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    if (eruTime) eruTime.innerText = now;
+    if (eriTime) eriTime.innerText = now;
+
+    if (eruVal) eruVal.innerText = `${data.finalERU}%`;
+    if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
+    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th>SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
+    
+    if (eruBody && Array.isArray(data.eruResults)) {
+        // Filtrar encabezados residuales
+        const cleanERU = data.eruResults.filter(r => r.ubi && !r.ubi.toString().toUpperCase().includes('UBICAC'));
+        eruBody.innerHTML = cleanERU.map(r => `
+            <tr>
+                <td style="font-weight:600; color:#10b981; padding:8px;">${r.ubi}</td>
+                <td style="font-size:0.65rem; color:rgba(255,255,255,0.6);">${r.sku}</td>
+                <td style="text-align:center; opacity:0.8;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; color:${r.diff===0?'#10b981':'#ef4444'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;">
+                    <span style="background:rgba(16,185,129,0.1); color:#10b981; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.65rem;">${r.eri}%</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+  };
+
+  const renderERIERULayout = (container) => {
+      // Función obsoleta - Eliminada para evitar duplicados en el dashboard unificado
+      console.log("[PULSE] renderERIERULayout llamado pero desactivado por v18.5.20");
   };
 
   const processReporteUCA = (matriz, reserva) => {
@@ -2750,6 +2964,224 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  // --- MOTOR DE ANALISIS ERI ---
+  const processERIAnalysis = async (conteoData) => {
+    try {
+        // [MOD V18.5.5] Buscamos primero en 'inventario' (Llave de la pestaña Archivo Inventario)
+        let stockActivo = await getAreaData('inventario');
+        
+        // Si no hay en 'inventario', probamos con 'inventario_activo' por si acaso
+        if (!stockActivo || stockActivo.length === 0) {
+            stockActivo = await getAreaData('inventario_activo');
+        }
+
+        if (!stockActivo || stockActivo.length === 0) {
+            alert("⚠️ No hay datos de 'STOCK ACTIVO' cargados. Cárgalos primero para realizar el cruce.");
+            return;
+        }
+
+        const maestro = await getAreaData('articulos') || [];
+        const maestroMap = new Map();
+        maestro.forEach(a => {
+            const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim();
+            const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString();
+            if (mSku) maestroMap.set(mSku, mDesc);
+        });
+
+        // [MOD V18.5.7] Mapa de descripciones extraído directamente del Stock Activo (Col C)
+        const descMap = new Map();
+
+        // Mapa de Sistema: [SKU + UBI] -> QTY
+        const sistemaMap = new Map();
+        stockActivo.forEach(row => {
+            const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim();
+            const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim();
+            const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
+            
+            // [MOD V18.5.13] Escaneo inteligente de descripción
+            let desc = 'S/D';
+            if (typeof row === 'object' && !Array.isArray(row)) {
+                desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
+            } else if (Array.isArray(row)) {
+                // Si la Col C (2) falla, buscamos en otras columnas probables (E, G, H...)
+                desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
+            }
+            desc = desc.toString().trim();
+
+            if (sku) {
+                const key = `${sku.toUpperCase()}|${ubi.toUpperCase()}`;
+                sistemaMap.set(key, (sistemaMap.get(key) || 0) + qty);
+                if (desc) descMap.set(sku.toUpperCase(), desc);
+            }
+        });
+
+        // Mapa de Fisico: [SKU + UBI] -> QTY
+        const fisicoMap = new Map();
+        conteoData.forEach(row => {
+            const sku = (row[0] || '').toString().trim(); // Col A
+            const qty = parseFloat(row[1]) || 0;           // Col B
+            const ubi = (row[2] || '').toString().trim(); // Col C
+            if (sku) {
+                const key = `${sku.toUpperCase()}|${ubi.toUpperCase()}`;
+                fisicoMap.set(key, (fisicoMap.get(key) || 0) + qty);
+            }
+        });
+
+        // Cruce de Datos - [MOD V18.5.7] Solo mostramos lo que está en el CONTEO FISICO
+        const countKeys = Array.from(fisicoMap.keys());
+        const results = [];
+        let totalItems = 0;
+        let correctItems = 0;
+
+        countKeys.forEach(key => {
+            const [sku, ubi] = key.split('|');
+            const qSis = sistemaMap.get(key) || 0;
+            const qFis = fisicoMap.get(key) || 0;
+            const diff = qFis - qSis;
+            
+            // ERI por item: Proporción de acierto
+            const eri = qSis === qFis ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, qFis || 1))) * 100;
+
+            totalItems++;
+            if (diff === 0) correctItems++;
+
+            results.push({
+                sku,
+                ubi,
+                desc: descMap.get(sku.toUpperCase()) || 'N/A',
+                sis: qSis,
+                fis: qFis,
+                diff,
+                eri: Math.max(0, eri).toFixed(1)
+            });
+        });
+
+        const globalERI_Val = totalItems > 0 ? ((correctItems / totalItems) * 100).toFixed(1) : 0;
+
+        // --- [MOD V18.5.11] LOGICA ERI (POR SKU TOTAL - SOLO LO CONTADO) ---
+        const countedSkus = new Set();
+        fisicoMap.forEach((qty, key) => countedSkus.add(key.split('|')[0].toUpperCase()));
+
+        const eriBySku = new Map();
+        countedSkus.forEach(sku => eriBySku.set(sku, { sis: 0, fis: 0 }));
+
+        // Sumar todo el sistema por SKU pero SOLO de lo contado
+        sistemaMap.forEach((qty, key) => {
+            const sku = key.split('|')[0].toUpperCase();
+            if (countedSkus.has(sku)) {
+                eriBySku.get(sku).sis += qty;
+            }
+        });
+        // Sumar todo el fisico por SKU
+        fisicoMap.forEach((qty, key) => {
+            const sku = key.split('|')[0].toUpperCase();
+            if (countedSkus.has(sku)) {
+                eriBySku.get(sku).fis += qty;
+            }
+        });
+
+        const eriResults = [];
+        let eriCorrect = 0;
+        eriBySku.forEach((vals, sku) => {
+            const diff = vals.fis - vals.sis;
+            if (diff === 0) eriCorrect++;
+            const acc = vals.sis === vals.fis ? 100 : (1 - (Math.abs(diff) / Math.max(vals.sis, vals.fis || 1))) * 100;
+            
+            // Buscar ubicaciones donde aparece este SKU en el conteo
+            const ubis = results.filter(r => r.sku === sku).map(r => r.ubi);
+            const ubiText = ubis.length > 1 ? "VARIAS" : (ubis[0] || 'N/A');
+
+            eriResults.push({
+                sku,
+                ubi: ubiText,
+                desc: descMap.get(sku.toUpperCase()) || 'N/A',
+                sis: vals.sis,
+                fis: vals.fis,
+                diff,
+                eri: Math.max(0, acc).toFixed(1)
+            });
+        });
+        const finalERI = eriResults.length > 0 ? ((eriCorrect / eriResults.length) * 100).toFixed(1) : 0;
+
+        // --- [MOD V18.5.11] LOGICA ERU (POR UBICACION) ---
+        const eruResults = results.map(r => ({
+            ...r,
+            desc: descMap.get(r.sku.toUpperCase()) || 'N/A'
+        })); 
+        // [MOD V18.5.13] ERU Global ahora es el PROMEDIO de acierto para que sea más visual
+        const eruAccSum = eruResults.reduce((acc, r) => acc + parseFloat(r.eri || 0), 0);
+        const finalERU = eruResults.length > 0 ? (eruAccSum / eruResults.length).toFixed(1) : 0;
+
+        // Guardar para toggles
+        window._lastERI = { eriResults, finalERI, eruResults, finalERU };
+        
+        // [MOD V18.5.19] Si estamos en el dashboard unificado, usamos la nueva renderización
+        if (document.getElementById('eri_results_area_unif')) {
+            // Esta función suele estar definida dentro de renderModuloInventarios, 
+            // pero podemos disparar un evento o simplemente llamar si es accesible.
+            // Para asegurar compatibilidad, buscamos si existe la función de refresco.
+            if (typeof renderERI_ERU_Unified_Global === 'function') {
+                renderERI_ERU_Unified_Global();
+            } else {
+                // Failsafe
+                updateERIUI('ERI');
+            }
+        } else {
+            updateERIUI('ERI');
+        }
+
+    } catch (err) {
+        console.error("Error en analisis ERI/ERU:", err);
+        alert("Ocurrió un error al procesar el análisis.");
+    }
+  };
+
+  const updateERIUI = (mode) => {
+    const data = window._lastERI;
+    if (!data) return;
+
+    const tableBody = document.querySelector('#eri_eru_table_body');
+    const tableHead = document.querySelector('#eri_eru_table_head');
+    const eriLabel = document.querySelector('#eri_global_val');
+    const eruLabel = document.querySelector('#eru_global_val');
+    const eriCircle = document.querySelector('#eri_circle_path');
+    const eruCircle = document.querySelector('#eru_circle_path');
+
+    // Actualizar circulos siempre
+    if (eriLabel) eriLabel.textContent = `${data.finalERI}%`;
+    if (eruLabel) eruLabel.textContent = `${data.finalERU}%`;
+    if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
+    if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
+
+    if (!tableBody || !tableHead) return;
+
+    if (mode === 'ERI') {
+        tableHead.innerHTML = `<tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA TOTAL</th><th style="text-align:center;">FÍSICO TOTAL</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERI</th></tr>`;
+        tableBody.innerHTML = data.eriResults.map(r => `
+            <tr>
+                <td style="font-weight:700; color:#818cf8;">${r.sku}</td>
+                <td style="font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
+                <td style="text-align:center;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? '#4ade80' : '#f87171'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;"><span style="background:rgba(129,140,248,0.1); color:#818cf8; padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
+            </tr>
+        `).join('');
+    } else {
+        tableHead.innerHTML = `<tr><th>SKU / UBICACIÓN</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERU</th></tr>`;
+        tableBody.innerHTML = data.eruResults.map(r => `
+            <tr>
+                <td style="font-weight:700;">${r.sku}<br><span style="font-size:0.6rem; color:#10b981;">${r.ubi}</span></td>
+                <td style="font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
+                <td style="text-align:center;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? '#4ade80' : '#f87171'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;"><span style="background:rgba(16,185,129,0.1); color:#10b981; padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
+            </tr>
+        `).join('');
+    }
+  };
+
   const displayReporteUCA = (results) => {
     const container = document.getElementById('uca_results_area');
     if (!container) return;
@@ -2858,62 +3290,10 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
       </div>
-
-      <!-- SECCION ERI ABAJO -->
-      <div class="animate-fade-in" style="animation-delay: 0.2s; border-top:1px solid rgba(255,255,255,0.1); padding-top:1.5rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:36px; height:36px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
-                    <i class="fas fa-bullseye" style="font-size:0.9rem;"></i>
-                </div>
-                <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">INDICADOR ERI - EXACTITUD DE INVENTARIO</h3>
-            </div>
-            <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:800; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
-                📥 CARGAR CONTEO FÍSICO
-            </button>
-        </div>
-        <div style="display:grid; grid-template-columns: 350px 1fr; gap:1.5rem;">
-            <div style="display:flex; flex-direction:column; gap:1rem;">
-                <div class="glass-panel" style="padding:2rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);">
-                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem; font-weight:700;">ERI GLOBAL</div>
-                    <div style="position:relative; width:120px; height:120px; margin:0 auto;">
-                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:120px; height:120px;">
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="98.5, 100" />
-                        </svg>
-                        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.5rem; font-weight:900; color:#fff;">98.5%</div>
-                    </div>
-                </div>
-            </div>
-            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px;">
-                <table class="data-table" style="font-size:0.8rem;">
-                    <thead><tr><th>SKU</th><th>DESCRIPCIÓN</th><th>SISTEMA</th><th>FÍSICO</th><th>DIF.</th><th>% ERI</th></tr></thead>
-                    <tbody><tr><td colspan="6" style="text-align:center; padding:4rem; color:var(--text-muted); font-style:italic;">Carga un archivo de conteo físico para activar el análisis ERI detallado.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-      </div>
     `;
 
     // Vincular exportación
     document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
-    
-    // Vincular Carga ERI
-    const btnUploadERI = document.getElementById('btn_upload_eri');
-    if (btnUploadERI) {
-        btnUploadERI.onclick = () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv, .xlsx';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                alert(`Archivo "${file.name}" seleccionado. Procesando análisis ERI...`);
-                // Aquí se disparará la lógica de comparación ERI en el futuro
-            };
-            input.click();
-        };
-    }
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {

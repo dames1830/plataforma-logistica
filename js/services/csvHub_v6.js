@@ -100,8 +100,8 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '18.5.0-RELEASE';
-const CACHE_KEY = `logistics_v18_5_0_release_shared_`;
+const VERSION = '18.5.14-BETA';
+const CACHE_KEY = `logistics_v18_5_14_beta_shared_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
@@ -343,7 +343,9 @@ export const parseFile = (file, area) => {
                   });
               }
           } else {
-              jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0, defval: "" });
+              // Por defecto para reportes genéricos como el Conteo ERI
+              // Usamos header: 1 para obtener un array de arrays (A, B, C...)
+              jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 0, defval: "" });
           }
 
           const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
