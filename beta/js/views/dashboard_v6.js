@@ -2742,69 +2742,72 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const displayReporteUCA = (container, results) => {
+   const displayReporteUCA = (results) => {
+    const container = document.getElementById('uca-results-container');
+    if (!container) return;
+
     const total = results.length;
     const vacias = results.filter(r => r.estado === 'VACÍA').length;
     const ocupadas = total - vacias;
     const accuracy = total > 0 ? ((vacias / total) * 100).toFixed(2) : 0;
     const discrepancias = results.filter(r => r.lpns > 1);
     const now = new Date();
-    const timestampStr = `${now.toLocaleDateString()} - ${now.toLocaleTimeString()}`;
+    const ts = `${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    const tsSpan = `<span style="font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 400; margin-left: 10px; letter-spacing: 0.5px; vertical-align: middle;">[ ${ts} ]</span>`;
 
     container.innerHTML = `
-      <div style="margin-bottom: 1rem; text-align: right;">
-        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.25); font-weight: 500; letter-spacing: 0.5px;">🕒 Generado el: ${timestampStr}</span>
-      </div>
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
         <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--primary);">
           <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Analizadas</div>
-          <div style="font-size:1.5rem; font-weight:800;">${total}</div>
+          <div style="font-size:1.5rem; font-weight:700;">${total}</div>
         </div>
         <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--success);">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Vacías</div>
-          <div style="font-size:1.5rem; font-weight:800;">${vacias}</div>
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Vacías (UCA)</div>
+          <div style="font-size:1.5rem; font-weight:700; color:var(--success);">${vacias}</div>
         </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--warning);">
+        <div class="glass-panel" style="padding:1rem; border-left:4px solid #f59e0b;">
           <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Ocupadas</div>
-          <div style="font-size:1.5rem; font-weight:800;">${ocupadas}</div>
+          <div style="font-size:1.5rem; font-weight:700; color:#f59e0b;">${ocupadas}</div>
         </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Con Multicarga</div>
-          <div style="font-size:1.5rem; font-weight:800;">${discrepancias.length}</div>
-        </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">% Efectividad</div>
-          <div style="font-size:1.5rem; font-weight:800;">${accuracy}%</div>
+        <div class="glass-panel" style="padding:1rem; border-left:4px solid #818cf8;">
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">% Disponibilidad</div>
+          <div style="font-size:1.5rem; font-weight:700; color:#818cf8;">${accuracy}%</div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start; margin-bottom:2rem;">
-        <div class="animate-fade-in">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <h3 style="color:#fff; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">REPORTE UCA GENERAL</h3>
-            <button id="btn_export_uca" style="background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.65rem; font-weight:800; display:flex; align-items:center; gap:6px; transition:all 0.2s;">
-              📊 EXPORTAR UCA
-            </button>
+      <div style="display:grid; grid-template-columns: 1fr; gap:1.5rem;">
+        <!-- TABLA GENERAL -->
+        <div class="glass-panel" style="padding:1.5rem; overflow:hidden; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:10px;">
+            <h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#fff; display:flex; align-items:center;">
+              REPORTE UCA GENERAL ${tsSpan}
+            </h3>
+            <button id="btnExportUCA" class="btn" style="width:auto; padding:6px 16px; font-size:0.75rem; background:#059669;">📊 EXPORTAR UCA</button>
           </div>
-          <div class="data-table-container glass-panel" style="max-height:450px; overflow-y:auto; border-radius:10px;">
-            <table class="data-table" style="font-size:0.8rem;">
+          
+          <div class="data-table-container" style="max-height:500px; border-radius:8px;">
+            <table class="data-table">
               <thead>
                 <tr>
-                  <th style="padding:0.75rem;">UBICACIÓN</th>
-                  <th style="padding:0.75rem;">ESTADO</th>
-                  <th style="padding:0.75rem; text-align:center;">LPNs</th>
-                  <th style="padding:0.75rem; text-align:center;">SKU´s</th>
-                  <th style="padding:0.75rem; text-align:center;">Qty</th>
+                  <th style="font-size:0.7rem;">UBICACIÓN</th>
+                  <th style="font-size:0.7rem;">ESTADO</th>
+                  <th style="font-size:0.7rem; text-align:center;">LPNS</th>
+                  <th style="font-size:0.7rem; text-align:center;">SKU´S</th>
+                  <th style="font-size:0.7rem; text-align:center;">QTY</th>
                 </tr>
               </thead>
               <tbody>
                 ${results.map(r => `
                   <tr>
-                    <td style="font-weight:700; padding:0.6rem 0.75rem;">${r.ubicacion}</td>
-                    <td style="padding:0.6rem 0.75rem;"><span class="status-badge ${r.estado === 'VACÍA' ? 'status-completed' : 'status-pending'}" style="padding: 2px 8px; font-size: 0.65rem;">${r.estado}</span></td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:600;">${r.lpns}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem;">${r.skus}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:700; color:var(--primary);">${r.qty}</td>
+                    <td style="font-weight:600; font-size:0.85rem;">${r.ubicacion}</td>
+                    <td>
+                      <span class="status-badge" style="background:${r.estado === 'VACÍA' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; color:${r.estado === 'VACÍA' ? '#4ade80' : '#fbbf24'}; font-size:0.65rem;">
+                        ${r.estado}
+                      </span>
+                    </td>
+                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; color:#818cf8; font-size:0.85rem;">${r.qty}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -2812,31 +2815,34 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
 
-        <div class="animate-fade-in" style="animation-delay: 0.1s;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <h3 style="color:#f87171; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">DISCREPANCIA UBICACIONES</h3>
-            <span style="background:rgba(248, 113, 113, 0.1); color:#f87171; padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800;">${discrepancias.length} CASOS</span>
+        <!-- DISCREPANCIAS -->
+        <div class="glass-panel" style="padding:1.5rem; border:1px solid rgba(239,68,68,0.2);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+            <h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase; color:#f87171; display:flex; align-items:center;">
+              DISCREPANCIA UBICACIONES ${tsSpan}
+            </h3>
+            <span style="background:rgba(239,68,68,0.2); color:#f87171; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${discrepancias.length} CASOS</span>
           </div>
-          <div class="data-table-container glass-panel" style="max-height:450px; overflow-y:auto; border-radius:10px; border:1px solid rgba(248, 113, 113, 0.2);">
-            <table class="data-table" style="font-size:0.8rem;">
+          <div class="data-table-container" style="max-height:350px; border-radius:8px;">
+            <table class="data-table">
               <thead>
-                <tr style="background:rgba(248, 113, 113, 0.05);">
-                  <th style="padding:0.75rem; color:#f87171;">UBICACIÓN</th>
-                  <th style="padding:0.75rem; color:#f87171; text-align:center;">LPNs</th>
-                  <th style="padding:0.75rem; color:#f87171; text-align:center;">SKU´s</th>
-                  <th style="padding:0.75rem; color:#f87171; text-align:center;">Qty</th>
-                  <th style="padding:0.75rem; color:#f87171;">DETALLE</th>
+                <tr>
+                  <th style="color:#f87171; font-size:0.7rem;">UBICACIÓN</th>
+                  <th style="color:#f87171; font-size:0.7rem; text-align:center;">LPNS</th>
+                  <th style="color:#f87171; font-size:0.7rem; text-align:center;">SKU´S</th>
+                  <th style="color:#f87171; font-size:0.7rem; text-align:center;">QTY</th>
+                  <th style="color:#f87171; font-size:0.7rem;">DETALLE</th>
                 </tr>
               </thead>
               <tbody>
-                ${discrepancias.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias</td></tr>` : 
+                ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">No se encontraron discrepancias</td></tr>' : 
                   discrepancias.map(r => `
                   <tr>
-                    <td style="font-weight:700; padding:0.6rem 0.75rem; color:#fca5a5;">${r.ubicacion}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:800;">${r.lpns}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem;">${r.skus}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:700; color:#fca5a5;">${r.qty}</td>
-                    <td style="font-size:0.7rem; color:var(--text-muted); padding:0.6rem 0.75rem;">${r.detalle}</td>
+                    <td style="color:#f87171; font-weight:600; font-size:0.8rem;">${r.ubicacion}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.lpns}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.skus}</td>
+                    <td style="text-align:center; font-weight:700; font-size:0.85rem;">${r.qty}</td>
+                    <td style="font-size:0.65rem; color:var(--text-muted); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.detalle}</td>
                   </tr>
                 `).join('')}
               </tbody>
