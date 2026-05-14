@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.14-BETA';
+const VERSION = '18.5.15-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -80,12 +80,10 @@ const loadAlmacenajeTasks = async () => {
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
-    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
-    { id: 'analisis_inventarios', label: 'Análisis Inventario', icon: '🔍' },
-    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦' },
-    { id: 'reportes_inventarios', label: 'Reportes', icon: '📊' }
+  { id: 'inventario', label: 'Inventarios', icon: '📦', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+    { id: 'general', label: 'General', icon: '📝' },
+    { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
+    { id: 'reportes', label: 'Reportes', icon: '📊' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -409,7 +407,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.14</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.15</span>
           </h2>
         </div>
       </div>
@@ -2520,8 +2518,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
 
 
-  let activeInventarioSub = 'modulo_inventarios';
-
+  let activeInventarioSub = 'general';
   const renderInventarioTab = async () => {
     const invTabDef = TABS.find(t => t.id === 'inventario');
     const allowedSubTabs = invTabDef.subTabs;
@@ -2546,96 +2543,135 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const invContainer = document.getElementById('inventarioContent');
     
-    if (activeInventarioSub === 'archivo_inventario') {
-       // --- MULTI-UPLOAD PARA INVENTARIO ---
-       const wrap = document.createElement('div');
-       wrap.style.display = 'flex';
-       wrap.style.flexDirection = 'column';
-       wrap.style.gap = '1rem';
-       invContainer.appendChild(wrap);
-
-       const [matriz, reserva, general] = await Promise.all([
+    if (activeInventarioSub === 'general') {
+       const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '1rem'; invContainer.appendChild(wrap);
+       const [matriz, reserva, general, articulos] = await Promise.all([
            getAreaData('matriz_ubicaciones'),
            getAreaData('stockReserva'),
-           getAreaData('inventario')
+           getAreaData('inventario'),
+           getAreaData('articulos')
        ]);
-
-       renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES (Col A)');
-       renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA (Col E, Col I)');
+       renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES');
+       renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA');
        renderUploadArea(wrap, 'inventario', general, '.csv', 'STOCK ACTIVO');
+       renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
 
-    } else if (activeInventarioSub === 'kpi_inventarios') {
-       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">KPI Inventarios en desarrollo.</div>`;
-    } else if (activeInventarioSub === 'analisis_inventarios') {
-       invContainer.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">Análisis Inventario en desarrollo.</div>`;
-    } else if (activeInventarioSub === 'modulo_inventarios') {
-       // Por ahora mostramos Ciclicos como placeholder y General si hay datos
-       const data = await getAreaData('inventario');
-       if (!data) renderUploadArea(invContainer, 'inventario', null, '.csv', 'STOCK ACTIVO');
-       else renderDashboardView(invContainer, data);
+    } else if (activeInventarioSub === 'ciclicos') {
+       invContainer.innerHTML = `
+           <div class="glass-panel" style="padding:1.5rem; border-radius:12px; border:1px solid var(--border); background:rgba(30, 41, 59, 0.2);">
+               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                   <div>
+                       <h3 style="color:#fff; margin:0; font-size:1.1rem; font-weight:800;">🔄 PROCESO DE INVENTARIO CÍCLICO</h3>
+                       <p style="color:var(--text-muted); font-size:0.75rem; margin-top:4px;">Carga el archivo de conteo físico para iniciar el análisis ERI/ERU.</p>
+                   </div>
+               </div>
+               <div style="max-width:500px;" id="ciclico_upload_area"></div>
+           </div>
+       `;
+       renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico', null, '.csv, .xlsx', 'CARGAR CONTEO FÍSICO');
+       const input = document.getElementById('up_conteo_ciclico');
+       if (input) {
+           input.onchange = async (e) => {
+               const file = e.target.files[0];
+               if (!file) return;
+               try {
+                   const data = await parseFile(file, 'inventario_eri');
+                   if (data && data.length > 0) {
+                       await processERIAnalysis(data);
+                       activeInventarioSub = 'reportes';
+                       renderInventarioTab();
+                   }
+               } catch(err) { alert(err); }
+           };
+       }
 
-    } else if (activeInventarioSub === 'reportes_inventarios') {
-       await renderReporteUCATab(invContainer);
+    } else if (activeInventarioSub === 'reportes') {
+       invContainer.innerHTML = `
+           <div style="display:flex; flex-direction:column; gap:2rem;">
+               <div class="glass-panel" style="padding:1.5rem; border-radius:12px; border:1px solid rgba(79, 70, 229, 0.2);">
+                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                       <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800;">📊 REPORTE UCA</h3>
+                       <button id="btn_run_uca" class="btn" style="width:auto; padding:8px 16px; font-size:0.75rem;">⚡ GENERAR UCA</button>
+                   </div>
+                   <div id="uca_results_area"></div>
+               </div>
+               <div id="eri_eru_report_area"></div>
+           </div>
+       `;
+       document.getElementById('btn_run_uca').onclick = async () => {
+           const [matriz, reserva] = await Promise.all([getAreaData('matriz_ubicaciones'), getAreaData('stockReserva')]);
+           if (matriz && reserva) {
+               const results = processReporteUCA(matriz, reserva);
+               displayReporteUCA(results);
+           } else {
+               alert("Faltan datos de Matriz o Reserva en la pestaña GENERAL.");
+           }
+       };
+       if (window._lastERI) {
+           renderERIERULayout(document.getElementById('eri_eru_report_area'));
+           updateERIUI('ERI');
+       }
     }
   };
 
-  const renderReporteUCATab = async (container) => {
+  const renderERIERULayout = (container) => {
     container.innerHTML = `
-      <div id="uca_process_header" style="display:flex; flex-direction:column; align-items:center; gap:1rem; margin-bottom:2rem; padding:2rem; background:rgba(99, 102, 241, 0.03); border-radius:15px; border:1px dashed rgba(99, 102, 241, 0.2);">
-        <div style="color:var(--text-muted); font-size:0.85rem; text-align:center; max-width:500px;">
-          Utiliza los archivos cargados en <strong>🗂️ ARCHIVO INVENTARIO</strong> para generar el análisis de exactitud.
+        <div style="display:grid; grid-template-columns: 200px 200px 1fr; gap:1.5rem; margin-top:1rem;">
+            <div id="card_eri" style="cursor:pointer; transition:transform 0.2s;" class="glass-panel" onclick="document.querySelector('#btn_mode_eri').click()">
+                <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERI GLOBAL</div>
+                    <div style="position:relative; width:90px; height:90px;">
+                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
+                            <path id="eri_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-dasharray="0, 100" />
+                        </svg>
+                        <div id="eri_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="card_eru" style="cursor:pointer; transition:transform 0.2s;" class="glass-panel" onclick="document.querySelector('#btn_mode_eru').click()">
+                <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #10b981; background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERU GLOBAL</div>
+                    <div style="position:relative; width:90px; height:90px;">
+                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
+                            <path id="eru_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.5" stroke-dasharray="0, 100" />
+                        </svg>
+                        <div id="eru_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px; display:flex; flex-direction:column;">
+                <div style="padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:10px; background:rgba(0,0,0,0.2);">
+                    <button id="btn_mode_eri" style="flex:1; padding:6px; font-size:0.65rem; font-weight:800; border-radius:4px; border:none; background:#6366f1; color:#fff; cursor:pointer;">REPORTE ERI (TOTALES SKU)</button>
+                    <button id="btn_mode_eru" style="flex:1; padding:6px; font-size:0.65rem; font-weight:800; border-radius:4px; border:none; background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:pointer;">REPORTE ERU (POR UBICACIÓN)</button>
+                </div>
+                <table class="data-table" style="font-size:0.8rem;">
+                    <thead id="eri_eru_table_head"><tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">%</th></tr></thead>
+                    <tbody id="eri_eru_table_body"></tbody>
+                </table>
+            </div>
         </div>
-        <div id="uca_button_container" style="width:100%; display:flex; justify-content:center;"></div>
-      </div>
-      <div id="uca_results_area"></div>
     `;
-    
-    const buttonContainer = document.getElementById('uca_button_container');
-    const resultsArea = document.getElementById('uca_results_area');
 
-    const [matriz, reserva] = await Promise.all([getAreaData('matriz_ubicaciones'), getAreaData('stockReserva')]);
-    
-    const btnProcess = document.createElement('button');
-    btnProcess.className = 'btn';
-    btnProcess.style = "width:100%; max-width:600px; background:linear-gradient(135deg, var(--primary), #6366f1); font-weight:800; letter-spacing:1px; height:55px; font-size:1rem; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border-radius:12px; transition:all 0.3s ease;";
-    btnProcess.innerHTML = '⚡ PROCESAR REPORTES';
-    buttonContainer.appendChild(btnProcess);
-
-    const runProcess = () => {
-        try {
-            if (!matriz || !reserva) {
-                alert("⚠️ No hay datos suficientes en ARCHIVO INVENTARIO (Matriz y Stock Reserva).");
-                return;
-            }
-            btnProcess.disabled = true;
-            btnProcess.innerHTML = '<i class="fas fa-cog fa-spin"></i> GENERANDO REPORTES...';
-            
-            setTimeout(() => {
-                try {
-                    const results = processReporteUCA(matriz, reserva);
-                    displayReporteUCA(results);
-                    btnProcess.disabled = false;
-                    btnProcess.innerHTML = '⚡ RE-PROCESAR REPORTES';
-                    resultsArea.scrollIntoView({ behavior: 'smooth' });
-                } catch (err) {
-                    console.error("Error en procesamiento:", err);
-                    alert("❌ Error al procesar los datos: " + err.message);
-                    btnProcess.disabled = false;
-                    btnProcess.innerHTML = '⚡ INTENTAR DE NUEVO';
-                }
-            }, 500);
-        } catch (f) {
-            console.error("Fatal runProcess:", f);
+    setTimeout(() => {
+        const bERI = document.getElementById('btn_mode_eri');
+        const bERU = document.getElementById('btn_mode_eru');
+        if(bERI && bERU) {
+            bERI.addEventListener('click', () => {
+                bERI.style.background = '#6366f1'; bERI.style.color = '#fff';
+                bERU.style.background = 'rgba(255,255,255,0.05)'; bERU.style.color = 'var(--text-muted)';
+                updateERIUI('ERI');
+            });
+            bERU.addEventListener('click', () => {
+                bERU.style.background = '#10b981'; bERU.style.color = '#fff';
+                bERI.style.background = 'rgba(255,255,255,0.05)'; bERI.style.color = 'var(--text-muted)';
+                updateERIUI('ERU');
+            });
         }
-    };
-
-    btnProcess.onclick = runProcess;
-    
-    /* Auto-process disabled as per user request
-    if (matriz && reserva) {
-        runProcess();
-    }
-    */
+    }, 100);
   };
 
   const processReporteUCA = (matriz, reserva) => {
