@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.20-BETA';
+const VERSION = '18.5.22-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,7 +408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.20</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.22</span>
           </h2>
         </div>
       </div>
@@ -3208,27 +3208,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.8rem;">No se encontraron discrepancias</td></tr>' : 
                   discrepancias.map(r => `
                   <tr>
-                          </div>
+      </div>
     `;
 
     // Vincular exportación
     document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
-  };RU) {
-            bERI.addEventListener('click', () => {
-                bERI.style.background = '#6366f1'; bERI.style.color = '#fff';
-                bERU.style.background = 'rgba(255,255,255,0.05)'; bERU.style.color = 'var(--text-muted)';
-                updateERIUI('ERI');
-            });
-            bERU.addEventListener('click', () => {
-                bERU.style.background = '#10b981'; bERU.style.color = '#fff';
-                bERI.style.background = 'rgba(255,255,255,0.05)'; bERI.style.color = 'var(--text-muted)';
-                updateERIUI('ERU');
-            });
-        }
-    }, 100);
-
-    // Vincular exportación
-    document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
+  };
     
     // Vincular Carga ERI
     const btnUploadERI = document.getElementById('btn_upload_eri');
