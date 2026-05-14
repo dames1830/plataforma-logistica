@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.0.0';
-const CACHE_KEY = `logistics_v18_0_0_shared_`;
+const VERSION = '17.6.4';
+const CACHE_KEY = `logistics_v17_6_4_prod_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -80,14 +80,7 @@ const loadAlmacenajeTasks = async () => {
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   { id: 'inventario', label: 'Inventario (Ciclo)', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
-    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
-    { id: 'analisis_inventario', label: 'Analisis Inventario', icon: '🔍' },
-    { id: 'inventarios_main', label: 'Inventarios', icon: '📦', subTabs: [
-        { id: 'general', label: 'General', icon: '📝' },
-        { id: 'ciclicos', label: 'Ciclicos', icon: '🔄' }
-    ]},
-    { id: 'reportes_inventario', label: 'Reportes', icon: '📋' }
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -410,7 +403,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.0.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.6.4</span>
           </h2>
         </div>
       </div>
@@ -2519,235 +2512,6 @@ export const renderDashboard = async (container, user, onLogout) => {
       }, 20000); 
   };
 
-  const processReporteUCA = async (resultContainer) => {
-    const btn = document.getElementById('btn_procesar_uca');
-    if (!btn) return;
-    
-    btn.disabled = true;
-    btn.innerHTML = '⌛ PROCESANDO CRUCE...';
-    
-    await new Promise(r => setTimeout(r, 600));
-
-    const reserva = dataStore.inventario_reserva || [];
-    const matriz = dataStore.matriz_ubicaciones || [];
-
-    if (reserva.length === 0 || matriz.length === 0) {
-      alert('⚠️ Faltan datos: Primero debes cargar "STOCK RESERVA" y "MATRIZ UBICACIONES ALTO" en la sección de Archivo.');
-      btn.disabled = false;
-      btn.innerHTML = '⚡ PROCESAR REPORTE UCA';
-      return;
-    }
-
-    // Filtro Crítico: Solo considerar ubicaciones con NIVEL = "ALTO"
-    const reservaFiltrada = reserva.filter(row => String(row.NIVEL || '').trim().toUpperCase() === 'ALTO');
-
-    const reservaMap = new Map();
-    reservaFiltrada.forEach(row => {
-      const ubi = String(row.UBICACION || '').trim().toUpperCase();
-      if (!reservaMap.has(ubi)) reservaMap.set(ubi, []);
-      reservaMap.get(ubi).push(row);
-    });
-
-    const results = [];
-    matriz.forEach(m => {
-      // Detección robusta de la ubicación en la matriz
-      let ubiRaw = '';
-      if (typeof m === 'string') ubiRaw = m;
-      else if (Array.isArray(m)) ubiRaw = m[0];
-      else if (typeof m === 'object' && m !== null) {
-          ubiRaw = m.UBICACION || m.ubicacion || m.Ubicacion || Object.values(m)[0];
-      }
-      
-      const ubi = String(ubiRaw || '').trim().toUpperCase();
-      if (!ubi) return; 
-
-      const stockRes = reservaMap.get(ubi);
-      const hasStock = stockRes && stockRes.length > 0;
-      
-      // Filtrar LPNs únicos para evitar duplicados en el reporte
-      const uniqueLPNs = hasStock ? [...new Set(stockRes.map(s => String(s.LPN || '').trim()))].filter(l => l !== '') : [];
-
-      results.push({
-        ubicacion: ubi,
-        estado: hasStock ? 'OCUPADA' : 'VACÍA',
-        lpns: uniqueLPNs.length,
-        detalle: uniqueLPNs.length > 0 ? uniqueLPNs.join(', ') : '-'
-      });
-    });
-
-    displayReporteUCA(resultContainer, results);
-    btn.disabled = false;
-    btn.innerHTML = '✅ REPORTE GENERADO';
-    setTimeout(() => { if(btn) btn.innerHTML = '⚡ PROCESAR REPORTE UCA'; }, 3000);
-  };
-
-  const exportUCAtoExcel = async (results) => {
-    if (!results || results.length === 0) return;
-    try {
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Reporte UCA');
-        
-        sheet.columns = [
-          { header: 'N°', key: 'num', width: 6 },
-          { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
-          { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
-          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
-          { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
-          { header: 'OBSERVACIONES', key: 'obs', width: 30 },
-          { header: 'CHECK', key: 'check', width: 10 }
-        ];
-
-        results.forEach((r, idx) => {
-            sheet.addRow({
-                num: idx + 1,
-                ubicacion: r.ubicacion,
-                estado: r.estado,
-                lpns: r.lpns,
-                detalle: r.detalle,
-                obs: '',
-                check: '☐'
-            });
-        });
-
-        sheet.getRow(1).eachCell((cell) => {
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-          cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        });
-
-        // Bordes para toda la tabla y alineación
-        sheet.eachRow((row, rowNumber) => {
-            row.eachCell((cell, colNumber) => {
-                cell.border = {
-                    top: {style:'thin'},
-                    left: {style:'thin'},
-                    bottom: {style:'thin'},
-                    right: {style:'thin'}
-                };
-                if (rowNumber > 1) {
-                    const isCenter = [1, 4, 7].includes(colNumber);
-                    cell.alignment = { 
-                      vertical: 'middle', 
-                      horizontal: isCenter ? 'center' : 'left' 
-                    };
-                }
-            });
-        });
-
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Reporte_UCA_${new Date().toISOString().split('T')[0]}.xlsx`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    } catch (err) {
-        console.error("Error al exportar Excel:", err);
-        alert("❌ Error al generar el Excel. Por favor revisa la consola.");
-    }
-  };
-
-  const displayReporteUCA = (container, results) => {
-    const total = results.length;
-    const vacias = results.filter(r => r.estado === 'VACÍA').length;
-    const ocupadas = total - vacias;
-    const accuracy = ((vacias / total) * 100).toFixed(2);
-    
-    // Ubicaciones con Discrepancia (Más de 1 LPN)
-    const discrepancias = results.filter(r => r.lpns > 1);
-
-    container.innerHTML = `
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--primary);">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Analizadas</div>
-          <div style="font-size:1.5rem; font-weight:800;">${total}</div>
-        </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--success);">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Vacías</div>
-          <div style="font-size:1.5rem; font-weight:800;">${vacias}</div>
-        </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--warning);">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Ocupadas</div>
-          <div style="font-size:1.5rem; font-weight:800;">${ocupadas}</div>
-        </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Con Multicarga</div>
-          <div style="font-size:1.5rem; font-weight:800;">${discrepancias.length}</div>
-        </div>
-        <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">% Efectividad</div>
-          <div style="font-size:1.5rem; font-weight:800;">${accuracy}%</div>
-        </div>
-      </div>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start;">
-        
-        <!-- COLUMNA IZQUIERDA: REPORTE UCA GENERAL -->
-        <div class="animate-fade-in">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <h3 style="color:#fff; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">REPORTE UCA GENERAL</h3>
-            <button id="btn_export_uca" style="background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid #22c55e; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.65rem; font-weight:800; display:flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='rgba(34, 197, 94, 0.1)'; this.style.color='#22c55e'">
-              📊 EXPORTAR UCA
-            </button>
-          </div>
-          <div class="data-table-container glass-panel" style="max-height:450px; overflow-y:auto; border-radius:10px;">
-            <table class="data-table" style="font-size:0.8rem;">
-              <thead>
-                <tr>
-                  <th style="padding:0.75rem;">UBICACIÓN</th>
-                  <th style="padding:0.75rem;">ESTADO</th>
-                  <th style="padding:0.75rem; text-align:center;">LPNs</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${results.map(r => `
-                  <tr>
-                    <td style="font-weight:700; padding:0.6rem 0.75rem;">${r.ubicacion}</td>
-                    <td style="padding:0.6rem 0.75rem;"><span class="status-badge ${r.estado === 'VACÍA' ? 'status-completed' : 'status-pending'}" style="padding: 2px 8px; font-size: 0.65rem;">${r.estado}</span></td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:600;">${r.lpns}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- COLUMNA DERECHA: DISCREPANCIA UBICACIONES (MULTICARGA) -->
-        <div class="animate-fade-in" style="animation-delay: 0.1s;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <h3 style="color:#f87171; margin:0; font-size:0.9rem; font-weight:700; letter-spacing:0.5px;">DISCREPANCIA UBICACIONES</h3>
-            <span style="background:rgba(248, 113, 113, 0.1); color:#f87171; padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800;">${discrepancias.length} CASOS</span>
-          </div>
-          <div class="data-table-container glass-panel" style="max-height:450px; overflow-y:auto; border-radius:10px; border:1px solid rgba(248, 113, 113, 0.2);">
-            <table class="data-table" style="font-size:0.8rem;">
-              <thead>
-                <tr style="background:rgba(248, 113, 113, 0.05);">
-                  <th style="padding:0.75rem; color:#f87171;">UBICACIÓN</th>
-                  <th style="padding:0.75rem; color:#f87171; text-align:center;">LPNs ÚNICOS</th>
-                  <th style="padding:0.75rem; color:#f87171;">DETALLE LPN</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${discrepancias.length === 0 ? `<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias detectadas</td></tr>` : 
-                  discrepancias.map(r => `
-                  <tr>
-                    <td style="font-weight:700; padding:0.6rem 0.75rem; color:#fca5a5;">${r.ubicacion}</td>
-                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:800;">${r.lpns}</td>
-                    <td style="font-size:0.7rem; color:var(--text-muted); padding:0.6rem 0.75rem;">${r.detalle}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    `;
-
-    document.getElementById('btn_export_uca')?.addEventListener('click', () => exportUCAtoExcel(results));
-  };
-
   const renderGenericAreaTab = async (tabId, subtitle) => {
     contentSubtitle.textContent = subtitle;
     const tabDef = TABS.find(t => t.id === tabId);
@@ -2782,33 +2546,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (tabId === 'almacenaje') {
             renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
-        if (tabId === 'inventario') {
-            renderUploadArea(wrap, 'matriz_ubicaciones', dataStore.matriz_ubicaciones, '.xlsx', 'MATRIZ UBICACIONES ALTO');
-        }
-    } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
-        const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');
-        let activeSubSub = localStorage.getItem('activeSubSub_inventario_main') || 'general';
-        
-        container.innerHTML = `
-            <nav style="display:flex; gap:1.2rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                ${activeSubObj.subTabs.map(ss => `
-                    <a class="sub-sub-nav-item ${activeSubSub===ss.id?'active':''}" data-ss="${ss.id}" style="padding: 0.5rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${activeSubSub===ss.id?'var(--primary)':'var(--text-muted)'}; font-weight:${activeSubSub===ss.id?'800':'500'}; border-bottom:${activeSubSub===ss.id?'2px solid var(--primary)':'none'};">
-                        ${ss.icon} ${ss.label.toUpperCase()}
-                    </a>
-                `).join('')}
-            </nav>
-            <div id="subSubContent"></div>
-        `;
-        
-        document.querySelectorAll('.sub-sub-nav-item').forEach(b => b.addEventListener('click', (e) => {
-            activeSubSub = e.currentTarget.dataset.ss;
-            localStorage.setItem('activeSubSub_inventario_main', activeSubSub);
-            renderGenericAreaTab(tabId, subtitle);
-        }));
-
-        const subSubContent = document.getElementById('subSubContent');
-        subSubContent.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Contenido de ${activeSubSub.toUpperCase()} en desarrollo</h4></div>`;
-        
     } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
         // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaña seleccionada
         if (activeSub === 'kpi_tareas') {
@@ -2822,22 +2559,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         }
         renderAlmacenajeTareas(container);
-    } else if (tabId === 'inventario' && activeSub === 'reportes_inventario') {
-        container.innerHTML = `
-            <div class="glass-panel" style="padding:3rem; text-align:center;">
-                <h3 style="margin-bottom:1rem; color:var(--primary); font-weight:800;">ANÁLISIS DE DISCREPANCIAS (UCA)</h3>
-                <p style="color:var(--text-muted); margin-bottom:2rem; max-width:600px; margin-left:auto; margin-right:auto;">
-                    Cruce inteligente entre <strong>Stock Reserva</strong> y <strong>Matriz de Ubicaciones</strong> para determinar la efectividad del vaciado en ubicaciones de alto nivel.
-                </p>
-                <button id="btn_procesar_uca" class="btn" style="max-width:300px; margin:0 auto; padding:1rem 2rem; border-radius:12px; box-shadow: 0 10px 20px rgba(79,70,229,0.2);">
-                    ⚡ PROCESAR REPORTE UCA
-                </button>
-                <div id="ucaResultsArea" style="margin-top:3rem;"></div>
-            </div>
-        `;
-        document.getElementById('btn_procesar_uca').addEventListener('click', () => {
-            processReporteUCA(document.getElementById('ucaResultsArea'));
-        });
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
