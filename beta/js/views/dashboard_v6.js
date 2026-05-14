@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.7-BETA';
+const VERSION = '18.5.8-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.7</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.8</span>
           </h2>
         </div>
       </div>
@@ -2836,8 +2836,21 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         });
 
-        const globalERI = ((correctItems / totalItems) * 100).toFixed(1);
-        updateERIUI(results, globalERI);
+        const globalERI = totalItems > 0 ? ((correctItems / totalItems) * 100).toFixed(1) : 0;
+
+        // [MOD V18.5.8] Calculo ERU (Exactitud de Ubicacion)
+        const locationStats = new Map();
+        results.forEach(r => {
+            if (!locationStats.has(r.ubi)) locationStats.set(r.ubi, { items: 0, correct: 0 });
+            const s = locationStats.get(r.ubi);
+            s.items++;
+            if (parseFloat(r.diff) === 0) s.correct++;
+        });
+        const totalUbis = locationStats.size;
+        const correctUbis = Array.from(locationStats.values()).filter(s => s.items === s.correct).length;
+        const globalERU = totalUbis > 0 ? ((correctUbis / totalUbis) * 100).toFixed(1) : 0;
+
+        updateERIUI(results, globalERI, globalERU);
 
     } catch (err) {
         console.error("Error en analisis ERI:", err);
@@ -2845,10 +2858,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  const updateERIUI = (results, globalERI) => {
+  const updateERIUI = (results, globalERI, globalERU) => {
     const tableBody = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('tbody');
-    const eriLabel = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('div div div[style*="font-size:1.5rem"]');
-    const eriCircle = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('svg path[stroke="#6366f1"]');
+    const eriLabel = document.querySelector('#eri_global_val');
+    const eruLabel = document.querySelector('#eru_global_val');
+    const eriCircle = document.querySelector('#eri_circle_path');
+    const eruCircle = document.querySelector('#eru_circle_path');
 
     if (tableBody) {
         tableBody.innerHTML = results.map(r => `
@@ -2868,9 +2883,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     if (eriLabel) eriLabel.textContent = `${globalERI}%`;
-    if (eriCircle) {
-        eriCircle.setAttribute('stroke-dasharray', `${globalERI}, 100`);
-    }
+    if (eruLabel) eruLabel.textContent = `${globalERU}%`;
+    
+    if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${globalERI}, 100`);
+    if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${globalERU}, 100`);
   };
 
   const displayReporteUCA = (results) => {
@@ -2995,18 +3011,29 @@ export const renderDashboard = async (container, user, onLogout) => {
                 📥 CARGAR CONTEO FÍSICO
             </button>
         </div>
-        <div style="display:grid; grid-template-columns: 350px 1fr; gap:1.5rem;">
-            <div style="display:flex; flex-direction:column; gap:1rem;">
-                <div class="glass-panel" style="padding:2rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);">
-                    <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem; font-weight:700;">ERI GLOBAL</div>
-                    <div style="position:relative; width:120px; height:120px; margin:0 auto;">
-                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:120px; height:120px;">
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="98.5, 100" />
-                        </svg>
-                        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.5rem; font-weight:900; color:#fff;">98.5%</div>
-                    </div>
+        <div style="display:grid; grid-template-columns: 200px 200px 1fr; gap:1.5rem;">
+            <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
+                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERI GLOBAL</div>
+                <div style="position:relative; width:90px; height:90px;">
+                    <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
+                        <path id="eri_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-dasharray="0, 100" />
+                    </svg>
+                    <div id="eri_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
                 </div>
+                <div style="font-size:0.6rem; color:#6366f1; margin-top:0.8rem; font-weight:600;">EXACTITUD SKU</div>
+            </div>
+
+            <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #10b981; background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
+                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERU GLOBAL</div>
+                <div style="position:relative; width:90px; height:90px;">
+                    <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
+                        <path id="eru_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.5" stroke-dasharray="0, 100" />
+                    </svg>
+                    <div id="eru_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
+                </div>
+                <div style="font-size:0.6rem; color:#10b981; margin-top:0.8rem; font-weight:600;">EXACTITUD UBICACIÓN</div>
             </div>
             <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px;">
                 <table class="data-table" style="font-size:0.8rem;">
