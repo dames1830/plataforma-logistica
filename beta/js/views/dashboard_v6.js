@@ -2,8 +2,8 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '17.8.0-BETA';
-const CACHE_KEY = `logistics_v17_8_0_beta_shared_`;
+const VERSION = '18.1.0-BETA';
+const CACHE_KEY = `logistics_v18_1_0_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
@@ -411,7 +411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v17.8.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.1.0</span>
           </h2>
         </div>
       </div>
@@ -2567,11 +2567,17 @@ export const renderDashboard = async (container, user, onLogout) => {
       
       // Filtrar LPNs únicos para evitar duplicados en el reporte
       const uniqueLPNs = hasStock ? [...new Set(stockRes.map(s => String(s.LPN || '').trim()))].filter(l => l !== '') : [];
+      
+      // NUEVO: Conteo de SKUs únicos y Suma de Cantidades
+      const uniqueSKUs = hasStock ? [...new Set(stockRes.map(s => String(s.SKU || s.Sku || '').trim()))].filter(sk => sk !== '') : [];
+      const totalQty = hasStock ? stockRes.reduce((acc, curr) => acc + (parseFloat(curr.CANTIDAD || curr.Cant || curr.Qty || curr.CANT || 0)), 0) : 0;
 
       results.push({
         ubicacion: ubi,
         estado: hasStock ? 'OCUPADA' : 'VACÍA',
         lpns: uniqueLPNs.length,
+        skus: uniqueSKUs.length,
+        qty: totalQty,
         detalle: uniqueLPNs.length > 0 ? uniqueLPNs.join(', ') : '-'
       });
     });
@@ -2593,6 +2599,8 @@ export const renderDashboard = async (container, user, onLogout) => {
           { header: 'UBICACIÓN', key: 'ubicacion', width: 25 },
           { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
           { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 15 },
+          { header: 'SKU´s', key: 'skus', width: 10 },
+          { header: 'CANTIDAD (QTY)', key: 'qty', width: 15 },
           { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
           { header: 'OBSERVACIONES', key: 'obs', width: 30 },
           { header: 'CHECK', key: 'check', width: 10 }
@@ -2604,6 +2612,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ubicacion: r.ubicacion,
                 estado: r.estado,
                 lpns: r.lpns,
+                skus: r.skus,
+                qty: r.qty,
                 detalle: r.detalle,
                 obs: '',
                 check: '☐'
@@ -2626,7 +2636,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     right: {style:'thin'}
                 };
                 if (rowNumber > 1) {
-                    const isCenter = [1, 4, 7].includes(colNumber);
+                    // Índices: 1 (num), 4 (lpns), 5 (skus), 6 (qty), 9 (check)
+                    const isCenter = [1, 4, 5, 6, 9].includes(colNumber);
                     cell.alignment = { 
                       vertical: 'middle', 
                       horizontal: isCenter ? 'center' : 'left' 
@@ -2699,6 +2710,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                   <th style="padding:0.75rem;">UBICACIÓN</th>
                   <th style="padding:0.75rem;">ESTADO</th>
                   <th style="padding:0.75rem; text-align:center;">LPNs</th>
+                  <th style="padding:0.75rem; text-align:center;">SKU´s</th>
+                  <th style="padding:0.75rem; text-align:center;">Qty</th>
                 </tr>
               </thead>
               <tbody>
@@ -2707,6 +2720,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <td style="font-weight:700; padding:0.6rem 0.75rem;">${r.ubicacion}</td>
                     <td style="padding:0.6rem 0.75rem;"><span class="status-badge ${r.estado === 'VACÍA' ? 'status-completed' : 'status-pending'}" style="padding: 2px 8px; font-size: 0.65rem;">${r.estado}</span></td>
                     <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:600;">${r.lpns}</td>
+                    <td style="text-align:center; padding:0.6rem 0.75rem;">${r.skus}</td>
+                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:700; color:var(--primary);">${r.qty}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -2725,16 +2740,20 @@ export const renderDashboard = async (container, user, onLogout) => {
               <thead>
                 <tr style="background:rgba(248, 113, 113, 0.05);">
                   <th style="padding:0.75rem; color:#f87171;">UBICACIÓN</th>
-                  <th style="padding:0.75rem; color:#f87171; text-align:center;">LPNs ÚNICOS</th>
+                  <th style="padding:0.75rem; color:#f87171; text-align:center;">LPNs</th>
+                  <th style="padding:0.75rem; color:#f87171; text-align:center;">SKU´s</th>
+                  <th style="padding:0.75rem; color:#f87171; text-align:center;">Qty</th>
                   <th style="padding:0.75rem; color:#f87171;">DETALLE LPN</th>
                 </tr>
               </thead>
               <tbody>
-                ${discrepancias.length === 0 ? `<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias detectadas</td></tr>` : 
+                ${discrepancias.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Sin discrepancias detectadas</td></tr>` : 
                   discrepancias.map(r => `
                   <tr>
                     <td style="font-weight:700; padding:0.6rem 0.75rem; color:#fca5a5;">${r.ubicacion}</td>
                     <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:800;">${r.lpns}</td>
+                    <td style="text-align:center; padding:0.6rem 0.75rem;">${r.skus}</td>
+                    <td style="text-align:center; padding:0.6rem 0.75rem; font-weight:700; color:#fca5a5;">${r.qty}</td>
                     <td style="font-size:0.7rem; color:var(--text-muted); padding:0.6rem 0.75rem;">${r.detalle}</td>
                   </tr>
                 `).join('')}
