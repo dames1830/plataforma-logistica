@@ -3208,80 +3208,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ${discrepancias.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.8rem;">No se encontraron discrepancias</td></tr>' : 
                   discrepancias.map(r => `
                   <tr>
-                    <td style="color:#f87171; font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.lpns}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.skus}</td>
-                    <td style="text-align:center; font-weight:700; font-size:0.8rem; padding:6px 8px;">${r.qty}</td>
-                    <td style="font-size:0.65rem; color:#e2e8f0; padding:6px 8px; word-break: break-all; opacity:0.9;">${r.detalle}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SECCION ERI ABAJO -->
-      <div class="animate-fade-in" style="animation-delay: 0.2s; border-top:1px solid rgba(255,255,255,0.1); padding-top:1.5rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:36px; height:36px; background:rgba(99, 102, 241, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#6366f1; border:1px solid rgba(99, 102, 241, 0.2);">
-                    <i class="fas fa-bullseye" style="font-size:0.9rem;"></i>
-                </div>
-                <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">INDICADORES DE EXACTITUD (ERI / ERU)</h3>
-            </div>
-            <button id="btn_upload_eri" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; border:1px solid #6366f1; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:800; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
-                📥 CARGAR CONTEO FÍSICO
-            </button>
-        </div>
-        <div style="display:grid; grid-template-columns: 200px 200px 1fr; gap:1.5rem;">
-            <div id="card_eri" style="cursor:pointer; transition:transform 0.2s;" class="glass-panel" onclick="this.closest('#app').__vue__ ? null : document.querySelector('#btn_mode_eri').click()">
-                <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #6366f1; background:radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERI GLOBAL</div>
-                    <div style="position:relative; width:90px; height:90px;">
-                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
-                            <path id="eri_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-dasharray="0, 100" />
-                        </svg>
-                        <div id="eri_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
-                    </div>
-                    <div style="font-size:0.6rem; color:#6366f1; margin-top:0.8rem; font-weight:600;">EXACTITUD POR SKU</div>
-                </div>
-            </div>
-
-            <div id="card_eru" style="cursor:pointer; transition:transform 0.2s;" class="glass-panel" onclick="this.closest('#app').__vue__ ? null : document.querySelector('#btn_mode_eru').click()">
-                <div class="glass-panel" style="padding:1.5rem; text-align:center; border:2px solid #10b981; background:radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent); display:flex; flex-direction:column; align-items:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:700;">ERU GLOBAL</div>
-                    <div style="position:relative; width:90px; height:90px;">
-                        <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width:90px; height:90px;">
-                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5" />
-                            <path id="eru_circle_path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.5" stroke-dasharray="0, 100" />
-                        </svg>
-                        <div id="eru_global_val" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:1.1rem; font-weight:900; color:#fff;">0%</div>
-                    </div>
-                    <div style="font-size:0.6rem; color:#10b981; margin-top:0.8rem; font-weight:600;">EXACTITUD UBICACIÓN</div>
-                </div>
-            </div>
-
-            <div class="data-table-container glass-panel" style="max-height:400px; overflow-y:auto; border-radius:12px; display:flex; flex-direction:column;">
-                <div style="padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:10px; background:rgba(0,0,0,0.2);">
-                    <button id="btn_mode_eri" style="flex:1; padding:6px; font-size:0.65rem; font-weight:800; border-radius:4px; border:none; background:#6366f1; color:#fff; cursor:pointer;">REPORTE ERI (TOTALES SKU)</button>
-                    <button id="btn_mode_eru" style="flex:1; padding:6px; font-size:0.65rem; font-weight:800; border-radius:4px; border:none; background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:pointer;">REPORTE ERU (POR UBICACIÓN)</button>
-                </div>
-                <table class="data-table" style="font-size:0.8rem;">
-                    <thead id="eri_eru_table_head"><tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">%</th></tr></thead>
-                    <tbody id="eri_eru_table_body"><tr><td colspan="6" style="text-align:center; padding:4rem; color:var(--text-muted); font-style:italic;">Carga un archivo de conteo físico para activar el análisis.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-      </div>
+                          </div>
     `;
 
-    // Eventos de Toggle
-    setTimeout(() => {
-        const bERI = document.getElementById('btn_mode_eri');
-        const bERU = document.getElementById('btn_mode_eru');
-        if(bERI && bERU) {
+    // Vincular exportación
+    document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
+  };RU) {
             bERI.addEventListener('click', () => {
                 bERI.style.background = '#6366f1'; bERI.style.color = '#fff';
                 bERU.style.background = 'rgba(255,255,255,0.05)'; bERU.style.color = 'var(--text-muted)';
