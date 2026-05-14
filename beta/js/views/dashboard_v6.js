@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.1-BETA';
+const VERSION = '18.5.2-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.1</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.2</span>
           </h2>
         </div>
       </div>
@@ -2751,6 +2751,107 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  // --- MOTOR DE ANALISIS ERI ---
+  const processERIAnalysis = async (conteoData) => {
+    try {
+        const stockActivo = await getAreaData('inventario_activo');
+        if (!stockActivo || stockActivo.length === 0) {
+            alert("⚠️ No hay datos de 'STOCK ACTIVO' cargados. Cárgalos primero para realizar el cruce.");
+            return;
+        }
+
+        const maestro = await getAreaData('articulos') || [];
+        const maestroMap = new Map(maestro.map(a => [(a[0]||'').toString(), a[1]||'S/D']));
+
+        // Mapa de Sistema: [SKU + UBI] -> QTY
+        const sistemaMap = new Map();
+        stockActivo.forEach(row => {
+            const sku = (row[1] || '').toString().trim(); // Col B
+            const ubi = (row[3] || '').toString().trim(); // Col D
+            const qty = parseFloat(row[5]) || 0;           // Col F
+            if (sku) {
+                const key = `${sku}|${ubi}`;
+                sistemaMap.set(key, (sistemaMap.get(key) || 0) + qty);
+            }
+        });
+
+        // Mapa de Fisico: [SKU + UBI] -> QTY
+        const fisicoMap = new Map();
+        conteoData.forEach(row => {
+            const sku = (row[0] || '').toString().trim(); // Col A
+            const qty = parseFloat(row[1]) || 0;           // Col B
+            const ubi = (row[2] || '').toString().trim(); // Col C
+            if (sku) {
+                const key = `${sku}|${ubi}`;
+                fisicoMap.set(key, (fisicoMap.get(key) || 0) + qty);
+            }
+        });
+
+        // Cruce de Datos
+        const allKeys = new Set([...sistemaMap.keys(), ...fisicoMap.keys()]);
+        const results = [];
+        let totalItems = 0;
+        let correctItems = 0;
+
+        allKeys.forEach(key => {
+            const [sku, ubi] = key.split('|');
+            const qSis = sistemaMap.get(key) || 0;
+            const qFis = fisicoMap.get(key) || 0;
+            const diff = qFis - qSis;
+            // ERI por item: Proporción de acierto
+            const eri = qSis === qFis ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, qFis || 1))) * 100;
+
+            totalItems++;
+            if (diff === 0) correctItems++;
+
+            results.push({
+                sku,
+                ubi,
+                desc: maestroMap.get(sku) || 'N/A',
+                sis: qSis,
+                fis: qFis,
+                diff,
+                eri: Math.max(0, eri).toFixed(1)
+            });
+        });
+
+        const globalERI = ((correctItems / totalItems) * 100).toFixed(1);
+        updateERIUI(results, globalERI);
+
+    } catch (err) {
+        console.error("Error en analisis ERI:", err);
+        alert("Ocurrió un error al procesar el análisis ERI.");
+    }
+  };
+
+  const updateERIUI = (results, globalERI) => {
+    const tableBody = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('tbody');
+    const eriLabel = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('div div div[style*="font-size:1.5rem"]');
+    const eriCircle = document.querySelector('#btn_upload_eri').closest('div').nextElementSibling.querySelector('svg path[stroke="#6366f1"]');
+
+    if (tableBody) {
+        tableBody.innerHTML = results.map(r => `
+            <tr>
+                <td style="font-weight:700;">${r.sku}<br><span style="font-size:0.6rem; color:var(--text-muted);">${r.ubi}</span></td>
+                <td style="font-size:0.7rem; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
+                <td style="text-align:center;">${r.sis}</td>
+                <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? '#4ade80' : '#f87171'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
+                <td style="text-align:center;">
+                    <span style="background:${parseFloat(r.eri) >= 95 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${parseFloat(r.eri) >= 95 ? '#4ade80' : '#f87171'}; padding:2px 6px; border-radius:4px; font-weight:700;">
+                        ${r.eri}%
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    if (eriLabel) eriLabel.textContent = `${globalERI}%`;
+    if (eriCircle) {
+        eriCircle.setAttribute('stroke-dasharray', `${globalERI}, 100`);
+    }
+  };
+
   const displayReporteUCA = (results) => {
     const container = document.getElementById('uca_results_area');
     if (!container) return;
@@ -2909,8 +3010,25 @@ export const renderDashboard = async (container, user, onLogout) => {
             input.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                alert(`Archivo "${file.name}" seleccionado. Procesando análisis ERI...`);
-                // Aquí se disparará la lógica de comparación ERI en el futuro
+                
+                const btn = e.target;
+                const originalText = btnUploadERI.innerHTML;
+                btnUploadERI.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+                btnUploadERI.disabled = true;
+
+                try {
+                    const data = await parseFile(file);
+                    if (data && data.length > 0) {
+                        // Limpiar encabezados si existen
+                        const cleanData = data.filter(row => (row[0]||'').toString().toUpperCase() !== 'SKU');
+                        await processERIAnalysis(cleanData);
+                    }
+                } catch (err) {
+                    alert("Error al leer el archivo de conteo.");
+                } finally {
+                    btnUploadERI.innerHTML = originalText;
+                    btnUploadERI.disabled = false;
+                }
             };
             input.click();
         };
