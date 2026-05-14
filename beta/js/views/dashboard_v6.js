@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services/adminService.js?v=17.2.4';
 
 
-const VERSION = '18.5.5-BETA';
+const VERSION = '18.5.6-BETA';
 const CACHE_KEY = `logistics_v18_5_1_beta_shared_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -409,7 +409,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="background:#fbbf24; color:#000; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:900; vertical-align:middle; margin-left:4px; box-shadow: 0 0 10px rgba(251,191,36,0.3);">BETA</span>
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.5</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v18.5.6</span>
           </h2>
         </div>
       </div>
@@ -2768,16 +2768,23 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
 
         const maestro = await getAreaData('articulos') || [];
-        const maestroMap = new Map(maestro.map(a => [(a[0]||'').toString(), a[1]||'S/D']));
+        const maestroMap = new Map();
+        maestro.forEach(a => {
+            const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim();
+            const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString();
+            if (mSku) maestroMap.set(mSku, mDesc);
+        });
 
         // Mapa de Sistema: [SKU + UBI] -> QTY
         const sistemaMap = new Map();
         stockActivo.forEach(row => {
-            const sku = (row[1] || '').toString().trim(); // Col B
-            const ubi = (row[3] || '').toString().trim(); // Col D
-            const qty = parseFloat(row[5]) || 0;           // Col F
+            // [MOD V18.5.6] Mapeo dinámico por nombre de columna
+            const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim();
+            const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim();
+            const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
+            
             if (sku) {
-                const key = `${sku}|${ubi}`;
+                const key = `${sku.toUpperCase()}|${ubi.toUpperCase()}`;
                 sistemaMap.set(key, (sistemaMap.get(key) || 0) + qty);
             }
         });
@@ -2789,7 +2796,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const qty = parseFloat(row[1]) || 0;           // Col B
             const ubi = (row[2] || '').toString().trim(); // Col C
             if (sku) {
-                const key = `${sku}|${ubi}`;
+                const key = `${sku.toUpperCase()}|${ubi.toUpperCase()}`;
                 fisicoMap.set(key, (fisicoMap.get(key) || 0) + qty);
             }
         });
@@ -2814,7 +2821,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             results.push({
                 sku,
                 ubi,
-                desc: maestroMap.get(sku) || 'N/A',
+                desc: maestroMap.get(sku) || maestroMap.get(sku.toUpperCase()) || 'N/A',
                 sis: qSis,
                 fis: qFis,
                 diff,
