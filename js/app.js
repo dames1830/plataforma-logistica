@@ -1,7 +1,7 @@
 /**
  * App Entry Point v24.4.2 - SECURE SYNC
  */
-import { getSession, logout } from './services/auth.js?v=24.4.7';
+import { getSession, logout } from './services/auth.js?v=24.4.8';
 import * as adminService from './services/adminService.js?v=24.4.8';
 
 class App {
@@ -19,7 +19,7 @@ class App {
             <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; background:#0f172a;">
                 <div class="spinner" style="width:40px; height:40px; border:4px solid rgba(255,255,255,0.1); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:20px;"></div>
                 <h2 style="margin:0; font-weight:300; letter-spacing:2px;">LOGÍSTICA <span style="font-weight:800; color:#4f46e5;">DEAM1830</span></h2>
-                <p style="margin-top:10px; font-size:0.8rem; opacity:0.5;">Iniciando motor v${this.version}...</p>
+                <p style="margin-top:10px; font-size:0.8rem; opacity:0.5;">Iniciando motor ${this.APP_VERSION}...</p>
             </div>`;
         }
         
@@ -40,7 +40,7 @@ class App {
     
     try {
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=24.4.7`);
+            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=24.4.8`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;
@@ -48,7 +48,7 @@ class App {
                 this.init();
             });
         } else {
-            const { renderLogin } = await import(`./views/login.js?v=${this.version}`);
+            const { renderLogin } = await import(`./views/login.js?v=24.4.8`);
             this.root.innerHTML = '';
             renderLogin(this.root, () => {
                 this.isRendered = false;
