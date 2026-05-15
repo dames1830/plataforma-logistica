@@ -1,9 +1,9 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.4.5';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services/adminService.js?v=24.4.0';
+import * as adminService from '../services/adminService.js?v=24.4.1';
 
 
-const VERSION = '24.4.0';
+const VERSION = '24.4.1';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -432,7 +432,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.4.0 (NUEVA)</span>
+            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.4.1 (DIAGNÓSTICO)</span>
           </h2>
         </div>
       </div>
