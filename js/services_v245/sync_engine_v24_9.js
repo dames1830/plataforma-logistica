@@ -21,6 +21,15 @@ export const syncStore = {
  * PULL GLOBAL: Trae toda la verdad de la nube y actualiza el estado local.
  */
 export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'attendance', 'performance_log', 'almacenaje_tasks']) => {
+    // --- MODO BLINDADO v24.5.8 ---
+    if (localStorage.getItem('PULSE_OFFLINE_FORCE')) {
+        console.log("🛡️ [SYNC v24] MODO BLINDADO ACTIVO: Usando datos locales únicamente.");
+        areas.forEach(area => {
+            const local = localStorage.getItem(SYNC_PREFIX + area);
+            if (local) syncStore[area] = JSON.parse(local);
+        });
+        return true;
+    }
     console.log("🔄 [SYNC v24] Iniciando Pull Global...");
     
     const results = await Promise.all(areas.map(async (area) => {
@@ -81,6 +90,12 @@ export const pushChange = async (area, data) => {
     // 1. Guardado Local Inmediato (Supervivencia)
     syncStore[area] = data;
     localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(data));
+    
+    // --- MODO BLINDADO v24.5.8 ---
+    if (localStorage.getItem('PULSE_OFFLINE_FORCE')) {
+        console.log(`🛡️ [SYNC v24] Guardado local de "${area}" exitoso. (Sincronización en la nube pausada)`);
+        return true;
+    }
     
     console.log(`📡 [SYNC v24] Empujando "${area}" a la nube...`);
 

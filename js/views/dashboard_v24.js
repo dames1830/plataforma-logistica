@@ -1011,11 +1011,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             await savePerformanceLog(dPerf);
             console.log("✅ Performance OK.");
 
-            // ACTIVAR ESCUDO DE PROTECCIÓN (Evita que la nube vacía borre lo restaurado al reiniciar)
-            localStorage.setItem('PULSE_RESURRECTION_SHIELD', 'true');
-            setTimeout(() => localStorage.removeItem('PULSE_RESURRECTION_SHIELD'), 300000); // Se apaga solo en 5 min
+            // ACTIVAR MODO BLINDADO (10 minutos de paz)
+            localStorage.setItem('PULSE_OFFLINE_FORCE', 'true');
+            setTimeout(() => localStorage.removeItem('PULSE_OFFLINE_FORCE'), 600000);
 
-            alert("🏗️ RESURRECCIÓN EXITOSA v24.5.8 🏗️\n\nLos datos han sido restaurados localmente y protegidos contra sincronización vacía.\n\nYa puedes revisar PERFORMANCE.");
+            alert("🏗️ MODO BLINDADO ACTIVADO v24.5.8 🏗️\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronización.\n\nYa puedes revisar PERFORMANCE.");
             location.reload();
         } catch (e) {
             console.error("❌ ERROR CRÍTICO EN RESURRECCIÓN:", e);
