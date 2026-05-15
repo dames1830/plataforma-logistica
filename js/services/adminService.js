@@ -114,10 +114,45 @@ export const loadAlmacenajeTasks = async () => {
     return adminStore.almacenaje_tasks;
 };
 
-// Re-exportar funciones necesarias para el Dashboard
-export const closeAttendanceAndSyncPerformance = async (date, attendanceData) => {
-    adminStore.attendance[date] = { data: attendanceData, ts: Date.now(), finalized: true };
-    const ok = await save('attendance', adminStore.attendance);
-    // Aquí podrías añadir lógica de performance si es necesario
-    return ok;
+// --- PROTOCOLO DE LIMPIEZA TOTAL (v24.4.2) ---
+export const resetProductionData = async () => {
+    console.warn("⚠️ [PULSE] Iniciando purga total de datos en la nube...");
+    
+    // 1. Áreas de Administración (syncEngine)
+    const adminAreas = ['workers', 'users', 'permissions', 'attendance', 'performance', 'performance_log', 'almacenaje_tasks'];
+    for (const area of adminAreas) {
+        await syncEngine.pushChange(area, area === 'permissions' ? {} : []);
+    }
+
+    // 2. Áreas de Operación (csvHub)
+    const opAreas = [
+        'stockActivo', 'stockReserva', 'buffer', 'picking', 'packing', 
+        'despacho', 'no_retail', 'recepcion', 'almacenaje', 
+        'matriz_ubicaciones', 'inventario', 'tallas', 'articulos', 
+        'solicitud', 'buffer_activo', 'buffer_reserva', 'tabla_tallas'
+    ];
+
+    const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+    for (const area of opAreas) {
+        try {
+            await fetch(`${API_URL}/${area}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+                body: JSON.stringify([])
+            });
+            console.log(`✅ Área ${area} fulminada.`);
+        } catch (e) { console.error(`❌ Fallo al fulminar ${area}:`, e); }
+    }
+
+    // 3. Limpieza de Memoria Local
+    localStorage.clear();
+    const db = await indexedDB.open('LogisticsPulseDB');
+    db.onsuccess = (e) => {
+        const database = e.target.result;
+        const tx = database.transaction(['DataCache'], 'readwrite');
+        tx.objectStore('DataCache').clear();
+    };
+
+    console.log("🌪️ [PULSE] Purga completada. La nube está vacía.");
+    return true;
 };
