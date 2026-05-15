@@ -65,6 +65,49 @@ export const savePermissions = (role, data) => {
 
 export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
 
+// --- GESTIÓN DE PERMISOS (RESTAURADO v24.3) ---
+export const FORCED_ASISTENTE = [
+    'inicio',
+    'almacenaje', 'almacenaje_archivo_almacenaje', 'almacenaje_tareas_dia', 'almacenaje_kpi_tareas',
+    'buffer', 'buffer_maestros', 'buffer_reportes', 'buffer_historial_buffer', 'buffer_kpi_buffer',
+    'admin_pers', 'admin_pers_asistencia', 'admin_pers_performance', 'admin_pers_rfs',
+    'performance_historial', 'performance_graficos', 'performance_reporte'
+];
+
+export const initPermissions = (tabs) => {
+    const roles = ['admin', 'jefe', 'coordinador', 'supervisor', 'encargado', 'asistente'];
+    roles.forEach(role => {
+        if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
+        const p = adminStore.permissions[role];
+        tabs.forEach(t => {
+            if (role === 'asistente' && FORCED_ASISTENTE.includes(t.id)) p[t.id] = 1;
+            if (p[t.id] === undefined) p[t.id] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+            if (t.subTabs) {
+                t.subTabs.forEach(s => {
+                    const subKey = `${t.id}_${s.id}`;
+                    if (role === 'asistente' && FORCED_ASISTENTE.includes(subKey)) p[subKey] = 1;
+                    if (p[subKey] === undefined) p[subKey] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                    if (s.subTabs) {
+                        s.subTabs.forEach(ss => {
+                            const ssKey = `${s.id}_${ss.id}`;
+                            if (role === 'asistente' && FORCED_ASISTENTE.includes(ssKey)) p[ssKey] = 1;
+                            if (p[ssKey] === undefined) p[ssKey] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                        });
+                    }
+                });
+            }
+        });
+    });
+};
+
+export const togglePermission = (role, tabId) => {
+    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return;
+    if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
+    const p = adminStore.permissions[role];
+    p[tabId] = p[tabId] === 1 ? 0 : 1;
+    save('permissions', adminStore.permissions);
+};
+
 // --- COMPATIBILIDAD CON PROCESAR TAREAS ---
 export const loadAlmacenajeTasks = async () => {
     await syncEngine.pullGlobal(['almacenaje_tasks']);
