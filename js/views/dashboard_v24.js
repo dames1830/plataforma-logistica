@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.5.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.5.6';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.5.5';
+import * as adminService from '../services_v245/adminService.js?v=24.5.6';
 
 
-const VERSION = '24.5.5';
+const VERSION = '24.5.6';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -283,7 +283,7 @@ window.downloadExcelDetail = async () => {
             totalRow.eachCell(cell => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } }; // Gris 35%
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-        };
+            });
             [7, 8, 9].forEach(c => totalRow.getCell(c).alignment = { horizontal: 'center' });
             uSumA = 0; uSumR = 0; uSumB = 0;
         }
@@ -433,7 +433,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.5.5</span>
+            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.5.6</span>
           </h2>
         </div>
       </div>
@@ -951,7 +951,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:1.5rem;">🏗️</span>
                 <div>
-                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.5</div>
+                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.6</div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
                 </div>
             </div>
@@ -977,7 +977,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             
             try {
                 // CORRECCIÓN DE RUTA: Subimos un nivel para llegar a services desde views
-                const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.5');
+                const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.6');
             
             // 1. Usuarios
             const rUsers = await fetch('js/backups_v24/users_data.json');
@@ -1013,7 +1013,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             await savePerformanceLog(dPerf);
             console.log("✅ Performance restaurado.");
 
-            alert("🏗️ RESURRECCIÓN COMPLETADA v24.5.5 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
+            alert("🏗️ RESURRECCIÓN COMPLETADA v24.5.6 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
             location.reload();
         } catch (e) {
             console.error(e);
@@ -1021,8 +1021,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             btn.disabled = false;
             btn.innerHTML = '🚀 RE-INTENTAR';
         }
-    });
-}
+        });
+    }
     
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         activeAdminSub = e.currentTarget.dataset.s; 
@@ -1183,7 +1183,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     newRow[key.toLowerCase().trim()] = row[key];
                 }
                 return newRow;
-        };
+            });
 
             adminService.saveWorkers(normalized);
             renderAdminTab();
@@ -1468,9 +1468,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                 return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${isFixedSS ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
                                             }).join('')}
                                         </tr>`);
-                                };
+                                    });
                                 }
-                        };
+                            });
                         }
                         return rows.join('');
                     }).join('')}
@@ -1532,9 +1532,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                         present: true,
                         onTime: true,
                         justification: ''
-                };
+                    });
                 }
-        };
+            });
             return existing;
         }
         localState = workers.map(w => ({ 
@@ -2179,7 +2179,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
                     'Rendimiento %': p.rendimiento
                 };
-        };
+            });
 
             const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
@@ -2242,7 +2242,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const wDni = (w.dni || w.Dni || '').toString().trim();
                                 const pDni = (p.dni || '').toString().trim();
                                 return wDni === pDni;
-                        };
+                            });
                             const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
                             return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
@@ -2565,7 +2565,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     plugins: { legend: { display: false } },
                     scales: { y: { beginAtZero: true, max: 100 } }
                 }
-        };
+            });
         }
 
         const ctxVol = document.getElementById('bufferVolumeChart')?.getContext('2d');
@@ -2582,7 +2582,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 options: {
                     scales: { y: { beginAtZero: true } }
                 }
-        };
+            });
         }
     }, 100);
   };
@@ -3017,7 +3017,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 detalle: r.detalle,
                 obs: '',
                 check: '☐'
-        };
+            });
         });
 
         // Estilo de encabezado (Azul PREMIUM)
@@ -3041,7 +3041,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         if (cell.value === 'OCUPADA') cell.font = { color: { argb: 'FFB91C1C' }, bold: true };
                         else cell.font = { color: { argb: 'FF15803D' }, bold: true };
                     }
-            };
+                });
             }
         });
 
@@ -3148,7 +3148,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 fis: qFis,
                 diff,
                 eri: Math.max(0, eri).toFixed(1)
-        };
+            });
         });
 
         const globalERI_Val = totalItems > 0 ? ((correctItems / totalItems) * 100).toFixed(1) : 0;
@@ -3194,7 +3194,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 fis: vals.fis,
                 diff,
                 eri: Math.max(0, acc).toFixed(1)
-        };
+            });
         });
         const finalERI = eriResults.length > 0 ? ((eriCorrect / eriResults.length) * 100).toFixed(1) : 0;
 
@@ -3557,7 +3557,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                       if (key.startsWith('logistics_') && !key.startsWith(CACHE_KEY)) {
                           localStorage.removeItem(key);
                       }
-              };
+                  });
                   localStorage.setItem(CACHE_KEY + 'lastBufferKPI', JSON.stringify(lastBufferResult));
               } catch(e) {
                   console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirán en esta sesión.", e);
@@ -3761,7 +3761,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     marca: String(raw[13] || 'S/M').trim(),
                     gender: String(raw[3] || '').trim().toUpperCase(), 
                     coleccion: String(raw[9] || 'S/C').trim()
-            };
+                });
             }
         });
 
@@ -3815,12 +3815,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
             accs.forEach(a => {
                 finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
-        };
+            });
             const bigNormals = normals.filter(a => a.bufferQty >= 300);
             const smallNormals = normals.filter(a => a.bufferQty < 300);
             bigNormals.forEach(a => {
                 finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
-        };
+            });
             let currentGroup = [];
             let currentBufferQty = 0;
             smallNormals.forEach((art, index) => {
@@ -3831,7 +3831,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     currentGroup = [];
                     currentBufferQty = 0;
                 }
-        };
+            });
         });
 
         const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
@@ -3916,11 +3916,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             // CDBUFFER Rows
             art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
-        };
+            });
             // ZONA Rows
             art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
-        };
+            });
             // Subtotal
             dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
         });
@@ -3946,11 +3946,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                     fgColor: { argb: 'FFA6A6A6' } // Gris 35% (Aprox)
                 };
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-        };
+            });
         } else {
             row.eachCell((cell) => {
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-        };
+            });
         }
     });
 
@@ -4009,9 +4009,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 qty: qty,
                                 areaDisplay: areaKey.replace('_activo','').toUpperCase(),
                                 skuFull: rowSku
-                        };
+                            });
                         }
-                };
+                    });
                 }
             }
         });
@@ -4185,8 +4185,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                 time: timeStr,
                                                 pct: pct,
                                                 ok: uph >= 150
-                                        };
-                                    };
+                                            });
+                                        });
                                     } else if (uList.length === 1) {
                                         const uph = (t.qty / totalMinutes) * 60;
                                         const pct = Math.round((uph / 150) * 100);
@@ -4199,9 +4199,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             time: timeStr,
                                             pct: pct,
                                             ok: uph >= 150
-                                    };
+                                        });
                                     }
-                            };
+                                });
 
                                 if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
 
@@ -4346,8 +4346,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         if (!bufferUbis.has(item.ubi)) {
                                             otherZoneItems.push(item);
                                         }
-                                };
-                            };
+                                    });
+                                });
 
                                 const allItems = [...bufferItems, ...otherZoneItems]
                                     .filter(i => {
@@ -4367,7 +4367,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         if (isABuffer && !isBBuffer) return -1;
                                         if (!isABuffer && isBBuffer) return 1;
                                         return 0;
-                                };
+                                    });
 
                                 return allItems.map(i => {
                                     const isBuffer = i.ubi.startsWith('CDBUFFER');
@@ -4388,7 +4388,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             </span>
                                         </td>
                                     </tr>`;
-                            };
+                                });
                             })).join('')}
                         </tbody>
                     </table>
@@ -4491,7 +4491,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 saveAlmacenajeTasks().then(() => {
                     document.body.removeChild(modal);
                     renderAlmacenajeTareas(container);
-            };
+                });
             };
         }
         document.getElementById('m_close').onclick = () => document.body.removeChild(modal);
