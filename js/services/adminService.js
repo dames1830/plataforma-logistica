@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24.js?v=24.4.2';
+import * as syncEngine from './sync_engine_v24.js?v=24.4.9';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -116,7 +116,7 @@ export const loadAlmacenajeTasks = async () => {
     return adminStore.almacenaje_tasks;
 };
 
-// --- PROTOCOLO DE LIMPIEZA TOTAL (v24.4.2) ---
+// --- PROTOCOLO DE LIMPIEZA TOTAL (v24.4.9) ---
 export const resetProductionData = async () => {
     console.warn("⚠️ [PULSE] Iniciando purga total de datos en la nube...");
     
