@@ -992,10 +992,15 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
             console.log("✅ Permisos restaurados.");
 
-            // 3. Asistencia (El más pesado)
+            // 3. Trabajadores (¡AQUÍ ESTÁN TODOS!)
+            const rWorkers = await fetch('js/backups_v24/workers_data.json');
+            const dWorkers = await rWorkers.json();
+            await save('workers', dWorkers.data);
+            console.log("✅ Trabajadores restaurados.");
+
+            // 4. Asistencia (El más pesado)
             const rAtt = await fetch('js/backups_v24/attendance_data.json');
             const dAtt = await rAtt.json();
-            // Enviamos el objeto de fechas directamente
             await save('attendance', dAtt.data);
             console.log("✅ Asistencia restaurada.");
 
