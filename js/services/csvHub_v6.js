@@ -10,7 +10,7 @@ export const dataStore = {
 const DB_NAME = 'LogisticsPulseDB';
 const STORE_NAME = 'DataCache';
 const DB_VERSION = 1;
-const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas de validez
+const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 días de validez
 
 const openDB = () => {
     return new Promise((resolve, reject) => {
