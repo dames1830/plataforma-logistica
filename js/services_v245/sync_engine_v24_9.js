@@ -82,10 +82,23 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                 if (isResurrectionActive && hasLocalData && isNewDataEmpty) {
                     console.log(`🛡️ [PULSE] Escudo Activo: Protegiendo "${area}" local contra nube vacía.`);
                 } else {
+                    // --- DISCO DE ACERO v24.6.4 ---
+                    if (area === 'performance_log') {
+                        const newCount = Array.isArray(newData) ? newData.length : 0;
+                        const localData = localStorage.getItem(SYNC_PREFIX + area);
+                        const oldCount = localData ? JSON.parse(localData).length : 0;
+
+                        if (newCount === 0 && oldCount > 0) {
+                            console.warn(`🛡️ [SYNC v24] Bloqueando sobreescritura de "${area}" en disco (Nube: 0, Local: ${oldCount})`);
+                            syncStore[area] = JSON.parse(localData);
+                            continue; // Saltamos este área, no la guardamos vacía
+                        }
+                    }
+
                     syncStore[area] = newData;
                     localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(syncStore[area]));
                 }
-                return true;
+                continue;
             }
         } catch (e) {
             console.warn(`⚠️ [SYNC v24] Fallo en Pull de "${area}":`, e.message);
