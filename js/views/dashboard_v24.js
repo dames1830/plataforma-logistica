@@ -2605,6 +2605,12 @@ export const renderDashboard = async (container, user, onLogout) => {
           const isIdle = !document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA');
           
           if (document.visibilityState === 'visible' && isIdle) {
+              // --- MODO BLINDADO v24.6.0 ---
+              if (localStorage.getItem('PULSE_OFFLINE_FORCE')) {
+                  console.log("🛡️ [PULSE] Radar en pausa por Modo Blindado.");
+                  return;
+              }
+
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
               if (currentTab === 'inicio') renderTabContent(true); 

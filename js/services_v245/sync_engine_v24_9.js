@@ -155,7 +155,19 @@ export const initSync = async () => {
     const areas = ['workers', 'users', 'permissions', 'attendance', 'performance_log', 'almacenaje_tasks'];
     areas.forEach(area => {
         const local = localStorage.getItem(SYNC_PREFIX + area);
-        if (local) syncStore[area] = JSON.parse(local);
+        if (local) {
+            const parsed = JSON.parse(local);
+            const hasNewData = Array.isArray(parsed) ? parsed.length > 0 : Object.keys(parsed).length > 0;
+            const hasLocalData = Array.isArray(syncStore[area]) ? syncStore[area].length > 0 : Object.keys(syncStore[area]).length > 0;
+
+            // SOLO sobreescribir si el local tiene datos REALES o si la memoria está vacía.
+            // NUNCA sobreescribir datos en memoria con una lista vacía del disco.
+            if (hasNewData || !hasLocalData) {
+                syncStore[area] = parsed;
+            } else {
+                console.log(`🛡️ [SYNC] Protegiendo "${area}" en memoria contra carga local vacía.`);
+            }
+        }
     });
 
     // Pull de la nube en segundo plano para actualizar
