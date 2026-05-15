@@ -3,7 +3,7 @@ import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, 
 import * as adminService from '../services_v245/adminService.js?v=24.5.7';
 
 
-const VERSION = '24.5.8';
+const VERSION = '24.5.9';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -951,7 +951,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:1.5rem;">🏗️</span>
                 <div>
-                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.8</div>
+                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.9</div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
                 </div>
             </div>
@@ -974,7 +974,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.8');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.9');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -1015,7 +1015,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             localStorage.setItem('PULSE_OFFLINE_FORCE', 'true');
             setTimeout(() => localStorage.removeItem('PULSE_OFFLINE_FORCE'), 600000);
 
-            alert("🏗️ MODO BLINDADO ACTIVADO v24.5.8 🏗️\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronización.\n\nYa puedes revisar PERFORMANCE.");
+            alert("🏗️ MODO BLINDADO ACTIVADO v24.5.9 🏗️\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronización.\n\nYa puedes revisar PERFORMANCE.");
             location.reload();
         } catch (e) {
             console.error("❌ ERROR CRÍTICO EN RESURRECCIÓN:", e);
