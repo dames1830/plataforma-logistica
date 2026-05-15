@@ -975,7 +975,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         try {
             // CORRECCIÓN DE RUTA: Subimos un nivel para llegar a services desde views
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services/adminService.js?v=24.5.0');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.0');
             
             // 1. Usuarios
             const rUsers = await fetch('js/backups_v24/users_data.json');

@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services/auth.js?v=24.5.0';
+import { login as authLogin } from '../services_v245/auth.js?v=24.5.0';
 
 export const renderLogin = (container, onLoginSuccess) => {
   container.className = 'login-container';
