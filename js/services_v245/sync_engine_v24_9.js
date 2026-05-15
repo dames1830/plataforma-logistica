@@ -3,7 +3,7 @@
  * Este motor centraliza toda la comunicación con la nube y garantiza la integridad de datos entre múltiples PCs.
  */
 
-const API_BASE = 'https://logistics-backend-wv8x.onrender.com/api/logistics';
+const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
 const SYNC_PREFIX = 'logistics_sync_v24_';
 const TIMEOUT_MS = 60000; // 60 segundos de paciencia
 
@@ -140,8 +140,7 @@ export const pushChange = async (area, data) => {
         const res = await fetch(`${API_BASE}/${area}`, {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'X-Environment': 'production'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ data: data }),
             signal: controller.signal
