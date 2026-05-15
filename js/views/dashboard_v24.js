@@ -58,7 +58,7 @@ const saveAlmacenajeTasks = async () => {
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
           updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
-          setTimeout(() => updateSyncIndicator('online', 'SISTEMA v24.0 ONLINE'), 3000);
+          setTimeout(() => updateSyncIndicator('online', 'SISTEMA v24.4.0 ONLINE'), 3000);
       } else {
           updateSyncIndicator('offline', 'ERROR DE NUBE (REINTENTANDO...)');
       }
@@ -77,7 +77,7 @@ const loadAlmacenajeTasks = async () => {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(syncedTasks));
       }
-      updateSyncIndicator('online', 'SISTEMA v24.0 ONLINE');
+      updateSyncIndicator('online', 'SISTEMA v24.4.0 ONLINE');
   } catch (e) { 
       console.error("[SYNC] Error al cargar:", e);
       updateSyncIndicator('offline', 'MODO OFFLINE ACTIVO');
@@ -432,7 +432,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v24.2.0</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v24.4.0</span>
           </h2>
         </div>
       </div>
