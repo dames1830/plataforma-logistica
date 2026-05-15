@@ -1,7 +1,7 @@
 /**
  * App Entry Point v24.0.0
  */
-import { initApp, navigateTo, currentTab } from './views/dashboard_v24.js?v=24.0.0';
+import { initApp, navigateTo } from './views/dashboard_v24.js?v=24.0.1';
 import * as adminService from './services/adminService.js?v=24.0.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
