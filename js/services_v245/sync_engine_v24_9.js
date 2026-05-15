@@ -82,7 +82,8 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                 if (isResurrectionActive && hasLocalData && isNewDataEmpty) {
                     console.log(`🛡️ [PULSE] Escudo Activo: Protegiendo "${area}" local contra nube vacía.`);
                 } else {
-                    // --- DISCO DE ACERO v24.6.4 ---
+                    // --- DISCO DE ACERO v24.6.6 ---
+                    // Solo protegemos el Performance Log. Almacenaje debe poder vaciarse si el servidor lo pide.
                     if (area === 'performance_log') {
                         const newCount = Array.isArray(newData) ? newData.length : 0;
                         const localData = localStorage.getItem(SYNC_PREFIX + area);
@@ -91,7 +92,7 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                         if (newCount === 0 && oldCount > 0) {
                             console.warn(`🛡️ [SYNC v24] Bloqueando sobreescritura de "${area}" en disco (Nube: 0, Local: ${oldCount})`);
                             syncStore[area] = JSON.parse(localData);
-                            return true; // Saltamos este área, no la guardamos vacía
+                            return true; 
                         }
                     }
 

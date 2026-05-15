@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=24.6.5';
+import * as syncEngine from './sync_engine_v24_9.js?v=24.6.6';
 
 export const adminStore = syncEngine.syncStore;
 
