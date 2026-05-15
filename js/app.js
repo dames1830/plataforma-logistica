@@ -7,7 +7,14 @@ import * as adminService from './services_v245/adminService.js?v=24.6.1';
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v24.6.1';
+    this.APP_VERSION = 'v24.6.2';
+    
+    // --- LIMPIEZA DE CACHÉ FORZADA v24.6.2 ---
+    const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
+    if (lastVer !== this.APP_VERSION) {
+        console.warn("🧹 [PULSE] Detectada versión nueva. Limpiando caché de scripts...");
+        localStorage.setItem('PULSE_INSTALLED_VERSION', this.APP_VERSION);
+    }
     this.isRendered = false;
     this.init();
   }
