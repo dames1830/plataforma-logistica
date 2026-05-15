@@ -38,9 +38,9 @@ export const syncStore = new Proxy({
 /**
  * PULL GLOBAL: Trae toda la verdad de la nube y actualiza el estado local.
  */
-export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'attendance', 'performance_log', 'almacenaje_tasks']) => {
+export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'attendance', 'performance_log', 'almacenaje_tasks'], force = false) => {
     // --- MODO BLINDADO v24.5.8 ---
-    if (localStorage.getItem('PULSE_OFFLINE_FORCE')) {
+    if (localStorage.getItem('PULSE_OFFLINE_FORCE') && !force) {
         console.log("🛡️ [SYNC v24] MODO BLINDADO ACTIVO: Usando datos locales únicamente.");
         areas.forEach(area => {
             const local = localStorage.getItem(SYNC_PREFIX + area);
@@ -170,7 +170,7 @@ export const pushChange = async (area, data) => {
 /**
  * INITIALIZE: Carga inicial y primer pull.
  */
-export const initSync = async () => {
+export const initSync = async (force = false) => {
     // Carga local rápida
     const areas = ['workers', 'users', 'permissions', 'attendance', 'performance_log', 'almacenaje_tasks'];
     areas.forEach(area => {
@@ -191,5 +191,5 @@ export const initSync = async () => {
     });
 
     // Pull de la nube en segundo plano para actualizar
-    return await pullGlobal(areas);
+    return await pullGlobal(areas, force);
 };

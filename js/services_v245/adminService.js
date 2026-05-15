@@ -2,12 +2,12 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=24.6.7';
+import * as syncEngine from './sync_engine_v24_9.js?v=24.6.8';
 
 export const adminStore = syncEngine.syncStore;
 
-export const initializeAdminData = async () => {
-    return await syncEngine.initSync();
+export const initializeAdminData = async (force = false) => {
+    return await syncEngine.initSync(force);
 };
 
 export const save = async (area, data) => {
@@ -111,8 +111,8 @@ export const togglePermission = (role, tabId) => {
 };
 
 // --- COMPATIBILIDAD CON PROCESAR TAREAS ---
-export const loadAlmacenajeTasks = async () => {
-    await syncEngine.pullGlobal(['almacenaje_tasks']);
+export const loadAlmacenajeTasks = async (force = false) => {
+    await syncEngine.pullGlobal(['almacenaje_tasks'], force);
     return adminStore.almacenaje_tasks;
 };
 
