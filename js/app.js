@@ -7,7 +7,7 @@ import * as adminService from './services/adminService.js?v=24.2.0';
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.version = '24.2.0';
+    this.version = '24.3.1';
     this.isRendered = false;
     this.init();
   }
@@ -40,7 +40,7 @@ class App {
     
     try {
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=${this.version}`);
+            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=24.3.1`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;
