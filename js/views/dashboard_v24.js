@@ -1011,7 +1011,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             await savePerformanceLog(dPerf);
             console.log("✅ Performance OK.");
 
-            alert("🏗️ RESURRECCIÓN EXITOSA v24.5.8 🏗️\n\nDatos restaurados en la nube. La página se reiniciará.");
+            // ACTIVAR ESCUDO DE PROTECCIÓN (Evita que la nube vacía borre lo restaurado al reiniciar)
+            localStorage.setItem('PULSE_RESURRECTION_SHIELD', 'true');
+            setTimeout(() => localStorage.removeItem('PULSE_RESURRECTION_SHIELD'), 300000); // Se apaga solo en 5 min
+
+            alert("🏗️ RESURRECCIÓN EXITOSA v24.5.8 🏗️\n\nLos datos han sido restaurados localmente y protegidos contra sincronización vacía.\n\nYa puedes revisar PERFORMANCE.");
             location.reload();
         } catch (e) {
             console.error("❌ ERROR CRÍTICO EN RESURRECCIÓN:", e);

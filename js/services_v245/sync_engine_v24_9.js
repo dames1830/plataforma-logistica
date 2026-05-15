@@ -3,7 +3,7 @@
  * Este motor centraliza toda la comunicación con la nube y garantiza la integridad de datos entre múltiples PCs.
  */
 
-const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const API_BASE = 'https://logistics-backend-wv8x.onrender.com/api/logistics';
 const SYNC_PREFIX = 'logistics_sync_v24_';
 const TIMEOUT_MS = 60000; // 60 segundos de paciencia
 
@@ -44,8 +44,20 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                     data = data.data;
                 }
 
-                syncStore[area] = Array.isArray(data) ? data : (data || (area === 'permissions' || area === 'attendance' ? {} : []));
-                localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(syncStore[area]));
+                const newData = Array.isArray(data) ? data : (data || (area === 'permissions' || area === 'attendance' ? {} : []));
+                
+                // --- ESCUDO DE RESURRECCIÓN v24.5.8 ---
+                // Si la nube está vacía pero tenemos datos locales y el escudo está activo, NO SOBREESCRIBIR.
+                const isResurrectionActive = localStorage.getItem('PULSE_RESURRECTION_SHIELD');
+                const hasLocalData = syncStore[area] && (Array.isArray(syncStore[area]) ? syncStore[area].length > 0 : Object.keys(syncStore[area]).length > 0);
+                const isNewDataEmpty = Array.isArray(newData) ? newData.length === 0 : Object.keys(newData).length === 0;
+
+                if (isResurrectionActive && hasLocalData && isNewDataEmpty) {
+                    console.log(`🛡️ [PULSE] Escudo Activo: Protegiendo "${area}" local contra nube vacía.`);
+                } else {
+                    syncStore[area] = newData;
+                    localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(syncStore[area]));
+                }
                 return true;
             }
         } catch (e) {
