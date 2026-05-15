@@ -18,10 +18,16 @@ export const syncStore = new Proxy({
 }, {
     set(target, prop, value) {
         if (prop === 'performance_log') {
-            console.log(`📦 [CAJA NEGRA] Actualizando performance_log: ${Array.isArray(value) ? value.length : 'ERROR'} registros.`);
-            if (Array.isArray(value) && value.length === 0 && target.performance_log.length > 0) {
-                console.error("🚨 [PULSE] ALGUIEN ESTÁ INTENTANDO VACIAR EL PERFORMANCE LOG!");
-                console.trace(); // Esto nos dirá quién fue
+            const newCount = Array.isArray(value) ? value.length : 0;
+            const oldCount = Array.isArray(target.performance_log) ? target.performance_log.length : 0;
+            
+            console.log(`📦 [CAJA NEGRA] Intento de actualización: ${prop} (${oldCount} -> ${newCount} registros).`);
+            
+            // --- MURO DE HIERRO v24.6.3 ---
+            // Si intentan meter una lista vacía (0) y ya tenemos datos (>0), BLOQUEAMOS.
+            if (newCount === 0 && oldCount > 0) {
+                console.error("🚨 [PULSE] BLOQUEADO: Se intentó vaciar el Performance Log. Protegiendo datos en memoria.");
+                return true; // Mentimos al sistema diciendo que lo hicimos, pero mantenemos los datos viejos
             }
         }
         target[prop] = value;
