@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.4.5';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.5.2';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services/adminService.js?v=24.4.2';
+import * as adminService from '../services_v245/adminService.js?v=24.5.2';
 
 
-const VERSION = '24.4.2';
+const VERSION = '24.5.2';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -433,7 +433,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.5.1</span>
+            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.5.2</span>
           </h2>
         </div>
       </div>
@@ -951,7 +951,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:1.5rem;">🏗️</span>
                 <div>
-                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.1</div>
+                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.2</div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
                 </div>
             </div>
@@ -975,7 +975,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         try {
             // CORRECCIÓN DE RUTA: Subimos un nivel para llegar a services desde views
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.1');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.2');
             
             // 1. Usuarios
             const rUsers = await fetch('js/backups_v24/users_data.json');
@@ -1011,7 +1011,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             await savePerformanceLog(dPerf);
             console.log("✅ Performance restaurado.");
 
-            alert("🏗️ RESURRECCIÓN COMPLETADA v24.5.1 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
+            alert("🏗️ RESURRECCIÓN COMPLETADA v24.5.2 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
             location.reload();
         } catch (e) {
             console.error(e);
