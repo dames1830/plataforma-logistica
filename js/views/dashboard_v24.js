@@ -432,7 +432,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:400; margin-left:5px;">v24.4.0</span>
+            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.4.0 (NUEVA)</span>
           </h2>
         </div>
       </div>
