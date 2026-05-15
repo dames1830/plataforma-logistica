@@ -64,6 +64,8 @@ export const savePermissions = (role, data) => {
 };
 
 export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
+export const savePerformance = (data) => save('performance', data);
+export const savePerformanceLog = (data) => save('performance_log', data);
 
 // --- GESTIÓN DE PERMISOS (RESTAURADO v24.3) ---
 export const FORCED_ASISTENTE = [

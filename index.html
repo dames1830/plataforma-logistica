@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LOGISTICA DEAM1830 v24.4.7</title>
+  <title>DEAM1830 - Sistema Logístico v24.4.8</title>
   <!-- FORCE NO CACHE -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   
-  <link rel="stylesheet" href="css/main.css?v=24.4.5" id="main_css">
+  <link rel="stylesheet" href="css/main.css?v=24.4.8" id="main_css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     #sync-indicator {
@@ -27,6 +27,7 @@
       font-size: 0.75rem;
       font-weight: 800;
       display: flex;
+      flex-direction: column;
       align-items: center;
       gap: 10px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
@@ -41,9 +42,12 @@
 <body>
   <div id="app"></div>
   <div id="sync-indicator" class="sync-online">
-    <span id="sync-icon">✅</span>
-    <span id="sync-text">SISTEMA v24.4.7 ONLINE</span>
+    <div>
+      <span id="sync-icon">✅</span>
+      <span id="sync-text">SISTEMA v24.4.8 ONLINE</span>
+    </div>
+    <p style="margin:0; font-size:0.75rem; color:rgba(255,255,255,0.4);">System Build: v24.4.8 | Production Environment</p>
   </div>
-  <script src="js/app.js?v=24.4.7" type="module"></script>
+  <script src="js/app.js?v=24.4.8" type="module"></script>
 </body>
 </html>
