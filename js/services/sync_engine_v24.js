@@ -93,11 +93,17 @@ export const pushChange = async (area, data) => {
             console.log(`✅ [SYNC v24] "${area}" guardado en la nube.`);
             return true;
         } else {
-            console.error(`❌ [SYNC v24] Error de servidor en "${area}": ${res.status}`);
+            const errorMsg = `ERROR NUBE: ${res.status} ${res.statusText || ''}`;
+            console.error(`❌ [SYNC v24] ${errorMsg} en "${area}"`);
+            const indicatorText = document.getElementById('sync-text');
+            if (indicatorText) indicatorText.innerText = errorMsg;
             return false;
         }
     } catch (e) {
-        console.error(`🚨 [SYNC v24] Error crítico de conexión al empujar "${area}":`, e.message);
+        const errorMsg = `FALLO CONEXIÓN: ${e.message}`;
+        console.error(`🚨 [SYNC v24] ${errorMsg} al empujar "${area}"`);
+        const indicatorText = document.getElementById('sync-text');
+        if (indicatorText) indicatorText.innerText = errorMsg;
         return false;
     }
 };
