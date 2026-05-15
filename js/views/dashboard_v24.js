@@ -433,7 +433,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.4.9</span>
+            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.5.0</span>
           </h2>
         </div>
       </div>
@@ -951,7 +951,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:1.5rem;">🏗️</span>
                 <div>
-                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.4.9</div>
+                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.5.0</div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
                 </div>
             </div>
@@ -1011,7 +1011,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             await savePerformanceLog(dPerf);
             console.log("✅ Performance restaurado.");
 
-            alert("🏗️ RESURRECCIÓN COMPLETADA v24.4.9 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
+            alert("🏗️ RESURRECCIÓN COMPLETADA v24.5.0 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
             location.reload();
         } catch (e) {
             console.error(e);
