@@ -951,7 +951,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:1.5rem;">🏗️</span>
                 <div>
-                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.4.2</div>
+                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.4.4</div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
                 </div>
             </div>
@@ -975,7 +975,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         try {
             // CORRECCIÓN DE RUTA: Subimos un nivel para llegar a services desde views
-            const { saveUsers, savePermissions, save } = await import('../services/adminService.js?v=24.4.3');
+            const { saveUsers, savePermissions, save } = await import('../services/adminService.js?v=24.4.4');
             
             // 1. Usuarios
             const rUsers = await fetch('js/backups_v24/users_data.json');
