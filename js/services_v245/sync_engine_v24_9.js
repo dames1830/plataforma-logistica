@@ -91,14 +91,14 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                         if (newCount === 0 && oldCount > 0) {
                             console.warn(`🛡️ [SYNC v24] Bloqueando sobreescritura de "${area}" en disco (Nube: 0, Local: ${oldCount})`);
                             syncStore[area] = JSON.parse(localData);
-                            continue; // Saltamos este área, no la guardamos vacía
+                            return true; // Saltamos este área, no la guardamos vacía
                         }
                     }
 
                     syncStore[area] = newData;
                     localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(syncStore[area]));
                 }
-                continue;
+                return true;
             }
         } catch (e) {
             console.warn(`⚠️ [SYNC v24] Fallo en Pull de "${area}":`, e.message);
