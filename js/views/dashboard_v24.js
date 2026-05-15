@@ -78,7 +78,7 @@ const loadAlmacenajeTasks = async () => {
           almacenajeTasksCache = syncedTasks;
           localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(syncedTasks));
       }
-      updateSyncIndicator('online', 'SISTEMA v24.4.0 ONLINE');
+      updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
   } catch (e) { 
       console.error("[SYNC] Error al cargar:", e);
       updateSyncIndicator('offline', 'MODO OFFLINE ACTIVO');
@@ -433,7 +433,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
             LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
-            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v24.5.7</span>
+            <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
       </div>
