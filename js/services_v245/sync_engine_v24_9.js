@@ -142,7 +142,7 @@ export const pushChange = async (area, data) => {
             headers: { 
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ data: data }),
+            body: JSON.stringify(data),
             signal: controller.signal
         });
 
