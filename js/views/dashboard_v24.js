@@ -1,9 +1,9 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.4.5';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services/adminService.js?v=24.3.2';
+import * as adminService from '../services/adminService.js?v=24.4.0';
 
 
-const VERSION = '24.0.0';
+const VERSION = '24.4.0';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -30,7 +30,7 @@ let selectedTaskDate = null; // Filtro de fecha seleccionado
 let expandedWeeks = []; // Semanas expandidas en el historial
 let almacenajeTasksCache = [];
 try {
-    const stored = localStorage.getItem('logistics_admin_v11_almacenaje_tasks');
+    const stored = localStorage.getItem('logistics_sync_v24_almacenaje_tasks');
     if (stored) almacenajeTasksCache = JSON.parse(stored);
 } catch(e) { almacenajeTasksCache = []; }
 if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
@@ -51,7 +51,7 @@ const saveAlmacenajeTasks = async () => {
       updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
       
       // 1. Persistencia LOCAL inmediata
-      localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+      localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
       // 2. Sincronización Global OBLIGATORIA
@@ -75,7 +75,7 @@ const loadAlmacenajeTasks = async () => {
       const syncedTasks = await adminService.loadAlmacenajeTasks();
       if (Array.isArray(syncedTasks)) {
           almacenajeTasksCache = syncedTasks;
-          localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(syncedTasks));
+          localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(syncedTasks));
       }
       updateSyncIndicator('online', 'SISTEMA v24.0 ONLINE');
   } catch (e) { 
@@ -3705,7 +3705,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
             if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
-            const item = { ...row, skuFull, ubi, qty, area };
+            // [OPTIMIZACIÓN v24.4] Solo guardar campos necesarios para reducir peso de la nube
+            const item = { ubi, qty, area, skuFull }; 
             groups[sku7].items.push(item);
             if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
             else groups[sku7].zonaQty += qty;
@@ -4522,7 +4523,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             try {
                 console.log("🔄 [PULSE] Forzando descarga limpia desde la nube...");
                 // 1. Limpiar rastro local para forzar lectura de servidor
-                localStorage.removeItem('logistics_admin_v11_almacenaje_tasks');
+                localStorage.removeItem('logistics_sync_v24_almacenaje_tasks');
                 
                 // 2. Sincronizar con el servidor (PULL GLOBAL DIRECTO)
                 await adminService.initializeAdminData();
@@ -4530,7 +4531,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 
                 if (Array.isArray(serverTasks)) {
                     almacenajeTasksCache = [...serverTasks];
-                    localStorage.setItem('logistics_admin_v11_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+                    localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
                     console.log(`✅ [PULSE] ${serverTasks.length} tareas sincronizadas.`);
                 }
                 
