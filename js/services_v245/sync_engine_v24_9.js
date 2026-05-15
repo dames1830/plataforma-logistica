@@ -7,7 +7,7 @@ const API_BASE = 'https://logistics-backend-wv8x.onrender.com/api/logistics';
 const SYNC_PREFIX = 'logistics_sync_v24_';
 const TIMEOUT_MS = 60000; // 60 segundos de paciencia
 
-export const syncStore = {
+export const syncStore = new Proxy({
     workers: [],
     users: [],
     permissions: {},
@@ -15,7 +15,19 @@ export const syncStore = {
     performance_log: [],
     almacenaje_tasks: [],
     lastSync: null
-};
+}, {
+    set(target, prop, value) {
+        if (prop === 'performance_log') {
+            console.log(`📦 [CAJA NEGRA] Actualizando performance_log: ${Array.isArray(value) ? value.length : 'ERROR'} registros.`);
+            if (Array.isArray(value) && value.length === 0 && target.performance_log.length > 0) {
+                console.error("🚨 [PULSE] ALGUIEN ESTÁ INTENTANDO VACIAR EL PERFORMANCE LOG!");
+                console.trace(); // Esto nos dirá quién fue
+            }
+        }
+        target[prop] = value;
+        return true;
+    }
+});
 
 /**
  * PULL GLOBAL: Trae toda la verdad de la nube y actualiza el estado local.
