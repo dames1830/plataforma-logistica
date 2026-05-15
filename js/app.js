@@ -1,13 +1,13 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=24.6.0';
-import * as adminService from './services_v245/adminService.js?v=24.6.0';
+import { getSession, logout } from './services_v245/auth.js?v=24.6.1';
+import * as adminService from './services_v245/adminService.js?v=24.6.1';
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v24.6.0';
+    this.APP_VERSION = 'v24.6.1';
     this.isRendered = false;
     this.init();
   }
