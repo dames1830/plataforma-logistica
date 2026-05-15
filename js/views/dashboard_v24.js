@@ -955,7 +955,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
                 </div>
             </div>
-            <button id="btn_master_resurrection" style="background:white; color:#d97706; border:none; padding:8px 16px; border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.1); transition:all 0.3s;">🚀 INICIAR RESTAURACIÓN</button>
+            <button id="btn_master_resurrection" onclick="window.executeResurrection()" style="background:white; color:#d97706; border:none; padding:8px 16px; border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.1); transition:all 0.3s;">🚀 INICIAR RESTAURACIÓN</button>
         </div>
         <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
           ${allowedSubTabs.map(sub => `
@@ -965,69 +965,61 @@ export const renderDashboard = async (container, user, onLogout) => {
           `).join('')}
         </nav><div id="adminContent"></div>`;
     
-    const masterBtn = document.getElementById('btn_master_resurrection');
-    if (masterBtn) {
-        masterBtn.addEventListener('click', async () => {
-            console.log("🚀 [DEBUG] Botón de Resurrección presionado - v24.5.8");
-            const btn = document.getElementById('btn_master_resurrection');
+    window.executeResurrection = async () => {
+        console.log("🚀 [PULSE] Iniciando Ejecución Maestra de Resurrección...");
+        const btn = document.getElementById('btn_master_resurrection');
+        if (!btn) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '⏳ PROCESANDO...';
+        
+        try {
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.8');
             
-            btn.disabled = true;
-            btn.innerHTML = '⏳ PROCESANDO...';
-            
-            try {
-                const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.5.8');
-                
-                // Helper para extraer datos de forma segura
-                const extractData = (json) => (json && json.data) ? json.data : json;
-            
-                // 1. Usuarios
-                console.log("📡 Restaurando Usuarios...");
-                const rUsers = await fetch('js/backups_v24/users_data.json');
-                const dUsers = extractData(await rUsers.json());
-                await saveUsers(dUsers); 
-                console.log("✅ Usuarios restaurados.");
+            const extractData = (json) => (json && json.data) ? json.data : json;
 
-                // 2. Permisos
-                console.log("📡 Restaurando Permisos...");
-                const rPerms = await fetch('js/backups_v24/permissions_data.json');
-                const rawPerms = await rPerms.json();
-                const permsMatrix = (rawPerms.data && rawPerms.data.data) ? rawPerms.data.data : (rawPerms.data || rawPerms);
-                for (let role in permsMatrix) {
-                    await savePermissions(role, permsMatrix[role]);
-                }
-                console.log("✅ Permisos restaurados.");
+            console.log("📡 [1/5] Restaurando Usuarios...");
+            const rUsers = await fetch('js/backups_v24/users_data.json');
+            const dUsers = extractData(await rUsers.json());
+            await saveUsers(dUsers); 
+            console.log("✅ Usuarios OK.");
 
-                // 3. Trabajadores
-                console.log("📡 Restaurando Trabajadores...");
-                const rWorkers = await fetch('js/backups_v24/workers_data.json');
-                const dWorkers = extractData(await rWorkers.json());
-                await save('workers', dWorkers);
-                console.log("✅ Trabajadores restaurados.");
-
-                // 4. Asistencia
-                console.log("📡 Restaurando Asistencia...");
-                const rAtt = await fetch('js/backups_v24/attendance_data.json');
-                const dAtt = extractData(await rAtt.json());
-                await save('attendance', dAtt);
-                console.log("✅ Asistencia restaurada.");
-
-                // 5. Performance Log
-                console.log("📡 Restaurando Performance Log...");
-                const rPerf = await fetch('js/backups_v24/performance_log_data.json');
-                const dPerf = extractData(await rPerf.json());
-                await savePerformanceLog(dPerf);
-                console.log("✅ Performance restaurado.");
-
-                alert("🏗️ RESURRECCIÓN COMPLETADA v24.5.8 🏗️\n\nSe han restaurado:\n- Trabajadores\n- Usuarios y Permisos\n- Asistencia\n- Historial de Performance");
-                location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("❌ Error en la resurrección: " + e.message);
-                btn.disabled = false;
-                btn.innerHTML = '🚀 RE-INTENTAR';
+            console.log("📡 [2/5] Restaurando Permisos...");
+            const rPerms = await fetch('js/backups_v24/permissions_data.json');
+            const rawPerms = await rPerms.json();
+            const permsMatrix = (rawPerms.data && rawPerms.data.data) ? rawPerms.data.data : (rawPerms.data || rawPerms);
+            for (let role in permsMatrix) {
+                await savePermissions(role, permsMatrix[role]);
             }
-        });
-    }
+            console.log("✅ Permisos OK.");
+
+            console.log("📡 [3/5] Restaurando Trabajadores...");
+            const rWorkers = await fetch('js/backups_v24/workers_data.json');
+            const dWorkers = extractData(await rWorkers.json());
+            await save('workers', dWorkers);
+            console.log("✅ Trabajadores OK.");
+
+            console.log("📡 [4/5] Restaurando Asistencia...");
+            const rAtt = await fetch('js/backups_v24/attendance_data.json');
+            const dAtt = extractData(await rAtt.json());
+            await save('attendance', dAtt);
+            console.log("✅ Asistencia OK.");
+
+            console.log("📡 [5/5] Restaurando Performance...");
+            const rPerf = await fetch('js/backups_v24/performance_log_data.json');
+            const dPerf = extractData(await rPerf.json());
+            await savePerformanceLog(dPerf);
+            console.log("✅ Performance OK.");
+
+            alert("🏗️ RESURRECCIÓN EXITOSA v24.5.8 🏗️\n\nDatos restaurados en la nube. La página se reiniciará.");
+            location.reload();
+        } catch (e) {
+            console.error("❌ ERROR CRÍTICO EN RESURRECCIÓN:", e);
+            alert("❌ Fallo en la restauración: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = '🚀 RE-INTENTAR';
+        }
+    };
     
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         activeAdminSub = e.currentTarget.dataset.s; 
