@@ -1,6 +1,6 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services/csvHub_v6.js?v=17.4.5';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services/adminService.js?v=24.0.0';
+import * as adminService from '../services/adminService.js?v=24.3.2';
 
 
 const VERSION = '24.0.0';
