@@ -101,7 +101,7 @@ export let currentDateFilter = null;
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
 const VERSION = '18.6.0';
-const CACHE_KEY = `logistics_v18_6_0_prod_shared_`;
+const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
 export const getCol = (row, names) => {
