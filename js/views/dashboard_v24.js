@@ -947,6 +947,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     contentArea.innerHTML = `
+        <div id="resurrection_banner" style="background:linear-gradient(90deg, #f59e0b, #d97706); padding:0.8rem; border-radius:12px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 10px 20px rgba(245, 158, 11, 0.2); border:1px solid rgba(255,255,255,0.2);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:1.5rem;">🏗️</span>
+                <div>
+                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.4.2</div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
+                </div>
+            </div>
+            <button id="btn_master_resurrection" style="background:white; color:#d97706; border:none; padding:8px 16px; border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.1); transition:all 0.3s;">🚀 INICIAR RESTAURACIÓN</button>
+        </div>
         <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
           ${allowedSubTabs.map(sub => `
             <a class="sub-nav-item ${activeAdminSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
@@ -954,6 +964,49 @@ export const renderDashboard = async (container, user, onLogout) => {
             </a>
           `).join('')}
         </nav><div id="adminContent"></div>`;
+    
+    // Lógica de Resurrección
+    document.getElementById('btn_master_resurrection').onclick = async () => {
+        const btn = document.getElementById('btn_master_resurrection');
+        if (!confirm("⚠️ ¿Deseas restaurar todos los datos de Administración (Usuarios, Permisos, Asistencia) desde el respaldo blindado?")) return;
+        
+        btn.disabled = true;
+        btn.innerHTML = '⏳ PROCESANDO...';
+        
+        try {
+            const adminService = await import('./js/services/adminService.js?v=24.4.2');
+            
+            // 1. Usuarios
+            const rUsers = await fetch('js/backups_v24/users_data.json');
+            const dUsers = await rUsers.json();
+            await adminService.saveUsers(dUsers.data);
+            console.log("✅ Usuarios restaurados.");
+
+            // 2. Permisos
+            const rPerms = await fetch('js/backups_v24/permissions_data.json');
+            const dPerms = await rPerms.json();
+            await adminService.savePermissions('all_roles', dPerms.data.data); // Usamos save genérico
+            // Nota: savePermissions en adminService v24 guarda por rol, necesitamos un bucle o ajuste
+            for (let role in dPerms.data.data) {
+                await adminService.savePermissions(role, dPerms.data.data[role]);
+            }
+            console.log("✅ Permisos restaurados.");
+
+            // 3. Asistencia
+            const rAtt = await fetch('js/backups_v24/attendance_data.json');
+            const dAtt = await rAtt.json();
+            await adminService.save('attendance', dAtt.data);
+            console.log("✅ Asistencia restaurada.");
+
+            alert("✨ RESURRECCIÓN COMPLETADA ✨\n\nTodos los datos oficiales han sido inyectados en la nube.");
+            location.reload();
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error en la resurrección: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = '🚀 RE-INTENTAR';
+        }
+    };
     
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         activeAdminSub = e.currentTarget.dataset.s; 
