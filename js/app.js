@@ -1,13 +1,13 @@
 /**
- * App Entry Point v24.4.2 - SECURE SYNC
+ * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=24.5.7';
-import * as adminService from './services_v245/adminService.js?v=24.5.7';
+import { getSession, logout } from './services_v245/auth.js?v=24.5.8';
+import * as adminService from './services_v245/adminService.js?v=24.5.8';
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v24.5.7';
+    this.APP_VERSION = 'v24.5.8';
     this.isRendered = false;
     this.init();
   }
@@ -40,7 +40,7 @@ class App {
     
     try {
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=24.5.7`);
+            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=24.5.8`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;
