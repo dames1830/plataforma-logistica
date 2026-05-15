@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Logística Dames1830</title>
+  <title>LOGISTICA DEAM1830 v24.0</title>
+  <!-- FORCE NO CACHE -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -13,11 +14,37 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   
-  <link rel="stylesheet" href="css/main.css?v=18.6.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=24.0.0" id="main_css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* Estilo para el indicador de sincronización global */
+    #sync-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    .sync-online { background: #22c55e; color: #fff; }
+    .sync-offline { background: #ef4444; color: #fff; }
+    .sync-working { background: #eab308; color: #000; }
+  </style>
 </head>
 <body>
   <div id="app"></div>
-  <script src="js/app.js?v=18.6.0" type="module"></script>
+  <div id="sync-indicator" class="sync-online">
+    <span id="sync-icon">✅</span>
+    <span id="sync-text">SISTEMA v24.0 ONLINE</span>
+  </div>
+  <script src="js/app.js?v=24.0.0" type="module"></script>
 </body>
 </html>
