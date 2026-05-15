@@ -55,7 +55,7 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-            const res = await fetch(`${API_BASE}/${area}?cb=${Date.now()}`, {
+            const res = await fetch(`${API_BASE}/${area}`, {
                 method: 'GET',
                 headers: { 'X-Environment': 'production' },
                 signal: controller.signal
@@ -123,8 +123,9 @@ export const pushChange = async (area, data) => {
     syncStore[area] = data;
     localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(data));
     
-    // --- MODO BLINDADO v24.5.8 ---
-    if (localStorage.getItem('PULSE_OFFLINE_FORCE')) {
+    // --- MODO BLINDADO v24.6.9 ---
+    // El blindaje NO debe impedir que enviemos datos de Almacenaje a la nube.
+    if (localStorage.getItem('PULSE_OFFLINE_FORCE') && area !== 'almacenaje_tasks') {
         console.log(`🛡️ [SYNC v24] Guardado local de "${area}" exitoso. (Sincronización en la nube pausada)`);
         return true;
     }
