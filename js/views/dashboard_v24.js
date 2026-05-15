@@ -58,9 +58,10 @@ const saveAlmacenajeTasks = async () => {
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
           updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
-          setTimeout(() => updateSyncIndicator('online', 'SISTEMA v24.4.0 ONLINE'), 3000);
+          setTimeout(() => updateSyncIndicator('online', 'SISTEMA v24.4.1 ONLINE'), 3000);
       } else {
-          updateSyncIndicator('offline', 'ERROR DE NUBE (REINTENTANDO...)');
+          // Dejar que el sync_engine muestre el error detallado
+          updateSyncIndicator('offline', document.getElementById('sync-text').innerText);
       }
   } catch (e) { 
       console.error("[SYNC] Error crítico:", e);
