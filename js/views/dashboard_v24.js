@@ -974,28 +974,29 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const adminService = await import('./js/services/adminService.js?v=24.4.2');
+            // CORRECCIÓN DE RUTA: Subimos un nivel para llegar a services desde views
+            const { saveUsers, savePermissions, save } = await import('../services/adminService.js?v=24.4.2');
             
             // 1. Usuarios
             const rUsers = await fetch('js/backups_v24/users_data.json');
             const dUsers = await rUsers.json();
-            await adminService.saveUsers(dUsers.data);
+            await saveUsers(dUsers.data); // syncEngine ya lo empaqueta
             console.log("✅ Usuarios restaurados.");
 
             // 2. Permisos
             const rPerms = await fetch('js/backups_v24/permissions_data.json');
             const dPerms = await rPerms.json();
-            await adminService.savePermissions('all_roles', dPerms.data.data); // Usamos save genérico
-            // Nota: savePermissions en adminService v24 guarda por rol, necesitamos un bucle o ajuste
-            for (let role in dPerms.data.data) {
-                await adminService.savePermissions(role, dPerms.data.data[role]);
+            const permsMatrix = dPerms.data.data;
+            for (let role in permsMatrix) {
+                await savePermissions(role, permsMatrix[role]);
             }
             console.log("✅ Permisos restaurados.");
 
-            // 3. Asistencia
+            // 3. Asistencia (El más pesado)
             const rAtt = await fetch('js/backups_v24/attendance_data.json');
             const dAtt = await rAtt.json();
-            await adminService.save('attendance', dAtt.data);
+            // Enviamos el objeto de fechas directamente
+            await save('attendance', dAtt.data);
             console.log("✅ Asistencia restaurada.");
 
             alert("✨ RESURRECCIÓN COMPLETADA ✨\n\nTodos los datos oficiales han sido inyectados en la nube.");
