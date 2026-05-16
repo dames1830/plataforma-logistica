@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.0.0';
+import * as adminService from '../services_v245/adminService.js?v=25.0.1';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.0.0';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.0.1';
 
 
-const VERSION = '25.0.0';
+const VERSION = '25.0.1';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -63,8 +63,11 @@ const saveAlmacenajeTasks = async () => {
             return;
         }
 
-        console.log(`🚀 [PULSE] Sincronización Maestra: Enviando ${almacenajeTasksCache.length} tareas a la nube.`);
-        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+        // [ESTRATEGIA NUBE DE ÉLITE v25.0.1] Solo mandamos las últimas 10 tareas para garantizar el VERDE
+        const eliteTasks = almacenajeTasksCache.slice(-10);
+
+        console.log(`🚀 [PULSE] Sincronización de Élite: Enviando ${eliteTasks.length} tareas a la nube.`);
+        const success = await adminService.saveAlmacenajeTasks(eliteTasks);
         
         if (success) {
             updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
@@ -4433,7 +4436,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${isBuffer ? '800' : '500'};">
                                             ${i.ubi}
                                         </td>
-                                        <td style="padding:0.6rem 1rem;">${i.skuFull}</td>
+                                        <td style="padding:0.6rem 1rem;">${i.skuFull || i.sku || '---'}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${isBuffer ? '#fff' : 'transparent'};">${isBuffer ? i.qty : ''}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${!isBuffer ? '#fbbf24' : 'rgba(255,255,255,0.05)'};">${!isBuffer ? i.qty : '---'}</td>
