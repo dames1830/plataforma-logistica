@@ -140,6 +140,30 @@ setInterval(async () => {
         }
     }
 }, 60000);
+    
+const restoreAdminDataFromLocal = async () => {
+    try {
+        updateSyncIndicator('working', 'RESTAURANDO DATOS...');
+        const keys = ['workers', 'permissions', 'users', 'attendance'];
+        let count = 0;
+        for (const key of keys) {
+            const stored = localStorage.getItem(`logistics_sync_v24_${key}`);
+            if (stored) {
+                const data = JSON.parse(stored);
+                if (data && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0)) {
+                    await adminService.save(key, data);
+                    count++;
+                }
+            }
+        }
+        alert(`✅ ¡Éxito! Se han restaurado ${count} módulos de administración desde tu PC.`);
+        location.reload();
+    } catch (e) {
+        alert("❌ Error al restaurar: " + e.message);
+        updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
+    }
+};
+window.restoreAdminDataFromLocal = restoreAdminDataFromLocal;
 
 const TABS = [
   { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
@@ -485,7 +509,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     <nav class="top-nav-links" id="navLinks"></nav>
     <main class="main-wrapper">
       <div class="glass-panel" style="padding:1.5rem; min-height:80vh;">
-        <div class="tab-header" style="margin-bottom:1.5rem;"><h1 id="contentTitle" style="color:var(--primary); font-size:1.8rem; font-weight:800;">Cargando...</h1><p id="contentSubtitle" style="color:var(--text-muted); font-size:0.85rem;"></p></div>
+        <div class="tab-header" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h1 id="contentTitle" style="color:var(--primary); font-size:1.8rem; font-weight:800;">Cargando...</h1>
+                <p id="contentSubtitle" style="color:var(--text-muted); font-size:0.85rem;"></p>
+            </div>
+            ${user.role === 'admin' ? `<button onclick="restoreAdminDataFromLocal()" class="btn" style="background:#ef4444; font-size:0.7rem; padding:5px 15px; width:auto; border-radius:8px;">⚠️ RESTAURAR ADMIN DESDE PC</button>` : ''}
+        </div>
         <div id="contentArea"></div>
       </div>
     </main>

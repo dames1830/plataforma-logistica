@@ -55,9 +55,21 @@ def init_db():
     cursor.execute('CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL, action TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS shared_data (key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     
+    # Sembrar Usuarios Base (Recuperados de Captura)
     if cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
         cursor.execute("INSERT INTO users (username, password, name, role) VALUES ('dames', 'Bata1830', 'Daniel Ames', 'admin')")
-    
+        # Sembrar otros usuarios detectados
+        users = [
+            ('eleon', 'Bata1830', 'E. Leon', 'supervisor'),
+            ('jgarcia', 'Bata1830', 'J. Garcia', 'supervisor'),
+            ('jcuevas', 'Bata1830', 'J. Cuevas', 'supervisor'),
+            ('emayuri', 'Bata1830', 'E. Mayuri', 'supervisor'),
+            ('jpelaez', 'Bata1830', 'J. Pelaez', 'supervisor')
+        ]
+        for u in users:
+            try: cursor.execute("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", u)
+            except: pass
+
     conn.commit()
     conn.close()
 
