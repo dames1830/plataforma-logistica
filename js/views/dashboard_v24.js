@@ -3866,9 +3866,19 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const exportAlmacenajeExcel = async () => {
-    if (!almacenajeTasksCache.length) { alert("No hay tareas para exportar."); return; }
+    console.log("📥 [PULSE] Iniciando exportación a Excel...");
+    if (!almacenajeTasksCache.length) { 
+        alert("⚠️ No hay tareas en el historial para exportar."); 
+        return; 
+    }
     
-    const workbook = new ExcelJS.Workbook();
+    try {
+        if (typeof ExcelJS === 'undefined') {
+            throw new Error("La librería ExcelJS no está cargada. Por favor, recarga la página (Ctrl+F5).");
+        }
+        
+        updateSyncIndicator('working', 'GENERANDO EXCEL...');
+        const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet('Tareas Día', {
         properties: { tabColor: { argb: 'FF4F46E5' } },
         pageSetup: { 
@@ -3931,6 +3941,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     almacenajeTasksCache.forEach(task => {
         // Filtrar tareas por fecha seleccionada si existe
         if (selectedTaskDate && task.fecha !== selectedTaskDate) return;
+        if (!task.items || !Array.isArray(task.items)) return;
 
         task.items.forEach(art => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
@@ -3985,6 +3996,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     a.download = `Plan_Almacenaje_v13.0.2_${new Date().toISOString().split('T')[0]}.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
+    
+    updateSyncIndicator('online', 'EXCEL GENERADO ✅');
+    console.log("✅ [PULSE] Excel generado con éxito.");
+    setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+
+    } catch (err) {
+        console.error("❌ [PULSE] Error en exportAlmacenajeExcel:", err);
+        alert("❌ Error al generar el Excel: " + err.message);
+        updateSyncIndicator('offline', 'ERROR EXCEL');
+    }
   };
 
   window.renderAlmacenajeTareas = (container) => {
