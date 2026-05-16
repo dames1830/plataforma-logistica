@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.8';
+const VERSION = '24.8.9';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);

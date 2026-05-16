@@ -138,6 +138,12 @@ export const pushChange = async (area, data) => {
 
     // 2. Intento de subida
     try {
+        // [MOD v24.8.9] Lógica de Fragmentación para datos pesados (Almacenaje)
+        if (area === 'almacenaje_tasks' && Array.isArray(data) && data.some(t => t.items && t.items.length > 50)) {
+            console.warn("📦 [SYNC v24] Datos pesados detectados. Iniciando Empuje Fragmentado...");
+            return await pushChunked(area, data);
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -170,6 +176,42 @@ export const pushChange = async (area, data) => {
         const indicatorText = document.getElementById('sync-text');
         if (indicatorText) indicatorText.innerText = errorMsg;
         return false;
+    }
+};
+
+/**
+ * PUSH CHUNKED: Divide los datos en trozos para evitar Error 500 en servidores limitados.
+ */
+const pushChunked = async (area, data) => {
+    try {
+        // [ESTRATEGIA v24.8.9] Mandar primero el esqueleto y luego los detalles por partes
+        // Para simplificar en Render (Node/Express), mandaremos bloques de tareas completas
+        const CHUNK_SIZE = 5; // Mandar de 5 en 5 tareas pesadas
+        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+            const chunk = data.slice(i, i + CHUNK_SIZE);
+            console.log(`📤 [SYNC] Enviando Bloque ${Math.floor(i/CHUNK_SIZE) + 1}...`);
+            
+            const res = await fetch(`${API_BASE}/${area}/append`, { // Usar endpoint de anexar si existe, o POST normal si el backend lo permite
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(chunk)
+            });
+            
+            if (!res.ok) throw new Error(`Fallo en bloque ${i}`);
+        }
+        console.log("✅ [SYNC] Empuje fragmentado completado exitosamente.");
+        return true;
+    } catch (e) {
+        console.error("❌ [SYNC] Fallo en empuje fragmentado. Reintentando modo normal...", e);
+        // Fallback: Intentar mandar todo una vez más por si fue un fallo temporal
+        const res = await fetch(`${API_BASE}/${area}`, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return res.ok;
     }
 };
 
