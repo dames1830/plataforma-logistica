@@ -93,13 +93,53 @@ def health():
 def get_area_data(area: str, date: Optional[str] = None):
     try:
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        
+        # CASO ESPECIAL: USUARIOS (sacar de tabla maestra)
+        if area == 'users':
+            cursor.execute("SELECT username, password, name, role, active FROM users")
+            rows = cursor.fetchall()
+            data = [{"username": r[0], "password": r[1], "name": r[2], "role": r[3], "active": bool(r[4])} for r in rows]
+            conn.close()
+            return {"area": "users", "data": data}
+            
+        # CASO ESPECIAL: PERMISOS (sacar de tabla maestra)
+        if area == 'permissions':
+            cursor.execute("SELECT role, module, allowed FROM role_permissions")
+            rows = cursor.fetchall()
+            data = {}
+            for r in rows:
+                if r[0] not in data: data[r[0]] = {}
+                data[r[0]][r[1]] = bool(r[2])
+            conn.close()
+            return {"area": "permissions", "data": data}
+
+        # CASO GENERAL: SNAPSHOTS (Logistics/Performance/Workers)
         if date:
             cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, date))
         else:
+            # Si es workers, buscar el snapshot 'MASTER' primero
+            if area == 'workers':
+                cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, "MASTER"))
+                row = cursor.fetchone()
+                if row: 
+                    conn.close()
+                    return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
+            
             cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC LIMIT 1", (area,))
+        
         row = cursor.fetchone(); conn.close()
         if row: return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
-        return {"area": area, "data": [] if area == 'workers' else None}
+        return {"area": area, "data": []}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
+@app.get("/api/logistics/{area}/dates")
+def list_area_dates(area: str):
+    try:
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
+        dates = [r[0] for r in cursor.fetchall()]
+        conn.close()
+        return {"area": area, "dates": dates}
     except Exception as e: return {"status": "error", "message": str(e)}
 
 @app.post("/api/logistics/{area}")
