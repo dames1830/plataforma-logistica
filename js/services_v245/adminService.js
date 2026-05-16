@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=25.1.31';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.1.32';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -66,6 +66,7 @@ export const saveAttendance = async (dateStr, data) => {
         data.data.forEach(asist => {
             const asistDni = String(asist.dni || '').trim();
             const isPresent = asist.present || asist.asistencia === 'P';
+            const isOnTime = asist.onTime !== false;
             const existingIdx = adminStore.performance_log.findIndex(p => p.date === dateStr && String(p.dni || '').trim() === asistDni);
 
             const perfEntry = {
@@ -74,10 +75,11 @@ export const saveAttendance = async (dateStr, data) => {
                 nombre: asist.nombre || '',
                 apellidos: asist.apellidos || '',
                 asistencia: isPresent ? 'P' : 'F',
-                puntualidad: isPresent ? (asist.puntualidad || 'SÍ') : 'NO',
+                puntualidad: isPresent ? (isOnTime ? 'SÍ' : 'NO') : 'NO',
                 produccion: isPresent ? 10 : 0,
                 bpa: isPresent ? 10 : 0,
                 supervisor: isPresent ? 9 : 0,
+                justification: asist.justification || '',
                 rendimiento: isPresent ? '96%' : '0%'
             };
 
