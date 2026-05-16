@@ -25,11 +25,17 @@ def init_db():
         
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # LIMPIEZA AUTOMÁTICA EN ARRANQUE
+    
+    # LIMPIEZA QUIRÚRGICA EN ARRANQUE PARA RECUPERAR ESPACIO
     try:
-        cursor.execute("PRAGMA auto_vacuum = FULL")
+        # Modo de emergencia para liberar espacio
+        cursor.execute("PRAGMA journal_mode = OFF") # Desactivar journal temporalmente para ahorrar espacio
+        cursor.execute("DELETE FROM audit_logs WHERE created_at < date('now', '-3 days')")
+        cursor.execute("DELETE FROM logistics_snapshots WHERE updated_at < date('now', '-7 days')")
         cursor.execute("VACUUM")
-    except: pass
+        cursor.execute("PRAGMA journal_mode = DELETE") # Volver a modo normal
+    except Exception as e:
+        print(f"Error en limpieza inicial: {e}")
     
     cursor.execute('CREATE TABLE IF NOT EXISTS logistics_snapshots (area_id TEXT, snapshot_date TEXT, data_json TEXT NOT NULL, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (area_id, snapshot_date))')
     cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
@@ -56,15 +62,14 @@ def health():
                 fpath = os.path.join(db_dir, f)
                 files.append({"name": f, "size_mb": os.path.getsize(fpath) / (1024*1024)})
         
-        # Check free space
         import shutil
         total, used, free = shutil.disk_usage(db_dir)
         
         return {
             "status": "ok",
-            "db_path": DB_PATH,
-            "files_in_data": files,
+            "db_size_kb": os.path.getsize(DB_PATH) // 1024 if os.path.exists(DB_PATH) else 0,
             "disk_free_mb": free / (1024*1024),
+            "files": files,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
@@ -95,12 +100,6 @@ async def save_area_data(area: str, request: Request):
         
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        
-        # SI EL DISCO ESTÁ LLENO, INTENTAR BORRAR LOGS VIEJOS ANTES DE GUARDAR
-        try:
-            cursor.execute("DELETE FROM audit_logs WHERE created_at < date('now', '-7 days')")
-        except: pass
-
         cursor.execute("""
             INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
             VALUES (?, ?, ?, ?)
@@ -110,35 +109,13 @@ async def save_area_data(area: str, request: Request):
         conn.close()
         return {"status": "success", "rows": len(payload_data)}
     except Exception as e:
-        # SI FALLA POR DISCO LLENO, REINTENTAR VACUUM
+        # REINTENTAR LIMPIEZA SI FALLA POR DISCO
         if "full" in str(e).lower():
             try:
-                c = sqlite3.connect(DB_PATH); c.execute("VACUUM"); c.close()
+                c = sqlite3.connect(DB_PATH)
+                c.execute("PRAGMA journal_mode = OFF")
+                c.execute("DELETE FROM audit_logs WHERE created_at < date('now', '-1 day')")
+                c.execute("VACUUM")
+                c.close()
             except: pass
         return {"status": "error", "message": str(e)}
-
-@app.post("/api/auth/login")
-async def api_login(request: Request):
-    try:
-        body = await request.json()
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, username, name, role FROM users WHERE username = ? AND password = ? AND active = 1", (body.get("username"), body.get("password")))
-        row = cursor.fetchone()
-        conn.close()
-        if row: return {"success": True, "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
-        return {"success": False, "message": "Credenciales inválidas"}
-    except Exception as e: return {"status": "error", "message": str(e)}
-
-@app.get("/api/permissions")
-def get_all_permissions():
-    try:
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
-        cursor.execute("SELECT role, module, allowed FROM role_permissions")
-        rows = cursor.fetchall(); conn.close()
-        perms = {}
-        for r in rows:
-            if r[0] not in perms: perms[r[0]] = {}
-            perms[r[0]][r[1]] = r[2]
-        return {"permissions": perms}
-    except Exception as e: return {"status": "error", "message": str(e)}
