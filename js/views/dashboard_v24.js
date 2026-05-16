@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.0';
+const VERSION = '24.8.1';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -60,10 +60,18 @@ const saveAlmacenajeTasks = async () => {
       const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
       if (success) {
           updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
-          setTimeout(() => updateSyncIndicator('online', 'SISTEMA v24.4.1 ONLINE'), 3000);
+          setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
       } else {
-          // Dejar que el sync_engine muestre el error detallado
-          updateSyncIndicator('offline', document.getElementById('sync-text').innerText);
+          // [FALLBACK v24.8.1] Si falla por peso, intentar subir solo los cabezales (Resumen)
+          console.warn("⚠️ [SYNC] Fallo al subir detalle completo. Intentando Sincronización Ligera...");
+          const lightTasks = almacenajeTasksCache.map(t => ({...t, items: []})); // Quitamos el peso
+          const lightSuccess = await adminService.saveAlmacenajeTasks(lightTasks);
+          if (lightSuccess) {
+              updateSyncIndicator('online', 'NUBE ACTUALIZADA (Modo Ligero) 🕊️');
+              setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+          } else {
+              updateSyncIndicator('offline', 'FALLO TOTAL DE NUBE');
+          }
       }
   } catch (e) { 
       console.error("[SYNC] Error crítico:", e);
@@ -3784,10 +3792,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
             if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
-            // [OPTIMIZACIÓN v24.4] Solo guardar campos necesarios para reducir peso de la nube
-            const item = { ubi, qty, area, skuFull }; 
+            // [ULTRA-OPTIMIZACIÓN v24.8.1] Normalizar claves para evitar errores de codificación en el servidor
+            const item = { ubi: ubi, qty: qty, area: area, sku: skuFull }; 
             groups[sku7].items.push(item);
-            if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+            if (area.toUpperCase().includes('CDBUFFER')) groups[sku7].bufferQty += qty;
             else groups[sku7].zonaQty += qty;
         });
 
