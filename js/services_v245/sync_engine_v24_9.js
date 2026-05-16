@@ -1,6 +1,6 @@
 /**
- * Motor de Sincronización Daniel v25.1.2 (Ultimate Stabilization)
- * Restaurada función initSync y limpieza total de comunicación.
+ * Motor de Sincronización Daniel v25.1.3 (Ultimate Stabilization)
+ * Restaurada área de WORKERS y fijado error de iteración.
  */
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
@@ -8,22 +8,22 @@ export const syncStore = {
     almacenaje_tasks: [],
     attendance: {},
     permissions: {},
+    workers: [], // RESTAURADO
     config: {}
 };
 
 // --- LOGICA DE SINCRONIZACION ---
 
 export async function initSync() {
-    console.log("🚀 [PULSE] Inicializando Motor de Sincronización v25.1.2...");
+    console.log("🚀 [PULSE] Inicializando Motor v25.1.3...");
     await pullGlobal();
-    // Auto-sincronización cada 30 segundos
     setInterval(pullGlobal, 30000);
     return syncStore;
 }
 
 export async function pullGlobal() {
-    console.log("📥 [PULSE] Sincronización: Descargando de la nube...");
-    const areas = ['almacenaje_tasks', 'attendance', 'permissions'];
+    console.log("📥 [PULSE] Sincronización: Descargando...");
+    const areas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers']; // WORKERS INCLUIDO
 
     const results = await Promise.all(areas.map(async (area) => {
         try {
