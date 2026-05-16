@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=25.1.30';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.1.31';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -68,31 +68,23 @@ export const saveAttendance = async (dateStr, data) => {
             const isPresent = asist.present || asist.asistencia === 'P';
             const existingIdx = adminStore.performance_log.findIndex(p => p.date === dateStr && String(p.dni || '').trim() === asistDni);
 
-            if (isPresent) {
-                const perfEntry = {
-                    date: dateStr,
-                    dni: asistDni,
-                    nombre: asist.nombre || '',
-                    apellidos: asist.apellidos || '',
-                    asistencia: 'P',
-                    puntualidad: asist.puntualidad || 'SÍ',
-                    produccion: 10,
-                    bpa: 10,
-                    supervisor: 9,
-                    rendimiento: '96%'
-                };
-                if (existingIdx !== -1) {
-                    // Actualizar existente
-                    adminStore.performance_log[existingIdx] = { ...adminStore.performance_log[existingIdx], ...perfEntry };
-                } else {
-                    // Añadir nuevo
-                    adminStore.performance_log.push(perfEntry);
-                }
+            const perfEntry = {
+                date: dateStr,
+                dni: asistDni,
+                nombre: asist.nombre || '',
+                apellidos: asist.apellidos || '',
+                asistencia: isPresent ? 'P' : 'F',
+                puntualidad: isPresent ? (asist.puntualidad || 'SÍ') : 'NO',
+                produccion: isPresent ? 10 : 0,
+                bpa: isPresent ? 10 : 0,
+                supervisor: isPresent ? 9 : 0,
+                rendimiento: isPresent ? '96%' : '0%'
+            };
+
+            if (existingIdx !== -1) {
+                adminStore.performance_log[existingIdx] = { ...adminStore.performance_log[existingIdx], ...perfEntry };
             } else {
-                // Si está ausente, eliminar del historial si existía
-                if (existingIdx !== -1) {
-                    adminStore.performance_log.splice(existingIdx, 1);
-                }
+                adminStore.performance_log.push(perfEntry);
             }
         });
         console.log(`🚀 [PULSE] Guardando historial: ${adminStore.performance_log.length} registros totales.`);
