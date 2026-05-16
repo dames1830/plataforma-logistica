@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.14';
 
 
-const VERSION = '25.1.16';
+const VERSION = '25.1.18';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3947,11 +3947,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
             
             // CDBUFFER Rows
-            art.items.filter(i => i.area.includes('CDBUFFER')).forEach(i => {
+            art.items.filter(i => i.area && i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
             });
             // ZONA Rows
-            art.items.filter(i => !i.area.includes('CDBUFFER')).forEach(i => {
+            art.items.filter(i => !i.area || !i.area.includes('CDBUFFER')).forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
             });
             // Subtotal
