@@ -1,6 +1,6 @@
 /**
- * Motor de Sincronización Daniel v25.1.1 (Ultimate Stabilization)
- * Simplificación total para asegurar compatibilidad con Render.
+ * Motor de Sincronización Daniel v25.1.2 (Ultimate Stabilization)
+ * Restaurada función initSync y limpieza total de comunicación.
  */
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
@@ -13,8 +13,16 @@ export const syncStore = {
 
 // --- LOGICA DE SINCRONIZACION ---
 
+export async function initSync() {
+    console.log("🚀 [PULSE] Inicializando Motor de Sincronización v25.1.2...");
+    await pullGlobal();
+    // Auto-sincronización cada 30 segundos
+    setInterval(pullGlobal, 30000);
+    return syncStore;
+}
+
 export async function pullGlobal() {
-    console.log("📥 [PULSE] Sincronización de Élite: Descargando de la nube...");
+    console.log("📥 [PULSE] Sincronización: Descargando de la nube...");
     const areas = ['almacenaje_tasks', 'attendance', 'permissions'];
 
     const results = await Promise.all(areas.map(async (area) => {
@@ -25,7 +33,6 @@ export async function pullGlobal() {
                 if (result.status === 'error') throw new Error(result.message);
                 let data = result.data !== undefined ? result.data : result;
 
-                // Restaurar tareas si vienen comprimidas
                 if (area === 'almacenaje_tasks' && Array.isArray(data)) {
                     data = data.map(t => {
                         if (t._comp && Array.isArray(t.items)) {
@@ -51,17 +58,14 @@ export async function pullGlobal() {
     }));
 
     results.forEach(r => { if (r.data) syncStore[r.area] = r.data; });
-    console.log("✅ [PULSE] Nube sincronizada con éxito.");
+    console.log("✅ [PULSE] Nube sincronizada.");
     return syncStore;
 }
 
 export async function pushChange(area, data) {
     if (!data) return;
-    console.log(`📤 [PULSE] Sincronización de Élite: Enviando ${area} a la nube...`);
-
     try {
         let payload = data;
-        // Compresión Daniel para almacenaje_tasks
         if (area === 'almacenaje_tasks' && Array.isArray(data)) {
             payload = data.map(t => {
                 const compactItems = (t.items || []).map(art => {
@@ -80,8 +84,6 @@ export async function pushChange(area, data) {
 
         const result = await res.json();
         if (!res.ok || result.status === 'error') throw new Error(result.message || 'Error en servidor');
-
-        console.log(`✅ [PULSE] ${area} guardado en la nube.`);
         return true;
     } catch (err) {
         console.error(`❌ Push error ${area}:`, err);
