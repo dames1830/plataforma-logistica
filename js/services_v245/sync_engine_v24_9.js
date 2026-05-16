@@ -20,7 +20,7 @@ export const syncStore = {
 export let isFirstPullDone = false;
 
 export async function initSync() {
-    console.log("🚀 [PULSE] Inicializando Motor v25.1.22...");
+    console.log("🚀 [PULSE] Inicializando Motor v25.1.23...");
     try {
         await pullGlobal();
     } catch (e) {
@@ -68,7 +68,21 @@ export async function pullGlobal() {
         }
     }));
 
-    results.forEach(r => { if (r.data) syncStore[r.area] = r.data; });
+    results.forEach(r => {
+        if (r.data) {
+            const current = syncStore[r.area];
+            const incoming = r.data;
+            
+            // Si el área es un objeto (como attendance), verificamos compatibilidad
+            if (current && typeof current === 'object' && !Array.isArray(current)) {
+                if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+                    syncStore[r.area] = { ...syncStore[r.area], ...incoming };
+                }
+            } else {
+                syncStore[r.area] = incoming;
+            }
+        }
+    });
     console.log("✅ [PULSE] Nube sincronizada.");
     return syncStore;
 }

@@ -134,7 +134,10 @@ def get_area_data(area: str, date: Optional[str] = None):
         
         row = cursor.fetchone(); conn.close()
         if row: return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
-        return {"area": area, "data": []}
+        
+        # Valor por defecto según el área
+        DEFAULT_OBJECTS = ['attendance', 'permissions', 'config']
+        return {"area": area, "data": {} if area in DEFAULT_OBJECTS else []}
     except Exception as e: return {"status": "error", "message": str(e)}
 
 @app.post("/api/logistics/{area}")
