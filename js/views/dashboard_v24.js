@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.14';
 
 
-const VERSION = '25.1.15';
+const VERSION = '25.1.16';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -56,11 +56,9 @@ const saveAlmacenajeTasks = async () => {
       localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        // [ELIMINADO] Sincronización Total: Ahora permite mandar listas vacías si el usuario borra todo.
-        const eliteTasks = almacenajeTasksCache.slice(-10);
-
-        console.log(`🚀 [PULSE] Sincronización de Élite: Enviando ${eliteTasks.length} tareas a la nube.`);
-        const success = await adminService.saveAlmacenajeTasks(eliteTasks);
+        // [SIN LÍMITES] Sincronización Completa: Ahora se envía la lista total de tareas sin recortes.
+        console.log(`🚀 [PULSE] Sincronización Total: Enviando ${almacenajeTasksCache.length} tareas a la nube.`);
+        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
         
         if (success) {
             updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
