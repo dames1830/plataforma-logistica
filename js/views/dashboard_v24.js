@@ -1,11 +1,11 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.6';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.7';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.7.6';
-import { login as authLogin } from '../services_v245/auth.js?v=24.7.6';
-import * as syncEngine from './sync_engine_v24_9.js?v=24.7.6';
+import * as adminService from '../services_v245/adminService.js?v=24.7.7';
+import { login as authLogin } from '../services_v245/auth.js?v=24.7.7';
+import * as syncEngine from './sync_engine_v24_9.js?v=24.7.7';
 
 
-const VERSION = '24.7.6';
+const VERSION = '24.7.7';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
