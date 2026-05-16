@@ -20,8 +20,12 @@ export const syncStore = {
 export let isFirstPullDone = false;
 
 export async function initSync() {
-    console.log("🚀 [PULSE] Inicializando Motor v25.1.3...");
-    await pullGlobal();
+    console.log("🚀 [PULSE] Inicializando Motor v25.1.19...");
+    try {
+        await pullGlobal();
+    } catch (e) {
+        console.warn("⚠️ [PULSE] Error en carga inicial, pero activando motor:", e);
+    }
     isFirstPullDone = true;
     console.log("✅ [PULSE] Primera sincronización completada.");
     setInterval(pullGlobal, 30000);
