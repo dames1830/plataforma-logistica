@@ -29,7 +29,9 @@ export const pullGlobal = async (areasInput = ['workers', 'users', 'permissions'
 
     const results = await Promise.all(areas.map(async (area) => {
         try {
-            const res = await fetch(`${API_BASE}/${area}?z=${Date.now()}`);
+            const res = await fetch(`${API_BASE}/${area}?z=${Date.now()}`, {
+                headers: { 'X-Environment': 'production' }
+            });
             if (res.ok) {
                 const result = await res.json();
                 let data = result.data !== undefined ? result.data : result;
@@ -86,7 +88,10 @@ export const pushChange = async (area, data) => {
 
         const res = await fetch(`${API_BASE}/${area}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
             body: JSON.stringify(payload)
         });
 

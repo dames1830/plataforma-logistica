@@ -113,7 +113,6 @@ async def save_area_data(area: str, request: Request):
     conn.commit()
     conn.close()
     return {"status": "success", "rows": len(payload_data)}
-en(payload_data)}
 
 # =============================================
 # API DE USUARIOS Y PRIVILEGIOS
