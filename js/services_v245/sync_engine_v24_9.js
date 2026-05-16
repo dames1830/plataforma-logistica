@@ -100,8 +100,12 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                         }
                     }
 
-                    // --- DESERIALIZACIÓN DANIEL v24.9.2 ---
+                    // --- BLINDAJE DE HIERRO v25.0.0 ---
                     if (area === 'almacenaje_tasks' && Array.isArray(newData)) {
+                        if (newData.length === 0 && syncStore[area].length > 0) {
+                            console.warn("🛡️ [PULSE] Bloqueando intento de vaciado de tareas desde la nube.");
+                            return true;
+                        }
                         syncStore[area] = newData.map(t => {
                             if (t._comp && Array.isArray(t.items)) {
                                 const restoredItems = t.items.map(artArr => {

@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.9.10';
+import * as adminService from '../services_v245/adminService.js?v=25.0.0';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.10';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.0.0';
 
 
-const VERSION = '24.9.10';
+const VERSION = '25.0.0';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -56,12 +56,15 @@ const saveAlmacenajeTasks = async () => {
       localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        // 2. Sincronización Ultra-Ágil (SOLO HOY a la nube para evitar Error 500 de Render)
-        const logicalDate = new Date().toLocaleDateString('en-GB'); // Formato DD/MM/YYYY que usamos en las tareas
-        const todayTasks = almacenajeTasksCache.filter(t => t.fecha === logicalDate);
+        // [BLINDAJE MAESTRO v25.0.0] Solo sincronizar si hay tareas. NUNCA mandar lista vacía si tenemos datos.
+        if (almacenajeTasksCache.length === 0) {
+            console.log("ℹ️ [SYNC] No hay tareas para sincronizar.");
+            updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
+            return;
+        }
 
-        console.log(`🚀 [PULSE] Sincronización de Hoy: Enviando ${todayTasks.length} de ${almacenajeTasksCache.length} tareas a la nube.`);
-        const success = await adminService.saveAlmacenajeTasks(todayTasks);
+        console.log(`🚀 [PULSE] Sincronización Maestra: Enviando ${almacenajeTasksCache.length} tareas a la nube.`);
+        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
         
         if (success) {
             updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
@@ -115,8 +118,8 @@ setInterval(async () => {
             if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
                 console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
                 
-                // [INTELIGENCIA HÍBRIDA v24.9.8] Súper Blindaje: Solo actualizar si la nube tiene IGUAL o MÁS tareas que el PC
-                if (synced && synced.length >= almacenajeTasksCache.length) {
+                // [INTELIGENCIA HÍBRIDA v25.0.0] Blindaje de Hierro: Solo actualizar si la nube tiene DATOS y son IGUAL O MÁS que el PC
+                if (synced && synced.length > 0 && synced.length >= almacenajeTasksCache.length) {
                     almacenajeTasksCache = synced.map(newTask => {
                         const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
                         if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
