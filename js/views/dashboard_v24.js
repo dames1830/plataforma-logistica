@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.1';
+const VERSION = '24.8.2';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4347,6 +4347,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
+                                        <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
                                         <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
                                         <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                     </td>
@@ -4572,6 +4573,59 @@ export const renderDashboard = async (container, user, onLogout) => {
             alert("❌ Error crítico al abrir calendario: " + err.message);
             console.error(err);
         }
+    };
+
+    window.editTaskTimes = (taskId) => {
+        const task = almacenajeTasksCache.find(t => t.id === taskId);
+        if (!task) return;
+
+        const modal = document.createElement('div');
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+        
+        // Helper para formatear ISO a input time (HH:mm)
+        const toTimeInput = (iso) => iso ? new Date(iso).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) : '';
+        
+        modal.innerHTML = `
+            <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid var(--primary); border-radius:15px; box-shadow: 0 0 30px rgba(79,70,229,0.3);">
+                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">✏️ Editar Tiempos - ${taskId}</h3>
+                <div style="display:flex; flex-direction:column; gap:15px;">
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">HORA INICIO:</label>
+                        <input type="time" id="edit_start" value="${toTimeInput(task.inicio)}" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; font-size:1.2rem; font-weight:800; outline:none; color-scheme:dark;">
+                    </div>
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">HORA TÉRMINO:</label>
+                        <input type="time" id="edit_end" value="${toTimeInput(task.termino)}" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; font-size:1.2rem; font-weight:800; outline:none; color-scheme:dark;">
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <button id="save_times" class="btn" style="flex:1; background:var(--primary); font-weight:800;">GUARDAR CAMBIOS</button>
+                        <button id="close_edit" class="btn" style="flex:1; background:rgba(255,255,255,0.05); color:var(--text-muted);">CANCELAR</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('#save_times').onclick = () => {
+            const newStart = modal.querySelector('#edit_start').value;
+            const newEnd = modal.querySelector('#edit_end').value;
+            
+            if (!newStart || !newEnd) { alert("⚠️ Ambas horas son obligatorias."); return; }
+
+            // Re-construir ISO conservando la fecha original de la tarea
+            const baseDate = task.fecha || new Date().toISOString().split('T')[0];
+            task.inicio = `${baseDate}T${newStart}:00`;
+            task.termino = `${baseDate}T${newEnd}:00`;
+            
+            // Si tiene horas, forzar status a Finalizado para que se calcule productividad
+            task.status = 'Finalizado';
+
+            saveAlmacenajeTasks().then(() => {
+                document.body.removeChild(modal);
+                renderAlmacenajeTareas(container);
+            });
+        };
+        modal.querySelector('#close_edit').onclick = () => document.body.removeChild(modal);
     };
 
     window.processAlmacenajeTasks = processAlmacenajeTasks;
