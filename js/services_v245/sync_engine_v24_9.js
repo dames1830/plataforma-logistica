@@ -8,7 +8,10 @@ export const syncStore = {
     almacenaje_tasks: [],
     attendance: {},
     permissions: {},
-    workers: [], // RESTAURADO
+    workers: [], 
+    users: [], // AÑADIDO
+    performance: {}, // AÑADIDO
+    performance_log: [], // AÑADIDO
     config: {}
 };
 
@@ -23,7 +26,7 @@ export async function initSync() {
 
 export async function pullGlobal() {
     console.log("📥 [PULSE] Sincronización: Descargando...");
-    const areas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers']; // WORKERS INCLUIDO
+    const areas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log']; // ÁREAS COMPLETADAS
 
     const results = await Promise.all(areas.map(async (area) => {
         try {
