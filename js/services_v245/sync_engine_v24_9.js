@@ -86,7 +86,7 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                 if (isResurrectionActive && hasLocalData && isNewDataEmpty) {
                     console.log(`🛡️ [PULSE] Escudo Activo: Protegiendo "${area}" local contra nube vacía.`);
                 } else {
-                    // --- DISCO DE ACERO v24.9.7 ---
+                    // --- DISCO DE ACERO v24.9.8 ---
                     // Solo protegemos el Performance Log. Almacenaje debe poder vaciarse si el servidor lo pide.
                     if (area === 'performance_log') {
                         const newCount = Array.isArray(newData) ? newData.length : 0;
@@ -173,25 +173,8 @@ export const pushChange = async (area, data) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        // [ESTRATEGIA DANIEL v24.9.4] Ultra-Seguridad (1 por 1)
-        // Mandamos las tareas de una en una para que el servidor no tenga NINGUNA excusa para fallar
-        if (payload.length > 1 && area === 'almacenaje_tasks') {
-            console.log("📦 [PULSE] Iniciando Sincronización de Ultra-Seguridad (1 por 1)...");
-            let allSuccess = true;
-            for (let i = 0; i < payload.length; i++) {
-                const chunk = payload.slice(i, i + 1); // Solo UNA tarea
-                const res = await fetch(`${API_BASE}/${area}`, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify(chunk),
-                    signal: controller.signal
-                });
-                if (!res.ok) allSuccess = false;
-            }
-            clearTimeout(timeoutId);
-            return allSuccess;
-        }
+        /* [DESACTIVADO v24.9.8] La entrega 1-a-1 borraba las tareas anteriores en el servidor.
+           Volvemos al envío en bloque con Compresión Daniel. */
 
         const res = await fetch(`${API_BASE}/${area}`, {
             method: 'POST',

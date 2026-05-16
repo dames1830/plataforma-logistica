@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.9.7';
+import * as adminService from '../services_v245/adminService.js?v=24.9.8';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.7';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.8';
 
 
-const VERSION = '24.9.7';
+const VERSION = '24.9.8';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -110,8 +110,8 @@ setInterval(async () => {
             if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
                 console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
                 
-                // [INTELIGENCIA HÍBRIDA v24.9.6] Blindaje Radar: No borrar si la nube no tiene datos
-                if (synced && synced.length > 0) {
+                // [INTELIGENCIA HÍBRIDA v24.9.8] Súper Blindaje: Solo actualizar si la nube tiene IGUAL o MÁS tareas que el PC
+                if (synced && synced.length >= almacenajeTasksCache.length) {
                     almacenajeTasksCache = synced.map(newTask => {
                         const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
                         if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
