@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.9.6';
+import * as adminService from '../services_v245/adminService.js?v=24.9.7';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.6';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.7';
 
 
-const VERSION = '24.9.6';
+const VERSION = '24.9.7';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3819,7 +3819,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
             if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
-            const item = { ubi: ubi, qty: qty, area: area, sku: skuFull, talla: tallaExtraida }; 
+            // [FIX v24.9.7] Usar skuFull para que la pantalla lo reconozca
+            const item = { ubi: ubi, qty: qty, area: area, skuFull: skuFull, talla: tallaExtraida }; 
             groups[sku7].items.push(item);
             if (area.toUpperCase().includes('CDBUFFER')) groups[sku7].bufferQty += qty;
             else groups[sku7].zonaQty += qty;

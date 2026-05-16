@@ -86,7 +86,7 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                 if (isResurrectionActive && hasLocalData && isNewDataEmpty) {
                     console.log(`🛡️ [PULSE] Escudo Activo: Protegiendo "${area}" local contra nube vacía.`);
                 } else {
-                    // --- DISCO DE ACERO v24.6.6 ---
+                    // --- DISCO DE ACERO v24.9.7 ---
                     // Solo protegemos el Performance Log. Almacenaje debe poder vaciarse si el servidor lo pide.
                     if (area === 'performance_log') {
                         const newCount = Array.isArray(newData) ? newData.length : 0;
