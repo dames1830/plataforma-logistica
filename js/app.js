@@ -7,9 +7,9 @@ import * as adminService from './services_v245/adminService.js?v=25.1.9';
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v25.1.11';
+    this.APP_VERSION = 'v25.1.12';
     
-    // --- LIMPIEZA DE CACHÉ FORZADA v25.1.11 ---
+    // --- LIMPIEZA DE CACHÉ FORZADA v25.1.12 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
     if (lastVer !== this.APP_VERSION) {
         console.warn("🧹 [PULSE] Detectada versión nueva. Limpiando caché de scripts...");
