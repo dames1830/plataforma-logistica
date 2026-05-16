@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.9.1';
+import * as adminService from '../services_v245/adminService.js?v=24.9.2';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.1';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.2';
 
 
-const VERSION = '24.9.1';
+const VERSION = '24.9.2';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -56,28 +56,19 @@ const saveAlmacenajeTasks = async () => {
       localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-      // 2. Sincronización Global OBLIGATORIA
-      const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
-      if (success) {
-          updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
-          setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
-      } else {
-          // [FALLBACK v24.8.4] Enviar solo cabezales a la nube, pero PRESERVAR detalle en memoria local
-          console.warn("⚠️ [SYNC] Detalle pesado. Usando Sincronización Ligera para la nube...");
-          const lightTasks = almacenajeTasksCache.map(t => ({...t, items: []})); 
-          const lightSuccess = await adminService.saveAlmacenajeTasks(lightTasks);
-          if (lightSuccess) {
-              updateSyncIndicator('online', 'NUBE ACTUALIZADA (Modo Ligero) 🕊️');
-              setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
-          } else {
-              updateSyncIndicator('offline', 'FALLO TOTAL DE NUBE');
-          }
-          // IMPORTANTE: NO tocamos almacenajeTasksCache aquí, para que el DETALLE siga vivo en pantalla.
-      }
-  } catch (e) { 
-      console.error("[SYNC] Error crítico:", e);
-      updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
-  }
+        // 2. Sincronización Global OBLIGATORIA
+        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+        if (success) {
+            updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
+            setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+        } else {
+            console.warn("⚠️ [SYNC] Error de sincronización. Los datos permanecen seguros en tu PC.");
+            updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
+        }
+    } catch (e) { 
+        console.error("[SYNC] Error crítico:", e);
+        updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
+    }
 };
 
 const loadAlmacenajeTasks = async () => {

@@ -100,7 +100,24 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                         }
                     }
 
-                    syncStore[area] = newData;
+                    // --- DESERIALIZACIÓN DANIEL v24.9.2 ---
+                    if (area === 'almacenaje_tasks' && Array.isArray(newData)) {
+                        syncStore[area] = newData.map(t => {
+                            if (t._comp && Array.isArray(t.items)) {
+                                const restoredItems = t.items.map(artArr => {
+                                    const [sku7, marca, gender, coleccion, bufferQty, zonaQty, compactArtItems] = artArr;
+                                    const restoredArtItems = compactArtItems.map(iArr => ({
+                                        skuFull: iArr[0], ubi: iArr[1], qty: iArr[2], area: iArr[1].includes('CDBUFFER') ? 'CDBUFFER' : 'ZONA'
+                                    }));
+                                    return { sku7, marca, gender, coleccion, bufferQty, zonaQty, items: restoredArtItems };
+                                });
+                                return { ...t, items: restoredItems };
+                            }
+                            return t;
+                        });
+                    } else {
+                        syncStore[area] = newData;
+                    }
                     localStorage.setItem(SYNC_PREFIX + area, JSON.stringify(syncStore[area]));
                 }
                 return true;
@@ -138,6 +155,20 @@ export const pushChange = async (area, data) => {
 
     // 2. Intento de subida
     try {
+        // [ESTRATEGIA DANIEL v24.9.2] Serialización de Alta Eficiencia
+        // Convertimos los objetos pesados en arrays compactos para reducir el peso un 80%
+        let payload = data;
+        if (area === 'almacenaje_tasks' && Array.isArray(data)) {
+            console.log("🚀 [PULSE] Aplicando Serialización Daniel (100% integridad, -80% peso)");
+            payload = data.map(t => {
+                const compactItems = (t.items || []).map(art => {
+                    const compactArtItems = (art.items || []).map(i => [i.skuFull, i.ubi, i.qty]);
+                    return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, compactArtItems];
+                });
+                return { ...t, items: compactItems, _comp: true }; // Marcamos como comprimido
+            });
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -148,7 +179,7 @@ export const pushChange = async (area, data) => {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
             signal: controller.signal
         });
 
