@@ -1,5 +1,5 @@
 /**
- * SYNC ENGINE v25.0.5 - Motor de Sincronización Global (Cero Fallos)
+ * SYNC ENGINE v25.0.6 - Motor de Sincronización Global (Cero Fallos)
  * Este motor centraliza toda la comunicación con la nube y garantiza la integridad de datos entre múltiples PCs.
  */
 
@@ -160,19 +160,9 @@ export const pushChange = async (area, data) => {
 
     // 2. Intento de subida
     try {
-        // [ESTRATEGIA DANIEL v24.9.2] Serialización de Alta Eficiencia
-        // Convertimos los objetos pesados en arrays compactos para reducir el peso un 80%
         let payload = data;
-        if (area === 'almacenaje_tasks' && Array.isArray(data)) {
-            console.log("🚀 [PULSE] Aplicando Serialización Daniel (100% integridad, -80% peso)");
-            payload = data.map(t => {
-                const compactItems = (t.items || []).map(art => {
-                    const compactArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA']);
-                    return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, compactArtItems];
-                });
-                return { ...t, items: compactItems, _comp: true }; // Marcamos como comprimido
-            });
-        }
+        /* [DESACTIVADO v25.0.6] La compresión Daniel causaba errores 500 en el backend. 
+           Volvemos al envío estándar para máxima compatibilidad. */
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
