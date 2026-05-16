@@ -162,7 +162,7 @@ export const pushChange = async (area, data) => {
             console.log("🚀 [PULSE] Aplicando Serialización Daniel (100% integridad, -80% peso)");
             payload = data.map(t => {
                 const compactItems = (t.items || []).map(art => {
-                    const compactArtItems = (art.items || []).map(i => [i.skuFull, i.ubi, i.qty]);
+                    const compactArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty]);
                     return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, compactArtItems];
                 });
                 return { ...t, items: compactItems, _comp: true }; // Marcamos como comprimido
@@ -172,13 +172,13 @@ export const pushChange = async (area, data) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        // [ESTRATEGIA DANIEL v24.9.3] Entrega Segura (Chunking)
-        // Si el payload es pesado, lo mandamos en bloques para que Render no lo rechace
-        if (payload.length > 50 && area === 'almacenaje_tasks') {
-            console.log("📦 [PULSE] Payload pesado. Iniciando Entrega Segura por bloques...");
+        // [ESTRATEGIA DANIEL v24.9.4] Ultra-Seguridad (1 por 1)
+        // Mandamos las tareas de una en una para que el servidor no tenga NINGUNA excusa para fallar
+        if (payload.length > 1 && area === 'almacenaje_tasks') {
+            console.log("📦 [PULSE] Iniciando Sincronización de Ultra-Seguridad (1 por 1)...");
             let allSuccess = true;
-            for (let i = 0; i < payload.length; i += 20) {
-                const chunk = payload.slice(i, i + 20);
+            for (let i = 0; i < payload.length; i++) {
+                const chunk = payload.slice(i, i + 1); // Solo UNA tarea
                 const res = await fetch(`${API_BASE}/${area}`, {
                     method: 'POST',
                     mode: 'cors',
