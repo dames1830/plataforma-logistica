@@ -104,7 +104,9 @@ def get_area_data(area: str, date: Optional[str] = None):
     try:
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
         
-        # CASO ESPECIAL: USUARIOS (sacar de tabla maestra)
+        # ÁREAS SINGLETON (Siempre un solo registro maestro)
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks']
+        
         if area == 'users':
             cursor.execute("SELECT username, password, name, role, active FROM users")
             rows = cursor.fetchall()
@@ -112,7 +114,6 @@ def get_area_data(area: str, date: Optional[str] = None):
             conn.close()
             return {"area": "users", "data": data}
             
-        # CASO ESPECIAL: PERMISOS (sacar de tabla maestra)
         if area == 'permissions':
             cursor.execute("SELECT role, module, allowed FROM role_permissions")
             rows = cursor.fetchall()
@@ -123,18 +124,12 @@ def get_area_data(area: str, date: Optional[str] = None):
             conn.close()
             return {"area": "permissions", "data": data}
 
-        # CASO GENERAL: SNAPSHOTS (Logistics/Performance/Workers)
-        if date:
+        # Lógica de búsqueda optimizada
+        if area in SINGLETON_AREAS:
+            cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, "MASTER"))
+        elif date:
             cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, date))
         else:
-            # Si es workers, buscar el snapshot 'MASTER' primero
-            if area == 'workers':
-                cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, "MASTER"))
-                row = cursor.fetchone()
-                if row: 
-                    conn.close()
-                    return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
-            
             cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC LIMIT 1", (area,))
         
         row = cursor.fetchone(); conn.close()
@@ -148,8 +143,10 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         payload_data = await request.json()
         json_string = json.dumps(payload_data)
         
-        # Prioridad de fecha: 1. Query Param (?date=), 2. Hoy
-        target_date = date if date else datetime.now().strftime("%Y-%m-%d")
+        # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks']
+        
+        target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
         cursor.execute("""
@@ -159,7 +156,6 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit(); conn.close()
         
-        # Retornar info útil
         return {"status": "success", "area": area, "date": target_date}
     except Exception as e:
         return {"status": "error", "message": str(e)}
