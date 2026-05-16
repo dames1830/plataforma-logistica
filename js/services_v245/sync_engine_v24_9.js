@@ -138,10 +138,21 @@ export const pushChange = async (area, data) => {
 
     // 2. Intento de subida
     try {
-        // [MOD v24.8.9] Lógica de Fragmentación para datos pesados (Almacenaje)
-        if (area === 'almacenaje_tasks' && Array.isArray(data) && data.some(t => t.items && t.items.length > 50)) {
-            console.warn("📦 [SYNC v24] Datos pesados detectados. Iniciando Empuje Fragmentado...");
-            return await pushChunked(area, data);
+        // [OPTIMIZACIÓN DANIEL v24.9.0] Reducir peso antes de enviar
+        let payload = data;
+        if (area === 'almacenaje_tasks' && Array.isArray(data)) {
+            console.log("⚖️ [SYNC] Optimizando carga para Daniel (v24.9.0)...");
+            payload = data.map(t => ({
+                ...t,
+                items: (t.items || []).map(art => ({
+                    sku7: art.sku7,
+                    items: (art.items || []).map(i => ({
+                        skuFull: i.skuFull,
+                        ubi: i.ubi,
+                        qty: i.qty
+                    }))
+                }))
+            }));
         }
 
         const controller = new AbortController();
@@ -154,7 +165,7 @@ export const pushChange = async (area, data) => {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
             signal: controller.signal
         });
 
