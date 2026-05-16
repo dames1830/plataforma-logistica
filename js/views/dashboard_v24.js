@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.6';
+const VERSION = '24.8.7';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -113,8 +113,18 @@ setInterval(async () => {
         if (currentTab === 'almacenaje') {
             const synced = adminService.adminStore.almacenaje_tasks;
             if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
-                console.log("✨ [RADAR v24] Datos nuevos detectados. Refrescando UI.");
-                almacenajeTasksCache = synced;
+                console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
+                
+                // [NUEVO] Fusión inteligente: No permitir que la nube borre detalles locales
+                almacenajeTasksCache = synced.map(newTask => {
+                    const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
+                    // Si la nube manda items vacíos pero localmente tenemos datos, PRESERVAR local
+                    if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                        return { ...newTask, items: localTask.items };
+                    }
+                    return newTask;
+                });
+
                 const areaContent = document.getElementById('areaContent');
                 if (areaContent) renderAlmacenajeTareas(areaContent);
             }
