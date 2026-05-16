@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.5';
+const VERSION = '24.8.6';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4203,14 +4203,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const uList = [t.u1, t.u2].filter(u => u && u !== '---');
                                     
                                     if (uList.length > 0) {
-                                        const baseQty = (uList.length === 2) ? Math.ceil(t.qty / 2) : t.qty;
-                                        uList.forEach(user => {
+                                        uList.forEach((user, idx) => {
+                                            const qtyForThisUser = (uList.length === 2) 
+                                                ? (idx === 0 ? Math.ceil(t.qty / 2) : Math.floor(t.qty / 2)) 
+                                                : t.qty;
+                                                
                                             let uph = 0;
                                             let pct = 0;
                                             let ok = false;
                                             
                                             if (totalMinutes > 0) {
-                                                uph = (baseQty / totalMinutes) * 60;
+                                                uph = (qtyForThisUser / totalMinutes) * 60;
                                                 pct = Math.round((uph / 150) * 100);
                                                 ok = uph >= 150;
                                             }
@@ -4218,7 +4221,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             indRows.push({
                                                 fecha: t.fecha,
                                                 user: user,
-                                                qty: baseQty,
+                                                qty: qtyForThisUser,
                                                 inicio: t.inicio,
                                                 termino: t.termino,
                                                 time: timeStr,
@@ -4359,9 +4362,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                     </td>
                                 </tr>`;
-                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => t.items.flatMap(art => {
+                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => (t.items || []).flatMap(art => {
                                 // [STABLE] Recuperar información optimizada del mapa pre-calculado
-                                const bufferItems = art.items;
+                                const bufferItems = art.items || [];
                                 const bufferUbis = new Set(bufferItems.map(bi => bi.ubi));
                                 const uniqueSkus = [...new Set(bufferItems.map(i => i.skuFull))];
                                 const otherZoneItems = [];
