@@ -3,7 +3,7 @@
  * Este motor centraliza toda la comunicación con la nube y garantiza la integridad de datos entre múltiples PCs.
  */
 
-const API_BASE = 'https://logistics-backend-wv8x.onrender.com/api/logistics';
+const API_BASE = 'https://logistics-backend.onrender.com/api/logistics';
 const SYNC_PREFIX = 'logistics_sync_v24_';
 const TIMEOUT_MS = 60000; // 60 segundos de paciencia
 
@@ -55,9 +55,13 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-            const res = await fetch(`${API_BASE}/${area}`, {
+            const res = await fetch(`${API_BASE}/${area}?z=${Date.now()}`, {
                 method: 'GET',
-                headers: { 'X-Environment': 'production' },
+                mode: 'cors',
+                cache: 'no-cache',
+                headers: { 
+                    'Accept': 'application/json'
+                },
                 signal: controller.signal
             });
             
@@ -139,8 +143,10 @@ export const pushChange = async (area, data) => {
 
         const res = await fetch(`${API_BASE}/${area}`, {
             method: 'POST',
+            mode: 'cors',
             headers: { 
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(data),
             signal: controller.signal

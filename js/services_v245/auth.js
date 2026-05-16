@@ -1,5 +1,5 @@
 // URL del servidor backend para autenticación
-const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
+const AUTH_API = "https://logistics-backend.onrender.com/api";
 
 // Fallback local en caso de que el servidor esté caído
 export const login = async (username, password) => {
