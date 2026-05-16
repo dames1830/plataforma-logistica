@@ -143,20 +143,24 @@ def get_area_data(area: str, date: Optional[str] = None):
     except Exception as e: return {"status": "error", "message": str(e)}
 
 @app.post("/api/logistics/{area}")
-async def save_area_data(area: str, request: Request):
+async def save_area_data(area: str, request: Request, date: Optional[str] = None):
     try:
         payload_data = await request.json()
         json_string = json.dumps(payload_data)
-        today_date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Prioridad de fecha: 1. Query Param (?date=), 2. Hoy
+        target_date = date if date else datetime.now().strftime("%Y-%m-%d")
         
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
-        """, (area, today_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit(); conn.close()
-        return {"status": "success", "rows": len(payload_data)}
+        
+        # Retornar info útil
+        return {"status": "success", "area": area, "date": target_date}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=25.1.20';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.1.21';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -10,8 +10,8 @@ export const initializeAdminData = async (force = false) => {
     return await syncEngine.initSync(force);
 };
 
-export const save = async (area, data) => {
-    return await syncEngine.pushChange(area, data);
+export const save = async (area, data, date = null) => {
+    return await syncEngine.pushChange(area, data, date);
 };
 
 // --- GETTERS (Ahora usan el syncStore centralizado) ---
@@ -79,13 +79,13 @@ export const saveAttendance = async (dateStr, data) => {
         });
         await save('performance_log', adminStore.performance_log);
     }
-    return await save('attendance', adminStore.attendance);
+    return await save('attendance', adminStore.attendance, dateStr);
 };
 
 export const reopenAttendance = async (dateStr) => {
     if (!adminStore.attendance[dateStr]) return;
     adminStore.attendance[dateStr].finalized = false;
-    return await save('attendance', adminStore.attendance);
+    return await save('attendance', adminStore.attendance, dateStr);
 };
 
 export const updatePerformanceLogEntry = async (date, dni, updates) => {

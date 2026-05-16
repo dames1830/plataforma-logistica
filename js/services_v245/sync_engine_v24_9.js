@@ -73,7 +73,7 @@ export async function pullGlobal() {
     return syncStore;
 }
 
-export async function pushChange(area, data) {
+export async function pushChange(area, data, date = null) {
     if (!data) return;
     try {
         let payload = data;
@@ -87,7 +87,8 @@ export async function pushChange(area, data) {
             });
         }
 
-        const res = await fetch(`${API_BASE}/${area}`, {
+        const url = date ? `${API_BASE}/${area}?date=${date}` : `${API_BASE}/${area}`;
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
