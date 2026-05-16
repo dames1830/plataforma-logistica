@@ -138,23 +138,6 @@ export const pushChange = async (area, data) => {
 
     // 2. Intento de subida
     try {
-        // [OPTIMIZACIÓN DANIEL v24.9.0] Reducir peso antes de enviar
-        let payload = data;
-        if (area === 'almacenaje_tasks' && Array.isArray(data)) {
-            console.log("⚖️ [SYNC] Optimizando carga para Daniel (v24.9.0)...");
-            payload = data.map(t => ({
-                ...t,
-                items: (t.items || []).map(art => ({
-                    sku7: art.sku7,
-                    items: (art.items || []).map(i => ({
-                        skuFull: i.skuFull,
-                        ubi: i.ubi,
-                        qty: i.qty
-                    }))
-                }))
-            }));
-        }
-
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -165,7 +148,7 @@ export const pushChange = async (area, data) => {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(data),
             signal: controller.signal
         });
 
@@ -187,42 +170,6 @@ export const pushChange = async (area, data) => {
         const indicatorText = document.getElementById('sync-text');
         if (indicatorText) indicatorText.innerText = errorMsg;
         return false;
-    }
-};
-
-/**
- * PUSH CHUNKED: Divide los datos en trozos para evitar Error 500 en servidores limitados.
- */
-const pushChunked = async (area, data) => {
-    try {
-        // [ESTRATEGIA v24.8.9] Mandar primero el esqueleto y luego los detalles por partes
-        // Para simplificar en Render (Node/Express), mandaremos bloques de tareas completas
-        const CHUNK_SIZE = 5; // Mandar de 5 en 5 tareas pesadas
-        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-            const chunk = data.slice(i, i + CHUNK_SIZE);
-            console.log(`📤 [SYNC] Enviando Bloque ${Math.floor(i/CHUNK_SIZE) + 1}...`);
-            
-            const res = await fetch(`${API_BASE}/${area}/append`, { // Usar endpoint de anexar si existe, o POST normal si el backend lo permite
-                method: 'POST',
-                mode: 'cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(chunk)
-            });
-            
-            if (!res.ok) throw new Error(`Fallo en bloque ${i}`);
-        }
-        console.log("✅ [SYNC] Empuje fragmentado completado exitosamente.");
-        return true;
-    } catch (e) {
-        console.error("❌ [SYNC] Fallo en empuje fragmentado. Reintentando modo normal...", e);
-        // Fallback: Intentar mandar todo una vez más por si fue un fallo temporal
-        const res = await fetch(`${API_BASE}/${area}`, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.ok;
     }
 };
 
