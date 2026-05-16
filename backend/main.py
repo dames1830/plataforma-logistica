@@ -167,7 +167,7 @@ async def create_user(payload: UserPayload, request: Request):
 @app.put("/api/users/{user_id}")
 async def update_user(user_id: int, request: Request):
     body = await request.json()
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(get_db_path(request))
     cursor = conn.cursor()
     
     fields = []
@@ -235,7 +235,7 @@ async def update_role_permissions(role: str, request: Request):
     body = await request.json()
     modules = body.get("modules", {})
     
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(get_db_path(request))
     cursor = conn.cursor()
     
     for module, allowed in modules.items():
@@ -253,8 +253,8 @@ async def update_role_permissions(role: str, request: Request):
 # =============================================
 
 @app.get("/api/logs")
-def get_logs(username: Optional[str] = None, date: Optional[str] = None):
-    conn = sqlite3.connect(DB_FILE)
+def get_logs(request: Request, username: Optional[str] = None, date: Optional[str] = None):
+    conn = sqlite3.connect(get_db_path(request))
     cursor = conn.cursor()
     query = "SELECT username, action, details, created_at FROM audit_logs WHERE 1=1"
     params = []
@@ -276,7 +276,7 @@ def get_logs(username: Optional[str] = None, date: Optional[str] = None):
 @app.post("/api/logs")
 async def add_log(request: Request):
     body = await request.json()
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(get_db_path(request))
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO audit_logs (username, action, details)
@@ -298,7 +298,7 @@ def get_buffer_config(request: Request):
 @app.put("/api/buffer/config")
 async def update_buffer_config(request: Request):
     body = await request.json()
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(get_db_path(request))
     cursor = conn.cursor()
     for key, value in body.items():
         cursor.execute("""
@@ -325,7 +325,7 @@ def get_shared_data(key: str, request: Request):
 @app.post("/api/shared/{key}")
 async def save_shared_data(key: str, request: Request):
     body = await request.json()
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(get_db_path(request))
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO shared_data (key, value_json, updated_by, updated_at)
