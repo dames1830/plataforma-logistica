@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.14';
 
 
-const VERSION = '25.1.18';
+const VERSION = '25.1.19';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -508,7 +508,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <h1 id="contentTitle" style="color:var(--primary); font-size:1.8rem; font-weight:800;">Cargando...</h1>
                 <p id="contentSubtitle" style="color:var(--text-muted); font-size:0.85rem;"></p>
             </div>
-            ${user.role === 'admin' ? `<button onclick="restoreAdminDataFromLocal()" class="btn" style="background:#ef4444; font-size:0.7rem; padding:5px 15px; width:auto; border-radius:8px;">⚠️ RESTAURAR ADMIN DESDE PC</button>` : ''}
         </div>
         <div id="contentArea"></div>
       </div>
