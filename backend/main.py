@@ -120,6 +120,52 @@ async def save_area_data(area: str, request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.post("/api/admin/restore/workers")
+async def restore_workers(request: Request):
+    try:
+        data = await request.json()
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        # Los trabajadores se guardan como un snapshot especial 'workers' con fecha 'MASTER'
+        cursor.execute("INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json) VALUES (?, ?, ?) ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json", ("workers", "MASTER", json.dumps(data)))
+        conn.commit(); conn.close()
+        return {"status": "success", "message": f"{len(data)} trabajadores restaurados"}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
+@app.post("/api/admin/restore/users")
+async def restore_users(request: Request):
+    try:
+        data = await request.json()
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        for u in data:
+            cursor.execute("INSERT INTO users (username, password, name, role, active) VALUES (?, ?, ?, ?, ?) ON CONFLICT(username) DO UPDATE SET password=excluded.password, name=excluded.name, role=excluded.role, active=excluded.active", (u['username'], u['password'], u['name'], u['role'], u.get('active', 1)))
+        conn.commit(); conn.close()
+        return {"status": "success", "message": f"{len(data)} usuarios restaurados"}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
+@app.post("/api/admin/restore/permissions")
+async def restore_permissions(request: Request):
+    try:
+        data = await request.json()
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        for p in data:
+            cursor.execute("INSERT INTO role_permissions (role, module, allowed) VALUES (?, ?, ?) ON CONFLICT(role, module) DO UPDATE SET allowed=excluded.allowed", (p['role'], p['module'], p['allowed']))
+        conn.commit(); conn.close()
+        return {"status": "success", "message": "Permisos restaurados"}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
+@app.post("/api/admin/restore/performance_history")
+async def restore_performance(request: Request):
+    try:
+        data = await request.json() # Esperamos un objeto { "YYYY-MM-DD": [records], ... }
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        count = 0
+        for date, records in data.items():
+            cursor.execute("INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json) VALUES (?, ?, ?) ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json", ("performance", date, json.dumps(records)))
+            count += 1
+        conn.commit(); conn.close()
+        return {"status": "success", "message": f"{count} días de historial restaurados"}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
 @app.post("/api/auth/login")
 async def api_login(request: Request):
     try:
