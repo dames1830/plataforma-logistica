@@ -1,5 +1,5 @@
 /**
- * SYNC ENGINE v24 - Motor de Sincronización Global (Cero Fallos)
+ * SYNC ENGINE v25.0.5 - Motor de Sincronización Global (Cero Fallos)
  * Este motor centraliza toda la comunicación con la nube y garantiza la integridad de datos entre múltiples PCs.
  */
 

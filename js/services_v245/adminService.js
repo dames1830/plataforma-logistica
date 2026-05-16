@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=24.8.0';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.0.5';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -37,6 +37,68 @@ export const saveWorker = async (worker) => {
     if (idx !== -1) adminStore.workers[idx] = { ...adminStore.workers[idx], ...worker };
     else adminStore.workers.push({ ...worker, active: true });
     return await save('workers', adminStore.workers);
+};
+
+export const toggleWorkerStatus = async (dni) => {
+    const worker = adminStore.workers.find(w => String(w.dni || w.Dni || '') === String(dni));
+    if (worker) {
+        worker.active = worker.active === false;
+        return await save('workers', adminStore.workers);
+    }
+};
+
+export const toggleUserStatus = async (username) => {
+    const user = adminStore.users.find(u => u.username === username);
+    if (user) {
+        user.active = user.active === false;
+        return await save('users', adminStore.users);
+    }
+};
+
+export const saveAttendance = async (dateStr, data) => {
+    adminStore.attendance[dateStr] = data;
+    
+    if (data.finalized) {
+        if (!adminStore.performance_log) adminStore.performance_log = [];
+        data.data.forEach(asist => {
+            if (asist.present) {
+                const exists = adminStore.performance_log.find(p => p.date === dateStr && p.dni === asist.dni);
+                if (!exists) {
+                    adminStore.performance_log.push({
+                        date: dateStr,
+                        dni: asist.dni,
+                        nombre: asist.nombre,
+                        apellidos: asist.apellidos,
+                        produccion: 10,
+                        bpa: 10,
+                        supervisor: 9,
+                        rendimiento: '96%'
+                    });
+                }
+            }
+        });
+        await save('performance_log', adminStore.performance_log);
+    }
+    return await save('attendance', adminStore.attendance);
+};
+
+export const reopenAttendance = async (dateStr) => {
+    if (!adminStore.attendance[dateStr]) return;
+    adminStore.attendance[dateStr].finalized = false;
+    return await save('attendance', adminStore.attendance);
+};
+
+export const updatePerformanceLogEntry = async (date, dni, updates) => {
+    const entry = adminStore.performance_log.find(p => p.date === date && p.dni === dni);
+    if (entry) {
+        Object.assign(entry, updates);
+        const p = parseFloat(entry.produccion || 0);
+        const b = parseFloat(entry.bpa || 0);
+        const s = parseFloat(entry.supervisor || 0);
+        const rend = ((p + b + s) / 30) * 100;
+        entry.rendimiento = Math.round(rend) + '%';
+        return await save('performance_log', adminStore.performance_log);
+    }
 };
 
 export const deleteWorker = async (dni) => {

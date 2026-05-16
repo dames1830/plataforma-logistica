@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.0.4';
+import * as adminService from '../services_v245/adminService.js?v=25.0.5';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.0.4';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.0.5';
 
 
-const VERSION = '25.0.4';
+const VERSION = '25.0.5';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1730,7 +1730,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     try {
                         btnClose.disabled = true;
                         btnClose.textContent = "⌛ ENVIANDO...";
-                        const success = await adminService.closeAttendanceAndSyncPerformance(forcedDate, localState);
+                        const success = await adminService.saveAttendance(forcedDate, { finalized: true, data: localState });
                         if (success) {
                             alert("✅ Información enviada a la nube");
                             renderAsistenciaSection(container);
@@ -2186,67 +2186,56 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderPerformanceHistory = (container) => {
     let log = adminService.getPerformanceLog();
-    if (!Array.isArray(log)) {
-        console.warn("[PULSE] Performance log was not an array, fixing...");
-        log = [];
-    }
+    if (!Array.isArray(log)) log = [];
     
-    // Función para exportar a Excel
     window.exportPerformanceToExcel = () => {
         if (!log.length) return alert('No hay datos para exportar.');
-        try {
-            const dataToExport = log.map(p => {
-                const worker = adminService.getWorkers().find(w => (w.dni || w.Dni) === p.dni);
-                const nombreCompleto = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
-                return {
-                    'Fecha': p.date,
-                    'DNI': p.dni,
-                    'Nombre Completo': nombreCompleto,
-                    'Asistencia': p.asistencia,
-                    'Puntualidad': p.puntualidad,
-                    'Producción (1-10)': p.produccion,
-                    'BPA (1-10)': p.bpa,
-                    'Supervisor (1-10)': p.supervisor,
-                    'Justificación': (p.justification && p.justification !== '') ? 'SI' : 'NO',
-                    'Rendimiento %': p.rendimiento
-                };
-            });
-
-            const ws = XLSX.utils.json_to_sheet(dataToExport);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Performance_Log");
-            XLSX.writeFile(wb, `Reporte_Performance_${new Date().toISOString().split('T')[0]}.xlsx`);
-        } catch (e) { alert("Error al generar el archivo Excel."); }
+        const dataToExport = log.map(p => {
+            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni) === p.dni);
+            const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
+            return {
+                'Fecha': p.date,
+                'DNI': p.dni,
+                'Nombre': displayName,
+                'Asistencia': p.asistencia,
+                'Puntualidad': p.puntualidad,
+                'Producción': p.produccion,
+                'BPA': p.bpa,
+                'Supervisor': p.supervisor,
+                'Rendimiento %': p.rendimiento
+            };
+        });
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Performance");
+        XLSX.writeFile(wb, `Performance_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
-    // Lógica de agrupamiento y Promedio
     const grouped = log.reduce((acc, p) => {
         if (!acc[p.date]) acc[p.date] = [];
         acc[p.date].push(p);
         return acc;
     }, {});
 
-    const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a)); // Recientes primero
+    const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
 
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h3 style="color:var(--primary); margin:0;">Historial de Performance Diaria</h3>
-            <button onclick="exportPerformanceToExcel()" class="btn" style="width:auto; background:#10b981; padding:0.6rem 1.2rem; font-size:0.8rem; font-weight:800; border-radius:8px; display:flex; align-items:center; gap:8px;">
-                <span>📊</span> EXPORTAR A EXCEL
-            </button>
+            <button onclick="exportPerformanceToExcel()" class="btn" style="width:auto; background:#10b981; padding:0.6rem 1.2rem; font-size:0.8rem; font-weight:800;">📊 EXPORTAR A EXCEL</button>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
                 <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                     <tr>
-                        <th style="padding:0.8rem; text-align:center; width:45px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
+                        <th style="padding:0.8rem; text-align:center; width:45px;">#</th>
                         <th style="padding:0.8rem; text-align:left;">TRABAJADOR / DNI</th>
-                        <th style="padding:0.8rem; text-align:center;">ASISTENCIA</th>
-                        <th style="padding:0.8rem; text-align:center;">PUNTUALIDAD</th>
-                        <th style="padding:0.8rem; text-align:center;">PRODUCCIÓN</th>
+                        <th style="padding:0.8rem; text-align:center;">ASIST.</th>
+                        <th style="padding:0.8rem; text-align:center;">PUNT.</th>
+                        <th style="padding:0.8rem; text-align:center;">PROD.</th>
                         <th style="padding:0.8rem; text-align:center;">BPA</th>
-                        <th style="padding:0.8rem; text-align:center;">SUPERVISOR</th>
-                        <th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th>
+                        <th style="padding:0.8rem; text-align:center;">SUP.</th>
+                        <th style="padding:0.8rem; text-align:center;">JUST.</th>
                         <th style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1);">RENDIMIENTO %</th>
                     </tr>
                 </thead>
@@ -2255,157 +2244,58 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const entries = grouped[date];
                         const avgRend = Math.round(entries.reduce((sum, e) => sum + (parseInt(e.rendimiento) || 0), 0) / entries.length);
                         return `
-                        <!-- CABECERA DE FECHA -->
                         <tr class="perf-date-header" data-date="${date}" style="cursor:pointer; background:rgba(79,70,229,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">
-                                <span style="margin-right:10px; color:var(--primary); font-size:1rem;">📅</span> 
-                                <span style="color:#60a5fa;">${date}</span> 
-                                <small style="margin-left:15px; color:rgba(255,255,255,0.3); font-weight:400;">(${entries.length} registros)</small>
-                            </td>
-                            <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;">
-                                <span style="font-size:0.65rem; color:var(--text-muted);">Prom:</span> <span id="avg-${date}">${avgRend}%</span>
-                            </td>
+                            <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">📅 ${date} <small style="margin-left:15px; color:rgba(255,255,255,0.3);">(${entries.length} registros)</small></td>
+                            <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;"><span id="avg-${date}">${avgRend}%</span></td>
                         </tr>
-                        <!-- FILAS DE TRABAJADORES -->
                         ${entries.map((p, idx) => {
-                            // Búsqueda robusta por DNI (sin espacios y como string)
-                            const worker = adminService.getWorkers().find(w => {
-                                const wDni = (w.dni || w.Dni || '').toString().trim();
-                                const pDni = (p.dni || '').toString().trim();
-                                return wDni === pDni;
-                            });
+                            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === (p.dni || '').toString().trim());
                             const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
                             return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
-                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
-                            <td style="padding:0.8rem;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <b style="color:#fff;">${displayName}</b>
-                                    <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-weight:700; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${p.dni}</span>
-                                </div>
-                            </td>
+                            <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${idx + 1}</td>
+                            <td style="padding:0.8rem;"><b>${displayName}</b> <br><small>${p.dni}</small></td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="asistencia" style="background:none; border:none; color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900; outline:none; cursor:pointer;">
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="asistencia" style="background:none; border:none; color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900;">
                                     <option value="P" ${p.asistencia==='P'?'selected':''}>P</option>
                                     <option value="F" ${p.asistencia==='F'?'selected':''}>F</option>
                                 </select>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÍ'?'var(--success)':'#ef4444'}; font-weight:700; outline:none; cursor:pointer;">
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÍ'?'var(--success)':'#ef4444'}; font-weight:700;">
                                     <option value="SÍ" ${p.puntualidad==='SÍ'?'selected':''}>SÍ</option>
                                     <option value="NO" ${p.puntualidad==='NO'?'selected':''}>NO</option>
                                 </select>
                             </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="number" min="0" max="10" value="${p.produccion || 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
-                            </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="number" min="0" max="10" value="${p.bpa || 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
-                            </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="number" min="0" max="10" value="${p.supervisor !== undefined ? p.supervisor : 0}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:50px; background:none; border:none; color:#fff; text-align:center; outline:none;">
-                            </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                <input type="text" id="just-${p.dni}-${p.date}" value="${p.justification || ''}" placeholder="NO" data-date="${p.date}" data-dni="${p.dni}" data-f="justification" class="edit-perf-log" style="width:100%; background:none; border:none; color:${p.justification ? '#fcd34d' : 'rgba(255,255,255,0.2)'}; text-align:center; outline:none; font-weight:800; font-size:0.75rem;">
-                            </td>
-                            <td style="padding:0.8rem; text-align:center; border:1px solid rgba(79,70,229,0.2); background:rgba(79,70,229,0.05); font-weight:900; color:#fcd34d;" id="rend-${p.dni}-${p.date}">
-                                ${p.rendimiento}
-                            </td>
-                        </tr>`; }).join('')}
-                        `;
-                    }).join('') : '<tr><td colspan="9" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en el historial. Cierra la asistencia del día para generar datos.</td></tr>'}
+                            <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:35px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:35px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:35px; background:none; border:none; color:#fff; text-align:center;"></td>
+                            <td style="padding:0.8rem; text-align:center; color:${p.justification?'#06b6d4':'rgba(255,255,255,0.2)'}; font-weight:700;">${p.justification?'SÍ':'NO'}</td>
+                            <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); font-weight:900; color:#fff;" id="rend-${p.dni}-${p.date}">${p.rendimiento}</td>
+                        </tr>`;
+                        }).join('')}`;
+                    }).join('') : '<tr><td colspan="9" style="padding:2rem; text-align:center; color:var(--text-muted);">Sin registros.</td></tr>'}
                 </tbody>
             </table>
         </div>
-        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem;">* Haz clic en una fecha para expandir/contraer. Los campos de producción, BPA y supervisor (escala 1-10) actualizan el % de rendimiento automáticamente.</p>
     `;
 
-    // Event listeners para Colapsar/Expandir
     document.querySelectorAll('.perf-date-header').forEach(header => {
         header.onclick = () => {
-            const date = header.dataset.date;
-            const rows = document.querySelectorAll(`.perf-row-${date}`);
-            const isHidden = rows[0].style.display === 'none';
-            rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
+            const rows = document.querySelectorAll(`.perf-row-${header.dataset.date}`);
+            rows.forEach(r => r.style.display = r.style.display === 'none' ? 'table-row' : 'none');
         };
     });
 
-    // Mejorar edición y navegación (Keyboard Friendly)
-    document.querySelectorAll('.edit-perf-log').forEach((input, index, all) => {
-        // Auto-selección al enfocar
-        input.onfocus = () => { if(input.select) input.select(); };
-
-        // Navegación por flechas o TAB
-        input.onkeydown = (e) => {
-            const rowsInTable = Array.from(document.querySelectorAll('.edit-perf-log'));
-            const currentIndex = rowsInTable.indexOf(e.target);
-            const colsPerRow = 6; // select(att), select(pun), produccion, bpa, supervisor, justificacion
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                const next = rowsInTable[currentIndex + colsPerRow];
-                if (next) next.focus();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                const prev = rowsInTable[currentIndex - colsPerRow];
-                if (prev) prev.focus();
-            } else if (e.key === 'ArrowRight' && (e.target.type !== 'number' || e.target.selectionEnd === e.target.value.length)) {
-                // Navegar derecha si no es número o si el cursor está al final
-                const next = rowsInTable[currentIndex + 1];
-                if (next) next.focus();
-            } else if (e.key === 'ArrowLeft' && (e.target.type !== 'number' || e.target.selectionStart === 0)) {
-                const prev = rowsInTable[currentIndex - 1];
-                if (prev) prev.focus();
-            }
-        };
-
-        // Cambio y cálculo instantáneo (Sin re-render total para no perder foco)
-        input.onchange = (e) => {
-            const { date, dni, f: field } = e.target.dataset;
-            let val = e.target.value;
-
-            if (field === 'produccion' || field === 'bpa' || field === 'supervisor') {
-                val = parseFloat(val) || 0;
-                if (val > 10) val = 10;
-                if (val < 0) val = 0;
-                e.target.value = val;
-            }
-
-            // Actualizar datos en memoria
-            adminService.updatePerformanceLogEntry(date, dni, { [field]: val });
-
-            // Recalcular rendimiento de la FILA localmente para la UI
-            const entry = adminService.getPerformanceLog().find(p => p.dni === dni && p.date === date);
-            if (entry) {
-                const cellRend = document.getElementById(`rend-${dni}-${date}`);
-                if (cellRend) cellRend.textContent = entry.rendimiento;
-                
-                // Actualizar color si es select
-                if (field === 'asistencia') e.target.style.color = val === 'P' ? 'var(--success)' : '#ef4444';
-                if (field === 'puntualidad') e.target.style.color = val === 'SÍ' ? 'var(--success)' : '#ef4444';
-                
-                // Actualizar indicador de Justificación
-                const cellJust = document.getElementById(`just-${dni}-${date}`);
-                if (cellJust) {
-                    const hasJ = (entry.justification && entry.justification !== '');
-                    if (cellJust.tagName === 'INPUT') {
-                        cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
-                    } else {
-                        cellJust.textContent = hasJ ? 'SI' : 'NO';
-                        cellJust.style.color = hasJ ? '#fcd34d' : 'rgba(255,255,255,0.2)';
-                    }
-                }
-
-                // Recalcular PROMEDIO DE LA FECHA en la cabecera
-                const allForDate = adminService.getPerformanceLog().filter(p => p.date === date);
-                const sum = allForDate.reduce((acc, curr) => acc + parseInt(curr.rendimiento || 0), 0);
-                const avgText = Math.round(sum / allForDate.length) + '%';
-                const cellAvg = document.getElementById(`avg-${date}`);
-                if (cellAvg) cellAvg.textContent = avgText;
-            }
+    document.querySelectorAll('.edit-perf-log').forEach(input => {
+        input.onchange = async (e) => {
+            const { date, dni, f } = e.target.dataset;
+            await adminService.updatePerformanceLogEntry(date, dni, { [f]: e.target.value });
+            renderPerformanceHistory(container);
         };
     });
   };
+
 
   const renderRFSection = (container) => {
     container.innerHTML = `
