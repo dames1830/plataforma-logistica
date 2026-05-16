@@ -89,6 +89,16 @@ def health():
         }
     except Exception as e: return {"status": "error", "message": str(e)}
 
+@app.get("/api/logistics/{area}/dates")
+def list_area_dates(area: str):
+    try:
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
+        dates = [r[0] for r in cursor.fetchall()]
+        conn.close()
+        return {"area": area, "dates": dates}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
 @app.get("/api/logistics/{area}")
 def get_area_data(area: str, date: Optional[str] = None):
     try:
@@ -130,16 +140,6 @@ def get_area_data(area: str, date: Optional[str] = None):
         row = cursor.fetchone(); conn.close()
         if row: return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
         return {"area": area, "data": []}
-    except Exception as e: return {"status": "error", "message": str(e)}
-
-@app.get("/api/logistics/{area}/dates")
-def list_area_dates(area: str):
-    try:
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
-        dates = [r[0] for r in cursor.fetchall()]
-        conn.close()
-        return {"area": area, "dates": dates}
     except Exception as e: return {"status": "error", "message": str(e)}
 
 @app.post("/api/logistics/{area}")
