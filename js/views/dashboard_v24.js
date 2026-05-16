@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.7.8';
+const VERSION = '24.8.0';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3974,7 +3974,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.URL.revokeObjectURL(url);
   };
 
-  const renderAlmacenajeTareas = (container) => {
+  window.renderAlmacenajeTareas = (container) => {
+    const renderAlmacenajeTareas = window.renderAlmacenajeTareas; // Local alias for internal calls
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
     
