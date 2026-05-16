@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.9.5';
+import * as adminService from '../services_v245/adminService.js?v=24.9.6';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.5';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.6';
 
 
-const VERSION = '24.9.5';
+const VERSION = '24.9.6';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2632,6 +2632,26 @@ export const renderDashboard = async (container, user, onLogout) => {
 
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
+              
+              // [BLINDAJE DANIEL v24.9.6] Fusión No-Destructiva
+              const serverTasks = adminService.adminStore.almacenaje_tasks;
+              if (Array.isArray(serverTasks) && serverTasks.length > 0) {
+                  serverTasks.forEach(st => {
+                      const localIdx = almacenajeTasksCache.findIndex(lt => lt.id === st.id);
+                      if (localIdx === -1) {
+                          almacenajeTasksCache.push(st);
+                      } else {
+                          const lt = almacenajeTasksCache[localIdx];
+                          if ((!st.items || st.items.length === 0) && lt.items && lt.items.length > 0) {
+                              almacenajeTasksCache[localIdx] = { ...st, items: lt.items };
+                          } else {
+                              almacenajeTasksCache[localIdx] = st;
+                          }
+                      }
+                  });
+                  localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+              }
+
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
@@ -3793,15 +3813,16 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const groups = {};
         filtered.forEach(row => {
-            const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
+            // [LOGICA POSICIONAL DANIEL v24.9.6] Columna B (index 1) y Columna C (index 2)
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const skuFull = String(raw[1] || '').trim(); // Columna B
             const sku7 = skuFull.substring(0, 7);
             const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
             const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
             const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
             
             // [LOGICA DANIEL v24.9.5] Extraer Talla de la Descripción (Columna C)
-            // Ejemplo: ...BUBBLEGUMMERS-1-26 -> Talla: 26
-            const desc = String(row['DescripciÃ³n'] || row['Descripcion'] || row['Descripción'] || '').trim();
+            const desc = String(raw[2] || '').trim(); // Columna C
             let tallaExtraida = 'S/TALLA';
             const tallaMatch = desc.match(/-[0-9]-(.+)$/);
             if (tallaMatch) {
