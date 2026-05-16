@@ -77,14 +77,18 @@ const loadAlmacenajeTasks = async () => {
       // Carga desde el puente v24 (que ya hizo el pull)
       const syncedTasks = await adminService.loadAlmacenajeTasks();
       if (Array.isArray(syncedTasks)) {
-          // [INTELIGENCIA HÍBRIDA v24.8.3] No sobreescribir detalles locales con vacíos de la nube
-          almacenajeTasksCache = syncedTasks.map(newTask => {
-              const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
-              if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
-                  return { ...newTask, items: localTask.items }; // Preservar detalle local
-              }
-              return newTask;
-          });
+          // [INTELIGENCIA HÍBRIDA v24.9.6] Blindaje Total: No permitir que la nube borre datos locales si está vacía
+          if (syncedTasks && syncedTasks.length > 0) {
+              almacenajeTasksCache = syncedTasks.map(newTask => {
+                  const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
+                  if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                      return { ...newTask, items: localTask.items }; // Preservar detalle local
+                  }
+                  return newTask;
+              });
+          } else {
+              console.log("☁️ [PULL] Nube vacía. Preservando historial local.");
+          }
           localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       }
       updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
@@ -106,15 +110,18 @@ setInterval(async () => {
             if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
                 console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
                 
-                // [NUEVO] Fusión inteligente: No permitir que la nube borre detalles locales
-                almacenajeTasksCache = synced.map(newTask => {
-                    const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
-                    // Si la nube manda items vacíos pero localmente tenemos datos, PRESERVAR local
-                    if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
-                        return { ...newTask, items: localTask.items };
-                    }
-                    return newTask;
-                });
+                // [INTELIGENCIA HÍBRIDA v24.9.6] Blindaje Radar: No borrar si la nube no tiene datos
+                if (synced && synced.length > 0) {
+                    almacenajeTasksCache = synced.map(newTask => {
+                        const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
+                        if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                            return { ...newTask, items: localTask.items };
+                        }
+                        return newTask;
+                    });
+                } else {
+                    console.log("📡 [RADAR] Nube sin datos. Manteniendo PC local como fuente de verdad.");
+                }
 
                 const areaContent = document.getElementById('areaContent');
                 if (areaContent) renderAlmacenajeTareas(areaContent);
@@ -2632,26 +2639,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
-              
-              // [BLINDAJE DANIEL v24.9.6] Fusión No-Destructiva
-              const serverTasks = adminService.adminStore.almacenaje_tasks;
-              if (Array.isArray(serverTasks) && serverTasks.length > 0) {
-                  serverTasks.forEach(st => {
-                      const localIdx = almacenajeTasksCache.findIndex(lt => lt.id === st.id);
-                      if (localIdx === -1) {
-                          almacenajeTasksCache.push(st);
-                      } else {
-                          const lt = almacenajeTasksCache[localIdx];
-                          if ((!st.items || st.items.length === 0) && lt.items && lt.items.length > 0) {
-                              almacenajeTasksCache[localIdx] = { ...st, items: lt.items };
-                          } else {
-                              almacenajeTasksCache[localIdx] = st;
-                          }
-                      }
-                  });
-                  localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
-              }
-
               if (currentTab === 'inicio') renderTabContent(true); 
           }
       }, 20000); 
@@ -3813,7 +3800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const groups = {};
         filtered.forEach(row => {
-            // [LOGICA POSICIONAL DANIEL v24.9.6] Columna B (index 1) y Columna C (index 2)
+            // [COORDENADAS DANIEL v24.9.6] Ignorar nombres, usar índices directos: Col B=1, Col C=2
             const raw = Array.isArray(row) ? row : Object.values(row);
             const skuFull = String(raw[1] || '').trim(); // Columna B
             const sku7 = skuFull.substring(0, 7);
@@ -3821,7 +3808,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
             const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
             
-            // [LOGICA DANIEL v24.9.5] Extraer Talla de la Descripción (Columna C)
+            // [LOGICA DANIEL v24.9.6] Extraer Talla de la Columna C (Índice 2)
             const desc = String(raw[2] || '').trim(); // Columna C
             let tallaExtraida = 'S/TALLA';
             const tallaMatch = desc.match(/-[0-9]-(.+)$/);
@@ -3832,7 +3819,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
 
             if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
-            // [ULTRA-OPTIMIZACIÓN v24.8.1] Normalizar claves para evitar errores de codificación en el servidor
             const item = { ubi: ubi, qty: qty, area: area, sku: skuFull, talla: tallaExtraida }; 
             groups[sku7].items.push(item);
             if (area.toUpperCase().includes('CDBUFFER')) groups[sku7].bufferQty += qty;
