@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.2';
+const VERSION = '24.8.3';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -85,8 +85,15 @@ const loadAlmacenajeTasks = async () => {
       // Carga desde el puente v24 (que ya hizo el pull)
       const syncedTasks = await adminService.loadAlmacenajeTasks();
       if (Array.isArray(syncedTasks)) {
-          almacenajeTasksCache = syncedTasks;
-          localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(syncedTasks));
+          // [INTELIGENCIA HÍBRIDA v24.8.3] No sobreescribir detalles locales con vacíos de la nube
+          almacenajeTasksCache = syncedTasks.map(newTask => {
+              const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
+              if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                  return { ...newTask, items: localTask.items }; // Preservar detalle local
+              }
+              return newTask;
+          });
+          localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       }
       updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
   } catch (e) { 
@@ -4342,7 +4349,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.8rem 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">
-                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:900; font-size:0.7rem; border:1px solid ${t.status === 'Finalizado' ? 'rgba(34,197,94,0.3)' : 'transparent'}">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
