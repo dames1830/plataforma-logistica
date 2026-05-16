@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.14';
 
 
-const VERSION = '25.1.14';
+const VERSION = '25.1.15';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -56,14 +56,7 @@ const saveAlmacenajeTasks = async () => {
       localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        // [BLINDAJE MAESTRO v25.0.0] Solo sincronizar si hay tareas. NUNCA mandar lista vacía si tenemos datos.
-        if (almacenajeTasksCache.length === 0) {
-            console.log("ℹ️ [SYNC] No hay tareas para sincronizar.");
-            updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
-            return;
-        }
-
-        // [ESTRATEGIA NUBE DE ÉLITE v25.0.1] Solo mandamos las últimas 10 tareas para garantizar el VERDE
+        // [ELIMINADO] Sincronización Total: Ahora permite mandar listas vacías si el usuario borra todo.
         const eliteTasks = almacenajeTasksCache.slice(-10);
 
         console.log(`🚀 [PULSE] Sincronización de Élite: Enviando ${eliteTasks.length} tareas a la nube.`);
@@ -88,8 +81,8 @@ const loadAlmacenajeTasks = async () => {
       // Carga desde el puente v24 (que ya hizo el pull)
       const syncedTasks = await adminService.loadAlmacenajeTasks();
       if (Array.isArray(syncedTasks)) {
-          // [INTELIGENCIA HÍBRIDA v24.9.6] Blindaje Total: No permitir que la nube borre datos locales si está vacía
-          if (syncedTasks && syncedTasks.length > 0) {
+          // [SINCRONIZACIÓN TOTAL] Ahora permite que la nube limpie los datos locales si se borraron allá.
+          if (Array.isArray(syncedTasks)) {
               almacenajeTasksCache = syncedTasks.map(newTask => {
                   const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
                   if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
@@ -97,8 +90,11 @@ const loadAlmacenajeTasks = async () => {
                   }
                   return newTask;
               });
-          } else {
-              console.log("☁️ [PULL] Nube vacía. Preservando historial local.");
+              
+              if (syncedTasks.length === 0 && almacenajeTasksCache.length > 0) {
+                  console.log("🧹 [PULL] Sincronización de borrado total desde la nube.");
+                  almacenajeTasksCache = [];
+              }
           }
           localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       }
