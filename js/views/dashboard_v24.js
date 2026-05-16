@@ -984,16 +984,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     contentArea.innerHTML = `
-        <div id="resurrection_banner" style="background:linear-gradient(90deg, #f59e0b, #d97706); padding:0.8rem; border-radius:12px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 10px 20px rgba(245, 158, 11, 0.2); border:1px solid rgba(255,255,255,0.2);">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <span style="font-size:1.5rem;">🏗️</span>
-                <div>
-                    <div style="font-weight:900; color:white; font-size:0.85rem; letter-spacing:0.5px;"> PROTOCOLO DE RESURRECCIÓN v24.7.2</div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.85);">Restaura Usuarios, Permisos y Asistencia desde el respaldo oficial.</div>
-                </div>
-            </div>
-            <button id="btn_master_resurrection" onclick="window.executeResurrection()" style="background:white; color:#d97706; border:none; padding:8px 16px; border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.1); transition:all 0.3s;">🚀 INICIAR RESTAURACIÓN</button>
-        </div>
         <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
           ${allowedSubTabs.map(sub => `
             <a class="sub-nav-item ${activeAdminSub===sub.id?'active':''}" data-s="${sub.id}" style="padding: 0.5rem 0.2rem; font-size: 0.85rem; white-space:nowrap; cursor:pointer;">
