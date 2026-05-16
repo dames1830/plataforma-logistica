@@ -35,10 +35,10 @@ export const syncStore = new Proxy({
     }
 });
 
-/**
- * PULL GLOBAL: Trae toda la verdad de la nube y actualiza el estado local.
- */
 export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'attendance', 'performance_log', 'almacenaje_tasks'], force = false) => {
+    // --- NORMALIZACIÓN v25.0.4 ---
+    if (typeof areas === 'string') areas = [areas];
+
     // --- MODO BLINDADO v24.5.8 ---
     if (localStorage.getItem('PULSE_OFFLINE_FORCE') && !force) {
         console.log("🛡️ [SYNC v24] MODO BLINDADO ACTIVO: Usando datos locales únicamente.");
@@ -100,7 +100,7 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                         }
                     }
 
-                    // --- BLINDAJE DE HIERRO v25.0.0 ---
+                    // --- BLINDAJE v25.0.4 ---
                     if (area === 'almacenaje_tasks' && Array.isArray(newData)) {
                         if (newData.length === 0 && syncStore[area].length > 0) {
                             console.warn("🛡️ [PULSE] Bloqueando intento de vaciado de tareas desde la nube.");
