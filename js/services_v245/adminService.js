@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=25.1.26';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.1.27';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -59,19 +59,23 @@ export const saveAttendance = async (dateStr, data) => {
     adminStore.attendance[dateStr] = data;
     
     if (data.finalized) {
-        // [MOD v25.1.25] Sincronizar SOLO historial para no pisar el cierre actual
+        // [MOD v25.1.27] Sincronización selectiva y normalización de DNI
         await syncEngine.pullGlobal(['performance_log'], true); 
         if (!adminStore.performance_log) adminStore.performance_log = [];
         
         data.data.forEach(asist => {
-            if (asist.present) {
-                const exists = adminStore.performance_log.find(p => p.date === dateStr && p.dni === asist.dni);
+            if (asist.present || asist.asistencia === 'P') {
+                const asistDni = String(asist.dni || '').trim();
+                const exists = adminStore.performance_log.find(p => p.date === dateStr && String(p.dni || '').trim() === asistDni);
+                
                 if (!exists) {
                     adminStore.performance_log.push({
                         date: dateStr,
-                        dni: asist.dni,
-                        nombre: asist.nombre,
-                        apellidos: asist.apellidos,
+                        dni: asistDni,
+                        nombre: asist.nombre || '',
+                        apellidos: asist.apellidos || '',
+                        asistencia: 'P',
+                        puntualidad: asist.puntualidad || 'SÍ',
                         produccion: 10,
                         bpa: 10,
                         supervisor: 9,
@@ -80,6 +84,7 @@ export const saveAttendance = async (dateStr, data) => {
                 }
             }
         });
+        console.log(`🚀 [PULSE] Guardando historial: ${adminStore.performance_log.length} registros totales.`);
         await save('performance_log', adminStore.performance_log);
     }
     return await save('attendance', adminStore.attendance, dateStr);
