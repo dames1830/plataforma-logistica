@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=24.9.8';
+import * as adminService from '../services_v245/adminService.js?v=24.9.9';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.8';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.9.9';
 
 
-const VERSION = '24.9.8';
+const VERSION = '24.9.9';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -56,8 +56,17 @@ const saveAlmacenajeTasks = async () => {
       localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        // 2. Sincronización Global OBLIGATORIA
-        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+        // 2. Sincronización Ágil (Solo últimos 2 días a la nube para evitar Error 500)
+        const now = new Date();
+        const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
+        const agileTasks = almacenajeTasksCache.filter(t => {
+            const tDate = new Date(t.fecha);
+            return tDate >= twoDaysAgo;
+        });
+
+        console.log(`🚀 [PULSE] Sincronización Ágil: Enviando ${agileTasks.length} de ${almacenajeTasksCache.length} tareas a la nube.`);
+        const success = await adminService.saveAlmacenajeTasks(agileTasks);
+        
         if (success) {
             updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
             setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
