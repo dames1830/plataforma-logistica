@@ -107,7 +107,8 @@ export const pullGlobal = async (areas = ['workers', 'users', 'permissions', 'at
                                 const restoredItems = t.items.map(artArr => {
                                     const [sku7, marca, gender, coleccion, bufferQty, zonaQty, compactArtItems] = artArr;
                                     const restoredArtItems = compactArtItems.map(iArr => ({
-                                        skuFull: iArr[0], ubi: iArr[1], qty: iArr[2], area: iArr[1].includes('CDBUFFER') ? 'CDBUFFER' : 'ZONA'
+                                        skuFull: iArr[0], ubi: iArr[1], qty: iArr[2], area: iArr[1].includes('CDBUFFER') ? 'CDBUFFER' : 'ZONA',
+                                        talla: iArr[3] || 'S/TALLA'
                                     }));
                                     return { sku7, marca, gender, coleccion, bufferQty, zonaQty, items: restoredArtItems };
                                 });
@@ -162,7 +163,7 @@ export const pushChange = async (area, data) => {
             console.log("🚀 [PULSE] Aplicando Serialización Daniel (100% integridad, -80% peso)");
             payload = data.map(t => {
                 const compactItems = (t.items || []).map(art => {
-                    const compactArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty]);
+                    const compactArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA']);
                     return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, compactArtItems];
                 });
                 return { ...t, items: compactItems, _comp: true }; // Marcamos como comprimido
