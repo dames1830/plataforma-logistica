@@ -172,6 +172,26 @@ export const pushChange = async (area, data) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+        // [ESTRATEGIA DANIEL v24.9.3] Entrega Segura (Chunking)
+        // Si el payload es pesado, lo mandamos en bloques para que Render no lo rechace
+        if (payload.length > 50 && area === 'almacenaje_tasks') {
+            console.log("📦 [PULSE] Payload pesado. Iniciando Entrega Segura por bloques...");
+            let allSuccess = true;
+            for (let i = 0; i < payload.length; i += 20) {
+                const chunk = payload.slice(i, i + 20);
+                const res = await fetch(`${API_BASE}/${area}`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(chunk),
+                    signal: controller.signal
+                });
+                if (!res.ok) allSuccess = false;
+            }
+            clearTimeout(timeoutId);
+            return allSuccess;
+        }
+
         const res = await fetch(`${API_BASE}/${area}`, {
             method: 'POST',
             mode: 'cors',
