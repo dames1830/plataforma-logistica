@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.23';
+import * as adminService from '../services_v245/adminService.js?v=25.1.24';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.23';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.24';
 
 
-const VERSION = '25.1.23';
+const VERSION = '25.1.24';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2327,7 +2327,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">📅 ${date} <small style="margin-left:15px; color:rgba(255,255,255,0.3);">(${entries.length} registros)</small></td>
                             <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;"><span id="avg-${date}">${avgRend}%</span></td>
                         </tr>
-                        ${entries.map((p, idx) => {
+                        ${entries.sort((a, b) => {
+                            const workerA = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === (a.dni || '').toString().trim());
+                            const workerB = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === (b.dni || '').toString().trim());
+                            const nameA = workerA ? `${workerA.apellidos || workerA.Apellidos || ''}, ${workerA.nombre || workerA.Nombre || ''}` : `${a.apellidos || ''}, ${a.nombre || ''}`;
+                            const nameB = workerB ? `${workerB.apellidos || workerB.Apellidos || ''}, ${workerB.nombre || workerB.Nombre || ''}` : `${b.apellidos || ''}, ${b.nombre || ''}`;
+                            return nameA.localeCompare(nameB);
+                        }).map((p, idx) => {
                             const pDni = (p.dni || '').toString().trim();
                             const worker = adminService.getWorkers().find(w => {
                                 const wDni = (w.dni || w.Dni || '').toString().trim();
