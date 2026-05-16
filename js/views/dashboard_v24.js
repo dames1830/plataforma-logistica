@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.3';
+const VERSION = '24.8.4';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -62,9 +62,9 @@ const saveAlmacenajeTasks = async () => {
           updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
           setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
       } else {
-          // [FALLBACK v24.8.1] Si falla por peso, intentar subir solo los cabezales (Resumen)
-          console.warn("⚠️ [SYNC] Fallo al subir detalle completo. Intentando Sincronización Ligera...");
-          const lightTasks = almacenajeTasksCache.map(t => ({...t, items: []})); // Quitamos el peso
+          // [FALLBACK v24.8.4] Enviar solo cabezales a la nube, pero PRESERVAR detalle en memoria local
+          console.warn("⚠️ [SYNC] Detalle pesado. Usando Sincronización Ligera para la nube...");
+          const lightTasks = almacenajeTasksCache.map(t => ({...t, items: []})); 
           const lightSuccess = await adminService.saveAlmacenajeTasks(lightTasks);
           if (lightSuccess) {
               updateSyncIndicator('online', 'NUBE ACTUALIZADA (Modo Ligero) 🕊️');
@@ -72,6 +72,7 @@ const saveAlmacenajeTasks = async () => {
           } else {
               updateSyncIndicator('offline', 'FALLO TOTAL DE NUBE');
           }
+          // IMPORTANTE: NO tocamos almacenajeTasksCache aquí, para que el DETALLE siga vivo en pantalla.
       }
   } catch (e) { 
       console.error("[SYNC] Error crítico:", e);
@@ -4174,59 +4175,86 @@ export const renderDashboard = async (container, user, onLogout) => {
                             ${(() => {
                                 const indRows = [];
                                 tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
-                                    if (!t.inicio || !t.termino || t.status !== 'Finalizado') return;
+                                    if (t.status !== 'Finalizado') return;
 
-                                    const s = new Date(t.inicio);
-                                    const e = new Date(t.termino);
-                                    let ms = e - s;
+                                    let timeStr = '--:--';
+                                    let totalMinutes = 0;
+                                    
+                                    if (t.inicio && t.termino) {
+                                        const s = new Date(t.inicio);
+                                        const e = new Date(t.termino);
+                                        let ms = e - s;
 
-                                    // Descontar break si aplica
-                                    const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
-                                    const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
-                                    const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
-                                    const overlapStart = Math.max(s, bStart);
-                                    const overlapEnd = Math.min(e, bEnd);
-                                    const overlap = Math.max(0, overlapEnd - overlapStart);
-                                    ms = ms - overlap;
+                                        // Descontar break si aplica
+                                        const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
+                                        const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
+                                        const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
+                                        const overlapStart = Math.max(s, bStart);
+                                        const overlapEnd = Math.min(e, bEnd);
+                                        const overlap = Math.max(0, overlapEnd - overlapStart);
+                                        ms = ms - overlap;
 
-                                    const totalMinutes = Math.floor(ms / (1000 * 60));
-                                    if (totalMinutes <= 0) return;
+                                        totalMinutes = Math.floor(ms / (1000 * 60));
+                                        if (totalMinutes > 0) {
+                                            timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
+                                        }
+                                    }
 
-                                    const timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
                                     const uList = [t.u1, t.u2].filter(u => u && u !== '---');
                                     
-                                    if (uList.length === 2) {
-                                        const q1 = Math.ceil(t.qty / 2);
-                                        const q2 = Math.floor(t.qty / 2);
-                                        [ {u:t.u1, q:q1}, {u:t.u2, q:q2} ].forEach(entry => {
-                                            const uph = (entry.q / totalMinutes) * 60;
-                                            const pct = Math.round((uph / 150) * 100);
+                                    if (uList.length > 0) {
+                                        const baseQty = (uList.length === 2) ? Math.ceil(t.qty / 2) : t.qty;
+                                        uList.forEach(user => {
+                                            let uph = 0;
+                                            let pct = 0;
+                                            let ok = false;
+                                            
+                                            if (totalMinutes > 0) {
+                                                uph = (baseQty / totalMinutes) * 60;
+                                                pct = Math.round((uph / 150) * 100);
+                                                ok = uph >= 150;
+                                            }
+
                                             indRows.push({
                                                 fecha: t.fecha,
-                                                user: entry.u,
-                                                qty: entry.q,
+                                                user: user,
+                                                qty: baseQty,
                                                 inicio: t.inicio,
                                                 termino: t.termino,
                                                 time: timeStr,
                                                 pct: pct,
-                                                ok: uph >= 150
+                                                ok: ok
                                             });
-                                        });
-                                    } else if (uList.length === 1) {
-                                        const uph = (t.qty / totalMinutes) * 60;
-                                        const pct = Math.round((uph / 150) * 100);
-                                        indRows.push({
-                                            fecha: t.fecha,
-                                            user: uList[0],
-                                            qty: t.qty,
-                                            inicio: t.inicio,
-                                            termino: t.termino,
-                                            time: timeStr,
-                                            pct: pct,
-                                            ok: uph >= 150
                                         });
                                     }
                                 });
+
+                                if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
+
+                                indRows.sort((a, b) => a.user.localeCompare(b.user));
+
+                                return indRows.map(r => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
+                                        <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
+                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${r.inicio ? new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${r.termino ? new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
+                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
+                                            </div>
+                                            <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
+                                                ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('');
+                            })()}
 
                                 if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
 
