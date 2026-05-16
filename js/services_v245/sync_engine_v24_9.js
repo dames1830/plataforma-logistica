@@ -17,9 +17,13 @@ export const syncStore = {
 
 // --- LOGICA DE SINCRONIZACION ---
 
+export let isFirstPullDone = false;
+
 export async function initSync() {
     console.log("🚀 [PULSE] Inicializando Motor v25.1.3...");
     await pullGlobal();
+    isFirstPullDone = true;
+    console.log("✅ [PULSE] Primera sincronización completada.");
     setInterval(pullGlobal, 30000);
     return syncStore;
 }

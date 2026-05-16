@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.13';
+import * as adminService from '../services_v245/adminService.js?v=25.1.14';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.13';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.14';
 
 
-const VERSION = '25.1.13';
+const VERSION = '25.1.14';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1272,7 +1272,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${users.length ? users.map(u => `
+                            ${!syncEngine.isFirstPullDone ? 
+                                '<tr><td colspan="6" style="padding:3rem; text-align:center;"><div class="spinner-small" style="display:inline-block; margin-bottom:10px;"></div><br><span style="color:var(--primary); font-weight:700;">Sincronizando con la nube...</span></td></tr>' :
+                                (users.length ? users.map(u => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity: ${u.active === false ? '0.5' : '1'}">
                                     <td style="padding:0.8rem; text-align:center;">
                                         <button class="btn-status" data-user="${u.username}" title="${u.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">
@@ -1295,7 +1297,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </div>
                                     </td>
                                 </tr>
-                            `).join('') : '<tr><td colspan="5" style="padding:1rem; text-align:center; color:var(--text-muted);">No hay usuarios adicionales creados.</td></tr>'}
+                            `).join('') : '<tr><td colspan="6" style="padding:1rem; text-align:center; color:var(--text-muted);">No hay usuarios adicionales creados.</td></tr>')}
                         </tbody>
                     </table>
                 </div>
@@ -1814,12 +1816,28 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderKPIGraphsSection = (container) => {
     let rawLog = adminService.getPerformanceLog();
     if (!Array.isArray(rawLog)) rawLog = [];
+    if (!syncEngine.isFirstPullDone) {
+        container.innerHTML = `<div class="glass-panel" style="padding:5rem; text-align:center;">
+            <div class="spinner" style="margin:0 auto 1.5rem auto;"></div>
+            <h4 style="color:var(--primary); font-weight:800;">Sincronizando Performance...</h4>
+            <p style="color:var(--text-muted); font-size:0.85rem;">Obteniendo últimos registros de la nube.</p>
+        </div>`;
+        return;
+    }
     if (rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
             <h4>Sin datos de Performance</h4>
             <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o más días para generar estadísticas.</p>
+            <button id="btn_retry_sync_perf" class="btn-secondary" style="margin-top:1.5rem; padding:0.5rem 1rem;">🔄 Reintentar Sincronización</button>
         </div>`;
+        const btnRetry = document.getElementById('btn_retry_sync_perf');
+        if (btnRetry) btnRetry.onclick = async () => {
+            btnRetry.disabled = true;
+            btnRetry.innerHTML = '⌛ Sincronizando...';
+            await adminService.initializeAdminData(true);
+            renderKPIGraphsSection(container);
+        };
         return;
     }
 
@@ -2081,8 +2099,21 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderKPIReportSection = (container) => {
     let rawLog = adminService.getPerformanceLog();
     if (!Array.isArray(rawLog)) rawLog = [];
+    if (!syncEngine.isFirstPullDone) {
+        container.innerHTML = `<div class="glass-panel" style="padding:5rem; text-align:center;"><div class="spinner" style="margin:0 auto 1rem auto;"></div><h4 style="color:var(--primary);">Calculando Reporte...</h4></div>`;
+        return;
+    }
     if (!rawLog || rawLog.length === 0) {
-        container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Sin datos para el reporte</h4></div>`;
+        container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+            <h4>Sin datos para el reporte</h4>
+            <button id="btn_retry_report" class="btn-secondary" style="margin-top:1rem; padding:0.5rem 1rem;">🔄 Refrescar Datos</button>
+        </div>`;
+        const btn = document.getElementById('btn_retry_report');
+        if (btn) btn.onclick = async () => {
+            btn.disabled = true;
+            await adminService.initializeAdminData(true);
+            renderKPIReportSection(container);
+        };
         return;
     }
 
@@ -2195,13 +2226,38 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     container.innerHTML = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-          ${allowedSubSubs.map(ss => `
-            <a class="perf-sub-item ${activePerfSub===ss.id?'active':''}" data-ss="${ss.id}" style="padding: 0.5rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${activePerfSub===ss.id?'var(--primary)':'var(--text-muted)'}; font-weight:${activePerfSub===ss.id?'800':'500'}; text-decoration:none; border-bottom:${activePerfSub===ss.id?'2px solid var(--primary)':'none'};">
-                ${ss.icon} ${ss.label.toUpperCase()}
-            </a>
-          `).join('')}
-        </nav><div id="perfContent"></div>`;
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); flex-wrap:wrap; gap:1rem;">
+            <nav style="display:flex; gap:1.2rem;">
+              ${allowedSubSubs.map(ss => `
+                <a class="perf-sub-item ${activePerfSub===ss.id?'active':''}" data-ss="${ss.id}" style="padding: 0.5rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${activePerfSub===ss.id?'var(--primary)':'var(--text-muted)'}; font-weight:${activePerfSub===ss.id?'800':'500'}; text-decoration:none; border-bottom:${activePerfSub===ss.id?'2px solid var(--primary)':'none'};">
+                    ${ss.icon} ${ss.label.toUpperCase()}
+                </a>
+              `).join('')}
+            </nav>
+            <button id="btn_sync_performance_cloud" class="btn-primary" style="font-size:0.75rem; padding:0.5rem 1rem; border-radius:8px; background:var(--primary); color:#fff; font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(79,70,229,0.4); border:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:1.1rem;">🔄</span> SINCRONIZAR CLOUD
+            </button>
+        </div>
+        <div id="perfContent"></div>`;
+    
+    console.log("🛠️ [PULSE] Renderizando Sección Performance con Botón Sincronizar");
+    
+    const btnSync = document.getElementById('btn_sync_performance_cloud');
+    if (btnSync) {
+        btnSync.onclick = async () => {
+            btnSync.innerHTML = '⌛ SINCRONIZANDO...';
+            btnSync.style.opacity = '0.5';
+            btnSync.disabled = true;
+            await adminService.initializeAdminData(true);
+            btnSync.innerHTML = '✅ ACTUALIZADO';
+            setTimeout(() => {
+                btnSync.innerHTML = '🔄 SINCRONIZAR CLOUD';
+                btnSync.style.opacity = '1';
+                btnSync.disabled = false;
+            }, 2000);
+            renderPerformanceSection(container);
+        };
+    }
 
     document.querySelectorAll('.perf-sub-item').forEach(b => b.addEventListener('click', (e) => { 
         activePerfSub = e.currentTarget.dataset.ss; 
@@ -2279,8 +2335,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;"><span id="avg-${date}">${avgRend}%</span></td>
                         </tr>
                         ${entries.map((p, idx) => {
-                            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === (p.dni || '').toString().trim());
-                            const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
+                            const pDni = (p.dni || '').toString().trim();
+                            const worker = adminService.getWorkers().find(w => {
+                                const wDni = (w.dni || w.Dni || '').toString().trim();
+                                return wDni === pDni && wDni !== '';
+                            });
+                            const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos || ''}, ${p.nombre || ''}`;
                             return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${idx + 1}</td>
@@ -2300,7 +2360,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:35px; background:none; border:none; color:#fff; text-align:center;"></td>
                             <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:35px; background:none; border:none; color:#fff; text-align:center;"></td>
                             <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:35px; background:none; border:none; color:#fff; text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center; color:${p.justification?'#06b6d4':'rgba(255,255,255,0.2)'}; font-weight:700;">${p.justification?'SÍ':'NO'}</td>
+                            <td style="padding:0.8rem; text-align:center;"><input type="text" value="${p.justification || ''}" data-date="${p.date}" data-dni="${p.dni}" data-f="justification" class="edit-perf-log" placeholder="---" style="width:100%; background:none; border:none; color:${p.justification?'#06b6d4':'rgba(255,255,255,0.1)'}; text-align:center; font-size:0.7rem; outline:none;"></td>
                             <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); font-weight:900; color:#fff;" id="rend-${p.dni}-${p.date}">${p.rendimiento}</td>
                         </tr>`;
                         }).join('')}`;
