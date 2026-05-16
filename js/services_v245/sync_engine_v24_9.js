@@ -32,9 +32,10 @@ export async function initSync() {
     return syncStore;
 }
 
-export async function pullGlobal() {
-    console.log("📥 [PULSE] Sincronización: Descargando...");
-    const areas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log']; // ÁREAS COMPLETADAS
+export async function pullGlobal(requestedAreas = null, force = false) {
+    console.log(`📥 [PULSE] Sincronización: Descargando ${requestedAreas ? requestedAreas.join(', ') : 'Todo'}...`);
+    const allAreas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log'];
+    const areas = requestedAreas || allAreas;
 
     const results = await Promise.all(areas.map(async (area) => {
         try {
