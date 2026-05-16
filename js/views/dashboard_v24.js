@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.7';
+const VERSION = '24.8.8';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,18 +4683,23 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnRef.style.opacity = '0.5';
             
             try {
-                console.log("🔄 [PULSE] Forzando descarga limpia desde la nube...");
-                // 1. Limpiar rastro local para forzar lectura de servidor
-                localStorage.removeItem('logistics_sync_v24_almacenaje_tasks');
+                console.log("🔄 [PULSE] Sincronizando con la nube (Fusión Híbrida)...");
                 
-                // 2. Sincronizar con el servidor (PULL GLOBAL DIRECTO CON FUERZA)
+                // 1. Sincronizar con el servidor (PULL GLOBAL)
                 await adminService.initializeAdminData(true);
                 const serverTasks = adminService.adminStore.almacenaje_tasks;
                 
                 if (Array.isArray(serverTasks)) {
-                    almacenajeTasksCache = [...serverTasks];
+                    // [FUSIÓN HÍBRIDA] No permitir que la nube borre detalles locales
+                    almacenajeTasksCache = serverTasks.map(newTask => {
+                        const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
+                        if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                            return { ...newTask, items: localTask.items };
+                        }
+                        return newTask;
+                    });
                     localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
-                    console.log(`✅ [PULSE] ${serverTasks.length} tareas sincronizadas.`);
+                    console.log(`✅ [PULSE] ${serverTasks.length} tareas fusionadas.`);
                 }
                 
                 renderAlmacenajeTareas(container);
