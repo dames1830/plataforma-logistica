@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=25.1.32';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.1.33';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -69,6 +69,24 @@ export const saveAttendance = async (dateStr, data) => {
             const isOnTime = asist.onTime !== false;
             const existingIdx = adminStore.performance_log.findIndex(p => p.date === dateStr && String(p.dni || '').trim() === asistDni);
 
+            let pVal = isPresent ? 10 : 0;
+            let bVal = isPresent ? 10 : 0;
+            let sVal = isPresent ? 10 : 0;
+
+            if (existingIdx !== -1) {
+                const ex = adminStore.performance_log[existingIdx];
+                pVal = ex.produccion !== undefined && ex.produccion !== '' ? parseFloat(ex.produccion) : pVal;
+                bVal = ex.bpa !== undefined && ex.bpa !== '' ? parseFloat(ex.bpa) : bVal;
+                sVal = ex.supervisor !== undefined && ex.supervisor !== '' ? parseFloat(ex.supervisor) : sVal;
+            }
+
+            const asisScore = isPresent ? 30 : 0;
+            const puntScore = (isPresent && isOnTime) ? 10 : 0;
+            const prodScore = pVal * 3;
+            const bpaScore = bVal * 1.5;
+            const supScore = sVal * 1.5;
+            const totalScore = asisScore + puntScore + prodScore + bpaScore + supScore;
+
             const perfEntry = {
                 date: dateStr,
                 dni: asistDni,
@@ -76,11 +94,11 @@ export const saveAttendance = async (dateStr, data) => {
                 apellidos: asist.apellidos || '',
                 asistencia: isPresent ? 'P' : 'F',
                 puntualidad: isPresent ? (isOnTime ? 'SÍ' : 'NO') : 'NO',
-                produccion: isPresent ? 10 : 0,
-                bpa: isPresent ? 10 : 0,
-                supervisor: isPresent ? 9 : 0,
+                produccion: pVal,
+                bpa: bVal,
+                supervisor: sVal,
                 justification: asist.justification || '',
-                rendimiento: isPresent ? '96%' : '0%'
+                rendimiento: Math.round(totalScore) + '%'
             };
 
             if (existingIdx !== -1) {
@@ -105,11 +123,24 @@ export const updatePerformanceLogEntry = async (date, dni, updates) => {
     const entry = adminStore.performance_log.find(p => p.date === date && p.dni === dni);
     if (entry) {
         Object.assign(entry, updates);
+        
+        const isPresent = entry.asistencia === 'P';
+        const isOnTime = entry.puntualidad === 'SÍ';
+
+        const asisScore = isPresent ? 30 : 0;
+        const puntScore = (isPresent && isOnTime) ? 10 : 0;
+        
         const p = parseFloat(entry.produccion || 0);
         const b = parseFloat(entry.bpa || 0);
         const s = parseFloat(entry.supervisor || 0);
-        const rend = ((p + b + s) / 30) * 100;
+        
+        const prodScore = p * 3;
+        const bpaScore = b * 1.5;
+        const supScore = s * 1.5;
+        
+        const rend = asisScore + puntScore + prodScore + bpaScore + supScore;
         entry.rendimiento = Math.round(rend) + '%';
+        
         return await save('performance_log', adminStore.performance_log);
     }
 };
