@@ -48,8 +48,27 @@ init_db()
 
 @app.get("/api/health")
 def health():
-    size = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
-    return {"status": "ok", "db_size_kb": size // 1024, "timestamp": datetime.now().isoformat()}
+    try:
+        db_dir = os.path.dirname(DB_PATH) or "."
+        files = []
+        if os.path.exists(db_dir):
+            for f in os.listdir(db_dir):
+                fpath = os.path.join(db_dir, f)
+                files.append({"name": f, "size_mb": os.path.getsize(fpath) / (1024*1024)})
+        
+        # Check free space
+        import shutil
+        total, used, free = shutil.disk_usage(db_dir)
+        
+        return {
+            "status": "ok",
+            "db_path": DB_PATH,
+            "files_in_data": files,
+            "disk_free_mb": free / (1024*1024),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"status": "diag_error", "message": str(e)}
 
 @app.get("/api/logistics/{area}")
 def get_area_data(area: str, date: Optional[str] = None):
