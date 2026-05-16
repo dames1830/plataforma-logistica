@@ -5,7 +5,7 @@ import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=24.7.8';
 
 
-const VERSION = '24.8.4';
+const VERSION = '24.8.5';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4240,34 +4240,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
                                         <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${r.inicio ? new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
                                         <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${r.termino ? new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
-                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
-                                            </div>
-                                            <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
-                                        </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
-                                                ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                `).join('');
-                            })()}
-
-                                if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
-
-                                // [MOD v17.1.5] Ordenar alfabéticamente por usuario para fácil localización
-                                indRows.sort((a, b) => a.user.localeCompare(b.user));
-
-                                return indRows.map(r => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
-                                        <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
-                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
-                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
                                         <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
                                         <td style="padding:0.8rem 1rem; text-align:center;">
                                             <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
