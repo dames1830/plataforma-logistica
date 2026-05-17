@@ -1,11 +1,11 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.33';
+import * as adminService from '../services_v245/adminService.js?v=25.1.34';
 import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.33';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.34';
 
 
-const VERSION = '25.1.33';
+const VERSION = '25.1.34';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2343,7 +2343,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${idx + 1}</td>
-                            <td style="padding:0.8rem;"><b>${displayName}</b> <br><small>${p.dni}</small></td>
+                            <td style="padding:0.8rem; display:flex; align-items:center;"><b>${displayName}</b> <span style="background:#fcd34d; color:#000; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800; margin-left:8px;">${p.dni}</span></td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="asistencia" style="background:none; border:none; color:${p.asistencia==='P'?'var(--success)':'#ef4444'}; font-weight:900;">
                                     <option value="P" ${p.asistencia==='P'?'selected':''}>P</option>
@@ -2379,8 +2379,43 @@ export const renderDashboard = async (container, user, onLogout) => {
     document.querySelectorAll('.edit-perf-log').forEach(input => {
         input.onchange = async (e) => {
             const { date, dni, f } = e.target.dataset;
-            await adminService.updatePerformanceLogEntry(date, dni, { [f]: e.target.value });
-            renderPerformanceHistory(container);
+            const updatedEntry = await adminService.updatePerformanceLogEntry(date, dni, { [f]: e.target.value });
+            
+            // Actualización local del DOM para evitar pantallazos
+            if (updatedEntry) {
+                const rendCell = document.getElementById(`rend-${dni}-${date}`);
+                if (rendCell) {
+                    rendCell.textContent = updatedEntry.rendimiento;
+                }
+                
+                if (f === 'asistencia') {
+                    e.target.style.color = e.target.value === 'P' ? 'var(--success)' : '#ef4444';
+                }
+                if (f === 'puntualidad') {
+                    e.target.style.color = e.target.value === 'SÍ' ? 'var(--success)' : '#ef4444';
+                }
+                if (f === 'justification') {
+                    e.target.style.color = e.target.value ? '#06b6d4' : 'rgba(255,255,255,0.1)';
+                }
+                
+                // Recalcular promedio de la fecha
+                const dateRows = document.querySelectorAll(`.perf-row-${date}`);
+                let sumRend = 0;
+                let count = 0;
+                dateRows.forEach(row => {
+                    const rendText = row.querySelector(`[id^="rend-"]`)?.textContent;
+                    if (rendText) {
+                        sumRend += parseInt(rendText) || 0;
+                        count++;
+                    }
+                });
+                if (count > 0) {
+                    const avgSpan = document.getElementById(`avg-${date}`);
+                    if (avgSpan) {
+                        avgSpan.textContent = Math.round(sumRend / count) + '%';
+                    }
+                }
+            }
         };
     });
   };
