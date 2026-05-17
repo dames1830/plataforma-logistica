@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.52';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.53';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.52';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.52'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.52';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.52';
+import * as adminService from '../services_v245/adminService.js?v=25.1.53';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.53'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.53';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.53';
 
 
-const VERSION = '25.1.52';
+const VERSION = '25.1.53';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2821,7 +2821,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="display:flex; flex-direction:column; gap:1rem;">
                         <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">🔒 CERRAR UBICACIÓN</button>
                     </div>
-                    <input type="text" id="sku_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                    <input type="text" id="sku_scanner_input" style="position:fixed; top:0; left:0; width:0; height:0; opacity:0; border:none; overflow:hidden; pointer-events:none;" autocomplete="off">
                 </div>
             `;
 
@@ -2854,8 +2854,15 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             const skuInput = document.getElementById('sku_scanner_input');
             if(skuInput) {
-                skuInput.focus();
-                document.addEventListener('click', () => { skuInput.focus(); });
+                skuInput.focus({ preventScroll: true });
+                const focusHandler = () => {
+                    if (document.getElementById('sku_scanner_input')) {
+                        skuInput.focus({ preventScroll: true });
+                    } else {
+                        document.removeEventListener('click', focusHandler);
+                    }
+                };
+                document.addEventListener('click', focusHandler);
                 skuInput.addEventListener('keydown', (e) => {
                     if(e.key === 'Enter') {
                         const code = skuInput.value.trim();
@@ -2990,7 +2997,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>
                 </div>
                 <!-- Scanner oculto para que la pistola despierte el modo escaner desde el Admin Panel -->
-                <input type="text" id="zebra_scanner_input_admin" style="position:absolute; left:-9999px;" autocomplete="off">
+                <input type="text" id="zebra_scanner_input_admin" style="position:fixed; top:0; left:0; width:0; height:0; opacity:0; border:none; overflow:hidden; pointer-events:none;" autocomplete="off">
             `;
             
             renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico_tarea', null, '.csv, .xlsx', 'SUBIR UBICACIONES (TAREA)');
@@ -3041,13 +3048,21 @@ export const renderDashboard = async (container, user, onLogout) => {
             // Auto-detect scanner input from Admin view
             const adminScannerInput = document.getElementById('zebra_scanner_input_admin');
             if(adminScannerInput) {
-                adminScannerInput.focus();
-                document.addEventListener('click', () => { adminScannerInput.focus(); });
+                adminScannerInput.focus({ preventScroll: true });
+                const focusHandler = () => {
+                    if (document.getElementById('zebra_scanner_input_admin')) {
+                        adminScannerInput.focus({ preventScroll: true });
+                    } else {
+                        document.removeEventListener('click', focusHandler);
+                    }
+                };
+                document.addEventListener('click', focusHandler);
                 adminScannerInput.addEventListener('keydown', (e) => {
                     if(e.key === 'Enter') {
                         const code = adminScannerInput.value.trim();
                         adminScannerInput.value = '';
-                        const t = currentTasks.find(x => x.location.toUpperCase() === code.toUpperCase());
+                        const cleanCode = code.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase();
+                        const t = currentTasks.find(x => x.location.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase() === cleanCode);
                         if(t) {
                             if(cyclicService.isLocationClosed(t.location)) {
                                 alert('Ubicación Cerrada.');
@@ -3249,7 +3264,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <h3 style="color:#fff; font-size:1rem; margin-bottom:1rem;">Ubicaciones Pendientes</h3>
                         <div id="operario_tasks_container" style="display:flex; flex-direction:column; gap:0.8rem;"></div>
                         
-                        <input type="text" id="zebra_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                        <input type="text" id="zebra_scanner_input" style="position:fixed; top:0; left:0; width:0; height:0; opacity:0; border:none; overflow:hidden; pointer-events:none;" autocomplete="off">
                     </div>
                 `;
                 
@@ -3285,13 +3300,21 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 const scannerInput = document.getElementById('zebra_scanner_input');
                 if(scannerInput) {
-                    scannerInput.focus();
-                    document.addEventListener('click', () => { scannerInput.focus(); });
+                    scannerInput.focus({ preventScroll: true });
+                    const focusHandler = () => {
+                        if (document.getElementById('zebra_scanner_input')) {
+                            scannerInput.focus({ preventScroll: true });
+                        } else {
+                            document.removeEventListener('click', focusHandler);
+                        }
+                    };
+                    document.addEventListener('click', focusHandler);
                     scannerInput.addEventListener('keydown', (e) => {
                         if(e.key === 'Enter') {
                             const code = scannerInput.value.trim();
                             scannerInput.value = '';
-                            const t = tasks.find(x => x.location.toUpperCase() === code.toUpperCase());
+                            const cleanCode = code.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase();
+                            const t = tasks.find(x => x.location.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase() === cleanCode);
                             if(t) {
                                 if(cyclicService.isLocationClosed(t.location)) {
                                     alert('Ubicación Cerrada.');
@@ -3324,7 +3347,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <div style="display:flex; flex-direction:column; gap:1rem;">
                             <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">🔒 CERRAR UBICACIÓN</button>
                         </div>
-                        <input type="text" id="sku_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                        <input type="text" id="sku_scanner_input" style="position:fixed; top:0; left:0; width:0; height:0; opacity:0; border:none; overflow:hidden; pointer-events:none;" autocomplete="off">
                     </div>
                 `;
 
@@ -3358,8 +3381,15 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 const skuInput = document.getElementById('sku_scanner_input');
                 if(skuInput) {
-                    skuInput.focus();
-                    document.addEventListener('click', () => { skuInput.focus(); });
+                    skuInput.focus({ preventScroll: true });
+                    const focusHandler = () => {
+                        if (document.getElementById('sku_scanner_input')) {
+                            skuInput.focus({ preventScroll: true });
+                        } else {
+                            document.removeEventListener('click', focusHandler);
+                        }
+                    };
+                    document.addEventListener('click', focusHandler);
                     skuInput.addEventListener('keydown', (e) => {
                         if(e.key === 'Enter') {
                             const code = skuInput.value.trim();
@@ -3386,10 +3416,331 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     }
     else if (activeModuloInvSub === 'reportes') {
-        content.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:2.5rem;">
+        // Lógica de auto-cruce en background si no se ha hecho aún pero hay tareas
+        const runAutoCruceBackground = async () => {
+            if (window._lastERI) return;
+            const stockActivo = await getAreaData('inventario') || [];
+            const tasks = cyclicService.getTasks();
+            const scans = cyclicService.getScans();
+            if (tasks.length === 0 || scans.length === 0) return;
+            
+            console.log("[PULSE] Auto-cruzando datos en background para Reporte Gerencial...");
+            
+            const maestro = await getAreaData('articulos') || [];
+            const maestroMap = new Map();
+            maestro.forEach(a => {
+                const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim().toUpperCase();
+                const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString().trim();
+                if (mSku) maestroMap.set(mSku, mDesc);
+            });
+            
+            const taskLocations = new Set(tasks.map(t => t.location.toUpperCase()));
+            const sistemaMap = new Map();
+            const descMap = new Map();
+            
+            stockActivo.forEach(row => {
+                const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim().toUpperCase();
+                const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
+                const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
                 
-                <!-- SECTION 1: REPORTE UCA (TOP - FULL WIDTH) -->
+                let desc = 'S/D';
+                if (typeof row === 'object' && !Array.isArray(row)) {
+                    desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
+                } else if (Array.isArray(row)) {
+                    desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
+                }
+                desc = desc.toString().trim();
+                
+                if (sku && taskLocations.has(ubi)) {
+                    const key = `${sku}|${ubi}`;
+                    sistemaMap.set(key, (sistemaMap.get(key) || 0) + qty);
+                    if (desc && desc !== 'S/D') descMap.set(sku, desc);
+                }
+            });
+            
+            const fisicoMap = new Map();
+            scans.forEach(s => {
+                let sku = s.sku.toString().trim().toUpperCase();
+                if (barcodeToSkuMap && barcodeToSkuMap.has(sku)) {
+                    sku = barcodeToSkuMap.get(sku);
+                }
+                const ubi = s.location.toString().trim().toUpperCase();
+                const qty = parseFloat(s.qty) || 0;
+                
+                if (sku && taskLocations.has(ubi)) {
+                    const key = `${sku}|${ubi}`;
+                    fisicoMap.set(key, (fisicoMap.get(key) || 0) + qty);
+                }
+            });
+            
+            const allKeys = new Set([...sistemaMap.keys(), ...fisicoMap.keys()]);
+            const eruResults = [];
+            let totalItems = 0;
+            let correctItems = 0;
+            
+            allKeys.forEach(key => {
+                const [sku, ubi] = key.split('|');
+                const qSis = sistemaMap.get(key) || 0;
+                const qFis = fisicoMap.get(key) || 0;
+                const diff = qFis - qSis;
+                const acc = qSis === qFis ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, qFis || 1))) * 100;
+                
+                totalItems++;
+                if (diff === 0) correctItems++;
+                
+                const finalDesc = descMap.get(sku) || maestroMap.get(sku) || 'N/A';
+                eruResults.push({
+                    sku, ubi, desc: finalDesc, sis: qSis, fis: qFis, diff, eri: Math.max(0, acc).toFixed(1)
+                });
+            });
+            
+            eruResults.sort((a, b) => a.ubi.localeCompare(b.ubi));
+            
+            const countedSkus = new Set(eruResults.map(r => r.sku));
+            const eriBySku = new Map();
+            countedSkus.forEach(sku => eriBySku.set(sku, { sis: 0, fis: 0 }));
+            eruResults.forEach(r => {
+                const entry = eriBySku.get(r.sku);
+                entry.sis += r.sis;
+                entry.fis += r.fis;
+            });
+            
+            const eriResults = [];
+            let eriCorrect = 0;
+            eriBySku.forEach((vals, sku) => {
+                const diff = vals.fis - vals.sis;
+                if (diff === 0) eriCorrect++;
+                const acc = vals.sis === vals.fis ? 100 : (1 - (Math.abs(diff) / Math.max(vals.sis, vals.fis || 1))) * 100;
+                
+                const ubis = eruResults.filter(r => r.sku === sku).map(r => r.ubi);
+                const ubiText = ubis.length > 1 ? "VARIAS" : (ubis[0] || 'N/A');
+                const finalDesc = descMap.get(sku) || maestroMap.get(sku) || 'N/A';
+                
+                eriResults.push({
+                    sku, ubi: ubiText, desc: finalDesc, sis: vals.sis, fis: vals.fis, diff, eri: Math.max(0, acc).toFixed(1)
+                });
+            });
+            
+            const finalERU = eruResults.length > 0 ? (eruResults.reduce((acc, r) => acc + parseFloat(r.eri || 0), 0) / eruResults.length).toFixed(1) : 0;
+            const finalERI = eriResults.length > 0 ? ((eriCorrect / eriResults.length) * 100).toFixed(1) : 0;
+            
+            window._lastERI = { eriResults, finalERI, eruResults, finalERU };
+            
+            // Re-render
+            renderModuloInventarios(container);
+        };
+        
+        // Ejecutar en background si es necesario
+        if (!window._lastERI) {
+            runAutoCruceBackground();
+        }
+
+        // Recuperar y procesar datos gerenciales
+        const scans = cyclicService.getScans() || [];
+        const tasks = cyclicService.getTasks() || [];
+        const closedLocations = cyclicService.getClosedLocations() || [];
+        
+        // Calcular KPIs gerenciales rápidos
+        const totalClosed = closedLocations.length;
+        const totalAssigned = tasks.length;
+        const uniqueSkusCount = new Set(scans.map(s => s.sku.toUpperCase())).size;
+        const totalFisQty = scans.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0);
+        
+        let totalSisQty = 0;
+        let avgERU = 0;
+        if (window._lastERI && window._lastERI.eruResults) {
+            totalSisQty = window._lastERI.eruResults.reduce((acc, curr) => acc + parseFloat(curr.sis || 0), 0);
+            avgERU = window._lastERI.finalERU;
+        }
+
+        // Lógica de pestañas gerenciales
+        window._activeGerTab = window._activeGerTab || 'cronologico';
+
+        // Pre-calcular desglose por Semana y Día
+        const getWeekNumber = (d) => {
+            const date = new Date(d.getTime());
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            const week1 = new Date(date.getFullYear(), 0, 4);
+            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        };
+
+        const dateGroups = {};
+        scans.forEach(s => {
+            const timestamp = s.last_scan || Date.now();
+            const d = new Date(timestamp);
+            const dateStr = d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            if (!dateGroups[dateStr]) {
+                dateGroups[dateStr] = {
+                    date: d,
+                    locations: new Set(),
+                    skus: new Set(),
+                    qtyFis: 0,
+                    qtySis: 0,
+                    diff: 0,
+                    eruSum: 0,
+                    eruCount: 0
+                };
+            }
+            dateGroups[dateStr].locations.add(s.location.toUpperCase());
+            dateGroups[dateStr].skus.add(s.sku.toUpperCase());
+            dateGroups[dateStr].qtyFis += parseFloat(s.qty) || 0;
+        });
+
+        if (window._lastERI && window._lastERI.eruResults) {
+            Object.keys(dateGroups).forEach(dateStr => {
+                const group = dateGroups[dateStr];
+                const locsOnDate = group.locations;
+                const matchingResults = window._lastERI.eruResults.filter(r => locsOnDate.has(r.ubi.toUpperCase()));
+                
+                let sisSum = 0;
+                let eruSum = 0;
+                matchingResults.forEach(r => {
+                    sisSum += parseFloat(r.sis) || 0;
+                    eruSum += parseFloat(r.eri) || 0;
+                });
+                
+                group.qtySis = sisSum;
+                group.diff = group.qtyFis - group.qtySis;
+                group.accuracy = matchingResults.length > 0 ? (eruSum / matchingResults.length) : 100;
+            });
+        }
+
+        const weekGroups = {};
+        Object.keys(dateGroups).forEach(dateStr => {
+            const group = dateGroups[dateStr];
+            const d = group.date;
+            const weekNo = getWeekNumber(d);
+            const year = d.getFullYear();
+            const weekKey = `Semana ${weekNo} (${year})`;
+            
+            if (!weekGroups[weekKey]) {
+                weekGroups[weekKey] = {
+                    weekName: weekKey,
+                    days: []
+                };
+            }
+            
+            weekGroups[weekKey].days.push({
+                dateStr,
+                dayName: d.toLocaleDateString('es-PE', { weekday: 'long' }),
+                locsCount: group.locations.size,
+                skusCount: group.skus.size,
+                qtyFis: group.qtyFis,
+                qtySis: group.qtySis,
+                diff: group.diff,
+                accuracy: group.accuracy || 100
+            });
+        });
+
+        const sortedWeeks = Object.values(weekGroups).sort((a, b) => b.weekName.localeCompare(a.weekName));
+        sortedWeeks.forEach(w => {
+            w.days.sort((a, b) => {
+                const dateA = new Date(a.dateStr.split('/').reverse().join('-'));
+                const dateB = new Date(b.dateStr.split('/').reverse().join('-'));
+                return dateB - dateA;
+            });
+        });
+
+        let htmlWeeks = '';
+        if (sortedWeeks.length === 0) {
+            htmlWeeks = `<tr><td colspan="7" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay lecturas registradas para agrupar cronológicamente.</td></tr>`;
+        } else {
+            sortedWeeks.forEach(w => {
+                htmlWeeks += `
+                    <tr style="background:rgba(255,255,255,0.02); font-weight:800; color:#38bdf8;">
+                        <td colspan="7" style="padding:10px 15px; font-size:0.85rem; border-left:4px solid #38bdf8;">
+                            📅 ${w.weekName.toUpperCase()}
+                        </td>
+                    </tr>
+                `;
+                w.days.forEach(d => {
+                    const dayCapitalized = d.dayName.charAt(0).toUpperCase() + d.dayName.slice(1);
+                    const accColor = d.accuracy >= 90 ? '#10b981' : (d.accuracy >= 80 ? '#f59e0b' : '#ef4444');
+                    htmlWeeks += `
+                        <tr>
+                            <td style="padding:10px 15px; font-weight:600; padding-left:25px;">${dayCapitalized} <span style="font-size:0.7rem; color:var(--text-muted); margin-left:8px;">(${d.dateStr})</span></td>
+                            <td style="text-align:center; font-weight:700;">${d.locsCount}</td>
+                            <td style="text-align:center;">${d.skusCount}</td>
+                            <td style="text-align:center; font-weight:700; color:#fff;">${d.qtyFis} u.</td>
+                            <td style="text-align:center; opacity:0.8;">${d.qtySis} u.</td>
+                            <td style="text-align:center; color:${d.diff===0?'#10b981':(d.diff>0?'#38bdf8':'#ef4444')}; font-weight:900;">
+                                ${d.diff > 0 ? '+' : ''}${d.diff}
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="background:${accColor}15; color:${accColor}; padding:2px 8px; border-radius:6px; font-weight:800;">
+                                    ${parseFloat(d.accuracy).toFixed(1)}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        content.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:2rem;">
+                
+                <!-- TABLERO GERENCIAL (MANDO Y CONTROL) -->
+                <div class="glass-panel" style="padding:2rem; border-radius:15px; border:1px solid rgba(56, 189, 248, 0.2); background:radial-gradient(circle at top right, rgba(56,189,248,0.03), transparent);">
+                    <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.2rem; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:10px;">
+                        📈 TABLERO Y REPORTE GERENCIAL (MANDO Y CONTROL)
+                    </h3>
+                    
+                    <!-- KPI CARDS -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1.2rem; margin-bottom:2rem;">
+                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #38bdf8; background:rgba(255,255,255,0.01);">
+                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Ubicaciones Contadas</h4>
+                            <h2 style="margin:0.5rem 0; font-size:1.8rem; color:#fff; font-weight:800;">${totalClosed} / ${totalAssigned}</h2>
+                            <span style="font-size:0.65rem; background:rgba(56, 189, 248, 0.1); color:#38bdf8; padding:2px 8px; border-radius:10px; font-weight:700;">
+                                ${totalAssigned > 0 ? ((totalClosed/totalAssigned)*100).toFixed(0) : 0}% COMPLETADO
+                            </span>
+                        </div>
+                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #a855f7; background:rgba(255,255,255,0.01);">
+                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">SKUs Únicos</h4>
+                            <h2 style="margin:0.5rem 0; font-size:1.8rem; color:#fff; font-weight:800;">${uniqueSkusCount}</h2>
+                            <span style="font-size:0.65rem; color:var(--text-muted);">Sobrantes o asignados</span>
+                        </div>
+                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #10b981; background:rgba(255,255,255,0.01);">
+                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Qty Total Conteo</h4>
+                            <h2 style="margin:0.5rem 0; font-size:1.8rem; color:#10b981; font-weight:800;">${totalFisQty} u.</h2>
+                            <span style="font-size:0.65rem; color:var(--text-muted);">Unidades físicas</span>
+                        </div>
+                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #f59e0b; background:rgba(255,255,255,0.01);">
+                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Qty Total Sistema</h4>
+                            <h2 style="margin:0.5rem 0; font-size:1.8rem; color:#fff; font-weight:800;">${totalSisQty} u.</h2>
+                            <span style="font-size:0.65rem; color:${totalFisQty - totalSisQty === 0 ? '#10b981' : '#ef4444'}; font-weight:800;">
+                                DIF: ${totalFisQty - totalSisQty > 0 ? '+' : ''}${totalFisQty - totalSisQty} u.
+                            </span>
+                        </div>
+                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid ${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}; background:rgba(255,255,255,0.01);">
+                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Exactitud ERU</h4>
+                            <h2 style="margin:0.5rem 0; font-size:1.8rem; color:${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}; font-weight:800;">${avgERU}%</h2>
+                            <span style="font-size:0.65rem; background:${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}22; color:${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}; padding:2px 8px; border-radius:10px; font-weight:700;">
+                                ${avgERU >= 90 ? 'EXCELENTE' : (avgERU >= 80 ? 'REGULAR' : 'CRÍTICO')}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- INNER NAVIGATION TABS -->
+                    <div style="display:flex; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem;">
+                        <button class="ger-tab-btn ${window._activeGerTab === 'cronologico' ? 'active' : ''}" data-tab="cronologico" style="background:none; border:none; padding:10px 15px; color:${window._activeGerTab === 'cronologico' ? '#38bdf8' : 'var(--text-muted)'}; border-bottom:2px solid ${window._activeGerTab === 'cronologico' ? '#38bdf8' : 'transparent'}; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s;">
+                            📅 RESUMEN POR SEMANA Y DÍA
+                        </button>
+                        <button class="ger-tab-btn ${window._activeGerTab === 'ubicacion' ? 'active' : ''}" data-tab="ubicacion" style="background:none; border:none; padding:10px 15px; color:${window._activeGerTab === 'ubicacion' ? '#38bdf8' : 'var(--text-muted)'}; border-bottom:2px solid ${window._activeGerTab === 'ubicacion' ? '#38bdf8' : 'transparent'}; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s;">
+                            📍 ACUMULADO POR UBICACIÓN
+                        </button>
+                        <button class="ger-tab-btn ${window._activeGerTab === 'sku' ? 'active' : ''}" data-tab="sku" style="background:none; border:none; padding:10px 15px; color:${window._activeGerTab === 'sku' ? '#38bdf8' : 'var(--text-muted)'}; border-bottom:2px solid ${window._activeGerTab === 'sku' ? '#38bdf8' : 'transparent'}; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s;">
+                            🏷️ ACUMULADO POR SKU
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT AREA -->
+                    <div id="ger_tab_content"></div>
+                </div>
+
+                <!-- SECTION 1: REPORTE UCA (BOTTOM - FULL WIDTH) -->
                 <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(99, 102, 241, 0.2); background:rgba(15, 23, 42, 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                         <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">📊 REPORTE UCA (DISPONIBILIDAD)</h3>
@@ -3424,7 +3775,163 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         `;
 
-        // Lógica UCA
+        // Renderizar pestaña gerencial activa
+        const gerContent = document.getElementById('ger_tab_content');
+        if (window._activeGerTab === 'cronologico') {
+            gerContent.innerHTML = `
+                <div class="data-table-container" style="border-radius:10px; border:1px solid rgba(255,255,255,0.05); overflow-x:auto;">
+                    <table class="data-table" style="font-size:0.75rem;">
+                        <thead>
+                            <tr>
+                                <th style="padding:12px 15px;">DÍA / SEMANA</th>
+                                <th style="text-align:center;">UBICACIONES CONTADAS</th>
+                                <th style="text-align:center;">SKUs ÚNICOS</th>
+                                <th style="text-align:center;">FISICO (QTY)</th>
+                                <th style="text-align:center;">SISTEMA (QTY)</th>
+                                <th style="text-align:center;">DIFERENCIA</th>
+                                <th style="text-align:center;">EXACTITUD ERU</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${htmlWeeks}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else if (window._activeGerTab === 'ubicacion') {
+            const cleanERU = (window._lastERI && window._lastERI.eruResults) ? window._lastERI.eruResults.filter(r => r.ubi && !r.ubi.toString().toUpperCase().includes('UBICAC')) : [];
+            let htmlRows = '';
+            if (cleanERU.length === 0) {
+                htmlRows = `<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos de ubicación acumulados. Realiza el cruce para cargar.</td></tr>`;
+            } else {
+                htmlRows = cleanERU.map(r => {
+                    const accColor = r.eri >= 90 ? '#10b981' : (r.eri >= 80 ? '#f59e0b' : '#ef4444');
+                    // Buscar el usuario del conteo
+                    const t = tasks.find(x => x.location.toUpperCase() === r.ubi.toUpperCase());
+                    const operarioName = t ? (t.user || 'S/D') : 'S/D';
+                    return `
+                        <tr>
+                            <td style="font-weight:700; color:#10b981; padding:10px 15px;">📍 ${r.ubi}</td>
+                            <td>${r.sku}</td>
+                            <td style="text-align:center;">${r.sis}</td>
+                            <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                            <td style="text-align:center; color:${r.diff===0?'#10b981':(r.diff>0?'#38bdf8':'#ef4444')}; font-weight:900;">
+                                ${r.diff > 0 ? '+' : ''}${r.diff}
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="background:${accColor}15; color:${accColor}; padding:2px 8px; border-radius:6px; font-weight:800;">
+                                    ${parseFloat(r.eri).toFixed(1)}%
+                                </span>
+                            </td>
+                            <td style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${operarioName.toUpperCase()}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            gerContent.innerHTML = `
+                <div style="margin-bottom:1rem; display:flex; justify-content:flex-end;">
+                    <input type="text" id="search_ger_loc" placeholder="🔍 Buscar ubicación..." style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.75rem; width:200px;">
+                </div>
+                <div class="data-table-container" style="border-radius:10px; border:1px solid rgba(255,255,255,0.05); max-height:400px; overflow-y:auto;">
+                    <table class="data-table" style="font-size:0.75rem;" id="table_ger_loc">
+                        <thead style="position:sticky; top:0; z-index:10; background:#1a1d21;">
+                            <tr>
+                                <th style="padding:12px 15px;">UBICACIÓN</th>
+                                <th>SKU</th>
+                                <th style="text-align:center;">SISTEMA</th>
+                                <th style="text-align:center;">FÍSICO</th>
+                                <th style="text-align:center;">DIF</th>
+                                <th style="text-align:center;">EXACTITUD ERU</th>
+                                <th>OPERARIO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${htmlRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            const searchInput = document.getElementById('search_ger_loc');
+            if (searchInput) {
+                searchInput.oninput = () => {
+                    const term = searchInput.value.toUpperCase();
+                    const rows = document.querySelectorAll('#table_ger_loc tbody tr');
+                    rows.forEach(row => {
+                        const txt = row.innerText.toUpperCase();
+                        row.style.display = txt.includes(term) ? '' : 'none';
+                    });
+                };
+            }
+        } else if (window._activeGerTab === 'sku') {
+            const cleanERI = (window._lastERI && window._lastERI.eriResults) ? window._lastERI.eriResults.filter(r => r.sku && !r.sku.toString().toUpperCase().includes('SKU')) : [];
+            let htmlRows = '';
+            if (cleanERI.length === 0) {
+                htmlRows = `<tr><td colspan="6" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos de SKU acumulados. Realiza el cruce para cargar.</td></tr>`;
+            } else {
+                htmlRows = cleanERI.map(r => {
+                    const accColor = r.eri >= 90 ? '#10b981' : (r.eri >= 80 ? '#f59e0b' : '#ef4444');
+                    return `
+                        <tr>
+                            <td style="font-weight:700; color:#818cf8; padding:10px 15px;">🏷️ ${r.sku}</td>
+                            <td style="font-size:0.7rem; color:var(--text-muted);">${r.ubi}</td>
+                            <td style="text-align:center;">${r.sis}</td>
+                            <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
+                            <td style="text-align:center; color:${r.diff===0?'#10b981':(r.diff>0?'#38bdf8':'#ef4444')}; font-weight:900;">
+                                ${r.diff > 0 ? '+' : ''}${r.diff}
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="background:${accColor}15; color:${accColor}; padding:2px 8px; border-radius:6px; font-weight:800;">
+                                    ${parseFloat(r.eri).toFixed(1)}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            gerContent.innerHTML = `
+                <div style="margin-bottom:1rem; display:flex; justify-content:flex-end;">
+                    <input type="text" id="search_ger_sku" placeholder="🔍 Buscar SKU..." style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.75rem; width:200px;">
+                </div>
+                <div class="data-table-container" style="border-radius:10px; border:1px solid rgba(255,255,255,0.05); max-height:400px; overflow-y:auto;">
+                    <table class="data-table" style="font-size:0.75rem;" id="table_ger_sku">
+                        <thead style="position:sticky; top:0; z-index:10; background:#1a1d21;">
+                            <tr>
+                                <th style="padding:12px 15px;">SKU</th>
+                                <th>UBICACIÓN</th>
+                                <th style="text-align:center;">SISTEMA</th>
+                                <th style="text-align:center;">FÍSICO</th>
+                                <th style="text-align:center;">DIF</th>
+                                <th style="text-align:center;">EXACTITUD ERI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${htmlRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            const searchInput = document.getElementById('search_ger_sku');
+            if (searchInput) {
+                searchInput.oninput = () => {
+                    const term = searchInput.value.toUpperCase();
+                    const rows = document.querySelectorAll('#table_ger_sku tbody tr');
+                    rows.forEach(row => {
+                        const txt = row.innerText.toUpperCase();
+                        row.style.display = txt.includes(term) ? '' : 'none';
+                    });
+                };
+            }
+        }
+
+        // Vincular clics de botones gerenciales
+        document.querySelectorAll('.ger-tab-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                window._activeGerTab = e.currentTarget.dataset.tab;
+                renderModuloInventarios(container);
+            };
+        });
+
+        // Lógica UCA original
         document.getElementById('btn_run_uca').onclick = () => {
             if (matriz && reserva) {
                 const res = processReporteUCA(matriz, reserva);
@@ -3434,7 +3941,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         };
 
-        // Lógica ERI/ERU
+        // Lógica ERI/ERU original
         const inputUnif = document.getElementById('up_conteo_unificado');
         if (inputUnif) {
             inputUnif.onchange = async (e) => {
@@ -3463,7 +3970,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         btn.disabled = false;
                         btn.style.opacity = '1';
                     }
-                    inputUnif.value = ''; // Limpiar para permitir re-subir el mismo archivo
+                    inputUnif.value = '';
                 }
             };
         }
@@ -3528,11 +4035,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             `;
             
-            // Inyectamos los datos reales usando la lógica existente
             updateERIUI_Unified();
         };
 
-        // Exportamos la función de refresco al ámbito global/superior temporalmente
         window.renderERI_ERU_Unified_Global = () => renderERI_ERU_Unified();
 
         if (window._lastERI) renderERI_ERU_Unified();
