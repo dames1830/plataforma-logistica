@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.67';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.68';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.67';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.67'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.67';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.67';
+import * as adminService from '../services_v245/adminService.js?v=25.1.68';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.68'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.68';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.68';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.67';
+const VERSION = '25.1.68';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4294,7 +4294,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </h3>
             <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
                 Cruza en tiempo real el <strong>Stock Activo</strong> de Recepción con el <strong>Maestro de Artículos</strong>. 
-                <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A</strong>.
+                <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A, CDBUFFER-D</strong>.
             </p>
             
             <div style="max-width: 500px; margin: 2.5rem auto 0 auto; text-align: left;">
@@ -4316,7 +4316,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       let pct = 0;
       const steps = [
           { threshold: 10, text: 'Leyendo Stock Activo de Recepción...' },
-          { threshold: 40, text: 'Filtrando ubicaciones CDBUFFER-A...' },
+          { threshold: 40, text: 'Filtrando ubicaciones CDBUFFER-A y CDBUFFER-D...' },
           { threshold: 70, text: 'Cruzando con Maestro de Artículos...' },
           { threshold: 90, text: 'Tabulando marcas y departamentos...' },
           { threshold: 100, text: '¡Procesamiento completado con éxito!' }
@@ -4390,7 +4390,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           </h3>
           <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
               Cruza en tiempo real el <strong>Stock Activo</strong> de Recepción con el <strong>Maestro de Artículos</strong>. 
-              <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A</strong>.
+              <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A, CDBUFFER-D</strong>.
           </p>
           <button id="btn_procesar_recepcion" class="btn" style="max-width: 320px; margin: 0 auto; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(79,70,229,0.3);">
               ⚡ PROCESAR REPORTE CDBUFFER
@@ -4441,7 +4441,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       // ==========================================
       const cdbufferRows = activeRows.filter(row => {
           const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
-          return location.startsWith('CDBUFFER-A');
+          return location.startsWith('CDBUFFER-A') || location.startsWith('CDBUFFER-D');
       });
 
       let reporte1HTML = '';
@@ -4449,9 +4449,9 @@ export const renderDashboard = async (container, user, onLogout) => {
           reporte1HTML = `
               <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); border-radius: 12px; height: 100%;">
                   <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
-                  <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A</h4>
+                  <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A/D</h4>
                   <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
-                      No se encontraron ubicaciones que inicien con <strong>CDBUFFER-A</strong> en el Stock Activo.
+                      No se encontraron ubicaciones que inicien con <strong>CDBUFFER-A</strong> o <strong>CDBUFFER-D</strong> en el Stock Activo.
                   </p>
               </div>
           `;
