@@ -796,6 +796,17 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (btnCalc) {
             btnCalc.onclick = async () => {
                 console.log("[PULSE] Click Procesar Análisis");
+                
+                // VALIDACIÓN EXPLÍCITA DE ARCHIVOS (Antes de mostrar la barra de progreso)
+                try {
+                    if (!dataStore.buffer_activo) throw new Error("Falta cargar el archivo STOCK ACTIVO.");
+                    if (!dataStore.buffer_reserva) throw new Error("Falta cargar el archivo STOCK RESERVA.");
+                    if (!dataStore.articulos) throw new Error("Falta cargar el archivo MAESTRO.");
+                } catch (err) {
+                    alert("Error crítico: " + err.message);
+                    return;
+                }
+
                 btnCalc.disabled = true; btnCalc.innerHTML = '⚙️ CALCULANDO...';
                 results.innerHTML = `
                 <div style="width: 100%; padding:5rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); border-radius:16px; border:1px solid rgba(255,255,255,0.05); min-height:300px; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);">
@@ -814,11 +825,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 setTimeout(async () => {
                     try {
-                        // VALIDACIÓN EXPLÍCITA DE ARCHIVOS
-                        if (!dataStore.buffer_activo) throw new Error("Falta cargar el archivo STOCK ACTIVO.");
-                        if (!dataStore.buffer_reserva) throw new Error("Falta cargar el archivo STOCK RESERVA.");
-                        if (!dataStore.articulos) throw new Error("Falta cargar el archivo MAESTRO.");
-
                         const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                         const res = calculateBufferPallets(config);
                         if (res) {
