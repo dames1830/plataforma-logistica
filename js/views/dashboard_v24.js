@@ -2822,54 +2822,149 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         } else {
             // VISTA OPERARIO
-            content.innerHTML = `
-                <div style="padding:0.5rem;">
-                    <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:1rem; border-radius:10px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <h2 style="color:#10b981; margin:0; font-size:1.1rem;">🟢 ESCÁNER ACTIVO</h2>
-                            <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">Apunta a una ubicación para empezar.</p>
-                        </div>
-                        <span style="font-size:2rem;">🔫</span>
-                    </div>
-                    
-                    <h3 style="color:#fff; font-size:1rem; margin-bottom:1rem;">Ubicaciones Pendientes</h3>
-                    <div id="operario_tasks_container" style="display:flex; flex-direction:column; gap:0.8rem;"></div>
-                    
-                    <input type="text" id="zebra_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
-                </div>
-            `;
-            
-            const tasks = cyclicService.getTasks();
-            const container = document.getElementById('operario_tasks_container');
-            if (tasks.length === 0) {
-                container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:2rem; font-style:italic;">No hay ubicaciones asignadas por el Administrador.</div>';
-            } else {
-                tasks.forEach(t => {
-                    const isClosed = cyclicService.isLocationClosed(t.location);
-                    const color = isClosed ? '#10b981' : 'var(--text-muted)';
-                    const bg = isClosed ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)';
-                    const statusText = isClosed ? 'CERRADA' : 'PENDIENTE';
-                    container.innerHTML += `
-                        <div style="padding:1rem; background:${bg}; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
-                            <span style="color:#fff; font-weight:bold; font-size:1.1rem;">${t.location}</span>
-                            <span style="color:${color}; font-size:0.75rem; font-weight:800; letter-spacing:1px;">${statusText}</span>
-                        </div>
-                    `;
-                });
-            }
+            const activeLocation = localStorage.getItem('eru_active_location');
+            const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'+'A'.repeat(100)); // Short placeholder beep. In real env, we can synthesize one using Web Audio API
 
-            // Keep scanner input focused
-            const scannerInput = document.getElementById('zebra_scanner_input');
-            if(scannerInput) {
-                scannerInput.focus();
-                document.addEventListener('click', () => { scannerInput.focus(); });
-                scannerInput.addEventListener('keydown', (e) => {
-                    if(e.key === 'Enter') {
-                        const code = scannerInput.value.trim();
-                        scannerInput.value = '';
-                        if(code) alert('Has escaneado: ' + code); // Temporal
-                    }
+            if (!activeLocation) {
+                // LISTA DE UBICACIONES
+                content.innerHTML = `
+                    <div style="padding:0.5rem;">
+                        <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:1rem; border-radius:10px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <h2 style="color:#10b981; margin:0; font-size:1.1rem;">🟢 MODO PISTOLEO ACTIVO</h2>
+                                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">Pistolea el código de una ubicación de la lista para empezar.</p>
+                            </div>
+                            <span style="font-size:2rem;">🔫</span>
+                        </div>
+                        
+                        <h3 style="color:#fff; font-size:1rem; margin-bottom:1rem;">Ubicaciones Pendientes</h3>
+                        <div id="operario_tasks_container" style="display:flex; flex-direction:column; gap:0.8rem;"></div>
+                        
+                        <input type="text" id="zebra_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                    </div>
+                `;
+                
+                const tasks = cyclicService.getTasks();
+                const container = document.getElementById('operario_tasks_container');
+                if (tasks.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:2rem; font-style:italic;">No hay ubicaciones asignadas por el Administrador.</div>';
+                } else {
+                    tasks.forEach(t => {
+                        const isClosed = cyclicService.isLocationClosed(t.location);
+                        const color = isClosed ? '#10b981' : 'var(--text-muted)';
+                        const bg = isClosed ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)';
+                        const statusText = isClosed ? 'CERRADA 🔒' : 'PENDIENTE';
+                        container.innerHTML += `
+                            <div class="loc-item" data-loc="${t.location}" data-closed="${isClosed}" style="padding:1rem; background:${bg}; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                                <span style="color:#fff; font-weight:bold; font-size:1.1rem;">${t.location}</span>
+                                <span style="color:${color}; font-size:0.75rem; font-weight:800; letter-spacing:1px;">${statusText}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                document.querySelectorAll('.loc-item').forEach(el => {
+                    el.onclick = () => {
+                        if(el.dataset.closed === 'true') {
+                            alert('Esta ubicación ya fue contada y está cerrada. Solicite desbloqueo a Administración.');
+                            return;
+                        }
+                        localStorage.setItem('eru_active_location', el.dataset.loc);
+                        renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                    };
                 });
+
+                const scannerInput = document.getElementById('zebra_scanner_input');
+                if(scannerInput) {
+                    scannerInput.focus();
+                    document.addEventListener('click', () => { scannerInput.focus(); });
+                    scannerInput.addEventListener('keydown', (e) => {
+                        if(e.key === 'Enter') {
+                            const code = scannerInput.value.trim();
+                            scannerInput.value = '';
+                            const t = tasks.find(x => x.location.toUpperCase() === code.toUpperCase());
+                            if(t) {
+                                if(cyclicService.isLocationClosed(t.location)) {
+                                    alert('Ubicación Cerrada.');
+                                } else {
+                                    localStorage.setItem('eru_active_location', t.location);
+                                    renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                                }
+                            } else {
+                                alert('Ubicación no encontrada en la tarea actual.');
+                            }
+                        }
+                    });
+                }
+            } else {
+                // MODO ESCANEO (Ubicación Abierta)
+                const scans = cyclicService.getScansByLocation(activeLocation);
+                const totalScans = scans.reduce((acc, curr) => acc + curr.qty, 0);
+
+                content.innerHTML = `
+                    <div style="padding:0.5rem; text-align:center;">
+                        <button id="btn_back_locs" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">< Volver a lista</button>
+                        
+                        <div style="background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.3); padding:1.5rem; border-radius:10px; margin-bottom:1.5rem;">
+                            <h2 style="color:#38bdf8; margin:0 0 0.5rem 0; font-size:1.8rem; font-weight:900;">${activeLocation}</h2>
+                            <p style="margin:0; font-size:0.8rem; color:#fff;">Pistolee los SKUs físicos ahora</p>
+                            <h1 style="color:#fff; font-size:3rem; margin:1rem 0 0 0;" id="scan_counter">${totalScans}</h1>
+                            <p style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Artículos leídos</p>
+                        </div>
+                        
+                        <div style="display:flex; flex-direction:column; gap:1rem;">
+                            <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">🔒 CERRAR UBICACIÓN</button>
+                        </div>
+                        <input type="text" id="sku_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                    </div>
+                `;
+
+                document.getElementById('btn_back_locs').onclick = () => {
+                    localStorage.removeItem('eru_active_location');
+                    renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                };
+
+                document.getElementById('btn_close_loc').onclick = () => {
+                    if(confirm('¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.')) {
+                        cyclicService.closeLocation(activeLocation);
+                        localStorage.removeItem('eru_active_location');
+                        renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                    }
+                };
+
+                // Play beep using Web Audio API for guaranteed cross-browser sound without external files
+                const playBeep = () => {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                };
+
+                const skuInput = document.getElementById('sku_scanner_input');
+                if(skuInput) {
+                    skuInput.focus();
+                    document.addEventListener('click', () => { skuInput.focus(); });
+                    skuInput.addEventListener('keydown', (e) => {
+                        if(e.key === 'Enter') {
+                            const code = skuInput.value.trim();
+                            skuInput.value = '';
+                            if(code) {
+                                playBeep();
+                                cyclicService.saveScan(activeLocation, code);
+                                // Update counter immediately
+                                const currentCount = parseInt(document.getElementById('scan_counter').innerText) || 0;
+                                document.getElementById('scan_counter').innerText = currentCount + 1;
+                            }
+                        }
+                    });
+                }
             }
         }
     }
