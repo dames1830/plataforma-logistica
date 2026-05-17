@@ -478,7 +478,11 @@ export const renderDashboard = async (container, user, onLogout) => {
   const allowedTabs = TABS.filter(t => {
       if (user.role === 'admin') return true;
       if (t.id === 'inicio') return true;
-      return rolePermissions[t.id] === 1;
+      const dbPerm = rolePermissions[t.id];
+      if (dbPerm !== undefined) {
+          return dbPerm === 1 || dbPerm === true;
+      }
+      return t.roles && t.roles.includes(user.role);
   });
   
   if (allowedTabs.length === 0) {
@@ -1502,7 +1506,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
-                                let hasAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[t.id] === 1 || t.roles.includes(r));
+                                const dbVal = adminService.getPermissions(r)?.[t.id];
+                                let hasAccess = r === 'admin' ? true : (dbVal !== undefined ? (dbVal === 1 || dbVal === true) : t.roles.includes(r));
                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
                                 const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
                                 return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
@@ -1521,7 +1526,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         ${sub.icon} ${sub.label}
                                     </td>
                                     ${allRoles.map(r => {
-                                        let hasSubAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[subKey] === 1 || t.roles.includes(r));
+                                        const dbSubVal = adminService.getPermissions(r)?.[subKey];
+                                        let hasSubAccess = r === 'admin' ? true : (dbSubVal !== undefined ? (dbSubVal === 1 || dbSubVal === true) : t.roles.includes(r));
                                         if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey)) hasSubAccess = true;
                                         const isFixedSub = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey));
                                         return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixedSub ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
@@ -1536,7 +1542,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <tr class="sub-row-${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.005); display:none; background:rgba(0,0,0,0.2);">
                                             <td style="padding:0.5rem 0.8rem 0.5rem 4.5rem; font-size:0.7rem; color:var(--primary); border-right:1px solid var(--border);">${ss.icon} ${ss.label}</td>
                                             ${allRoles.map(r => {
-                                                let hasSSAccess = r === 'admin' ? true : (adminService.getPermissions(r)?.[ssKey] === 1 || t.roles.includes(r));
+                                                const dbSSVal = adminService.getPermissions(r)?.[ssKey];
+                                                let hasSSAccess = r === 'admin' ? true : (dbSSVal !== undefined ? (dbSSVal === 1 || dbSSVal === true) : t.roles.includes(r));
                                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey)) hasSSAccess = true;
                                                 const isFixedSS = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey));
                                                 return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${isFixedSS ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
