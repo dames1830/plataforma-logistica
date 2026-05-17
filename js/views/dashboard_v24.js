@@ -4351,54 +4351,44 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderRecepcionReportTab = (container) => {
     const hasDataFiles = dataStore.recepcion_activo && dataStore.recepcion_activo.length > 0 && dataStore.articulos && dataStore.articulos.length > 0;
-    const isProcessed = localStorage.getItem('recepcion_report_processed') === 'true' && hasDataFiles;
 
-    if (isProcessed) {
-        // Mostrar el reporte procesado de forma persistente e inmediata
+    if (!hasDataFiles) {
         container.innerHTML = `
-          <div style="max-width: 900px; margin: 1.5rem auto; text-align: right; margin-bottom: 1rem; animation: fadeIn 0.3s ease;">
-              <button id="btn_reprocesar_recepcion" class="btn" style="background: rgba(34, 211, 238, 0.1); color: #22d3ee; border: 1px solid #22d3ee; font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;">
-                  🔄 REPROCESAR REPORTE
-              </button>
+          <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 800px; margin: 2rem auto; animation: fadeIn 0.3s ease;">
+              <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">⚠️</div>
+              <h3 style="margin-bottom: 1rem; color: #ff6b6b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                  FALTAN ARCHIVOS DE RECEPCIÓN
+              </h3>
+              <p style="color: var(--text-muted); margin-bottom: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
+                  No se puede generar el reporte porque aún no has cargado los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.
+                  <br><br>Por favor, asegúrate de subir:
+                  <br>• <strong>Stock Activo</strong> (CSV)
+                  <br>• <strong>Maestro Artículos</strong> (XLSX)
+              </p>
           </div>
-          <div id="recepcionResultsArea"></div>
         `;
-        
-        try {
-            const resultsArea = document.getElementById('recepcionResultsArea');
-            generateAndRenderRecepcionReport(resultsArea);
-        } catch (err) {
-            console.error(err);
-            localStorage.removeItem('recepcion_report_processed');
-            renderRecepcionReportTab(container);
-            return;
-        }
-
-        document.getElementById('btn_reprocesar_recepcion').addEventListener('click', () => {
-            localStorage.removeItem('recepcion_report_processed');
-            runProcessingAnimation(container);
-        });
-        
         return;
     }
 
     container.innerHTML = `
-      <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 800px; margin: 2rem auto;">
-          <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">📊</div>
-          <h3 style="margin-bottom: 1rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-              REPORTE RECEPCIÓN - CDBUFFER
-          </h3>
-          <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
-              Cruza en tiempo real el <strong>Stock Activo</strong> de Recepción con el <strong>Maestro de Artículos</strong>. 
-              <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A, CDBUFFER-D</strong>.
-          </p>
-          <button id="btn_procesar_recepcion" class="btn" style="max-width: 320px; margin: 0 auto; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(79,70,229,0.3);">
-              ⚡ PROCESAR REPORTE CDBUFFER
+      <div style="max-width: 900px; margin: 1.5rem auto; text-align: right; margin-bottom: 1rem; animation: fadeIn 0.3s ease;">
+          <button id="btn_reprocesar_recepcion" class="btn" style="background: rgba(34, 211, 238, 0.1); color: #22d3ee; border: 1px solid #22d3ee; font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;">
+              🔄 REPROCESAR REPORTE
           </button>
       </div>
+      <div id="recepcionResultsArea"></div>
     `;
+    
+    try {
+        const resultsArea = document.getElementById('recepcionResultsArea');
+        generateAndRenderRecepcionReport(resultsArea);
+    } catch (err) {
+        console.error(err);
+        showPremiumAlert('Error de Análisis', 'Ocurrió un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
+        return;
+    }
 
-    document.getElementById('btn_procesar_recepcion').addEventListener('click', () => {
+    document.getElementById('btn_reprocesar_recepcion').addEventListener('click', () => {
         runProcessingAnimation(container);
     });
   };
