@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.54';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.55';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.54';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.54'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.54';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.54';
+import * as adminService from '../services_v245/adminService.js?v=25.1.55';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.55'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.55';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.55';
 
 
-const VERSION = '25.1.54';
+const VERSION = '25.1.55';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5304,7 +5304,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             ` : `
             <div style="flex:1; display:flex; justify-content:space-between; align-items:center;">
                 <h4 style="margin:0; color:var(--primary); font-size:0.8rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;">📊 Panel de Rendimiento Individual</h4>
-                <div style="font-size:0.75rem; color:var(--text-muted);">Módulo de Analítica Avanzada</div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                        🔄
+                    </button>
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Módulo de Analítica Avanzada</div>
+                </div>
             </div>
             `}
         </div>
@@ -5448,17 +5453,22 @@ export const renderDashboard = async (container, user, onLogout) => {
                 
                 <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
                 <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:1.5rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:1.2rem;">
-                    <div style="border-left: 4px solid #00E5FF; padding-left: 12px; display:flex; flex-direction:column; gap:4px;">
-                        <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                            REPORTE ALMACENAJE - MARCAS
-                        </h3>
-                        <div style="font-size:0.7rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                            SYNC_ID: ${(() => {
-                                const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                const syncDateStr = selectedTaskDate ? selectedTaskDate.split('-').reverse().join('/') : new Date().toLocaleDateString('es-ES');
-                                return `${syncDateStr} ${syncTimeStr}`;
-                            })()}
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="border-left: 4px solid #00E5FF; padding-left: 12px; display:flex; flex-direction:column; gap:4px;">
+                            <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                                REPORTE ALMACENAJE - MARCAS
+                            </h3>
+                            <div style="font-size:0.7rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                                SYNC_ID: ${(() => {
+                                    const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+                                    const syncDateStr = selectedTaskDate ? selectedTaskDate.split('-').reverse().join('/') : new Date().toLocaleDateString('es-ES');
+                                    return `${syncDateStr} ${syncTimeStr}`;
+                                })()}
+                            </div>
                         </div>
+                        <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                            🔄
+                        </button>
                     </div>
                     
                     <div style="overflow-x:auto;">
