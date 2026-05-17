@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.48';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.49';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.48';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.48';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.48';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.48';
+import * as adminService from '../services_v245/adminService.js?v=25.1.49';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.48'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.49';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.49';
 
 
-const VERSION = '25.1.48';
+const VERSION = '25.1.49';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2979,12 +2979,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                     }
                 });
             }
-        }
 
-            document.getElementById('btn_sync_eru').onclick = () => {
-                alert('⏳ Iniciando motor de cruce ERU (Modelo 1 Ciego Total)... Funcionalidad en desarrollo.');
-            };
-
+            const syncBtn = document.getElementById('btn_sync_eru');
+            if (syncBtn) {
+                syncBtn.onclick = () => {
+                    alert('⏳ Iniciando motor de cruce ERU (Modelo 1 Ciego Total)... Funcionalidad en desarrollo.');
+                };
+            }
         } else {
             // VISTA OPERARIO
             const activeLocation = localStorage.getItem('eru_active_location');
