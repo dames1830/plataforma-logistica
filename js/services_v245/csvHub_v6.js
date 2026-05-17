@@ -382,8 +382,8 @@ export const parseBufferFiles = async (files) => {
 };
 
 const persistToDatabase = async (area, payload, username = 'sistema') => {
-    // [MOD LOCAL] Si es del módulo de Recepción, procesar 100% de manera local
-    if (area.startsWith('recepcion')) {
+    // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, procesar 100% de manera local
+    if (area.startsWith('recepcion') || area === 'articulos') {
         dataStore[area] = payload;
         await saveToDB(area, payload);
         if (area.endsWith('_activo') || area.endsWith('_reserva')) {
@@ -424,8 +424,8 @@ export const clearAreaData = async (area, username = 'sistema') => {
     dataStore[area] = null;
     localStorage.removeItem('meta_' + area);
     
-    // [MOD LOCAL] Si es del módulo de Recepción, procesar 100% de manera local
-    if (area.startsWith('recepcion')) {
+    // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, procesar 100% de manera local
+    if (area.startsWith('recepcion') || area === 'articulos') {
         try {
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -466,8 +466,8 @@ export const getAreaData = async (area) => {
       return dbData; 
   }
 
-  // [MOD LOCAL] Si es del módulo de Recepción, no buscar en el servidor
-  if (area.startsWith('recepcion')) {
+  // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
+  if (area.startsWith('recepcion') || area === 'articulos') {
       if (area.endsWith('_activo') || area.endsWith('_reserva')) {
           updateTablaTallas();
       }

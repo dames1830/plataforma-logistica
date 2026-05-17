@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.63';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.64';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.63';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.63'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.63';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.63';
+import * as adminService from '../services_v245/adminService.js?v=25.1.64';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.64'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.64';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.64';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.63';
+const VERSION = '25.1.64';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5027,13 +5027,22 @@ export const renderDashboard = async (container, user, onLogout) => {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; container.appendChild(wrap);
         const actKey = `${tabId}_activo`;
         const resKey = `${tabId}_reserva`;
-        renderUploadArea(wrap, actKey, dataStore[actKey], '.csv', 'STOCK ACTIVO');
-        renderUploadArea(wrap, resKey, dataStore[resKey], '.xlsx', 'STOCK RESERVA');
+
+        // Cargar asíncronamente de la base de datos local IndexedDB antes de renderizar
+        const [activoData, reservaData, articulosData, matrizData] = await Promise.all([
+            getAreaData(actKey),
+            getAreaData(resKey),
+            (tabId === 'almacenaje' || tabId === 'recepcion') ? getAreaData('articulos') : Promise.resolve(null),
+            (tabId === 'inventario') ? getAreaData('matriz_ubicaciones') : Promise.resolve(null)
+        ]);
+
+        renderUploadArea(wrap, actKey, activoData, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, resKey, reservaData, '.xlsx', 'STOCK RESERVA');
         if (tabId === 'almacenaje' || tabId === 'recepcion') {
-            renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
+            renderUploadArea(wrap, 'articulos', articulosData, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
         if (tabId === 'inventario') {
-            renderUploadArea(wrap, 'matriz_ubicaciones', dataStore.matriz_ubicaciones, '.xlsx', 'MATRIZ UBICACIONES ALTO');
+            renderUploadArea(wrap, 'matriz_ubicaciones', matrizData, '.xlsx', 'MATRIZ UBICACIONES ALTO');
         }
     } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
         const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');
