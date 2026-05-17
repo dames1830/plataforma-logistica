@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.55';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.56';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.55';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.55'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.55';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.55';
+import * as adminService from '../services_v245/adminService.js?v=25.1.56';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.56'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.56';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.56';
 
 
-const VERSION = '25.1.55';
+const VERSION = '25.1.56';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5170,6 +5170,30 @@ export const renderDashboard = async (container, user, onLogout) => {
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
     
+    const getPctHtml = (avance, buffer, withIcon = true) => {
+        const pct = buffer > 0 ? Math.round((avance / buffer) * 100) : 0;
+        let color = '';
+        let icon = '';
+        if (pct === 0) {
+            color = '#ef4444'; // Rojo
+            icon = '●';
+        } else if (avance < buffer) {
+            color = '#fbbf24'; // Ámbar / Amarillo
+            icon = '▲';
+        } else {
+            color = '#22c55e'; // Verde
+            icon = '▲';
+        }
+        if (withIcon) {
+            return `
+                <span style="color:${color}; margin-right:4px;">${icon}</span>
+                <span style="color:${color}; font-size:0.75rem; font-weight:800;">${pct}%</span>
+            `;
+        } else {
+            return `<span style="color:${color}; font-size:0.85rem; font-weight:900;">${pct}%</span>`;
+        }
+    };
+    
     // [OPTIMIZACIÓN] Pre-calcular mapa de stock para evitar bloqueos en el renderizado
     const otherZonesStockMap = new Map();
     if (isDetail) {
@@ -5551,15 +5575,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                     <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:700; color:#ffffff;">${data.buffer.toLocaleString()}</td>
                                                     <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:700; color:#ffffff;">${data.avance.toLocaleString()}</td>
                                                     <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:800; font-size:0.8rem;">
-                                                        <span style="color:#22c55e; margin-right:4px;">▲</span>
-                                                        <span style="color:rgba(255,255,255,0.45); font-size:0.75rem;">${pct}%</span>
+                                                        ${getPctHtml(data.avance, data.buffer, true)}
                                                     </td>
                                                     <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:800; color:#00E5FF; text-decoration: underline; border-bottom: 1px solid rgba(0, 229, 255, 0.2);">${pendiente.toLocaleString()}</td>
                                                 </tr>
                                             `;
                                         });
 
-                                        const areaPct = areaBufferSum > 0 ? Math.round((areaAvanceSum / areaBufferSum) * 100) : 0;
                                         const areaPendiente = areaBufferSum - areaAvanceSum;
 
                                         brandTableRows += `
@@ -5567,13 +5589,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                 <td colspan="2" style="padding:0.8rem; color:#00E5FF; font-weight:900; font-size:0.85rem; text-transform:uppercase;">Total ${area}</td>
                                                 <td style="padding:0.8rem; text-align:center; color:#ffffff; font-size:0.85rem;">${areaBufferSum.toLocaleString()}</td>
                                                 <td style="padding:0.8rem; text-align:center; color:#ffffff; font-size:0.85rem;">${areaAvanceSum.toLocaleString()}</td>
-                                                <td style="padding:0.8rem; text-align:center; color:#00E5FF; font-size:0.85rem;">${areaPct}%</td>
+                                                <td style="padding:0.8rem; text-align:center; font-size:0.85rem;">
+                                                    ${getPctHtml(areaAvanceSum, areaBufferSum, false)}
+                                                </td>
                                                 <td style="padding:0.8rem; text-align:center; color:#00E5FF; font-size:0.85rem;">${areaPendiente.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     });
 
-                                    const grandPct = grandBuffer > 0 ? Math.round((grandAvance / grandBuffer) * 100) : 0;
                                     const grandPendiente = grandBuffer - grandAvance;
                                     
                                     brandTableRows += `
@@ -5581,7 +5604,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             <td colspan="2" style="padding:1rem 0.8rem; color:#ffffff; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">TOTAL GENERAL CDBUFFER</td>
                                             <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandBuffer.toLocaleString()}</td>
                                             <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandAvance.toLocaleString()}</td>
-                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandPct}%</td>
+                                            <td style="padding:1rem 0.8rem; text-align:center; font-size:0.9rem;">
+                                                ${getPctHtml(grandAvance, grandBuffer, false)}
+                                            </td>
                                             <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandPendiente.toLocaleString()}</td>
                                         </tr>
                                     `;
