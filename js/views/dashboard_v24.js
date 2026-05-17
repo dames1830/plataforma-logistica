@@ -2797,10 +2797,45 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>
                 </div>
                 
-                <!-- Reporte Gerencial -->
+                <!-- Monitor de Tareas en Vivo -->
                 <div class="glass-panel" style="margin-top:1.5rem; padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
-                    <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">📊 Reporte Gerencial de Cíclicos</h3>
-                    <div id="eru_report_area" style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic;">Pendiente de sincronización...</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h3 style="color:#fff; margin:0; font-size:1rem;">📋 Monitor de Tareas en Vivo</h3>
+                        <button onclick="renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'))" class="btn-premium-pulse" style="padding:6px 15px; font-size:0.75rem; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; cursor:pointer;">🔄 Actualizar Estado</button>
+                    </div>
+                    <div id="admin_live_monitor" style="overflow-x:auto;">
+                        ${activeCount > 0 ? `
+                            <table class="modern-table" style="width:100%; text-align:left; border-collapse:collapse;">
+                                <thead>
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#818cf8;">
+                                        <th style="padding:10px;">#</th>
+                                        <th style="padding:10px;">Ubicación</th>
+                                        <th style="padding:10px;">Estado</th>
+                                        <th style="padding:10px;">Artículos Leídos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${currentTasks.map((t, i) => {
+                                        const isClosed = cyclicService.isLocationClosed(t.location);
+                                        const badge = isClosed 
+                                            ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">CERRADA 🔒</span>'
+                                            : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">EN PROCESO ⏳</span>';
+                                        
+                                        const scansCount = cyclicService.getScansByLocation(t.location).reduce((acc, curr) => acc + curr.qty, 0);
+                                        
+                                        return `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding:10px; color:var(--text-muted);">${i + 1}</td>
+                                            <td style="padding:10px; color:#fff; font-weight:bold;">${t.location}</td>
+                                            <td style="padding:10px;">${badge}</td>
+                                            <td style="padding:10px; color:#38bdf8; font-weight:bold;">${scansCount}</td>
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        ` : `<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic;">No hay ubicaciones asignadas. Sube un archivo para comenzar.</div>`}
+                    </div>
                 </div>
             `;
             renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico_tarea', null, '.csv, .xlsx', 'SUBIR UBICACIONES (TAREA)');
