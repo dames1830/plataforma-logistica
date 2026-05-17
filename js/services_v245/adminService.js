@@ -197,17 +197,17 @@ export const initPermissions = (tabs) => {
         const p = adminStore.permissions[role];
         tabs.forEach(t => {
             if (role === 'asistente' && FORCED_ASISTENTE.includes(t.id)) p[t.id] = 1;
-            if (p[t.id] === undefined) p[t.id] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+            if (p[t.id] === undefined) p[t.id] = (role === 'admin' || role === 'jefe' || (t.roles && t.roles.includes(role))) ? 1 : 0;
             if (t.subTabs) {
                 t.subTabs.forEach(s => {
                     const subKey = `${t.id}_${s.id}`;
                     if (role === 'asistente' && FORCED_ASISTENTE.includes(subKey)) p[subKey] = 1;
-                    if (p[subKey] === undefined) p[subKey] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                    if (p[subKey] === undefined) p[subKey] = (role === 'admin' || role === 'jefe' || (t.roles && t.roles.includes(role))) ? 1 : 0;
                     if (s.subTabs) {
                         s.subTabs.forEach(ss => {
                             const ssKey = `${s.id}_${ss.id}`;
                             if (role === 'asistente' && FORCED_ASISTENTE.includes(ssKey)) p[ssKey] = 1;
-                            if (p[ssKey] === undefined) p[ssKey] = (role === 'admin' || role === 'jefe') ? 1 : 0;
+                            if (p[ssKey] === undefined) p[ssKey] = (role === 'admin' || role === 'jefe' || (t.roles && t.roles.includes(role))) ? 1 : 0;
                         });
                     }
                 });
