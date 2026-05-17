@@ -2774,12 +2774,19 @@ export const renderDashboard = async (container, user, onLogout) => {
         const isAdmin = session && (session.role === 'admin' || session.role === 'jefe');
 
         if (isAdmin) {
+            const currentTasks = cyclicService.getTasks();
+            const activeCount = currentTasks.length;
+            const statusHtml = activeCount > 0 
+                ? `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">🟢 TAREA ACTIVA EN PISO: ${activeCount} ubicaciones pendientes</div>` 
+                : `<div style="margin-top:1rem; padding:0.8rem; background:rgba(255,255,255,0.05); border-radius:8px; color:var(--text-muted); font-size:0.85rem; text-align:center;">No hay tareas activas.</div>`;
+
             content.innerHTML = `
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
                     <!-- Panel Izquierdo: Carga de Tareas -->
                     <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
                         <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">📂 1. Asignar Tarea Cíclica</h3>
                         <div id="ciclico_upload_area"></div>
+                        <div id="admin_task_status">${statusHtml}</div>
                     </div>
                     
                     <!-- Panel Derecho: Cruce y Sincronización -->
@@ -2837,6 +2844,9 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                             const tasks = uniqueLocs.map(loc => ({ location: loc, status: 'pending' }));
                             cyclicService.saveTasks(tasks);
+                            
+                            // Visual Update UX
+                            document.getElementById('admin_task_status').innerHTML = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">🟢 TAREA ACTIVA EN PISO: ${tasks.length} ubicaciones pendientes</div>`;
                             alert('✅ Tarea de ' + tasks.length + ' ubicaciones asignada con éxito.');
                         }
                     } catch(err) { alert(err); }
