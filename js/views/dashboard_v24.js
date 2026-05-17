@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.53';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.54';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.53';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.53'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.53';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.53';
+import * as adminService from '../services_v245/adminService.js?v=25.1.54';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.54'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.54';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.54';
 
 
-const VERSION = '25.1.53';
+const VERSION = '25.1.54';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5441,7 +5441,157 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medición: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
                     <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
                 </div>
+            </div>
+
+            <!-- FILA INFERIOR DE REPORTES (50% / 50%) -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+                
+                <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
+                <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:1.5rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:1.2rem;">
+                    <div style="border-left: 4px solid #00E5FF; padding-left: 12px; display:flex; flex-direction:column; gap:4px;">
+                        <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                            REPORTE ALMACENAJE - MARCAS
+                        </h3>
+                        <div style="font-size:0.7rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                            SYNC_ID: ${(() => {
+                                const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+                                const syncDateStr = selectedTaskDate ? selectedTaskDate.split('-').reverse().join('/') : new Date().toLocaleDateString('es-ES');
+                                return `${syncDateStr} ${syncTimeStr}`;
+                            })()}
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                            <thead>
+                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.75rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                                    <th style="padding:0.8rem; text-align:left; width: 120px;">AREA</th>
+                                    <th style="padding:0.8rem; text-align:left;">MARCAS</th>
+                                    <th style="padding:0.8rem; text-align:center; width: 90px;">BUFFER</th>
+                                    <th style="padding:0.8rem; text-align:center; width: 90px;">AVANCE</th>
+                                    <th style="padding:0.8rem; text-align:center; width: 90px;">%</th>
+                                    <th style="padding:0.8rem; text-align:center; width: 100px;">PENDIENTE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                                    const brandGroups = {};
+                                    const filteredTasks = tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate);
+
+                                    filteredTasks.forEach(t => {
+                                        (t.items || []).forEach(art => {
+                                            const brand = String(art.marca || 'S/M').trim();
+                                            const bufferItems = art.items || [];
+                                            
+                                            bufferItems.forEach(i => {
+                                                const ubi = String(i.ubi || '').toUpperCase().trim();
+                                                if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
+                                                    let area = 'CDBUFFER-A';
+                                                    if (ubi.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
+                                                    else if (ubi.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
+                                                    else {
+                                                        const parts = ubi.split('-');
+                                                        area = parts.length > 1 ? `${parts[0]}-${parts[1]}` : parts[0];
+                                                    }
+                                                    
+                                                    const qty = parseFloat(i.qty) || 0;
+                                                    
+                                                    if (!brandGroups[area]) brandGroups[area] = {};
+                                                    if (!brandGroups[area][brand]) {
+                                                        brandGroups[area][brand] = { buffer: 0, avance: 0 };
+                                                    }
+                                                    
+                                                    brandGroups[area][brand].buffer += qty;
+                                                    if (t.status === 'Finalizado') {
+                                                        brandGroups[area][brand].avance += qty;
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    });
+
+                                    const areas = Object.keys(brandGroups).sort((a, b) => b.localeCompare(a));
+                                    let brandTableRows = '';
+                                    let grandBuffer = 0;
+                                    let grandAvance = 0;
+
+                                    if (areas.length === 0) {
+                                        return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
+                                    }
+
+                                    areas.forEach(area => {
+                                        const brands = Object.keys(brandGroups[area]).sort((a, b) => a.localeCompare(b));
+                                        let areaBufferSum = 0;
+                                        let areaAvanceSum = 0;
+
+                                        brands.forEach(brand => {
+                                            const data = brandGroups[area][brand];
+                                            const pct = data.buffer > 0 ? Math.round((data.avance / data.buffer) * 100) : 0;
+                                            const pendiente = data.buffer - data.avance;
+                                            
+                                            areaBufferSum += data.buffer;
+                                            areaAvanceSum += data.avance;
+                                            grandBuffer += data.buffer;
+                                            grandAvance += data.avance;
+
+                                            brandTableRows += `
+                                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
+                                                    <td style="padding:0.7rem 0.8rem; color:#a1a1aa; font-size: 0.8rem; font-weight:600;">${area}</td>
+                                                    <td style="padding:0.7rem 0.8rem;"><b style="color:#ffffff; font-weight:800; font-size:0.85rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
+                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:700; color:#ffffff;">${data.buffer.toLocaleString()}</td>
+                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:700; color:#ffffff;">${data.avance.toLocaleString()}</td>
+                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:800; font-size:0.8rem;">
+                                                        <span style="color:#22c55e; margin-right:4px;">▲</span>
+                                                        <span style="color:rgba(255,255,255,0.45); font-size:0.75rem;">${pct}%</span>
+                                                    </td>
+                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:800; color:#00E5FF; text-decoration: underline; border-bottom: 1px solid rgba(0, 229, 255, 0.2);">${pendiente.toLocaleString()}</td>
+                                                </tr>
+                                            `;
+                                        });
+
+                                        const areaPct = areaBufferSum > 0 ? Math.round((areaAvanceSum / areaBufferSum) * 100) : 0;
+                                        const areaPendiente = areaBufferSum - areaAvanceSum;
+
+                                        brandTableRows += `
+                                            <tr style="background:rgba(0, 229, 255, 0.04); border-top:1px solid rgba(0, 229, 255, 0.3); border-bottom:1px solid rgba(0, 229, 255, 0.3); font-weight:800;">
+                                                <td colspan="2" style="padding:0.8rem; color:#00E5FF; font-weight:900; font-size:0.85rem; text-transform:uppercase;">Total ${area}</td>
+                                                <td style="padding:0.8rem; text-align:center; color:#ffffff; font-size:0.85rem;">${areaBufferSum.toLocaleString()}</td>
+                                                <td style="padding:0.8rem; text-align:center; color:#ffffff; font-size:0.85rem;">${areaAvanceSum.toLocaleString()}</td>
+                                                <td style="padding:0.8rem; text-align:center; color:#00E5FF; font-size:0.85rem;">${areaPct}%</td>
+                                                <td style="padding:0.8rem; text-align:center; color:#00E5FF; font-size:0.85rem;">${areaPendiente.toLocaleString()}</td>
+                                            </tr>
+                                        `;
+                                    });
+
+                                    const grandPct = grandBuffer > 0 ? Math.round((grandAvance / grandBuffer) * 100) : 0;
+                                    const grandPendiente = grandBuffer - grandAvance;
+                                    
+                                    brandTableRows += `
+                                        <tr style="background:rgba(0, 229, 255, 0.15); border:2px solid #00E5FF; font-weight:900;">
+                                            <td colspan="2" style="padding:1rem 0.8rem; color:#ffffff; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">TOTAL GENERAL CDBUFFER</td>
+                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandBuffer.toLocaleString()}</td>
+                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandAvance.toLocaleString()}</td>
+                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandPct}%</td>
+                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandPendiente.toLocaleString()}</td>
+                                        </tr>
+                                    `;
+
+                                    return brandTableRows;
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <!-- ESPACIO PARA OTRO REPORTE (DERECHA) -->
+                <div class="glass-panel" style="border:1px dashed rgba(255,255,255,0.1); display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:435px; border-radius:12px; background:rgba(15,23,42,0.3); box-shadow: 0 0 25px rgba(0,0,0,0.2);">
+                    <div style="font-size:2.8rem; margin-bottom:1rem; opacity:0.15;">📊</div>
+                    <span style="color:var(--text-muted); font-size:0.85rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;">Reporte Futuro</span>
+                    <span style="color:rgba(255,255,255,0.2); font-size:0.7rem; margin-top:0.3rem;">Espacio reservado para reportes adicionales</span>
+                </div>
+
+            </div>
+        </div>
             ` : `
 
 
