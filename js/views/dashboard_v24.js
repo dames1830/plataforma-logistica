@@ -2886,6 +2886,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                 ? `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">🟢 TAREA ACTIVA EN PISO: ${activeCount} ubicaciones pendientes</div>` 
                 : `<div style="margin-top:1rem; padding:0.8rem; background:rgba(255,255,255,0.05); border-radius:8px; color:var(--text-muted); font-size:0.85rem; text-align:center;">No hay tareas activas.</div>`;
 
+            // Construir mapa de Stock de Sistema por ubicación para cálculo en vivo del Monitor
+            const systemStockMap = new Map();
+            if (stock && stock.length > 0) {
+                stock.forEach(row => {
+                    const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
+                    const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
+                    if (ubi) {
+                        systemStockMap.set(ubi, (systemStockMap.get(ubi) || 0) + qty);
+                    }
+                });
+            }
+
             content.innerHTML = `
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
                     <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
@@ -2911,10 +2923,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <table class="modern-table" style="width:100%; text-align:left; border-collapse:collapse;">
                                 <thead>
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#818cf8;">
-                                        <th style="padding:10px;">#</th>
+                                        <th style="padding:10px; text-align:center;">#</th>
                                         <th style="padding:10px;">Ubicación</th>
-                                        <th style="padding:10px;">Estado</th>
-                                        <th style="padding:10px;">Artículos Leídos</th>
+                                        <th style="padding:10px; text-align:center;">Estado</th>
+                                        <th style="padding:10px; text-align:center; color:#eab308;">Qty Sistema</th>
+                                        <th style="padding:10px; text-align:center; color:#38bdf8;">Qty Conteo</th>
+                                        <th style="padding:10px; text-align:center;">Diferencia</th>
+                                        <th style="padding:10px; text-align:center; color:#10b981;">% Exactitud</th>
+                                        <th style="padding:10px; text-align:center;">Usuario</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2923,14 +2939,48 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         const badge = isClosed 
                                             ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">CERRADA 🔒</span>'
                                             : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">EN PROCESO ⏳</span>';
-                                        const scansCount = cyclicService.getScansByLocation(t.location).reduce((acc, curr) => acc + curr.qty, 0);
+                                        
+                                        // 1. Qty Sistema
+                                        const qSis = systemStockMap.get(t.location.toUpperCase()) || 0;
+                                        
+                                        // 2. Qty Conteo
+                                        const locationScans = cyclicService.getScansByLocation(t.location);
+                                        const scansCount = locationScans.reduce((acc, curr) => acc + curr.qty, 0);
+                                        
+                                        // 3. Qty Diferencia
+                                        const diff = scansCount - qSis;
+                                        let diffBadge = '-';
+                                        if (diff > 0) {
+                                            diffBadge = `<span style="color:#10b981; font-weight:bold;">+${diff}</span>`;
+                                        } else if (diff < 0) {
+                                            diffBadge = `<span style="color:#ef4444; font-weight:bold;">${diff}</span>`;
+                                        } else {
+                                            diffBadge = `<span style="color:#94a3b8;">0</span>`;
+                                        }
+                                        
+                                        // 4. % Exactitud
+                                        const acc = qSis === scansCount ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, scansCount || 1))) * 100;
+                                        const accFormatted = Math.max(0, acc).toFixed(1) + '%';
+                                        let accColor = '#ef4444'; // Red for low
+                                        if (acc >= 95) accColor = '#10b981'; // Green for high
+                                        else if (acc >= 75) accColor = '#f59e0b'; // Amber for mid
+                                        
+                                        // 5. Usuario
+                                        const lastScanner = locationScans.length > 0 ? (locationScans[locationScans.length - 1].user || 'operario') : '-';
+                                        const userDisplay = isClosed 
+                                            ? `<span style="color:#10b981; font-weight:bold;">👤 ${t.user || lastScanner}</span>`
+                                            : (locationScans.length > 0 ? `<span style="color:#f59e0b;">👤 ${lastScanner} ✍️</span>` : '<span style="color:#64748b;">-</span>');
                                         
                                         return `
                                         <tr class="admin-loc-row" data-loc="${t.location}" data-closed="${isClosed}" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" title="Clic para entrar a Modo Escáner">
-                                            <td style="padding:10px; color:var(--text-muted);">${i + 1}</td>
+                                            <td style="padding:10px; text-align:center; color:var(--text-muted);">${i + 1}</td>
                                             <td style="padding:10px; color:#fff; font-weight:bold;">${t.location}</td>
-                                            <td style="padding:10px;">${badge}</td>
-                                            <td style="padding:10px; color:#38bdf8; font-weight:bold;">${scansCount}</td>
+                                            <td style="padding:10px; text-align:center;">${badge}</td>
+                                            <td style="padding:10px; text-align:center; color:#eab308; font-weight:bold;">${qSis}</td>
+                                            <td style="padding:10px; text-align:center; color:#38bdf8; font-weight:bold;">${scansCount}</td>
+                                            <td style="padding:10px; text-align:center;">${diffBadge}</td>
+                                            <td style="padding:10px; text-align:center; color:${accColor}; font-weight:bold;">${accFormatted}</td>
+                                            <td style="padding:10px; text-align:center;">${userDisplay}</td>
                                         </tr>
                                         `;
                                     }).join('')}
