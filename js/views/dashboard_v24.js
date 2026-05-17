@@ -426,19 +426,31 @@ window.downloadExcelDetail = async () => {
     // --- PESTAÑA 2: ANÁLISIS BUFFER (FORMATO PREMIUM) ---
     const wsAnalisis = workbook.addWorksheet('Análisis Buffer', {
         properties: { tabColor: { argb: 'FF22C55E' } }, // VERDE SOLICITADO
-        pageSetup: { printTitlesRow: '1:4' }
+        pageSetup: { 
+            printTitlesRow: '1:4',
+            margins: { left: 0, right: 0, top: 0.5, bottom: 0, header: 0.3, footer: 0 },
+            fitToPage: true,
+            fitToWidth: 1,
+            fitToHeight: 0
+        }
     });
-    // Re-ajuste de anchos para precisión de píxeles reales (Pixels / 7.0 aprox)
+
+    // Poner N° página en el centro de la cabecera
+    wsAnalisis.headerFooter = {
+        oddHeader: "&C Página &P de &N",
+        evenHeader: "&C Página &P de &N"
+    };
+    // Re-ajuste de anchos para precisión de píxeles reales con fuente 16
     wsAnalisis.columns = [
-        { key: 'ubi', width: 27.5 }, // 193px
-        { key: 'lpn', width: 28.5 }, // 200px
-        { key: 'sku', width: 23.5 }, // 165px
-        { key: 'talla', width: 10 },   // 70px
-        { key: 'marca', width: 20 },   // 140px
-        { key: 'gender', width: 23.5 }, // 165px
-        { key: 'act', width: 16.4 },   // 115px
-        { key: 'res', width: 17.8 },   // 125px
-        { key: 'buf', width: 15.7 }    // 110px
+        { key: 'ubi', width: 32 },
+        { key: 'lpn', width: 30 },
+        { key: 'sku', width: 25 },
+        { key: 'talla', width: 12 },
+        { key: 'marca', width: 22 },
+        { key: 'gender', width: 25 },
+        { key: 'act', width: 18 },
+        { key: 'res', width: 18 },
+        { key: 'buf', width: 18 }
     ];
 
     wsAnalisis.mergeCells('A1:I1');
@@ -456,12 +468,12 @@ window.downloadExcelDetail = async () => {
 
     const row4A = wsAnalisis.getRow(4);
     row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
-    row4A.height = 25;
-    row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 14, name: 'Calibri' };
+    row4A.height = 30;
+    row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
     row4A.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-        cell.alignment = { vertical: 'middle' };
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
     });
     [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
@@ -481,12 +493,14 @@ window.downloadExcelDetail = async () => {
     physicalDetalle.forEach((d) => {
         if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
             const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-            totalRow.font = { bold: true, size: 14, name: 'Calibri' };
+            totalRow.height = 30;
+            totalRow.font = { bold: true, size: 16, name: 'Calibri' };
             totalRow.eachCell(cell => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } }; // Gris 35%
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                cell.alignment = { vertical: 'middle' };
             });
-            [7, 8, 9].forEach(c => totalRow.getCell(c).alignment = { horizontal: 'center' });
+            [7, 8, 9].forEach(c => totalRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
             uSumA = 0; uSumR = 0; uSumB = 0;
         }
 
@@ -500,10 +514,12 @@ window.downloadExcelDetail = async () => {
             d.LPN, sku, talla, maestro.marca, maestro.gender,
             d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER']
         ]);
-        dataRow.font = { size: 14, name: 'Calibri' };
+        dataRow.height = 30;
+        dataRow.font = { size: 16, name: 'Calibri' };
         dataRow.eachCell((cell, colNumber) => {
             cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            if (colNumber >= 7) cell.alignment = { horizontal: 'center' };
+            cell.alignment = { vertical: 'middle' };
+            if (colNumber >= 7) cell.alignment = { vertical: 'middle', horizontal: 'center' };
         });
 
         uSumA += (d['QTY ACTIVO'] || 0); uSumR += (d['QTY RESERVA'] || 0); uSumB += (d['QTY BUFFER'] || 0);
@@ -513,17 +529,19 @@ window.downloadExcelDetail = async () => {
 
     if (lastUbi !== "") {
         const lastTotal = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-        lastTotal.font = { bold: true, size: 14, name: 'Calibri' };
+        lastTotal.height = 30;
+        lastTotal.font = { bold: true, size: 16, name: 'Calibri' };
         lastTotal.eachCell(cell => {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } };
             cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            cell.alignment = { vertical: 'middle' };
         });
-        [7, 8, 9].forEach(c => lastTotal.getCell(c).alignment = { horizontal: 'center' });
+        [7, 8, 9].forEach(c => lastTotal.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
     }
     wsAnalisis.addRow([]);
     const gtRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
-    gtRow.height = 25;
-    gtRow.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
+    gtRow.height = 30;
+    gtRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
     gtRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
