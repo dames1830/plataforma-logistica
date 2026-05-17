@@ -2804,11 +2804,38 @@ export const renderDashboard = async (container, user, onLogout) => {
                     const file = e.target.files[0];
                     if (!file) return;
                     try {
-                        const data = await parseFile(file, 'inventario_eri');
-                        // Por ahora guardamos las ubicaciones crudas como tareas pendientes
+                        const data = await parseFile(file, 'conteo_ciclico_tarea');
                         if (data && data.length > 0) {
-                            const locations = [...new Set(data.map(d => d.ubicacion || d.Ubicacion || d.UBICACION).filter(Boolean))];
-                            const tasks = locations.map(loc => ({ location: loc, status: 'pending' }));
+                            let locations = [];
+                            
+                            // Check if it's an array of arrays (from XLSX header:1) or array of objects (from CSV)
+                            if (Array.isArray(data[0])) {
+                                const headerRow = data[0].map(h => String(h).toUpperCase().trim());
+                                const ubiIndex = headerRow.findIndex(h => h === 'UBICACION' || h === 'UBICACIÓN');
+                                
+                                if (ubiIndex === -1) {
+                                    alert('❌ Error: No se encontró la columna "UBICACION" en la fila 1.');
+                                    return;
+                                }
+                                
+                                for (let i = 1; i < data.length; i++) {
+                                    if (data[i] && data[i][ubiIndex]) {
+                                        locations.push(String(data[i][ubiIndex]).trim());
+                                    }
+                                }
+                            } else {
+                                // Object mapping (from CSV PapaParse)
+                                locations = data.map(d => String(d.ubicacion || d.Ubicacion || d.UBICACION || d.UBICACIÓN || '').trim()).filter(Boolean);
+                            }
+
+                            const uniqueLocs = [...new Set(locations)];
+                            
+                            if (uniqueLocs.length === 0) {
+                                alert('⚠️ No se encontraron ubicaciones válidas en el archivo.');
+                                return;
+                            }
+
+                            const tasks = uniqueLocs.map(loc => ({ location: loc, status: 'pending' }));
                             cyclicService.saveTasks(tasks);
                             alert('✅ Tarea de ' + tasks.length + ' ubicaciones asignada con éxito.');
                         }
