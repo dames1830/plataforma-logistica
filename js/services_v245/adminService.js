@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=25.1.34';
+import * as syncEngine from './sync_engine_v24_9.js?v=25.1.35';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -141,7 +141,8 @@ export const updatePerformanceLogEntry = async (date, dni, updates) => {
         const rend = asisScore + puntScore + prodScore + bpaScore + supScore;
         entry.rendimiento = Math.round(rend) + '%';
         
-        return await save('performance_log', adminStore.performance_log);
+        await save('performance_log', adminStore.performance_log);
+        return entry;
     }
 };
 
