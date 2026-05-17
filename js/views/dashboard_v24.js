@@ -788,7 +788,35 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnCalc.onclick = async () => {
                 console.log("[PULSE] Click Procesar Análisis");
                 btnCalc.disabled = true; btnCalc.innerHTML = '⚙️ CALCULANDO...';
-                results.innerHTML = `<div style="grid-column: span 2; padding:3rem; text-align:center; color:var(--text-muted); background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed var(--border);"><div class="spinner" style="margin:0 auto 1rem auto; width:30px; height:30px; border:3px solid rgba(79,70,229,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div><h3 style="font-size:0.9rem; margin:0;">Iniciando Motor de Análisis...</h3><p style="font-size:0.75rem; margin-top:0.5rem;">Cargando archivos maestros desde memoria local.</p></div>`;
+                results.innerHTML = `
+                <div style="grid-column: span 2; padding:4rem 2rem; text-align:center; background:linear-gradient(145deg, rgba(15,23,42,0.8) 0%, rgba(0,0,0,0.6) 100%); border-radius:16px; border:1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.7); backdrop-filter: blur(10px); position:relative; overflow:hidden;">
+                    <!-- Glow effect -->
+                    <div style="position:absolute; top:-50%; left:50%; transform:translateX(-50%); width:200px; height:200px; background:rgba(79,70,229,0.15); filter:blur(60px); border-radius:50%;"></div>
+                    <h3 style="font-size:1.1rem; margin:0 0 1.5rem 0; color:#fff; font-weight:700; letter-spacing:1px; position:relative; z-index:1;">PROCESANDO ANÁLISIS BUFFER</h3>
+                    <div style="width: 100%; max-width: 450px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 0 auto; overflow: hidden; position: relative; z-index:1;">
+                        <div style="position: absolute; top: 0; left: 0; height: 100%; width: 50%; background: linear-gradient(90deg, transparent, #4f46e5, #06b6d4, transparent); border-radius: 10px; animation: premium-progress 1.5s infinite ease-in-out;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:center; gap:3rem; margin-top:2.5rem; position:relative; z-index:1;">
+                        <div style="display:flex; flex-direction:column; align-items:center; opacity:0.7;">
+                            <span style="font-size:1.3rem; margin-bottom:0.5rem;">📂</span>
+                            <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:1px;">Maestros</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <div style="width:28px; height:28px; border-radius:50%; background:rgba(79,70,229,0.1); border:1px solid rgba(79,70,229,0.3); display:flex; align-items:center; justify-content:center; margin-bottom:0.4rem; box-shadow: 0 0 10px rgba(79,70,229,0.2);">
+                                <span style="font-size:0.9rem;" class="spin-slow">⚙️</span>
+                            </div>
+                            <span style="font-size:0.65rem; color:#fff; text-transform:uppercase; font-weight:800; letter-spacing:1px; text-shadow: 0 0 8px rgba(255,255,255,0.3);">Cruzando Data</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:center; opacity:0.4;">
+                            <span style="font-size:1.3rem; margin-bottom:0.5rem;">📊</span>
+                            <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:1px;">Dashboard</span>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes premium-progress { 0% { left: -50%; } 100% { left: 100%; } }
+                        .spin-slow { display:inline-block; animation:spin 3s linear infinite; }
+                    </style>
+                </div>`;
 
                 setTimeout(async () => {
                     try {
