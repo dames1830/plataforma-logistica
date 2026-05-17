@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.47';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.48';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.47';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.47';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.47';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.47';
+import * as adminService from '../services_v245/adminService.js?v=25.1.48';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.48';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.48';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.48';
 
 
-const VERSION = '25.1.47';
+const VERSION = '25.1.48';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2776,8 +2776,78 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeModuloInvSub === 'ciclicos') {
         const session = getSession();
         const isAdmin = session && (session.role === 'admin' || session.role === 'jefe');
+        const activeLocation = localStorage.getItem('eru_active_location');
 
-        if (isAdmin) {
+        // MODO ESCANEO (Compartido para Admin y Operario)
+        if (activeLocation) {
+            const scans = cyclicService.getScansByLocation(activeLocation);
+            const totalScans = scans.reduce((acc, curr) => acc + curr.qty, 0);
+
+            content.innerHTML = `
+                <div style="padding:0.5rem; text-align:center;">
+                    <button id="btn_back_locs" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">< Volver a lista</button>
+                    
+                    <div style="background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.3); padding:1.5rem; border-radius:10px; margin-bottom:1.5rem;">
+                        <h2 style="color:#38bdf8; margin:0 0 0.5rem 0; font-size:1.8rem; font-weight:900;">${activeLocation}</h2>
+                        <p style="margin:0; font-size:0.8rem; color:#fff;">Pistolee los SKUs físicos ahora</p>
+                        <h1 style="color:#fff; font-size:3rem; margin:1rem 0 0 0;" id="scan_counter">${totalScans}</h1>
+                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Artículos leídos</p>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:1rem;">
+                        <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">🔒 CERRAR UBICACIÓN</button>
+                    </div>
+                    <input type="text" id="sku_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                </div>
+            `;
+
+            document.getElementById('btn_back_locs').onclick = () => {
+                localStorage.removeItem('eru_active_location');
+                renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+            };
+
+            document.getElementById('btn_close_loc').onclick = () => {
+                if(confirm('¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.')) {
+                    cyclicService.closeLocation(activeLocation);
+                    localStorage.removeItem('eru_active_location');
+                    renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                }
+            };
+
+            const playBeep = () => {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            };
+
+            const skuInput = document.getElementById('sku_scanner_input');
+            if(skuInput) {
+                skuInput.focus();
+                document.addEventListener('click', () => { skuInput.focus(); });
+                skuInput.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter') {
+                        const code = skuInput.value.trim();
+                        skuInput.value = '';
+                        if(code) {
+                            playBeep();
+                            cyclicService.saveScan(activeLocation, code);
+                            const currentCount = parseInt(document.getElementById('scan_counter').innerText) || 0;
+                            document.getElementById('scan_counter').innerText = currentCount + 1;
+                        }
+                    }
+                });
+            }
+        } 
+        else if (isAdmin) {
+            // VISTA ADMINISTRADOR (Panel Central)
             const currentTasks = cyclicService.getTasks();
             const activeCount = currentTasks.length;
             const statusHtml = activeCount > 0 
@@ -2786,14 +2856,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             content.innerHTML = `
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-                    <!-- Panel Izquierdo: Carga de Tareas -->
                     <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
                         <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">📂 1. Asignar Tarea Cíclica</h3>
                         <div id="ciclico_upload_area"></div>
                         <div id="admin_task_status">${statusHtml}</div>
                     </div>
                     
-                    <!-- Panel Derecho: Cruce y Sincronización -->
                     <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(16, 185, 129, 0.2); background:rgba(15, 23, 42, 0.2); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
                         <h3 style="color:#10b981; margin:0 0 1rem 0; font-size:1rem;">⚡ 2. Ejecutar Cruce (ERU)</h3>
                         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Cruza las lecturas en vivo de los operarios contra los archivos maestros.</p>
@@ -2801,7 +2869,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>
                 </div>
                 
-                <!-- Monitor de Tareas en Vivo -->
                 <div class="glass-panel" style="margin-top:1.5rem; padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                         <h3 style="color:#fff; margin:0; font-size:1rem;">📋 Monitor de Tareas en Vivo</h3>
@@ -2824,11 +2891,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         const badge = isClosed 
                                             ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">CERRADA 🔒</span>'
                                             : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">EN PROCESO ⏳</span>';
-                                        
                                         const scansCount = cyclicService.getScansByLocation(t.location).reduce((acc, curr) => acc + curr.qty, 0);
                                         
                                         return `
-                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <tr class="admin-loc-row" data-loc="${t.location}" data-closed="${isClosed}" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" title="Clic para entrar a Modo Escáner">
                                             <td style="padding:10px; color:var(--text-muted);">${i + 1}</td>
                                             <td style="padding:10px; color:#fff; font-weight:bold;">${t.location}</td>
                                             <td style="padding:10px;">${badge}</td>
@@ -2841,7 +2907,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                         ` : `<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic;">No hay ubicaciones asignadas. Sube un archivo para comenzar.</div>`}
                     </div>
                 </div>
+                <!-- Scanner oculto para que la pistola despierte el modo escaner desde el Admin Panel -->
+                <input type="text" id="zebra_scanner_input_admin" style="position:absolute; left:-9999px;" autocomplete="off">
             `;
+            
             renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico_tarea', null, '.csv, .xlsx', 'SUBIR UBICACIONES (TAREA)');
             
             const input = document.getElementById('up_conteo_ciclico_tarea');
@@ -2853,44 +2922,64 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const data = await parseFile(file, 'conteo_ciclico_tarea');
                         if (data && data.length > 0) {
                             let locations = [];
-                            
-                            // Check if it's an array of arrays (from XLSX header:1) or array of objects (from CSV)
                             if (Array.isArray(data[0])) {
                                 const headerRow = data[0].map(h => String(h).toUpperCase().trim());
                                 const ubiIndex = headerRow.findIndex(h => h === 'UBICACION' || h === 'UBICACIÓN');
-                                
-                                if (ubiIndex === -1) {
-                                    alert('❌ Error: No se encontró la columna "UBICACION" en la fila 1.');
-                                    return;
-                                }
-                                
+                                if (ubiIndex === -1) { alert('❌ Error: No se encontró la columna "UBICACION" en la fila 1.'); return; }
                                 for (let i = 1; i < data.length; i++) {
-                                    if (data[i] && data[i][ubiIndex]) {
-                                        locations.push(String(data[i][ubiIndex]).trim());
-                                    }
+                                    if (data[i] && data[i][ubiIndex]) locations.push(String(data[i][ubiIndex]).trim());
                                 }
                             } else {
-                                // Object mapping (from CSV PapaParse)
                                 locations = data.map(d => String(d.ubicacion || d.Ubicacion || d.UBICACION || d.UBICACIÓN || '').trim()).filter(Boolean);
                             }
-
                             const uniqueLocs = [...new Set(locations)];
-                            
-                            if (uniqueLocs.length === 0) {
-                                alert('⚠️ No se encontraron ubicaciones válidas en el archivo.');
-                                return;
-                            }
-
+                            if (uniqueLocs.length === 0) { alert('⚠️ No se encontraron ubicaciones válidas.'); return; }
                             const tasks = uniqueLocs.map(loc => ({ location: loc, status: 'pending' }));
                             cyclicService.saveTasks(tasks);
-                            
-                            // Visual Update UX
                             document.getElementById('admin_task_status').innerHTML = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">🟢 TAREA ACTIVA EN PISO: ${tasks.length} ubicaciones pendientes</div>`;
                             alert('✅ Tarea de ' + tasks.length + ' ubicaciones asignada con éxito.');
+                            renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                         }
                     } catch(err) { alert(err); }
                 };
             }
+
+            // Click listener for Admin table rows
+            document.querySelectorAll('.admin-loc-row').forEach(el => {
+                el.onclick = () => {
+                    if(el.dataset.closed === 'true') {
+                        alert('Esta ubicación ya está cerrada.');
+                        return;
+                    }
+                    localStorage.setItem('eru_active_location', el.dataset.loc);
+                    renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                };
+            });
+
+            // Auto-detect scanner input from Admin view
+            const adminScannerInput = document.getElementById('zebra_scanner_input_admin');
+            if(adminScannerInput) {
+                adminScannerInput.focus();
+                document.addEventListener('click', () => { adminScannerInput.focus(); });
+                adminScannerInput.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter') {
+                        const code = adminScannerInput.value.trim();
+                        adminScannerInput.value = '';
+                        const t = currentTasks.find(x => x.location.toUpperCase() === code.toUpperCase());
+                        if(t) {
+                            if(cyclicService.isLocationClosed(t.location)) {
+                                alert('Ubicación Cerrada.');
+                            } else {
+                                localStorage.setItem('eru_active_location', t.location);
+                                renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
+                            }
+                        } else {
+                            alert('Ubicación no encontrada en la tarea actual.');
+                        }
+                    }
+                });
+            }
+        }
 
             document.getElementById('btn_sync_eru').onclick = () => {
                 alert('⏳ Iniciando motor de cruce ERU (Modelo 1 Ciego Total)... Funcionalidad en desarrollo.');
