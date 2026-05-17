@@ -30,10 +30,10 @@ export const saveScan = (location, sku) => {
     const raw = localStorage.getItem(STORAGE_KEY_SCANS);
     const scans = raw ? JSON.parse(raw) : [];
     
-    // Obtener usuario de la sesión actual
+    // Obtener usuario de la sesión actual (priorizar nombre completo)
     const sessionRaw = localStorage.getItem('logistics_session');
     const session = sessionRaw ? JSON.parse(sessionRaw) : {};
-    const username = session.username || 'operario';
+    const username = session.name || session.username || 'operario';
     
     // Si ya existe el SKU en esa ubicación, sumar 1. Si no, crearlo.
     const existing = scans.find(s => s.location === location && s.sku === sku);
@@ -71,10 +71,10 @@ export const closeLocation = (location) => {
         localStorage.setItem(STORAGE_KEY_CLOSED, JSON.stringify(closed));
     }
     
-    // Obtener usuario de la sesión actual
+    // Obtener usuario de la sesión actual (priorizar nombre completo)
     const sessionRaw = localStorage.getItem('logistics_session');
     const session = sessionRaw ? JSON.parse(sessionRaw) : {};
-    const username = session.username || 'operario';
+    const username = session.name || session.username || 'operario';
     
     // Actualizar estado en la tarea principal
     const tasks = getTasks();
