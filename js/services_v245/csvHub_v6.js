@@ -382,6 +382,16 @@ export const parseBufferFiles = async (files) => {
 };
 
 const persistToDatabase = async (area, payload, username = 'sistema') => {
+    // [MOD LOCAL] Si es del módulo de Recepción, procesar 100% de manera local
+    if (area.startsWith('recepcion')) {
+        dataStore[area] = payload;
+        await saveToDB(area, payload);
+        if (area.endsWith('_activo') || area.endsWith('_reserva')) {
+            updateTablaTallas();
+        }
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/${area}`, {
             method: 'POST',
@@ -414,6 +424,18 @@ export const clearAreaData = async (area, username = 'sistema') => {
     dataStore[area] = null;
     localStorage.removeItem('meta_' + area);
     
+    // [MOD LOCAL] Si es del módulo de Recepción, procesar 100% de manera local
+    if (area.startsWith('recepcion')) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete(area);
+        } catch (e) {
+            console.warn(`[PULSE] Error al limpiar localmente '${area}':`, e);
+        }
+        return;
+    }
+
     try {
         const db = await openDB();
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -442,6 +464,14 @@ export const getAreaData = async (area) => {
   if (dbData) { 
       dataStore[area] = dbData; 
       return dbData; 
+  }
+
+  // [MOD LOCAL] Si es del módulo de Recepción, no buscar en el servidor
+  if (area.startsWith('recepcion')) {
+      if (area.endsWith('_activo') || area.endsWith('_reserva')) {
+          updateTablaTallas();
+      }
+      return null;
   }
 
   try {
