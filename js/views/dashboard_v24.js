@@ -1,8 +1,9 @@
 import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=25.1.45';
-import { login as authLogin } from '../services_v245/auth.js?v=24.7.8';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=24.7.8';
 import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.45';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.45';
 
 
 const VERSION = '25.1.45';
@@ -2769,25 +2770,107 @@ export const renderDashboard = async (container, user, onLogout) => {
         wrap.innerHTML += `<div style="margin-top:1rem; padding:0.8rem; background:rgba(129, 140, 248, 0.05); border-radius:8px; border:1px dashed rgba(129, 140, 248, 0.2); font-size:0.7rem; color:#818cf8; text-align:center;">ℹ️ Este módulo utiliza automáticamente la Matriz y Stock cargados en 'ARCHIVO INVENTARIO'.</div>`;
     } 
     else if (activeModuloInvSub === 'ciclicos') {
-        content.innerHTML = `
-            <div style="max-width:500px; margin:0 auto;" id="ciclico_upload_area"></div>
-        `;
-        renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico', null, '.csv, .xlsx', 'CARGAR CONTEO FÍSICO');
-        
-        const input = document.getElementById('up_conteo_ciclico');
-        if (input) {
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    const data = await parseFile(file, 'inventario_eri');
-                    if (data && data.length > 0) {
-                        await processERIAnalysis(data);
-                        activeModuloInvSub = 'reportes';
-                        renderModuloInventarios(container);
-                    }
-                } catch(err) { alert(err); }
+        const session = getSession();
+        const isAdmin = session && (session.role === 'admin' || session.role === 'jefe');
+
+        if (isAdmin) {
+            content.innerHTML = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                    <!-- Panel Izquierdo: Carga de Tareas -->
+                    <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
+                        <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">📂 1. Asignar Tarea Cíclica</h3>
+                        <div id="ciclico_upload_area"></div>
+                    </div>
+                    
+                    <!-- Panel Derecho: Cruce y Sincronización -->
+                    <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(16, 185, 129, 0.2); background:rgba(15, 23, 42, 0.2); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                        <h3 style="color:#10b981; margin:0 0 1rem 0; font-size:1rem;">⚡ 2. Ejecutar Cruce (ERU)</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Cruza las lecturas en vivo de los operarios contra los archivos maestros.</p>
+                        <button id="btn_sync_eru" class="btn-premium-pulse" style="width:100%; max-width:300px; padding:12px 20px; font-size:0.85rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(16, 185, 129, 0.3);">🔄 SINCRONIZAR Y CRUZAR</button>
+                    </div>
+                </div>
+                
+                <!-- Reporte Gerencial -->
+                <div class="glass-panel" style="margin-top:1.5rem; padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
+                    <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">📊 Reporte Gerencial de Cíclicos</h3>
+                    <div id="eru_report_area" style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic;">Pendiente de sincronización...</div>
+                </div>
+            `;
+            renderUploadArea(document.getElementById('ciclico_upload_area'), 'conteo_ciclico_tarea', null, '.csv, .xlsx', 'SUBIR UBICACIONES (TAREA)');
+            
+            const input = document.getElementById('up_conteo_ciclico_tarea');
+            if (input) {
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    try {
+                        const data = await parseFile(file, 'inventario_eri');
+                        // Por ahora guardamos las ubicaciones crudas como tareas pendientes
+                        if (data && data.length > 0) {
+                            const locations = [...new Set(data.map(d => d.ubicacion || d.Ubicacion || d.UBICACION).filter(Boolean))];
+                            const tasks = locations.map(loc => ({ location: loc, status: 'pending' }));
+                            cyclicService.saveTasks(tasks);
+                            alert('✅ Tarea de ' + tasks.length + ' ubicaciones asignada con éxito.');
+                        }
+                    } catch(err) { alert(err); }
+                };
+            }
+
+            document.getElementById('btn_sync_eru').onclick = () => {
+                alert('⏳ Iniciando motor de cruce ERU (Modelo 1 Ciego Total)... Funcionalidad en desarrollo.');
             };
+
+        } else {
+            // VISTA OPERARIO
+            content.innerHTML = `
+                <div style="padding:0.5rem;">
+                    <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:1rem; border-radius:10px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h2 style="color:#10b981; margin:0; font-size:1.1rem;">🟢 ESCÁNER ACTIVO</h2>
+                            <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">Apunta a una ubicación para empezar.</p>
+                        </div>
+                        <span style="font-size:2rem;">🔫</span>
+                    </div>
+                    
+                    <h3 style="color:#fff; font-size:1rem; margin-bottom:1rem;">Ubicaciones Pendientes</h3>
+                    <div id="operario_tasks_container" style="display:flex; flex-direction:column; gap:0.8rem;"></div>
+                    
+                    <input type="text" id="zebra_scanner_input" style="position:absolute; left:-9999px;" autocomplete="off">
+                </div>
+            `;
+            
+            const tasks = cyclicService.getTasks();
+            const container = document.getElementById('operario_tasks_container');
+            if (tasks.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:2rem; font-style:italic;">No hay ubicaciones asignadas por el Administrador.</div>';
+            } else {
+                tasks.forEach(t => {
+                    const isClosed = cyclicService.isLocationClosed(t.location);
+                    const color = isClosed ? '#10b981' : 'var(--text-muted)';
+                    const bg = isClosed ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)';
+                    const statusText = isClosed ? 'CERRADA' : 'PENDIENTE';
+                    container.innerHTML += `
+                        <div style="padding:1rem; background:${bg}; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+                            <span style="color:#fff; font-weight:bold; font-size:1.1rem;">${t.location}</span>
+                            <span style="color:${color}; font-size:0.75rem; font-weight:800; letter-spacing:1px;">${statusText}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Keep scanner input focused
+            const scannerInput = document.getElementById('zebra_scanner_input');
+            if(scannerInput) {
+                scannerInput.focus();
+                document.addEventListener('click', () => { scannerInput.focus(); });
+                scannerInput.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter') {
+                        const code = scannerInput.value.trim();
+                        scannerInput.value = '';
+                        if(code) alert('Has escaneado: ' + code); // Temporal
+                    }
+                });
+            }
         }
     }
     else if (activeModuloInvSub === 'reportes') {
