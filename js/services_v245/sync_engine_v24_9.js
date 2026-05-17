@@ -4,20 +4,35 @@
  */
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
-export const syncStore = {
-    almacenaje_tasks: [],
-    attendance: {},
-    permissions: {},
-    workers: [], 
-    users: [], // AÑADIDO
-    performance: {}, // AÑADIDO
-    performance_log: [], // AÑADIDO
-    config: {}
-};
+// --- CENTRALIZAR STATE GLOBAL PARA EVITAR DUPLICADOS POR CACHE QUERY STRINGS ---
+if (!window._pulseSyncState) {
+    window._pulseSyncState = {
+        isFirstPullDone: false,
+        syncStore: {
+            almacenaje_tasks: [],
+            attendance: {},
+            permissions: {},
+            workers: [], 
+            users: [], 
+            performance: {}, 
+            performance_log: [], 
+            config: {}
+        }
+    };
+}
+
+export const syncStore = window._pulseSyncState.syncStore;
 
 // --- LOGICA DE SINCRONIZACION ---
 
-export let isFirstPullDone = false;
+export let isFirstPullDone = window._pulseSyncState.isFirstPullDone;
+
+// Mantener la variable exportada en sincronía con el estado global (live binding)
+setInterval(() => {
+    if (window._pulseSyncState.isFirstPullDone && !isFirstPullDone) {
+        isFirstPullDone = true;
+    }
+}, 100);
 
 export async function initSync() {
     console.log("🚀 [PULSE] Inicializando Motor v25.1.44...");
@@ -26,6 +41,7 @@ export async function initSync() {
     } catch (e) {
         console.warn("⚠️ [PULSE] Error en carga inicial, pero activando motor:", e);
     }
+    window._pulseSyncState.isFirstPullDone = true;
     isFirstPullDone = true;
     console.log("✅ [PULSE] Primera sincronización completada.");
     setInterval(pullGlobal, 30000);
@@ -84,6 +100,8 @@ export async function pullGlobal(requestedAreas = null, force = false) {
             }
         }
     });
+    window._pulseSyncState.isFirstPullDone = true;
+    isFirstPullDone = true;
     console.log("✅ [PULSE] Nube sincronizada.");
     return syncStore;
 }
