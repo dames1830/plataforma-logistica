@@ -1,12 +1,153 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.56';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.60';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.56';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.56'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.56';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.56';
+import * as adminService from '../services_v245/adminService.js?v=25.1.60';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.60'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.60';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.60';
 
+export const showPremiumAlert = (title, message, type = 'error') => {
+    return new Promise((resolve) => {
+        // Create backdrop container
+        const backdrop = document.createElement('div');
+        backdrop.style.position = 'fixed';
+        backdrop.style.top = '0';
+        backdrop.style.left = '0';
+        backdrop.style.width = '100vw';
+        backdrop.style.height = '100vh';
+        backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.75)';
+        backdrop.style.backdropFilter = 'blur(12px)';
+        backdrop.style.display = 'flex';
+        backdrop.style.justifyContent = 'center';
+        backdrop.style.alignItems = 'center';
+        backdrop.style.zIndex = '999999';
+        backdrop.style.opacity = '0';
+        backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        // Define colors and icon based on type
+        let accentColor = '#ef4444'; // Red for error
+        let icon = '❌';
+        let glowColor = 'rgba(239, 68, 68, 0.3)';
+        
+        if (type === 'success') {
+            accentColor = '#10b981'; // Green
+            icon = '✅';
+            glowColor = 'rgba(16, 185, 129, 0.3)';
+        } else if (type === 'warning') {
+            accentColor = '#f59e0b'; // Amber
+            icon = '⚠️';
+            glowColor = 'rgba(245, 158, 11, 0.3)';
+        } else if (type === 'info') {
+            accentColor = '#3b82f6'; // Blue
+            icon = 'ℹ️';
+            glowColor = 'rgba(59, 130, 246, 0.3)';
+        }
 
-const VERSION = '25.1.56';
+        backdrop.innerHTML = `
+            <div class="glass-panel" style="
+                width: 90%;
+                max-width: 450px;
+                padding: 2.5rem 2rem;
+                border-radius: 20px;
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px ${glowColor};
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                transform: scale(0.9);
+                transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            ">
+                <div style="
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 2px solid ${accentColor};
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 2.2rem;
+                    margin-bottom: 1.5rem;
+                    box-shadow: 0 0 20px ${glowColor};
+                    animation: pulse-icon 2s infinite;
+                ">
+                    ${icon}
+                </div>
+                
+                <h3 style="
+                    margin: 0 0 0.8rem 0;
+                    color: #fff;
+                    font-size: 1.3rem;
+                    font-weight: 800;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                ">
+                    ${title}
+                </h3>
+                
+                <p style="
+                    margin: 0 0 2rem 0;
+                    color: #94a3b8;
+                    font-size: 0.9rem;
+                    line-height: 1.6;
+                    font-weight: 500;
+                ">
+                    ${message}
+                </p>
+                
+                <button id="premium-alert-btn" style="
+                    width: 100%;
+                    padding: 0.8rem;
+                    border: none;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, ${accentColor} 0%, #000 150%);
+                    color: #fff;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px ${glowColor};
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px ${glowColor}';" 
+                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${glowColor}';">
+                    ACEPTAR
+                </button>
+            </div>
+            <style>
+                @keyframes pulse-icon {
+                    0% { transform: scale(1); box-shadow: 0 0 20px ${glowColor}; }
+                    50% { transform: scale(1.05); box-shadow: 0 0 30px ${accentColor}; }
+                    100% { transform: scale(1); box-shadow: 0 0 20px ${glowColor}; }
+                }
+            </style>
+        `;
+        
+        document.body.appendChild(backdrop);
+        
+        setTimeout(() => {
+            backdrop.style.opacity = '1';
+            backdrop.querySelector('.glass-panel').style.transform = 'scale(1)';
+        }, 10);
+        
+        const closeAlert = () => {
+            backdrop.style.opacity = '0';
+            backdrop.querySelector('.glass-panel').style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                backdrop.remove();
+                resolve();
+            }, 250);
+        };
+        
+        backdrop.querySelector('#premium-alert-btn').onclick = closeAlert;
+        backdrop.onclick = (e) => {
+            if (e.target === backdrop) closeAlert();
+        };
+    });
+};
+window.showPremiumAlert = showPremiumAlert;
+
+const VERSION = '25.1.60';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -798,12 +939,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                 console.log("[PULSE] Click Procesar Análisis");
                 
                 // VALIDACIÓN EXPLÍCITA DE ARCHIVOS (Antes de mostrar la barra de progreso)
-                try {
-                    if (!dataStore.buffer_activo) throw new Error("Falta cargar el archivo STOCK ACTIVO.");
-                    if (!dataStore.buffer_reserva) throw new Error("Falta cargar el archivo STOCK RESERVA.");
-                    if (!dataStore.articulos) throw new Error("Falta cargar el archivo MAESTRO.");
-                } catch (err) {
-                    alert("Error crítico: " + err.message);
+                if (!dataStore.buffer_activo) {
+                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK ACTIVO</b> para poder realizar el análisis.", "error");
+                    return;
+                }
+                if (!dataStore.buffer_reserva) {
+                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK RESERVA</b> para poder realizar el análisis.", "error");
+                    return;
+                }
+                if (!dataStore.articulos) {
+                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo <b>MAESTRO</b> para poder realizar el análisis.", "error");
                     return;
                 }
 
@@ -847,15 +992,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             if (saved) successCount++;
                                         }
                                     }
-                                    if (successCount > 0) alert(`✅ Se guardaron ${successCount} reportes en el historial.`);
+                                    if (successCount > 0) {
+                                        showPremiumAlert("¡Éxito!", `Se guardaron ${successCount} reportes de buffer en el historial de forma segura.`, "success");
+                                    }
                                 }
                             }, 300);
                         } else {
-                            alert('⚠️ ERROR: Faltan archivos maestros.');
+                            showPremiumAlert("Error de Maestros", "No se pudo realizar el análisis porque faltan los archivos maestros.", "error");
                         }
                     } catch (err) {
                         console.error("Error en proceso:", err);
-                        alert("Error crítico: " + err.message);
+                        showPremiumAlert("Error Crítico", err.message, "error");
                     } finally {
                         btnCalc.disabled = false; btnCalc.innerHTML = '⚡ PROCESAR ANÁLISIS';
                     }
