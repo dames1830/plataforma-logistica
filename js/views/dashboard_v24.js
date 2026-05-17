@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.74';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.75';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.74';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.74'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.74';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.74';
+import * as adminService from '../services_v245/adminService.js?v=25.1.75';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.75'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.75';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.75';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.74';
+const VERSION = '25.1.75';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -472,7 +472,7 @@ window.downloadExcelDetail = async () => {
 
     const row4A = wsAnalisis.getRow(4);
     row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
-    row4A.height = 30;
+    row4A.height = 21;
     row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
     row4A.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
@@ -497,7 +497,7 @@ window.downloadExcelDetail = async () => {
     physicalDetalle.forEach((d) => {
         if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
             const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-            totalRow.height = 30;
+            totalRow.height = 21;
             totalRow.font = { bold: true, size: 16, name: 'Calibri' };
             totalRow.eachCell(cell => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } }; // Gris 35%
@@ -518,7 +518,7 @@ window.downloadExcelDetail = async () => {
             d.LPN, sku, talla, maestro.marca, maestro.gender,
             d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER']
         ]);
-        dataRow.height = 30;
+        dataRow.height = 21;
         dataRow.font = { size: 16, name: 'Calibri' };
         dataRow.eachCell((cell, colNumber) => {
             cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
@@ -533,7 +533,7 @@ window.downloadExcelDetail = async () => {
 
     if (lastUbi !== "") {
         const lastTotal = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
-        lastTotal.height = 30;
+        lastTotal.height = 21;
         lastTotal.font = { bold: true, size: 16, name: 'Calibri' };
         lastTotal.eachCell(cell => {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA6A6A6' } };
@@ -544,7 +544,7 @@ window.downloadExcelDetail = async () => {
     }
     wsAnalisis.addRow([]);
     const gtRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
-    gtRow.height = 30;
+    gtRow.height = 21;
     gtRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
     gtRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
