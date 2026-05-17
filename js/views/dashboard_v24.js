@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.70';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.71';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.70';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.70'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.70';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.70';
+import * as adminService from '../services_v245/adminService.js?v=25.1.71';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.71'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.71';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.71';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.70';
+const VERSION = '25.1.71';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5698,13 +5698,19 @@ export const renderDashboard = async (container, user, onLogout) => {
     const ws = workbook.addWorksheet('Tareas Día', {
         properties: { tabColor: { argb: 'FF4F46E5' } },
         pageSetup: { 
-            margins: { left: 0, right: 0, top: 0, bottom: 0, header: 0, footer: 0 },
+            margins: { left: 0, right: 0, top: 0, bottom: 0.5, header: 0, footer: 0.3 },
             fitToPage: true,
             fitToWidth: 1,
             fitToHeight: 0,
             printTitlesRow: '1:6'
         }
     });
+
+    // Poner N° página en el centro del pie de página
+    ws.headerFooter = {
+        oddFooter: "&C Página &P de &N",
+        evenFooter: "&C Página &P de &N"
+    };
 
     // 7. Configurar anchos de columna
     ws.columns = [
@@ -5726,11 +5732,19 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     // 1. Crear 5 filas (implícito al empezar en la 6 para el header)
-    // 5. En la celda A2 escribir Nombres, A3 Hora Inicio, A4 Hora Inicio
     ws.getCell('A2').value = 'Nombres';
     ws.getCell('A3').value = 'Hora Inicio';
-    ws.getCell('A4').value = 'Hora Inicio';
+    ws.getCell('A4').value = 'Hora Término';
     ws.getCell('A5').value = new Date().toLocaleString('es-ES');
+
+    // Altura 30.00 y alineación en el medio para filas 2, 3, 4
+    [2, 3, 4].forEach(rowNum => {
+        const row = ws.getRow(rowNum);
+        row.height = 30.00;
+        for (let col = 1; col <= 10; col++) {
+            row.getCell(col).alignment = { vertical: 'middle', horizontal: 'left' };
+        }
+    });
 
     // Estilo para las etiquetas de cabecera
     ['A2', 'A3', 'A4'].forEach(cellId => {
