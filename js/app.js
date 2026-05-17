@@ -2,12 +2,12 @@
  * App Entry Point v24.5.8 - SECURE SYNC
  */
 import { getSession, logout } from './services_v245/auth.js?v=24.7.8';
-import * as adminService from './services_v245/adminService.js?v=25.1.39';
+import * as adminService from './services_v245/adminService.js?v=25.1.40';
 
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v25.1.39';
+    this.APP_VERSION = 'v25.1.40';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
@@ -16,7 +16,34 @@ class App {
         localStorage.setItem('PULSE_INSTALLED_VERSION', this.APP_VERSION);
     }
     this.isRendered = false;
+    
+    // Timer de inactividad
+    this.inactivityTimeout = null;
+    this.setupActivityListeners();
+    this.startInactivityTimer();
+
     this.init();
+  }
+
+  setupActivityListeners() {
+      const resetTimer = () => this.startInactivityTimer();
+      window.addEventListener('mousemove', resetTimer, { passive: true });
+      window.addEventListener('keydown', resetTimer, { passive: true });
+      window.addEventListener('click', resetTimer, { passive: true });
+      window.addEventListener('scroll', resetTimer, { passive: true });
+      window.addEventListener('touchstart', resetTimer, { passive: true });
+  }
+
+  startInactivityTimer() {
+      if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
+      // 20 minutos = 20 * 60 * 1000 = 1200000 ms
+      this.inactivityTimeout = setTimeout(() => {
+          if (getSession()) {
+              console.warn("⏳ [PULSE] Sesión expirada por inactividad (20 min).");
+              logout();
+              window.location.reload();
+          }
+      }, 1200000);
   }
 
   async init() {
