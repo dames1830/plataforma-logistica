@@ -2767,6 +2767,30 @@ export const renderDashboard = async (container, user, onLogout) => {
         getAreaData('articulos')
     ]);
 
+    // Construir mapa de Código de Barras a SKU para traducción instantánea en el escaneo
+    const barcodeToSkuMap = new Map();
+    if (articulos && articulos.length > 0) {
+        articulos.forEach(a => {
+            const raw = Array.isArray(a) ? a : Object.values(a);
+            if (raw.length >= 2) {
+                const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || raw[1] || '').toString().trim().toUpperCase();
+                const possibleBarcode = String(raw[0] || '').trim().toUpperCase();
+                if (mSku && possibleBarcode) {
+                    barcodeToSkuMap.set(possibleBarcode, mSku);
+                }
+                
+                // Inspeccionar otras celdas por si acaso (ej. si la columna de código de barras está en otra posición)
+                raw.forEach(cell => {
+                    const cellStr = String(cell || '').trim();
+                    if (/^\d{8,15}$/.test(cellStr) && mSku) {
+                        barcodeToSkuMap.set(cellStr, mSku);
+                    }
+                });
+            }
+        });
+        console.log(`[PULSE] Mapeo de códigos de barra cargado. Total códigos registrados: ${barcodeToSkuMap.size}`);
+    }
+
     if (activeModuloInvSub === 'general') {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; content.appendChild(wrap);
         renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
@@ -2838,7 +2862,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                         skuInput.value = '';
                         if(code) {
                             playBeep();
-                            cyclicService.saveScan(activeLocation, code);
+                            
+                            // Traducir código de barras a SKU real si existe en el maestro
+                            let translatedCode = code;
+                            if (barcodeToSkuMap && barcodeToSkuMap.has(code.toUpperCase())) {
+                                translatedCode = barcodeToSkuMap.get(code.toUpperCase());
+                                console.log(`[ESCANER] Traduciendo código de barras ${code} a SKU ${translatedCode}`);
+                            }
+                            
+                            cyclicService.saveScan(activeLocation, translatedCode);
                             const currentCount = parseInt(document.getElementById('scan_counter').innerText) || 0;
                             document.getElementById('scan_counter').innerText = currentCount + 1;
                         }
@@ -3043,7 +3075,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                         const fisicoMap = new Map();
                         scans.forEach(s => {
-                            const sku = s.sku.toString().trim().toUpperCase();
+                            let sku = s.sku.toString().trim().toUpperCase();
+                            
+                            // Traducir código de barras a SKU real si existe en el maestro (para lecturas históricas)
+                            if (barcodeToSkuMap && barcodeToSkuMap.has(sku)) {
+                                sku = barcodeToSkuMap.get(sku);
+                            }
+
                             const ubi = s.location.toString().trim().toUpperCase();
                             const qty = parseFloat(s.qty) || 0;
 
@@ -3278,7 +3316,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                             skuInput.value = '';
                             if(code) {
                                 playBeep();
-                                cyclicService.saveScan(activeLocation, code);
+                                
+                                // Traducir código de barras a SKU real si existe en el maestro
+                                let translatedCode = code;
+                                if (barcodeToSkuMap && barcodeToSkuMap.has(code.toUpperCase())) {
+                                    translatedCode = barcodeToSkuMap.get(code.toUpperCase());
+                                    console.log(`[ESCANER] Traduciendo código de barras ${code} a SKU ${translatedCode}`);
+                                }
+                                
+                                cyclicService.saveScan(activeLocation, translatedCode);
                                 // Update counter immediately
                                 const currentCount = parseInt(document.getElementById('scan_counter').innerText) || 0;
                                 document.getElementById('scan_counter').innerText = currentCount + 1;
