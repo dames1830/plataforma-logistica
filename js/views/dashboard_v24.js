@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.72';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.74';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.72';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.72'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.72';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.72';
+import * as adminService from '../services_v245/adminService.js?v=25.1.74';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.74'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.74';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.74';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.72';
+const VERSION = '25.1.74';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -462,9 +462,13 @@ window.downloadExcelDetail = async () => {
 
     wsAnalisis.mergeCells('A2:I2');
     const row2A = wsAnalisis.getRow(2);
+    row2A.height = 30;
     row2A.getCell(1).value = data.timestamp || new Date().toLocaleString();
     row2A.getCell(1).font = { size: 10, name: 'Calibri' };
     row2A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const row3A = wsAnalisis.getRow(3);
+    row3A.height = 30;
 
     const row4A = wsAnalisis.getRow(4);
     row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
