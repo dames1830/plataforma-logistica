@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.69';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.70';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.69';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.69'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.69';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.69';
+import * as adminService from '../services_v245/adminService.js?v=25.1.70';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.70'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.70';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.70';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.69';
+const VERSION = '25.1.70';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5615,7 +5615,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             // [FIX v24.9.7] Usar skuFull para que la pantalla lo reconozca
             const item = { ubi: ubi, qty: qty, area: area, skuFull: skuFull, talla: tallaExtraida }; 
             groups[sku7].items.push(item);
-            if (area.toUpperCase().includes('CDBUFFER')) groups[sku7].bufferQty += qty;
+            const isUbiBuffer = ubi && String(ubi).trim().toUpperCase().startsWith('CDBUFFER');
+            if (area.toUpperCase().includes('CDBUFFER') || isUbiBuffer) groups[sku7].bufferQty += qty;
             else groups[sku7].zonaQty += qty;
         });
 
@@ -5761,12 +5762,26 @@ export const renderDashboard = async (container, user, onLogout) => {
         task.items.forEach(art => {
             const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
             
-            // CDBUFFER Rows
-            art.items.filter(i => i.area && i.area.includes('CDBUFFER')).forEach(i => {
+            // CDBUFFER Rows (Buffer)
+            const bufferRows = (art.items || []).filter(i => i.ubi && String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
+            // ZONA Rows (Picking, Rack, etc.)
+            const zonaRows = (art.items || []).filter(i => !i.ubi || !String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
+
+            // Ordenamiento por SKU / Talla para mantener consistencia visual
+            const sortBySku = (a, b) => {
+                const skuA = String(a.skuFull || a.sku || '');
+                const skuB = String(b.skuFull || b.sku || '');
+                return skuA.localeCompare(skuB);
+            };
+            bufferRows.sort(sortBySku);
+            zonaRows.sort(sortBySku);
+
+            // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía)
+            bufferRows.forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
             });
-            // ZONA Rows
-            art.items.filter(i => !i.area || !i.area.includes('CDBUFFER')).forEach(i => {
+            // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra)
+            zonaRows.forEach(i => {
                 dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
             });
             // Subtotal
