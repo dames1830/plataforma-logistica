@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.68';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.69';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.68';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.68'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.68';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.68';
+import * as adminService from '../services_v245/adminService.js?v=25.1.69';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.69'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.69';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.69';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.68';
+const VERSION = '25.1.69';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4287,23 +4287,14 @@ export const renderDashboard = async (container, user, onLogout) => {
       }
 
       container.innerHTML = `
-        <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 800px; margin: 2rem auto; animation: fadeIn 0.3s ease;">
-            <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">📊</div>
-            <h3 style="margin-bottom: 1rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                REPORTE RECEPCIÓN - CDBUFFER
-            </h3>
-            <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
-                Cruza en tiempo real el <strong>Stock Activo</strong> de Recepción con el <strong>Maestro de Artículos</strong>. 
-                <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A, CDBUFFER-D</strong>.
-            </p>
-            
-            <div style="max-width: 500px; margin: 2.5rem auto 0 auto; text-align: left;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span id="recepcionProgressText" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Iniciando análisis...</span>
-                    <span id="recepcionProgressPct" style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">0%</span>
+        <div class="glass-panel" style="padding: 4rem 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 900px; margin: 4rem auto; animation: fadeIn 0.3s ease;">
+            <div style="max-width: 700px; margin: 0 auto; text-align: left;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: flex-end;">
+                    <span id="recepcionProgressText" style="font-size: 1rem; color: #a1a1aa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Iniciando análisis...</span>
+                    <span id="recepcionProgressPct" style="font-size: 1.5rem; color: #22d3ee; font-weight: 900; font-family: monospace;">0%</span>
                 </div>
-                <div class="progress-bar-container" style="background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
-                    <div id="recepcionProgressBar" style="background: linear-gradient(90deg, var(--primary) 0%, #22d3ee 100%); height: 100%; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(34,211,238,0.5);"></div>
+                <div class="progress-bar-container" style="background: rgba(255,255,255,0.03); border-radius: 999px; height: 24px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
+                    <div id="recepcionProgressBar" style="background: linear-gradient(90deg, #4f46e5 0%, #22d3ee 50%, #10b981 100%); height: 100%; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 25px rgba(34,211,238,0.6); border-radius: 999px;"></div>
                 </div>
             </div>
         </div>
