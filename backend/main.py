@@ -115,6 +115,15 @@ def get_area_data(area: str, date: Optional[str] = None):
             return {"area": "users", "data": data}
             
         if area == 'permissions':
+            # Intentar primero cargar desde el snapshot JSON (donde escribe POST)
+            cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", ("permissions", "MASTER"))
+            row = cursor.fetchone()
+            if row:
+                data = json.loads(row[0])
+                conn.close()
+                return {"area": "permissions", "data": data}
+            
+            # Si no hay snapshot guardado, usar la tabla de fallback role_permissions
             cursor.execute("SELECT role, module, allowed FROM role_permissions")
             rows = cursor.fetchall()
             data = {}
