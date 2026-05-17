@@ -892,19 +892,28 @@ export const calculateBufferPallets = (configOverride = null) => {
     let detallePallets = [];
     Array.from(ubicacionesEnElPiso).forEach(ubi => {
         let items = reserva.filter(f => String(f['UBICACION']).trim() === ubi);
+        
+        let remainingPicks = {};
+        if (cuotasPicking[ubi]) {
+            Object.keys(cuotasPicking[ubi]).forEach(k => remainingPicks[k] = cuotasPicking[ubi][k]);
+        }
+
         items.forEach(item => {
             let sku = String(getCol(item, ['PRODUCTO', 'Articulo', 'Producto']) || '').trim();
             let qty = parseFloat(item['CANTIDAD'] || 0);
-            let pick = (cuotasPicking[ubi] && cuotasPicking[ubi][sku]) ? cuotasPicking[ubi][sku] : 0;
             
-            if (pick > 0) {
+            let pickTotal = remainingPicks[sku] || 0;
+            if (pickTotal > 0) {
+                let actualPick = Math.min(pickTotal, qty);
+                remainingPicks[sku] -= actualPick;
+
                 const demandObj = demanda[sku];
                 const tipo = sku.length >= 14 ? 'PreePack' : 'SolidPack';
                 
                 if (demandObj) {
                     demandObj.sources.forEach(dSrc => {
                         const proportion = dSrc.qty / demandObj.total;
-                        const attributedUnits = pick * proportion;
+                        const attributedUnits = actualPick * proportion;
                         
                         if (attributedUnits > 0) {
                             detallePallets.push({ 
