@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.61';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.62';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.61';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.61'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.61';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.61';
+import * as adminService from '../services_v245/adminService.js?v=25.1.62';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.62'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.62';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.62';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.61';
+const VERSION = '25.1.62';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -326,7 +326,8 @@ const TABS = [
     { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
   ]},
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }
+    { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' },
+    { id: 'reportes_recepcion', label: 'Reportes Recepción', icon: '📊' }
   ]},
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
@@ -4274,6 +4275,283 @@ export const renderDashboard = async (container, user, onLogout) => {
       console.log("[PULSE] renderERIERULayout llamado pero desactivado por v18.5.20");
   };
 
+  const renderRecepcionReportTab = (container) => {
+    container.innerHTML = `
+      <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 800px; margin: 2rem auto;">
+          <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">📊</div>
+          <h3 style="margin-bottom: 1rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+              REPORTE RECEPCIÓN - CDBUFFER
+          </h3>
+          <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
+              Cruza en tiempo real el <strong>Stock Activo</strong> de Recepción con el <strong>Maestro de Artículos</strong>. 
+              <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A</strong>.
+          </p>
+          <button id="btn_procesar_recepcion" class="btn" style="max-width: 320px; margin: 0 auto; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(79,70,229,0.3);">
+              ⚡ PROCESAR REPORTE CDBUFFER
+          </button>
+          
+          <!-- Progress area -->
+          <div id="recepcionProgressArea" style="margin-top: 2.5rem; display: none; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span id="recepcionProgressText" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Iniciando análisis...</span>
+                  <span id="recepcionProgressPct" style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">0%</span>
+              </div>
+              <div class="progress-bar-container" style="background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
+                  <div id="recepcionProgressBar" style="background: linear-gradient(90deg, var(--primary) 0%, #22d3ee 100%); height: 100%; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(34,211,238,0.5);"></div>
+              </div>
+          </div>
+
+          <!-- Results area -->
+          <div id="recepcionResultsArea" style="margin-top: 1rem;"></div>
+      </div>
+    `;
+
+    document.getElementById('btn_procesar_recepcion').addEventListener('click', async () => {
+        const btn = document.getElementById('btn_procesar_recepcion');
+        const progressArea = document.getElementById('recepcionProgressArea');
+        const progressBar = document.getElementById('recepcionProgressBar');
+        const progressText = document.getElementById('recepcionProgressText');
+        const progressPct = document.getElementById('recepcionProgressPct');
+        const resultsArea = document.getElementById('recepcionResultsArea');
+
+        // 1. Validaciones de archivos
+        if (!dataStore.recepcion_activo || dataStore.recepcion_activo.length === 0 || !dataStore.articulos || dataStore.articulos.length === 0) {
+            showPremiumAlert(
+                'Faltan Cargar Archivos',
+                'No se puede procesar el reporte porque falta cargar los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.<br><br>Por favor, asegúrate de subir: <br>• <strong>Stock Activo</strong> (CSV)<br>• <strong>Maestro Artículos</strong> (XLSX)',
+                'error'
+            );
+            return;
+        }
+
+        // Bloquear botón e iniciar barra
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        progressArea.style.display = 'block';
+        resultsArea.innerHTML = '';
+
+        let pct = 0;
+        const steps = [
+            { threshold: 10, text: 'Leyendo Stock Activo de Recepción...' },
+            { threshold: 40, text: 'Filtrando ubicaciones CDBUFFER-A...' },
+            { threshold: 70, text: 'Cruzando con Maestro de Artículos...' },
+            { threshold: 90, text: 'Tabulando marcas y departamentos...' },
+            { threshold: 100, text: '¡Procesamiento completado con éxito!' }
+        ];
+
+        const interval = setInterval(() => {
+            pct += 5;
+            if (pct > 100) pct = 100;
+
+            progressBar.style.width = `${pct}%`;
+            progressPct.textContent = `${pct}%`;
+
+            const currentStep = steps.find(s => pct <= s.threshold);
+            if (currentStep) {
+                progressText.textContent = currentStep.text;
+            }
+
+            if (pct === 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    progressArea.style.display = 'none';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                    
+                    try {
+                        generateAndRenderRecepcionReport(resultsArea);
+                    } catch (err) {
+                        console.error(err);
+                        showPremiumAlert('Error de Análisis', 'Ocurrió un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
+                    }
+                }, 500);
+            }
+        }, 100);
+    });
+  };
+
+  const generateAndRenderRecepcionReport = (targetContainer) => {
+      const activeRows = dataStore.recepcion_activo;
+      const articulos = dataStore.articulos;
+
+      // 1. Construir articulosMap
+      const articulosMap = new Map();
+      articulos.forEach((row) => {
+          const raw = Array.isArray(row) ? row : Object.values(row);
+          const skuVal = String(raw[1] || '').trim();
+          const sku7 = skuVal.substring(0, 7);
+          
+          if (sku7 && !articulosMap.has(sku7)) {
+              articulosMap.set(sku7, {
+                  gGender: String(raw[2] || 'S/D').trim().toUpperCase(),
+                  marca: String(raw[13] || 'OTROS').trim()
+              });
+          }
+      });
+
+      // Formateador premium de marcas para coincidir con la imagen de referencia
+      const formatBrandName = (str) => {
+          if (!str) return 'OTROS';
+          const u = str.toUpperCase().trim();
+          if (u.includes('BATA')) return 'Bata';
+          if (u.includes('BUBBLEGUMMERS') || u.includes('BUBBLE GUMMERS')) return 'Bubblegummers';
+          if (u.includes('NORTH STAR') || u.includes('NORTHSTAR')) return 'North Star';
+          if (u.includes('POWER')) return 'Power';
+          if (u.includes('PUMA')) return 'Puma';
+          if (u.includes('WEINBRENNER')) return 'Weinbrenner';
+          
+          // Formateo genérico Title Case
+          return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      };
+
+      // 2. Filtrar stock activo que empiece con CDBUFFER-A
+      const cdbufferRows = activeRows.filter(row => {
+          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
+          return location.startsWith('CDBUFFER-A');
+      });
+
+      if (cdbufferRows.length === 0) {
+          targetContainer.innerHTML = `
+              <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); margin-top: 1.5rem; border-radius: 12px;">
+                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+                  <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A</h4>
+                  <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
+                      No se encontraron ubicaciones que inicien con <strong>CDBUFFER-A</strong> en el Stock Activo cargado. Verifica tu archivo de origen.
+                  </p>
+              </div>
+          `;
+          return;
+      }
+
+      // 3. Agregar datos
+      const matrix = {}; // { brand: { dept: sum } }
+      const uniqueDepts = new Set();
+      const uniqueBrands = new Set();
+      let totalSum = 0;
+
+      cdbufferRows.forEach(row => {
+          const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
+          const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
+          if (qty <= 0) return;
+
+          const sku7 = sku.substring(0, 7);
+          const info = articulosMap.get(sku7);
+          
+          const rawBrand = info ? info.marca : 'OTROS';
+          const brand = formatBrandName(rawBrand);
+          const dept = info && info.gGender ? info.gGender.trim().toUpperCase() : 'S/D';
+
+          uniqueDepts.add(dept);
+          uniqueBrands.add(brand);
+
+          if (!matrix[brand]) matrix[brand] = {};
+          matrix[brand][dept] = (matrix[brand][dept] || 0) + qty;
+          totalSum += qty;
+      });
+
+      // Ordenar departamentos siguiendo la imagen: 03 KIDS, 01 MEN, 05 SCHOOL, 04 SPORT, 02 WOMEN
+      const deptOrder = ['03 KIDS', '01 MEN', '05 SCHOOL', '04 SPORT', '02 WOMEN'];
+      const sortedDepts = Array.from(uniqueDepts).sort((a, b) => {
+          const idxA = deptOrder.indexOf(a);
+          const idxB = deptOrder.indexOf(b);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return a.localeCompare(b);
+      });
+
+      // Ordenar marcas como en la imagen
+      const brandOrder = ['Bata', 'Bubblegummers', 'North Star', 'Power', 'Puma', 'Weinbrenner'];
+      const sortedBrands = Array.from(uniqueBrands).sort((a, b) => {
+          const idxA = brandOrder.indexOf(a);
+          const idxB = brandOrder.indexOf(b);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return a.localeCompare(b);
+      });
+
+      // Obtener hora de actualización
+      const meta = getUploadMeta('recepcion_activo') || {};
+      const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+
+      // 4. Renderizar panel premium cian
+      targetContainer.innerHTML = `
+          <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); max-width: 900px; margin: 1.5rem auto; text-align: left; position: relative; overflow: hidden; animation: fadeInUp 0.4s ease;">
+              <!-- Left accented title block -->
+              <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
+                  <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+                  <div>
+                      <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                          REPORTE RECEPCIÓN - CDBUFFER
+                      </h2>
+                      <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                          DATA_SYNC: <span style="color: #94a3b8;">${timeStr}</span>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Table Matrix -->
+              <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                      <thead>
+                          <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
+                              <th style="color: #64748b; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">MARCAS</th>
+                              ${sortedDepts.map(dept => `
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">${dept}</th>
+                              `).join('')}
+                              <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">TOTAL</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          ${sortedBrands.map(brand => {
+                              let rowTotal = 0;
+                              return `
+                                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
+                                      <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${brand}</td>
+                                      ${sortedDepts.map(dept => {
+                                          const val = matrix[brand][dept] || 0;
+                                          rowTotal += val;
+                                          return `
+                                              <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">
+                                                  ${val > 0 ? val.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
+                                              </td>
+                                          `;
+                                      }).join('')}
+                                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; background: rgba(34,211,238,0.01); font-size: 0.9rem;">
+                                          ${rowTotal > 0 ? rowTotal.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
+                                      </td>
+                                  </tr>
+                              `;
+                          }).join('')}
+                      </tbody>
+                      <tfoot>
+                          <tr style="background: rgba(34, 211, 238, 0.04); border-top: 2px solid #22d3ee; font-weight: 800;">
+                              <td style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL</td>
+                              ${sortedDepts.map(dept => {
+                                  let deptTotal = 0;
+                                  sortedBrands.forEach(brand => {
+                                      deptTotal += matrix[brand][dept] || 0;
+                                  });
+                                  return `
+                                      <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.9rem;">
+                                          ${deptTotal > 0 ? deptTotal.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
+                                      </td>
+                                  `;
+                              }).join('')}
+                              <td style="color: #22d3ee; font-weight: 900; padding: 14px 16px; text-align: center; background: rgba(34, 211, 238, 0.08); font-size: 0.95rem; text-shadow: 0 0 5px rgba(34,211,238,0.5);">
+                                  ${totalSum.toLocaleString('en-US')}
+                              </td>
+                          </tr>
+                      </tfoot>
+                  </table>
+              </div>
+          </div>
+      `;
+  };
+
   const processReporteUCA = (matriz, reserva) => {
     const reservaMap = new Map();
     // Solo procesar registros de nivel ALTO (usando el flag pre-calculado)
@@ -4809,6 +5087,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         document.getElementById('btn_procesar_uca').addEventListener('click', () => {
             processReporteUCA(document.getElementById('ucaResultsArea'));
         });
+    } else if (tabId === 'recepcion' && activeSub === 'reportes_recepcion') {
+        renderRecepcionReportTab(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
