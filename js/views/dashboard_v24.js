@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=24.7.8';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.47';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.46';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=24.7.8';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.46';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.46';
+import * as adminService from '../services_v245/adminService.js?v=25.1.47';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.47';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.47';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.47';
 
 
-const VERSION = '25.1.46';
+const VERSION = '25.1.47';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -166,7 +166,11 @@ const TABS = [
     { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
     { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
     { id: 'analisis_inventarios', label: 'Análisis Inventario', icon: '🔍' },
-    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦' }
+    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦', subTabs: [
+        { id: 'general', label: 'General', icon: '📝' },
+        { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
+        { id: 'reportes', label: 'Reportes', icon: '📊' }
+    ] }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
