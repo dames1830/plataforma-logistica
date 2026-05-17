@@ -1,12 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.49';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.50';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.49';
+import * as adminService from '../services_v245/adminService.js?v=25.1.50';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.48'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.49';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.49';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.50';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.50';
 
 
-const VERSION = '25.1.49';
+const VERSION = '25.1.50';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2872,7 +2872,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div class="glass-panel" style="margin-top:1.5rem; padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                         <h3 style="color:#fff; margin:0; font-size:1rem;">📋 Monitor de Tareas en Vivo</h3>
-                        <button onclick="renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'))" class="btn-premium-pulse" style="padding:6px 15px; font-size:0.75rem; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; cursor:pointer;">🔄 Actualizar Estado</button>
+                        <button id="btn_refresh_live_monitor" class="btn-premium-pulse" style="padding:6px 15px; font-size:0.75rem; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; cursor:pointer;">🔄 Actualizar Estado</button>
                     </div>
                     <div id="admin_live_monitor" style="overflow-x:auto;">
                         ${activeCount > 0 ? `
@@ -2980,10 +2980,165 @@ export const renderDashboard = async (container, user, onLogout) => {
                 });
             }
 
+            const refreshBtn = document.getElementById('btn_refresh_live_monitor');
+            if (refreshBtn) {
+                refreshBtn.onclick = () => {
+                    renderModuloInventarios(container);
+                };
+            }
+
             const syncBtn = document.getElementById('btn_sync_eru');
             if (syncBtn) {
-                syncBtn.onclick = () => {
-                    alert('⏳ Iniciando motor de cruce ERU (Modelo 1 Ciego Total)... Funcionalidad en desarrollo.');
+                syncBtn.onclick = async () => {
+                    try {
+                        // 1. Obtener datos
+                        const stockActivo = await getAreaData('inventario') || [];
+                        const tasks = cyclicService.getTasks();
+                        const scans = cyclicService.getScans();
+
+                        if (tasks.length === 0) {
+                            alert("⚠️ No hay tareas asignadas en el Monitor en Vivo para cruzar.");
+                            return;
+                        }
+
+                        if (scans.length === 0) {
+                            alert("⚠️ Los operarios no han realizado lecturas físicas aún.");
+                            return;
+                        }
+
+                        // 2. Obtener maestro para descripciones
+                        const maestro = await getAreaData('articulos') || [];
+                        const maestroMap = new Map();
+                        maestro.forEach(a => {
+                            const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim().toUpperCase();
+                            const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString().trim();
+                            if (mSku) maestroMap.set(mSku, mDesc);
+                        });
+
+                        // 3. Crear sets y mapas
+                        const taskLocations = new Set(tasks.map(t => t.location.toUpperCase()));
+                        const sistemaMap = new Map();
+                        const descMap = new Map();
+
+                        stockActivo.forEach(row => {
+                            const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim().toUpperCase();
+                            const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
+                            const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
+                            
+                            // Escaneo inteligente de descripción
+                            let desc = 'S/D';
+                            if (typeof row === 'object' && !Array.isArray(row)) {
+                                desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
+                            } else if (Array.isArray(row)) {
+                                desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
+                            }
+                            desc = desc.toString().trim();
+
+                            if (sku && taskLocations.has(ubi)) {
+                                const key = `${sku}|${ubi}`;
+                                sistemaMap.set(key, (sistemaMap.get(key) || 0) + qty);
+                                if (desc && desc !== 'S/D') descMap.set(sku, desc);
+                            }
+                        });
+
+                        const fisicoMap = new Map();
+                        scans.forEach(s => {
+                            const sku = s.sku.toString().trim().toUpperCase();
+                            const ubi = s.location.toString().trim().toUpperCase();
+                            const qty = parseFloat(s.qty) || 0;
+
+                            if (sku && taskLocations.has(ubi)) {
+                                const key = `${sku}|${ubi}`;
+                                fisicoMap.set(key, (fisicoMap.get(key) || 0) + qty);
+                            }
+                        });
+
+                        // 4. Cruzar keys
+                        const allKeys = new Set([...sistemaMap.keys(), ...fisicoMap.keys()]);
+                        const eruResults = [];
+                        let totalItems = 0;
+                        let correctItems = 0;
+
+                        allKeys.forEach(key => {
+                            const [sku, ubi] = key.split('|');
+                            const qSis = sistemaMap.get(key) || 0;
+                            const qFis = fisicoMap.get(key) || 0;
+                            const diff = qFis - qSis;
+
+                            // Exactitud de Registro de Ubicación (ERU) por línea
+                            const acc = qSis === qFis ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, qFis || 1))) * 100;
+
+                            totalItems++;
+                            if (diff === 0) correctItems++;
+
+                            const finalDesc = descMap.get(sku) || maestroMap.get(sku) || 'N/A';
+
+                            eruResults.push({
+                                sku,
+                                ubi,
+                                desc: finalDesc,
+                                sis: qSis,
+                                fis: qFis,
+                                diff,
+                                eri: Math.max(0, acc).toFixed(1)
+                            });
+                        });
+
+                        // Ordenar eruResults por ubicación
+                        eruResults.sort((a, b) => a.ubi.localeCompare(b.ubi));
+
+                        // 5. Cruzar por SKU (ERI)
+                        const countedSkus = new Set(eruResults.map(r => r.sku));
+                        const eriBySku = new Map();
+                        countedSkus.forEach(sku => eriBySku.set(sku, { sis: 0, fis: 0 }));
+
+                        eruResults.forEach(r => {
+                            const entry = eriBySku.get(r.sku);
+                            entry.sis += r.sis;
+                            entry.fis += r.fis;
+                        });
+
+                        const eriResults = [];
+                        let eriCorrect = 0;
+
+                        eriBySku.forEach((vals, sku) => {
+                            const diff = vals.fis - vals.sis;
+                            if (diff === 0) eriCorrect++;
+                            const acc = vals.sis === vals.fis ? 100 : (1 - (Math.abs(diff) / Math.max(vals.sis, vals.fis || 1))) * 100;
+
+                            // Buscar ubicaciones de este SKU
+                            const ubis = eruResults.filter(r => r.sku === sku).map(r => r.ubi);
+                            const ubiText = ubis.length > 1 ? "VARIAS" : (ubis[0] || 'N/A');
+                            const finalDesc = descMap.get(sku) || maestroMap.get(sku) || 'N/A';
+
+                            eriResults.push({
+                                sku,
+                                ubi: ubiText,
+                                desc: finalDesc,
+                                sis: vals.sis,
+                                fis: vals.fis,
+                                diff,
+                                eri: Math.max(0, acc).toFixed(1)
+                            });
+                        });
+
+                        // Calcular consolidados globales
+                        const finalERU = eruResults.length > 0 ? (eruResults.reduce((acc, r) => acc + parseFloat(r.eri || 0), 0) / eruResults.length).toFixed(1) : 0;
+                        const finalERI = eriResults.length > 0 ? ((eriCorrect / eriResults.length) * 100).toFixed(1) : 0;
+
+                        // 6. Guardar en global
+                        window._lastERI = { eriResults, finalERI, eruResults, finalERU };
+
+                        // 7. Cambiar de pestaña y re-renderizar
+                        activeModuloInvSub = 'reportes';
+                        renderModuloInventarios(container);
+
+                        alert(`✅ ¡Cruce ERU / ERI realizado con éxito!\nERU: ${finalERU}%\nERI: ${finalERI}%`);
+
+                    } catch(err) {
+                        console.error("Error en cruce cíclico ERU:", err);
+                        alert("❌ Error al procesar el cruce cíclico: " + err);
+                    }
                 };
             }
         } else {
