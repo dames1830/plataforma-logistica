@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.66';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.67';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.66';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.66'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.66';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.66';
+import * as adminService from '../services_v245/adminService.js?v=25.1.67';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.67'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.67';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.67';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.66';
+const VERSION = '25.1.67';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4275,6 +4275,80 @@ export const renderDashboard = async (container, user, onLogout) => {
       console.log("[PULSE] renderERIERULayout llamado pero desactivado por v18.5.20");
   };
 
+  const runProcessingAnimation = (container) => {
+      // 1. Validaciones de archivos
+      if (!dataStore.recepcion_activo || dataStore.recepcion_activo.length === 0 || !dataStore.articulos || dataStore.articulos.length === 0) {
+          showPremiumAlert(
+              'Faltan Cargar Archivos',
+              'No se puede procesar el reporte porque falta cargar los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.<br><br>Por favor, asegúrate de subir: <br>• <strong>Stock Activo</strong> (CSV)<br>• <strong>Maestro Artículos</strong> (XLSX)',
+              'error'
+          );
+          return;
+      }
+
+      container.innerHTML = `
+        <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 800px; margin: 2rem auto; animation: fadeIn 0.3s ease;">
+            <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">📊</div>
+            <h3 style="margin-bottom: 1rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                REPORTE RECEPCIÓN - CDBUFFER
+            </h3>
+            <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
+                Cruza en tiempo real el <strong>Stock Activo</strong> de Recepción con el <strong>Maestro de Artículos</strong>. 
+                <br><span style="color: var(--primary); font-weight: 600;">Filtro:</span> Analiza exclusivamente ubicaciones que inicien con <strong style="color: #22d3ee; font-weight: 700;">CDBUFFER-A</strong>.
+            </p>
+            
+            <div style="max-width: 500px; margin: 2.5rem auto 0 auto; text-align: left;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span id="recepcionProgressText" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Iniciando análisis...</span>
+                    <span id="recepcionProgressPct" style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">0%</span>
+                </div>
+                <div class="progress-bar-container" style="background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="recepcionProgressBar" style="background: linear-gradient(90deg, var(--primary) 0%, #22d3ee 100%); height: 100%; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(34,211,238,0.5);"></div>
+                </div>
+            </div>
+        </div>
+      `;
+
+      const progressBar = document.getElementById('recepcionProgressBar');
+      const progressText = document.getElementById('recepcionProgressText');
+      const progressPct = document.getElementById('recepcionProgressPct');
+
+      let pct = 0;
+      const steps = [
+          { threshold: 10, text: 'Leyendo Stock Activo de Recepción...' },
+          { threshold: 40, text: 'Filtrando ubicaciones CDBUFFER-A...' },
+          { threshold: 70, text: 'Cruzando con Maestro de Artículos...' },
+          { threshold: 90, text: 'Tabulando marcas y departamentos...' },
+          { threshold: 100, text: '¡Procesamiento completado con éxito!' }
+      ];
+
+      const interval = setInterval(() => {
+          pct += 5;
+          if (pct > 100) pct = 100;
+
+          if (progressBar) progressBar.style.width = `${pct}%`;
+          if (progressPct) progressPct.textContent = `${pct}%`;
+
+          const currentStep = steps.find(s => pct <= s.threshold);
+          if (currentStep && progressText) {
+              progressText.textContent = currentStep.text;
+          }
+
+          if (pct === 100) {
+              clearInterval(interval);
+              setTimeout(() => {
+                  try {
+                      localStorage.setItem('recepcion_report_processed', 'true');
+                      renderRecepcionReportTab(container);
+                  } catch (err) {
+                      console.error(err);
+                      showPremiumAlert('Error de Análisis', 'Ocurrió un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
+                  }
+              }, 500);
+          }
+      }, 100);
+  };
+
   const renderRecepcionReportTab = (container) => {
     const hasDataFiles = dataStore.recepcion_activo && dataStore.recepcion_activo.length > 0 && dataStore.articulos && dataStore.articulos.length > 0;
     const isProcessed = localStorage.getItem('recepcion_report_processed') === 'true' && hasDataFiles;
@@ -4302,7 +4376,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         document.getElementById('btn_reprocesar_recepcion').addEventListener('click', () => {
             localStorage.removeItem('recepcion_report_processed');
-            renderRecepcionReportTab(container);
+            runProcessingAnimation(container);
         });
         
         return;
@@ -4321,92 +4395,11 @@ export const renderDashboard = async (container, user, onLogout) => {
           <button id="btn_procesar_recepcion" class="btn" style="max-width: 320px; margin: 0 auto; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(79,70,229,0.3);">
               ⚡ PROCESAR REPORTE CDBUFFER
           </button>
-          
-          <!-- Progress area -->
-          <div id="recepcionProgressArea" style="margin-top: 2.5rem; display: none; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span id="recepcionProgressText" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Iniciando análisis...</span>
-                  <span id="recepcionProgressPct" style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">0%</span>
-              </div>
-              <div class="progress-bar-container" style="background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
-                  <div id="recepcionProgressBar" style="background: linear-gradient(90deg, var(--primary) 0%, #22d3ee 100%); height: 100%; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(34,211,238,0.5);"></div>
-              </div>
-          </div>
-
-          <!-- Results area -->
-          <div id="recepcionResultsArea" style="margin-top: 1rem;"></div>
       </div>
     `;
 
-    document.getElementById('btn_procesar_recepcion').addEventListener('click', async () => {
-        const btn = document.getElementById('btn_procesar_recepcion');
-        const progressArea = document.getElementById('recepcionProgressArea');
-        const progressBar = document.getElementById('recepcionProgressBar');
-        const progressText = document.getElementById('recepcionProgressText');
-        const progressPct = document.getElementById('recepcionProgressPct');
-        const resultsArea = document.getElementById('recepcionResultsArea');
-
-        // 1. Validaciones de archivos
-        if (!dataStore.recepcion_activo || dataStore.recepcion_activo.length === 0 || !dataStore.articulos || dataStore.articulos.length === 0) {
-            showPremiumAlert(
-                'Faltan Cargar Archivos',
-                'No se puede procesar el reporte porque falta cargar los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.<br><br>Por favor, asegúrate de subir: <br>• <strong>Stock Activo</strong> (CSV)<br>• <strong>Maestro Artículos</strong> (XLSX)',
-                'error'
-            );
-            return;
-        }
-
-        // Bloquear botón e iniciar barra
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.pointerEvents = 'none';
-        progressArea.style.display = 'block';
-        resultsArea.innerHTML = '';
-
-        let pct = 0;
-        const steps = [
-            { threshold: 10, text: 'Leyendo Stock Activo de Recepción...' },
-            { threshold: 40, text: 'Filtrando ubicaciones CDBUFFER-A...' },
-            { threshold: 70, text: 'Cruzando con Maestro de Artículos...' },
-            { threshold: 90, text: 'Tabulando marcas y departamentos...' },
-            { threshold: 100, text: '¡Procesamiento completado con éxito!' }
-        ];
-
-        const interval = setInterval(() => {
-            pct += 5;
-            if (pct > 100) pct = 100;
-
-            progressBar.style.width = `${pct}%`;
-            progressPct.textContent = `${pct}%`;
-
-            const currentStep = steps.find(s => pct <= s.threshold);
-            if (currentStep) {
-                progressText.textContent = currentStep.text;
-            }
-
-            if (pct === 100) {
-                clearInterval(interval);
-                setTimeout(() => {
-                    progressArea.style.display = 'none';
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                    
-                    try {
-                        localStorage.setItem('recepcion_report_processed', 'true');
-                        generateAndRenderRecepcionReport(resultsArea);
-                        
-                        // Guardar en persistencia tras completar renderizado
-                        setTimeout(() => {
-                            renderRecepcionReportTab(container);
-                        }, 1200);
-                    } catch (err) {
-                        console.error(err);
-                        showPremiumAlert('Error de Análisis', 'Ocurrió un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
-                    }
-                }, 500);
-            }
-        }, 100);
+    document.getElementById('btn_procesar_recepcion').addEventListener('click', () => {
+        runProcessingAnimation(container);
     });
   };
 
