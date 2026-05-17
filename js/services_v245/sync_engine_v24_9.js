@@ -20,7 +20,7 @@ export const syncStore = {
 export let isFirstPullDone = false;
 
 export async function initSync() {
-    console.log("🚀 [PULSE] Inicializando Motor v25.1.38...");
+    console.log("🚀 [PULSE] Inicializando Motor v25.1.39...");
     try {
         await pullGlobal();
     } catch (e) {
