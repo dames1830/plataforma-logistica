@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.65';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.66';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.65';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.65'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.65';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.65';
+import * as adminService from '../services_v245/adminService.js?v=25.1.66';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.66'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.66';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.66';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.65';
+const VERSION = '25.1.66';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4411,8 +4411,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const generateAndRenderRecepcionReport = (targetContainer) => {
-      const activeRows = dataStore.recepcion_activo;
-      const articulos = dataStore.articulos;
+      const activeRows = dataStore.recepcion_activo || [];
+      const reserveRows = dataStore.recepcion_reserva || [];
+      const articulos = dataStore.articulos || [];
 
       // 1. Construir articulosMap
       const articulosMap = new Map();
@@ -4423,14 +4424,12 @@ export const renderDashboard = async (container, user, onLogout) => {
           
           if (sku7 && !articulosMap.has(sku7)) {
               articulosMap.set(sku7, {
-                  // Mapear Gender Rims de la columna D (índice 3)
-                  gGender: String(raw[3] || 'S/D').trim().toUpperCase(),
+                  gGender: String(raw[3] || '').trim().toUpperCase(),
                   marca: String(raw[13] || 'OTROS').trim()
               });
           }
       });
 
-      // Formateador premium de marcas para coincidir con la imagen de referencia
       const formatBrandName = (str) => {
           if (!str) return 'OTROS';
           const u = str.toUpperCase().trim();
@@ -4441,153 +4440,350 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (u.includes('PUMA')) return 'Puma';
           if (u.includes('WEINBRENNER')) return 'Weinbrenner';
           
-          // Formateo genérico Title Case
           return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
       };
 
-      // 2. Filtrar stock activo que empiece con CDBUFFER-A
+      // ==========================================
+      // REPORTE 1: REPORTE RECEPCIÓN - CDBUFFER (Izquierda)
+      // ==========================================
       const cdbufferRows = activeRows.filter(row => {
           const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
           return location.startsWith('CDBUFFER-A');
       });
 
+      let reporte1HTML = '';
       if (cdbufferRows.length === 0) {
-          targetContainer.innerHTML = `
-              <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); margin-top: 1.5rem; border-radius: 12px;">
+          reporte1HTML = `
+              <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); border-radius: 12px; height: 100%;">
                   <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
                   <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A</h4>
                   <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
-                      No se encontraron ubicaciones que inicien con <strong>CDBUFFER-A</strong> en el Stock Activo cargado. Verifica tu archivo de origen.
+                      No se encontraron ubicaciones que inicien con <strong>CDBUFFER-A</strong> en el Stock Activo.
                   </p>
               </div>
           `;
-          return;
+      } else {
+          const matrix = {}; // { brand: { dept: sum } }
+          const uniqueDepts = new Set();
+          const uniqueBrands = new Set();
+          let totalSum = 0;
+
+          cdbufferRows.forEach(row => {
+              const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
+              const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
+              if (qty <= 0) return;
+
+              const sku7 = sku.substring(0, 7);
+              const info = articulosMap.get(sku7);
+              
+              const rawBrand = info ? info.marca : 'OTROS';
+              const brand = formatBrandName(rawBrand);
+              const dept = info && info.gGender ? info.gGender.trim().toUpperCase() : 'S/D';
+
+              uniqueDepts.add(dept);
+              uniqueBrands.add(brand);
+
+              if (!matrix[brand]) matrix[brand] = {};
+              matrix[brand][dept] = (matrix[brand][dept] || 0) + qty;
+              totalSum += qty;
+          });
+
+          const deptOrder = ['03 KIDS', '01 MEN', '05 SCHOOL', '04 SPORT', '02 WOMEN'];
+          const sortedDepts = Array.from(uniqueDepts).sort((a, b) => {
+              const idxA = deptOrder.indexOf(a);
+              const idxB = deptOrder.indexOf(b);
+              if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+              if (idxA !== -1) return -1;
+              if (idxB !== -1) return 1;
+              return a.localeCompare(b);
+          });
+
+          const brandOrder = ['Bata', 'Bubblegummers', 'North Star', 'Power', 'Puma', 'Weinbrenner'];
+          const sortedBrands = Array.from(uniqueBrands).sort((a, b) => {
+              const idxA = brandOrder.indexOf(a);
+              const idxB = brandOrder.indexOf(b);
+              if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+              if (idxA !== -1) return -1;
+              if (idxB !== -1) return 1;
+              return a.localeCompare(b);
+          });
+
+          const meta = getUploadMeta('recepcion_activo') || {};
+          const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+
+          reporte1HTML = `
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: 100%;">
+                  <!-- Left accented title block -->
+                  <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
+                      <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+                      <div>
+                          <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                              REPORTE RECEPCIÓN - CDBUFFER
+                          </h2>
+                          <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                              DATA_SYNC: <span style="color: #94a3b8;">${timeStr}</span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Table Matrix -->
+                  <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
+                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                          <thead>
+                              <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
+                                  <th style="color: #64748b; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">MARCAS</th>
+                                  ${sortedDepts.map(dept => `
+                                      <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">${dept}</th>
+                                  `).join('')}
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">TOTAL</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              ${sortedBrands.map(brand => {
+                                  let rowTotal = 0;
+                                  return `
+                                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
+                                          <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${brand}</td>
+                                          ${sortedDepts.map(dept => {
+                                              const val = matrix[brand][dept] || 0;
+                                              rowTotal += val;
+                                              return `
+                                                  <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">
+                                                      ${val > 0 ? val.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
+                                                  </td>
+                                              `;
+                                          }).join('')}
+                                          <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; background: rgba(34,211,238,0.01); font-size: 0.9rem;">
+                                              ${rowTotal > 0 ? rowTotal.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
+                                          </td>
+                                      </tr>
+                                  `;
+                              }).join('')}
+                          </tbody>
+                          <tfoot>
+                              <tr style="background: rgba(34, 211, 238, 0.04); border-top: 2px solid #22d3ee; font-weight: 800;">
+                                  <td style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL</td>
+                                  ${sortedDepts.map(dept => {
+                                      let deptTotal = 0;
+                                      sortedBrands.forEach(brand => {
+                                          deptTotal += matrix[brand][dept] || 0;
+                                      });
+                                      return `
+                                          <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.9rem;">
+                                              ${deptTotal > 0 ? deptTotal.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
+                                          </td>
+                                      `;
+                                  }).join('')}
+                                  <td style="color: #22d3ee; font-weight: 900; padding: 14px 16px; text-align: center; background: rgba(34, 211, 238, 0.08); font-size: 0.95rem; text-shadow: 0 0 5px rgba(34,211,238,0.5);">
+                                      ${totalSum.toLocaleString('en-US')}
+                                  </td>
+                              </tr>
+                          </tfoot>
+                      </table>
+                  </div>
+              </div>
+          `;
       }
 
-      // 3. Agregar datos
-      const matrix = {}; // { brand: { dept: sum } }
-      const uniqueDepts = new Set();
-      const uniqueBrands = new Set();
-      let totalSum = 0;
+      // ==========================================
+      // REPORTE 2: REPORTE ALMACENAJE - GENDER (Derecha)
+      // ==========================================
+      const secondMatrix = {}; // { area: { dept: { buffer: 0, avance: 0 } } }
 
-      cdbufferRows.forEach(row => {
+      // Llenar buffer (Reserva)
+      reserveRows.forEach(row => {
+          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
+          let area = '';
+          if (location.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
+          else if (location.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
+          else if (location.startsWith('CDBUFFER-D')) area = 'CDBUFFER-D';
+          else return;
+
           const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
           const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
           if (qty <= 0) return;
 
           const sku7 = sku.substring(0, 7);
           const info = articulosMap.get(sku7);
-          
-          const rawBrand = info ? info.marca : 'OTROS';
-          const brand = formatBrandName(rawBrand);
-          const dept = info && info.gGender ? info.gGender.trim().toUpperCase() : 'S/D';
+          const dept = info && info.gGender ? info.gGender : '';
 
-          uniqueDepts.add(dept);
-          uniqueBrands.add(brand);
+          if (!secondMatrix[area]) secondMatrix[area] = {};
+          if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
 
-          if (!matrix[brand]) matrix[brand] = {};
-          matrix[brand][dept] = (matrix[brand][dept] || 0) + qty;
-          totalSum += qty;
+          secondMatrix[area][dept].buffer += qty;
       });
 
-      // Ordenar departamentos siguiendo la imagen: 03 KIDS, 01 MEN, 05 SCHOOL, 04 SPORT, 02 WOMEN
-      const deptOrder = ['03 KIDS', '01 MEN', '05 SCHOOL', '04 SPORT', '02 WOMEN'];
-      const sortedDepts = Array.from(uniqueDepts).sort((a, b) => {
-          const idxA = deptOrder.indexOf(a);
-          const idxB = deptOrder.indexOf(b);
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return a.localeCompare(b);
+      // Llenar avance (Activo)
+      activeRows.forEach(row => {
+          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
+          let area = '';
+          if (location.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
+          else if (location.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
+          else if (location.startsWith('CDBUFFER-D')) area = 'CDBUFFER-D';
+          else return;
+
+          const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
+          const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
+          if (qty <= 0) return;
+
+          const sku7 = sku.substring(0, 7);
+          const info = articulosMap.get(sku7);
+          const dept = info && info.gGender ? info.gGender : '';
+
+          if (!secondMatrix[area]) secondMatrix[area] = {};
+          if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
+
+          secondMatrix[area][dept].avance += qty;
       });
 
-      // Ordenar marcas como en la imagen
-      const brandOrder = ['Bata', 'Bubblegummers', 'North Star', 'Power', 'Puma', 'Weinbrenner'];
-      const sortedBrands = Array.from(uniqueBrands).sort((a, b) => {
-          const idxA = brandOrder.indexOf(a);
-          const idxB = brandOrder.indexOf(b);
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return a.localeCompare(b);
-      });
+      let reporte2HTML = '';
+      const sortedAreas = Object.keys(secondMatrix).sort((a, b) => b.localeCompare(a));
 
-      // Obtener hora de actualización
-      const meta = getUploadMeta('recepcion_activo') || {};
-      const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+      if (sortedAreas.length === 0) {
+          reporte2HTML = `
+              <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); border-radius: 12px; height: 100%;">
+                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+                  <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A/B/D</h4>
+                  <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
+                      No se encontraron ubicaciones de tipo CDBUFFER en Stock Activo ni Stock Reserva para generar el reporte de Almacenaje.
+                  </p>
+              </div>
+          `;
+      } else {
+          const secondDeptOrder = ['03 KIDS', '06 OTHERS', '01 MEN', '05 SCHOOL', '04 SPORT', '02 WOMEN', '08 ACCESORIES', ''];
+          let grandBuffer = 0;
+          let grandAvance = 0;
+          let grandPendiente = 0;
 
-      // 4. Renderizar panel premium cian
-      targetContainer.innerHTML = `
-          <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); max-width: 900px; margin: 1.5rem auto; text-align: left; position: relative; overflow: hidden; animation: fadeInUp 0.4s ease;">
-              <!-- Left accented title block -->
-              <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
-                  <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
-                  <div>
-                      <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
-                          REPORTE RECEPCIÓN - CDBUFFER
-                      </h2>
-                      <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
-                          DATA_SYNC: <span style="color: #94a3b8;">${timeStr}</span>
+          const tableRowsHTML = sortedAreas.map(area => {
+              let areaBuffer = 0;
+              let areaAvance = 0;
+              let areaPendiente = 0;
+
+              const areaGenders = Object.keys(secondMatrix[area]);
+              const sortedGenders = areaGenders.sort((a, b) => {
+                  const idxA = secondDeptOrder.indexOf(a);
+                  const idxB = secondDeptOrder.indexOf(b);
+                  if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                  if (idxA !== -1) return -1;
+                  if (idxB !== -1) return 1;
+                  return a.localeCompare(b);
+              });
+
+              const genderRows = sortedGenders.map(gender => {
+                  const data = secondMatrix[area][gender];
+                  const buffer = data.buffer;
+                  const avance = data.avance;
+                  const pendiente = Math.max(0, buffer - avance);
+
+                  areaBuffer += buffer;
+                  areaAvance += avance;
+                  areaPendiente += pendiente;
+
+                  let pct = 100;
+                  if (buffer > 0) {
+                      pct = Math.round((avance / buffer) * 100);
+                  }
+                  const pctStr = pct >= 100 ? `<span style="color:#22c55e; font-weight:700;">▲</span> 100%` : `${pct}%`;
+
+                  return `
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
+                          <td style="color: #64748b; font-weight: 600; padding: 12px 16px; font-size: 0.9rem;">${area}</td>
+                          <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${gender || '<span style="color: #334155;">-</span>'}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${buffer.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${avance.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pctStr}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pendiente.toLocaleString('en-US')}</td>
+                      </tr>
+                  `;
+              }).join('');
+
+              grandBuffer += areaBuffer;
+              grandAvance += areaAvance;
+              grandPendiente += areaPendiente;
+
+              let areaPct = 100;
+              if (areaBuffer > 0) {
+                  areaPct = Math.round((areaAvance / areaBuffer) * 100);
+              }
+
+              const subtotalRow = `
+                  <tr style="border-bottom: 2px solid rgba(34,211,238,0.3); background: rgba(34, 211, 238, 0.02); font-weight: 700;">
+                      <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">Total ${area}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaBuffer.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaAvance.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPct}%</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPendiente.toLocaleString('en-US')}</td>
+                  </tr>
+              `;
+
+              return genderRows + subtotalRow;
+          }).join('');
+
+          let grandPct = 100;
+          if (grandBuffer > 0) {
+              grandPct = Math.round((grandAvance / grandBuffer) * 100);
+          }
+
+          const meta = getUploadMeta('recepcion_activo') || {};
+          const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+
+          reporte2HTML = `
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: 100%;">
+                  <!-- Title Block -->
+                  <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
+                      <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+                      <div>
+                          <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                              REPORTE ALMACENAJE - GENDER
+                          </h2>
+                          <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                              SYNC_ID: <span style="color: #94a3b8;">${timeStr}</span>
+                          </div>
                       </div>
                   </div>
-              </div>
 
-              <!-- Table Matrix -->
-              <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
-                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
-                      <thead>
-                          <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
-                              <th style="color: #64748b; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">MARCAS</th>
-                              ${sortedDepts.map(dept => `
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">${dept}</th>
-                              `).join('')}
-                              <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">TOTAL</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          ${sortedBrands.map(brand => {
-                              let rowTotal = 0;
-                              return `
-                                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
-                                      <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${brand}</td>
-                                      ${sortedDepts.map(dept => {
-                                          const val = matrix[brand][dept] || 0;
-                                          rowTotal += val;
-                                          return `
-                                              <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">
-                                                  ${val > 0 ? val.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
-                                              </td>
-                                          `;
-                                      }).join('')}
-                                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; background: rgba(34,211,238,0.01); font-size: 0.9rem;">
-                                          ${rowTotal > 0 ? rowTotal.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
-                                      </td>
-                                  </tr>
-                              `;
-                          }).join('')}
-                      </tbody>
-                      <tfoot>
-                          <tr style="background: rgba(34, 211, 238, 0.04); border-top: 2px solid #22d3ee; font-weight: 800;">
-                              <td style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL</td>
-                              ${sortedDepts.map(dept => {
-                                  let deptTotal = 0;
-                                  sortedBrands.forEach(brand => {
-                                      deptTotal += matrix[brand][dept] || 0;
-                                  });
-                                  return `
-                                      <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.9rem;">
-                                          ${deptTotal > 0 ? deptTotal.toLocaleString('en-US') : '<span style="color: #334155;">-</span>'}
-                                      </td>
-                                  `;
-                              }).join('')}
-                              <td style="color: #22d3ee; font-weight: 900; padding: 14px 16px; text-align: center; background: rgba(34, 211, 238, 0.08); font-size: 0.95rem; text-shadow: 0 0 5px rgba(34,211,238,0.5);">
-                                  ${totalSum.toLocaleString('en-US')}
-                              </td>
-                          </tr>
-                      </tfoot>
-                  </table>
+                  <!-- Table Matrix -->
+                  <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
+                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                          <thead>
+                              <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AREA</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">GENDER</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">BUFFER</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AVANCE</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">%</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">PENDIENTE</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              ${tableRowsHTML}
+                              <tr style="background: rgba(34, 211, 238, 0.08); border-top: 2px solid #22d3ee; font-weight: 800;">
+                                  <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL CDBUFFER</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBuffer.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandAvance.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandPct}%</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandPendiente.toLocaleString('en-US')}</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
               </div>
-          </div>
+          `;
+      }
+
+      // Renderizar lado a lado de manera elegante y fluida
+      targetContainer.innerHTML = `
+        <div style="display: flex; flex-direction: row; gap: 1.5rem; justify-content: center; align-items: stretch; max-width: 1700px; margin: 0 auto; flex-wrap: wrap; padding: 0 1rem; animation: fadeInUp 0.4s ease;">
+            <!-- Reporte Izquierdo: Recepción CDBUFFER -->
+            <div style="flex: 1; min-width: 600px; max-width: 820px;">
+                ${reporte1HTML}
+            </div>
+            <!-- Reporte Derecho: Almacenaje GENDER -->
+            <div style="flex: 1; min-width: 600px; max-width: 820px;">
+                ${reporte2HTML}
+            </div>
+        </div>
       `;
   };
 
