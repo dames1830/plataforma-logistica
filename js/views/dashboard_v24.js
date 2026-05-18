@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.80';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.81';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.80';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.80';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.80';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.80';
+import * as adminService from '../services_v245/adminService.js?v=25.1.81';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.81';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.81';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.81';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.80';
+const VERSION = '25.1.81';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4408,6 +4408,28 @@ export const renderDashboard = async (container, user, onLogout) => {
               </p>
           </div>
         `;
+        return;
+    }
+
+    const isProcessed = localStorage.getItem('recepcion_report_processed') === 'true';
+    if (!isProcessed) {
+        container.innerHTML = `
+          <div class="glass-panel" style="padding: 4rem 3rem; text-align: center; border-radius: 16px; background: rgba(10, 15, 30, 0.7); border: 2px solid #22d3ee; box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); max-width: 800px; margin: 4rem auto; animation: fadeIn 0.3s ease;">
+              <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">📊</div>
+              <h3 style="margin-bottom: 1rem; color: #22d3ee; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                  REPORTE DE RECEPCIÓN - CDBUFFER
+              </h3>
+              <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
+                  Los archivos de stock y maestro se han cargado correctamente. Haz clic en el botón de abajo para procesar el reporte y generar el análisis de las matrices.
+              </p>
+              <button id="btn_procesar_recepcion_inicial" class="btn" style="background: linear-gradient(135deg, #4f46e5 0%, #22d3ee 100%); color: #fff; border: none; font-weight: 800; padding: 0.8rem 2.5rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 15px rgba(34,211,238,0.3);">
+                  📊 PROCESAR REPORTE
+              </button>
+          </div>
+        `;
+        document.getElementById('btn_procesar_recepcion_inicial').addEventListener('click', () => {
+            runProcessingAnimation(container);
+        });
         return;
     }
 

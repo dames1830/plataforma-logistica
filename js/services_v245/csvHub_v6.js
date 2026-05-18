@@ -386,6 +386,9 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     if (area.startsWith('recepcion') || area === 'articulos') {
         dataStore[area] = payload;
         await saveToDB(area, payload);
+        if (area.startsWith('recepcion')) {
+            localStorage.removeItem('recepcion_report_processed');
+        }
         if (area.endsWith('_activo') || area.endsWith('_reserva')) {
             updateTablaTallas();
         }
