@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.77';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.78';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.77';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.77'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.77';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.77';
+import * as adminService from '../services_v245/adminService.js?v=25.1.78';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.78';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.78';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.78';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.77';
+const VERSION = '25.1.78';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4580,9 +4580,10 @@ export const renderDashboard = async (container, user, onLogout) => {
       `;
 
       // ==========================================
-      // REPORTE 2: REPORTE ALMACENAJE - GENDER (Derecha)
+      // REPORTE 2: REPORTE ALMACENAJE - GENDER & MARCA (Derecha)
       // ==========================================
       const secondMatrix = {}; // { area: { dept: { buffer: 0, avance: 0 } } }
+      const thirdMatrix = {};  // { area: { brand: { buffer: 0, avance: 0 } } }
 
       // Mapa para registrar la zona activa CDBUFFER de cada SKU según Stock Activo
       const activeSkuToAreaMap = new Map();
@@ -4627,11 +4628,16 @@ export const renderDashboard = async (container, user, onLogout) => {
           const sku7 = sku.substring(0, 7);
           const info = articulosMap.get(sku7);
           const dept = info && info.gGender ? info.gGender : '';
+          const rawBrand = info ? info.marca : 'OTROS';
+          const brand = formatBrandName(rawBrand);
 
           if (!secondMatrix[area]) secondMatrix[area] = {};
           if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
-
           secondMatrix[area][dept].buffer += qty;
+
+          if (!thirdMatrix[area]) thirdMatrix[area] = {};
+          if (!thirdMatrix[area][brand]) thirdMatrix[area][brand] = { buffer: 0, avance: 0 };
+          thirdMatrix[area][brand].buffer += qty;
       });
 
       // Llenar avance (Activo)
@@ -4654,18 +4660,26 @@ export const renderDashboard = async (container, user, onLogout) => {
           const sku7 = sku.substring(0, 7);
           const info = articulosMap.get(sku7);
           const dept = info && info.gGender ? info.gGender : '';
+          const rawBrand = info ? info.marca : 'OTROS';
+          const brand = formatBrandName(rawBrand);
 
           if (!secondMatrix[area]) secondMatrix[area] = {};
           if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
 
+          if (!thirdMatrix[area]) thirdMatrix[area] = {};
+          if (!thirdMatrix[area][brand]) thirdMatrix[area][brand] = { buffer: 0, avance: 0 };
+
           if (isBufferB) {
               secondMatrix[area][dept].buffer += qty;
+              thirdMatrix[area][brand].buffer += qty;
           } else {
               secondMatrix[area][dept].avance += qty;
+              thirdMatrix[area][brand].avance += qty;
           }
       });
 
       let reporte2HTML = '';
+      let reporte3HTML = '';
       const sortedAreas = Object.keys(secondMatrix).sort((a, b) => b.localeCompare(a));
 
       if (sortedAreas.length === 0) {
@@ -4678,6 +4692,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                   </p>
               </div>
           `;
+          reporte3HTML = reporte2HTML;
       } else {
           const secondDeptOrder = ['03 KIDS', '06 OTHERS', '01 MEN', '05 SCHOOL', '04 SPORT', '02 WOMEN', '08 ACCESORIES', ''];
           let grandBuffer = 0;
@@ -4799,6 +4814,127 @@ export const renderDashboard = async (container, user, onLogout) => {
                   </div>
               </div>
           `;
+
+          // ==========================================
+          // REPORTE 3: REPORTE ALMACENAJE - MARCA (Derecha Inferior)
+          // ==========================================
+          const secondBrandOrder = ['Bata', 'Bubblegummers', 'North Star', 'Power', 'Puma', 'Weinbrenner', 'Otros', ''];
+          let grandBrandBuffer = 0;
+          let grandBrandAvance = 0;
+          let grandBrandPendiente = 0;
+
+          const tableBrandRowsHTML = sortedAreas.map(area => {
+              let areaBuffer = 0;
+              let areaAvance = 0;
+              let areaPendiente = 0;
+
+              const areaBrands = thirdMatrix[area] ? Object.keys(thirdMatrix[area]) : [];
+              const sortedBrands = areaBrands.sort((a, b) => {
+                  const idxA = secondBrandOrder.indexOf(a);
+                  const idxB = secondBrandOrder.indexOf(b);
+                  if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                  if (idxA !== -1) return -1;
+                  if (idxB !== -1) return 1;
+                  return a.localeCompare(b);
+              });
+
+              const brandRows = sortedBrands.map(brand => {
+                  const data = thirdMatrix[area][brand];
+                  const buffer = data.buffer;
+                  const avance = data.avance;
+                  const pendiente = Math.max(0, buffer - avance);
+
+                  areaBuffer += buffer;
+                  areaAvance += avance;
+                  areaPendiente += pendiente;
+
+                  let pct = 100;
+                  if (buffer > 0) {
+                      pct = Math.round((avance / buffer) * 100);
+                  }
+                  const pctStr = pct >= 100 ? `<span style="color:#22c55e; font-weight:700;">▲</span> 100%` : `${pct}%`;
+
+                  return `
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
+                          <td style="color: #64748b; font-weight: 600; padding: 12px 16px; font-size: 0.9rem;">${area}</td>
+                          <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${brand || '<span style="color: #334155;">-</span>'}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${buffer.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${avance.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pctStr}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pendiente.toLocaleString('en-US')}</td>
+                      </tr>
+                  `;
+              }).join('');
+
+              grandBrandBuffer += areaBuffer;
+              grandBrandAvance += areaAvance;
+              grandBrandPendiente += areaPendiente;
+
+              let areaPct = 100;
+              if (areaBuffer > 0) {
+                  areaPct = Math.round((areaAvance / areaBuffer) * 100);
+              }
+
+              const subtotalRow = `
+                  <tr style="border-bottom: 2px solid rgba(34,211,238,0.3); background: rgba(34, 211, 238, 0.02); font-weight: 700;">
+                      <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">Total ${area}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaBuffer.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaAvance.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPct}%</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPendiente.toLocaleString('en-US')}</td>
+                  </tr>
+              `;
+
+              return brandRows + subtotalRow;
+          }).join('');
+
+          let grandBrandPct = 100;
+          if (grandBrandBuffer > 0) {
+              grandBrandPct = Math.round((grandBrandAvance / grandBrandBuffer) * 100);
+          }
+
+          reporte3HTML = `
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: 100%;">
+                  <!-- Title Block -->
+                  <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
+                      <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+                      <div>
+                          <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                              REPORTE ALMACENAJE - MARCA
+                          </h2>
+                          <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                              SYNC_ID: <span style="color: #94a3b8;">${timeStr}</span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Table Matrix -->
+                  <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
+                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                          <thead>
+                              <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AREA</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">MARCA</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">BUFFER</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AVANCE</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">%</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">PENDIENTE</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              ${tableBrandRowsHTML}
+                              <tr style="background: rgba(34, 211, 238, 0.08); border-top: 2px solid #22d3ee; font-weight: 800;">
+                                  <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL CDBUFFER</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandBuffer.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandAvance.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandPct}%</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandPendiente.toLocaleString('en-US')}</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          `;
       }
 
       // Renderizar lado a lado de manera elegante y fluida
@@ -4808,9 +4944,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="flex: 1; min-width: 600px; max-width: 820px;">
                 ${reporte1HTML}
             </div>
-            <!-- Reporte Derecho: Almacenaje GENDER -->
-            <div style="flex: 1; min-width: 600px; max-width: 820px;">
+            <!-- Columna Derecha: Reportes de Almacenaje -->
+            <div style="flex: 1; min-width: 600px; max-width: 820px; display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- Reporte Derecho Superior: Almacenaje GENDER -->
                 ${reporte2HTML}
+                <!-- Reporte Derecho Inferior: Almacenaje MARCA -->
+                ${reporte3HTML}
             </div>
         </div>
       `;
