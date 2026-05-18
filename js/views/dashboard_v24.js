@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.78';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.79';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.78';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.78';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.78';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.78';
+import * as adminService from '../services_v245/adminService.js?v=25.1.79';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.79';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.79';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.79';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.78';
+const VERSION = '25.1.79';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -178,6 +178,21 @@ try {
     if (stored) almacenajeTasksCache = JSON.parse(stored);
 } catch(e) { almacenajeTasksCache = []; }
 if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
+
+// [MIGRACIÓN DE IDENTIFICADORES] Migrar tareas antiguas sin prefijo de fecha a formato único
+let migratedInit = false;
+almacenajeTasksCache = almacenajeTasksCache.map(t => {
+    if (t && t.id && !t.id.includes('_')) {
+        t.id = `${t.fecha}_${t.id}`;
+        migratedInit = true;
+    }
+    return t;
+});
+if (migratedInit) {
+    try {
+        localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+    } catch(e){}
+}
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const updateSyncIndicator = (status, text) => {
@@ -224,12 +239,25 @@ const loadAlmacenajeTasks = async () => {
           // [SINCRONIZACIÓN TOTAL] Ahora permite que la nube limpie los datos locales si se borraron allá.
           if (Array.isArray(syncedTasks)) {
               almacenajeTasksCache = syncedTasks.map(newTask => {
-                  const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
+                  const cleanTaskId = (id) => id.includes('_') ? id.split('_')[1] : id;
+                  const localTask = almacenajeTasksCache.find(lt => lt.fecha === newTask.fecha && cleanTaskId(lt.id) === cleanTaskId(newTask.id));
                   if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
                       return { ...newTask, items: localTask.items }; // Preservar detalle local
                   }
                   return newTask;
               });
+              
+              let migratedSynced = false;
+              almacenajeTasksCache = almacenajeTasksCache.map(t => {
+                  if (t && t.id && !t.id.includes('_')) {
+                      t.id = `${t.fecha}_${t.id}`;
+                      migratedSynced = true;
+                  }
+                  return t;
+              });
+              if (migratedSynced) {
+                  setTimeout(() => saveAlmacenajeTasks(), 200);
+              }
               
               if (syncedTasks.length === 0 && almacenajeTasksCache.length > 0) {
                   console.log("🧹 [PULL] Sincronización de borrado total desde la nube.");
@@ -5828,7 +5856,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         const usedNumbers = new Set();
         almacenajeTasksCache.forEach(t => {
             if (t.fecha === logicalDate) {
-                const num = parseInt(t.id.replace('Tarea', ''));
+                const cleanId = t.id.includes('_') ? t.id.split('_')[1] : t.id;
+                const num = parseInt(cleanId.replace('Tarea', ''));
                 if (!isNaN(num)) usedNumbers.add(num);
             }
         });
@@ -5838,7 +5867,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             let n = 1;
             while (usedNumbers.has(n)) n++;
             usedNumbers.add(n); // Reservarlo de inmediato
-            return `Tarea${n}`;
+            return `${logicalDate}_Tarea${n}`;
         };
 
         Object.keys(byMarca).forEach(marca => {
@@ -6583,7 +6612,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
                                     <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
+                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
                                     <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
@@ -6651,7 +6680,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${isBuffer ? '#fff' : 'transparent'};">${isBuffer ? i.qty : ''}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${!isBuffer ? '#fbbf24' : 'rgba(255,255,255,0.05)'};">${!isBuffer ? i.qty : '---'}</td>
-                                        <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id}</td>
+                                        <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
                                         <td style="padding:0.6rem 1rem; text-align:center;">
                                             <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                                 ${t.status.toUpperCase()}
@@ -6679,7 +6708,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.processAlmacenajeTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
     window.resetTask = (id) => {
-        if (confirm(`¿Reiniciar la tarea ${id}? Se borrarán los usuarios y horas asignadas.`)) {
+        const cleanId = id.includes('_') ? id.split('_')[1] : id;
+        if (confirm(`¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`)) {
             const t = almacenajeTasksCache.find(x => x.id === id);
             if (t) {
                 t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada';
@@ -6689,13 +6719,15 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
     window.deleteTask = (id) => {
-        if (confirm(`¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${id}?\n\nEsta acción es permanente y se borrará de todos los terminales.`)) {
+        const cleanId = id.includes('_') ? id.split('_')[1] : id;
+        if (confirm(`¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`)) {
             almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
         }
     };
     window.assignTask = (id) => {
+        const cleanId = id.includes('_') ? id.split('_')[1] : id;
         // [ORDENAMIENTO A-Z] Ordenar operarios alfabéticamente
         const workers = adminService.getWorkers()
             .filter(w => w.active)
@@ -6713,7 +6745,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
         modal.innerHTML = `
             <div class="glass-panel" style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
-                <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">Asignar Tarea: <span style="color:var(--primary);">${id}</span></h3>
+                <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">Asignar Tarea: <span style="color:var(--primary);">${cleanId}</span></h3>
                 <div style="display:flex; flex-direction:column; gap:1.2rem;">
                     <div>
                         <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
@@ -6836,9 +6868,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         // Helper para formatear ISO a input time (HH:mm)
         const toTimeInput = (iso) => iso ? new Date(iso).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) : '';
         
+        const cleanTaskId = taskId.includes('_') ? taskId.split('_')[1] : taskId;
         modal.innerHTML = `
             <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid var(--primary); border-radius:15px; box-shadow: 0 0 30px rgba(79,70,229,0.3);">
-                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">✏️ Editar Tiempos - ${taskId}</h3>
+                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">✏️ Editar Tiempos - ${cleanTaskId}</h3>
                 <div style="display:flex; flex-direction:column; gap:15px;">
                     <div>
                         <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">HORA INICIO:</label>
