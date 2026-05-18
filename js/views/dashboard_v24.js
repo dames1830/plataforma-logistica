@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.79';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.80';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.79';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.79';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.79';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.79';
+import * as adminService from '../services_v245/adminService.js?v=25.1.80';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.80';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.80';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.80';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.79';
+const VERSION = '25.1.80';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4535,7 +4535,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
 
       reporte1HTML = `
-          <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: 100%;">
+          <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
               <!-- Left accented title block -->
               <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
                   <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
@@ -4801,7 +4801,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
 
           reporte2HTML = `
-              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: 100%;">
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
                   <!-- Title Block -->
                   <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
                       <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
@@ -4922,7 +4922,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           }
 
           reporte3HTML = `
-              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: 100%;">
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
                   <!-- Title Block -->
                   <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
                       <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
@@ -4967,7 +4967,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
       // Renderizar lado a lado de manera elegante y fluida
       targetContainer.innerHTML = `
-        <div style="display: flex; flex-direction: row; gap: 1.5rem; justify-content: center; align-items: stretch; max-width: 1700px; margin: 0 auto; flex-wrap: wrap; padding: 0 1rem; animation: fadeInUp 0.4s ease;">
+        <div style="display: flex; flex-direction: row; gap: 1.5rem; justify-content: center; align-items: flex-start; max-width: 1700px; margin: 0 auto; flex-wrap: wrap; padding: 0 1rem; animation: fadeInUp 0.4s ease;">
             <!-- Reporte Izquierdo: Recepción CDBUFFER -->
             <div style="flex: 1; min-width: 600px; max-width: 820px;">
                 ${reporte1HTML}
