@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.82';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.83';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.82';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.82';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.82';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.82';
+import * as adminService from '../services_v245/adminService.js?v=25.1.83';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.83';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.83';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.83';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.82';
+const VERSION = '25.1.83';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -348,7 +348,9 @@ const TABS = [
     { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
   ]},
   { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' }
+    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' },
+    { id: 'monitoreo_despacho', label: 'Monitoreo de Rutas', icon: '🗺️' },
+    { id: 'chofer_despacho', label: 'Portal Chofer', icon: '📱' }
   ]},
   { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
@@ -5551,11 +5553,671 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
     } else if (tabId === 'recepcion' && activeSub === 'reportes_recepcion') {
         renderRecepcionReportTab(container);
+    } else if (tabId === 'despacho' && activeSub === 'monitoreo_despacho') {
+        renderDespachoMonitoreo(container);
+    } else if (tabId === 'despacho' && activeSub === 'chofer_despacho') {
+        renderDespachoChoferPortal(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
         else renderDashboardView(container, data);
     }
+  };
+
+  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.83) ---
+  const MOCK_DESCARGA_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><line x1="50" y1="50" x2="350" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="50" y1="50" x2="50" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="350" y1="50" x2="350" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><path d="M 200,100 L 260,130 L 260,200 L 200,230 L 140,200 L 140,130 Z" fill="%23f59e0b" opacity="0.95"/><path d="M 200,100 L 200,230" stroke="%2378350f" stroke-width="2"/><path d="M 200,100 L 260,130 M 200,100 L 140,130" stroke="%2378350f" stroke-width="2"/><path d="M 140,130 L 200,160 L 260,130" stroke="%2378350f" stroke-width="2"/><polygon points="170,155 190,165 190,175 170,165" fill="%23fff" opacity="0.9"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">📦 DESCARGA TIENDA OK</text></svg>`;
+
+  const MOCK_CARGO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><rect x="120" y="40" width="160" height="220" rx="4" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><line x1="140" y1="70" x2="260" y2="70" stroke="%233b82f6" stroke-width="4"/><line x1="140" y1="100" x2="260" y2="100" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="120" x2="240" y2="120" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="140" x2="250" y2="140" stroke="%2394a3b8" stroke-width="2"/><circle cx="230" cy="190" r="22" fill="none" stroke="%23ef4444" stroke-width="3" stroke-dasharray="3,1"/><text x="230" y="194" fill="%23ef4444" font-family="sans-serif" font-size="8" font-weight="900" text-anchor="middle">RECIBIDO</text><path d="M 140,210 Q 155,190 170,210 T 200,210" fill="none" stroke="%231e3a8a" stroke-width="2" stroke-linecap="round"/><line x1="135" y1="215" x2="205" y2="215" stroke="%23475569" stroke-width="1"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">✍️ CARGO FIRMADO OK</text></svg>`;
+
+  const getDispatchRoutes = () => {
+    const defaultRoutes = [
+      {
+        id: 'RUTA-01',
+        driver: 'Carlos Mendoza',
+        plate: 'F3G-894',
+        status: 'Creada',
+        progress: 0,
+        startTime: null,
+        endTime: null,
+        stops: [
+          {
+            id: 'S-01',
+            storeName: 'Saga Falabella - Jockey Plaza',
+            address: 'Av. Javier Prado Este 4200, Surco',
+            guides: ['GR-99210', 'GR-99211'],
+            status: 'Pendiente',
+            deliveredTime: null,
+            photoDescarga: null,
+            photoCargo: null
+          },
+          {
+            id: 'S-02',
+            storeName: 'Ripley - San Isidro',
+            address: 'Av. Las Begonias 545, San Isidro',
+            guides: ['GR-99215'],
+            status: 'Pendiente',
+            deliveredTime: null,
+            photoDescarga: null,
+            photoCargo: null
+          }
+        ],
+        gpsHistory: [
+          { lat: -12.0864, lng: -77.0125, time: '12:00:00', x: 150, y: 250 }
+        ]
+      },
+      {
+        id: 'RUTA-02',
+        driver: 'Luis Fuentes',
+        plate: 'B2U-105',
+        status: 'En Tránsito',
+        progress: 50,
+        startTime: '10:15:30',
+        endTime: null,
+        stops: [
+          {
+            id: 'S-03',
+            storeName: 'Saga Falabella - San Miguel',
+            address: 'Av. La Marina 2000, San Miguel',
+            guides: ['GR-99301', 'GR-99302'],
+            status: 'Entregado',
+            deliveredTime: '11:20:15',
+            photoDescarga: MOCK_DESCARGA_SVG,
+            photoCargo: MOCK_CARGO_SVG
+          },
+          {
+            id: 'S-04',
+            storeName: 'Ripley - Plaza San Miguel',
+            address: 'Av. La Marina 2100, San Miguel',
+            guides: ['GR-99305'],
+            status: 'Pendiente',
+            deliveredTime: null,
+            photoDescarga: null,
+            photoCargo: null
+          }
+        ],
+        gpsHistory: [
+          { lat: -12.0864, lng: -77.0125, time: '10:15:00', x: 150, y: 250 },
+          { lat: -12.0792, lng: -77.0812, time: '11:20:00', x: 60, y: 180 }
+        ]
+      }
+    ];
+    let routes = localStorage.getItem('logistics_dispatch_routes_v1');
+    if (!routes) {
+        localStorage.setItem('logistics_dispatch_routes_v1', JSON.stringify(defaultRoutes));
+        return defaultRoutes;
+    }
+    try {
+        return JSON.parse(routes);
+    } catch(e) {
+        return defaultRoutes;
+    }
+  };
+
+  const saveDispatchRoutes = (routes) => {
+    localStorage.setItem('logistics_dispatch_routes_v1', JSON.stringify(routes));
+  };
+
+  const renderDespachoMonitoreo = (container) => {
+    const routes = getDispatchRoutes();
+    let selectedRouteId = localStorage.getItem('selected_dispatch_route') || routes[0]?.id;
+    let selectedRoute = routes.find(r => r.id === selectedRouteId) || routes[0];
+
+    const getStatusClass = (status) => {
+        if (status === 'Entregada' || status === 'Entregado') return 'status-success';
+        if (status === 'En Tránsito') return 'status-warning';
+        if (status === 'En Tienda') return 'status-primary';
+        if (status === 'Incidencia') return 'status-danger';
+        return 'status-muted';
+    };
+
+    const drawSVGMap = (route) => {
+        const warehouse = { name: "Almacén Central (Lince)", x: 150, y: 250 };
+        const stopsMap = {
+            'S-01': { x: 400, y: 150 }, // SF Jockey Plaza
+            'S-02': { x: 280, y: 300 }, // R San Isidro
+            'S-03': { x: 60, y: 180 },  // SF San Miguel
+            'S-04': { x: 70, y: 120 }   // R Plaza San Miguel
+        };
+
+        // Get truck coordinates
+        let truckPos = { ...warehouse };
+        if (route.gpsHistory && route.gpsHistory.length > 0) {
+            const lastPoint = route.gpsHistory[route.gpsHistory.length - 1];
+            if (lastPoint.x !== undefined && lastPoint.y !== undefined) {
+                truckPos.x = lastPoint.x;
+                truckPos.y = lastPoint.y;
+            }
+        }
+
+        // Draw street grids
+        let streetLines = `
+            <line x1="20" y1="200" x2="480" y2="200" stroke="rgba(255,255,255,0.06)" stroke-width="3" />
+            <text x="30" y="195" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600">AV. JAVIER PRADO</text>
+            
+            <line x1="250" y1="20" x2="250" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="3" />
+            <text x="255" y="30" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600" transform="rotate(90,255,30)">VÍA EXPRESA</text>
+
+            <line x1="20" y1="140" x2="250" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="3" />
+            <text x="30" y="135" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600">AV. LA MARINA</text>
+        `;
+
+        // Path between stops
+        let routePaths = '';
+        if (route && route.stops) {
+            let lastX = warehouse.x;
+            let lastY = warehouse.y;
+            route.stops.forEach(s => {
+                const stopPt = stopsMap[s.id] || warehouse;
+                routePaths += `
+                    <line x1="${lastX}" y1="${lastY}" x2="${stopPt.x}" y2="${stopPt.y}" stroke="${route.status==='En Tránsito'?'#eab308':'#10b981'}" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.8" />
+                `;
+                lastX = stopPt.x;
+                lastY = stopPt.y;
+            });
+        }
+
+        // Targets for stops
+        let stopMarkers = '';
+        route.stops.forEach(s => {
+            const pt = stopsMap[s.id];
+            if (!pt) return;
+            const isDelivered = s.status === 'Entregado';
+            const markerColor = isDelivered ? '#10b981' : '#f59e0b';
+            stopMarkers += `
+                <g style="cursor:pointer;" class="map-marker" data-stop-id="${s.id}">
+                    <circle cx="${pt.x}" cy="${pt.y}" r="12" fill="${markerColor}" opacity="0.2" class="pulse-marker" />
+                    <circle cx="${pt.x}" cy="${pt.y}" r="6" fill="${markerColor}" stroke="#fff" stroke-width="1.5" />
+                    <text x="${pt.x}" y="${pt.y - 12}" fill="#fff" font-size="8.5" font-weight="800" text-anchor="middle">${s.storeName.split(' - ')[0]}</text>
+                </g>
+            `;
+        });
+
+        // Warehouse marker
+        const warehouseMarker = `
+            <g>
+                <circle cx="${warehouse.x}" cy="${warehouse.y}" r="8" fill="#3b82f6" stroke="#fff" stroke-width="2" />
+                <rect x="${warehouse.x - 4}" y="${warehouse.y - 4}" width="8" height="8" fill="#fff" />
+                <text x="${warehouse.x}" y="${warehouse.y + 18}" fill="#94a3b8" font-size="8" font-weight="700" text-anchor="middle">ALMACÉN LINCE</text>
+            </g>
+        `;
+
+        // Pulse vehicle
+        let vehicleMarker = '';
+        if (route.status === 'En Tránsito' || route.status === 'En Tienda') {
+            vehicleMarker = `
+                <g class="truck-marker">
+                    <circle cx="${truckPos.x}" cy="${truckPos.y}" r="16" fill="#3b82f6" opacity="0.3" class="pulse-marker" />
+                    <circle cx="${truckPos.x}" cy="${truckPos.y}" r="9" fill="#2563eb" stroke="#fff" stroke-width="2" />
+                    <text x="${truckPos.x}" y="${truckPos.y + 4}" font-size="8" text-anchor="middle">🚚</text>
+                </g>
+            `;
+        }
+
+        return `
+            <svg viewBox="0 0 500 400" style="width:100%; height:100%; display:block; background:#0f172a;">
+                <style>
+                    .pulse-marker {
+                        animation: mapPulse 2s infinite alternate;
+                    }
+                    @keyframes mapPulse {
+                        0% { transform: scale(0.9); opacity: 0.2; }
+                        100% { transform: scale(1.3); opacity: 0.4; }
+                    }
+                </style>
+                <rect width="500" height="400" fill="#0f172a" />
+                ${streetLines}
+                ${routePaths}
+                ${warehouseMarker}
+                ${stopMarkers}
+                ${vehicleMarker}
+            </svg>
+        `;
+    };
+
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+            <!-- Left Side: Route list -->
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="glass-panel" style="padding:1.2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h4 style="margin:0; font-weight:800; color:var(--primary);">MONITOREO DE DESPACHOS</h4>
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">${routes.length} RUTAS ACTIVAS</span>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                        ${routes.map(r => `
+                            <div class="route-card ${r.id === selectedRouteId ? 'active' : ''}" data-route-id="${r.id}" style="
+                                padding: 1rem;
+                                border-radius: 12px;
+                                background: ${r.id === selectedRouteId ? 'rgba(79,70,229,0.08)' : 'rgba(255,255,255,0.02)'};
+                                border: 1px solid ${r.id === selectedRouteId ? 'var(--primary)' : 'rgba(255,255,255,0.05)'};
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            ">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                    <span style="font-weight:900; font-size:0.9rem; color:#fff;">${r.id} (${r.plate})</span>
+                                    <span class="badge ${getStatusClass(r.status)}">${r.status.toUpperCase()}</span>
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">
+                                    <div>👨🏻‍✈️ ${r.driver}</div>
+                                    <div style="text-align:right;">🕒 Salida: ${r.startTime || '--:--'}</div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.8rem;">
+                                    <div style="flex-grow:1; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                                        <div style="width:${r.progress}%; height:100%; background:var(--primary); transition:width 0.3s;"></div>
+                                    </div>
+                                    <span style="font-size:0.75rem; font-weight:800; color:#fff;">${r.progress}%</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Stops for selected route -->
+                <div class="glass-panel" style="padding:1.2rem;">
+                    <h5 style="margin:0 0 1rem 0; font-weight:800;">PROGRAMACIÓN DE PARADAS: ${selectedRoute.id}</h5>
+                    <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                        ${selectedRoute.stops.map((s, index) => {
+                            const isDelivered = s.status === 'Entregado';
+                            return `
+                                <div style="
+                                    display: flex; 
+                                    gap: 1rem; 
+                                    align-items: flex-start;
+                                    padding: 0.8rem;
+                                    background: rgba(255,255,255,0.01);
+                                    border-radius: 8px;
+                                    border-left: 4px solid ${isDelivered ? 'var(--success)' : 'var(--warning)'};
+                                ">
+                                    <div style="
+                                        width: 22px; 
+                                        height: 22px; 
+                                        border-radius: 50%; 
+                                        background: ${isDelivered ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)'};
+                                        color: ${isDelivered ? 'var(--success)' : 'var(--warning)'};
+                                        display: flex;
+                                        justify-content: center;
+                                        align-items: center;
+                                        font-size: 0.75rem;
+                                        font-weight: 800;
+                                    ">
+                                        ${index + 1}
+                                    </div>
+                                    <div style="flex-grow:1;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <span style="font-weight:700; font-size:0.8rem; color:#fff;">${s.storeName}</span>
+                                            <span class="badge ${isDelivered ? 'status-success' : 'status-warning'}" style="font-size:0.6rem;">${s.status.toUpperCase()}</span>
+                                        </div>
+                                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">📍 ${s.address}</div>
+                                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">📑 Guías: ${s.guides.join(', ')}</div>
+                                    </div>
+                                    ${isDelivered ? `
+                                        <button class="btn btn-view-evidence" data-stop-id="${s.id}" style="padding:0.3rem 0.6rem; font-size:0.65rem; border-radius:6px; border:1px solid var(--success); background:none; color:var(--success);">
+                                            📄 VER EVIDENCIAS
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: SVG map and Telemetry -->
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="glass-panel" style="padding:0; overflow:hidden; border-radius:16px; border:1px solid rgba(255,255,255,0.06); height:320px; position:relative;">
+                    <div style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); padding:6px 12px; border-radius:8px;">
+                        <span style="font-size:0.7rem; font-weight:800; color:#fff;">📍 MAPA SATELITAL DE VIAJE (MOCK)</span>
+                    </div>
+                    <div id="svgMapContainer" style="width:100%; height:100%;">
+                        ${drawSVGMap(selectedRoute)}
+                    </div>
+                </div>
+
+                <!-- Live Telemetry -->
+                <div class="glass-panel" style="padding:1.2rem; background:linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);">
+                    <h5 style="margin:0 0 1rem 0; font-weight:800; color:#3b82f6;">📡 TELEMETRÍA EN VIVO (SIMULADA)</h5>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; text-align:center;">
+                        <div style="background:rgba(255,255,255,0.02); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
+                            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">VELOCIDAD PROMEDIO</div>
+                            <div style="font-size:1.2rem; font-weight:900; color:#fff; margin-top:4px;">${selectedRoute.status === 'En Tránsito' ? '45 km/h' : '0 km/h'}</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
+                            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">PRECISIÓN GPS</div>
+                            <div style="font-size:1.2rem; font-weight:900; color:#10b981; margin-top:4px;">± 3 metros</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
+                            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">LATENCIA DE RED</div>
+                            <div style="font-size:1.2rem; font-weight:900; color:#3b82f6; margin-top:4px;">120 ms</div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.65rem; color:var(--text-muted); margin-top:1rem; text-align:center;">
+                        Último ping GPS reportado: <strong>hace 18 segundos</strong>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add click listeners to cards
+    document.querySelectorAll('.route-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const rid = e.currentTarget.dataset.routeId;
+            localStorage.setItem('selected_dispatch_route', rid);
+            renderDespachoMonitoreo(container);
+        });
+    });
+
+    // Add click listeners to ver evidencias
+    document.querySelectorAll('.btn-view-evidence').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const stopId = e.currentTarget.dataset.stopId;
+            const stop = selectedRoute.stops.find(s => s.id === stopId);
+            if (stop) {
+                openEvidenceModal(stop);
+            }
+        });
+    });
+  };
+
+  const openEvidenceModal = (stop) => {
+    const backdrop = document.createElement('div');
+    backdrop.style.position = 'fixed';
+    backdrop.style.top = '0';
+    backdrop.style.left = '0';
+    backdrop.style.width = '100vw';
+    backdrop.style.height = '100vh';
+    backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.85)';
+    backdrop.style.backdropFilter = 'blur(10px)';
+    backdrop.style.display = 'flex';
+    backdrop.style.justifyContent = 'center';
+    backdrop.style.alignItems = 'center';
+    backdrop.style.zIndex = '99999';
+
+    backdrop.innerHTML = `
+        <div class="glass-panel" style="width:90%; max-width:800px; padding:2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.98) 100%); position:relative;">
+            <button id="close_evidence_modal" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            
+            <h4 style="margin:0 0 0.5rem 0; font-weight:900; color:#fff;">📄 EVIDENCIA DE ENTREGA DIGITAL (POD)</h4>
+            <p style="margin:0 0 1.5rem 0; color:var(--text-muted); font-size:0.8rem;">Tienda: <strong>${stop.storeName}</strong> | Hora de entrega: <strong>${stop.deliveredTime || '--:--'}</strong></p>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+                <div>
+                    <h5 style="margin:0 0 0.8rem 0; font-size:0.85rem; color:#f59e0b; font-weight:700;">📸 EVIDENCIA DE DESCARGA FÍSICA</h5>
+                    <div style="aspect-ratio:4/3; border-radius:12px; background:rgba(0,0,0,0.4); overflow:hidden; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:center; align-items:center;">
+                        <img src="${stop.photoDescarga}" style="width:100%; height:100%; object-fit:contain;" />
+                    </div>
+                </div>
+                <div>
+                    <h5 style="margin:0 0 0.8rem 0; font-size:0.85rem; color:#3b82f6; font-weight:700;">✍️ FOTO CARGO G.R. FIRMADO</h5>
+                    <div style="aspect-ratio:4/3; border-radius:12px; background:rgba(0,0,0,0.4); overflow:hidden; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:center; align-items:center;">
+                        <img src="${stop.photoCargo}" style="width:100%; height:100%; object-fit:contain;" />
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top:1.5rem; display:flex; justify-content:flex-end;">
+                <button id="btn_approve_evidence" class="btn" style="max-width:180px; padding:0.6rem 1.2rem; font-size:0.8rem; border-radius:8px;">
+                    ✅ APROBAR ENTREGA
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(backdrop);
+    document.getElementById('close_evidence_modal').onclick = () => backdrop.remove();
+    document.getElementById('btn_approve_evidence').onclick = () => {
+        alert("✅ Entrega Auditada y Aprobada Correctamente.");
+        backdrop.remove();
+    };
+    backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
+  };
+
+  const renderDespachoChoferPortal = (container) => {
+    const routes = getDispatchRoutes();
+    let selectedDriverId = localStorage.getItem('selected_dispatch_driver') || routes[0]?.id;
+    let activeRoute = routes.find(r => r.id === selectedDriverId) || routes[0];
+
+    let currentPhotoDescarga = null;
+    let currentPhotoCargo = null;
+
+    const refreshDriverUI = () => {
+        renderDespachoChoferPortal(container);
+    };
+
+    container.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; padding:1rem 0;">
+            <!-- Simulation info -->
+            <div style="max-width:380px; width:100%; text-align:center; color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem; line-height:1.4;">
+                <span style="color:#eab308; font-weight:800;">⚡ SIMULADOR DE TRANSPORTISTA 📲</span><br>
+                Usa este portal móvil para actuar como chofer. Los cambios realizados aquí se verán reflejados de inmediato en la pantalla de <strong>Monitoreo de Rutas</strong> de la oficina.
+            </div>
+
+            <!-- Driver selector -->
+            <div style="max-width:380px; width:100%; margin-bottom:1rem; display:flex; gap:0.5rem; align-items:center;">
+                <span style="font-size:0.75rem; color:#fff; font-weight:700; white-space:nowrap;">👨🏻‍✈️ ELEGIR CHOFER:</span>
+                <select id="driver_selector" style="flex-grow:1; padding:0.4rem; border-radius:8px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem;">
+                    ${routes.map(r => `<option value="${r.id}" ${r.id === selectedDriverId ? 'selected' : ''}>${r.driver} (${r.id})</option>`).join('')}
+                </select>
+            </div>
+
+            <!-- Smartphone Mock Frame -->
+            <div style="
+                max-width: 380px;
+                width: 100%;
+                background: #0b1329;
+                border: 10px solid #1e293b;
+                border-radius: 36px;
+                padding: 1rem;
+                box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+                position: relative;
+                overflow: hidden;
+                border-bottom-width: 14px;
+            ">
+                <!-- Status Bar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.65rem; color:#64748b; font-weight:bold; margin-bottom:1rem;">
+                    <div>12:45</div>
+                    <div style="width:40px; height:12px; background:#000; border-radius:6px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); top:8px;"></div>
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        <span>📶 4G</span>
+                        <span>🔋 88%</span>
+                    </div>
+                </div>
+
+                <!-- Driver App Header -->
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem; margin-bottom:1rem;">
+                    <div>
+                        <div style="font-size:0.8rem; font-weight:800; color:#fff;">PULSE CONDUCTOR</div>
+                        <div style="font-size:0.6rem; color:var(--text-muted);">Camión: ${activeRoute.plate} | ${activeRoute.id}</div>
+                    </div>
+                    <span class="badge ${activeRoute.status === 'Creada' ? 'status-muted' : 'status-warning'}" style="font-size:0.6rem;">
+                        ${activeRoute.status.toUpperCase()}
+                    </span>
+                </div>
+
+                <!-- Active Route Actions -->
+                ${activeRoute.status === 'Creada' ? `
+                    <div style="text-align:center; padding:1.5rem 0;">
+                        <div style="font-size:3rem; margin-bottom:1rem;">🚚</div>
+                        <h4 style="margin:0 0 0.5rem 0; color:#fff; font-weight:800;">VIAJE NO INICIADO</h4>
+                        <p style="color:var(--text-muted); font-size:0.7rem; margin-bottom:1.5rem;">Presiona el botón para iniciar la ruta y registrar el despacho del camión con GPS.</p>
+                        <button id="btn_driver_start" class="btn" style="padding:0.8rem; border-radius:12px; font-size:0.8rem; font-weight:bold; width:100%;">
+                            🚚 INICIAR VIAJE A TIENDA
+                        </button>
+                    </div>
+                ` : `
+                    <!-- Active Stops list -->
+                    <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                        <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">📌 PRÓXIMAS PARADAS:</div>
+                        
+                        ${activeRoute.stops.map((stop, index) => {
+                            const isDelivered = stop.status === 'Entregado';
+                            const isNext = activeRoute.stops.findIndex(s => s.status !== 'Entregado') === index;
+                            
+                            return `
+                                <div style="
+                                    background: rgba(255,255,255,0.02);
+                                    border: 1px solid ${isNext ? 'rgba(79,70,229,0.3)' : 'rgba(255,255,255,0.03)'};
+                                    border-radius: 12px;
+                                    padding: 0.8rem;
+                                    opacity: ${isDelivered ? 0.6 : 1};
+                                    position: relative;
+                                ">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.3rem;">
+                                        <div style="font-size:0.75rem; font-weight:800; color:#fff;">${index + 1}. ${stop.storeName}</div>
+                                        <span class="badge ${isDelivered ? 'status-success' : (isNext ? 'status-warning' : 'status-muted')}" style="font-size:0.55rem; padding:1px 6px;">
+                                            ${stop.status.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.5rem;">📍 ${stop.address}</div>
+
+                                    <!-- Actions for the NEXT pending stop -->
+                                    ${isNext ? `
+                                        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.8rem;">
+                                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                                                <button id="btn_upload_descarga" class="btn" style="background:#1e293b; border:1px dashed #f59e0b; color:#fff; font-size:0.65rem; padding:0.5rem 0; border-radius:6px;">
+                                                    📷 FOTO DESCARGA ${stop.photoDescarga ? '✅' : ''}
+                                                </button>
+                                                <button id="btn_upload_cargo" class="btn" style="background:#1e293b; border:1px dashed #3b82f6; color:#fff; font-size:0.65rem; padding:0.5rem 0; border-radius:6px;">
+                                                    📷 FOTO CARGO ${stop.photoCargo ? '✅' : ''}
+                                                </button>
+                                            </div>
+
+                                            <div id="evidence_status" style="font-size:0.6rem; text-align:center; color:var(--text-muted);">
+                                                ${(stop.photoDescarga && stop.photoCargo) ? '<span style="color:var(--success); font-weight:800;">¡Evidencias cargadas!</span>' : 'Sube las fotos obligatorias para entregar.'}
+                                            </div>
+
+                                            <button id="btn_deliver_stop" class="btn" style="font-size:0.75rem; padding:0.6rem; border-radius:8px; font-weight:bold; width:100%;" ${(stop.photoDescarga && stop.photoCargo) ? '' : 'disabled'}>
+                                                📦 ENTREGAR PEDIDO Y FIRMAR
+                                            </button>
+
+                                            <!-- GPS Telemetry simulation -->
+                                            <button id="btn_simulate_gps" class="btn" style="background:none; border:1px solid rgba(255,255,255,0.1); color:#94a3b8; font-size:0.6rem; padding:0.4rem 0; border-radius:6px; margin-top:0.2rem;">
+                                                🚀 Simular Avance GPS (Camión en Ruta)
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+
+    // Listen to driver selector
+    document.getElementById('driver_selector')?.addEventListener('change', (e) => {
+        const did = e.target.value;
+        localStorage.setItem('selected_dispatch_driver', did);
+        refreshDriverUI();
+    });
+
+    // Start Voyage button
+    document.getElementById('btn_driver_start')?.addEventListener('click', () => {
+        activeRoute.status = 'En Tránsito';
+        activeRoute.startTime = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const allRoutes = getDispatchRoutes();
+        const idx = allRoutes.findIndex(r => r.id === activeRoute.id);
+        if (idx !== -1) {
+            allRoutes[idx] = activeRoute;
+            saveDispatchRoutes(allRoutes);
+        }
+        refreshDriverUI();
+    });
+
+    // Upload Mock Descarga
+    document.getElementById('btn_upload_descarga')?.addEventListener('click', () => {
+        const allRoutes = getDispatchRoutes();
+        const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
+        if (rIdx !== -1) {
+            const nextStop = allRoutes[rIdx].stops.find(s => s.status !== 'Entregado');
+            if (nextStop) {
+                nextStop.photoDescarga = MOCK_DESCARGA_SVG;
+                saveDispatchRoutes(allRoutes);
+                activeRoute = allRoutes[rIdx];
+            }
+        }
+        refreshDriverUI();
+    });
+
+    // Upload Mock Cargo
+    document.getElementById('btn_upload_cargo')?.addEventListener('click', () => {
+        const allRoutes = getDispatchRoutes();
+        const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
+        if (rIdx !== -1) {
+            const nextStop = allRoutes[rIdx].stops.find(s => s.status !== 'Entregado');
+            if (nextStop) {
+                nextStop.photoCargo = MOCK_CARGO_SVG;
+                saveDispatchRoutes(allRoutes);
+                activeRoute = allRoutes[rIdx];
+            }
+        }
+        refreshDriverUI();
+    });
+
+    // Deliver stop button
+    document.getElementById('btn_deliver_stop')?.addEventListener('click', () => {
+        const allRoutes = getDispatchRoutes();
+        const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
+        if (rIdx !== -1) {
+            const nextStopIdx = allRoutes[rIdx].stops.findIndex(s => s.status !== 'Entregado');
+            if (nextStopIdx !== -1) {
+                allRoutes[rIdx].stops[nextStopIdx].status = 'Entregado';
+                allRoutes[rIdx].stops[nextStopIdx].deliveredTime = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // Calculate progress
+                const totalStops = allRoutes[rIdx].stops.length;
+                const deliveredStops = allRoutes[rIdx].stops.filter(s => s.status === 'Entregado').length;
+                allRoutes[rIdx].progress = Math.round((deliveredStops / totalStops) * 100);
+
+                if (deliveredStops === totalStops) {
+                    allRoutes[rIdx].status = 'Entregada';
+                    allRoutes[rIdx].endTime = allRoutes[rIdx].stops[nextStopIdx].deliveredTime;
+                }
+
+                saveDispatchRoutes(allRoutes);
+                activeRoute = allRoutes[rIdx];
+            }
+        }
+        alert("📦 ¡Entrega completada con éxito!");
+        refreshDriverUI();
+    });
+
+    // Simulate GPS movement
+    document.getElementById('btn_simulate_gps')?.addEventListener('click', () => {
+        const allRoutes = getDispatchRoutes();
+        const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
+        if (rIdx !== -1) {
+            const nextStop = allRoutes[rIdx].stops.find(s => s.status !== 'Entregado');
+            if (nextStop) {
+                // Animate coordinates movement closer to the next stop
+                const stopsMap = {
+                    'S-01': { x: 400, y: 150 },
+                    'S-02': { x: 280, y: 300 },
+                    'S-03': { x: 60, y: 180 },
+                    'S-04': { x: 70, y: 120 }
+                };
+                const targetPt = stopsMap[nextStop.id];
+                if (targetPt) {
+                    // Inject a mock GPS point in history
+                    const currentHistory = allRoutes[rIdx].gpsHistory || [];
+                    const newPt = {
+                        lat: -12.08 + (Math.random() - 0.5) * 0.05,
+                        lng: -77.02 + (Math.random() - 0.5) * 0.05,
+                        time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+                        x: Math.round(targetPt.x - 20 + Math.random() * 40),
+                        y: Math.round(targetPt.y - 20 + Math.random() * 40)
+                    };
+                    allRoutes[rIdx].gpsHistory.push(newPt);
+                    saveDispatchRoutes(allRoutes);
+                    activeRoute = allRoutes[rIdx];
+                    alert(`📡 Coordenadas GPS del camión actualizadas en ruta a ${nextStop.storeName.split(' - ')[0]}.`);
+                }
+            }
+        }
+        refreshDriverUI();
+    });
   };
 
   const renderAnalisisSKUTab = async () => {
