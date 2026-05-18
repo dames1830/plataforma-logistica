@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.81';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.82';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.81';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.81';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.81';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.81';
+import * as adminService from '../services_v245/adminService.js?v=25.1.82';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.82';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.82';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.82';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.81';
+const VERSION = '25.1.82';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6891,10 +6891,38 @@ export const renderDashboard = async (container, user, onLogout) => {
         const toTimeInput = (iso) => iso ? new Date(iso).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) : '';
         
         const cleanTaskId = taskId.includes('_') ? taskId.split('_')[1] : taskId;
+
+        // Obtener operarios ordenados alfabéticamente
+        const workers = adminService.getWorkers()
+            .filter(w => w.active)
+            .sort((a, b) => (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || ''));
+        const formatUser = (w) => {
+            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+            return nom ? `${nom[0]}${ape}` : 's/n';
+        };
+
+        const u1Options = workers.map(w => `<option value="${formatUser(w)}" ${formatUser(w) === task.u1 ? 'selected' : ''}>${formatUser(w)} (${w.nombre})</option>`).join('');
+        const u2Options = workers.map(w => `<option value="${formatUser(w)}" ${formatUser(w) === task.u2 ? 'selected' : ''}>${formatUser(w)} (${w.nombre})</option>`).join('');
+
         modal.innerHTML = `
-            <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid var(--primary); border-radius:15px; box-shadow: 0 0 30px rgba(79,70,229,0.3);">
-                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">✏️ Editar Tiempos - ${cleanTaskId}</h3>
+            <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid var(--primary); border-radius:15px; box-shadow: 0 0 30px rgba(79,70,229,0.3); max-height:90vh; overflow-y:auto; pointer-events:auto !important;">
+                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">✏️ Editar Tarea - ${cleanTaskId}</h3>
                 <div style="display:flex; flex-direction:column; gap:15px;">
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">USUARIO 1 (Obligatorio):</label>
+                        <select id="edit_u1" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.95rem;">
+                            <option value="" style="background:#0f172a;">Seleccionar operario...</option>
+                            ${u1Options}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">USUARIO 2 (Opcional):</label>
+                        <select id="edit_u2" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.95rem;">
+                            <option value="" style="background:#0f172a;">Ninguno</option>
+                            ${u2Options}
+                        </select>
+                    </div>
                     <div>
                         <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">HORA INICIO:</label>
                         <input type="time" id="edit_start" value="${toTimeInput(task.inicio)}" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; font-size:1.2rem; font-weight:800; outline:none; color-scheme:dark;">
@@ -6913,18 +6941,43 @@ export const renderDashboard = async (container, user, onLogout) => {
         document.body.appendChild(modal);
 
         modal.querySelector('#save_times').onclick = () => {
+            const u1 = modal.querySelector('#edit_u1').value;
+            const u2 = modal.querySelector('#edit_u2').value;
             const newStart = modal.querySelector('#edit_start').value;
             const newEnd = modal.querySelector('#edit_end').value;
             
-            if (!newStart || !newEnd) { alert("⚠️ Ambas horas son obligatorias."); return; }
+            if (!u1) { alert("⚠️ El Usuario 1 es obligatorio."); return; }
+            if (newEnd && !newStart) {
+                alert("⚠️ Si ingresas la Hora de Término, también debes ingresar la Hora de Inicio.");
+                return;
+            }
 
             // Re-construir ISO conservando la fecha original de la tarea
             const baseDate = task.fecha || new Date().toISOString().split('T')[0];
-            task.inicio = `${baseDate}T${newStart}:00`;
-            task.termino = `${baseDate}T${newEnd}:00`;
             
-            // Si tiene horas, forzar status a Finalizado para que se calcule productividad
-            task.status = 'Finalizado';
+            task.u1 = u1;
+            task.u2 = u2 || '';
+
+            if (newStart) {
+                task.inicio = `${baseDate}T${newStart}:00`;
+            } else {
+                task.inicio = null;
+            }
+
+            if (newEnd) {
+                task.termino = `${baseDate}T${newEnd}:00`;
+            } else {
+                task.termino = null;
+            }
+            
+            // Recalcular Status
+            if (task.inicio && task.termino) {
+                task.status = 'Finalizado';
+            } else if (task.inicio) {
+                task.status = 'Asignado';
+            } else {
+                task.status = 'Creada';
+            }
 
             saveAlmacenajeTasks().then(() => {
                 document.body.removeChild(modal);
