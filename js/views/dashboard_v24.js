@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.76';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.77';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.76';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.76'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.76';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.76';
+import * as adminService from '../services_v245/adminService.js?v=25.1.77';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.77'; // Keep this one since it wasn't bumped earlier (or wait, was it?)
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.77';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.77';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.76';
+const VERSION = '25.1.77';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4638,8 +4638,12 @@ export const renderDashboard = async (container, user, onLogout) => {
       activeRows.forEach(row => {
           const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
           let area = '';
+          let isBufferB = false;
           if (location.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
-          else if (location.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
+          else if (location.startsWith('CDBUFFER-B')) {
+              area = 'CDBUFFER-B';
+              isBufferB = true;
+          }
           else if (location.startsWith('CDBUFFER-D')) area = 'CDBUFFER-D';
           else return;
 
@@ -4654,7 +4658,11 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (!secondMatrix[area]) secondMatrix[area] = {};
           if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
 
-          secondMatrix[area][dept].avance += qty;
+          if (isBufferB) {
+              secondMatrix[area][dept].buffer += qty;
+          } else {
+              secondMatrix[area][dept].avance += qty;
+          }
       });
 
       let reporte2HTML = '';
