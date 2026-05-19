@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=24.7.8';
-import * as adminService from './services_v245/adminService.js?v=25.1.92';
+import { getSession, logout } from './services_v245/auth.js?v=25.1.93';
+import * as adminService from './services_v245/adminService.js?v=25.1.93';
 
 class App {
   constructor(rootId) {

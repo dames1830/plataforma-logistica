@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.90';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.93';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.90';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.90';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.90';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.90';
+import * as adminService from '../services_v245/adminService.js?v=25.1.93';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.93';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.93';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.93';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -1255,7 +1255,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=24.7.2');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=25.1.93');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -1296,7 +1296,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             localStorage.setItem('PULSE_OFFLINE_FORCE', 'true');
             setTimeout(() => localStorage.removeItem('PULSE_OFFLINE_FORCE'), 600000);
 
-            alert("🏗️ MODO BLINDADO ACTIVADO v24.7.2 🏗️\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronización.\n\nYa puedes revisar PERFORMANCE.");
+            alert("🏗️ MODO BLINDADO ACTIVADO v25.1.93 🏗️\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronización.\n\nYa puedes revisar PERFORMANCE.");
             location.reload();
         } catch (e) {
             console.error("❌ ERROR CRÍTICO EN RESURRECCIÓN:", e);
