@@ -38,6 +38,7 @@ body {
     radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
   color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;
+  overflow-x: hidden;
 }
 
 #app { width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
@@ -105,13 +106,271 @@ body {
 }
 .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
-/* Login View */
-.login-container { display: flex; height: 100vh; justify-content: center; align-items: center; }
-.login-box { width: 100%; max-width: 400px; padding: 2.5rem; }
-.login-header { text-align: center; margin-bottom: 2rem; }
-.login-header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-.login-header p { color: var(--text-muted); font-size: 0.875rem; }
-.error-message { color: var(--danger); font-size: 0.875rem; margin-top: 1rem; text-align: center; min-height: 1.2rem; }
+/* Login View Premium (Estilo Referencial) */
+.login-view-wrapper {
+  background: linear-gradient(135deg, #fffcf6 0%, #eef6fc 50%, #e0f2fe 100%);
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.login-box-premium {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 
+    0 10px 25px -5px rgba(15, 23, 42, 0.05),
+    0 25px 50px -12px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  padding: 3.5rem 2.75rem;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 10;
+}
+
+.login-box-premium.fade-out-up {
+  opacity: 0 !important;
+  transform: translateY(-40px) scale(0.96) !important;
+  pointer-events: none !important;
+}
+
+.login-view-wrapper.fade-out {
+  opacity: 0 !important;
+  transition: opacity 0.4s ease-out !important;
+  pointer-events: none !important;
+}
+
+/* Inputs tipo Píldora */
+.pill-input-group {
+  position: relative;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.pill-input-group label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  margin-left: 1.2rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pill-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.pill-input-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.05rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pill-input-separator {
+  position: absolute;
+  left: 2.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 18px;
+  background-color: #cbd5e1;
+  pointer-events: none;
+}
+
+.pill-input-wrapper input {
+  width: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 50px !important;
+  padding: 0.9rem 1.25rem 0.9rem 3.4rem !important;
+  color: #1e293b !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.01), 0 4px 10px rgba(0,0,0,0.02) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color-scheme: light !important;
+}
+
+.pill-input-wrapper input::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  font-size: 0.95rem !important;
+}
+
+.pill-input-wrapper input:focus {
+  border-color: #0ea5e9 !important;
+  box-shadow: 
+    0 0 0 4px rgba(14, 165, 233, 0.12),
+    0 4px 12px rgba(14, 165, 233, 0.05) !important;
+  background: #ffffff !important;
+}
+
+/* Botón Píldora Premium */
+.btn-pill {
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 0.95rem !important;
+  border-radius: 50px !important;
+  font-weight: 800 !important;
+  font-size: 1.05rem !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3) !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.btn-pill:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(14, 165, 233, 0.45) !important;
+  filter: brightness(1.05) !important;
+}
+
+.btn-pill:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+.btn-pill:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+/* Acciones Extras de Login */
+.login-extra-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-me-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.remember-me-checkbox:checked {
+  background-color: #0ea5e9;
+  border-color: #0ea5e9;
+}
+
+.remember-me-checkbox:checked::after {
+  content: '✓';
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.forgot-password-link {
+  color: #0ea5e9;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Pantalla de Carga de Pantalla Completa */
+.app-loading-layout {
+  background: #0f172a;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+}
+
+.premium-progress-bar {
+  width: 240px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 1.75rem;
+}
+
+.premium-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0ea5e9, #6366f1);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+  border-radius: 10px;
+  animation: progressInfinite 2s infinite ease-in-out;
+}
+
+@keyframes progressInfinite {
+  0% { width: 0%; left: 0%; }
+  50% { width: 50%; }
+  100% { width: 0%; left: 100%; }
+}
+
+.error-message {
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  min-height: 1.2rem;
+  font-weight: 600;
+}
 
 /* Dashboard Layout (Top Navigation) */
 .dashboard-layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }

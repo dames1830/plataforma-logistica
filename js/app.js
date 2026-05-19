@@ -49,14 +49,25 @@ class App {
   async init() {
     try {
         if (this.root) {
+            // [CRÍTICO] Limpiar clases heredadas para evitar bugs de desbordamiento de scroll y franjas horizontales
+            this.root.className = 'app-loading-layout';
             this.root.innerHTML = `
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; background:transparent;">
-                <div class="spinner" style="width:50px; height:50px; border:4px solid rgba(255,255,255,0.1); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:24px;"></div>
-                <h2 style="margin:0; font-weight:300; letter-spacing:3px; font-size:1.8rem;">LOGÍSTICA <span style="font-weight:800; color:#4f46e5;">DEAM1830</span></h2>
-                <p style="margin-top:12px; font-size:0.95rem; opacity:0.6; letter-spacing:1px;">Iniciando entorno v${this.APP_VERSION}...</p>
+            <div style="text-align: center; max-width: 420px; width: 90%; display: flex; flex-direction: column; align-items: center;">
+                <h2 style="margin:0; font-weight: 300; letter-spacing: 4px; font-size: 1.8rem; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.1);">
+                    LOGÍSTICA <span style="font-weight: 900; background: linear-gradient(to right, #0ea5e9, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DEAM1830</span>
+                </h2>
+                <div class="premium-progress-bar">
+                    <div class="premium-progress-fill"></div>
+                </div>
+                <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.6; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: #94a3b8; animation: pulseLoadingText 1.5s infinite alternate;">
+                    Iniciando entorno v${this.APP_VERSION}...
+                </p>
             </div>
             <style>
-              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+              @keyframes pulseLoadingText {
+                0% { opacity: 0.4; }
+                100% { opacity: 0.8; }
+              }
             </style>`;
         }
         
