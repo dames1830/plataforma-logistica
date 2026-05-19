@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.89';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.90';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.89';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.89';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.89';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.89';
+import * as adminService from '../services_v245/adminService.js?v=25.1.90';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.90';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.90';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.90';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.89';
+const VERSION = '25.1.90';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5436,7 +5436,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.89) ---
+  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.90) ---
   const MOCK_DESCARGA_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><line x1="50" y1="50" x2="350" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="50" y1="50" x2="50" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="350" y1="50" x2="350" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><path d="M 200,100 L 260,130 L 260,200 L 200,230 L 140,200 L 140,130 Z" fill="%23f59e0b" opacity="0.95"/><path d="M 200,100 L 200,230" stroke="%2378350f" stroke-width="2"/><path d="M 200,100 L 260,130 M 200,100 L 140,130" stroke="%2378350f" stroke-width="2"/><path d="M 140,130 L 200,160 L 260,130" stroke="%2378350f" stroke-width="2"/><polygon points="170,155 190,165 190,175 170,165" fill="%23fff" opacity="0.9"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">📦 DESCARGA TIENDA OK</text></svg>`;
 
   const MOCK_CARGO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><rect x="120" y="40" width="160" height="220" rx="4" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><line x1="140" y1="70" x2="260" y2="70" stroke="%233b82f6" stroke-width="4"/><line x1="140" y1="100" x2="260" y2="100" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="120" x2="240" y2="120" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="140" x2="250" y2="140" stroke="%2394a3b8" stroke-width="2"/><circle cx="230" cy="190" r="22" fill="none" stroke="%23ef4444" stroke-width="3" stroke-dasharray="3,1"/><text x="230" y="194" fill="%23ef4444" font-family="sans-serif" font-size="8" font-weight="900" text-anchor="middle">RECIBIDO</text><path d="M 140,210 Q 155,190 170,210 T 200,210" fill="none" stroke="%231e3a8a" stroke-width="2" stroke-linecap="round"/><line x1="135" y1="215" x2="205" y2="215" stroke="%23475569" stroke-width="1"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">✍️ CARGO FIRMADO OK</text></svg>`;
@@ -7051,14 +7051,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         const areaPendiente = areaBufferSum - areaAvanceSum;
 
                                         brandTableRows += `
-                                            <tr style="background:rgba(0, 229, 255, 0.04); border-top:1px solid rgba(0, 229, 255, 0.3); border-bottom:1px solid rgba(0, 229, 255, 0.3); font-weight:800;">
-                                                <td colspan="2" style="padding:6px 8px; color:#00E5FF; font-weight:900; font-size:0.8rem; text-transform:uppercase;">Total ${area}</td>
-                                                <td style="padding:6px 8px; text-align:center; color:#ffffff; font-size:0.8rem;">${areaBufferSum.toLocaleString()}</td>
-                                                <td style="padding:6px 8px; text-align:center; color:#ffffff; font-size:0.8rem;">${areaAvanceSum.toLocaleString()}</td>
-                                                <td style="padding:6px 8px; text-align:center; font-size:0.8rem;">
+                                            <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(15, 23, 42, 0.5) 100%); border-top: 1.5px solid rgba(0, 229, 255, 0.6); border-bottom: 1.5px solid rgba(0, 229, 255, 0.6); font-weight: 900;">
+                                                <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid #00E5FF;">Total ${area}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBufferSum.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaAvanceSum.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800;">
                                                     ${getPctHtml(areaAvanceSum, areaBufferSum, false)}
                                                 </td>
-                                                <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-size:0.8rem;">${areaPendiente.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     });
@@ -7066,14 +7066,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const grandPendiente = grandBuffer - grandAvance;
                                     
                                     brandTableRows += `
-                                        <tr style="background:rgba(0, 229, 255, 0.15); border:2px solid #00E5FF; font-weight:900;">
-                                            <td colspan="2" style="padding:8px 8px; color:#ffffff; font-size:0.82rem; text-transform:uppercase; letter-spacing:1px;">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:8px 8px; text-align:center; color:#00E5FF; font-size:0.82rem;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:8px 8px; text-align:center; color:#00E5FF; font-size:0.82rem;">${grandAvance.toLocaleString()}</td>
-                                            <td style="padding:8px 8px; text-align:center; font-size:0.82rem;">
+                                        <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #00E5FF; border-bottom: 2px solid #00E5FF; font-weight: 900;">
+                                            <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandAvance.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900;">
                                                 ${getPctHtml(grandAvance, grandBuffer, false)}
                                             </td>
-                                            <td style="padding:8px 8px; text-align:center; color:#00E5FF; font-size:0.82rem;">${grandPendiente.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);">${grandPendiente.toLocaleString()}</td>
                                         </tr>
                                     `;
 
@@ -7110,8 +7110,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                         <thead>
                             <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
-                                <th style="padding:6px 8px; text-align:left; white-space:nowrap;">FECHA</th>
-                                <th style="padding:6px 8px; text-align:center; width: 80px; white-space:nowrap;">TURNO</th>
+                                <th style="padding:6px 4px; text-align:left; width:70px; white-space:nowrap;">FECHA</th>
+                                <th style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;">TURNO</th>
                                 <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">N° OPERARIOS</th>
                                 <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">QTY TOTAL</th>
                                 <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">QTY TAREAS</th>
@@ -7139,26 +7139,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 };
 
                                 const getTaskLogicalDate = (task, shiftVal) => {
-                                    if (!task.inicio) return task.fecha;
-                                    const dateObj = new Date(task.inicio);
-                                    if (isNaN(dateObj.getTime())) return task.fecha;
-                                    
-                                    const hrs = dateObj.getHours();
-                                    // Si es turno NOCHE y la hora es entre las 00:00 y las 06:59 AM,
-                                    // operativamente pertenece al día anterior.
-                                    if (shiftVal === 'NOCHE' && hrs >= 0 && hrs < 7) {
-                                        const targetDate = new Date(dateObj.getTime());
-                                        targetDate.setDate(dateObj.getDate() - 1);
-                                        const y = targetDate.getFullYear();
-                                        const m = String(targetDate.getMonth() + 1).padStart(2, '0');
-                                        const d = String(targetDate.getDate()).padStart(2, '0');
-                                        return `${y}-${m}-${d}`;
-                                    }
-                                    
-                                    const y = dateObj.getFullYear();
-                                    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-                                    const d = String(dateObj.getDate()).padStart(2, '0');
-                                    return `${y}-${m}-${d}`;
+                                    return task.fecha;
                                 };
 
                                 const getBreakOverlapMs = (start, end) => {
@@ -7295,8 +7276,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const displayDate = row.fecha ? row.fecha.split('-').reverse().join('/') : '---';
                                     return `
                                         <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                            <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${displayDate}</td>
-                                            <td style="padding:6px 8px; text-align:center;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(0,229,255,0.2)' : 'rgba(234,179,8,0.2)'}; color:${row.turno === 'NOCHE' ? '#00E5FF' : '#fef08a'}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800;">${row.turno}</span></td>
+                                            <td style="padding:6px 4px; color:#ffffff; font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
+                                            <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(0,229,255,0.2)' : 'rgba(234,179,8,0.2)'}; color:${row.turno === 'NOCHE' ? '#00E5FF' : '#fef08a'}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800;">${row.turno}</span></td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:800; color:#ffffff;">${row.operators.size}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#ffffff;">${row.totalQty.toLocaleString()}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#00E5FF;">${row.taskCount}</td>
