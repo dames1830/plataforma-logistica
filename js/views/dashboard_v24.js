@@ -6911,7 +6911,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                                 // --- PAGINACIÓN 20 por página ---
                                 if (window.__kpiLastDate !== (selectedTaskDate||'')) { window.__kpiPage = 0; window.__kpiLastDate = selectedTaskDate||''; }
-                                if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { window.__kpiPage = p; if(window.setSelectedDate) window.setSelectedDate(window.__kpiLastDate||null); };
+                                if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__kpiLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _pg = window.__kpiPage || 0;
                                 const _ptot = Math.ceil(indRows.length / 20);
                                 window.__kpiTotalPages = _ptot;
@@ -7012,8 +7012,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 });
                                 const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
+                                // --- PAGINACIÓN ACUMULADO ---
+                                if (window.__accLastDate !== (selectedTaskDate||'')) { window.__accPage=0; window.__accLastDate=selectedTaskDate||''; }
+                                if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__accLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                const _apg = window.__accPage||0;
+                                const _aptot = Math.ceil(rows.length/20);
+                                window.__accTotalPages = _aptot;
+                                window.__accTotalRows = rows.length;
+                                const accPagedRows = rows.slice(_apg*20, (_apg+1)*20);
                                 const maxQty = Math.max(...rows.map(r=>r.qty),1);
-                                return rows.map(r => {
+                                return accPagedRows.map(r => {
                                     const uph = r.mins>0?(r.qty/r.mins*60):0;
                                     const uphColor = uph>=150?'#22c55e':uph>=100?'#f59e0b':'#ef4444';
                                     const uphOk = uph>=150;
@@ -7024,31 +7032,25 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <td style="padding:0.8rem 1rem; opacity:0.65; font-size:0.78rem;">${r.fecha.split('-').reverse().join('/')}</td>
                                         <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.85rem;">${r.user}</b></td>
                                         <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${r.tasks}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="color:#f59e0b; font-weight:900; font-size:1.05rem;">${r.qty.toLocaleString()}</span>
-                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#f59e0b; font-weight:900; font-size:1.05rem;">${r.qty.toLocaleString()}</span></td>
                                         <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.6); font-weight:700; font-size:0.82rem;">${hh}:${mm}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="color:${uphColor}; font-weight:900; font-size:0.95rem;">${uph>0?Math.round(uph):'---'}</span>
-                                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-left:3px;">u/h</span>
-                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${uphColor}; font-weight:900; font-size:0.95rem;">${uph>0?Math.round(uph):'---'}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-left:3px;">u/h</span></td>
                                         <td style="padding:0.8rem 1.2rem;">
-                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;">
-                                                <div style="width:${bar}%; height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:6px; box-shadow:0 0 8px rgba(245,158,11,0.4); transition:width 0.5s;"></div>
-                                            </div>
+                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${bar}%; height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:6px; box-shadow:0 0 8px rgba(245,158,11,0.4);"></div></div>
                                             <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:3px; text-align:right;">${bar}%</div>
                                         </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="background:${uphOk?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; color:${uphOk?'#22c55e':'#ef4444'}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${uphOk?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}">${uphOk?'✅ META':'⚠️ BAJO'}</span>
-                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${uphOk?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; color:${uphOk?'#22c55e':'#ef4444'}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${uphOk?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}">${uphOk?'✅ META':'⚠️ BAJO'}</span></td>
                                     </tr>`;
                                 }).join('');
                             })()}
                         </tbody>
                     </table>
                 </div>
-                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(245,158,11,0.15); font-size:0.68rem; color:rgba(255,255,255,0.3);">
-                    💡 Si un usuario hizo 3 tareas de 100 unidades → Acumulado del día = 300 unidades
+                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(245,158,11,0.15);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.3);">💡 3 tareas × 100 unid = <b style="color:#f59e0b;">300 acumuladas</b> &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.5);">${window.__accTotalRows||0} registros</span></div>
+                    </div>
+                    ${(()=>{ const tp=window.__accTotalPages||1; const cp=window.__accPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#f59e0b':'rgba(255,255,255,0.1)'};background:${a?'rgba(245,158,11,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#fbbf24'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__accSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__accSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__accSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
                 </div>
             </div>
 
@@ -7101,9 +7103,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const rows = [...uMap.values()].map(r=>({...r, avgUph:r.mins>0?(r.qty/r.mins*60):0}))
                                     .sort((a,b)=>b.avgUph-a.avgUph);
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos de velocidad para mostrar.</td></tr>`;
+                                // --- PAGINACIÓN RANKING ---
+                                if (window.__rkLastDate !== (selectedTaskDate||'')) { window.__rkPage=0; window.__rkLastDate=selectedTaskDate||''; }
+                                if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__rkLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                const _rpg = window.__rkPage||0;
+                                const _rptot = Math.ceil(rows.length/20);
+                                window.__rkTotalPages = _rptot;
+                                window.__rkTotalRows = rows.length;
+                                const rkPagedRows = rows.slice(_rpg*20, (_rpg+1)*20);
                                 const maxUph = Math.max(...rows.map(r=>r.avgUph),1);
                                 const medals = ['🥇','🥈','🥉'];
-                                return rows.map((r,i) => {
+                                return rkPagedRows.map((r,i) => {
+                                    const globalIdx = _rpg*20+i;
                                     const pct = Math.round(r.avgUph/150*100);
                                     const uphColor = r.avgUph>=150?'#22c55e':r.avgUph>=100?'#f59e0b':'#ef4444';
                                     const barPct = Math.min(Math.round(r.avgUph/maxUph*100),100);
@@ -7111,41 +7122,29 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     const rangeLabel = r.avgUph>=150?'ELITE':r.avgUph>=120?'ALTO':r.avgUph>=90?'MEDIO':'BAJO';
                                     const rangeColor = r.avgUph>=150?'#22c55e':r.avgUph>=120?'#a78bfa':r.avgUph>=90?'#f59e0b':'#ef4444';
                                     return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(139,92,246,0.05)'" onmouseout="this.style.background=''">
-                                        <td style="padding:0.8rem 1rem; text-align:center; font-size:1.1rem;">${medals[i]||`<span style='color:rgba(255,255,255,0.4);font-weight:700;'>${i+1}</span>`}</td>
-                                        <td style="padding:0.8rem 1rem;">
-                                            <b style="color:#fff; text-transform:uppercase; font-size:0.88rem;">${r.user}</b>
-                                            <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.tasks} tarea${r.tasks!==1?'s':''} realizadas</div>
-                                        </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="color:${uphColor}; font-weight:900; font-size:1.15rem;">${Math.round(r.avgUph)}</span>
-                                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span>
-                                        </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="color:#a78bfa; font-weight:800;">${Math.round(r.bestUph)}</span>
-                                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span>
-                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; font-size:1.1rem;">${medals[globalIdx]||`<span style='color:rgba(255,255,255,0.4);font-weight:700;'>${globalIdx+1}</span>`}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.88rem;">${r.user}</b><div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.tasks} tarea${r.tasks!==1?'s':''} realizadas</div></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${uphColor}; font-weight:900; font-size:1.15rem;">${Math.round(r.avgUph)}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#a78bfa; font-weight:800;">${Math.round(r.bestUph)}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span></td>
                                         <td style="padding:0.8rem 1rem; text-align:center; color:#e2e8f0; font-weight:700;">${r.qty.toLocaleString()}</td>
                                         <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-size:0.82rem;">${hh}h ${mm.toString().padStart(2,'0')}m</td>
-                                        <td style="padding:0.8rem 1.2rem;">
-                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;">
-                                                <div style="width:${barPct}%; height:100%; background:linear-gradient(90deg,${uphColor},${i===0?'#86efac':'rgba(255,255,255,0.3)'}); border-radius:6px; box-shadow:0 0 8px ${uphColor}44; transition:width 0.5s;"></div>
-                                            </div>
-                                            <div style="font-size:0.62rem; color:${uphColor}; margin-top:3px; text-align:right; font-weight:700;">${pct}% de meta</div>
-                                        </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="background:${rangeColor}22; color:${rangeColor}; padding:3px 10px; border-radius:8px; font-weight:900; font-size:0.65rem; border:1px solid ${rangeColor}55; letter-spacing:0.5px;">${rangeLabel}</span>
-                                        </td>
+                                        <td style="padding:0.8rem 1.2rem;"><div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${barPct}%; height:100%; background:linear-gradient(90deg,${uphColor},${globalIdx===0?'#86efac':'rgba(255,255,255,0.3)'}); border-radius:6px; box-shadow:0 0 8px ${uphColor}44;"></div></div><div style="font-size:0.62rem; color:${uphColor}; margin-top:3px; text-align:right; font-weight:700;">${pct}% de meta</div></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${rangeColor}22; color:${rangeColor}; padding:3px 10px; border-radius:8px; font-weight:900; font-size:0.65rem; border:1px solid ${rangeColor}55; letter-spacing:0.5px;">${rangeLabel}</span></td>
                                     </tr>`;
                                 }).join('');
                             })()}
                         </tbody>
                     </table>
                 </div>
-                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15); display:flex; gap:1.5rem; font-size:0.68rem; color:rgba(255,255,255,0.3);">
-                    <span>🟢 ELITE ≥ 150 u/h</span>
-                    <span>🟣 ALTO ≥ 120 u/h</span>
-                    <span>🟡 MEDIO ≥ 90 u/h</span>
-                    <span>🔴 BAJO &lt; 90 u/h</span>
+                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15);">
+                    <div style="display:flex; gap:1.5rem; font-size:0.68rem; color:rgba(255,255,255,0.3); margin-bottom:0.5rem; flex-wrap:wrap;">
+                        <span>🟢 ELITE ≥ 150 u/h</span>
+                        <span>🟣 ALTO ≥ 120 u/h</span>
+                        <span>🟡 MEDIO ≥ 90 u/h</span>
+                        <span>🔴 BAJO &lt; 90 u/h</span>
+                        <span style="margin-left:auto; color:rgba(255,255,255,0.5);">${window.__rkTotalRows||0} operadores</span>
+                    </div>
+                    ${(()=>{ const tp=window.__rkTotalPages||1; const cp=window.__rkPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#8b5cf6':'rgba(255,255,255,0.1)'};background:${a?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#a78bfa'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__rkSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__rkSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__rkSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
                 </div>
             </div>
 
