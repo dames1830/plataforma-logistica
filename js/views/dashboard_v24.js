@@ -6941,7 +6941,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             <!-- FILA INFERIOR DE REPORTES (50% / 50%) -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
                 
-                <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
+                <!-- COLUMNA IZQUIERDA: MARCAS Y RENDIMIENTO -->
+                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
                 <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
@@ -7043,7 +7045,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                     <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">
                                                         ${getPctHtml(data.avance, data.buffer, true)}
                                                     </td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; text-decoration: underline; border-bottom: 1px solid rgba(0, 229, 255, 0.2); font-size:0.8rem;">${pendiente.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF;  font-size:0.8rem;">${pendiente.toLocaleString()}</td>
                                                 </tr>
                                             `;
                                         });
@@ -7082,6 +7084,103 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                <!-- REPORTE RENDIMIENTO DE OPERARIOS -->
+                <div style="background:#000000; border:2px solid #a855f7; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(168,85,247,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="border-left: 4px solid #a855f7; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                            <h3 style="color:#a855f7; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                                RENDIMIENTO DE OPERARIOS
+                            </h3>
+                            <div style="font-size:0.68rem; color:rgba(168, 85, 247, 0.6); font-weight:700; letter-spacing:0.5px;">
+                                MEDICIÓN DE TAREAS FINALIZADAS
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x:auto; margin-top:0.4rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                            <thead>
+                                <tr style="color:#a855f7; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #a855f7;">
+                                    <th style="padding:6px 8px; text-align:left;">OPERARIO</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 100px;">CANTIDAD</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 80px;">TAREAS</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 100px;">1ra TAREA</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 100px;">ÚLTIMA TAREA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                                    const operatorStats = {};
+                                    const filteredTasks = tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate);
+
+                                    filteredTasks.forEach(t => {
+                                        if (t.status !== 'Finalizado') return;
+
+                                        const uList = [t.u1, t.u2].filter(u => u && u !== '---');
+                                        if (uList.length > 0) {
+                                            uList.forEach((user, idx) => {
+                                                const qtyForThisUser = (uList.length === 2) 
+                                                    ? (idx === 0 ? Math.ceil(t.qty / 2) : Math.floor(t.qty / 2)) 
+                                                    : t.qty;
+                                                
+                                                const username = String(user).trim().toUpperCase();
+                                                if (!operatorStats[username]) {
+                                                    operatorStats[username] = {
+                                                        name: username,
+                                                        totalQty: 0,
+                                                        taskCount: 0,
+                                                        firstStart: null,
+                                                        lastEnd: null
+                                                    };
+                                                }
+                                                
+                                                operatorStats[username].totalQty += qtyForThisUser;
+                                                operatorStats[username].taskCount += 1;
+                                                
+                                                if (t.inicio) {
+                                                    const sTime = new Date(t.inicio);
+                                                    if (!operatorStats[username].firstStart || sTime < operatorStats[username].firstStart) {
+                                                        operatorStats[username].firstStart = sTime;
+                                                    }
+                                                }
+                                                if (t.termino) {
+                                                    const eTime = new Date(t.termino);
+                                                    if (!operatorStats[username].lastEnd || eTime > operatorStats[username].lastEnd) {
+                                                        operatorStats[username].lastEnd = eTime;
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+
+                                    const operatorRows = Object.values(operatorStats)
+                                        .sort((a, b) => b.totalQty - a.totalQty);
+
+                                    if (operatorRows.length === 0) {
+                                        return `<tr><td colspan="5" style="padding:3rem; text-align:center; color:rgba(168, 85, 247, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
+                                    }
+
+                                    return operatorRows.map(op => {
+                                        const startStr = op.firstStart ? op.firstStart.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '---';
+                                        const endStr = op.lastEnd ? op.lastEnd.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '---';
+                                        return `
+                                            <tr style="border-bottom: 1px solid rgba(168, 85, 247, 0.08); background:#000000;">
+                                                <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; text-transform:uppercase;">${op.name}</b></td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${op.totalQty.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#a855f7; font-size:0.8rem;">${op.taskCount}</td>
+                                                <td style="padding:5px 6px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${startStr}</td>
+                                                <td style="padding:5px 6px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${endStr}</td>
+                                            </tr>
+                                        `;
+                                    }).join('');
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 </div>
 
                 <!-- ESPACIO PARA OTRO REPORTE (DERECHA) -->
