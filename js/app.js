@@ -50,11 +50,14 @@ class App {
     try {
         if (this.root) {
             this.root.innerHTML = `
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; background:#0f172a;">
-                <div class="spinner" style="width:40px; height:40px; border:4px solid rgba(255,255,255,0.1); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:20px;"></div>
-                <h2 style="margin:0; font-weight:300; letter-spacing:2px;">LOGÍSTICA <span style="font-weight:800; color:#4f46e5;">DEAM1830</span></h2>
-                <p style="margin-top:10px; font-size:0.8rem; opacity:0.5;">Iniciando motor ${this.APP_VERSION}...</p>
-            </div>`;
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; background:transparent;">
+                <div class="spinner" style="width:50px; height:50px; border:4px solid rgba(255,255,255,0.1); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:24px;"></div>
+                <h2 style="margin:0; font-weight:300; letter-spacing:3px; font-size:1.8rem;">LOGÍSTICA <span style="font-weight:800; color:#4f46e5;">DEAM1830</span></h2>
+                <p style="margin-top:12px; font-size:0.95rem; opacity:0.6; letter-spacing:1px;">Iniciando entorno v${this.APP_VERSION}...</p>
+            </div>
+            <style>
+              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>`;
         }
         
         // 1. Sincronización proactiva con la nube
