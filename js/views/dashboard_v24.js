@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.83';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.84';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.83';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.83';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.83';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.83';
+import * as adminService from '../services_v245/adminService.js?v=25.1.84';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.84';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.84';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.84';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.83';
+const VERSION = '25.1.84';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4559,15 +4559,15 @@ export const renderDashboard = async (container, user, onLogout) => {
       const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
 
       reporte1HTML = `
-          <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
+          <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 12px; padding: 0.8rem 1.2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
               <!-- Left accented title block -->
-              <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
-                  <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+              <div style="display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.8rem;">
+                  <div style="width: 4px; height: 26px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
                   <div>
-                      <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                      <h2 style="font-size: 1.05rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
                           REPORTE RECEPCIÓN - CDBUFFER
                       </h2>
-                      <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                      <div style="font-size: 0.7rem; font-weight: 600; color: #64748b; margin-top: 1px; letter-spacing: 0.5px;">
                           DATA_SYNC: <span style="color: #94a3b8;">${timeStr}</span>
                       </div>
                   </div>
@@ -4575,14 +4575,14 @@ export const renderDashboard = async (container, user, onLogout) => {
 
               <!-- Table Matrix -->
               <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
-                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem;">
                       <thead>
                           <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
-                              <th style="color: #64748b; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">MARCAS</th>
+                              <th style="color: #64748b; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">MARCAS</th>
                               ${sortedDepts.map(dept => `
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">${dept}</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">${dept}</th>
                               `).join('')}
-                              <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">TOTAL</th>
+                              <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">TOTAL</th>
                           </tr>
                       </thead>
                       <tbody>
@@ -4590,17 +4590,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                               let rowTotal = 0;
                               return `
                                   <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
-                                      <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${brand}</td>
+                                      <td style="color: #ffffff; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${brand}</td>
                                       ${sortedDepts.map(dept => {
                                           const val = matrix[brand][dept] || 0;
                                           rowTotal += val;
                                           return `
-                                              <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">
+                                              <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">
                                                   ${val.toLocaleString('en-US')}
                                               </td>
                                           `;
                                       }).join('')}
-                                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; background: rgba(34,211,238,0.01); font-size: 0.9rem;">
+                                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; background: rgba(34,211,238,0.01); font-size: 0.8rem;">
                                           ${rowTotal.toLocaleString('en-US')}
                                       </td>
                                   </tr>
@@ -4609,19 +4609,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                       </tbody>
                       <tfoot>
                           <tr style="background: rgba(34, 211, 238, 0.04); border-top: 2px solid #22d3ee; font-weight: 800;">
-                              <td style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL</td>
+                              <td style="color: #ffffff; font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82rem;">TOTAL GENERAL</td>
                               ${sortedDepts.map(dept => {
                                   let deptTotal = 0;
                                   sortedBrands.forEach(brand => {
                                       deptTotal += matrix[brand][dept] || 0;
                                   });
                                   return `
-                                      <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.9rem;">
+                                      <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.82rem;">
                                           ${deptTotal.toLocaleString('en-US')}
                                       </td>
                                   `;
                               }).join('')}
-                              <td style="color: #22d3ee; font-weight: 900; padding: 14px 16px; text-align: center; background: rgba(34, 211, 238, 0.08); font-size: 0.95rem; text-shadow: 0 0 5px rgba(34,211,238,0.5);">
+                              <td style="color: #22d3ee; font-weight: 900; padding: 6px 10px; text-align: center; background: rgba(34, 211, 238, 0.08); font-size: 0.85rem; text-shadow: 0 0 5px rgba(34,211,238,0.5);">
                                   ${totalSum.toLocaleString('en-US')}
                               </td>
                           </tr>
@@ -4784,12 +4784,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                   return `
                       <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
-                          <td style="color: #64748b; font-weight: 600; padding: 12px 16px; font-size: 0.9rem;">${area}</td>
-                          <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${gender || '<span style="color: #334155;">-</span>'}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${buffer.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${avance.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pctStr}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pendiente.toLocaleString('en-US')}</td>
+                          <td style="color: #64748b; font-weight: 600; padding: 5px 10px; font-size: 0.8rem;">${area}</td>
+                          <td style="color: #ffffff; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${gender || '<span style="color: #334155;">-</span>'}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${buffer.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${avance.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pctStr}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pendiente.toLocaleString('en-US')}</td>
                       </tr>
                   `;
               }).join('');
@@ -4805,11 +4805,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
               const subtotalRow = `
                   <tr style="border-bottom: 2px solid rgba(34,211,238,0.3); background: rgba(34, 211, 238, 0.02); font-weight: 700;">
-                      <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">Total ${area}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaBuffer.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaAvance.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPct}%</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPendiente.toLocaleString('en-US')}</td>
+                      <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">Total ${area}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaBuffer.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaAvance.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPct}%</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPendiente.toLocaleString('en-US')}</td>
                   </tr>
               `;
 
@@ -4825,15 +4825,15 @@ export const renderDashboard = async (container, user, onLogout) => {
           const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
 
           reporte2HTML = `
-              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 12px; padding: 0.8rem 1.2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
                   <!-- Title Block -->
-                  <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
-                      <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+                  <div style="display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.8rem;">
+                      <div style="width: 4px; height: 26px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
                       <div>
-                          <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                          <h2 style="font-size: 1.05rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
                               REPORTE ALMACENAJE - GENDER
                           </h2>
-                          <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                          <div style="font-size: 0.7rem; font-weight: 600; color: #64748b; margin-top: 1px; letter-spacing: 0.5px;">
                               SYNC_ID: <span style="color: #94a3b8;">${timeStr}</span>
                           </div>
                       </div>
@@ -4841,25 +4841,25 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                   <!-- Table Matrix -->
                   <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
-                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem;">
                           <thead>
                               <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AREA</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">GENDER</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">BUFFER</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AVANCE</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">%</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">PENDIENTE</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AREA</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">GENDER</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">BUFFER</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AVANCE</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">%</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">PENDIENTE</th>
                               </tr>
                           </thead>
                           <tbody>
                               ${tableRowsHTML}
                               <tr style="background: rgba(34, 211, 238, 0.08); border-top: 2px solid #22d3ee; font-weight: 800;">
-                                  <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL CDBUFFER</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBuffer.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandAvance.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandPct}%</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandPendiente.toLocaleString('en-US')}</td>
+                                  <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82rem;">TOTAL GENERAL CDBUFFER</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBuffer.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandAvance.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandPct}%</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandPendiente.toLocaleString('en-US')}</td>
                               </tr>
                           </tbody>
                       </table>
@@ -4908,12 +4908,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                   return `
                       <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
-                          <td style="color: #64748b; font-weight: 600; padding: 12px 16px; font-size: 0.9rem;">${area}</td>
-                          <td style="color: #ffffff; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">${brand || '<span style="color: #334155;">-</span>'}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${buffer.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${avance.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pctStr}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${pendiente.toLocaleString('en-US')}</td>
+                          <td style="color: #64748b; font-weight: 600; padding: 5px 10px; font-size: 0.8rem;">${area}</td>
+                          <td style="color: #ffffff; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${brand || '<span style="color: #334155;">-</span>'}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${buffer.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${avance.toLocaleString('en-US')}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pctStr}</td>
+                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pendiente.toLocaleString('en-US')}</td>
                       </tr>
                   `;
               }).join('');
@@ -4929,11 +4929,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
               const subtotalRow = `
                   <tr style="border-bottom: 2px solid rgba(34,211,238,0.3); background: rgba(34, 211, 238, 0.02); font-weight: 700;">
-                      <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 12px 16px; font-size: 0.9rem;">Total ${area}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaBuffer.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaAvance.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPct}%</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 12px 16px; text-align: center; font-size: 0.9rem;">${areaPendiente.toLocaleString('en-US')}</td>
+                      <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">Total ${area}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaBuffer.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaAvance.toLocaleString('en-US')}</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPct}%</td>
+                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPendiente.toLocaleString('en-US')}</td>
                   </tr>
               `;
 
@@ -4946,15 +4946,15 @@ export const renderDashboard = async (container, user, onLogout) => {
           }
 
           reporte3HTML = `
-              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 16px; padding: 2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
+              <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 12px; padding: 0.8rem 1.2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
                   <!-- Title Block -->
-                  <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
-                      <div style="width: 4px; height: 38px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
+                  <div style="display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.8rem;">
+                      <div style="width: 4px; height: 26px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
                       <div>
-                          <h2 style="font-size: 1.3rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
+                          <h2 style="font-size: 1.05rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
                               REPORTE ALMACENAJE - MARCA
                           </h2>
-                          <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.5px;">
+                          <div style="font-size: 0.7rem; font-weight: 600; color: #64748b; margin-top: 1px; letter-spacing: 0.5px;">
                               SYNC_ID: <span style="color: #94a3b8;">${timeStr}</span>
                           </div>
                       </div>
@@ -4962,25 +4962,25 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                   <!-- Table Matrix -->
                   <div style="overflow-x: auto; border-radius: 8px; border: 1px solid rgba(34, 211, 238, 0.1); background: rgba(0, 0, 0, 0.2);">
-                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem;">
                           <thead>
                               <tr style="border-bottom: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.03);">
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AREA</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">MARCA</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">BUFFER</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">AVANCE</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">%</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 14px 16px; text-align: center; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">PENDIENTE</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AREA</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">MARCA</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">BUFFER</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AVANCE</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">%</th>
+                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">PENDIENTE</th>
                               </tr>
                           </thead>
                           <tbody>
                               ${tableBrandRowsHTML}
                               <tr style="background: rgba(34, 211, 238, 0.08); border-top: 2px solid #22d3ee; font-weight: 800;">
-                                  <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 14px 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;">TOTAL GENERAL CDBUFFER</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandBuffer.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandAvance.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandPct}%</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 14px 16px; text-align: center; font-size: 0.95rem;">${grandBrandPendiente.toLocaleString('en-US')}</td>
+                                  <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82rem;">TOTAL GENERAL CDBUFFER</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandBuffer.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandAvance.toLocaleString('en-US')}</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandPct}%</td>
+                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandPendiente.toLocaleString('en-US')}</td>
                               </tr>
                           </tbody>
                       </table>
@@ -5564,7 +5564,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.83) ---
+  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.84) ---
   const MOCK_DESCARGA_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><line x1="50" y1="50" x2="350" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="50" y1="50" x2="50" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="350" y1="50" x2="350" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><path d="M 200,100 L 260,130 L 260,200 L 200,230 L 140,200 L 140,130 Z" fill="%23f59e0b" opacity="0.95"/><path d="M 200,100 L 200,230" stroke="%2378350f" stroke-width="2"/><path d="M 200,100 L 260,130 M 200,100 L 140,130" stroke="%2378350f" stroke-width="2"/><path d="M 140,130 L 200,160 L 260,130" stroke="%2378350f" stroke-width="2"/><polygon points="170,155 190,165 190,175 170,165" fill="%23fff" opacity="0.9"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">📦 DESCARGA TIENDA OK</text></svg>`;
 
   const MOCK_CARGO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><rect x="120" y="40" width="160" height="220" rx="4" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><line x1="140" y1="70" x2="260" y2="70" stroke="%233b82f6" stroke-width="4"/><line x1="140" y1="100" x2="260" y2="100" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="120" x2="240" y2="120" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="140" x2="250" y2="140" stroke="%2394a3b8" stroke-width="2"/><circle cx="230" cy="190" r="22" fill="none" stroke="%23ef4444" stroke-width="3" stroke-dasharray="3,1"/><text x="230" y="194" fill="%23ef4444" font-family="sans-serif" font-size="8" font-weight="900" text-anchor="middle">RECIBIDO</text><path d="M 140,210 Q 155,190 170,210 T 200,210" fill="none" stroke="%231e3a8a" stroke-width="2" stroke-linecap="round"/><line x1="135" y1="215" x2="205" y2="215" stroke="%23475569" stroke-width="1"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">✍️ CARGO FIRMADO OK</text></svg>`;
@@ -7070,13 +7070,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
                 
                 <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
-                <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:1.5rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:1.2rem;">
+                <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="border-left: 4px solid #00E5FF; padding-left: 12px; display:flex; flex-direction:column; gap:4px;">
-                            <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                        <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                            <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - MARCAS
                             </h3>
-                            <div style="font-size:0.7rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                            <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
                                 SYNC_ID: ${(() => {
                                     const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
                                     const syncDateStr = selectedTaskDate ? selectedTaskDate.split('-').reverse().join('/') : new Date().toLocaleDateString('es-ES');
@@ -7084,21 +7084,21 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 })()}
                             </div>
                         </div>
-                        <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                        <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
                             🔄
                         </button>
                     </div>
                     
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
-                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.75rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
-                                    <th style="padding:0.8rem; text-align:left; width: 120px;">AREA</th>
-                                    <th style="padding:0.8rem; text-align:left;">MARCAS</th>
-                                    <th style="padding:0.8rem; text-align:center; width: 90px;">BUFFER</th>
-                                    <th style="padding:0.8rem; text-align:center; width: 90px;">AVANCE</th>
-                                    <th style="padding:0.8rem; text-align:center; width: 90px;">%</th>
-                                    <th style="padding:0.8rem; text-align:center; width: 100px;">PENDIENTE</th>
+                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                                    <th style="padding:6px 8px; text-align:left; width: 120px;">AREA</th>
+                                    <th style="padding:6px 8px; text-align:left;">MARCAS</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 90px;">BUFFER</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 90px;">AVANCE</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 90px;">%</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 100px;">PENDIENTE</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -7164,14 +7164,14 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                                             brandTableRows += `
                                                 <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                                    <td style="padding:0.7rem 0.8rem; color:#a1a1aa; font-size: 0.8rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:0.7rem 0.8rem;"><b style="color:#ffffff; font-weight:800; font-size:0.85rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
-                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:700; color:#ffffff;">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:700; color:#ffffff;">${data.avance.toLocaleString()}</td>
-                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:800; font-size:0.8rem;">
+                                                    <td style="padding:5px 6px; color:#a1a1aa; font-size: 0.78rem; font-weight:600;">${area}</td>
+                                                    <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">
                                                         ${getPctHtml(data.avance, data.buffer, true)}
                                                     </td>
-                                                    <td style="padding:0.7rem 0.8rem; text-align:center; font-weight:800; color:#00E5FF; text-decoration: underline; border-bottom: 1px solid rgba(0, 229, 255, 0.2);">${pendiente.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; text-decoration: underline; border-bottom: 1px solid rgba(0, 229, 255, 0.2); font-size:0.8rem;">${pendiente.toLocaleString()}</td>
                                                 </tr>
                                             `;
                                         });
@@ -7180,13 +7180,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                                         brandTableRows += `
                                             <tr style="background:rgba(0, 229, 255, 0.04); border-top:1px solid rgba(0, 229, 255, 0.3); border-bottom:1px solid rgba(0, 229, 255, 0.3); font-weight:800;">
-                                                <td colspan="2" style="padding:0.8rem; color:#00E5FF; font-weight:900; font-size:0.85rem; text-transform:uppercase;">Total ${area}</td>
-                                                <td style="padding:0.8rem; text-align:center; color:#ffffff; font-size:0.85rem;">${areaBufferSum.toLocaleString()}</td>
-                                                <td style="padding:0.8rem; text-align:center; color:#ffffff; font-size:0.85rem;">${areaAvanceSum.toLocaleString()}</td>
-                                                <td style="padding:0.8rem; text-align:center; font-size:0.85rem;">
+                                                <td colspan="2" style="padding:6px 8px; color:#00E5FF; font-weight:900; font-size:0.8rem; text-transform:uppercase;">Total ${area}</td>
+                                                <td style="padding:6px 8px; text-align:center; color:#ffffff; font-size:0.8rem;">${areaBufferSum.toLocaleString()}</td>
+                                                <td style="padding:6px 8px; text-align:center; color:#ffffff; font-size:0.8rem;">${areaAvanceSum.toLocaleString()}</td>
+                                                <td style="padding:6px 8px; text-align:center; font-size:0.8rem;">
                                                     ${getPctHtml(areaAvanceSum, areaBufferSum, false)}
                                                 </td>
-                                                <td style="padding:0.8rem; text-align:center; color:#00E5FF; font-size:0.85rem;">${areaPendiente.toLocaleString()}</td>
+                                                <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-size:0.8rem;">${areaPendiente.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     });
@@ -7195,13 +7195,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     
                                     brandTableRows += `
                                         <tr style="background:rgba(0, 229, 255, 0.15); border:2px solid #00E5FF; font-weight:900;">
-                                            <td colspan="2" style="padding:1rem 0.8rem; color:#ffffff; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandAvance.toLocaleString()}</td>
-                                            <td style="padding:1rem 0.8rem; text-align:center; font-size:0.9rem;">
+                                            <td colspan="2" style="padding:8px 8px; color:#ffffff; font-size:0.82rem; text-transform:uppercase; letter-spacing:1px;">TOTAL GENERAL CDBUFFER</td>
+                                            <td style="padding:8px 8px; text-align:center; color:#00E5FF; font-size:0.82rem;">${grandBuffer.toLocaleString()}</td>
+                                            <td style="padding:8px 8px; text-align:center; color:#00E5FF; font-size:0.82rem;">${grandAvance.toLocaleString()}</td>
+                                            <td style="padding:8px 8px; text-align:center; font-size:0.82rem;">
                                                 ${getPctHtml(grandAvance, grandBuffer, false)}
                                             </td>
-                                            <td style="padding:1rem 0.8rem; text-align:center; color:#00E5FF; font-size:0.9rem;">${grandPendiente.toLocaleString()}</td>
+                                            <td style="padding:8px 8px; text-align:center; color:#00E5FF; font-size:0.82rem;">${grandPendiente.toLocaleString()}</td>
                                         </tr>
                                     `;
 
@@ -7213,7 +7213,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
 
                 <!-- ESPACIO PARA OTRO REPORTE (DERECHA) -->
-                <div class="glass-panel" style="border:1px dashed rgba(255,255,255,0.1); display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:435px; border-radius:12px; background:rgba(15,23,42,0.3); box-shadow: 0 0 25px rgba(0,0,0,0.2);">
+                <div class="glass-panel" style="border:1px dashed rgba(255,255,255,0.1); display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:280px; border-radius:12px; background:rgba(15,23,42,0.3); box-shadow: 0 0 25px rgba(0,0,0,0.2);">
                     <div style="font-size:2.8rem; margin-bottom:1rem; opacity:0.15;">📊</div>
                     <span style="color:var(--text-muted); font-size:0.85rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;">Reporte Futuro</span>
                     <span style="color:rgba(255,255,255,0.2); font-size:0.7rem; margin-top:0.3rem;">Espacio reservado para reportes adicionales</span>
