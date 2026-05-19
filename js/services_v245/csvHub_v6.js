@@ -100,7 +100,7 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '25.1.95';
+const VERSION = '25.1.96';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
