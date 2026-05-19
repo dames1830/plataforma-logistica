@@ -6907,9 +6907,18 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                                 if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
 
-                                indRows.sort((a, b) => a.user.localeCompare(b.user));
+                                indRows.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.user.localeCompare(b.user));
 
-                                return indRows.map(r => `
+                                // --- PAGINACIÓN 20 por página ---
+                                if (window.__kpiLastDate !== (selectedTaskDate||'')) { window.__kpiPage = 0; window.__kpiLastDate = selectedTaskDate||''; }
+                                if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { window.__kpiPage = p; if(window.setSelectedDate) window.setSelectedDate(window.__kpiLastDate||null); };
+                                const _pg = window.__kpiPage || 0;
+                                const _ptot = Math.ceil(indRows.length / 20);
+                                window.__kpiTotalPages = _ptot;
+                                window.__kpiTotalRows = indRows.length;
+                                const pagedRows = indRows.slice(_pg * 20, (_pg + 1) * 20);
+
+                                return pagedRows.map(r => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
                                         <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
                                         <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
@@ -6935,9 +6944,208 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </table>
                 </div>
                 
-                <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2); display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base de medición: 150 Unid/Hora por usuario (Equivalente a 300 Unid/Hora grupal)</div>
-                    <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
+                <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base: 150 Unid/Hr por usuario &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.6);">${window.__kpiTotalRows||0} registros totales</span></div>
+                        <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
+                    </div>
+                    ${(() => {
+                        const tp = window.__kpiTotalPages || 1;
+                        const cp = window.__kpiPage || 0;
+                        if (tp <= 1) return '';
+                        const btnStyle = (active, dis) => `padding:5px 11px; border-radius:8px; border:1px solid ${active?'#6366f1':'rgba(255,255,255,0.1)'}; background:${active?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a5b4fc'}; cursor:${dis?'default':'pointer'}; font-size:0.75rem; font-weight:${active?900:500};`;
+                        const pages = Array.from({length: tp}, (_, i) => i);
+                        return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05);">
+                            <button onclick="window.__kpiSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
+                            ${pages.map(p=>`<button onclick="window.__kpiSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
+                            <button onclick="window.__kpiSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                            <span style="font-size:0.7rem; color:rgba(255,255,255,0.3); margin-left:6px;">Pág ${cp+1} / ${tp}</span>
+                        </div>`;
+                    })()}
+                </div>
+            </div>
+
+            <!-- REPORTE: ACUMULADO DÍA × USUARIO -->
+            <div style="background:rgba(10,15,30,0.95); border:2px solid #f59e0b; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(245,158,11,0.15);">
+                <div style="padding:1rem 1.2rem; background:rgba(245,158,11,0.08); border-bottom:1px solid rgba(245,158,11,0.25); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3 style="color:#f59e0b; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📅 ACUMULADO POR DÍA × USUARIO</h3>
+                        <div style="font-size:0.68rem; color:rgba(245,158,11,0.55); font-weight:600;">Suma de unidades por operador por jornada — incluye todas las tareas del día</div>
+                    </div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.6);">
+                            <tr style="color:rgba(245,158,11,0.8); text-transform:uppercase; font-size:0.68rem; letter-spacing:0.06em; border-bottom:2px solid rgba(245,158,11,0.25);">
+                                <th style="padding:0.85rem 1rem; text-align:left;">Fecha</th>
+                                <th style="padding:0.85rem 1rem; text-align:left;">Usuario</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Tareas</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Unid. Acumuladas</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Tiempo Total</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Unid/Hr</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Progreso</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const accMap = new Map();
+                                tasks.filter(t => (!selectedTaskDate || t.fecha === selectedTaskDate) && t.status === 'Finalizado').forEach(t => {
+                                    let mins = 0;
+                                    if (t.inicio && t.termino) {
+                                        const s = new Date(t.inicio); let e = new Date(t.termino);
+                                        if (e < s) e = new Date(e.getTime() + 86400000);
+                                        const sd = s.getHours() < 12 ? new Date(s.getTime()-43200000) : s;
+                                        const bS = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,0,0);
+                                        const bE = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,50,0);
+                                        mins = Math.max(0,Math.floor(((e-s)-Math.max(0,Math.min(e,bE)-Math.max(s,bS)))/60000));
+                                    }
+                                    const uList = [t.u1,t.u2].filter(u=>u&&u!=='---');
+                                    uList.forEach((user,idx) => {
+                                        const qty = uList.length===2?(idx===0?Math.ceil(t.qty/2):Math.floor(t.qty/2)):t.qty;
+                                        const key = t.fecha+'|'+user;
+                                        const cur = accMap.get(key)||{fecha:t.fecha,user,qty:0,mins:0,tasks:0};
+                                        cur.qty+=qty; cur.mins+=mins; cur.tasks++;
+                                        accMap.set(key,cur);
+                                    });
+                                });
+                                const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
+                                if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
+                                const maxQty = Math.max(...rows.map(r=>r.qty),1);
+                                return rows.map(r => {
+                                    const uph = r.mins>0?(r.qty/r.mins*60):0;
+                                    const uphColor = uph>=150?'#22c55e':uph>=100?'#f59e0b':'#ef4444';
+                                    const uphOk = uph>=150;
+                                    const bar = Math.round(r.qty/maxQty*100);
+                                    const hh = Math.floor(r.mins/60).toString().padStart(2,'0');
+                                    const mm = (r.mins%60).toString().padStart(2,'0');
+                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.04)'" onmouseout="this.style.background=''">
+                                        <td style="padding:0.8rem 1rem; opacity:0.65; font-size:0.78rem;">${r.fecha.split('-').reverse().join('/')}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.85rem;">${r.user}</b></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${r.tasks}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="color:#f59e0b; font-weight:900; font-size:1.05rem;">${r.qty.toLocaleString()}</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.6); font-weight:700; font-size:0.82rem;">${hh}:${mm}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="color:${uphColor}; font-weight:900; font-size:0.95rem;">${uph>0?Math.round(uph):'---'}</span>
+                                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-left:3px;">u/h</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1.2rem;">
+                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;">
+                                                <div style="width:${bar}%; height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:6px; box-shadow:0 0 8px rgba(245,158,11,0.4); transition:width 0.5s;"></div>
+                                            </div>
+                                            <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:3px; text-align:right;">${bar}%</div>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="background:${uphOk?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; color:${uphOk?'#22c55e':'#ef4444'}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${uphOk?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}">${uphOk?'✅ META':'⚠️ BAJO'}</span>
+                                        </td>
+                                    </tr>`;
+                                }).join('');
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(245,158,11,0.15); font-size:0.68rem; color:rgba(255,255,255,0.3);">
+                    💡 Si un usuario hizo 3 tareas de 100 unidades → Acumulado del día = 300 unidades
+                </div>
+            </div>
+
+            <!-- REPORTE: RANKING VELOCIDAD (UNID/HR) -->
+            <div style="background:rgba(10,15,30,0.95); border:2px solid #8b5cf6; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(139,92,246,0.15);">
+                <div style="padding:1rem 1.2rem; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.25); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3 style="color:#a78bfa; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">⚡ RANKING DE VELOCIDAD — UNID/HORA</h3>
+                        <div style="font-size:0.68rem; color:rgba(167,139,250,0.55); font-weight:600;">Eficiencia promedio por operador · Ordenado de mayor a menor velocidad</div>
+                    </div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">BASE: 150 U/Hr = 100%</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.6);">
+                            <tr style="color:rgba(167,139,250,0.8); text-transform:uppercase; font-size:0.68rem; letter-spacing:0.06em; border-bottom:2px solid rgba(139,92,246,0.25);">
+                                <th style="padding:0.85rem 1rem; text-align:center; width:50px;">#</th>
+                                <th style="padding:0.85rem 1rem; text-align:left;">Operador</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Unid/Hr Prom</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Mejor Unid/Hr</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Total Unid</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Horas Trab.</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Eficiencia</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Rango</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const uMap = new Map();
+                                tasks.filter(t => (!selectedTaskDate || t.fecha === selectedTaskDate) && t.status === 'Finalizado').forEach(t => {
+                                    let mins = 0;
+                                    if (t.inicio && t.termino) {
+                                        const s = new Date(t.inicio); let e = new Date(t.termino);
+                                        if (e < s) e = new Date(e.getTime() + 86400000);
+                                        const sd = s.getHours() < 12 ? new Date(s.getTime()-43200000) : s;
+                                        const bS = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,0,0);
+                                        const bE = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,50,0);
+                                        mins = Math.max(0,Math.floor(((e-s)-Math.max(0,Math.min(e,bE)-Math.max(s,bS)))/60000));
+                                    }
+                                    const uList = [t.u1,t.u2].filter(u=>u&&u!=='---');
+                                    uList.forEach((user,idx) => {
+                                        const qty = uList.length===2?(idx===0?Math.ceil(t.qty/2):Math.floor(t.qty/2)):t.qty;
+                                        const taskUph = mins>0?(qty/mins*60):0;
+                                        const cur = uMap.get(user)||{user,qty:0,mins:0,bestUph:0,tasks:0};
+                                        cur.qty+=qty; cur.mins+=mins; cur.tasks++;
+                                        if (taskUph>cur.bestUph) cur.bestUph=taskUph;
+                                        uMap.set(user,cur);
+                                    });
+                                });
+                                const rows = [...uMap.values()].map(r=>({...r, avgUph:r.mins>0?(r.qty/r.mins*60):0}))
+                                    .sort((a,b)=>b.avgUph-a.avgUph);
+                                if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos de velocidad para mostrar.</td></tr>`;
+                                const maxUph = Math.max(...rows.map(r=>r.avgUph),1);
+                                const medals = ['🥇','🥈','🥉'];
+                                return rows.map((r,i) => {
+                                    const pct = Math.round(r.avgUph/150*100);
+                                    const uphColor = r.avgUph>=150?'#22c55e':r.avgUph>=100?'#f59e0b':'#ef4444';
+                                    const barPct = Math.min(Math.round(r.avgUph/maxUph*100),100);
+                                    const hh = Math.floor(r.mins/60); const mm = r.mins%60;
+                                    const rangeLabel = r.avgUph>=150?'ELITE':r.avgUph>=120?'ALTO':r.avgUph>=90?'MEDIO':'BAJO';
+                                    const rangeColor = r.avgUph>=150?'#22c55e':r.avgUph>=120?'#a78bfa':r.avgUph>=90?'#f59e0b':'#ef4444';
+                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(139,92,246,0.05)'" onmouseout="this.style.background=''">
+                                        <td style="padding:0.8rem 1rem; text-align:center; font-size:1.1rem;">${medals[i]||`<span style='color:rgba(255,255,255,0.4);font-weight:700;'>${i+1}</span>`}</td>
+                                        <td style="padding:0.8rem 1rem;">
+                                            <b style="color:#fff; text-transform:uppercase; font-size:0.88rem;">${r.user}</b>
+                                            <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.tasks} tarea${r.tasks!==1?'s':''} realizadas</div>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="color:${uphColor}; font-weight:900; font-size:1.15rem;">${Math.round(r.avgUph)}</span>
+                                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="color:#a78bfa; font-weight:800;">${Math.round(r.bestUph)}</span>
+                                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:#e2e8f0; font-weight:700;">${r.qty.toLocaleString()}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-size:0.82rem;">${hh}h ${mm.toString().padStart(2,'0')}m</td>
+                                        <td style="padding:0.8rem 1.2rem;">
+                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;">
+                                                <div style="width:${barPct}%; height:100%; background:linear-gradient(90deg,${uphColor},${i===0?'#86efac':'rgba(255,255,255,0.3)'}); border-radius:6px; box-shadow:0 0 8px ${uphColor}44; transition:width 0.5s;"></div>
+                                            </div>
+                                            <div style="font-size:0.62rem; color:${uphColor}; margin-top:3px; text-align:right; font-weight:700;">${pct}% de meta</div>
+                                        </td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">
+                                            <span style="background:${rangeColor}22; color:${rangeColor}; padding:3px 10px; border-radius:8px; font-weight:900; font-size:0.65rem; border:1px solid ${rangeColor}55; letter-spacing:0.5px;">${rangeLabel}</span>
+                                        </td>
+                                    </tr>`;
+                                }).join('');
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15); display:flex; gap:1.5rem; font-size:0.68rem; color:rgba(255,255,255,0.3);">
+                    <span>🟢 ELITE ≥ 150 u/h</span>
+                    <span>🟣 ALTO ≥ 120 u/h</span>
+                    <span>🟡 MEDIO ≥ 90 u/h</span>
+                    <span>🔴 BAJO &lt; 90 u/h</span>
                 </div>
             </div>
 
