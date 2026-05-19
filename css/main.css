@@ -108,7 +108,10 @@ body {
 
 /* Login View Premium (Estilo Referencial) */
 .login-view-wrapper {
-  background: linear-gradient(135deg, #fffcf6 0%, #eef6fc 50%, #e0f2fe 100%);
+  background: #0b0f19;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 45%);
   width: 100%;
   min-height: 100vh;
   display: flex;
@@ -120,14 +123,13 @@ body {
 }
 
 .login-box-premium {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 
-    0 10px 25px -5px rgba(15, 23, 42, 0.05),
-    0 25px 50px -12px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 20px 50px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   padding: 3.5rem 2.75rem;
   border-radius: 32px;
   width: 100%;
@@ -136,6 +138,7 @@ body {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 10;
+  --avatar-stroke: #131c2e;
 }
 
 .login-box-premium.fade-out-up {
@@ -160,7 +163,7 @@ body {
 .pill-input-group label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: #94a3b8;
   margin-bottom: 0.5rem;
   margin-left: 1.2rem;
   display: block;
@@ -193,37 +196,37 @@ body {
   transform: translateY(-50%);
   width: 1px;
   height: 18px;
-  background-color: #cbd5e1;
+  background-color: rgba(255, 255, 255, 0.15);
   pointer-events: none;
 }
 
 .pill-input-wrapper input {
   width: 100% !important;
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
+  background: rgba(30, 41, 59, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 50px !important;
   padding: 0.9rem 1.25rem 0.9rem 3.4rem !important;
-  color: #1e293b !important;
+  color: #f8fafc !important;
   font-size: 1rem !important;
   font-weight: 600 !important;
   outline: none !important;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.01), 0 4px 10px rgba(0,0,0,0.02) !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 10px rgba(0,0,0,0.1) !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  color-scheme: light !important;
+  color-scheme: dark !important;
 }
 
 .pill-input-wrapper input::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
   font-weight: 500 !important;
   font-size: 0.95rem !important;
 }
 
 .pill-input-wrapper input:focus {
-  border-color: #0ea5e9 !important;
+  border-color: #38bdf8 !important;
   box-shadow: 
-    0 0 0 4px rgba(14, 165, 233, 0.12),
-    0 4px 12px rgba(14, 165, 233, 0.05) !important;
-  background: #ffffff !important;
+    0 0 0 4px rgba(56, 189, 248, 0.15),
+    0 4px 12px rgba(56, 189, 248, 0.05) !important;
+  background: rgba(30, 41, 59, 0.6) !important;
 }
 
 /* Botón Píldora Premium */
@@ -277,7 +280,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: #94a3b8;
   cursor: pointer;
   user-select: none;
 }
@@ -287,7 +290,7 @@ body {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 4px;
   outline: none;
   cursor: pointer;
@@ -295,12 +298,12 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  background: #fff;
+  background: rgba(30, 41, 59, 0.4) !important;
 }
 
 .remember-me-checkbox:checked {
-  background-color: #0ea5e9;
-  border-color: #0ea5e9;
+  background-color: #0ea5e9 !important;
+  border-color: #0ea5e9 !important;
 }
 
 .remember-me-checkbox:checked::after {
@@ -311,13 +314,13 @@ body {
 }
 
 .forgot-password-link {
-  color: #0ea5e9;
+  color: #38bdf8 !important;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .forgot-password-link:hover {
-  color: #2563eb;
+  color: #0ea5e9 !important;
   text-decoration: underline;
 }
 

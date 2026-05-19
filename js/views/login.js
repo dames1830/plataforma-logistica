@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services_v245/auth.js?v=25.1.97';
+import { login as authLogin } from '../services_v245/auth.js?v=25.1.98';
 
 export const renderLogin = (container, onLoginSuccess) => {
   // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
@@ -20,8 +20,8 @@ export const renderLogin = (container, onLoginSuccess) => {
           <path d="M64,80 C64,66 76,60 88,60 C100,60 112,66 112,80 Z" />
           
           <!-- Avatar Centro (Con contorno para lograr el efecto 3D exacto de la referencia) -->
-          <circle cx="60" cy="36" r="18" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
-          <path d="M28,80 C28,62 42,56 60,56 C78,56 92,62 92,80 Z" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
+          <circle cx="60" cy="36" r="18" stroke="var(--avatar-stroke, #ffffff)" stroke-width="4" stroke-linejoin="round" />
+          <path d="M28,80 C28,62 42,56 60,56 C78,56 92,62 92,80 Z" stroke="var(--avatar-stroke, #ffffff)" stroke-width="4" stroke-linejoin="round" />
         </svg>
       </div>
 
