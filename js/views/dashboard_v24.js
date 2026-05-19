@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.84';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.85';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.84';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.84';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.84';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.84';
+import * as adminService from '../services_v245/adminService.js?v=25.1.85';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.85';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.85';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.85';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.84';
+const VERSION = '25.1.85';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4488,7 +4488,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (u.includes('PUMA')) return 'Puma';
           if (u.includes('WEINBRENNER')) return 'Weinbrenner';
           
-          return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+          return str.trim();
       };
 
       // ==========================================
@@ -4546,7 +4546,20 @@ export const renderDashboard = async (container, user, onLogout) => {
           return a.localeCompare(b);
       });
 
-      const sortedBrands = Array.from(uniqueBrands).sort((a, b) => {
+      let brandsToDisplay = [];
+      if (totalSum === 0) {
+          brandsToDisplay = [...brandOrder];
+      } else {
+          brandsToDisplay = Array.from(uniqueBrands).filter(brand => {
+              let brandTotal = 0;
+              sortedDepts.forEach(dept => {
+                  brandTotal += (matrix[brand] && matrix[brand][dept]) || 0;
+              });
+              return brandTotal > 0;
+          });
+      }
+
+      const sortedBrands = brandsToDisplay.sort((a, b) => {
           const idxA = brandOrder.indexOf(a);
           const idxB = brandOrder.indexOf(b);
           if (idxA !== -1 && idxB !== -1) return idxA - idxB;
@@ -4634,11 +4647,10 @@ export const renderDashboard = async (container, user, onLogout) => {
       // ==========================================
       // REPORTE 2: REPORTE ALMACENAJE - GENDER & MARCA (Derecha)
       // ==========================================
-      const secondMatrix = {}; // { area: { dept: { buffer: 0, avance: 0 } } }
-      const thirdMatrix = {};  // { area: { brand: { buffer: 0, avance: 0 } } }
+      const secondMatrix = {}; // { area: { dept: { buffer: 0 } } }
+      const thirdMatrix = {};  // { area: { brand: { buffer: 0 } } }
 
-      // Mapa para registrar la zona activa CDBUFFER de cada SKU según Stock Activo
-      const activeSkuToAreaMap = new Map();
+      // Llenar buffer a partir de Stock Activo (activeRows) únicamente
       activeRows.forEach(row => {
           const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
           let area = '';
@@ -4648,86 +4660,22 @@ export const renderDashboard = async (container, user, onLogout) => {
           else return;
 
           const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
-          if (sku) {
-              activeSkuToAreaMap.set(sku, area);
-              const sku7 = sku.substring(0, 7);
-              if (sku7 && !activeSkuToAreaMap.has(sku7)) {
-                  activeSkuToAreaMap.set(sku7, area);
-              }
-          }
-      });
-
-      // Llenar buffer (Reserva)
-      reserveRows.forEach(row => {
-          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
-          let area = '';
-          if (location.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
-          else if (location.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
-          else if (location.startsWith('CDBUFFER-D')) area = 'CDBUFFER-D';
-          else {
-              // Si la ubicación no empieza con CDBUFFER (p.ej. es racks altos SEL-), buscamos por SKU activo correlacionado
-              const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
-              if (sku) {
-                  area = activeSkuToAreaMap.get(sku) || activeSkuToAreaMap.get(sku.substring(0, 7)) || '';
-              }
-          }
-          if (!area) return;
-
-          const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
           const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
           if (qty <= 0) return;
 
           const sku7 = sku.substring(0, 7);
           const info = articulosMap.get(sku7);
-          const dept = info && info.gGender ? info.gGender : '';
+          const dept = info && info.gGender ? info.gGender.trim().toUpperCase() : 'S/D';
           const rawBrand = info ? info.marca : 'OTROS';
           const brand = formatBrandName(rawBrand);
 
           if (!secondMatrix[area]) secondMatrix[area] = {};
-          if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
+          if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0 };
           secondMatrix[area][dept].buffer += qty;
 
           if (!thirdMatrix[area]) thirdMatrix[area] = {};
-          if (!thirdMatrix[area][brand]) thirdMatrix[area][brand] = { buffer: 0, avance: 0 };
+          if (!thirdMatrix[area][brand]) thirdMatrix[area][brand] = { buffer: 0 };
           thirdMatrix[area][brand].buffer += qty;
-      });
-
-      // Llenar avance (Activo)
-      activeRows.forEach(row => {
-          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
-          let area = '';
-          let isBufferB = false;
-          if (location.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
-          else if (location.startsWith('CDBUFFER-B')) {
-              area = 'CDBUFFER-B';
-              isBufferB = true;
-          }
-          else if (location.startsWith('CDBUFFER-D')) area = 'CDBUFFER-D';
-          else return;
-
-          const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
-          const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
-          if (qty <= 0) return;
-
-          const sku7 = sku.substring(0, 7);
-          const info = articulosMap.get(sku7);
-          const dept = info && info.gGender ? info.gGender : '';
-          const rawBrand = info ? info.marca : 'OTROS';
-          const brand = formatBrandName(rawBrand);
-
-          if (!secondMatrix[area]) secondMatrix[area] = {};
-          if (!secondMatrix[area][dept]) secondMatrix[area][dept] = { buffer: 0, avance: 0 };
-
-          if (!thirdMatrix[area]) thirdMatrix[area] = {};
-          if (!thirdMatrix[area][brand]) thirdMatrix[area][brand] = { buffer: 0, avance: 0 };
-
-          if (isBufferB) {
-              secondMatrix[area][dept].buffer += qty;
-              thirdMatrix[area][brand].buffer += qty;
-          } else {
-              secondMatrix[area][dept].avance += qty;
-              thirdMatrix[area][brand].avance += qty;
-          }
       });
 
       let reporte2HTML = '';
@@ -4748,13 +4696,9 @@ export const renderDashboard = async (container, user, onLogout) => {
       } else {
           const secondDeptOrder = ['03 KIDS', '06 OTHERS', '01 MEN', '05 SCHOOL', '04 SPORT', '02 WOMEN', '08 ACCESORIES', ''];
           let grandBuffer = 0;
-          let grandAvance = 0;
-          let grandPendiente = 0;
 
           const tableRowsHTML = sortedAreas.map(area => {
               let areaBuffer = 0;
-              let areaAvance = 0;
-              let areaPendiente = 0;
 
               const areaGenders = Object.keys(secondMatrix[area]);
               const sortedGenders = areaGenders.sort((a, b) => {
@@ -4769,57 +4713,29 @@ export const renderDashboard = async (container, user, onLogout) => {
               const genderRows = sortedGenders.map(gender => {
                   const data = secondMatrix[area][gender];
                   const buffer = data.buffer;
-                  const avance = data.avance;
-                  const pendiente = Math.max(0, buffer - avance);
 
                   areaBuffer += buffer;
-                  areaAvance += avance;
-                  areaPendiente += pendiente;
-
-                  let pct = 100;
-                  if (buffer > 0) {
-                      pct = Math.round((avance / buffer) * 100);
-                  }
-                  const pctStr = pct >= 100 ? `<span style="color:#22c55e; font-weight:700;">▲</span> 100%` : `${pct}%`;
 
                   return `
                       <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
                           <td style="color: #64748b; font-weight: 600; padding: 5px 10px; font-size: 0.8rem;">${area}</td>
                           <td style="color: #ffffff; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${gender || '<span style="color: #334155;">-</span>'}</td>
                           <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${buffer.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${avance.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pctStr}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pendiente.toLocaleString('en-US')}</td>
                       </tr>
                   `;
               }).join('');
 
               grandBuffer += areaBuffer;
-              grandAvance += areaAvance;
-              grandPendiente += areaPendiente;
-
-              let areaPct = 100;
-              if (areaBuffer > 0) {
-                  areaPct = Math.round((areaAvance / areaBuffer) * 100);
-              }
 
               const subtotalRow = `
                   <tr style="border-bottom: 2px solid rgba(34,211,238,0.3); background: rgba(34, 211, 238, 0.02); font-weight: 700;">
                       <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">Total ${area}</td>
                       <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaBuffer.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaAvance.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPct}%</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPendiente.toLocaleString('en-US')}</td>
                   </tr>
               `;
 
               return genderRows + subtotalRow;
           }).join('');
-
-          let grandPct = 100;
-          if (grandBuffer > 0) {
-              grandPct = Math.round((grandAvance / grandBuffer) * 100);
-          }
 
           const meta = getUploadMeta('recepcion_activo') || {};
           const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
@@ -4847,9 +4763,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                   <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AREA</th>
                                   <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">GENDER</th>
                                   <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">BUFFER</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AVANCE</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">%</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">PENDIENTE</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -4857,9 +4770,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                               <tr style="background: rgba(34, 211, 238, 0.08); border-top: 2px solid #22d3ee; font-weight: 800;">
                                   <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82rem;">TOTAL GENERAL CDBUFFER</td>
                                   <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBuffer.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandAvance.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandPct}%</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandPendiente.toLocaleString('en-US')}</td>
                               </tr>
                           </tbody>
                       </table>
@@ -4872,13 +4782,9 @@ export const renderDashboard = async (container, user, onLogout) => {
           // ==========================================
           const secondBrandOrder = ['Bata', 'Bubblegummers', 'North Star', 'Power', 'Puma', 'Weinbrenner', 'Otros', ''];
           let grandBrandBuffer = 0;
-          let grandBrandAvance = 0;
-          let grandBrandPendiente = 0;
 
           const tableBrandRowsHTML = sortedAreas.map(area => {
               let areaBuffer = 0;
-              let areaAvance = 0;
-              let areaPendiente = 0;
 
               const areaBrands = thirdMatrix[area] ? Object.keys(thirdMatrix[area]) : [];
               const sortedBrands = areaBrands.sort((a, b) => {
@@ -4893,57 +4799,29 @@ export const renderDashboard = async (container, user, onLogout) => {
               const brandRows = sortedBrands.map(brand => {
                   const data = thirdMatrix[area][brand];
                   const buffer = data.buffer;
-                  const avance = data.avance;
-                  const pendiente = Math.max(0, buffer - avance);
 
                   areaBuffer += buffer;
-                  areaAvance += avance;
-                  areaPendiente += pendiente;
-
-                  let pct = 100;
-                  if (buffer > 0) {
-                      pct = Math.round((avance / buffer) * 100);
-                  }
-                  const pctStr = pct >= 100 ? `<span style="color:#22c55e; font-weight:700;">▲</span> 100%` : `${pct}%`;
 
                   return `
                       <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(34,211,238,0.02)'" onmouseout="this.style.background='none'">
                           <td style="color: #64748b; font-weight: 600; padding: 5px 10px; font-size: 0.8rem;">${area}</td>
                           <td style="color: #ffffff; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${brand || '<span style="color: #334155;">-</span>'}</td>
                           <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${buffer.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${avance.toLocaleString('en-US')}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pctStr}</td>
-                          <td style="color: #ffffff; font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${pendiente.toLocaleString('en-US')}</td>
                       </tr>
                   `;
               }).join('');
 
               grandBrandBuffer += areaBuffer;
-              grandBrandAvance += areaAvance;
-              grandBrandPendiente += areaPendiente;
-
-              let areaPct = 100;
-              if (areaBuffer > 0) {
-                  areaPct = Math.round((areaAvance / areaBuffer) * 100);
-              }
 
               const subtotalRow = `
                   <tr style="border-bottom: 2px solid rgba(34,211,238,0.3); background: rgba(34, 211, 238, 0.02); font-weight: 700;">
                       <td colspan="2" style="color: #22d3ee; font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">Total ${area}</td>
                       <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaBuffer.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaAvance.toLocaleString('en-US')}</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPct}%</td>
-                      <td style="color: #22d3ee; font-weight: 700; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${areaPendiente.toLocaleString('en-US')}</td>
                   </tr>
               `;
 
               return brandRows + subtotalRow;
           }).join('');
-
-          let grandBrandPct = 100;
-          if (grandBrandBuffer > 0) {
-              grandBrandPct = Math.round((grandBrandAvance / grandBrandBuffer) * 100);
-          }
 
           reporte3HTML = `
               <div class="glass-panel" style="border: 2px solid #22d3ee; border-radius: 12px; padding: 0.8rem 1.2rem; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
@@ -4968,9 +4846,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                   <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AREA</th>
                                   <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">MARCA</th>
                                   <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">BUFFER</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">AVANCE</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">%</th>
-                                  <th style="color: #22d3ee; font-weight: 700; padding: 6px 10px; text-align: center; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">PENDIENTE</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -4978,9 +4853,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                               <tr style="background: rgba(34, 211, 238, 0.08); border-top: 2px solid #22d3ee; font-weight: 800;">
                                   <td colspan="2" style="color: #ffffff; font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82rem;">TOTAL GENERAL CDBUFFER</td>
                                   <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandBuffer.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandAvance.toLocaleString('en-US')}</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandPct}%</td>
-                                  <td style="color: #22d3ee; font-weight: 800; padding: 6px 10px; text-align: center; font-size: 0.85rem;">${grandBrandPendiente.toLocaleString('en-US')}</td>
                               </tr>
                           </tbody>
                       </table>
@@ -5564,7 +5436,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
-  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.84) ---
+  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.85) ---
   const MOCK_DESCARGA_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><line x1="50" y1="50" x2="350" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="50" y1="50" x2="50" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="350" y1="50" x2="350" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><path d="M 200,100 L 260,130 L 260,200 L 200,230 L 140,200 L 140,130 Z" fill="%23f59e0b" opacity="0.95"/><path d="M 200,100 L 200,230" stroke="%2378350f" stroke-width="2"/><path d="M 200,100 L 260,130 M 200,100 L 140,130" stroke="%2378350f" stroke-width="2"/><path d="M 140,130 L 200,160 L 260,130" stroke="%2378350f" stroke-width="2"/><polygon points="170,155 190,165 190,175 170,165" fill="%23fff" opacity="0.9"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">📦 DESCARGA TIENDA OK</text></svg>`;
 
   const MOCK_CARGO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><rect x="120" y="40" width="160" height="220" rx="4" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><line x1="140" y1="70" x2="260" y2="70" stroke="%233b82f6" stroke-width="4"/><line x1="140" y1="100" x2="260" y2="100" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="120" x2="240" y2="120" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="140" x2="250" y2="140" stroke="%2394a3b8" stroke-width="2"/><circle cx="230" cy="190" r="22" fill="none" stroke="%23ef4444" stroke-width="3" stroke-dasharray="3,1"/><text x="230" y="194" fill="%23ef4444" font-family="sans-serif" font-size="8" font-weight="900" text-anchor="middle">RECIBIDO</text><path d="M 140,210 Q 155,190 170,210 T 200,210" fill="none" stroke="%231e3a8a" stroke-width="2" stroke-linecap="round"/><line x1="135" y1="215" x2="205" y2="215" stroke="%23475569" stroke-width="1"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">✍️ CARGO FIRMADO OK</text></svg>`;
