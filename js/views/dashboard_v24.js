@@ -7103,16 +7103,32 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
                                 <tr style="color:#a855f7; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #a855f7;">
-                                    <th style="padding:6px 8px; text-align:left;">OPERARIO</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 100px;">CANTIDAD</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 80px;">TAREAS</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 100px;">1ra TAREA</th>
+                                    <th style="padding:6px 8px; text-align:left;">FECHA</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 80px;">TURNO</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 90px;">N° OPERARIOS</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 100px;">QTY TOTAL</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 90px;">QTY TAREAS</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 100px;">PRIMERA TAREA</th>
                                     <th style="padding:6px 8px; text-align:center; width: 100px;">ÚLTIMA TAREA</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 110px;">PROMEDIO/TAREA</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${(() => {
-                                    const operatorStats = {};
+                                    const shiftStats = {};
+                                    const workers = adminService.getWorkers() || [];
+
+                                    const findWorkerByUsername = (username) => {
+                                        if (!username || username === '---') return null;
+                                        const cleanUsername = String(username).trim().toLowerCase();
+                                        return workers.find(w => {
+                                            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+                                            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+                                            const formatStr = nom ? `${nom[0]}${ape}` : '';
+                                            return formatStr === cleanUsername;
+                                        });
+                                    };
+
                                     const filteredTasks = tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate);
 
                                     filteredTasks.forEach(t => {
@@ -7125,10 +7141,22 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                     ? (idx === 0 ? Math.ceil(t.qty / 2) : Math.floor(t.qty / 2)) 
                                                     : t.qty;
                                                 
-                                                const username = String(user).trim().toUpperCase();
-                                                if (!operatorStats[username]) {
-                                                    operatorStats[username] = {
-                                                        name: username,
+                                                const username = String(user).trim().toLowerCase();
+                                                const worker = findWorkerByUsername(username);
+                                                
+                                                let shift = 'DÍA';
+                                                if (worker) {
+                                                    const wTurno = String(worker.turno || worker.Turno || '').trim().toUpperCase();
+                                                    if (wTurno === 'NOCHE') shift = 'NOCHE';
+                                                    else if (wTurno === 'DIA' || wTurno === 'DÍA') shift = 'DÍA';
+                                                }
+                                                
+                                                const groupKey = `${t.fecha}_${shift}`;
+                                                if (!shiftStats[groupKey]) {
+                                                    shiftStats[groupKey] = {
+                                                        fecha: t.fecha,
+                                                        turno: shift,
+                                                        operators: new Set(),
                                                         totalQty: 0,
                                                         taskCount: 0,
                                                         firstStart: null,
@@ -7136,42 +7164,48 @@ export const renderDashboard = async (container, user, onLogout) => {
                                                     };
                                                 }
                                                 
-                                                operatorStats[username].totalQty += qtyForThisUser;
-                                                operatorStats[username].taskCount += 1;
+                                                shiftStats[groupKey].operators.add(username);
+                                                shiftStats[groupKey].totalQty += qtyForThisUser;
+                                                shiftStats[groupKey].taskCount += 1;
                                                 
                                                 if (t.inicio) {
                                                     const sTime = new Date(t.inicio);
-                                                    if (!operatorStats[username].firstStart || sTime < operatorStats[username].firstStart) {
-                                                        operatorStats[username].firstStart = sTime;
+                                                    if (!shiftStats[groupKey].firstStart || sTime < shiftStats[groupKey].firstStart) {
+                                                        shiftStats[groupKey].firstStart = sTime;
                                                     }
                                                 }
                                                 if (t.termino) {
                                                     const eTime = new Date(t.termino);
-                                                    if (!operatorStats[username].lastEnd || eTime > operatorStats[username].lastEnd) {
-                                                        operatorStats[username].lastEnd = eTime;
+                                                    if (!shiftStats[groupKey].lastEnd || eTime > shiftStats[groupKey].lastEnd) {
+                                                        shiftStats[groupKey].lastEnd = eTime;
                                                     }
                                                 }
                                             });
                                         }
                                     });
 
-                                    const operatorRows = Object.values(operatorStats)
-                                        .sort((a, b) => b.totalQty - a.totalQty);
+                                    const sortedGroupRows = Object.values(shiftStats)
+                                        .sort((a, b) => b.fecha.localeCompare(a.fecha) || a.turno.localeCompare(b.turno));
 
-                                    if (operatorRows.length === 0) {
-                                        return `<tr><td colspan="5" style="padding:3rem; text-align:center; color:rgba(168, 85, 247, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
+                                    if (sortedGroupRows.length === 0) {
+                                        return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(168, 85, 247, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
                                     }
 
-                                    return operatorRows.map(op => {
-                                        const startStr = op.firstStart ? op.firstStart.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '---';
-                                        const endStr = op.lastEnd ? op.lastEnd.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '---';
+                                    return sortedGroupRows.map(row => {
+                                        const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '---';
+                                        const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '---';
+                                        const avgQty = row.taskCount > 0 ? Math.round(row.totalQty / row.taskCount) : 0;
+                                        const displayDate = row.fecha ? row.fecha.split('-').reverse().join('/') : '---';
                                         return `
                                             <tr style="border-bottom: 1px solid rgba(168, 85, 247, 0.08); background:#000000;">
-                                                <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; text-transform:uppercase;">${op.name}</b></td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${op.totalQty.toLocaleString()}</td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#a855f7; font-size:0.8rem;">${op.taskCount}</td>
-                                                <td style="padding:5px 6px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${startStr}</td>
-                                                <td style="padding:5px 6px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${endStr}</td>
+                                                <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${displayDate}</td>
+                                                <td style="padding:6px 8px; text-align:center;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(168,85,247,0.2)' : 'rgba(234,179,8,0.2)'}; color:${row.turno === 'NOCHE' ? '#c084fc' : '#fef08a'}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800;">${row.turno}</span></td>
+                                                <td style="padding:6px 8px; text-align:center; font-weight:800; color:#ffffff;">${row.operators.size}</td>
+                                                <td style="padding:6px 8px; text-align:center; font-weight:700; color:#ffffff;">${row.totalQty.toLocaleString()}</td>
+                                                <td style="padding:6px 8px; text-align:center; font-weight:700; color:#a855f7;">${row.taskCount}</td>
+                                                <td style="padding:6px 8px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${startStr}</td>
+                                                <td style="padding:6px 8px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${endStr}</td>
+                                                <td style="padding:6px 8px; text-align:center; font-weight:800; color:#38bdf8;">${avgQty.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     }).join('');
