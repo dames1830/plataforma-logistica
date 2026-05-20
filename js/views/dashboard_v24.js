@@ -147,7 +147,35 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.99';
+// --- SOBREESCRITURA GLOBAL DE ALERTA PARA USAR EL MODAL PREMIUM ---
+window.alert = function(message) {
+    let type = 'warning';
+    let title = 'ATENCIÓN';
+    let cleanMessage = String(message || '');
+
+    if (cleanMessage.includes('✅')) {
+        type = 'success';
+        title = '¡ÉXITO!';
+        cleanMessage = cleanMessage.replace(/✅/g, '').trim();
+    } else if (cleanMessage.includes('❌') || cleanMessage.includes('🚨') || cleanMessage.toLowerCase().includes('error')) {
+        type = 'error';
+        title = 'ERROR';
+        cleanMessage = cleanMessage.replace(/[❌🚨]/g, '').trim();
+    } else if (cleanMessage.includes('⚠️') || cleanMessage.includes('🚧') || cleanMessage.includes('🏗️')) {
+        type = 'warning';
+        title = 'ADVERTENCIA';
+        cleanMessage = cleanMessage.replace(/[⚠️🚧🏗️]/g, '').trim();
+    } else if (cleanMessage.includes('📦') || cleanMessage.includes('📡') || cleanMessage.includes('☁️') || cleanMessage.includes('🔒')) {
+        type = 'info';
+        title = 'INFORMACIÓN';
+        cleanMessage = cleanMessage.replace(/[📦📡☁️🔒]/g, '').trim();
+    }
+
+    cleanMessage = cleanMessage.replace(/^[:!\s\-]+/, '');
+    showPremiumAlert(title, cleanMessage, type);
+};
+
+const VERSION = '25.2.00';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
