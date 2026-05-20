@@ -147,7 +147,7 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
-const VERSION = '25.1.98';
+const VERSION = '25.1.99';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6334,11 +6334,28 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const processAlmacenajeTasks = async (mode = 'update', manualDate = null) => {
+    let progressModal;
     try {
         const stock = await getAreaData('almacenaje_activo');
         const maestro = dataStore.articulos;
         if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
         if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+
+        // --- BARRA DE PROGRESO DE PROCESAMIENTO ---
+        progressModal = document.createElement('div');
+        progressModal.id = "progress_processing_modal";
+        progressModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11, 15, 25, 0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
+        progressModal.innerHTML = `
+            <div class="glass-panel" style="width:360px; padding:2rem; border:1px solid rgba(255,255,255,0.1); border-radius:16px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); text-align:center; background: rgba(15, 23, 42, 0.85); pointer-events:auto !important;">
+                <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.1rem; font-weight:700; letter-spacing:0.5px; font-family:'Inter', sans-serif;">Procesando Tareas</h3>
+                <div style="width:100%; height:8px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden; margin-bottom:1rem; position:relative; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="progress_bar_fill" style="width:0%; height:100%; background:linear-gradient(90deg, #22c55e, #4ade80); border-radius:10px; box-shadow: 0 0 12px rgba(34, 197, 94, 0.5); transition: width 0.1s ease-out;"></div>
+                </div>
+                <div id="progress_percentage" style="color:#22c55e; font-weight:800; font-size:1.1rem; margin-bottom:0.5rem; font-family:'Outfit', sans-serif;">0%</div>
+                <p style="color:#94a3b8; font-size:0.8rem; margin:0; letter-spacing:0.5px; font-family:'Inter', sans-serif;">Generando lote de almacenamiento...</p>
+            </div>
+        `;
+        document.body.appendChild(progressModal);
 
         const logicalDate = manualDate || getLogicalDate();
         almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
@@ -6454,8 +6471,70 @@ export const renderDashboard = async (container, user, onLogout) => {
         const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
         almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
         await saveAlmacenajeTasks(); 
-        renderAlmacenajeTareas(document.getElementById('areaContent') || document.querySelector('.main-content') || document.body);
+
+        // Animar la barra de progreso de 0% a 100% de manera fluida y mostrar el mensaje final
+        let currentPct = 0;
+        const progressFill = progressModal.querySelector('#progress_bar_fill');
+        const progressLabel = progressModal.querySelector('#progress_percentage');
+        
+        const interval = setInterval(() => {
+            currentPct += Math.floor(Math.random() * 15) + 5;
+            if (currentPct >= 100) {
+                currentPct = 100;
+                clearInterval(interval);
+                
+                setTimeout(() => {
+                    if (progressModal && document.body.contains(progressModal)) {
+                        document.body.removeChild(progressModal);
+                    }
+                    
+                    // Renderizar las tareas en la tabla del fondo
+                    const container = document.getElementById('areaContent') || document.querySelector('.main-content') || document.body;
+                    renderAlmacenajeTareas(container);
+                    
+                    // Mostrar modal de éxito
+                    const successModal = document.createElement('div');
+                    successModal.id = "success_processing_modal";
+                    successModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11, 15, 25, 0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
+                    successModal.innerHTML = `
+                        <div class="glass-panel" style="width:400px; padding:2.5rem; border:1px solid rgba(34, 197, 94, 0.3); border-radius:20px; box-shadow: 0 0 40px rgba(34, 197, 94, 0.2); text-align:center; background: rgba(15, 23, 42, 0.95); animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events:auto !important;">
+                            <div style="width:70px; height:70px; background:rgba(34, 197, 94, 0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem auto; border:2px solid rgba(34, 197, 94, 0.3); box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <h3 style="color:#fff; margin:0 0 0.5rem 0; font-size:1.4rem; font-weight:800; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">Proceso Finalizado</h3>
+                            <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:1.5rem; line-height:1.5; letter-spacing:0.3px; font-family:'Inter', sans-serif;">
+                                Se ha finalizado el proceso de las tareas correctamente.<br>
+                                <b style="color:#22c55e; font-size:1rem; display:block; margin-top:8px;">${tasksWithDate.length} tareas creadas</b>
+                            </p>
+                            <button id="btn_success_ok" class="btn" style="width:100%; padding:1rem; font-weight:800; background:linear-gradient(135deg, #22c55e, #10b981); border:none; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); border-radius:12px; color:#fff; cursor:pointer; font-size:0.95rem; letter-spacing:0.5px; transition: all 0.2s; font-family:'Inter', sans-serif;">
+                                ENTENDIDO
+                            </button>
+                        </div>
+                        <style>
+                            @keyframes zoomIn {
+                                from { opacity: 0; transform: scale(0.9); }
+                                to { opacity: 1; transform: scale(1); }
+                            }
+                        </style>
+                    `;
+                    document.body.appendChild(successModal);
+                    successModal.querySelector('#btn_success_ok').onclick = () => {
+                        if (document.body.contains(successModal)) {
+                            document.body.removeChild(successModal);
+                        }
+                    };
+                }, 300);
+            }
+            if (progressFill) progressFill.style.width = currentPct + '%';
+            if (progressLabel) progressLabel.textContent = currentPct + '%';
+        }, 80);
+
     } catch (e) {
+        if (progressModal && document.body.contains(progressModal)) {
+            document.body.removeChild(progressModal);
+        }
         alert("🚨 Error de Cálculo: " + e.message);
     }
   };
