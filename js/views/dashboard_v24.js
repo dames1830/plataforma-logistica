@@ -7070,7 +7070,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             return total > 0;
         });
 
-        activeDates.sort((a, b) => a.localeCompare(b));
+        activeDates.sort((a, b) => b.localeCompare(a));
 
         const formatLogicalDate = (dateStr) => {
             if (!dateStr || dateStr === '---') return '---';
@@ -7271,20 +7271,24 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         });
 
-        if (!window.__chartStartDate && maxDate) {
-            const maxD = new Date(maxDate + 'T00:00:00');
-            const startD = new Date(maxD.getTime() - 14 * 24 * 60 * 60 * 1000);
-            window.__chartStartDate = startD.toISOString().split('T')[0];
-        }
-        if (!window.__chartEndDate && maxDate) {
-            window.__chartEndDate = maxDate;
-        }
-
-        if (!window.__chartStartDate) {
+        if (!window.__chartStartDate || !window.__chartEndDate) {
             const today = new Date();
-            const startD = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-            window.__chartStartDate = startD.toISOString().split('T')[0];
-            window.__chartEndDate = today.toISOString().split('T')[0];
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(today.getTime());
+            monday.setDate(diff);
+            monday.setHours(0,0,0,0);
+            const sunday = new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000);
+            
+            const toYYYYMMDD = (d) => {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
+            
+            window.__chartStartDate = toYYYYMMDD(monday);
+            window.__chartEndDate = toYYYYMMDD(sunday);
         }
 
         const startDate = window.__chartStartDate || '';
@@ -7363,12 +7367,39 @@ export const renderDashboard = async (container, user, onLogout) => {
                     fill: true
                 };
             });
+
+            const averageData = [0, 0, 0, 0, 0, 0, 0];
+            if (displayWeeks.length > 0) {
+                for (let i = 0; i < 7; i++) {
+                    let sum = 0;
+                    displayWeeks.forEach(week => {
+                        sum += chartWeeksData[week][i] || 0;
+                    });
+                    averageData[i] = Math.round(sum / displayWeeks.length);
+                }
+                
+                datasets.push({
+                    label: 'Promedio',
+                    data: averageData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    pointBackgroundColor: '#ef4444',
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.35,
+                    fill: false
+                });
+            }
             
             const datalabelsPlugin = {
                 id: 'datalabels',
                 afterDatasetsDraw(chart) {
                     const ctx = chart.ctx;
                     chart.data.datasets.forEach((dataset, i) => {
+                        if (dataset.label === 'Promedio') return;
                         const meta = chart.getDatasetMeta(i);
                         if (meta.hidden) return;
                         meta.data.forEach((point, index) => {
@@ -8264,7 +8295,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     }
 
                                     const avgQty = row.taskCount > 0 ? Math.round(row.totalQty / row.taskCount) : 0;
-                                    const displayDate = row.fecha ? row.fecha.split('-').reverse().join('/') : '---';
+                                    const displayDate = (() => {
+                                        if (!row.fecha) return '---';
+                                        const parts = row.fecha.split('-');
+                                        if (parts.length !== 3) return row.fecha;
+                                        return `${parts[2]}/${parts[1]}`;
+                                    })();
                                     return `
                                         <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
                                             <td style="padding:6px 4px; color:#ffffff; font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
