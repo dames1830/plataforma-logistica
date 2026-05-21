@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.02';
+const VERSION = '25.2.03';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1287,7 +1287,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const hasData = matrix && matrix.rows && matrix.rows.length > 0;
     
     const brandAlias = (name) => {
-        if (name === 'Bubblegummers Licenses') return 'BG Licenses';
+        if (name === 'Bubblegummers Licenses') return 'BG. Licenses';
         if (name === 'Bubblegummers') return 'BG';
         if (name === 'Bata Industrials') return 'Industrials';
         return name;
@@ -6908,6 +6908,27 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   window.renderAlmacenajeTareas = (container) => {
+    window.__almacenajeContainer = container;
+    
+    // Global helper for toggling chart weeks
+    window.toggleChartWeek = (week) => {
+        if (!window.__chartSelectedWeeks) window.__chartSelectedWeeks = [];
+        const idx = window.__chartSelectedWeeks.indexOf(week);
+        if (idx > -1) {
+            if (window.__chartSelectedWeeks.length > 1) {
+                window.__chartSelectedWeeks.splice(idx, 1);
+            } else {
+                window.showPremiumAlert("MÍNIMO DE SELECCIÓN", "Debe haber al menos una semana seleccionada.", "warning");
+                return;
+            }
+        } else {
+            window.__chartSelectedWeeks.push(week);
+        }
+        if (window.__almacenajeContainer) {
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+        }
+    };
+
     const renderAlmacenajeTareas = window.renderAlmacenajeTareas; // Local alias for internal calls
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
@@ -7082,7 +7103,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${formatLogicalDate(dateKey)}</td>
                                     ${targetHours.map(hr => {
                                         const qty = rowData[hr];
-                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.15)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
                                     <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-weight:900; background:rgba(0, 229, 255, 0.05);">${rowTotal.toLocaleString()}</td>
                                 </tr>
@@ -7113,7 +7134,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             const weekStr = getWeekStr(t.fecha);
             if (weekStr === '---') return;
             
-            const brand = String(t.marca || 'S/M').trim();
+            let brand = String(t.marca || 'S/M').trim();
+            if (brand === 'Bubblegummers Licenses') brand = 'BG. Licenses';
+            if (brand === 'Bubblegummers') brand = 'BG';
+            
             allBrandsSet.add(brand);
             
             if (!weeklyBrandData[weekStr]) {
@@ -7182,10 +7206,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                             const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
                             return `
                                 <tr style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000;">
-                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${w}</td>
+                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">${w}</td>
                                     ${sortedBrands.map(b => {
                                         const qty = rowData[b] || 0;
-                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.15)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
                                     <td style="padding:6px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.05);">${rowTotal.toLocaleString()}</td>
                                 </tr>
@@ -7250,7 +7274,45 @@ export const renderDashboard = async (container, user, onLogout) => {
             return getVal(a) - getVal(b);
         });
 
-        const displayWeeks = activeWeeks.slice(-4);
+        // Ensure selected weeks are valid
+        window.__chartSelectedWeeks = (window.__chartSelectedWeeks || []).filter(w => activeWeeks.includes(w));
+        if (window.__chartSelectedWeeks.length === 0) {
+            window.__chartSelectedWeeks = activeWeeks.slice(-4);
+        }
+
+        const displayWeeks = [...window.__chartSelectedWeeks].sort((a, b) => {
+            const getVal = (s) => {
+                const m = s.match(/Semana (\d+) \((\d+)\)/);
+                if (!m) return 0;
+                return parseInt(m[2]) * 100 + parseInt(m[1]);
+            };
+            return getVal(a) - getVal(b);
+        });
+
+        const filterWeeks = activeWeeks.slice(-8); // Show up to the last 8 weeks for selection
+        const pillsHTML = filterWeeks.map(week => {
+            const isSelected = window.__chartSelectedWeeks.includes(week);
+            const bg = isSelected ? 'rgba(234, 179, 8, 0.25)' : 'rgba(255, 255, 255, 0.05)';
+            const border = isSelected ? '1px solid #eab308' : '1px solid rgba(255, 255, 255, 0.15)';
+            const textColor = isSelected ? '#fef08a' : '#94a3b8';
+            return `
+                <button onclick="window.toggleChartWeek('${week}')" style="
+                    background: ${bg};
+                    border: ${border};
+                    color: ${textColor};
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    font-family: 'Inter', sans-serif;
+                    box-shadow: ${isSelected ? '0 0 10px rgba(234, 179, 8, 0.2)' : 'none'};
+                " onmouseover="this.style.transform='translateY(-1px)';" onmouseout="this.style.transform='translateY(0)';">
+                    ${week}
+                </button>
+            `;
+        }).join('');
         
         const chartColors = [
             { border: '#00E5FF', bg: 'rgba(0, 229, 255, 0.1)' },
@@ -7359,12 +7421,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         return `
         <!-- GRÁFICO POR SEMANA Y DÍA -->
         <div style="background:#000000; border:2px solid #eab308; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(234,179,8,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid #eab308; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                <h3 style="color:#fef08a; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                    GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
-                </h3>
-                <div style="font-size:0.68rem; color:rgba(234, 179, 8, 0.6); font-weight:700; letter-spacing:0.5px;">
-                    TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A DOMINGO)
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(234,179,8,0.15); padding-bottom:8px;">
+                <div style="border-left: 4px solid #eab308; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                    <h3 style="color:#fef08a; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                        GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
+                    </h3>
+                    <div style="font-size:0.68rem; color:rgba(234, 179, 8, 0.6); font-weight:700; letter-spacing:0.5px;">
+                        TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A DOMINGO)
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">SEMANAS:</span>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        ${pillsHTML}
+                    </div>
                 </div>
             </div>
             <div style="position:relative; width:100%; height:250px; margin-top:0.5rem;">
