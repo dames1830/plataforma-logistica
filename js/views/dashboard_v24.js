@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.05';
+const VERSION = '25.2.06';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7048,9 +7048,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         tasksList.forEach(t => {
             if (t.status !== 'Finalizado') return;
-            if (!t.inicio) return;
+            if (!t.termino) return;
             
-            const dateObj = new Date(t.inicio);
+            const dateObj = new Date(t.termino);
             const hr = dateObj.getHours();
             if (!targetHours.includes(hr)) return;
             
@@ -7090,7 +7090,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     REPORTE DE PRODUCCIÓN POR HORA
                 </h3>
                 <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                    CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (INICIO DE TAREA)
+                    CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
@@ -7377,7 +7377,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             
                             ctx.save();
                             ctx.fillStyle = dataset.borderColor || '#ffffff';
-                            ctx.font = 'bold 9.5px "Inter", sans-serif';
+                            ctx.font = 'bold 11px "Inter", sans-serif';
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'bottom';
                             
@@ -7660,14 +7660,14 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                                 indRows.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.user.localeCompare(b.user));
 
-                                // --- PAGINACIÓN 20 por página ---
+                                // --- PAGINACIÓN 10 por página ---
                                 if (window.__kpiLastDate !== (selectedTaskDate||'')) { window.__kpiPage = 0; window.__kpiLastDate = selectedTaskDate||''; }
                                 if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__kpiLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _pg = window.__kpiPage || 0;
-                                const _ptot = Math.ceil(indRows.length / 20);
+                                const _ptot = Math.ceil(indRows.length / 10);
                                 window.__kpiTotalPages = _ptot;
                                 window.__kpiTotalRows = indRows.length;
-                                const pagedRows = indRows.slice(_pg * 20, (_pg + 1) * 20);
+                                const pagedRows = indRows.slice(_pg * 10, (_pg + 1) * 10);
 
                                 return pagedRows.map(r => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
@@ -7767,10 +7767,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 if (window.__accLastDate !== (selectedTaskDate||'')) { window.__accPage=0; window.__accLastDate=selectedTaskDate||''; }
                                 if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__accLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _apg = window.__accPage||0;
-                                const _aptot = Math.ceil(rows.length/20);
+                                const _aptot = Math.ceil(rows.length/10);
                                 window.__accTotalPages = _aptot;
                                 window.__accTotalRows = rows.length;
-                                const accPagedRows = rows.slice(_apg*20, (_apg+1)*20);
+                                const accPagedRows = rows.slice(_apg*10, (_apg+1)*10);
                                 const maxQty = Math.max(...rows.map(r=>r.qty),1);
                                 return accPagedRows.map(r => {
                                     const uph = r.mins>0?(r.qty/r.mins*60):0;
@@ -7858,14 +7858,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 if (window.__rkLastDate !== (selectedTaskDate||'')) { window.__rkPage=0; window.__rkLastDate=selectedTaskDate||''; }
                                 if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__rkLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _rpg = window.__rkPage||0;
-                                const _rptot = Math.ceil(rows.length/20);
+                                const _rptot = Math.ceil(rows.length/10);
                                 window.__rkTotalPages = _rptot;
                                 window.__rkTotalRows = rows.length;
-                                const rkPagedRows = rows.slice(_rpg*20, (_rpg+1)*20);
+                                const rkPagedRows = rows.slice(_rpg*10, (_rpg+1)*10);
                                 const maxUph = Math.max(...rows.map(r=>r.avgUph),1);
                                 const medals = ['🥇','🥈','🥉'];
                                 return rkPagedRows.map((r,i) => {
-                                    const globalIdx = _rpg*20+i;
+                                    const globalIdx = _rpg*10+i;
                                     const pct = Math.round(r.avgUph/150*100);
                                     const uphColor = r.avgUph>=150?'#22c55e':r.avgUph>=100?'#f59e0b':'#ef4444';
                                     const barPct = Math.min(Math.round(r.avgUph/maxUph*100),100);
