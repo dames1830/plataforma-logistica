@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.07';
+const VERSION = '25.2.08';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7370,26 +7370,29 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             const averageData = [0, 0, 0, 0, 0, 0, 0];
             if (displayWeeks.length > 0) {
-                for (let i = 0; i < 7; i++) {
-                    let sum = 0;
-                    displayWeeks.forEach(week => {
-                        sum += chartWeeksData[week][i] || 0;
+                let totalSum = 0;
+                let totalDays = 0;
+                displayWeeks.forEach(week => {
+                    chartWeeksData[week].forEach(val => {
+                        totalSum += val || 0;
+                        totalDays++;
                     });
-                    averageData[i] = Math.round(sum / displayWeeks.length);
+                });
+                const overallAverage = totalDays > 0 ? Math.round(totalSum / totalDays) : 0;
+                for (let i = 0; i < 7; i++) {
+                    averageData[i] = overallAverage;
                 }
                 
                 datasets.push({
                     label: 'Promedio',
                     data: averageData,
                     borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                    backgroundColor: 'transparent',
                     borderWidth: 3,
-                    borderDash: [5, 5],
-                    pointBackgroundColor: '#ef4444',
-                    pointBorderColor: '#ffffff',
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    tension: 0.35,
+                    borderDash: [8, 4],
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    tension: 0,
                     fill: false
                 });
             }
