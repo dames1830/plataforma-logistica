@@ -370,6 +370,8 @@ let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen'
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 if (!window.__almacenajeStartDate) window.__almacenajeStartDate = getLogicalDate();
 if (!window.__almacenajeEndDate) window.__almacenajeEndDate = getLogicalDate();
+if (!window.__kpiStartDate) window.__kpiStartDate = getLogicalDate();
+if (!window.__kpiEndDate) window.__kpiEndDate = getLogicalDate();
 let expandedWeeks = []; // Semanas expandidas en el historial
 let almacenajeTasksCache = [];
 try {
@@ -6995,6 +6997,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
+    window.setKpiDateRange = (start, end) => {
+        if (start !== null) window.__kpiStartDate = start;
+        if (end !== null) window.__kpiEndDate = end;
+        if (window.__almacenajeContainer) {
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+        }
+    };
+
     const renderAlmacenajeTareas = window.renderAlmacenajeTareas; // Local alias for internal calls
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
@@ -7715,9 +7725,22 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
             ` : `
-            <div style="flex:1; display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
                 <h4 style="margin:0; color:var(--primary); font-size:0.8rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;">📊 Panel de Rendimiento Individual</h4>
-                <div style="display:flex; gap:12px; align-items:center;">
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                    <!-- RANGO DE FECHAS DE : HASTA PARA KPI -->
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+                            <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
+                            <input type="date" id="kpiStartDateInput" value="${window.__kpiStartDate}" onchange="window.setKpiDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                        </div>
+                        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+                            <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
+                            <input type="date" id="kpiEndDateInput" value="${window.__kpiEndDate}" onchange="window.setKpiDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                        </div>
+                    </div>
                     <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                         🔄
                     </button>
@@ -7738,7 +7761,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
                         📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                     </h3>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${window.__almacenajeStartDate.split('-').reverse().join('/')} AL ${window.__almacenajeEndDate.split('-').reverse().join('/')}</div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
                 </div>
                 
                 <div style="overflow-x:auto;">
@@ -7758,7 +7781,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tbody>
                             ${(() => {
                                 const indRows = [];
-                                tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).forEach(t => {
+                                tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate).forEach(t => {
                                     if (t.status !== 'Finalizado') return;
 
                                     let timeStr = '--:--';
@@ -7824,7 +7847,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 indRows.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.user.localeCompare(b.user));
 
                                 // --- PAGINACIÓN 10 por página ---
-                                const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+                                const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__kpiLastDate !== rangeKey) { window.__kpiPage = 0; window.__kpiLastDate = rangeKey; }
                                 if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _pg = window.__kpiPage || 0;
@@ -7887,7 +7910,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <h3 style="color:#f59e0b; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📅 ACUMULADO POR DÍA × USUARIO</h3>
                         <div style="font-size:0.68rem; color:rgba(245,158,11,0.55); font-weight:600;">Suma de unidades por operador por jornada — incluye todas las tareas del día</div>
                     </div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${window.__almacenajeStartDate.split('-').reverse().join('/')} AL ${window.__almacenajeEndDate.split('-').reverse().join('/')}</div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
                 </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
@@ -7906,7 +7929,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tbody>
                             ${(() => {
                                 const accMap = new Map();
-                                tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate && t.status === 'Finalizado').forEach(t => {
+                                tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate && t.status === 'Finalizado').forEach(t => {
                                     let mins = 0;
                                     if (t.inicio && t.termino) {
                                         const s = new Date(t.inicio); let e = new Date(t.termino);
@@ -7928,7 +7951,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
                                 // --- PAGINACIÓN ACUMULADO ---
-                                const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+                                const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__accLastDate !== rangeKey) { window.__accPage=0; window.__accLastDate=rangeKey; }
                                 if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _apg = window.__accPage||0;
@@ -7996,7 +8019,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tbody>
                             ${(() => {
                                 const uMap = new Map();
-                                tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate && t.status === 'Finalizado').forEach(t => {
+                                tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate && t.status === 'Finalizado').forEach(t => {
                                     let mins = 0;
                                     if (t.inicio && t.termino) {
                                         const s = new Date(t.inicio); let e = new Date(t.termino);
@@ -8020,7 +8043,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     .sort((a,b)=>b.avgUph-a.avgUph);
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos de velocidad para mostrar.</td></tr>`;
                                 // --- PAGINACIÓN RANKING ---
-                                const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+                                const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__rkLastDate !== rangeKey) { window.__rkPage=0; window.__rkLastDate = rangeKey; }
                                 if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _rpg = window.__rkPage||0;
@@ -8078,8 +8101,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
                                 SYNC_ID: ${(() => {
                                     const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                    const startStr = window.__almacenajeStartDate.split('-').reverse().join('/');
-                                    const endStr = window.__almacenajeEndDate.split('-').reverse().join('/');
+                                    const startStr = window.__kpiStartDate.split('-').reverse().join('/');
+                                    const endStr = window.__kpiEndDate.split('-').reverse().join('/');
                                     const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
                                     return `${syncDateStr} ${syncTimeStr}`;
                                 })()}
@@ -8105,7 +8128,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <tbody>
                                 ${(() => {
                                     const brandGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
 
                                     filteredTasks.forEach(t => {
                                         (t.items || []).forEach(art => {
