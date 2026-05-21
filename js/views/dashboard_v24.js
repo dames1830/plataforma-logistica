@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.13';
+const VERSION = '25.2.14';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7591,13 +7591,26 @@ export const renderDashboard = async (container, user, onLogout) => {
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleColor: '#00E5FF',
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#fef08a',
                             bodyColor: '#ffffff',
-                            borderColor: '#38bdf8',
-                            borderWidth: 1,
-                            titleFont: { family: "'Outfit', sans-serif", weight: 'bold' },
-                            bodyFont: { family: "'Inter', sans-serif" }
+                            borderColor: '#eab308',
+                            borderWidth: 1.5,
+                            titleFont: { family: "'Outfit', sans-serif", weight: '900', size: 13 },
+                            bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                            padding: 12,
+                            cornerRadius: 10,
+                            boxPadding: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    const val = context.parsed.y;
+                                    if (val !== null && val !== undefined) {
+                                        return ` ${label}: ${val.toLocaleString()}`;
+                                    }
+                                    return ` ${label}`;
+                                }
+                            }
                         }
                     },
                     scales: {
