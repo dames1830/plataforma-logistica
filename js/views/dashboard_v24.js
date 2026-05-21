@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.09';
+const VERSION = '25.2.10';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -816,6 +816,23 @@ window.downloadExcelDetail = async () => {
 
 window.downloadExcelZonas = () => {
     alert("⚠️ Este reporte ahora está integrado en 'EXCEL DETALLE'.");
+};
+
+const formatDateTime = (isoStr) => {
+    if (!isoStr || isoStr === '---' || isoStr === 'null') return '---';
+    try {
+        const date = new Date(isoStr);
+        if (isNaN(date.getTime())) return isoStr;
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        const hh = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        const ss = String(date.getSeconds()).padStart(2, '0');
+        return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+    } catch (e) {
+        return isoStr;
+    }
 };
 
 export const renderDashboard = async (container, user, onLogout) => {
@@ -6645,12 +6662,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
             const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
             accs.forEach(a => {
-                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], creador: user.username, fechaProcesado: new Date().toISOString() });
             });
             const bigNormals = normals.filter(a => a.bufferQty >= 300);
             const smallNormals = normals.filter(a => a.bufferQty < 300);
             bigNormals.forEach(a => {
-                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a] });
+                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], creador: user.username, fechaProcesado: new Date().toISOString() });
             });
             let currentGroup = [];
             let currentBufferQty = 0;
@@ -6658,7 +6675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 currentGroup.push(art);
                 currentBufferQty += art.bufferQty;
                 if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
-                    finalTasks.push({ id: getNextFreeId(), marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup] });
+                    finalTasks.push({ id: getNextFreeId(), marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup], creador: user.username, fechaProcesado: new Date().toISOString() });
                     currentGroup = [];
                     currentBufferQty = 0;
                 }
@@ -6750,155 +6767,186 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         updateSyncIndicator('working', 'GENERANDO EXCEL...');
         const workbook = new ExcelJS.Workbook();
-    const ws = workbook.addWorksheet('Tareas Día', {
-        properties: { tabColor: { argb: 'FF4F46E5' } },
-        pageSetup: { 
-            margins: { left: 0, right: 0, top: 0.5, bottom: 0, header: 0.3, footer: 0 },
-            fitToPage: true,
-            fitToWidth: 1,
-            fitToHeight: 0,
-            printTitlesRow: '1:6'
-        }
-    });
-
-    // Poner N° página en el centro de la cabecera
-    ws.headerFooter = {
-        oddHeader: "&C Página &P de &N",
-        evenHeader: "&C Página &P de &N"
-    };
-
-    // 7. Configurar anchos de columna
-    ws.columns = [
-        { key: 'articulo', width: 20.50 }, // A
-        { key: 'ubicacion', width: 26.00 }, // B
-        { key: 'sku', width: 20.50 },      // C
-        { key: 'tallas', width: 7.00 },     // D
-        { key: 'marcas', width: 20.50 },    // E
-        { key: 'gender', width: 18.00 },    // F
-        { key: 'coleccion', width: 16.00 }, // G
-        { key: 'qty_buffer', width: 13.60 },// H
-        { key: 'qty_zona', width: 14.29 },  // I
-        { key: 'tareas', width: 14.29 }     // J
-    ];
-
-    // 3. Toda la pestaña en fuente 16
-    ws.eachRow((row) => {
-        row.font = { size: 16, name: 'Calibri' };
-    });
-
-    // 1. Crear 5 filas (implícito al empezar en la 6 para el header)
-    ws.getCell('A2').value = 'Nombres';
-    ws.getCell('A3').value = 'Hora Inicio';
-    ws.getCell('A4').value = 'Hora Término';
-    ws.getCell('A5').value = new Date().toLocaleString('es-ES');
-
-    // Altura 30.00 y alineación en el medio para filas 2, 3, 4
-    [2, 3, 4].forEach(rowNum => {
-        const row = ws.getRow(rowNum);
-        row.height = 30.00;
-        for (let col = 1; col <= 10; col++) {
-            row.getCell(col).alignment = { vertical: 'middle', horizontal: 'left' };
-        }
-    });
-
-    // Estilo para las etiquetas de cabecera
-    ['A2', 'A3', 'A4'].forEach(cellId => {
-        const cell = ws.getCell(cellId);
-        cell.font = { size: 16, bold: true, name: 'Calibri' };
-    });
-    
-    // A5: Solo fecha/hora, fuente 10, gris oscuro
-    const cellA5 = ws.getCell('A5');
-    cellA5.font = { size: 10, color: { argb: 'FF555555' }, name: 'Calibri' };
-
-    // 2. Fila 6 Columnas A hasta la J, Fondo Negro, texto blanco en negrita
-    const headerRow = ws.getRow(6);
-    headerRow.values = ["Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", "Qty Buffer", "Qty Zona", "Tareas"];
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
-    headerRow.eachCell((cell) => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
-        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-        cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    });
-
-    // Preparar datos
-    const dataRows = [];
-    almacenajeTasksCache.forEach(task => {
-        // Filtrar tareas por fecha seleccionada si existe
-        if (selectedTaskDate && task.fecha !== selectedTaskDate) return;
-        if (!task.items || !Array.isArray(task.items)) return;
-
-        task.items.forEach(art => {
-            const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
-            
-            // CDBUFFER Rows (Buffer)
-            const bufferRows = (art.items || []).filter(i => i.ubi && String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
-            // ZONA Rows (Picking, Rack, etc.)
-            const zonaRows = (art.items || []).filter(i => !i.ubi || !String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
-
-            // Ordenamiento por SKU / Talla para mantener consistencia visual
-            const sortBySku = (a, b) => {
-                const skuA = String(a.skuFull || a.sku || '');
-                const skuB = String(b.skuFull || b.sku || '');
-                return skuA.localeCompare(skuB);
-            };
-            bufferRows.sort(sortBySku);
-            zonaRows.sort(sortBySku);
-
-            // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía)
-            bufferRows.forEach(i => {
-                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, i.qty, "", task.id]);
-            });
-            // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra)
-            zonaRows.forEach(i => {
-                dataRows.push([art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, "", i.qty, task.id]);
-            });
-            // Subtotal
-            dataRows.push([`Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, task.id]);
+        const ws = workbook.addWorksheet('Tareas Día', {
+            properties: { tabColor: { argb: 'FF4F46E5' } },
+            pageSetup: { 
+                margins: { left: 0, right: 0, top: 0.5, bottom: 0, header: 0.3, footer: 0 },
+                fitToPage: true,
+                fitToWidth: 1,
+                fitToHeight: 0,
+                printTitlesRow: '1:6'
+            }
         });
-    });
 
-    // Agregar filas de datos a partir de la fila 7
-    dataRows.forEach((rowData) => {
-        const row = ws.addRow(rowData);
-        row.font = { size: 16, name: 'Calibri' };
+        // Poner N° página en el centro de la cabecera
+        ws.headerFooter = {
+            oddHeader: "&C Página &P de &N",
+            evenHeader: "&C Página &P de &N"
+        };
+
+        // 7. Configurar anchos de columna (16 columnas en total: A a P)
+        ws.columns = [
+            { key: 'articulo', width: 20.50 }, // A
+            { key: 'ubicacion', width: 26.00 }, // B
+            { key: 'sku', width: 20.50 },      // C
+            { key: 'tallas', width: 10.00 },    // D
+            { key: 'marcas', width: 20.50 },    // E
+            { key: 'gender', width: 18.00 },    // F
+            { key: 'coleccion', width: 16.00 }, // G
+            { key: 'qty_buffer', width: 13.60 },// H
+            { key: 'qty_zona', width: 14.29 },  // I
+            { key: 'avance', width: 14.29 },    // J (Avance)
+            { key: 'tareas', width: 15.00 },    // K (Tareas / ID)
+            { key: 'creador', width: 20.00 },   // L (Usuario Creación)
+            { key: 'f_procesado', width: 22.00 }, // M (F. Procesado)
+            { key: 'f_asignado', width: 22.00 }, // N (F. Asignado)
+            { key: 'f_finalizado', width: 22.00 }, // O (F. Finalizado)
+            { key: 'status', width: 15.00 }     // P (Status)
+        ];
+
+        // 3. Toda la pestaña en fuente 16
+        ws.eachRow((row) => {
+            row.font = { size: 16, name: 'Calibri' };
+        });
+
+        // 1. Crear 5 filas (implícito al empezar en la 6 para el header)
+        ws.getCell('A2').value = 'Nombres';
+        ws.getCell('A3').value = 'Hora Inicio';
+        ws.getCell('A4').value = 'Hora Término';
+        ws.getCell('A5').value = new Date().toLocaleString('es-ES');
+
+        // Altura 30.00 y alineación en el medio para filas 2, 3, 4
+        [2, 3, 4].forEach(rowNum => {
+            const row = ws.getRow(rowNum);
+            row.height = 30.00;
+            for (let col = 1; col <= 16; col++) {
+                row.getCell(col).alignment = { vertical: 'middle', horizontal: 'left' };
+            }
+        });
+
+        // Estilo para las etiquetas de cabecera
+        ['A2', 'A3', 'A4'].forEach(cellId => {
+            const cell = ws.getCell(cellId);
+            cell.font = { size: 16, bold: true, name: 'Calibri' };
+        });
         
-        // 4. Centras las columnas H, I y J
-        [8, 9, 10].forEach(colIdx => {
-            row.getCell(colIdx).alignment = { horizontal: 'center', vertical: 'middle' };
+        // A5: Solo fecha/hora, fuente 10, gris oscuro
+        const cellA5 = ws.getCell('A5');
+        cellA5.font = { size: 10, color: { argb: 'FF555555' }, name: 'Calibri' };
+
+        // 2. Fila 6 Columnas A hasta la P, Fondo Negro, texto blanco en negrita
+        const headerRow = ws.getRow(6);
+        headerRow.values = [
+            "Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", 
+            "Qty Buffer", "Qty Zona", "Avance", "Tareas", "Usuario Creación", 
+            "F. Procesado", "F. Asignado", "F. Finalizado", "Status"
+        ];
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
+        headerRow.eachCell((cell) => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
         });
 
-        // 6. Todas las celdas que comiencen con Total, Blanco, Fondo 1 , 35 %. de la columna A hasta la J y en negrita
-        if (String(rowData[0]).startsWith('Total')) {
-            row.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
-            row.eachCell((cell) => {
-                cell.fill = { 
-                    type: 'pattern', 
-                    pattern: 'solid', 
-                    fgColor: { argb: 'FFA6A6A6' } // Gris 35% (Aprox)
-                };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            });
-        } else {
-            row.eachCell((cell) => {
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            });
-        }
-    });
+        // Preparar datos
+        const dataRows = [];
+        almacenajeTasksCache.forEach(task => {
+            // Filtrar tareas por fecha seleccionada si existe
+            if (selectedTaskDate && task.fecha !== selectedTaskDate) return;
+            if (!task.items || !Array.isArray(task.items)) return;
 
-    // Escribir archivo
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Plan_Almacenaje_v13.0.2_${new Date().toISOString().split('T')[0]}.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    updateSyncIndicator('online', 'EXCEL GENERADO ✅');
-    console.log("✅ [PULSE] Excel generado con éxito.");
-    setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+            task.items.forEach(art => {
+                const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
+                
+                // CDBUFFER Rows (Buffer)
+                const bufferRows = (art.items || []).filter(i => i.ubi && String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
+                // ZONA Rows (Picking, Rack, etc.)
+                const zonaRows = (art.items || []).filter(i => !i.ubi || !String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
+
+                // Ordenamiento por SKU / Talla para mantener consistencia visual
+                const sortBySku = (a, b) => {
+                    const skuA = String(a.skuFull || a.sku || '');
+                    const skuB = String(b.skuFull || b.sku || '');
+                    return skuA.localeCompare(skuB);
+                };
+                bufferRows.sort(sortBySku);
+                zonaRows.sort(sortBySku);
+
+                // Fechas formateadas
+                const rawFechaProcesado = task.fechaProcesado || (task.fecha ? task.fecha + 'T00:00:00' : '');
+                const fProcesado = formatDateTime(rawFechaProcesado);
+                const fAsignado = formatDateTime(task.inicio);
+                const fFinalizado = formatDateTime(task.termino);
+                const userCreacion = task.creador || '---';
+
+                // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía, Avance según estado)
+                bufferRows.forEach(i => {
+                    const avanceVal = task.status === 'Finalizado' ? i.qty : 0;
+                    dataRows.push([
+                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, 
+                        i.qty, "", avanceVal, task.id.includes('_') ? task.id.split('_')[1] : task.id, 
+                        userCreacion, fProcesado, fAsignado, fFinalizado, task.status
+                    ]);
+                });
+                // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra, Avance es "---")
+                zonaRows.forEach(i => {
+                    dataRows.push([
+                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, 
+                        "", i.qty, "---", task.id.includes('_') ? task.id.split('_')[1] : task.id, 
+                        userCreacion, fProcesado, fAsignado, fFinalizado, task.status
+                    ]);
+                });
+                // Subtotal
+                const subtotalAvance = task.status === 'Finalizado' ? art.bufferQty : 0;
+                dataRows.push([
+                    `Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, 
+                    subtotalAvance, task.id.includes('_') ? task.id.split('_')[1] : task.id, 
+                    "", "", "", "", ""
+                ]);
+            });
+        });
+
+        // Agregar filas de datos a partir de la fila 7
+        dataRows.forEach((rowData) => {
+            const row = ws.addRow(rowData);
+            row.font = { size: 16, name: 'Calibri' };
+            
+            // Centrar columnas numéricas, de fechas y estado (H a P / 8 a 16)
+            [8, 9, 10, 11, 12, 13, 14, 15, 16].forEach(colIdx => {
+                row.getCell(colIdx).alignment = { horizontal: 'center', vertical: 'middle' };
+            });
+
+            // 6. Todas las celdas que comiencen con Total, Blanco, Fondo 1 , 35 %. de la columna A hasta la P y en negrita
+            if (String(rowData[0]).startsWith('Total')) {
+                row.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
+                row.eachCell((cell) => {
+                    cell.fill = { 
+                        type: 'pattern', 
+                        pattern: 'solid', 
+                        fgColor: { argb: 'FFA6A6A6' } // Gris 35% (Aprox)
+                    };
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+            } else {
+                row.eachCell((cell) => {
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+            }
+        });
+
+        // Escribir archivo
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Plan_Almacenaje_v13.0.2_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        updateSyncIndicator('online', 'EXCEL GENERADO ✅');
+        console.log("✅ [PULSE] Excel generado con éxito.");
+        setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
 
     } catch (err) {
         console.error("❌ [PULSE] Error en exportAlmacenajeExcel:", err);
@@ -7589,8 +7637,74 @@ export const renderDashboard = async (container, user, onLogout) => {
                     `;
                 }).join('') : ''}
             </div>
-        `;
     }).join('');
+
+    // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
+    const detailedItems = [];
+    if (isDetail) {
+        tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
+            (t.items || []).forEach(art => {
+                const bufferItems = art.items || [];
+                const bufferUbis = new Set(bufferItems.map(bi => bi.ubi));
+                const uniqueSkus = [...new Set(bufferItems.map(i => i.skuFull))];
+                const otherZoneItems = [];
+                
+                uniqueSkus.forEach(sku => {
+                    const stockItems = otherZonesStockMap.get(sku) || [];
+                    stockItems.forEach(item => {
+                        if (!bufferUbis.has(item.ubi)) {
+                            otherZoneItems.push(item);
+                        }
+                    });
+                });
+
+                const allItems = [...bufferItems, ...otherZoneItems]
+                    .filter(i => {
+                        const ubi = String(i.ubi || '').toUpperCase();
+                        if (ubi.startsWith('CDBUFFER')) {
+                            return !ubi.startsWith('CDBUFFER-C');
+                        }
+                        const allowedPrefixes = ['SEL-', 'MZN01-', 'MZN02-', 'MZN03-', 'MZN04-'];
+                        return allowedPrefixes.some(p => ubi.startsWith(p));
+                    })
+                    .sort((a, b) => {
+                        const isABuffer = a.ubi.startsWith('CDBUFFER');
+                        const isBBuffer = b.ubi.startsWith('CDBUFFER');
+                        if (isABuffer && !isBBuffer) return -1;
+                        if (!isABuffer && isBBuffer) return 1;
+                        return 0;
+                    });
+
+                allItems.forEach(i => {
+                    const isBuffer = i.ubi.startsWith('CDBUFFER');
+                    detailedItems.push({
+                        task: t,
+                        art: art,
+                        item: i,
+                        isBuffer: isBuffer
+                    });
+                });
+            });
+        });
+    }
+
+    // Inicializar o ajustar variables de paginación
+    if (typeof window.__detailCurrentPage === 'undefined' || window.__detailLastDate !== (selectedTaskDate || '')) {
+        window.__detailCurrentPage = 1;
+        window.__detailLastDate = selectedTaskDate || '';
+    }
+    const totalPages = Math.ceil(detailedItems.length / 25) || 1;
+    if (window.__detailCurrentPage > totalPages) window.__detailCurrentPage = totalPages;
+    if (window.__detailCurrentPage < 1) window.__detailCurrentPage = 1;
+
+    // Helper global para cambiar página
+    window.__setDetailPage = (p) => {
+        const maxPage = Math.ceil(detailedItems.length / 25) || 1;
+        if (p < 1) p = 1;
+        if (p > maxPage) p = maxPage;
+        window.__detailCurrentPage = p;
+        renderAlmacenajeTareas(container);
+    };
 
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
@@ -8396,13 +8510,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <th style="padding:1rem; text-align:center;">Tallas</th>
                                     <th style="padding:1rem; text-align:center;">Qty Buffer</th>
                                     <th style="padding:1rem; text-align:center;">Qty Zona</th>
+                                    <th style="padding:1rem; text-align:center;">Avance</th>
                                     <th style="padding:1rem; text-align:left;">ID Tareas</th>
+                                    <th style="padding:1rem; text-align:left;">Usuario Creación</th>
+                                    <th style="padding:1rem; text-align:center;">F. Procesado</th>
+                                    <th style="padding:1rem; text-align:center;">F. Asignado</th>
+                                    <th style="padding:1rem; text-align:center;">F. Finalizado</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
                                 </tr>
                             `}
                         </thead>
                         <tbody>
-                            ${tasks.length === 0 ? `<tr><td colspan="12" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay tareas registradas en este periodo.</td></tr>` : ''}
+                            ${(isDetail ? detailedItems.length === 0 : tasks.length === 0) ? `<tr><td colspan="${isDetail ? 13 : 12}" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en este periodo.</td></tr>` : ''}
                             ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
@@ -8465,70 +8584,95 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                     </td>
                                 </tr>`;
-                            }).join('') : tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).flatMap(t => (t.items || []).flatMap(art => {
-                                // [STABLE] Recuperar información optimizada del mapa pre-calculado
-                                const bufferItems = art.items || [];
-                                const bufferUbis = new Set(bufferItems.map(bi => bi.ubi));
-                                const uniqueSkus = [...new Set(bufferItems.map(i => i.skuFull))];
-                                const otherZoneItems = [];
+                            }).join('') : pageItems.map(di => {
+                                const t = di.task;
+                                const art = di.art;
+                                const i = di.item;
+                                const isBuffer = di.isBuffer;
                                 
-                                uniqueSkus.forEach(sku => {
-                                    const stockItems = otherZonesStockMap.get(sku) || [];
-                                    stockItems.forEach(item => {
-                                        if (!bufferUbis.has(item.ubi)) {
-                                            otherZoneItems.push(item);
-                                        }
-                                    });
-                                });
+                                // Logic for Avance
+                                let avanceVal = '---';
+                                let avanceColor = 'var(--text-muted)';
+                                let avanceFontWeight = '500';
+                                if (isBuffer) {
+                                    if (t.status === 'Finalizado') {
+                                        avanceVal = i.qty.toString();
+                                        avanceColor = '#22c55e'; // Bold Green
+                                        avanceFontWeight = '800';
+                                    } else {
+                                        avanceVal = '0';
+                                        avanceColor = '#9ca3af'; // Bold Gray/Muted
+                                        avanceFontWeight = '600';
+                                    }
+                                }
 
-                                const allItems = [...bufferItems, ...otherZoneItems]
-                                    .filter(i => {
-                                        const ubi = String(i.ubi || '').toUpperCase();
-                                        // 1. REGLA CDBUFFER: Solo si es CDBUFFER pero NO CDBUFFER-C
-                                        if (ubi.startsWith('CDBUFFER')) {
-                                            return !ubi.startsWith('CDBUFFER-C');
-                                        }
-                                        // 2. REGLA ZONAS PERMITIDAS: SEL, MZN01, MZN02, MZN03, MZN04
-                                        const allowedPrefixes = ['SEL-', 'MZN01-', 'MZN02-', 'MZN03-', 'MZN04-'];
-                                        return allowedPrefixes.some(p => ubi.startsWith(p));
-                                    })
-                                    .sort((a, b) => {
-                                        // PRIORIDAD: CDBUFFER PRIMERO
-                                        const isABuffer = a.ubi.startsWith('CDBUFFER');
-                                        const isBBuffer = b.ubi.startsWith('CDBUFFER');
-                                        if (isABuffer && !isBBuffer) return -1;
-                                        if (!isABuffer && isBBuffer) return 1;
-                                        return 0;
-                                    });
+                                const userCreacion = t.creador || '---';
+                                const fProcesado = formatDateTime(t.fechaProcesado || (t.fecha + 'T00:00:00'));
+                                const fAsignado = formatDateTime(t.inicio);
+                                const fFinalizado = formatDateTime(t.termino);
 
-                                return allItems.map(i => {
-                                    const isBuffer = i.ubi.startsWith('CDBUFFER');
-                                    return `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:0.6rem 1rem;">${art.sku7}</td>
-                                        <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${isBuffer ? '800' : '500'};">
-                                            ${i.ubi}
-                                        </td>
-                                        <td style="padding:0.6rem 1rem;">${i.skuFull || i.sku || '---'}</td>
-                                        <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
-                                        <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${isBuffer ? '#fff' : 'transparent'};">${isBuffer ? i.qty : ''}</td>
-                                        <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${!isBuffer ? '#fbbf24' : 'rgba(255,255,255,0.05)'};">${!isBuffer ? i.qty : '---'}</td>
-                                        <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
-                                        <td style="padding:0.6rem 1rem; text-align:center;">
-                                            <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
-                                                ${t.status.toUpperCase()}
-                                            </span>
-                                        </td>
-                                    </tr>`;
-                                });
-                            })).join('')}
+                                return `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                    <td style="padding:0.6rem 1rem;">${art.sku7}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff !important; font-weight:${isBuffer ? '800' : '500'};">
+                                        ${i.ubi}
+                                    </td>
+                                    <td style="padding:0.6rem 1rem;">${i.skuFull || i.sku || '---'}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${isBuffer ? '#fff' : 'transparent'};">${isBuffer ? i.qty : ''}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${!isBuffer ? '#fbbf24' : 'rgba(255,255,255,0.05)'};">${!isBuffer ? i.qty : '---'}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:${avanceFontWeight}; color:${avanceColor};">${avanceVal}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
+                                    <td style="padding:0.6rem 1rem; color:#fff; opacity:0.8;">${userCreacion}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fProcesado}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fAsignado}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fFinalizado}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">
+                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
+                                            ${t.status.toUpperCase()}
+                                        </span>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
-                    <div style="display:flex; gap:1.5rem; font-size:0.75rem;">
+                    <div style="display:flex; gap:1.5rem; font-size:0.75rem; align-items:center;">
                         <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
+                        <span style="color:var(--text-muted);">Registros Totales: <b style="color:#fff;">${detailedItems.length}</b></span>
                         <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
+                    </div>
+                    
+                    <!-- Paginación Glassmorphic -->
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button onclick="window.__setDetailPage(${window.__detailCurrentPage - 1})" 
+                                ${window.__detailCurrentPage <= 1 ? 'disabled' : ''} 
+                                style="background:${window.__detailCurrentPage <= 1 ? 'rgba(255,255,255,0.02)' : 'rgba(79, 70, 229, 0.15)'}; 
+                                       color:${window.__detailCurrentPage <= 1 ? '#6b7280' : '#fff'}; 
+                                       border:1px solid ${window.__detailCurrentPage <= 1 ? 'rgba(255,255,255,0.05)' : 'rgba(79, 70, 229, 0.3)'}; 
+                                       padding:5px 12px; border-radius:8px; cursor:${window.__detailCurrentPage <= 1 ? 'not-allowed' : 'pointer'}; 
+                                       font-size:0.75rem; font-weight:700; transition:all 0.2s; display:flex; align-items:center; gap:4px;" 
+                                onmouseover="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.3)'; this.style.borderColor='var(--primary)'; }" 
+                                onmouseout="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.15)'; this.style.borderColor='rgba(79, 70, 229, 0.3)'; }">
+                            ◀ Anterior
+                        </button>
+                        
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; padding:0 8px;">
+                            Página <span style="color:#fff; font-weight:800;">${window.__detailCurrentPage}</span> de <span style="color:#fff; font-weight:800;">${totalPages}</span>
+                        </span>
+                        
+                        <button onclick="window.__setDetailPage(${window.__detailCurrentPage + 1})" 
+                                ${window.__detailCurrentPage >= totalPages ? 'disabled' : ''} 
+                                style="background:${window.__detailCurrentPage >= totalPages ? 'rgba(255,255,255,0.02)' : 'rgba(79, 70, 229, 0.15)'}; 
+                                       color:${window.__detailCurrentPage >= totalPages ? '#6b7280' : '#fff'}; 
+                                       border:1px solid ${window.__detailCurrentPage >= totalPages ? 'rgba(255,255,255,0.05)' : 'rgba(79, 70, 229, 0.3)'}; 
+                                       padding:5px 12px; border-radius:8px; cursor:${window.__detailCurrentPage >= totalPages ? 'not-allowed' : 'pointer'}; 
+                                       font-size:0.75rem; font-weight:700; transition:all 0.2s; display:flex; align-items:center; gap:4px;" 
+                                onmouseover="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.3)'; this.style.borderColor='var(--primary)'; }" 
+                                onmouseout="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.15)'; this.style.borderColor='rgba(79, 70, 229, 0.3)'; }">
+                            Siguiente ▶
+                        </button>
                     </div>
                 </div>
             </div>
