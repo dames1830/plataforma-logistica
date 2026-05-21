@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.10';
+const VERSION = '25.2.11';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7637,6 +7637,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     `;
                 }).join('') : ''}
             </div>
+        `;
     }).join('');
 
     // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
@@ -7696,6 +7697,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     const totalPages = Math.ceil(detailedItems.length / 25) || 1;
     if (window.__detailCurrentPage > totalPages) window.__detailCurrentPage = totalPages;
     if (window.__detailCurrentPage < 1) window.__detailCurrentPage = 1;
+
+    const startIndex = (window.__detailCurrentPage - 1) * 25;
+    const pageItems = detailedItems.slice(startIndex, startIndex + 25);
 
     // Helper global para cambiar página
     window.__setDetailPage = (p) => {
