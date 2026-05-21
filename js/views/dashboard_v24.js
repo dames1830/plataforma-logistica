@@ -7358,6 +7358,27 @@ export const renderDashboard = async (container, user, onLogout) => {
             return Array.from(active).sort((a, b) => a - b);
         };
 
+        const getTaskMetrics = (t) => {
+            let qtyBuffer = 0;
+            let avance = 0;
+            (t.items || []).forEach(art => {
+                const bufferItems = art.items || [];
+                const cdbufferItems = bufferItems.filter(i => {
+                    const ubi = String(i.ubi || '').toUpperCase();
+                    return ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C');
+                });
+
+                cdbufferItems.forEach(i => {
+                    const qty = parseFloat(i.qty) || 0;
+                    qtyBuffer += qty;
+                    if (t.status === 'Finalizado') {
+                        avance += qty;
+                    }
+                });
+            });
+            return { qtyBuffer, avance };
+        };
+
         // dynamic default dates
         let minDate = '';
         let maxDate = '';
@@ -7392,7 +7413,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         const endDate = window.__chartEndDate || '';
 
         const chartTasks = tasksList.filter(t => {
-            if (t.status !== 'Finalizado') return false;
             if (!t.fecha) return false;
             if (startDate && t.fecha < startDate) return false;
             if (endDate && t.fecha > endDate) return false;
@@ -7405,9 +7425,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             if (weekStr === '---' || dayIdx === -1) return;
             
             if (!chartWeeksData[weekStr]) {
-                chartWeeksData[weekStr] = [0, 0, 0, 0, 0, 0, 0];
+                chartWeeksData[weekStr] = {
+                    qtyBuffer: [0, 0, 0, 0, 0, 0, 0],
+                    avance: [0, 0, 0, 0, 0, 0, 0]
+                };
             }
-            chartWeeksData[weekStr][dayIdx] += parseFloat(t.qty) || 0;
+            const metrics = getTaskMetrics(t);
+            chartWeeksData[weekStr].qtyBuffer[dayIdx] += metrics.qtyBuffer;
+            chartWeeksData[weekStr].avance[dayIdx] += metrics.avance;
         });
 
         const activeWeeks = Object.keys(chartWeeksData).sort((a, b) => {
@@ -7420,13 +7445,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
 
         const displayWeeks = activeWeeks;
-        
-        const chartColors = [
-            { border: '#00E5FF', bg: 'rgba(0, 229, 255, 0.1)' },
-            { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
-            { border: '#eab308', bg: 'rgba(234, 179, 8, 0.1)' },
-            { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' }
-        ];
 
         setTimeout(() => {
             const ctx = document.getElementById('weeklyDailyChartCanvas');
@@ -7452,22 +7470,43 @@ export const renderDashboard = async (container, user, onLogout) => {
             const allLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
             const chartLabels = allLabels.filter((_, idx) => activeIndices.includes(idx));
 
-            const datasets = displayWeeks.map((week, idx) => {
-                const color = chartColors[idx % chartColors.length];
-                const filteredData = chartWeeksData[week].filter((_, dIdx) => activeIndices.includes(dIdx));
-                return {
-                    label: week,
-                    data: filteredData,
-                    borderColor: color.border,
-                    backgroundColor: color.bg,
+            const datasets = [];
+            displayWeeks.forEach((week, idx) => {
+                const labelSuffix = displayWeeks.length > 1 ? ` (${week})` : '';
+                
+                // Qty Buffer dataset
+                const bufferColor = { border: '#00E5FF', bg: 'rgba(0, 229, 255, 0.05)' };
+                const filteredBufferData = chartWeeksData[week].qtyBuffer.filter((_, dIdx) => activeIndices.includes(dIdx));
+                datasets.push({
+                    label: `Qty Buffer${labelSuffix}`,
+                    data: filteredBufferData,
+                    borderColor: bufferColor.border,
+                    backgroundColor: bufferColor.bg,
                     borderWidth: 3,
-                    pointBackgroundColor: color.border,
+                    pointBackgroundColor: bufferColor.border,
                     pointBorderColor: '#ffffff',
                     pointRadius: 4,
                     pointHoverRadius: 6,
                     tension: 0.35,
                     fill: true
-                };
+                });
+
+                // Avance dataset
+                const avanceColor = { border: '#eab308', bg: 'rgba(234, 179, 8, 0.05)' };
+                const filteredAvanceData = chartWeeksData[week].avance.filter((_, dIdx) => activeIndices.includes(dIdx));
+                datasets.push({
+                    label: `Avance${labelSuffix}`,
+                    data: filteredAvanceData,
+                    borderColor: avanceColor.border,
+                    backgroundColor: avanceColor.bg,
+                    borderWidth: 3,
+                    pointBackgroundColor: avanceColor.border,
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.35,
+                    fill: true
+                });
             });
 
             if (displayWeeks.length > 0) {
@@ -7475,7 +7514,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 let totalDays = 0;
                 displayWeeks.forEach(week => {
                     activeIndices.forEach(idx => {
-                        totalSum += chartWeeksData[week][idx] || 0;
+                        totalSum += chartWeeksData[week].qtyBuffer[idx] || 0;
                         totalDays++;
                     });
                 });
@@ -7538,7 +7577,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false,
+                            display: true,
                             position: 'top',
                             labels: {
                                 color: '#e2e8f0',
