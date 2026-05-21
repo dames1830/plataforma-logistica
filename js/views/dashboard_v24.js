@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.03';
+const VERSION = '25.2.04';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6929,6 +6929,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
+    window.setChartDateRange = (start, end) => {
+        if (start !== null) window.__chartStartDate = start;
+        if (end !== null) window.__chartEndDate = end;
+        if (window.__almacenajeContainer) {
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+        }
+    };
+
     const renderAlmacenajeTareas = window.renderAlmacenajeTareas; // Local alias for internal calls
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
@@ -7103,7 +7111,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${formatLogicalDate(dateKey)}</td>
                                     ${targetHours.map(hr => {
                                         const qty = rowData[hr];
-                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
                                     <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-weight:900; background:rgba(0, 229, 255, 0.05);">${rowTotal.toLocaleString()}</td>
                                 </tr>
@@ -7209,7 +7217,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">${w}</td>
                                     ${sortedBrands.map(b => {
                                         const qty = rowData[b] || 0;
-                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
                                     <td style="padding:6px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.05);">${rowTotal.toLocaleString()}</td>
                                 </tr>
@@ -7253,8 +7261,44 @@ export const renderDashboard = async (container, user, onLogout) => {
             return day === 0 ? 6 : day - 1;
         };
 
+        // dynamic default dates
+        let minDate = '';
+        let maxDate = '';
         tasksList.forEach(t => {
-            if (t.status !== 'Finalizado') return;
+            if (t.status === 'Finalizado' && t.fecha) {
+                if (!minDate || t.fecha < minDate) minDate = t.fecha;
+                if (!maxDate || t.fecha > maxDate) maxDate = t.fecha;
+            }
+        });
+
+        if (!window.__chartStartDate && maxDate) {
+            const maxD = new Date(maxDate + 'T00:00:00');
+            const startD = new Date(maxD.getTime() - 14 * 24 * 60 * 60 * 1000);
+            window.__chartStartDate = startD.toISOString().split('T')[0];
+        }
+        if (!window.__chartEndDate && maxDate) {
+            window.__chartEndDate = maxDate;
+        }
+
+        if (!window.__chartStartDate) {
+            const today = new Date();
+            const startD = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+            window.__chartStartDate = startD.toISOString().split('T')[0];
+            window.__chartEndDate = today.toISOString().split('T')[0];
+        }
+
+        const startDate = window.__chartStartDate || '';
+        const endDate = window.__chartEndDate || '';
+
+        const chartTasks = tasksList.filter(t => {
+            if (t.status !== 'Finalizado') return false;
+            if (!t.fecha) return false;
+            if (startDate && t.fecha < startDate) return false;
+            if (endDate && t.fecha > endDate) return false;
+            return true;
+        });
+
+        chartTasks.forEach(t => {
             const weekStr = getWeekStr(t.fecha);
             const dayIdx = getDayIndex(t.fecha);
             if (weekStr === '---' || dayIdx === -1) return;
@@ -7274,45 +7318,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             return getVal(a) - getVal(b);
         });
 
-        // Ensure selected weeks are valid
-        window.__chartSelectedWeeks = (window.__chartSelectedWeeks || []).filter(w => activeWeeks.includes(w));
-        if (window.__chartSelectedWeeks.length === 0) {
-            window.__chartSelectedWeeks = activeWeeks.slice(-4);
-        }
-
-        const displayWeeks = [...window.__chartSelectedWeeks].sort((a, b) => {
-            const getVal = (s) => {
-                const m = s.match(/Semana (\d+) \((\d+)\)/);
-                if (!m) return 0;
-                return parseInt(m[2]) * 100 + parseInt(m[1]);
-            };
-            return getVal(a) - getVal(b);
-        });
-
-        const filterWeeks = activeWeeks.slice(-8); // Show up to the last 8 weeks for selection
-        const pillsHTML = filterWeeks.map(week => {
-            const isSelected = window.__chartSelectedWeeks.includes(week);
-            const bg = isSelected ? 'rgba(234, 179, 8, 0.25)' : 'rgba(255, 255, 255, 0.05)';
-            const border = isSelected ? '1px solid #eab308' : '1px solid rgba(255, 255, 255, 0.15)';
-            const textColor = isSelected ? '#fef08a' : '#94a3b8';
-            return `
-                <button onclick="window.toggleChartWeek('${week}')" style="
-                    background: ${bg};
-                    border: ${border};
-                    color: ${textColor};
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                    font-size: 0.7rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    font-family: 'Inter', sans-serif;
-                    box-shadow: ${isSelected ? '0 0 10px rgba(234, 179, 8, 0.2)' : 'none'};
-                " onmouseover="this.style.transform='translateY(-1px)';" onmouseout="this.style.transform='translateY(0)';">
-                    ${week}
-                </button>
-            `;
-        }).join('');
+        const displayWeeks = activeWeeks;
         
         const chartColors = [
             { border: '#00E5FF', bg: 'rgba(0, 229, 255, 0.1)' },
@@ -7430,10 +7436,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                         TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A DOMINGO)
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">SEMANAS:</span>
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        ${pillsHTML}
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-family:'Inter', sans-serif;">
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                        <span style="font-size:0.85rem; color:#eab308;">📅</span>
+                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Desde:</span>
+                        <input type="date" id="chartStartDateInput" value="${window.__chartStartDate}" onchange="window.setChartDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                    </div>
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                        <span style="font-size:0.85rem; color:#eab308;">📅</span>
+                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Hasta:</span>
+                        <input type="date" id="chartEndDateInput" value="${window.__chartEndDate}" onchange="window.setChartDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                     </div>
                 </div>
             </div>
@@ -8105,8 +8117,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             
                                             const logicalDate = getTaskLogicalDate(t, shift);
                                             
-                                            // Filtrar por la fecha lógica seleccionada
-                                            if (selectedTaskDate && logicalDate !== selectedTaskDate) return;
+                                            // [DECOUPLED] RENDIMIENTO DE OPERARIOS ya no es afectado por filtros de fecha del historial
+                                            // if (selectedTaskDate && logicalDate !== selectedTaskDate) return;
 
                                             processedTasks.push({
                                                 task: t,
