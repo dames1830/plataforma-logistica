@@ -7752,6 +7752,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
             </nav>
             <div style="display:flex; align-items:center; gap:15px; margin-left:auto; flex-wrap:wrap;">
+                <!-- BOTONES DE ACCIÓN PRINCIPALES -->
+                <div style="display:flex; gap:10px; align-items:center;">
+                    ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
+                    <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
+                </div>
+
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
@@ -7765,15 +7771,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <input type="date" id="almacenajeEndDateInput" value="${window.__almacenajeEndDate}" onchange="window.setAlmacenajeDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                     </div>
                 </div>
-                <div style="display:flex; gap:12px; align-items:center;">
+
+                <!-- BOTONES CIRCULARES (REFRESCO Y BASURA) -->
+                <div style="display:flex; gap:10px; align-items:center;">
                     <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                         🔄
                     </button>
                     ${!isDetail ? `
-                    <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
-                    <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">🗑️</button>
+                    <button onclick="window.clearCurrentShiftTasks()" title="Limpiar Tareas Pendientes" style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); color:#ef4444; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'; this.style.borderColor='#ef4444'" onmouseout="this.style.background='rgba(239,68,68,0.05)'; this.style.borderColor='rgba(239,68,68,0.2)'">
+                        🗑️
+                    </button>
                     ` : ''}
-                    <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
                 </div>
             </div>
             ` : `
@@ -8749,6 +8757,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
     window.resetTask = async (id) => {
+        if (user.username !== 'dames') {
+            showPremiumAlert("ACCESO DENEGADO", "Solo el usuario 'dames' tiene permisos para reiniciar tareas.", "error");
+            return;
+        }
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             const t = almacenajeTasksCache.find(x => x.id === id);
@@ -8760,6 +8772,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
     window.deleteTask = async (id) => {
+        if (user.username !== 'dames') {
+            showPremiumAlert("ACCESO DENEGADO", "Solo el usuario 'dames' tiene permisos para eliminar tareas.", "error");
+            return;
+        }
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("ELIMINAR TAREA", `¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`, "danger")) {
             almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
@@ -8768,6 +8784,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
     window.assignTask = (id) => {
+        const t = almacenajeTasksCache.find(x => x.id === id);
+        if (t && t.status === 'Finalizado') {
+            showPremiumAlert("TAREA BLOQUEADA", "Esta tarea ya está finalizada y bloqueada. Para realizar cualquier cambio, utiliza el botón de edición (✏️).", "warning");
+            return;
+        }
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         // [ORDENAMIENTO A-Z] Ordenar operarios alfabéticamente
         const workers = adminService.getWorkers()
@@ -8780,7 +8801,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
 
         const options = workers.map(w => `<option value="${formatUser(w)}" ${formatUser(w) === 'dames' ? 'selected' : ''}>${formatUser(w)} (${w.nombre})</option>`).join('');
-        const t = almacenajeTasksCache.find(x => x.id === id);
 
         const modal = document.createElement('div');
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
@@ -8906,9 +8926,18 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
-    window.editTaskTimes = (taskId) => {
+    window.editTaskTimes = async (taskId) => {
         const task = almacenajeTasksCache.find(t => t.id === taskId);
         if (!task) return;
+
+        if (task.status === 'Finalizado') {
+            const proceed = await showPremiumConfirm(
+                "TAREA FINALIZADA",
+                "⚠️ Estás intentando editar una tarea que ya está FINALIZADA.\n\nRecuerda que una tarea finalizada NO se puede REINICIAR ni BORRAR, solo se permite editar sus datos.\n\n¿Deseas continuar con la edición?",
+                "warning"
+            );
+            if (!proceed) return;
+        }
 
         const modal = document.createElement('div');
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";

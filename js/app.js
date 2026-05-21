@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=25.2.15';
-import * as adminService from './services_v245/adminService.js?v=25.2.15';
+import { getSession, logout } from './services_v245/auth.js?v=25.2.16';
+import * as adminService from './services_v245/adminService.js?v=25.2.16';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v25.2.15';
+    this.APP_VERSION = 'v25.2.16';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
