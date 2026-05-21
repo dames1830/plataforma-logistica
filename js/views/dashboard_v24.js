@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.08';
+const VERSION = '25.2.09';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7261,6 +7261,35 @@ export const renderDashboard = async (container, user, onLogout) => {
             return day === 0 ? 6 : day - 1;
         };
 
+        const getActiveDayIndices = (startStr, endStr) => {
+            if (!startStr || !endStr) return [0, 1, 2, 3, 4, 5, 6];
+            const startParts = startStr.split('-');
+            const endParts = endStr.split('-');
+            if (startParts.length !== 3 || endParts.length !== 3) return [0, 1, 2, 3, 4, 5, 6];
+            
+            const startObj = new Date(parseInt(startParts[0], 10), parseInt(startParts[1], 10) - 1, parseInt(startParts[2], 10));
+            const endObj = new Date(parseInt(endParts[0], 10), parseInt(endParts[1], 10) - 1, parseInt(endParts[2], 10));
+            
+            if (isNaN(startObj.getTime()) || isNaN(endObj.getTime()) || startObj > endObj) return [0, 1, 2, 3, 4, 5, 6];
+            
+            // Si el rango es de 7 días o más, mostramos la semana completa
+            const diffTime = Math.abs(endObj - startObj);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 6) {
+                return [0, 1, 2, 3, 4, 5, 6];
+            }
+            
+            const active = new Set();
+            let current = new Date(startObj.getTime());
+            while (current <= endObj) {
+                const day = current.getDay();
+                const idx = day === 0 ? 6 : day - 1;
+                active.add(idx);
+                current.setDate(current.getDate() + 1);
+            }
+            return Array.from(active).sort((a, b) => a - b);
+        };
+
         // dynamic default dates
         let minDate = '';
         let maxDate = '';
@@ -7351,11 +7380,16 @@ export const renderDashboard = async (container, user, onLogout) => {
                 return;
             }
             
+            const activeIndices = getActiveDayIndices(startDate, endDate);
+            const allLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            const chartLabels = allLabels.filter((_, idx) => activeIndices.includes(idx));
+
             const datasets = displayWeeks.map((week, idx) => {
                 const color = chartColors[idx % chartColors.length];
+                const filteredData = chartWeeksData[week].filter((_, dIdx) => activeIndices.includes(dIdx));
                 return {
                     label: week,
-                    data: chartWeeksData[week],
+                    data: filteredData,
                     borderColor: color.border,
                     backgroundColor: color.bg,
                     borderWidth: 3,
@@ -7368,20 +7402,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                 };
             });
 
-            const averageData = [0, 0, 0, 0, 0, 0, 0];
             if (displayWeeks.length > 0) {
                 let totalSum = 0;
                 let totalDays = 0;
                 displayWeeks.forEach(week => {
-                    chartWeeksData[week].forEach(val => {
-                        totalSum += val || 0;
+                    activeIndices.forEach(idx => {
+                        totalSum += chartWeeksData[week][idx] || 0;
                         totalDays++;
                     });
                 });
                 const overallAverage = totalDays > 0 ? Math.round(totalSum / totalDays) : 0;
-                for (let i = 0; i < 7; i++) {
-                    averageData[i] = overallAverage;
-                }
+                const averageData = activeIndices.map(() => overallAverage);
                 
                 datasets.push({
                     label: 'Promedio',
@@ -7431,7 +7462,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             window.weeklyDailyChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+                    labels: chartLabels,
                     datasets: datasets
                 },
                 options: {
@@ -8302,6 +8333,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         if (!row.fecha) return '---';
                                         const parts = row.fecha.split('-');
                                         if (parts.length !== 3) return row.fecha;
+                                        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                        const monthIdx = parseInt(parts[1], 10) - 1;
+                                        if (monthIdx >= 0 && monthIdx < 12) {
+                                            return `${parts[2]}-${months[monthIdx]}`;
+                                        }
                                         return `${parts[2]}/${parts[1]}`;
                                     })();
                                     return `
