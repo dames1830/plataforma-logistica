@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.11';
+const VERSION = '25.2.12';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -368,6 +368,8 @@ const getLogicalDate = () => {
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
+if (!window.__almacenajeStartDate) window.__almacenajeStartDate = getLogicalDate();
+if (!window.__almacenajeEndDate) window.__almacenajeEndDate = getLogicalDate();
 let expandedWeeks = []; // Semanas expandidas en el historial
 let almacenajeTasksCache = [];
 try {
@@ -6851,8 +6853,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         // Preparar datos
         const dataRows = [];
         almacenajeTasksCache.forEach(task => {
-            // Filtrar tareas por fecha seleccionada si existe
-            if (selectedTaskDate && task.fecha !== selectedTaskDate) return;
+            // Filtrar tareas por rango de fechas
+            if (task.fecha < window.__almacenajeStartDate || task.fecha > window.__almacenajeEndDate) return;
             if (!task.items || !Array.isArray(task.items)) return;
 
             task.items.forEach(art => {
@@ -6980,6 +6982,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     window.setChartDateRange = (start, end) => {
         if (start !== null) window.__chartStartDate = start;
         if (end !== null) window.__chartEndDate = end;
+        if (window.__almacenajeContainer) {
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+        }
+    };
+
+    window.setAlmacenajeDateRange = (start, end) => {
+        if (start !== null) window.__almacenajeStartDate = start;
+        if (end !== null) window.__almacenajeEndDate = end;
         if (window.__almacenajeContainer) {
             window.renderAlmacenajeTareas(window.__almacenajeContainer);
         }
@@ -7601,49 +7611,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         `;
     };
 
-    const groups = {};
-    tasks.forEach(t => {
-        if (!t || typeof t !== 'object') return;
-        if (!t.fecha) t.fecha = new Date().toISOString().split('T')[0];
-        const dateObj = new Date(t.fecha + 'T00:00:00');
-        if (isNaN(dateObj.getTime())) return;
-
-        const w = `Semana ${getWeekNumber(dateObj)}`;
-        if (!groups[w]) groups[w] = {};
-        if (!groups[w][t.fecha]) groups[w][t.fecha] = 0;
-        groups[w][t.fecha]++;
-    });
-
-    const sidebarHtml = Object.keys(groups).sort((a, b) => {
-        const numA = parseInt(a.replace(/\D/g, '')) || 0;
-        const numB = parseInt(b.replace(/\D/g, '')) || 0;
-        return numB - numA;
-    }).map(w => {
-        const isExpanded = expandedWeeks.includes(w);
-        const days = groups[w];
-        return `
-            <div style="margin-bottom:8px;">
-                <div onclick="window.toggleWeek('${w}')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 15px; background:rgba(255,255,255,0.03); border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:700; color:#fff;">
-                    <span>📅 ${w}</span>
-                    <span>${isExpanded ? '▼' : '▶'}</span>
-                </div>
-                ${isExpanded ? Object.keys(days).sort().reverse().map(d => {
-                    const [y, m, day] = d.split('-');
-                    const dDisplay = `${day}/${m}/${y}`;
-                    return `
-                    <div onclick="window.setSelectedDate('${d}')" style="padding:8px 15px 8px 35px; cursor:pointer; font-size:0.75rem; color:${selectedTaskDate === d ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${selectedTaskDate === d ? '800' : '500'}; background:${selectedTaskDate === d ? 'rgba(79,70,229,0.1)' : 'transparent'};" onmouseover="this.style.color='#fff'" onmouseout="if('${selectedTaskDate}'!=='${d}') this.style.color='var(--text-muted)'">
-                        ${dDisplay} <span style="opacity:0.5; font-size:0.6rem;">(${days[d]})</span>
-                    </div>
-                    `;
-                }).join('') : ''}
-            </div>
-        `;
-    }).join('');
-
     // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
     const detailedItems = [];
     if (isDetail) {
-        tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
+        tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).forEach(t => {
             (t.items || []).forEach(art => {
                 const bufferItems = art.items || [];
                 const bufferUbis = new Set(bufferItems.map(bi => bi.ubi));
@@ -7690,9 +7661,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     // Inicializar o ajustar variables de paginación
-    if (typeof window.__detailCurrentPage === 'undefined' || window.__detailLastDate !== (selectedTaskDate || '')) {
+    const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+    if (typeof window.__detailCurrentPage === 'undefined' || window.__detailLastDate !== rangeKey) {
         window.__detailCurrentPage = 1;
-        window.__detailLastDate = selectedTaskDate || '';
+        window.__detailLastDate = rangeKey;
     }
     const totalPages = Math.ceil(detailedItems.length / 25) || 1;
     if (window.__detailCurrentPage > totalPages) window.__detailCurrentPage = totalPages;
@@ -7711,19 +7683,36 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem; gap:1rem; flex-wrap:wrap;">
             ${!isKpi ? `
-            <nav style="display:flex; gap:1.5rem;">
+            <nav style="display:flex; gap:1.5rem; align-items:center;">
                 <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
                 <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
             </nav>
-            <div style="display:${isDetail ? 'none' : 'flex'}; gap:12px; align-items:center;">
-                <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
-                    🔄
-                </button>
-                <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
-                <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">🗑️</button>
-                <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
+            <div style="display:flex; align-items:center; gap:15px; margin-left:auto; flex-wrap:wrap;">
+                <!-- RANGO DE FECHAS DE : HASTA -->
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                        <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
+                        <input type="date" id="almacenajeStartDateInput" value="${window.__almacenajeStartDate}" onchange="window.setAlmacenajeDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                    </div>
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                        <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
+                        <input type="date" id="almacenajeEndDateInput" value="${window.__almacenajeEndDate}" onchange="window.setAlmacenajeDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+                        🔄
+                    </button>
+                    ${!isDetail ? `
+                    <button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>
+                    <button onclick="window.clearCurrentShiftTasks()" class="btn" style="width:auto; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:6px 10px; font-size:0.7rem;" title="Limpiar Tareas Pendientes">🗑️</button>
+                    ` : ''}
+                    <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
+                </div>
             </div>
             ` : `
             <div style="flex:1; display:flex; justify-content:space-between; align-items:center;">
@@ -7738,18 +7727,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             `}
         </div>
 
-        <div style="display:grid; grid-template-columns: 240px 1fr; gap:1.5rem; height:calc(100vh - 280px);">
-            <!-- SIDEBAR UNIFICADO -->
-            <div style="background:rgba(15, 23, 42, 0.4); border-radius:12px; padding:1.2rem; border:1px solid rgba(255,255,255,0.05); border-left: 3px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow-y:auto;">
-                <h4 style="margin:0 0 1.2rem 0; font-size:0.85rem; color:#fff; font-weight:800; letter-spacing:1px;">Historial</h4>
-                <div style="font-size:0.8rem;">
-                    <div onclick="window.setSelectedDate(null)" style="padding:10px 15px; background:${!selectedTaskDate ? 'var(--primary)' : 'rgba(255,255,255,0.03)'}; color:#fff; border-radius:10px; font-weight:700; margin-bottom:15px; cursor:pointer; font-size:0.75rem; text-align:center;">Todas las Tareas</div>
-                    ${sidebarHtml}
-                </div>
-            </div>
-
+        <div style="display:flex; flex-direction:column; gap:1.5rem; height:calc(100vh - 280px); width:100%;">
             <!-- CONTENIDO PRINCIPAL -->
-            <div style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto;">
+            <div style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto; width:100%; flex:1;">
                 ${isKpi ? `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
             <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
@@ -7758,7 +7738,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
                         📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                     </h3>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${window.__almacenajeStartDate.split('-').reverse().join('/')} AL ${window.__almacenajeEndDate.split('-').reverse().join('/')}</div>
                 </div>
                 
                 <div style="overflow-x:auto;">
@@ -7778,7 +7758,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tbody>
                             ${(() => {
                                 const indRows = [];
-                                tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).forEach(t => {
+                                tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).forEach(t => {
                                     if (t.status !== 'Finalizado') return;
 
                                     let timeStr = '--:--';
@@ -7844,8 +7824,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 indRows.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.user.localeCompare(b.user));
 
                                 // --- PAGINACIÓN 10 por página ---
-                                if (window.__kpiLastDate !== (selectedTaskDate||'')) { window.__kpiPage = 0; window.__kpiLastDate = selectedTaskDate||''; }
-                                if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__kpiLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+                                if (window.__kpiLastDate !== rangeKey) { window.__kpiPage = 0; window.__kpiLastDate = rangeKey; }
+                                if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _pg = window.__kpiPage || 0;
                                 const _ptot = Math.ceil(indRows.length / 10);
                                 window.__kpiTotalPages = _ptot;
@@ -7906,7 +7887,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <h3 style="color:#f59e0b; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📅 ACUMULADO POR DÍA × USUARIO</h3>
                         <div style="font-size:0.68rem; color:rgba(245,158,11,0.55); font-weight:600;">Suma de unidades por operador por jornada — incluye todas las tareas del día</div>
                     </div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${selectedTaskDate || 'TODAS'}</div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${window.__almacenajeStartDate.split('-').reverse().join('/')} AL ${window.__almacenajeEndDate.split('-').reverse().join('/')}</div>
                 </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
@@ -7925,7 +7906,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tbody>
                             ${(() => {
                                 const accMap = new Map();
-                                tasks.filter(t => (!selectedTaskDate || t.fecha === selectedTaskDate) && t.status === 'Finalizado').forEach(t => {
+                                tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate && t.status === 'Finalizado').forEach(t => {
                                     let mins = 0;
                                     if (t.inicio && t.termino) {
                                         const s = new Date(t.inicio); let e = new Date(t.termino);
@@ -7947,8 +7928,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
                                 // --- PAGINACIÓN ACUMULADO ---
-                                if (window.__accLastDate !== (selectedTaskDate||'')) { window.__accPage=0; window.__accLastDate=selectedTaskDate||''; }
-                                if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__accLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+                                if (window.__accLastDate !== rangeKey) { window.__accPage=0; window.__accLastDate=rangeKey; }
+                                if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _apg = window.__accPage||0;
                                 const _aptot = Math.ceil(rows.length/10);
                                 window.__accTotalPages = _aptot;
@@ -8014,7 +7996,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tbody>
                             ${(() => {
                                 const uMap = new Map();
-                                tasks.filter(t => (!selectedTaskDate || t.fecha === selectedTaskDate) && t.status === 'Finalizado').forEach(t => {
+                                tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate && t.status === 'Finalizado').forEach(t => {
                                     let mins = 0;
                                     if (t.inicio && t.termino) {
                                         const s = new Date(t.inicio); let e = new Date(t.termino);
@@ -8038,8 +8020,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     .sort((a,b)=>b.avgUph-a.avgUph);
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos de velocidad para mostrar.</td></tr>`;
                                 // --- PAGINACIÓN RANKING ---
-                                if (window.__rkLastDate !== (selectedTaskDate||'')) { window.__rkPage=0; window.__rkLastDate=selectedTaskDate||''; }
-                                if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.setSelectedDate) window.setSelectedDate(window.__rkLastDate||null); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
+                                if (window.__rkLastDate !== rangeKey) { window.__rkPage=0; window.__rkLastDate = rangeKey; }
+                                if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _rpg = window.__rkPage||0;
                                 const _rptot = Math.ceil(rows.length/10);
                                 window.__rkTotalPages = _rptot;
@@ -8095,7 +8078,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
                                 SYNC_ID: ${(() => {
                                     const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                    const syncDateStr = selectedTaskDate ? selectedTaskDate.split('-').reverse().join('/') : new Date().toLocaleDateString('es-ES');
+                                    const startStr = window.__almacenajeStartDate.split('-').reverse().join('/');
+                                    const endStr = window.__almacenajeEndDate.split('-').reverse().join('/');
+                                    const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
                                     return `${syncDateStr} ${syncTimeStr}`;
                                 })()}
                             </div>
@@ -8120,7 +8105,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <tbody>
                                 ${(() => {
                                     const brandGroups = {};
-                                    const filteredTasks = tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate);
+                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
 
                                     filteredTasks.forEach(t => {
                                         (t.items || []).forEach(art => {
@@ -8526,7 +8511,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </thead>
                         <tbody>
                             ${(isDetail ? detailedItems.length === 0 : tasks.length === 0) ? `<tr><td colspan="${isDetail ? 13 : 12}" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.filter(t => !selectedTaskDate || t.fecha === selectedTaskDate).map(t => {
+                            ${!isDetail ? tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
@@ -8791,6 +8776,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     window.setSelectedDate = (d) => {
         selectedTaskDate = d;
+        if (d === null) {
+            window.__almacenajeStartDate = getLogicalDate();
+            window.__almacenajeEndDate = getLogicalDate();
+        } else {
+            window.__almacenajeStartDate = d;
+            window.__almacenajeEndDate = d;
+        }
         renderAlmacenajeTareas(container);
     };
 
