@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.04';
+const VERSION = '25.2.05';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7364,6 +7364,36 @@ export const renderDashboard = async (container, user, onLogout) => {
                 };
             });
             
+            const datalabelsPlugin = {
+                id: 'datalabels',
+                afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (meta.hidden) return;
+                        meta.data.forEach((point, index) => {
+                            const val = dataset.data[index];
+                            if (val === undefined || val === null) return;
+                            
+                            ctx.save();
+                            ctx.fillStyle = dataset.borderColor || '#ffffff';
+                            ctx.font = 'bold 9.5px "Inter", sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            
+                            // Sombra negra para máxima legibilidad sobre cualquier cuadrícula o fondo
+                            ctx.shadowColor = '#000000';
+                            ctx.shadowBlur = 4;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 1;
+                            
+                            ctx.fillText(val.toLocaleString(), point.x, point.y - 8);
+                            ctx.restore();
+                        });
+                    });
+                }
+            };
+            
             window.weeklyDailyChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -7375,6 +7405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
+                            display: false,
                             position: 'top',
                             labels: {
                                 color: '#e2e8f0',
@@ -7420,7 +7451,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                             beginAtZero: true
                         }
                     }
-                }
+                },
+                plugins: [datalabelsPlugin]
             });
         }, 100);
 
