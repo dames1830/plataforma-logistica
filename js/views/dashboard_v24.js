@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.1.98';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.2.02';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.1.98';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.1.98';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.1.98';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.1.98';
+import * as adminService from '../services_v245/adminService.js?v=25.2.02';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.2.02';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.2.02';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.2.02';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -147,6 +147,175 @@ export const showPremiumAlert = (title, message, type = 'error') => {
 };
 window.showPremiumAlert = showPremiumAlert;
 
+export const showPremiumConfirm = (title, message, type = 'warning') => {
+    return new Promise((resolve) => {
+        const backdrop = document.createElement('div');
+        backdrop.style.position = 'fixed';
+        backdrop.style.top = '0';
+        backdrop.style.left = '0';
+        backdrop.style.width = '100vw';
+        backdrop.style.height = '100vh';
+        backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.75)';
+        backdrop.style.backdropFilter = 'blur(12px)';
+        backdrop.style.display = 'flex';
+        backdrop.style.justifyContent = 'center';
+        backdrop.style.alignItems = 'center';
+        backdrop.style.zIndex = '999999';
+        backdrop.style.opacity = '0';
+        backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        let accentColor = '#f59e0b'; // Amber
+        let icon = '❓';
+        let glowColor = 'rgba(245, 158, 11, 0.3)';
+        
+        if (type === 'danger') {
+            accentColor = '#ef4444'; // Red
+            icon = '🚨';
+            glowColor = 'rgba(239, 68, 68, 0.3)';
+        } else if (type === 'info') {
+            accentColor = '#3b82f6'; // Blue
+            icon = 'ℹ️';
+            glowColor = 'rgba(59, 130, 246, 0.3)';
+        } else if (type === 'success') {
+            accentColor = '#10b981'; // Green
+            icon = '✅';
+            glowColor = 'rgba(16, 185, 129, 0.3)';
+        }
+
+        backdrop.innerHTML = `
+            <div class="glass-panel" style="
+                width: 90%;
+                max-width: 450px;
+                padding: 2.5rem 2rem;
+                border-radius: 20px;
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px ${glowColor};
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                transform: scale(0.9);
+                transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            ">
+                <div style="
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 2px solid ${accentColor};
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 2.2rem;
+                    margin-bottom: 1.5rem;
+                    box-shadow: 0 0 20px ${glowColor};
+                    animation: pulse-icon-confirm-dash 2s infinite;
+                ">
+                    ${icon}
+                </div>
+                
+                <h3 style="
+                    margin: 0 0 0.8rem 0;
+                    color: #fff;
+                    font-size: 1.3rem;
+                    font-weight: 800;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    font-family: 'Outfit', sans-serif;
+                ">
+                    ${title}
+                </h3>
+                
+                <p style="
+                    margin: 0 0 2rem 0;
+                    color: #94a3b8;
+                    font-size: 0.9rem;
+                    line-height: 1.6;
+                    font-weight: 500;
+                    font-family: 'Inter', sans-serif;
+                ">
+                    ${message}
+                </p>
+                
+                <div style="
+                    display: flex;
+                    gap: 1rem;
+                    width: 100%;
+                ">
+                    <button id="premium-confirm-cancel" style="
+                        flex: 1;
+                        padding: 0.8rem;
+                        border: 1px solid rgba(255, 255, 255, 0.15);
+                        border-radius: 12px;
+                        background: rgba(255, 255, 255, 0.05);
+                        color: #cbd5e1;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        letter-spacing: 1px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        font-family: 'Inter', sans-serif;
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" 
+                      onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='#cbd5e1';">
+                        CANCELAR
+                    </button>
+                    
+                    <button id="premium-confirm-ok" style="
+                        flex: 1;
+                        padding: 0.8rem;
+                        border: none;
+                        border-radius: 12px;
+                        background: linear-gradient(135deg, ${accentColor} 0%, #000 150%);
+                        color: #fff;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        letter-spacing: 1px;
+                        cursor: pointer;
+                        box-shadow: 0 4px 12px ${glowColor};
+                        transition: all 0.2s ease;
+                        font-family: 'Inter', sans-serif;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px ${glowColor}';" 
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${glowColor}';">
+                        ACEPTAR
+                    </button>
+                </div>
+            </div>
+            <style>
+                @keyframes pulse-icon-confirm-dash {
+                    0% { transform: scale(1); box-shadow: 0 0 20px ${glowColor}; }
+                    50% { transform: scale(1.05); box-shadow: 0 0 30px ${accentColor}; }
+                    100% { transform: scale(1); box-shadow: 0 0 20px ${glowColor}; }
+                }
+            </style>
+        `;
+        
+        document.body.appendChild(backdrop);
+        
+        setTimeout(() => {
+            backdrop.style.opacity = '1';
+            backdrop.querySelector('.glass-panel').style.transform = 'scale(1)';
+        }, 10);
+        
+        const resolveConfirm = (value) => {
+            backdrop.style.opacity = '0';
+            backdrop.querySelector('.glass-panel').style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                backdrop.remove();
+                resolve(value);
+            }, 250);
+        };
+        
+        backdrop.querySelector('#premium-confirm-ok').onclick = () => resolveConfirm(true);
+        backdrop.querySelector('#premium-confirm-cancel').onclick = () => resolveConfirm(false);
+        backdrop.onclick = (e) => {
+            if (e.target === backdrop) resolveConfirm(false);
+        };
+    });
+};
+window.showPremiumConfirm = showPremiumConfirm;
+
+
 // --- SOBREESCRITURA GLOBAL DE ALERTA PARA USAR EL MODAL PREMIUM ---
 window.alert = function(message) {
     let type = 'warning';
@@ -175,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.00';
+const VERSION = '25.2.02';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -924,7 +1093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const delBtn = document.getElementById(`del_${area}`);
     if(delBtn) delBtn.addEventListener('click', async () => {
-        if(confirm(`¿Estás seguro de que quieres quitar el archivo de ${label}?`)) {
+        if(await showPremiumConfirm("QUITAR ARCHIVO", `¿Estás seguro de que quieres quitar el archivo de ${label}?`, 'danger')) {
             delBtn.disabled = true;
             delBtn.innerHTML = '...';
             await clearAreaData(area, user.username);
@@ -1063,7 +1232,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             
                             // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
                             setTimeout(async () => {
-                                if (confirm("¿Deseas guardar este análisis desglosado por FUENTE en el Historial?")) {
+                                if (await showPremiumConfirm("GUARDAR EN HISTORIAL", "¿Deseas guardar este análisis desglosado por FUENTE en el Historial?", "info")) {
                                     const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
                                     let successCount = 0;
                                     for (const s of sources) {
@@ -1092,8 +1261,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
 
         if (btnReset) {
-            btnReset.onclick = () => {
-                if(confirm('¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.')) {
+            btnReset.onclick = async () => {
+                if(await showPremiumConfirm('REINICIAR MEMORIA', '¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.', 'danger')) {
                     Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
                     localStorage.removeItem('lastBufferKPI');
                     window.location.reload();
@@ -1283,7 +1452,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=25.1.95');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=25.2.02');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -1703,7 +1872,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = async () => {
-        if (confirm('¿Estás seguro de eliminar permanentemente este usuario?')) {
+        if (await showPremiumConfirm('ELIMINAR USUARIO', '¿Estás seguro de eliminar permanentemente este usuario?', 'danger')) {
             await adminService.deleteUser(btn.dataset.user);
             renderAdminTab();
         }
@@ -2003,7 +2172,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 btnReopen.innerHTML = '🔓 REABRIR';
                 btnReopen.style = 'padding:0.6rem 1.2rem; border-radius:8px; font-weight:800; cursor:pointer; background:#ef4444; font-size:0.85rem;';
                 btnReopen.onclick = async () => {
-                    if (confirm("¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.")) {
+                    if (await showPremiumConfirm("REABRIR FECHA", "¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.", "warning")) {
                         btnReopen.disabled = true;
                         btnReopen.textContent = "⌛ ABRIENDO...";
                         await adminService.reopenAttendance(forcedDate);
@@ -2014,7 +2183,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         } else {
             btnClose.onclick = async () => {
-                if (confirm(`¿Confirmas cerrar la asistencia para el día ${forcedDate}?`)) {
+                if (await showPremiumConfirm("CERRAR ASISTENCIA", `¿Confirmas cerrar la asistencia para el día ${forcedDate}?`, "info")) {
                     try {
                         btnClose.disabled = true;
                         btnClose.textContent = "⌛ ENVIANDO...";
@@ -2722,7 +2891,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         `;
         document.getElementById('resetDataBtn').onclick = async () => {
-            if (confirm("🚨 ¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.")) {
+            if (await showPremiumConfirm("ZONA DE PELIGRO - REINICIAR DATOS", "¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.", "danger")) {
                 await adminService.resetProductionData();
                 alert("✅ Se han reiniciado los datos. La aplicación se recargará.");
                 window.location.reload();
@@ -3071,8 +3240,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                 renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
             };
 
-            document.getElementById('btn_close_loc').onclick = () => {
-                if(confirm('¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.')) {
+            document.getElementById('btn_close_loc').onclick = async () => {
+                if(await showPremiumConfirm('CERRAR UBICACIÓN', '¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.', 'warning')) {
                     cyclicService.closeLocation(activeLocation);
                     localStorage.removeItem('eru_active_location');
                     renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
@@ -3597,8 +3766,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                 };
 
-                document.getElementById('btn_close_loc').onclick = () => {
-                    if(confirm('¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.')) {
+                document.getElementById('btn_close_loc').onclick = async () => {
+                    if(await showPremiumConfirm('CERRAR UBICACIÓN', '¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.', 'warning')) {
                         cyclicService.closeLocation(activeLocation);
                         localStorage.removeItem('eru_active_location');
                         renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
@@ -6844,6 +7013,367 @@ export const renderDashboard = async (container, user, onLogout) => {
         return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
     };
 
+    const renderHourlyProductionReport = (tasksList) => {
+        const targetHours = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
+        const hourlyData = {};
+        
+        tasksList.forEach(t => {
+            if (t.status !== 'Finalizado') return;
+            if (!t.inicio) return;
+            
+            const dateObj = new Date(t.inicio);
+            const hr = dateObj.getHours();
+            if (!targetHours.includes(hr)) return;
+            
+            const dateKey = t.fecha || '---';
+            if (dateKey === '---') return;
+            
+            if (!hourlyData[dateKey]) {
+                hourlyData[dateKey] = {};
+                targetHours.forEach(h => hourlyData[dateKey][h] = 0);
+            }
+            
+            hourlyData[dateKey][hr] += parseFloat(t.qty) || 0;
+        });
+
+        const activeDates = Object.keys(hourlyData).filter(dateKey => {
+            const total = targetHours.reduce((sum, hr) => sum + hourlyData[dateKey][hr], 0);
+            return total > 0;
+        });
+
+        activeDates.sort((a, b) => a.localeCompare(b));
+
+        const formatLogicalDate = (dateStr) => {
+            if (!dateStr || dateStr === '---') return '---';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const day = parseInt(parts[2], 10);
+            const monthIdx = parseInt(parts[1], 10) - 1;
+            return `${day}-${months[monthIdx] || parts[1]}`;
+        };
+
+        return `
+        <!-- REPORTE DE PRODUCCIÓN POR HORA (ANCHO COMPLETO) -->
+        <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                    REPORTE DE PRODUCCIÓN POR HORA
+                </h3>
+                <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                    CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (INICIO DE TAREA)
+                </div>
+            </div>
+            <div style="overflow-x:auto; margin-top:0.4rem;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                    <thead>
+                        <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                            <th style="padding:6px 8px; text-align:left; width:80px;">FECHA</th>
+                            ${targetHours.map(hr => `<th style="padding:6px 4px; text-align:center;">${hr.toString().padStart(2, '0')}:00</th>`).join('')}
+                            <th style="padding:6px 8px; text-align:center; width:90px;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${activeDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producción por hora registrada.</td></tr>` : activeDates.map(dateKey => {
+                            const rowData = hourlyData[dateKey];
+                            const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
+                            return `
+                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
+                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${formatLogicalDate(dateKey)}</td>
+                                    ${targetHours.map(hr => {
+                                        const qty = rowData[hr];
+                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.15)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                    }).join('')}
+                                    <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-weight:900; background:rgba(0, 229, 255, 0.05);">${rowTotal.toLocaleString()}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        `;
+    };
+
+    const renderWeeklyStorageReport = (tasksList) => {
+        const weeklyBrandData = {};
+        const allBrandsSet = new Set();
+
+        const getWeekStr = (dateStr) => {
+            if (!dateStr || dateStr === '---') return '---';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return '---';
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const weekNo = getWeekNumber(dateObj);
+            return `Semana ${weekNo} (${parts[0]})`;
+        };
+
+        tasksList.forEach(t => {
+            if (t.status !== 'Finalizado') return;
+            const weekStr = getWeekStr(t.fecha);
+            if (weekStr === '---') return;
+            
+            const brand = String(t.marca || 'S/M').trim();
+            allBrandsSet.add(brand);
+            
+            if (!weeklyBrandData[weekStr]) {
+                weeklyBrandData[weekStr] = {};
+            }
+            if (!weeklyBrandData[weekStr][brand]) {
+                weeklyBrandData[weekStr][brand] = 0;
+            }
+            weeklyBrandData[weekStr][brand] += parseFloat(t.qty) || 0;
+        });
+
+        const predefinedBrands = ['Bata', 'North Star', 'Adidas', 'Puma'];
+        const otherBrands = Array.from(allBrandsSet)
+            .filter(b => !predefinedBrands.includes(b))
+            .sort((a, b) => a.localeCompare(b));
+        
+        const sortedBrands = [
+            ...predefinedBrands.filter(b => allBrandsSet.has(b)),
+            ...otherBrands
+        ];
+
+        const sortedWeeks = Object.keys(weeklyBrandData).sort((a, b) => {
+            const getVal = (s) => {
+                const m = s.match(/Semana (\d+) \((\d+)\)/);
+                if (!m) return 0;
+                return parseInt(m[2]) * 100 + parseInt(m[1]);
+            };
+            return getVal(a) - getVal(b);
+        });
+
+        const colTotals = {};
+        sortedBrands.forEach(b => colTotals[b] = 0);
+        let grandTotal = 0;
+
+        sortedWeeks.forEach(w => {
+            sortedBrands.forEach(b => {
+                const qty = weeklyBrandData[w][b] || 0;
+                colTotals[b] += qty;
+                grandTotal += qty;
+            });
+        });
+
+        return `
+        <!-- REPORTE DE ALMACENADO POR SEMANA (ANCHO COMPLETO) -->
+        <div style="background:#000000; border:2px solid #8b5cf6; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(139,92,246,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div style="border-left: 4px solid #8b5cf6; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                <h3 style="color:#a78bfa; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                    REPORTE DE ALMACENADO POR SEMANA Y MARCA
+                </h3>
+                <div style="font-size:0.68rem; color:rgba(167, 139, 250, 0.6); font-weight:700; letter-spacing:0.5px;">
+                    DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES
+                </div>
+            </div>
+            <div style="overflow-x:auto; margin-top:0.4rem;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                    <thead>
+                        <tr style="color:#a78bfa; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #8b5cf6;">
+                            <th style="padding:6px 8px; text-align:left; width:120px;">SEMANA</th>
+                            ${sortedBrands.map(b => `<th style="padding:6px 8px; text-align:center;">${b}</th>`).join('')}
+                            <th style="padding:6px 8px; text-align:center; width:100px;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:rgba(167, 139, 250, 0.4); font-weight:700;">No hay datos semanales registrados.</td></tr>` : sortedWeeks.map(w => {
+                            const rowData = weeklyBrandData[w];
+                            const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
+                            return `
+                                <tr style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000;">
+                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${w}</td>
+                                    ${sortedBrands.map(b => {
+                                        const qty = rowData[b] || 0;
+                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.15)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                    }).join('')}
+                                    <td style="padding:6px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.05);">${rowTotal.toLocaleString()}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                        ${sortedWeeks.length > 0 ? `
+                            <tr style="background: linear-gradient(90deg, rgba(139,92,246,0.2) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #8b5cf6; font-weight:900;">
+                                <td style="padding:8px 8px; color:#ffffff; font-weight:900;">TOTAL GENERAL</td>
+                                ${sortedBrands.map(b => {
+                                    const qty = colTotals[b];
+                                    return `<td style="padding:8px 8px; text-align:center; color:#a78bfa; font-weight:900;">${qty.toLocaleString()}</td>`;
+                                }).join('')}
+                                <td style="padding:8px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.1); text-shadow:0 0 8px rgba(167,139,250,0.5);">${grandTotal.toLocaleString()}</td>
+                            </tr>
+                        ` : ''}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        `;
+    };
+
+    const renderWeeklyDailyChartSection = (tasksList) => {
+        const chartWeeksData = {};
+
+        const getWeekStr = (dateStr) => {
+            if (!dateStr || dateStr === '---') return '---';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return '---';
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const weekNo = getWeekNumber(dateObj);
+            return `Semana ${weekNo} (${parts[0]})`;
+        };
+
+        const getDayIndex = (dateStr) => {
+            if (!dateStr) return -1;
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return -1;
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            const day = d.getDay();
+            return day === 0 ? 6 : day - 1;
+        };
+
+        tasksList.forEach(t => {
+            if (t.status !== 'Finalizado') return;
+            const weekStr = getWeekStr(t.fecha);
+            const dayIdx = getDayIndex(t.fecha);
+            if (weekStr === '---' || dayIdx === -1) return;
+            
+            if (!chartWeeksData[weekStr]) {
+                chartWeeksData[weekStr] = [0, 0, 0, 0, 0, 0, 0];
+            }
+            chartWeeksData[weekStr][dayIdx] += parseFloat(t.qty) || 0;
+        });
+
+        const activeWeeks = Object.keys(chartWeeksData).sort((a, b) => {
+            const getVal = (s) => {
+                const m = s.match(/Semana (\d+) \((\d+)\)/);
+                if (!m) return 0;
+                return parseInt(m[2]) * 100 + parseInt(m[1]);
+            };
+            return getVal(a) - getVal(b);
+        });
+
+        const displayWeeks = activeWeeks.slice(-4);
+        
+        const chartColors = [
+            { border: '#00E5FF', bg: 'rgba(0, 229, 255, 0.1)' },
+            { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+            { border: '#eab308', bg: 'rgba(234, 179, 8, 0.1)' },
+            { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' }
+        ];
+
+        setTimeout(() => {
+            const ctx = document.getElementById('weeklyDailyChartCanvas');
+            if (!ctx) {
+                console.warn("⚠️ Canvas element 'weeklyDailyChartCanvas' not found in DOM yet.");
+                return;
+            }
+            
+            if (window.weeklyDailyChartInstance) {
+                try {
+                    window.weeklyDailyChartInstance.destroy();
+                } catch(e) {
+                    console.error("Error destroying chart instance:", e);
+                }
+            }
+            
+            if (typeof Chart === 'undefined') {
+                console.error("❌ Chart.js is not loaded.");
+                return;
+            }
+            
+            const datasets = displayWeeks.map((week, idx) => {
+                const color = chartColors[idx % chartColors.length];
+                return {
+                    label: week,
+                    data: chartWeeksData[week],
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: 3,
+                    pointBackgroundColor: color.border,
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.35,
+                    fill: true
+                };
+            });
+            
+            window.weeklyDailyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    family: "'Outfit', sans-serif",
+                                    weight: 'bold',
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#00E5FF',
+                            bodyColor: '#ffffff',
+                            borderColor: '#38bdf8',
+                            borderWidth: 1,
+                            titleFont: { family: "'Outfit', sans-serif", weight: 'bold' },
+                            bodyFont: { family: "'Inter', sans-serif" }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)',
+                                borderColor: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { family: "'Inter', sans-serif", weight: '600' }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)',
+                                borderColor: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { family: "'Inter', sans-serif", weight: '600' }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }, 100);
+
+        return `
+        <!-- GRÁFICO POR SEMANA Y DÍA -->
+        <div style="background:#000000; border:2px solid #eab308; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(234,179,8,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div style="border-left: 4px solid #eab308; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                <h3 style="color:#fef08a; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                    GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
+                </h3>
+                <div style="font-size:0.68rem; color:rgba(234, 179, 8, 0.6); font-weight:700; letter-spacing:0.5px;">
+                    TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A DOMINGO)
+                </div>
+            </div>
+            <div style="position:relative; width:100%; height:250px; margin-top:0.5rem;">
+                <canvas id="weeklyDailyChartCanvas" style="width:100%; height:100%; max-height:250px;"></canvas>
+            </div>
+        </div>
+        `;
+    };
+
     const groups = {};
     tasks.forEach(t => {
         if (!t || typeof t !== 'object') return;
@@ -7528,6 +8058,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             fecha: pt.logicalDate,
                                             turno: pt.shift,
                                             operators: new Set(),
+                                            tasks: new Set(),
                                             totalQty: 0,
                                             taskCount: 0,
                                             firstStart: null,
@@ -7537,7 +8068,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     
                                     shiftStats[groupKey].operators.add(pt.username);
                                     shiftStats[groupKey].totalQty += pt.qtyForUser;
-                                    shiftStats[groupKey].taskCount += 1;
+                                    
+                                    const taskId = pt.task.id || pt.task.Id || JSON.stringify(pt.task);
+                                    if (!shiftStats[groupKey].tasks.has(taskId)) {
+                                        shiftStats[groupKey].tasks.add(taskId);
+                                        shiftStats[groupKey].taskCount += 1;
+                                    }
                                     
                                     if (pt.task.inicio) {
                                         let sTime = new Date(pt.task.inicio);
@@ -7635,6 +8171,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </table>
                 </div>
             </div>
+            
+            ${renderHourlyProductionReport(tasks)}
+            
+            ${renderWeeklyStorageReport(tasks)}
+            
+            ${renderWeeklyDailyChartSection(tasks)}
         </div>
             ` : `
 
@@ -7807,11 +8349,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
-    window.processAlmacenajeTasks = () => { if (confirm("¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.")) processAlmacenajeTasks(); };
+    window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
-    window.resetTask = (id) => {
+    window.resetTask = async (id) => {
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
-        if (confirm(`¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`)) {
+        if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             const t = almacenajeTasksCache.find(x => x.id === id);
             if (t) {
                 t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada';
@@ -7820,9 +8362,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         }
     };
-    window.deleteTask = (id) => {
+    window.deleteTask = async (id) => {
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
-        if (confirm(`¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`)) {
+        if (await showPremiumConfirm("ELIMINAR TAREA", `¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`, "danger")) {
             almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
@@ -7879,7 +8421,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         document.getElementById('m_save').onclick = () => {
             const u1 = document.getElementById('m_u1').value;
-            if (!u1) { alert("Usuario 1 es obligatorio."); return; }
+            if (!u1) { showPremiumAlert("ASIGNAR TAREA", "Usuario 1 es obligatorio.", "error"); return; }
             t.u1 = u1;
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
@@ -7949,13 +8491,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
             modal.querySelector('#optUpdate').onclick = () => {
                 const selectedDate = modal.querySelector('#manual_op_date').value;
-                if (!selectedDate) { alert("⚠️ Por favor selecciona una fecha."); return; }
+                if (!selectedDate) { showPremiumAlert("FECHA OPERATIVA", "Por favor selecciona una fecha.", "warning"); return; }
                 document.body.removeChild(modal);
                 window.processAlmacenajeTasks('update', selectedDate);
             };
             modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
         } catch (err) {
-            alert("❌ Error crítico al abrir calendario: " + err.message);
+            showPremiumAlert("ERROR CRÍTICO", "Error crítico al abrir calendario: " + err.message, "error");
             console.error(err);
         }
     };
@@ -8026,9 +8568,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             const newStart = modal.querySelector('#edit_start').value;
             const newEnd = modal.querySelector('#edit_end').value;
             
-            if (!u1) { alert("⚠️ El Usuario 1 es obligatorio."); return; }
+            if (!u1) { showPremiumAlert("EDITAR TAREA", "El Usuario 1 es obligatorio.", "error"); return; }
             if (newEnd && !newStart) {
-                alert("⚠️ Si ingresas la Hora de Término, también debes ingresar la Hora de Inicio.");
+                showPremiumAlert("EDITAR TAREA", "Si ingresas la Hora de Término, también debes ingresar la Hora de Inicio.", "warning");
                 return;
             }
 
@@ -8069,8 +8611,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     window.processAlmacenajeTasks = processAlmacenajeTasks;
 
-    window.clearCurrentShiftTasks = () => {
-        if (confirm(`⚠️ ¿Borrar TODAS las tareas con status "CREADA" de todo el historial?\n\n(Esta acción es global y no importa la fecha. No se borrarán tareas asignadas o finalizadas)`)) {
+    window.clearCurrentShiftTasks = async () => {
+        if (await showPremiumConfirm("BORRAR TAREAS CREADAS", `¿Borrar TODAS las tareas con status "CREADA" de todo el historial?\n\n(Esta acción es global y no importa la fecha. No se borrarán tareas asignadas o finalizadas)`, "danger")) {
             almacenajeTasksCache = almacenajeTasksCache.filter(t => t.status !== 'Creada');
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);

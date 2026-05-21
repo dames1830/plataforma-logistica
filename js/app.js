@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=25.2.00';
-import * as adminService from './services_v245/adminService.js?v=25.2.00';
+import { getSession, logout } from './services_v245/auth.js?v=25.2.02';
+import * as adminService from './services_v245/adminService.js?v=25.2.02';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -147,6 +147,174 @@ window.showPremiumAlert = (title, message, type = 'error') => {
     });
 };
 
+// --- SISTEMA GLOBAL DE CONFIRMACIONES PREMIUM GLASSMÓRFICAS ---
+window.showPremiumConfirm = (title, message, type = 'warning') => {
+    return new Promise((resolve) => {
+        const backdrop = document.createElement('div');
+        backdrop.style.position = 'fixed';
+        backdrop.style.top = '0';
+        backdrop.style.left = '0';
+        backdrop.style.width = '100vw';
+        backdrop.style.height = '100vh';
+        backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.75)';
+        backdrop.style.backdropFilter = 'blur(12px)';
+        backdrop.style.display = 'flex';
+        backdrop.style.justifyContent = 'center';
+        backdrop.style.alignItems = 'center';
+        backdrop.style.zIndex = '999999';
+        backdrop.style.opacity = '0';
+        backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        let accentColor = '#f59e0b'; // Amber
+        let icon = '❓';
+        let glowColor = 'rgba(245, 158, 11, 0.3)';
+        
+        if (type === 'danger') {
+            accentColor = '#ef4444'; // Red
+            icon = '🚨';
+            glowColor = 'rgba(239, 68, 68, 0.3)';
+        } else if (type === 'info') {
+            accentColor = '#3b82f6'; // Blue
+            icon = 'ℹ️';
+            glowColor = 'rgba(59, 130, 246, 0.3)';
+        } else if (type === 'success') {
+            accentColor = '#10b981'; // Green
+            icon = '✅';
+            glowColor = 'rgba(16, 185, 129, 0.3)';
+        }
+
+        backdrop.innerHTML = `
+            <div class="glass-panel" style="
+                width: 90%;
+                max-width: 450px;
+                padding: 2.5rem 2rem;
+                border-radius: 20px;
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px ${glowColor};
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                transform: scale(0.9);
+                transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            ">
+                <div style="
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 2px solid ${accentColor};
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 2.2rem;
+                    margin-bottom: 1.5rem;
+                    box-shadow: 0 0 20px ${glowColor};
+                    animation: pulse-icon-confirm 2s infinite;
+                ">
+                    ${icon}
+                </div>
+                
+                <h3 style="
+                    margin: 0 0 0.8rem 0;
+                    color: #fff;
+                    font-size: 1.3rem;
+                    font-weight: 800;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    font-family: 'Outfit', sans-serif;
+                ">
+                    ${title}
+                </h3>
+                
+                <p style="
+                    margin: 0 0 2rem 0;
+                    color: #94a3b8;
+                    font-size: 0.9rem;
+                    line-height: 1.6;
+                    font-weight: 500;
+                    font-family: 'Inter', sans-serif;
+                ">
+                    ${message}
+                </p>
+                
+                <div style="
+                    display: flex;
+                    gap: 1rem;
+                    width: 100%;
+                ">
+                    <button id="premium-confirm-cancel" style="
+                        flex: 1;
+                        padding: 0.8rem;
+                        border: 1px solid rgba(255, 255, 255, 0.15);
+                        border-radius: 12px;
+                        background: rgba(255, 255, 255, 0.05);
+                        color: #cbd5e1;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        letter-spacing: 1px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        font-family: 'Inter', sans-serif;
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" 
+                      onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='#cbd5e1';">
+                        CANCELAR
+                    </button>
+                    
+                    <button id="premium-confirm-ok" style="
+                        flex: 1;
+                        padding: 0.8rem;
+                        border: none;
+                        border-radius: 12px;
+                        background: linear-gradient(135deg, ${accentColor} 0%, #000 150%);
+                        color: #fff;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        letter-spacing: 1px;
+                        cursor: pointer;
+                        box-shadow: 0 4px 12px ${glowColor};
+                        transition: all 0.2s ease;
+                        font-family: 'Inter', sans-serif;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px ${glowColor}';" 
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${glowColor}';">
+                        ACEPTAR
+                    </button>
+                </div>
+            </div>
+            <style>
+                @keyframes pulse-icon-confirm {
+                    0% { transform: scale(1); box-shadow: 0 0 20px ${glowColor}; }
+                    50% { transform: scale(1.05); box-shadow: 0 0 30px ${accentColor}; }
+                    100% { transform: scale(1); box-shadow: 0 0 20px ${glowColor}; }
+                }
+            </style>
+        `;
+        
+        document.body.appendChild(backdrop);
+        
+        setTimeout(() => {
+            backdrop.style.opacity = '1';
+            backdrop.querySelector('.glass-panel').style.transform = 'scale(1)';
+        }, 10);
+        
+        const resolveConfirm = (value) => {
+            backdrop.style.opacity = '0';
+            backdrop.querySelector('.glass-panel').style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                backdrop.remove();
+                resolve(value);
+            }, 250);
+        };
+        
+        backdrop.querySelector('#premium-confirm-ok').onclick = () => resolveConfirm(true);
+        backdrop.querySelector('#premium-confirm-cancel').onclick = () => resolveConfirm(false);
+        backdrop.onclick = (e) => {
+            if (e.target === backdrop) resolveConfirm(false);
+        };
+    });
+};
+
 window.alert = function(message) {
     let type = 'warning';
     let title = 'ATENCIÓN';
@@ -177,7 +345,7 @@ window.alert = function(message) {
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v25.2.00';
+    this.APP_VERSION = 'v25.2.02';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
