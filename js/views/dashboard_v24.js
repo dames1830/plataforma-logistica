@@ -601,7 +601,9 @@ let activeConfigSub = 'parametros';
 
 window.downloadExcelDetail = async () => {
     if (!lastBufferResult) return;
-    const data = lastBufferResult;
+    
+    // 0. Copia profunda para evitar mutaciones de estado en sucesivas descargas
+    const data = JSON.parse(JSON.stringify(lastBufferResult));
 
     // 1. Obtener la configuración del buffer guardada
     let savedQtys = {};
@@ -655,17 +657,81 @@ window.downloadExcelDetail = async () => {
         }
     }
 
-    // 3. Aplicar la suma de la configuración a d['QTY BUFFER'] en data.detalle
+    // 3. Aplicar la suma de la configuración a d['QTY BUFFER'] en data.detalle de forma consolidada y secuencial
     if (Array.isArray(data.detalle)) {
+        // A. Agrupar filas de data.detalle por SKU
+        const rowsBySku = new Map();
         data.detalle.forEach(d => {
             const sku = d.SKU || '';
+            if (sku) {
+                if (!rowsBySku.has(sku)) {
+                    rowsBySku.set(sku, []);
+                }
+                rowsBySku.get(sku).push(d);
+            }
+        });
+
+        // B. Consolidar demanda y distribuir secuencialmente por SKU
+        rowsBySku.forEach((skuRows, sku) => {
+            // Calcular demanda base inicial
+            let baseSkuDemand = 0;
+            skuRows.forEach(d => {
+                baseSkuDemand += (d['QTY BUFFER'] || 0);
+            });
+
+            // Buscar configuración extra de Marca/Género
+            const art7 = sku.substring(0, 7);
+            const maestro = maestroMap.get(art7);
+            let extra = 0;
+            if (maestro) {
+                const key = `${maestro.marca}|${maestro.gender}`;
+                extra = parseInt(savedQtys[key]) || 0;
+            }
+
+            // Demanda consolidada final
+            const totalSkuDemand = baseSkuDemand + extra;
+
+            // Priorizar filas que ya tenían demanda original, luego ordenar por UBICACIONES y LPN
+            skuRows.sort((a, b) => {
+                const aHasOrigDemand = (a['QTY BUFFER'] || 0) > 0 ? 1 : 0;
+                const bHasOrigDemand = (b['QTY BUFFER'] || 0) > 0 ? 1 : 0;
+                if (aHasOrigDemand !== bHasOrigDemand) {
+                    return bHasOrigDemand - aHasOrigDemand;
+                }
+                const ubiA = String(a.UBICACIONES || '');
+                const ubiB = String(b.UBICACIONES || '');
+                if (ubiA !== ubiB) return ubiA.localeCompare(ubiB);
+                
+                const lpnA = String(a.LPN || '');
+                const lpnB = String(b.LPN || '');
+                return lpnA.localeCompare(lpnB);
+            });
+
+            // Distribución secuencial respetando QTY RESERVA
+            let remainingDemand = totalSkuDemand;
+            skuRows.forEach(row => {
+                const limit = row['QTY RESERVA'] || 0;
+                const allocated = Math.min(remainingDemand, limit);
+                row['QTY BUFFER'] = allocated;
+                remainingDemand -= allocated;
+            });
+        });
+    }
+
+    // 3.5. Sincronizar data.resumenSKUDetalle para que coincida perfectamente
+    if (Array.isArray(data.resumenSKUDetalle)) {
+        data.resumenSKUDetalle.forEach(s => {
+            const sku = s.Sku || '';
             const art7 = sku.substring(0, 7);
             const maestro = maestroMap.get(art7);
             if (maestro) {
                 const key = `${maestro.marca}|${maestro.gender}`;
                 const extra = parseInt(savedQtys[key]) || 0;
                 if (extra > 0) {
-                    d['QTY BUFFER'] = (d['QTY BUFFER'] || 0) + extra;
+                    const originalRQ = s['RQ'] || 0;
+                    const qtyActivo = s['Qty Activo'] || 0;
+                    s['RQ'] = originalRQ + extra;
+                    s['Diferencia'] = Math.max(0, s['RQ'] - qtyActivo);
                 }
             }
         });
@@ -703,8 +769,19 @@ window.downloadExcelDetail = async () => {
         if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
     });
 
+    // Crear un conjunto de LPNs válidos con demanda real (QTY BUFFER > 0)
+    const lpnsWithDemand = new Set();
+    if (Array.isArray(data.detalle)) {
+        data.detalle.forEach(d => {
+            if ((d['QTY BUFFER'] || 0) > 0 && d.LPN) {
+                lpnsWithDemand.add(d.LPN);
+            }
+        });
+    }
+
+    // Filtrar physicalDetalle para incluir únicamente LPNs que tienen demanda real asignada
     const physicalDetalle = (data.detalle || [])
-        .filter(d => String(d.UBICACIONES || '').startsWith('SEL-'))
+        .filter(d => String(d.UBICACIONES || '').startsWith('SEL-') && lpnsWithDemand.has(d.LPN))
         .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
 
     const montacargaMap = new Map();
