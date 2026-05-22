@@ -661,7 +661,14 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
     const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1', include_merma: '1' };
-    const getArticulo = (sku) => String(sku || '').substring(0, 7);
+    const getArticulo = (sku) => {
+        if (!sku) return '';
+        const trimmedSku = String(sku).trim();
+        if (trimmedSku.length === 15) {
+            return trimmedSku; // No le saques los 7 primeros
+        }
+        return trimmedSku.substring(0, 7);
+    };
 
     // Mapeo de Stock según Jerarquías (Fase 11.9.1)
     let stBajas = {}, stAltos = {}, stPisos = {}, stAereos = {}, stLogicos = {}, stMerma = {};
@@ -770,7 +777,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     // Helper para obtener el buffer extra de un SKU usando articulosMap
     const getExtraBuffer = (sku) => {
         if (!sku) return 0;
-        const sku7 = sku.trim().substring(0, 7);
+        const trimmedSku = sku.trim();
+        // Si el SKU tiene 15 dígitos (o caracteres), no se considera para el buffer extra
+        if (trimmedSku.length === 15) {
+            return 0;
+        }
+        const sku7 = trimmedSku.substring(0, 7);
         const info = articulosMap.get(sku7);
         if (!info) return 0;
         const m = String(info.marca || 'OTROS').trim().toUpperCase();
@@ -878,7 +890,11 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     const getArtInfo = (sku) => {
         if (!sku) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
-        const sku7 = sku.trim().substring(0, 7);
+        const trimmedSku = sku.trim();
+        if (trimmedSku.length === 15) {
+            return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
+        }
+        const sku7 = trimmedSku.substring(0, 7);
         const info = articulosMap.get(sku7);
         if (!info) return { gender: 'S/MAESTRO', marca: 'S/Maestro' };
         
@@ -1029,7 +1045,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'UBICACIONES': ubi, 
                                 'LPN': item['LPN'], 
                                 'SKU': sku, 
-                                'Articulo': sku.substring(0,7),
+                                'Articulo': sku.trim().length === 15 ? sku.trim() : sku.substring(0,7),
                                 'RQ': dSrc.qty,
                                 'QTY ACTIVO': activeStockMap[sku] || 0,
                                 'QTY RESERVA': qty, 
@@ -1082,7 +1098,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'FUENTE': 'ACOMPAÑANTE LPN',
                     'UBICACIONES': String(f['UBICACION'] || '').trim(),
                     'LPN': lpn,
-                    'Articulo': sku.substring(0,7),
+                    'Articulo': sku.trim().length === 15 ? sku.trim() : sku.substring(0,7),
                     'SKU': sku,
                     'RQ': 0,
                     'QTY ACTIVO': activeStockMap[sku] || 0,
@@ -1105,10 +1121,11 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (r[src] && r[src][type]) {
             r[src][type].qty += d.total;
             r[src][type].skus++;
-            // Nota: Para paletas usamos el maestro si existe, sino 1
-            const sku7 = sku.trim().substring(0, 7);
-            const info = articulosMap.get(sku7);
-            r[src][type].pal += (d.total / (info?.unidadesPorPalet || 1));
+             // Nota: Para paletas usamos el maestro si existe, sino 1
+             const trimmedSku = sku.trim();
+             const sku7 = trimmedSku.length === 15 ? trimmedSku : trimmedSku.substring(0, 7);
+             const info = trimmedSku.length === 15 ? null : articulosMap.get(sku7);
+             r[src][type].pal += (d.total / (info?.unidadesPorPalet || 1));
         }
     });
 
@@ -1264,7 +1281,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         skus: new Set(sinStockRows.map(d => String(d['SKU'] || d['Sku'] || d['sku'] || '').trim()).filter(x => x)).size,
         articulos: new Set(sinStockRows.map(d => {
             let val = d['ARTÍCULO'] || d['ARTICULO'] || d['SKU'] || d['Sku'] || d['sku'] || '';
-            return String(val).trim().substring(0, 7);
+            const trimmedVal = String(val).trim();
+            return trimmedVal.length === 15 ? trimmedVal : trimmedVal.substring(0, 7);
         }).filter(x => x && x.length >= 5)).size,
         qty: sinStockRows.reduce((acc, d) => acc + (parseFloat(d['ATD RQ'] || d['ATD_RQ'] || 0) || 0), 0)
     };
@@ -1274,7 +1292,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     
     // Sumar Activo
     Object.keys(activeStockMap).forEach(sku => {
-        const art = String(sku).substring(0, 7);
+        const trimmedSku = String(sku).trim();
+        const art = trimmedSku.length === 15 ? trimmedSku : trimmedSku.substring(0, 7);
         if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
         stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + (activeStockMap[sku] || 0));
     });
@@ -1283,7 +1302,8 @@ export const calculateBufferPallets = (configOverride = null) => {
     reserva.forEach(r => {
         const sku = String(getCol(r, ['PRODUCTO', 'Articulo', 'Producto', 'SKU']) || '').trim();
         const qty = parseFloat(getCol(r, ['CANTIDAD', 'Cant', 'Stock', 'Quantity']) || 0);
-        const art = sku.substring(0, 7);
+        const trimmedSku = sku.trim();
+        const art = trimmedSku.length === 15 ? trimmedSku : trimmedSku.substring(0, 7);
         if (art) {
             if (!stockGlobalPorArticulo.has(art)) stockGlobalPorArticulo.set(art, 0);
             stockGlobalPorArticulo.set(art, stockGlobalPorArticulo.get(art) + qty);
