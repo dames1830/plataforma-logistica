@@ -602,6 +602,75 @@ let activeConfigSub = 'parametros';
 window.downloadExcelDetail = async () => {
     if (!lastBufferResult) return;
     const data = lastBufferResult;
+
+    // 1. Obtener la configuración del buffer guardada
+    let savedQtys = {};
+    try {
+        const config = await fetchBufferConfig();
+        if (config && config.brand_gender_qtys) {
+            savedQtys = JSON.parse(config.brand_gender_qtys) || {};
+        }
+    } catch (e) {
+        console.warn("[PULSE] Error fetching/parsing buffer config for excel:", e);
+    }
+
+    // 2. Construir maestroMap con detección robusta de columnas
+    const maestroMap = new Map();
+    if (dataStore.articulos) {
+        let brandIdx = 13;
+        let genderIdx = 3;
+        const firstRow = dataStore.articulos[0];
+        if (firstRow && Array.isArray(firstRow)) {
+            firstRow.forEach((cell, idx) => {
+                const cellStr = String(cell || '').trim().toUpperCase();
+                if (cellStr === 'MARCA' || cellStr === 'BRAND') {
+                    brandIdx = idx;
+                } else if (cellStr === 'GENDER RIMS' || cellStr === 'GENDER' || cellStr === 'GENDERRIMS' || cellStr === 'DEPARTAMENTO' || cellStr === 'GENERO') {
+                    genderIdx = idx;
+                }
+            });
+        }
+        
+        let startIndex = 0;
+        if (Array.isArray(dataStore.articulos[0])) {
+            const firstCell = String(dataStore.articulos[0][0] || '').trim().toUpperCase();
+            if (firstCell.includes('SKU') || firstCell.includes('ARTICULO') || firstCell.includes('BARCODE') || firstCell.includes('CODIGO') || firstCell.includes('GENDER') || firstCell.includes('GENERO') || firstCell.includes('MARCA') || firstCell.includes('BRAND')) {
+                startIndex = 1;
+            }
+        }
+
+        for (let i = startIndex; i < dataStore.articulos.length; i++) {
+            const row = dataStore.articulos[i];
+            if (!row) continue;
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            if (raw.length <= Math.max(brandIdx, genderIdx)) continue;
+            
+            const art7 = String(raw[1] || '').trim().substring(0, 7);
+            const marca = String(raw[brandIdx] || 'OTROS').trim().toUpperCase();
+            const gender = String(raw[genderIdx] || 'OTROS').trim().toUpperCase();
+            
+            if (art7 && !maestroMap.has(art7)) {
+                maestroMap.set(art7, { marca, gender });
+            }
+        }
+    }
+
+    // 3. Aplicar la suma de la configuración a d['QTY BUFFER'] en data.detalle
+    if (Array.isArray(data.detalle)) {
+        data.detalle.forEach(d => {
+            const sku = d.SKU || '';
+            const art7 = sku.substring(0, 7);
+            const maestro = maestroMap.get(art7);
+            if (maestro) {
+                const key = `${maestro.marca}|${maestro.gender}`;
+                const extra = parseInt(savedQtys[key]) || 0;
+                if (extra > 0) {
+                    d['QTY BUFFER'] = (d['QTY BUFFER'] || 0) + extra;
+                }
+            }
+        });
+    }
+
     const workbook = new ExcelJS.Workbook();
 
     // --- PESTAÑA 1: MONTACARGA (FORMATO PREMIUM) ---
@@ -713,14 +782,7 @@ window.downloadExcelDetail = async () => {
     });
     [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
-    const maestroMap = new Map();
-    if (dataStore.articulos) {
-        dataStore.articulos.forEach(row => {
-            const raw = Array.isArray(row) ? row : Object.values(row);
-            const art7 = String(raw[1] || '').trim().substring(0, 7);
-            if (art7 && !maestroMap.has(art7)) maestroMap.set(art7, { marca: String(raw[13] || 'OTROS').trim(), gender: String(raw[3] || '').trim() });
-        });
-    }
+    // maestroMap ya fue construido robustamente al inicio de la función
     const tallasMap = dataStore.tabla_tallas || {};
 
     let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
