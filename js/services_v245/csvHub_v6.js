@@ -100,7 +100,7 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '26.5.24';
+const VERSION = '26.5.25';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -803,19 +803,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (sku) allKnownSkus.add(sku);
     });
 
-    // Inyectar SKUs que tienen buffer configurado pero 0 demanda base
-    allKnownSkus.forEach(sku => {
-        const extra = getExtraBuffer(sku);
-        if (extra > 0 && !tempMap[sku]) {
-            tempMap[sku] = { total: 0, bestSrc: 'PEDIDOS' };
-        }
-    });
-
-    // Sumar las cantidades de buffer extra a tempMap
-    Object.keys(tempMap).forEach(sku => {
-        const extra = getExtraBuffer(sku);
-        tempMap[sku].total += extra;
-    });
+    // La cantidad de configuración de buffer ya no se inyecta ni se suma a la demanda consolidada,
+    // permitiendo que el cálculo sea netamente en base al archivo de pedidos.
 
     // 3. Convertir al formato final de 'demanda'
     let demanda = {};
@@ -1049,7 +1038,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'RQ': dSrc.qty,
                                 'QTY ACTIVO': activeStockMap[sku] || 0,
                                 'QTY RESERVA': qty, 
-                                'QTY BUFFER': Math.round(attributedUnits)
+                                'QTY BUFFER': Math.round(attributedUnits),
+                                'QTY EXTRA': getExtraBuffer(sku)
                             });
                             
                             empaqueAggr[dSrc.src][tipo].pal.add(ubi);
@@ -1103,7 +1093,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'RQ': 0,
                     'QTY ACTIVO': activeStockMap[sku] || 0,
                     'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
-                    'QTY BUFFER': 0
+                    'QTY BUFFER': 0,
+                    'QTY EXTRA': getExtraBuffer(sku)
                 });
             }
         });
