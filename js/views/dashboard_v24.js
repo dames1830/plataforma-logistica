@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.2.02';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.22-patch1';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=25.2.02';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.2.02';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=25.2.02';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=25.2.02';
+import * as adminService from '../services_v245/adminService.js?v=26.5.22-patch1';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.22-patch1';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.22-patch1';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.22-patch1';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -657,85 +657,12 @@ window.downloadExcelDetail = async () => {
         }
     }
 
-    // 3. Aplicar la suma de la configuración a d['QTY BUFFER'] en data.detalle de forma consolidada y secuencial
-    if (Array.isArray(data.detalle)) {
-        // A. Agrupar filas de data.detalle por SKU
-        const rowsBySku = new Map();
-        data.detalle.forEach(d => {
-            const sku = d.SKU || '';
-            if (sku) {
-                if (!rowsBySku.has(sku)) {
-                    rowsBySku.set(sku, []);
-                }
-                rowsBySku.get(sku).push(d);
-            }
-        });
-
-        // B. Consolidar demanda y distribuir secuencialmente por SKU
-        rowsBySku.forEach((skuRows, sku) => {
-            // Calcular demanda base inicial
-            let baseSkuDemand = 0;
-            skuRows.forEach(d => {
-                baseSkuDemand += (d['QTY BUFFER'] || 0);
-            });
-
-            // Buscar configuración extra de Marca/Género
-            const art7 = sku.substring(0, 7);
-            const maestro = maestroMap.get(art7);
-            let extra = 0;
-            if (maestro) {
-                const key = `${maestro.marca}|${maestro.gender}`;
-                extra = parseInt(savedQtys[key]) || 0;
-            }
-
-            // Demanda consolidada final
-            const totalSkuDemand = baseSkuDemand + extra;
-
-            // Priorizar filas que ya tenían demanda original, luego ordenar por UBICACIONES y LPN
-            skuRows.sort((a, b) => {
-                const aHasOrigDemand = (a['QTY BUFFER'] || 0) > 0 ? 1 : 0;
-                const bHasOrigDemand = (b['QTY BUFFER'] || 0) > 0 ? 1 : 0;
-                if (aHasOrigDemand !== bHasOrigDemand) {
-                    return bHasOrigDemand - aHasOrigDemand;
-                }
-                const ubiA = String(a.UBICACIONES || '');
-                const ubiB = String(b.UBICACIONES || '');
-                if (ubiA !== ubiB) return ubiA.localeCompare(ubiB);
-                
-                const lpnA = String(a.LPN || '');
-                const lpnB = String(b.LPN || '');
-                return lpnA.localeCompare(lpnB);
-            });
-
-            // Distribución secuencial respetando QTY RESERVA
-            let remainingDemand = totalSkuDemand;
-            skuRows.forEach(row => {
-                const limit = row['QTY RESERVA'] || 0;
-                const allocated = Math.min(remainingDemand, limit);
-                row['QTY BUFFER'] = allocated;
-                remainingDemand -= allocated;
-            });
-        });
-    }
-
-    // 3.5. Sincronizar data.resumenSKUDetalle para que coincida perfectamente
-    if (Array.isArray(data.resumenSKUDetalle)) {
-        data.resumenSKUDetalle.forEach(s => {
-            const sku = s.Sku || '';
-            const art7 = sku.substring(0, 7);
-            const maestro = maestroMap.get(art7);
-            if (maestro) {
-                const key = `${maestro.marca}|${maestro.gender}`;
-                const extra = parseInt(savedQtys[key]) || 0;
-                if (extra > 0) {
-                    const originalRQ = s['RQ'] || 0;
-                    const qtyActivo = s['Qty Activo'] || 0;
-                    s['RQ'] = originalRQ + extra;
-                    s['Diferencia'] = Math.max(0, s['RQ'] - qtyActivo);
-                }
-            }
-        });
-    }
+    // [OPTIMIZACIÓN SOLUCIÓN 1]
+    // La redistribución manual y ad-hoc que se hacía aquí ha sido eliminada por completo.
+    // Ahora las cantidades de buffer extra configuradas se integran directamente en el motor 
+    // de cálculo central (calculateBufferPallets), garantizando que las LPNs en reserva se
+    // busquen, seleccionen y descuenten con absoluta precisión matemática desde el origen.
+    // Esto asegura coherencia total entre la interfaz de usuario, las alertas de stock y los reportes descargados.
 
     const workbook = new ExcelJS.Workbook();
 

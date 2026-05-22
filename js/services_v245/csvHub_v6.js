@@ -100,7 +100,7 @@ export let currentDateFilter = null;
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '25.1.98';
+const VERSION = '26.5.22-patch1';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -755,6 +755,54 @@ export const calculateBufferPallets = (configOverride = null) => {
             tempMap[item.sku].total += item.qty;
             // No cambiamos bestSrc porque el primero que lo puso (según jerarquía) gana
         });
+    });
+
+    // [NUEVO] Cargar y parsear configuración de buffer extra por Marca y Género
+    let savedQtys = {};
+    if (config && config.brand_gender_qtys) {
+        try {
+            savedQtys = JSON.parse(config.brand_gender_qtys) || {};
+        } catch (e) {
+            console.warn("[PULSE] Error parsing config.brand_gender_qtys inside engine:", e);
+        }
+    }
+
+    // Helper para obtener el buffer extra de un SKU usando articulosMap
+    const getExtraBuffer = (sku) => {
+        if (!sku) return 0;
+        const sku7 = sku.trim().substring(0, 7);
+        const info = articulosMap.get(sku7);
+        if (!info) return 0;
+        const m = String(info.marca || 'OTROS').trim().toUpperCase();
+        const g = String(info.gender || 'OTROS').trim().toUpperCase();
+        const key = `${m}|${g}`;
+        return parseInt(savedQtys[key]) || 0;
+    };
+
+    // Colectar todos los SKUs físicamente presentes en activo o reserva
+    const allKnownSkus = new Set();
+    const activeSkuHeaders = ['ArtÃculo', 'Articulo', 'Artículo', 'Sku'];
+    activo.forEach(f => {
+        let sku = String(getCol(f, activeSkuHeaders) || '').trim();
+        if (sku) allKnownSkus.add(sku);
+    });
+    reserva.forEach(f => {
+        let sku = String(f['PRODUCTO'] || '').trim();
+        if (sku) allKnownSkus.add(sku);
+    });
+
+    // Inyectar SKUs que tienen buffer configurado pero 0 demanda base
+    allKnownSkus.forEach(sku => {
+        const extra = getExtraBuffer(sku);
+        if (extra > 0 && !tempMap[sku]) {
+            tempMap[sku] = { total: 0, bestSrc: 'PEDIDOS' };
+        }
+    });
+
+    // Sumar las cantidades de buffer extra a tempMap
+    Object.keys(tempMap).forEach(sku => {
+        const extra = getExtraBuffer(sku);
+        tempMap[sku].total += extra;
     });
 
     // 3. Convertir al formato final de 'demanda'
