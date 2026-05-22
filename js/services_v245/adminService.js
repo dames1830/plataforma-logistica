@@ -185,7 +185,7 @@ export const savePerformanceLog = (data) => save('performance_log', data);
 export const FORCED_ASISTENTE = [
     'inicio',
     'almacenaje', 'almacenaje_archivo_almacenaje', 'almacenaje_tareas_dia', 'almacenaje_kpi_tareas',
-    'buffer', 'buffer_maestros', 'buffer_reportes', 'buffer_historial_buffer', 'buffer_kpi_buffer',
+    'buffer', 'buffer_maestros', 'buffer_reportes', 'buffer_historial_buffer', 'buffer_kpi_buffer', 'buffer_config_buffer',
     'admin_pers', 'admin_pers_asistencia', 'admin_pers_performance', 'admin_pers_rfs',
     'performance_historial', 'performance_graficos', 'performance_reporte'
 ];

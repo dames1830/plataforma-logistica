@@ -218,6 +218,52 @@ async def restore_performance(request: Request):
         return {"status": "success", "message": f"{count} días de historial restaurados"}
     except Exception as e: return {"status": "error", "message": str(e)}
 
+@app.get("/api/buffer/config")
+def get_buffer_config():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT key, value FROM buffer_config")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        config = {r[0]: r[1] for r in rows}
+        
+        # Default values if keys aren't set yet
+        defaults = {
+            "include_reserva": "1",
+            "include_alto": "1",
+            "include_piso": "1",
+            "include_aereo": "1",
+            "include_logico": "1",
+            "include_merma": "1"
+        }
+        
+        for k, v in defaults.items():
+            if k not in config:
+                config[k] = v
+                
+        return {"status": "success", "data": config}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/buffer/config")
+async def save_buffer_config(request: Request):
+    try:
+        data = await request.json()  # Expecting dictionary of key-value configurations
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        for k, v in data.items():
+            cursor.execute("""
+                INSERT INTO buffer_config (key, value) VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value
+            """, (k, str(v)))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Configuración de Buffer guardada"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/api/auth/login")
 async def api_login(request: Request):
     try:

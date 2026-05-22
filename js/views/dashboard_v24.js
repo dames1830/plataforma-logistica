@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.2.02';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=25.2.02';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=25.2.02';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=25.2.02';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.15';
+const VERSION = '25.2.16';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -569,7 +569,8 @@ const TABS = [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
     { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
-    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' }
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
+    { id: 'config_buffer', label: 'Configuración Buffer', icon: '⚙️' }
   ] },
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
@@ -1183,6 +1184,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderBufferHistory(buf);
     } else if (activeBufferSub === 'kpi_buffer') {
         renderBufferKPI(buf);
+    } else if (activeBufferSub === 'config_buffer') {
+        await renderBufferConfig(buf);
     } else {
         const now = new Date();
         const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
@@ -3012,6 +3015,213 @@ export const renderDashboard = async (container, user, onLogout) => {
             renderBufferTab();
         };
     });
+  };
+
+  const renderBufferConfig = async (container) => {
+      container.innerHTML = `
+        <div style="display:flex; justify-content:center; padding:1.5rem 0.5rem;">
+          <div class="glass-panel" style="
+              width: 100%;
+              max-width: 600px;
+              padding: 2.5rem;
+              border-radius: 20px;
+              background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.75) 100%);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.02);
+          ">
+              <div style="display:flex; align-items:center; gap:1rem; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08);">
+                  <div style="font-size:2.2rem; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">⚙️</div>
+                  <div>
+                      <h3 style="margin:0; color:#fff; font-size:1.3rem; font-weight:800; letter-spacing:1px; font-family:'Outfit', sans-serif;">CONFIGURACIÓN DEL BUFFER</h3>
+                      <p style="margin:0.2rem 0 0 0; color:#94a3b8; font-size:0.78rem; font-weight:500; font-family:'Inter', sans-serif;">Elige qué niveles se incluirán en el cálculo de la cascada de reposición.</p>
+                  </div>
+              </div>
+              
+              <div style="display:flex; flex-direction:column; gap:1.2rem; margin-bottom:2.5rem;" id="buffer-config-options">
+                  <div style="display:flex; justify-content:center; padding:2rem;"><div style="font-size:0.9rem; color:#94a3b8;">Cargando configuración...</div></div>
+              </div>
+              
+              <button id="btn-save-buffer-config" class="btn" style="
+                  width: 100%;
+                  padding: 0.9rem;
+                  border: none;
+                  border-radius: 12px;
+                  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 150%);
+                  color: #fff;
+                  font-size: 0.9rem;
+                  font-weight: 800;
+                  letter-spacing: 1px;
+                  cursor: pointer;
+                  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  font-family: 'Inter', sans-serif;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  gap: 0.8rem;
+              ">
+                  <span>💾 GUARDAR CONFIGURACIÓN</span>
+              </button>
+          </div>
+        </div>
+        <style>
+            .config-toggle-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.9rem 1.2rem;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid rgba(255, 255, 255, 0.04);
+                border-radius: 12px;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .config-toggle-row:hover {
+                background: rgba(255, 255, 255, 0.04);
+                border-color: rgba(255, 255, 255, 0.08);
+                transform: translateY(-1px);
+            }
+            .config-toggle-label-sec {
+                display: flex;
+                align-items: center;
+                gap: 0.8rem;
+            }
+            .config-toggle-icon {
+                font-size: 1.2rem;
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.03);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .config-toggle-title {
+                color: #f1f5f9;
+                font-size: 0.85rem;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                font-family: 'Outfit', sans-serif;
+            }
+            .config-toggle-desc {
+                color: #64748b;
+                font-size: 0.72rem;
+                margin-top: 0.1rem;
+                font-family: 'Inter', sans-serif;
+            }
+            
+            /* Premium iOS style Switch */
+            .premium-switch {
+                position: relative;
+                display: inline-block;
+                width: 48px;
+                height: 26px;
+            }
+            .premium-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            .premium-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+                border-radius: 34px;
+            }
+            .premium-slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: #94a3b8;
+                transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+                border-radius: 50%;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }
+            .premium-switch input:checked + .premium-slider {
+                background-color: rgba(79, 70, 229, 0.25);
+                border-color: rgba(99, 102, 241, 0.4);
+            }
+            .premium-switch input:checked + .premium-slider:before {
+                transform: translateX(22px);
+                background-color: #6366f1;
+                box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+            }
+        </style>
+      `;
+      
+      const optionsContainer = document.getElementById('buffer-config-options');
+      const btnSave = document.getElementById('btn-save-buffer-config');
+      
+      try {
+          const config = await fetchBufferConfig();
+          bufferConfigCached = config;
+          
+          const levels = [
+              { key: 'include_reserva', label: 'Global Reserva', icon: '📦', desc: 'Permite o bloquea el consumo de cualquier stock de reserva.' },
+              { key: 'include_alto', label: 'Nivel Alto (ALTO)', icon: '📈', desc: 'Consumo de paletas ubicadas en posiciones altas.' },
+              { key: 'include_piso', label: 'Nivel Piso (CROSS)', icon: '🪵', desc: 'Consumo de paletas a nivel de piso/cross.' },
+              { key: 'include_aereo', label: 'Nivel Aéreo (AEREO)', icon: '✈️', desc: 'Consumo de stock en nivel aéreo.' },
+              { key: 'include_logico', label: 'Nivel Lógico (PISO / DIS / MZM)', icon: '💻', desc: 'Consumo de stock lógico, discrepancias o traslados.' },
+              { key: 'include_merma', label: 'Nivel Merma (VER)', icon: '⚠️', desc: 'Consumo de stock del andén VER / Mermas.' }
+          ];
+          
+          const isEnabled = (val) => val === true || val === 1 || String(val) === '1' || String(val).toLowerCase() === 'true';
+          
+          optionsContainer.innerHTML = levels.map(lvl => {
+              const checked = isEnabled(config[lvl.key]);
+              return `
+                  <div class="config-toggle-row">
+                      <div class="config-toggle-label-sec">
+                          <div class="config-toggle-icon">${lvl.icon}</div>
+                          <div>
+                              <div class="config-toggle-title">${lvl.label}</div>
+                              <div class="config-toggle-desc">${lvl.desc}</div>
+                          </div>
+                      </div>
+                      <label class="premium-switch">
+                          <input type="checkbox" id="chk_${lvl.key}" ${checked ? 'checked' : ''}>
+                          <span class="premium-slider"></span>
+                      </label>
+                  </div>
+              `;
+          }).join('');
+          
+          btnSave.onclick = async () => {
+              btnSave.disabled = true;
+              btnSave.style.opacity = '0.7';
+              btnSave.innerHTML = `<span>⏳ GUARDANDO...</span>`;
+              
+              const updatedConfig = {};
+              levels.forEach(lvl => {
+                  const chk = document.getElementById(`chk_${lvl.key}`);
+                  updatedConfig[lvl.key] = chk.checked ? '1' : '0';
+              });
+              
+              const res = await saveBufferConfig(updatedConfig);
+              btnSave.disabled = false;
+              btnSave.style.opacity = '1';
+              btnSave.innerHTML = `<span>💾 GUARDAR CONFIGURACIÓN</span>`;
+              
+              if (res && res.status === 'success') {
+                  bufferConfigCached = updatedConfig;
+                  showPremiumAlert("¡ÉXITO!", "La configuración del buffer se ha guardado y aplicado correctamente.", "success");
+                  await logSystemAction(user.username, 'CONFIG_BUFFER_ACTUALIZADA', `Config: ${JSON.stringify(updatedConfig)}`);
+              } else {
+                  showPremiumAlert("Error", res?.message || "No se pudo guardar la configuración en el servidor.", "error");
+              }
+          };
+      } catch (err) {
+          optionsContainer.innerHTML = `<div style="padding:2rem; text-align:center; color:#ef4444;">Fallo al cargar la configuración: ${err.message}</div>`;
+      }
   };
 
   const renderBufferKPI = async (container) => {

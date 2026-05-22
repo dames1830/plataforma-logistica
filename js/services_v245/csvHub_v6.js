@@ -595,13 +595,35 @@ export const fetchBufferConfig = async () => {
                 headers: { 'X-Environment': 'production' }
             });
             clearTimeout(timeoutId);
-            if (response.ok) return await response.json();
+            if (response.ok) {
+                const res = await response.json();
+                return res.data || res;
+            }
         } catch (err) {
             if (err.name === 'AbortError') console.warn("Timeout config buffer (2s): usando local default");
             else console.warn("Error config buffer:", err);
         }
     } catch (e) { console.error("Error crítico fetchBufferConfig:", e); }
-    return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
+    return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1', include_merma: '1' };
+};
+
+export const saveBufferConfig = async (config) => {
+    try {
+        const response = await fetch(`${API_BASE}/buffer/config`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Environment': 'production'
+            },
+            body: JSON.stringify(config)
+        });
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (e) {
+        console.error("Error al guardar la configuración de buffer:", e);
+    }
+    return { status: 'error', message: 'Error de conexión con el servidor' };
 };
 
 export const calculateBufferPallets = (configOverride = null) => {
@@ -638,7 +660,7 @@ export const calculateBufferPallets = (configOverride = null) => {
 
 
 
-    const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' };
+    const config = configOverride || { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1', include_merma: '1' };
     const getArticulo = (sku) => String(sku || '').substring(0, 7);
 
     // Mapeo de Stock según Jerarquías (Fase 11.9.1)
@@ -855,23 +877,28 @@ export const calculateBufferPallets = (configOverride = null) => {
         pending -= atdActivo;
 
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
+        const isConfigEnabled = (val) => {
+            if (val === undefined || val === null) return true; // Default to enabled if not set
+            return val === true || val === 1 || String(val) === '1' || String(val).toLowerCase() === 'true';
+        };
+
+        if (pending > 0 && isConfigEnabled(config.include_reserva)) {
+            if (isConfigEnabled(config.include_alto)) pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
+            if (pending > 0 && isConfigEnabled(config.include_piso)) pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Piso']);
+            if (pending > 0 && isConfigEnabled(config.include_aereo)) pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
+            if (pending > 0 && isConfigEnabled(config.include_logico)) pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logico']);
+            if (pending > 0 && isConfigEnabled(config.include_merma)) pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
+        }
+        
+        // 3. Si aún queda pendiente, es "Sin Stock"
         if (pending > 0) {
-            pending = satisfyDemand(sku, pending, stAltos, nivelesMap['Alto']);
-            if (pending > 0) pending = satisfyDemand(sku, pending, stPisos, nivelesMap['Piso']);
-            if (pending > 0) pending = satisfyDemand(sku, pending, stAereos, nivelesMap['Aereo']);
-            if (pending > 0) pending = satisfyDemand(sku, pending, stLogicos, nivelesMap['Logico']);
-            if (pending > 0) pending = satisfyDemand(sku, pending, stMerma, nivelesMap['Merma']);
-            
-            // 3. Si aún queda pendiente, es "Sin Stock"
-            if (pending > 0) {
-                detalleZonas.push({
-                    'NIVEL/AREA': '7. SIN STOCK',
-                    'UBICACION': 'S/S',
-                    'ARTÍCULO': getArticulo(sku),
-                    'SKU': sku,
-                    'ATD RQ': pending
-                });
-            }
+            detalleZonas.push({
+                'NIVEL/AREA': '7. SIN STOCK',
+                'UBICACION': 'S/S',
+                'ARTÍCULO': getArticulo(sku),
+                'SKU': sku,
+                'ATD RQ': pending
+            });
         }
     });
 
