@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '25.2.16';
+const VERSION = '26.5.22';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3019,28 +3019,34 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferConfig = async (container) => {
       container.innerHTML = `
-        <div style="display:flex; justify-content:center; padding:1.5rem 0.5rem;">
-          <div class="glass-panel" style="
+        <div style="display:flex; justify-content:center; padding:1.5rem 0.5rem; width:100%;">
+          <div class="glass-panel animate-fade-in" style="
               width: 100%;
-              max-width: 600px;
+              max-width: 800px;
               padding: 2.5rem;
               border-radius: 20px;
               background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.75) 100%);
               border: 1px solid rgba(255, 255, 255, 0.08);
               box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.02);
+              font-family: 'Inter', sans-serif;
           ">
-              <div style="display:flex; align-items:center; gap:1rem; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-                  <div style="font-size:2.2rem; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">⚙️</div>
-                  <div>
-                      <h3 style="margin:0; color:#fff; font-size:1.3rem; font-weight:800; letter-spacing:1px; font-family:'Outfit', sans-serif;">CONFIGURACIÓN DEL BUFFER</h3>
-                      <p style="margin:0.2rem 0 0 0; color:#94a3b8; font-size:0.78rem; font-weight:500; font-family:'Inter', sans-serif;">Elige qué niveles se incluirán en el cálculo de la cascada de reposición.</p>
+              <!-- Header Section -->
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:1rem;">
+                  <div style="display:flex; align-items:center; gap:1rem;">
+                      <div style="font-size:2.2rem; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">⚙️</div>
+                      <div>
+                          <h3 style="margin:0; color:#fff; font-size:1.3rem; font-weight:800; letter-spacing:1px; font-family:'Outfit', sans-serif; text-transform: uppercase;">CONFIGURACIÓN DEL BUFFER</h3>
+                          <p style="margin:0.2rem 0 0 0; color:#94a3b8; font-size:0.78rem; font-weight:500;">Configura las cantidades de buffer para cada Marca y Gender Rims.</p>
+                      </div>
                   </div>
               </div>
               
-              <div style="display:flex; flex-direction:column; gap:1.2rem; margin-bottom:2.5rem;" id="buffer-config-options">
-                  <div style="display:flex; justify-content:center; padding:2rem;"><div style="font-size:0.9rem; color:#94a3b8;">Cargando configuración...</div></div>
+              <!-- Workspace Area -->
+              <div id="buffer-config-workspace">
+                  <div style="display:flex; justify-content:center; padding:3rem;"><div class="spinner"></div><div style="font-size:0.9rem; color:#94a3b8; margin-left:1rem;">Cargando combinaciones...</div></div>
               </div>
               
+              <!-- Save Button -->
               <button id="btn-save-buffer-config" class="btn" style="
                   width: 100%;
                   padding: 0.9rem;
@@ -3054,7 +3060,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                   cursor: pointer;
                   box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
                   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                  font-family: 'Inter', sans-serif;
                   display: flex;
                   justify-content: center;
                   align-items: center;
@@ -3065,162 +3070,280 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
         </div>
         <style>
-            .config-toggle-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.9rem 1.2rem;
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: rgba(0,0,0,0.1);
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: rgba(255,255,255,0.1);
+                border-radius: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: rgba(255,255,255,0.25);
+            }
+            .buffer-config-row {
+                border-bottom: 1px solid rgba(255,255,255,0.03);
+                transition: all 0.2s ease;
+            }
+            .buffer-config-row:hover {
                 background: rgba(255, 255, 255, 0.02);
-                border: 1px solid rgba(255, 255, 255, 0.04);
-                border-radius: 12px;
-                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            .config-toggle-row:hover {
-                background: rgba(255, 255, 255, 0.04);
-                border-color: rgba(255, 255, 255, 0.08);
-                transform: translateY(-1px);
-            }
-            .config-toggle-label-sec {
-                display: flex;
-                align-items: center;
-                gap: 0.8rem;
-            }
-            .config-toggle-icon {
-                font-size: 1.2rem;
-                width: 32px;
-                height: 32px;
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.03);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 1px solid rgba(255, 255, 255, 0.05);
-            }
-            .config-toggle-title {
-                color: #f1f5f9;
-                font-size: 0.85rem;
+            .buffer-config-input {
+                width: 120px;
+                padding: 0.4rem 0.6rem;
+                background: rgba(15, 23, 42, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                color: #fff;
+                text-align: right;
                 font-weight: 700;
-                letter-spacing: 0.5px;
-                font-family: 'Outfit', sans-serif;
+                transition: all 0.25s ease;
             }
-            .config-toggle-desc {
-                color: #64748b;
-                font-size: 0.72rem;
-                margin-top: 0.1rem;
-                font-family: 'Inter', sans-serif;
-            }
-            
-            /* Premium iOS style Switch */
-            .premium-switch {
-                position: relative;
-                display: inline-block;
-                width: 48px;
-                height: 26px;
-            }
-            .premium-switch input {
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-            .premium-slider {
-                position: absolute;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-                border-radius: 34px;
-            }
-            .premium-slider:before {
-                position: absolute;
-                content: "";
-                height: 18px;
-                width: 18px;
-                left: 3px;
-                bottom: 3px;
-                background-color: #94a3b8;
-                transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-                border-radius: 50%;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            }
-            .premium-switch input:checked + .premium-slider {
-                background-color: rgba(79, 70, 229, 0.25);
-                border-color: rgba(99, 102, 241, 0.4);
-            }
-            .premium-switch input:checked + .premium-slider:before {
-                transform: translateX(22px);
-                background-color: #6366f1;
-                box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+            .buffer-config-input:focus {
+                border-color: #6366f1;
+                background: rgba(99, 102, 241, 0.1);
+                box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+                outline: none;
             }
         </style>
       `;
       
-      const optionsContainer = document.getElementById('buffer-config-options');
+      const workspace = document.getElementById('buffer-config-workspace');
       const btnSave = document.getElementById('btn-save-buffer-config');
       
       try {
+          // 2. Fetch maestro articulos
+          const maestro = await getAreaData('articulos') || [];
+          if (maestro.length === 0) {
+              workspace.innerHTML = `
+                <div style="padding: 2.5rem; text-align: center; background: rgba(239, 68, 68, 0.04); border: 1px dashed rgba(239, 68, 68, 0.2); border-radius: 12px; margin-bottom: 2rem;">
+                    <div style="font-size: 2.8rem; margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(239,68,68,0.2));">⚠️</div>
+                    <h4 style="margin:0 0 0.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif;">Maestro de Artículos no cargado</h4>
+                    <p style="margin:0 0 1.5rem 0; color:#94a3b8; font-size:0.8rem; line-height:1.5;">
+                        No se encontraron registros en el Maestro de Artículos. Por favor, sube el archivo Maestro primero en la sección de Archivos del Buffer.
+                    </p>
+                    <button onclick="activeBufferSub = 'maestros'; renderBufferTab();" class="btn" style="
+                        padding: 0.6rem 1.5rem;
+                        background: rgba(239, 68, 68, 0.15);
+                        border: 1px solid rgba(239, 68, 68, 0.3);
+                        border-radius: 8px;
+                        color: #ff8b8b;
+                        font-weight: 700;
+                        font-size: 0.78rem;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='rgba(239,68,68,0.25)';" onmouseout="this.style.background='rgba(239,68,68,0.15)';">
+                        📁 Cargar Maestro
+                    </button>
+                </div>
+              `;
+              btnSave.style.display = 'none';
+              return;
+          }
+          
+          // 3. Extract unique combinations of MARCA & GENDER RIMS with robust index detection
+          let brandIdx = 13;
+          let genderIdx = 3;
+          
+          const firstRow = maestro[0];
+          if (firstRow && Array.isArray(firstRow)) {
+              firstRow.forEach((cell, idx) => {
+                  const cellStr = String(cell || '').trim().toUpperCase();
+                  if (cellStr === 'MARCA' || cellStr === 'BRAND') {
+                      brandIdx = idx;
+                  } else if (cellStr === 'GENDER RIMS' || cellStr === 'GENDER' || cellStr === 'GENDERRIMS' || cellStr === 'DEPARTAMENTO' || cellStr === 'GENERO') {
+                      genderIdx = idx;
+                  }
+              });
+          }
+          
+          let startIndex = 0;
+          if (Array.isArray(maestro[0])) {
+              const firstCell = String(maestro[0][0] || '').trim().toUpperCase();
+              if (firstCell.includes('SKU') || firstCell.includes('ARTICULO') || firstCell.includes('BARCODE') || firstCell.includes('CODIGO') || firstCell.includes('GENDER') || firstCell.includes('GENERO') || firstCell.includes('MARCA') || firstCell.includes('BRAND')) {
+                  startIndex = 1;
+              }
+          }
+          
+          const uniqueCombinations = [];
+          const seen = new Set();
+          
+          for (let i = startIndex; i < maestro.length; i++) {
+              const row = maestro[i];
+              if (!row) continue;
+              const raw = Array.isArray(row) ? row : Object.values(row);
+              if (raw.length <= Math.max(brandIdx, genderIdx)) continue;
+              
+              const marca = String(raw[brandIdx] || 'OTROS').trim().toUpperCase();
+              const gender = String(raw[genderIdx] || 'OTROS').trim().toUpperCase();
+              
+              if (!marca || marca === 'MARCA' || marca === 'BRAND' || gender === 'GENDER' || gender === 'GENDER RIMS') continue;
+              
+              const key = `${marca}|${gender}`;
+              if (!seen.has(key)) {
+                  seen.add(key);
+                  uniqueCombinations.push({ marca, gender });
+              }
+          }
+          
+          uniqueCombinations.sort((a, b) => {
+              if (a.marca !== b.marca) return a.marca.localeCompare(b.marca);
+              return a.gender.localeCompare(b.gender);
+          });
+          
+          // 4. Fetch existing configs
+          let savedQtys = {};
           const config = await fetchBufferConfig();
           bufferConfigCached = config;
           
-          const levels = [
-              { key: 'include_reserva', label: 'Global Reserva', icon: '📦', desc: 'Permite o bloquea el consumo de cualquier stock de reserva.' },
-              { key: 'include_alto', label: 'Nivel Alto (ALTO)', icon: '📈', desc: 'Consumo de paletas ubicadas en posiciones altas.' },
-              { key: 'include_piso', label: 'Nivel Piso (CROSS)', icon: '🪵', desc: 'Consumo de paletas a nivel de piso/cross.' },
-              { key: 'include_aereo', label: 'Nivel Aéreo (AEREO)', icon: '✈️', desc: 'Consumo de stock en nivel aéreo.' },
-              { key: 'include_logico', label: 'Nivel Lógico (PISO / DIS / MZM)', icon: '💻', desc: 'Consumo de stock lógico, discrepancias o traslados.' },
-              { key: 'include_merma', label: 'Nivel Merma (VER)', icon: '⚠️', desc: 'Consumo de stock del andén VER / Mermas.' }
-          ];
+          if (config && config.brand_gender_qtys) {
+              try {
+                  savedQtys = JSON.parse(config.brand_gender_qtys) || {};
+              } catch (e) {
+                  console.warn("[PULSE] Error parsing brand_gender_qtys:", e);
+              }
+          }
           
-          const isEnabled = (val) => val === true || val === 1 || String(val) === '1' || String(val).toLowerCase() === 'true';
-          
-          optionsContainer.innerHTML = levels.map(lvl => {
-              const checked = isEnabled(config[lvl.key]);
-              return `
-                  <div class="config-toggle-row">
-                      <div class="config-toggle-label-sec">
-                          <div class="config-toggle-icon">${lvl.icon}</div>
-                          <div>
-                              <div class="config-toggle-title">${lvl.label}</div>
-                              <div class="config-toggle-desc">${lvl.desc}</div>
-                          </div>
-                      </div>
-                      <label class="premium-switch">
-                          <input type="checkbox" id="chk_${lvl.key}" ${checked ? 'checked' : ''}>
-                          <span class="premium-slider"></span>
-                      </label>
+          // 5. Render active workspace HTML
+          workspace.innerHTML = `
+              <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
+                  <!-- Search Filter -->
+                  <div style="position:relative; width:100%;">
+                      <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">🔍</span>
+                      <input type="text" id="buffer-config-search" placeholder="Buscar por marca o género..." style="
+                          width: 100%;
+                          padding: 0.65rem 1rem 0.65rem 2.5rem;
+                          background: rgba(15, 23, 42, 0.6);
+                          border: 1px solid rgba(255, 255, 255, 0.08);
+                          border-radius: 10px;
+                          color: #fff;
+                          font-size: 0.82rem;
+                          outline: none;
+                          transition: all 0.3s ease;
+                      " onfocus="this.style.borderColor='rgba(99, 102, 241, 0.4)'; this.style.boxShadow='0 0 10px rgba(99, 102, 241, 0.1)';" onblur="this.style.borderColor='rgba(255, 255, 255, 0.08)'; this.style.boxShadow='none';" />
                   </div>
-              `;
-          }).join('');
+                  <!-- Stats Panel -->
+                  <div style="display:flex; justify-content:space-around; align-items:center; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:0.45rem 1rem;">
+                      <div style="text-align:center;">
+                          <div style="font-size:0.6rem; color:#64748b; font-weight:700; letter-spacing:0.5px;">TOTAL FILAS</div>
+                          <div id="stats-total-rows" style="font-size:0.9rem; color:#38bdf8; font-weight:800; font-family:'Outfit', sans-serif;">0</div>
+                      </div>
+                      <div style="width:1px; height:18px; background:rgba(255,255,255,0.1);"></div>
+                      <div style="text-align:center;">
+                          <div style="font-size:0.6rem; color:#64748b; font-weight:700; letter-spacing:0.5px;">CONFIGURADOS</div>
+                          <div id="stats-configured" style="font-size:0.9rem; color:#34d399; font-weight:800; font-family:'Outfit', sans-serif;">0</div>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Combinations Table -->
+              <div style="max-height:400px; overflow-y:auto; border-radius:12px; border:1px solid rgba(255,255,255,0.06); background:rgba(15, 23, 42, 0.3); margin-bottom:2rem;" class="custom-scrollbar">
+                  <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+                      <thead>
+                          <tr style="background:rgba(30, 41, 59, 0.75); border-bottom:1px solid rgba(255,255,255,0.08); position:sticky; top:0; z-index:10;">
+                              <th style="padding:0.85rem 1rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">Marca</th>
+                              <th style="padding:0.85rem 1rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">Gender Rims</th>
+                              <th style="padding:0.85rem 1rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; width:150px; text-align:right;">Cantidad (Qty)</th>
+                          </tr>
+                      </thead>
+                      <tbody id="buffer-config-tbody"></tbody>
+                  </table>
+              </div>
+          `;
           
+          const tbody = document.getElementById('buffer-config-tbody');
+          
+          const renderRows = (filteredList) => {
+              if (filteredList.length === 0) {
+                  return `<tr><td colspan="3" style="text-align:center; padding:2rem; color:#64748b; font-size:0.8rem;">No se encontraron combinaciones.</td></tr>`;
+              }
+              return filteredList.map(comb => {
+                  const key = `${comb.marca}|${comb.gender}`;
+                  const qtyVal = savedQtys[key] !== undefined ? savedQtys[key] : "";
+                  return `
+                      <tr class="buffer-config-row">
+                          <td style="padding:0.8rem 1rem; color:#fff; font-weight:600; font-family:'Outfit', sans-serif; font-size:0.82rem;">${comb.marca}</td>
+                          <td style="padding:0.8rem 1rem; color:#94a3b8; font-weight:500; font-size:0.82rem;">${comb.gender}</td>
+                          <td style="padding:0.8rem 1rem; text-align:right;">
+                              <input type="text" class="buffer-config-input" data-key="${key}" value="${qtyVal}" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                          </td>
+                      </tr>
+                  `;
+              }).join('');
+          };
+          
+          const refreshStats = () => {
+              let total = uniqueCombinations.length;
+              let configured = 0;
+              uniqueCombinations.forEach(comb => {
+                  const key = `${comb.marca}|${comb.gender}`;
+                  const val = savedQtys[key];
+                  if (val !== undefined && val !== "" && parseInt(val) > 0) {
+                      configured++;
+                  }
+              });
+              document.getElementById('stats-total-rows').textContent = total;
+              document.getElementById('stats-configured').textContent = configured;
+          };
+          
+          // Initial populate
+          tbody.innerHTML = renderRows(uniqueCombinations);
+          refreshStats();
+          
+          // Input change handler via delegation
+          tbody.addEventListener('input', (e) => {
+              if (e.target.classList.contains('buffer-config-input')) {
+                  const key = e.target.dataset.key;
+                  const rawVal = e.target.value.trim();
+                  if (rawVal === "") {
+                      delete savedQtys[key];
+                  } else {
+                      savedQtys[key] = parseInt(rawVal) || 0;
+                  }
+                  refreshStats();
+              }
+          });
+          
+          // Search input handler
+          const searchInput = document.getElementById('buffer-config-search');
+          searchInput.addEventListener('input', (e) => {
+              const term = e.target.value.trim().toUpperCase();
+              const filtered = uniqueCombinations.filter(comb => 
+                  comb.marca.includes(term) || comb.gender.includes(term)
+              );
+              tbody.innerHTML = renderRows(filtered);
+          });
+          
+          // Bind save button click
           btnSave.onclick = async () => {
               btnSave.disabled = true;
               btnSave.style.opacity = '0.7';
               btnSave.innerHTML = `<span>⏳ GUARDANDO...</span>`;
               
-              const updatedConfig = {};
-              levels.forEach(lvl => {
-                  const chk = document.getElementById(`chk_${lvl.key}`);
-                  updatedConfig[lvl.key] = chk.checked ? '1' : '0';
-              });
+              const payload = {
+                  ...bufferConfigCached,
+                  brand_gender_qtys: JSON.stringify(savedQtys)
+              };
               
-              const res = await saveBufferConfig(updatedConfig);
+              const res = await saveBufferConfig(payload);
               btnSave.disabled = false;
               btnSave.style.opacity = '1';
               btnSave.innerHTML = `<span>💾 GUARDAR CONFIGURACIÓN</span>`;
               
               if (res && res.status === 'success') {
-                  bufferConfigCached = updatedConfig;
-                  showPremiumAlert("¡ÉXITO!", "La configuración del buffer se ha guardado y aplicado correctamente.", "success");
-                  await logSystemAction(user.username, 'CONFIG_BUFFER_ACTUALIZADA', `Config: ${JSON.stringify(updatedConfig)}`);
+                  bufferConfigCached = payload;
+                  showPremiumAlert("¡ÉXITO!", "La configuración de buffer por Marca y Género se ha guardado y aplicado correctamente.", "success");
+                  await logSystemAction(user.username, 'CONFIG_BUFFER_ACTUALIZADA', `Combinaciones guardadas: ${Object.keys(savedQtys).length}`);
               } else {
                   showPremiumAlert("Error", res?.message || "No se pudo guardar la configuración en el servidor.", "error");
               }
           };
+          
       } catch (err) {
-          optionsContainer.innerHTML = `<div style="padding:2rem; text-align:center; color:#ef4444;">Fallo al cargar la configuración: ${err.message}</div>`;
+          workspace.innerHTML = `<div style="padding:2rem; text-align:center; color:#ef4444;">Fallo al cargar la configuración: ${err.message}</div>`;
       }
   };
 
