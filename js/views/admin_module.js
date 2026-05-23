@@ -754,6 +754,11 @@ const renderRFSection = (container, user, TABS) => {
       );
     }
 
+    // Listado para pestaña ASIGNAR RF
+    const availableOperativeRfs = rfs.filter(r => r.estado === 'Operativo' && !r.asignadoDni);
+    const activeWorkers = workers.filter(w => w.active !== false);
+    const activeAssignments = assignments.filter(a => !a.returned_at);
+
     container.innerHTML = `
       <!-- METRICS CARDS -->
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
@@ -803,12 +808,13 @@ const renderRFSection = (container, user, TABS) => {
         <!-- TAB SELECTOR -->
         <div style="display:flex; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:3px; border-radius:10px;">
           <button id="rf_tab_inventario" class="btn" style="background:${activeRFTab==='inventario'?'var(--primary)':'none'}; color:${activeRFTab==='inventario'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='inventario'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📁 INVENTARIO</button>
-          <button id="rf_tab_asignaciones" class="btn" style="background:${activeRFTab==='asignaciones'?'var(--primary)':'none'}; color:${activeRFTab==='asignaciones'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='asignaciones'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📝 BITÁCORA ASIGNACIONES</button>
+          <button id="rf_tab_asignar" class="btn" style="background:${activeRFTab==='asignar'?'var(--primary)':'none'}; color:${activeRFTab==='asignar'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='asignar'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">🔑 ASIGNAR RF</button>
+          <button id="rf_tab_asignaciones" class="btn" style="background:${activeRFTab==='asignaciones'?'var(--primary)':'none'}; color:${activeRFTab==='asignaciones'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='asignaciones'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📝 BITÁCORA</button>
         </div>
 
         <!-- SEARCH AND ADD -->
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
-          <input type="text" id="rf_search_input" placeholder="🔍 Buscar serie, marca, modelo..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
+          <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
           
           ${activeRFTab === 'inventario' ? `
             <select id="rf_status_filter" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; font-size:0.8rem; outline:none; cursor:pointer;">
@@ -822,10 +828,10 @@ const renderRFSection = (container, user, TABS) => {
         </div>
       </div>
 
-      <!-- MAIN CONTENT GRID -->
-      <div class="glass-panel" style="padding:0; overflow-x:auto;">
-        ${activeRFTab === 'inventario' ? `
-          <!-- TABLE INVENTARIO -->
+      <!-- MAIN CONTENT -->
+      ${activeRFTab === 'inventario' ? `
+        <!-- TABLE INVENTARIO -->
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
             <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
               <tr>
@@ -909,14 +915,114 @@ const renderRFSection = (container, user, TABS) => {
               }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se encontraron equipos registrados.</td></tr>'}
             </tbody>
           </table>
-          <style>
-            @keyframes pulse-bat {
-              0% { box-shadow: 0 0 3px rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.3); }
-              100% { box-shadow: 0 0 10px rgba(239,68,68,0.7); border-color: rgba(239,68,68,0.8); }
-            }
-          </style>
-        ` : `
-          <!-- TABLE BITÁCORA ASIGNACIONES -->
+        </div>
+      ` : activeRFTab === 'asignar' ? `
+        <!-- SUB-MÓDULO DE ASIGNACIÓN Y CONTROL RÁPIDO -->
+        <div style="display:grid; grid-template-columns: 350px 1fr; gap:1.5rem; align-items:start;">
+          <!-- COLUMNA IZQUIERDA: REGISTRO ENTREGA -->
+          <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08);">
+            <h4 style="margin:0 0 1.2rem 0; color:var(--primary); font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🔑 Entrega de Turno</h4>
+            <form id="form_fast_assign" style="display:flex; flex-direction:column; gap:0.9rem;">
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">1. SELECCIONAR OPERARIO ACTIVO:</label>
+                <select id="rf_fast_worker" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.75rem;">
+                  <option value="" style="background:#0f172a;">-- Seleccionar operario --</option>
+                  ${activeWorkers.map(w => `<option value="${w.dni}" style="background:#0f172a;">${w.apellidos}, ${w.nombre} (${w.dni})</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">2. SELECCIONAR TERMINAL DISPONIBLE:</label>
+                <select id="rf_fast_device" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-family:monospace; font-size:0.8rem;">
+                  <option value="" style="background:#0f172a;">-- Seleccionar serie RF --</option>
+                  ${availableOperativeRfs.map(r => `<option value="${r.serie}" style="background:#0f172a;">${r.serie} - ${r.marca} (${r.bateria}% bat)</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">3. TURNO:</label>
+                <select id="rf_fast_turn" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.75rem;">
+                  <option value="DIA" style="background:#0f172a;">DIA</option>
+                  <option value="NOCHE" style="background:#0f172a;">NOCHE</option>
+                </select>
+              </div>
+
+              <!-- CRITERIOS DE VERIFICACIÓN -->
+              <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">📝 CRITERIOS DE CONTROL (ENTREGA):</span>
+                
+                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
+                  <span>🖥️ Pantalla en buen estado</span>
+                  <input type="checkbox" id="rf_fast_pantalla" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+                </label>
+                
+                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
+                  <span>🏷️ Numeración legible / OK</span>
+                  <input type="checkbox" id="rf_fast_numeracion" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+                </label>
+              </div>
+
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / COMENTARIOS:</label>
+                <textarea id="rf_fast_notes" rows="2" placeholder="Ej: Sin arañazos, incluye lápiz..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;"></textarea>
+              </div>
+
+              <button type="submit" class="btn" style="background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); padding:0.7rem; font-weight:800; font-size:0.75rem; width:100%; border-radius:10px; box-shadow:0 4px 12px rgba(79,70,229,0.3); margin-top:0.3rem;">⚡ ENTREGAR Y ASIGNAR RF</button>
+            </form>
+          </div>
+
+          <!-- COLUMNA DERECHA: EQUIPOS ACTUALMENTE EN USO -->
+          <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08);">
+            <h4 style="margin:0 0 1.2rem 0; color:#06b6d4; font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📥 Equipos en uso (Retornos de Turno)</h4>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                <thead style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border);">
+                  <tr>
+                    <th style="padding:0.7rem; text-align:left;">Equipo RF</th>
+                    <th style="padding:0.7rem; text-align:left;">Trabajador</th>
+                    <th style="padding:0.7rem; text-align:center;">Turno</th>
+                    <th style="padding:0.7rem; text-align:left;">Entrega</th>
+                    <th style="padding:0.7rem; text-align:center;">Estado Inicial</th>
+                    <th style="padding:0.7rem; text-align:center; width:130px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${activeAssignments.length ? activeAssignments.map(a => {
+                    const activeTime = new Date(a.assigned_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+                    
+                    const screenStyle = a.pantalla_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
+                    const numStyle = a.numeracion_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
+
+                    return `
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                        <td style="padding:0.7rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-family:monospace;">${a.rf_serial}</span></td>
+                        <td style="padding:0.7rem;">
+                          <div style="font-weight:700; color:#fff;">${a.worker_name}</div>
+                          <div style="font-size:0.6rem; color:var(--text-muted);">DNI: ${a.worker_dni}</div>
+                        </td>
+                        <td style="padding:0.7rem; text-align:center;">
+                          <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-weight:800;">${a.turn}</span>
+                        </td>
+                        <td style="padding:0.7rem; color:#cbd5e1;">🕒 ${activeTime}</td>
+                        <td style="padding:0.7rem; text-align:center;">
+                          <div style="display:flex; flex-direction:column; gap:2px; font-size:0.65rem;">
+                            <span style="${screenStyle}">🖥️ ${a.pantalla_ok !== false ? 'PANTALLA OK' : 'PANTALLA MAL'}</span>
+                            <span style="${numStyle}">🏷️ ${a.numeracion_ok !== false ? 'NUMERACIÓN OK' : 'NUMERACIÓN MAL'}</span>
+                          </div>
+                        </td>
+                        <td style="padding:0.7rem; text-align:center;">
+                          <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(234,88,12,0.3); outline:none;">📥 RECIBIR RF</button>
+                        </td>
+                      </tr>`;
+                  }).join('') : '<tr><td colspan="6" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600;">No hay terminales asignados en uso en este turno.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ` : `
+        <!-- TABLE BITÁCORA ASIGNACIONES -->
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
             <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
               <tr>
@@ -924,9 +1030,9 @@ const renderRFSection = (container, user, TABS) => {
                 <th style="padding:0.8rem; text-align:left;">Equipo RF</th>
                 <th style="padding:0.8rem; text-align:left;">Trabajador</th>
                 <th style="padding:0.8rem; text-align:center;">Turno</th>
-                <th style="padding:0.8rem; text-align:left;">Asignación</th>
-                <th style="padding:0.8rem; text-align:left;">Devolución</th>
-                <th style="padding:0.8rem; text-align:left;">Observaciones / Entrega</th>
+                <th style="padding:0.8rem; text-align:left;">Asignación (Entrega)</th>
+                <th style="padding:0.8rem; text-align:left;">Devolución (Retorno)</th>
+                <th style="padding:0.8rem; text-align:left;">Bitácora de Control y Observaciones</th>
               </tr>
             </thead>
             <tbody>
@@ -945,10 +1051,20 @@ const renderRFSection = (container, user, TABS) => {
                     <td style="padding:0.8rem; text-align:center;">
                       <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:800; color:#e2e8f0;">${a.turn}</span>
                     </td>
-                    <td style="padding:0.8rem; color:#cbd5e1; font-weight:500;">📅 ${assignedTime}</td>
+                    <td style="padding:0.8rem; color:#cbd5e1; font-weight:500;">
+                      <div>📅 ${assignedTime}</div>
+                      <div style="font-size:0.65rem; margin-top:2px; color:rgba(255,255,255,0.45);">
+                        ${a.pantalla_ok !== false ? '🖥️ Pantalla: OK' : '🖥️ Pantalla: FALLO'} | 
+                        ${a.numeracion_ok !== false ? '🏷️ Num: OK' : '🏷️ Num: FALLO'}
+                      </div>
+                    </td>
                     <td style="padding:0.8rem;">
                       ${returnedTime ? `
-                        <span style="color:#10b981; font-weight:600;">✅ ${returnedTime}</span>
+                        <div style="color:#10b981; font-weight:600;">✅ ${returnedTime}</div>
+                        <div style="font-size:0.65rem; margin-top:2px; color:rgba(16,185,129,0.7);">
+                          ${a.retorno_pantalla_ok !== false ? '🖥️ Retorno: OK' : '🖥️ Retorno: DAÑADO'} | 
+                          ${a.retorno_numeracion_ok !== false ? '🏷️ Num: OK' : '🏷️ Num: MAL'}
+                        </div>
                       ` : `
                         <div style="display:flex; align-items:center; gap:8px;">
                           <span class="pulse-pendiente-dot" style="background:#ea580c; color:#fff; font-weight:800; font-size:0.6rem; padding:2px 8px; border-radius:20px; box-shadow:0 0 8px #ea580c; letter-spacing:0.5px; animation:pulse-orange 1.2s infinite alternate;">PENDIENTE</span>
@@ -957,21 +1073,15 @@ const renderRFSection = (container, user, TABS) => {
                       `}
                     </td>
                     <td style="padding:0.8rem; color:var(--text-muted); font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${a.notes || ''}">
-                      ${a.notes ? `<span>🗣️ ${a.notes}</span>` : 'Sin comentarios'}
-                      ${a.return_notes ? `<div style="color:#10b981; font-size:0.65rem; margin-top:2px;">📥 ${a.return_notes}</div>` : ''}
+                      ${a.notes ? `<div>🗣️ Entrega: ${a.notes}</div>` : ''}
+                      ${a.return_notes ? `<div style="color:#10b981; margin-top:3px;">📥 Retorno: ${a.return_notes}</div>` : ''}
                     </td>
                   </tr>`;
               }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
             </tbody>
           </table>
-          <style>
-            @keyframes pulse-orange {
-              0% { box-shadow: 0 0 3px rgba(234,88,12,0.3); opacity: 0.8; }
-              100% { box-shadow: 0 0 10px rgba(234,88,12,0.8); opacity: 1; }
-            }
-          </style>
-        `}
-      </div>
+        </div>
+      `}
     `;
 
     // AÑADIR LISTENERS DE EVENTOS
@@ -979,8 +1089,10 @@ const renderRFSection = (container, user, TABS) => {
       // TAB CLICKS
       const tabInv = document.getElementById('rf_tab_inventario');
       const tabAsig = document.getElementById('rf_tab_asignaciones');
+      const tabAsigar = document.getElementById('rf_tab_asignar');
       if (tabInv) tabInv.onclick = () => { activeRFTab = 'inventario'; renderRFSection(container, user, TABS); };
       if (tabAsig) tabAsig.onclick = () => { activeRFTab = 'asignaciones'; renderRFSection(container, user, TABS); };
+      if (tabAsigar) tabAsigar.onclick = () => { activeRFTab = 'asignar'; renderRFSection(container, user, TABS); };
 
       // SEARCH & FILTER INPUTS
       const searchInput = document.getElementById('rf_search_input');
@@ -997,6 +1109,64 @@ const renderRFSection = (container, user, TABS) => {
       if (statusFilter) {
         statusFilter.onchange = (e) => {
           rfStatusFilter = e.target.value;
+          renderRFSection(container, user, TABS);
+        };
+      }
+
+      // SUBMIT FORM FAST ASSIGN (Columna izquierda de pestaña Asignar RF)
+      const formFast = document.getElementById('form_fast_assign');
+      if (formFast) {
+        formFast.onsubmit = async (e) => {
+          e.preventDefault();
+          const workerDni = document.getElementById('rf_fast_worker').value;
+          const rfSerie = document.getElementById('rf_fast_device').value;
+          const turnVal = document.getElementById('rf_fast_turn').value;
+          const pantallaOk = document.getElementById('rf_fast_pantalla').checked;
+          const numeracionOk = document.getElementById('rf_fast_numeracion').checked;
+          const notesVal = document.getElementById('rf_fast_notes').value.trim();
+
+          const worker = activeWorkers.find(w => w.dni === workerDni);
+          const rfDevice = rfs.find(r => r.serie === rfSerie);
+
+          if (!worker || !rfDevice) return alert("Operario o Terminal RF no seleccionado.");
+
+          // Validar asignaciones existentes
+          const workerActiveRf = rfs.find(r => r.asignadoDni === workerDni);
+          if (workerActiveRf) {
+            if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
+              return;
+            }
+          }
+
+          // Actualizar RF
+          const listRfs = [...rfs];
+          const rfIdx = listRfs.findIndex(r => r.serie === rfSerie);
+          if (rfIdx !== -1) {
+            listRfs[rfIdx].asignadoDni = workerDni;
+            listRfs[rfIdx].asignadoNombre = `${worker.apellidos}, ${worker.nombre}`;
+            listRfs[rfIdx].asignadoTurno = turnVal;
+          }
+
+          // Crear Asignación
+          const listAssignments = [...assignments];
+          listAssignments.push({
+            id: 'ASIG_' + Date.now(),
+            rf_serial: rfSerie,
+            worker_dni: workerDni,
+            worker_name: `${worker.apellidos}, ${worker.nombre}`,
+            turn: turnVal,
+            assigned_at: new Date().toISOString(),
+            returned_at: null,
+            pantalla_ok: pantallaOk,
+            numeracion_ok: numeracionOk,
+            notes: notesVal,
+            return_notes: null
+          });
+
+          await adminService.saveRfs(listRfs);
+          await adminService.saveRfAssignments(listAssignments);
+
+          alert(`✅ Asignación rápida exitosa: RF ${rfSerie} entregada a ${worker.nombre}.`);
           renderRFSection(container, user, TABS);
         };
       }
@@ -1185,9 +1355,24 @@ const abrirModalAsignar = (container, user, TABS, serie) => {
             </select>
           </div>
 
+          <!-- CRITERIOS DE CONTROL -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">📝 CRITERIOS DE CONTROL (ENTREGA):</span>
+            
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
+              <span>🖥️ Pantalla en buen estado</span>
+              <input type="checkbox" id="rf_a_pantalla" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+            </label>
+            
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
+              <span>🏷️ Numeración legible / OK</span>
+              <input type="checkbox" id="rf_a_numeracion" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+            </label>
+          </div>
+
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / NOTAS DE ENTREGA:</label>
-            <textarea id="rf_a_notes" rows="3" placeholder="Ej: Entregado con correa de sujeción..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
+            <textarea id="rf_a_notes" rows="2" placeholder="Ej: Sin arañazos, incluye lápiz..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -1205,6 +1390,8 @@ const abrirModalAsignar = (container, user, TABS, serie) => {
       e.preventDefault();
       const workerDni = modal.querySelector('#rf_a_worker').value;
       const turnVal = modal.querySelector('#rf_a_turn').value;
+      const pantallaOk = modal.querySelector('#rf_a_pantalla').checked;
+      const numeracionOk = modal.querySelector('#rf_a_numeracion').checked;
       const notesVal = modal.querySelector('#rf_a_notes').value.trim();
 
       const worker = activeWorkers.find(w => w.dni === workerDni);
@@ -1237,6 +1424,8 @@ const abrirModalAsignar = (container, user, TABS, serie) => {
         turn: turnVal,
         assigned_at: new Date().toISOString(),
         returned_at: null,
+        pantalla_ok: pantallaOk,
+        numeracion_ok: numeracionOk,
         notes: notesVal,
         return_notes: null
       });
@@ -1248,9 +1437,9 @@ const abrirModalAsignar = (container, user, TABS, serie) => {
       modal.remove();
       renderRFSection(container, user, TABS);
     };
-};
+  };
 
-const abrirModalRecibir = (container, user, TABS, serie) => {
+  const abrirModalRecibir = (container, user, TABS, serie) => {
     const rfs = adminService.getRfs() || [];
     const assignments = adminService.getRfAssignments() || [];
 
@@ -1258,6 +1447,9 @@ const abrirModalRecibir = (container, user, TABS, serie) => {
     if (!rf) return alert("Equipo no encontrado.");
 
     const activeAssignment = assignments.find(a => a.rf_serial === serie && !a.returned_at);
+
+    const pantallaInicialText = activeAssignment && activeAssignment.pantalla_ok !== false ? '🖥️ OK' : '🖥️ FALLO / MAL';
+    const numeracionInicialText = activeAssignment && activeAssignment.numeracion_ok !== false ? '🏷️ OK' : '🏷️ FALLO / MAL';
 
     const modal = document.createElement('div');
     modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
@@ -1267,9 +1459,12 @@ const abrirModalRecibir = (container, user, TABS, serie) => {
           📥 RECIBIR EQUIPO RF (DEVOLUCIÓN)
         </h3>
         <p style="margin:-1rem 0 0.5rem 0; text-align:center; color:#f97316; font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
-        <p style="margin:0 0 1.5rem 0; text-align:center; color:var(--text-muted); font-size:0.75rem; font-weight:500;">
-          Asignado a: <b style="color:#fff;">${rf.asignadoNombre || 'Operario'}</b>
-        </p>
+        <div style="background:rgba(255,255,255,0.02); padding:0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.05); margin-bottom:1.2rem; font-size:0.7rem; text-align:center; color:var(--text-muted);">
+          Operario: <b style="color:#fff;">${rf.asignadoNombre || 'Operario'}</b><br>
+          <span style="display:inline-block; margin-top:3px;">
+            Condición inicial: <span style="color:#38bdf8;">${pantallaInicialText}</span> | <span style="color:#38bdf8;">${numeracionInicialText}</span>
+          </span>
+        </div>
         
         <form id="form_rf_receive" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
@@ -1277,9 +1472,24 @@ const abrirModalRecibir = (container, user, TABS, serie) => {
             <input type="number" id="rf_r_bateria" min="0" max="100" required value="${rf.bateria}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
           </div>
 
+          <!-- CRITERIOS DE VERIFICACIÓN DE RETORNO -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">📝 CRITERIOS DE CONTROL (DEVOLUCIÓN):</span>
+            
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
+              <span>🖥️ Pantalla devuelta OK / Sin daños</span>
+              <input type="checkbox" id="rf_r_pantalla" ${!activeAssignment || activeAssignment.pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+            </label>
+            
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
+              <span>🏷️ Numeración devuelta legible / OK</span>
+              <input type="checkbox" id="rf_r_numeracion" ${!activeAssignment || activeAssignment.numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+            </label>
+          </div>
+
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / NOTAS DE RETORNO:</label>
-            <textarea id="rf_r_notes" rows="3" placeholder="Ej: Devuelto operativo, batería baja..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
+            <textarea id="rf_r_notes" rows="2" placeholder="Ej: Todo conforme, devuelto operativo..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -1296,7 +1506,13 @@ const abrirModalRecibir = (container, user, TABS, serie) => {
     modal.querySelector('#form_rf_receive').onsubmit = async (e) => {
       e.preventDefault();
       const batVal = modal.querySelector('#rf_r_bateria').value;
+      const pantallaDevuelta = modal.querySelector('#rf_r_pantalla').checked;
+      const numeracionDevuelta = modal.querySelector('#rf_r_numeracion').checked;
       const notesVal = modal.querySelector('#rf_r_notes').value.trim();
+
+      // Regla logística inteligente: Si la pantalla o numeración se devuelve dañada,
+      // el equipo pasa automáticamente a "En Mantenimiento"
+      const nuevoEstado = (!pantallaDevuelta || !numeracionDevuelta) ? 'En Mantenimiento' : 'Operativo';
 
       // Actualizar el equipo RF
       const listRfs = [...rfs];
@@ -1306,6 +1522,10 @@ const abrirModalRecibir = (container, user, TABS, serie) => {
         listRfs[rfIdx].asignadoNombre = null;
         listRfs[rfIdx].asignadoTurno = null;
         listRfs[rfIdx].bateria = batVal;
+        listRfs[rfIdx].estado = nuevoEstado;
+        if (nuevoEstado === 'En Mantenimiento') {
+          listRfs[rfIdx].comentarios = `Devuelto con daños. Pantalla: ${pantallaDevuelta?'OK':'DAÑADA'} | Numeración: ${numeracionDevuelta?'OK':'DAÑADA'}. Observaciones: ${notesVal}`;
+        }
       }
 
       // Actualizar asignación
@@ -1314,14 +1534,25 @@ const abrirModalRecibir = (container, user, TABS, serie) => {
         const asigIdx = listAssignments.findIndex(a => a.id === activeAssignment.id);
         if (asigIdx !== -1) {
           listAssignments[asigIdx].returned_at = new Date().toISOString();
-          listAssignments[asigIdx].return_notes = `Retornado con ${batVal}% bat. ${notesVal ? '- ' + notesVal : ''}`;
+          listAssignments[asigIdx].retorno_pantalla_ok = pantallaDevuelta;
+          listAssignments[asigIdx].retorno_numeracion_ok = numeracionDevuelta;
+          
+          let alertDetails = `Devolución Conforme con ${batVal}% bat.`;
+          if (nuevoEstado === 'En Mantenimiento') {
+             alertDetails = `⚠️ DEVOLUCIÓN REGISTRADA CON DAÑOS. El terminal ha sido enviado automáticamente a Taller/Mantenimiento.`;
+          }
+          listAssignments[asigIdx].return_notes = `${alertDetails} ${notesVal ? '- ' + notesVal : ''}`;
         }
       }
 
       await adminService.saveRfs(listRfs);
       await adminService.saveRfAssignments(listAssignments);
 
-      alert(`✅ Equipo RF ${serie} recibido correctamente y marcado como Disponible.`);
+      const successMsg = nuevoEstado === 'En Mantenimiento' 
+        ? `⚠️ Equipo RF ${serie} devuelto CON DAÑOS. Se envió automáticamente al taller.`
+        : `✅ Equipo RF ${serie} devuelto conforme y disponible.`;
+      
+      alert(successMsg);
       modal.remove();
       renderRFSection(container, user, TABS);
     };
