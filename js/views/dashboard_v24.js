@@ -3274,41 +3274,81 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const assignedTime = new Date(a.assigned_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
                 const returnedTime = a.returned_at ? new Date(a.returned_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : null;
                 
+                const isDamaged = a.returned_at && (a.retorno_pantalla_ok === false || a.retorno_numeracion_ok === false);
+                const isPending = !a.returned_at;
+                
+                let rowBg = '';
+                let rowOpacity = '1';
+                let rowBorder = 'border-bottom:1px solid rgba(255,255,255,0.03);';
+                
+                if (isDamaged) {
+                  rowBg = 'background: rgba(239, 68, 68, 0.08);';
+                  rowBorder += ' border-left: 4px solid #ef4444;';
+                } else if (isPending) {
+                  rowBg = 'background: rgba(245, 158, 11, 0.03);';
+                  rowBorder += ' border-left: 4px solid #ea580c;';
+                } else {
+                  rowOpacity = '0.55';
+                  rowBg = 'background: rgba(255, 255, 255, 0.01);';
+                }
+                
+                let returnStatusHtml = '';
+                if (returnedTime) {
+                  if (a.retorno_pantalla_ok !== false && a.retorno_numeracion_ok !== false) {
+                    returnStatusHtml = `
+                      <div style="margin-bottom:6px;"><span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">✅ CONFORME</span></div>
+                      <div style="color:#10b981; font-weight:700; font-size:0.75rem;">${returnedTime}</div>
+                      <div style="font-size:0.65rem; color:rgba(16,185,129,0.7); margin-top:2px;">
+                        🖥️ Pantalla: OK | 🏷️ Num: OK
+                      </div>
+                    `;
+                  } else {
+                    returnStatusHtml = `
+                      <div style="margin-bottom:6px;"><span style="background:rgba(239,68,68,0.25); color:#f87171; border:1px solid rgba(239,68,68,0.5); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px; box-shadow:0 0 10px rgba(239,68,68,0.25);">🚨 DAÑADO / TALLER</span></div>
+                      <div style="color:#ef4444; font-weight:800; font-size:0.75rem;">${returnedTime}</div>
+                      <div style="font-size:0.65rem; color:#f87171; font-weight:700; margin-top:2px; display:flex; flex-direction:column; gap:2px;">
+                        <span>${a.retorno_pantalla_ok !== false ? '🖥️ Pantalla: OK' : '🖥️ Pantalla: DAÑADA'}</span>
+                        <span>${a.retorno_numeracion_ok !== false ? '🏷️ Num: OK' : '🏷️ Num: BORRADA'}</span>
+                      </div>
+                    `;
+                  }
+                } else {
+                  returnStatusHtml = `
+                    <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                      <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">⏳ EN USO</span>
+                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.65rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 3px 8px rgba(234,88,12,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
+                    </div>
+                  `;
+                }
+
                 return `
-                  <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity:${a.returned_at?'0.65':'1'}">
+                  <tr style="${rowBg} ${rowBorder} opacity:${rowOpacity}; transition: all 0.3s ease;">
                     <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
-                    <td style="padding:0.8rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-family:monospace;">${a.rf_serial}</span></td>
+                    <td style="padding:0.8rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:6px; font-family:monospace; font-size:0.85rem; letter-spacing:0.5px;">${a.rf_serial}</span></td>
                     <td style="padding:0.8rem;">
-                      <div style="font-weight:700; color:#fff;">${a.worker_name}</div>
-                      <div style="font-size:0.65rem; color:var(--text-muted);">DNI: ${a.worker_dni}</div>
+                      <div style="font-weight:700; color:#fff; font-size:0.8rem;">${a.worker_name}</div>
+                      <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">DNI: ${a.worker_dni}</div>
                     </td>
                     <td style="padding:0.8rem; text-align:center;">
-                      <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:800; color:#e2e8f0;">${a.turn}</span>
+                      <span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800; color:#cbd5e1;">${a.turn}</span>
                     </td>
                     <td style="padding:0.8rem; color:#cbd5e1; font-weight:500;">
-                      <div>📅 ${assignedTime}</div>
-                      <div style="font-size:0.65rem; margin-top:2px; color:rgba(255,255,255,0.45);">
-                        ${a.pantalla_ok !== false ? '🖥️ Pantalla: OK' : '🖥️ Pantalla: FALLO'} | 
-                        ${a.numeracion_ok !== false ? '🏷️ Num: OK' : '🏷️ Num: FALLO'}
+                      <div style="font-weight:700; color:#fff; margin-bottom:4px;">📅 ${assignedTime}</div>
+                      <div style="font-size:0.65rem; color:rgba(255,255,255,0.45); display:flex; flex-direction:column; gap:2px;">
+                        <span style="${a.pantalla_ok !== false ? 'color:#10b981;' : 'color:#ef4444; font-weight:800;'}">🖥️ Pantalla: ${a.pantalla_ok !== false ? 'OK' : 'DAÑADA'}</span>
+                        <span style="${a.numeracion_ok !== false ? 'color:#10b981;' : 'color:#ef4444; font-weight:800;'}">🏷️ Num: ${a.numeracion_ok !== false ? 'OK' : 'DAÑADA'}</span>
                       </div>
                     </td>
                     <td style="padding:0.8rem;">
-                      ${returnedTime ? `
-                        <div style="color:#10b981; font-weight:600;">✅ ${returnedTime}</div>
-                        <div style="font-size:0.65rem; margin-top:2px; color:rgba(16,185,129,0.7);">
-                          ${a.retorno_pantalla_ok !== false ? '🖥️ Retorno: OK' : '🖥️ Retorno: DAÑADO'} | 
-                          ${a.retorno_numeracion_ok !== false ? '🏷️ Num: OK' : '🏷️ Num: MAL'}
-                        </div>
-                      ` : `
-                        <div style="display:flex; align-items:center; gap:8px;">
-                          <span class="pulse-pendiente-dot" style="background:#ea580c; color:#fff; font-weight:800; font-size:0.6rem; padding:2px 8px; border-radius:20px; box-shadow:0 0 8px #ea580c; letter-spacing:0.5px; animation:pulse-orange 1.2s infinite alternate;">PENDIENTE</span>
-                          <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; font-size:0.6rem; padding:3px 8px; border-radius:5px; cursor:pointer; font-weight:700; outline:none;" onmouseover="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#cbd5e1';">📥 RECIBIR</button>
-                        </div>
-                      `}
+                      ${returnStatusHtml}
                     </td>
-                    <td style="padding:0.8rem; color:var(--text-muted); font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${a.notes || ''}">
-                      ${a.notes ? `<div>🗣️ Entrega: ${a.notes}</div>` : ''}
-                      ${a.return_notes ? `<div style="color:#10b981; margin-top:3px;">📥 Retorno: ${a.return_notes}</div>` : ''}
+                    <td style="padding:0.8rem; color:#cbd5e1; font-size:0.72rem; line-height:1.4; max-width:320px; overflow:visible; word-break:break-word; white-space:normal;">
+                      ${a.notes ? `<div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:5px 8px; border-radius:6px; margin-bottom:4px; color:rgba(255,255,255,0.65);">🗣️ <b>Entrega:</b> ${a.notes}</div>` : ''}
+                      ${a.return_notes ? `
+                        <div style="background:${isDamaged ? 'rgba(239,68,68,0.05)' : 'rgba(16,185,129,0.05)'}; border:1px solid ${isDamaged ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}; padding:5px 8px; border-radius:6px; color:${isDamaged ? '#f87171; font-weight:700;' : '#34d399;'};">
+                          📥 <b>Retorno:</b> ${a.return_notes}
+                        </div>
+                      ` : ''}
                     </td>
                   </tr>`;
               }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
