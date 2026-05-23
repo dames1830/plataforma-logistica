@@ -18,7 +18,9 @@ if (!window._pulseSyncState) {
             performance_log: [], 
             config: {},
             rfs: [],
-            rf_assignments: []
+            rf_assignments: [],
+            rfs_batteries: [],
+            rfs_chargers: []
         }
     };
 }
@@ -52,7 +54,7 @@ export async function initSync() {
 
 export async function pullGlobal(requestedAreas = null, force = false) {
     console.log(`📥 [PULSE] Sincronización: Descargando ${requestedAreas ? requestedAreas.join(', ') : 'Todo'}...`);
-    const allAreas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log', 'rfs', 'rf_assignments'];
+    const allAreas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers'];
     const areas = requestedAreas || allAreas;
 
     const results = await Promise.all(areas.map(async (area) => {

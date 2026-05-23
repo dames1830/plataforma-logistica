@@ -286,3 +286,17 @@ export const saveRfAssignments = async (data) => {
     return await save('rf_assignments', data, 'MASTER');
 };
 
+// --- GESTIÓN DE BATERÍAS & CARGADORES ---
+export const getRfsBatteries = () => adminStore.rfs_batteries || [];
+export const saveRfsBatteries = async (data) => {
+    adminStore.rfs_batteries = data;
+    return await save('rfs_batteries', data, 'MASTER');
+};
+
+export const getRfsChargers = () => adminStore.rfs_chargers || [];
+export const saveRfsChargers = async (data) => {
+    adminStore.rfs_chargers = data;
+    return await save('rfs_chargers', data, 'MASTER');
+};
+
+

@@ -105,7 +105,7 @@ def get_area_data(area: str, date: Optional[str] = None):
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
         
         # ÁREAS SINGLETON (Siempre un solo registro maestro)
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers']
         
         if area == 'users':
             cursor.execute("SELECT username, password, name, role, active FROM users")
@@ -156,7 +156,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         json_string = json.dumps(payload_data)
         
         # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers']
         
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
