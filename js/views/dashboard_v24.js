@@ -3702,7 +3702,7 @@ const renderRFSection = (container) => {
           // Validar asignaciones existentes
           const workerActiveRf = rfs.find(r => r.asignadoDni === workerDni);
           if (workerActiveRf) {
-            if (!confirm(`⚠️ El operario \${worker.nombre} ya tiene asignado el equipo \${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
+            if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
               return;
             }
           }
@@ -3712,7 +3712,7 @@ const renderRFSection = (container) => {
           const rfIdx = listRfs.findIndex(r => r.serie === rfSerie);
           if (rfIdx !== -1) {
             listRfs[rfIdx].asignadoDni = workerDni;
-            listRfs[rfIdx].asignadoNombre = `\${worker.apellidos}, \${worker.nombre}`;
+            listRfs[rfIdx].asignadoNombre = `${worker.apellidos}, ${worker.nombre}`;
             listRfs[rfIdx].asignadoTurno = turnVal;
           }
 
@@ -3722,7 +3722,7 @@ const renderRFSection = (container) => {
             id: 'ASIG_' + Date.now(),
             rf_serial: rfSerie,
             worker_dni: workerDni,
-            worker_name: `\${worker.apellidos}, \${worker.nombre}`,
+            worker_name: `${worker.apellidos}, ${worker.nombre}`,
             turn: turnVal,
             assigned_at: new Date().toISOString(),
             returned_at: null,
@@ -3735,7 +3735,7 @@ const renderRFSection = (container) => {
           await adminService.saveRfs(listRfs);
           await adminService.saveRfAssignments(listAssignments);
 
-          alert(`✅ Asignación rápida exitosa: RF \${rfSerie} entregada a \${worker.nombre}.`);
+          alert(`✅ Asignación rápida exitosa: RF ${rfSerie} entregada a ${worker.nombre}.`);
           renderRFSection(container);
         };
       }
@@ -3763,7 +3763,7 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-delete-rf').forEach(btn => {
         btn.onclick = async (e) => {
           const serie = e.currentTarget.dataset.serie;
-          if (confirm(`¿Estás seguro de eliminar el terminal RF \${serie} de forma permanente?`)) {
+          if (confirm(`¿Estás seguro de eliminar el terminal RF ${serie} de forma permanente?`)) {
             const list = adminService.getRfs().filter(r => r.serie !== serie);
             await adminService.saveRfs(list);
             alert("✅ Equipo eliminado con éxito.");
@@ -3783,7 +3783,7 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-delete-battery').forEach(btn => {
         btn.onclick = async (e) => {
           const codigo = e.currentTarget.dataset.codigo;
-          if (confirm(`¿Estás seguro de eliminar la batería \${codigo} de forma permanente?`)) {
+          if (confirm(`¿Estás seguro de eliminar la batería ${codigo} de forma permanente?`)) {
             const list = adminService.getRfsBatteries().filter(b => b.codigo !== codigo);
             await adminService.saveRfsBatteries(list);
             alert("✅ Batería eliminada con éxito.");
@@ -3803,7 +3803,7 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-delete-charger').forEach(btn => {
         btn.onclick = async (e) => {
           const codigo = e.currentTarget.dataset.codigo;
-          if (confirm(`¿Estás seguro de eliminar el cargador \${codigo} de forma permanente?`)) {
+          if (confirm(`¿Estás seguro de eliminar el cargador ${codigo} de forma permanente?`)) {
             const list = adminService.getRfsChargers().filter(c => c.codigo !== codigo);
             await adminService.saveRfsChargers(list);
             alert("✅ Cargador eliminado con éxito.");
@@ -3833,44 +3833,44 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          \${isEdit ? '✏️ EDITAR EQUIPO RF' : '📡 REGISTRAR EQUIPO RF'}
+          ${isEdit ? '✏️ EDITAR EQUIPO RF' : '📡 REGISTRAR EQUIPO RF'}
         </h3>
         
         <form id="form_rf_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">SERIE / IDENTIFICADOR:</label>
-            <input type="text" id="rf_m_serie" required value="\${rf ? rf.serie : ''}" \${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
+            <input type="text" id="rf_m_serie" required value="${rf ? rf.serie : ''}" ${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">MARCA:</label>
-              <input type="text" id="rf_m_marca" required placeholder="Ej: Zebra" value="\${rf ? rf.marca : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+              <input type="text" id="rf_m_marca" required placeholder="Ej: Zebra" value="${rf ? rf.marca : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
             </div>
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">MODELO:</label>
-              <input type="text" id="rf_m_modelo" required placeholder="Ej: MC3300" value="\${rf ? rf.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+              <input type="text" id="rf_m_modelo" required placeholder="Ej: MC3300" value="${rf ? rf.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÍA (%):</label>
-              <input type="number" id="rf_m_bateria" min="0" max="100" required value="\${rf ? rf.bateria : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+              <input type="number" id="rf_m_bateria" min="0" max="100" required value="${rf ? rf.bateria : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
             </div>
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
               <select id="rf_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
-                <option value="Operativo" \${rf && rf.estado==='Operativo'?'selected':''}>OPERATIVO</option>
-                <option value="En Mantenimiento" \${rf && rf.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
-                <option value="De Baja" \${rf && rf.estado==='De Baja'?'selected':''}>DE BAJA</option>
+                <option value="Operativo" ${rf && rf.estado==='Operativo'?'selected':''}>OPERATIVO</option>
+                <option value="En Mantenimiento" ${rf && rf.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
+                <option value="De Baja" ${rf && rf.estado==='De Baja'?'selected':''}>DE BAJA</option>
               </select>
             </div>
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">COMENTARIOS / NOTAS:</label>
-            <textarea id="rf_m_comentarios" rows="3" placeholder="Detalles de estado del terminal..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">\${rf ? (rf.comentarios || '') : ''}</textarea>
+            <textarea id="rf_m_comentarios" rows="3" placeholder="Detalles de estado del terminal..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">${rf ? (rf.comentarios || '') : ''}</textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -3895,7 +3895,7 @@ const renderRFSection = (container) => {
 
       if (!isEdit) {
         if (rfs.find(r => r.serie === serieVal)) {
-          return alert(`❌ Error: El equipo con Serie \${serieVal} ya se encuentra registrado.`);
+          return alert(`❌ Error: El equipo con Serie ${serieVal} ya se encuentra registrado.`);
         }
       }
 
@@ -3908,7 +3908,7 @@ const renderRFSection = (container) => {
             const activeAssignment = assignments.find(a => a.rf_serial === serieVal && !a.returned_at);
             if (activeAssignment) {
               activeAssignment.returned_at = new Date().toISOString();
-              activeAssignment.return_notes = `Retorno forzado: El equipo pasó a estado \${estadoVal}.`;
+              activeAssignment.return_notes = `Retorno forzado: El equipo pasó a estado ${estadoVal}.`;
               await adminService.saveRfAssignments(assignments);
             }
             list[idx].asignadoDni = null;
@@ -3936,43 +3936,43 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(16,185,129,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          \${isEdit ? '✏️ EDITAR BATERÍA' : '🔋 REGISTRAR BATERÍA'}
+          ${isEdit ? '✏️ EDITAR BATERÍA' : '🔋 REGISTRAR BATERÍA'}
         </h3>
         
         <form id="form_battery_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CÓDIGO DE BATERÍA:</label>
-            <input type="text" id="bat_m_codigo" required value="\${bat ? bat.codigo : ''}" \${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
+            <input type="text" id="bat_m_codigo" required value="${bat ? bat.codigo : ''}" ${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">COMPATIBILIDAD (MODELO RFS):</label>
-            <input type="text" id="bat_m_modelo" required placeholder="Ej: Zebra MC3300" value="\${bat ? bat.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+            <input type="text" id="bat_m_modelo" required placeholder="Ej: Zebra MC3300" value="${bat ? bat.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">SALUD CELDA (%):</label>
-              <input type="number" id="bat_m_salud" min="0" max="100" required value="\${bat ? bat.salud : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+              <input type="number" id="bat_m_salud" min="0" max="100" required value="${bat ? bat.salud : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
             </div>
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
               <select id="bat_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
-                <option value="Operativo" \${bat && bat.estado==='Operativo'?'selected':''}>OPERATIVO</option>
-                <option value="En Mantenimiento" \${bat && bat.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
-                <option value="De Baja" \${bat && bat.estado==='De Baja'?'selected':''}>DE BAJA</option>
+                <option value="Operativo" ${bat && bat.estado==='Operativo'?'selected':''}>OPERATIVO</option>
+                <option value="En Mantenimiento" ${bat && bat.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
+                <option value="De Baja" ${bat && bat.estado==='De Baja'?'selected':''}>DE BAJA</option>
               </select>
             </div>
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">UBICACIÓN / RANURA DE CARGA:</label>
-            <input type="text" id="bat_m_ubicacion" required placeholder="Ej: Cargador 1, Ranura 3" value="\${bat ? bat.ubicacion : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+            <input type="text" id="bat_m_ubicacion" required placeholder="Ej: Cargador 1, Ranura 3" value="${bat ? bat.ubicacion : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / COMENTARIOS:</label>
-            <textarea id="bat_m_comentarios" rows="3" placeholder="Comentarios sobre el estado de la batería..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">\${bat ? (bat.comentarios || '') : ''}</textarea>
+            <textarea id="bat_m_comentarios" rows="3" placeholder="Comentarios sobre el estado de la batería..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">${bat ? (bat.comentarios || '') : ''}</textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -3997,7 +3997,7 @@ const renderRFSection = (container) => {
 
       if (!isEdit) {
         if (batteries.find(b => b.codigo === codigoVal)) {
-          return alert(`❌ Error: La batería con Código \${codigoVal} ya se encuentra registrada.`);
+          return alert(`❌ Error: La batería con Código ${codigoVal} ya se encuentra registrada.`);
         }
       }
 
@@ -4027,55 +4027,55 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(6, 182, 212, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(6,182,212,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          \${isEdit ? '✏️ EDITAR CARGADOR' : '🔌 REGISTRAR CARGADOR'}
+          ${isEdit ? '✏️ EDITAR CARGADOR' : '🔌 REGISTRAR CARGADOR'}
         </h3>
         
         <form id="form_charger_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CÓDIGO DE CARGADOR:</label>
-            <input type="text" id="chg_m_codigo" required value="\${chg ? chg.codigo : ''}" \${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
+            <input type="text" id="chg_m_codigo" required value="${chg ? chg.codigo : ''}" ${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">MARCA:</label>
-              <input type="text" id="chg_m_marca" required placeholder="Ej: Zebra" value="\${chg ? chg.marca : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+              <input type="text" id="chg_m_marca" required placeholder="Ej: Zebra" value="${chg ? chg.marca : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
             </div>
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">MODELO:</label>
-              <input type="text" id="chg_m_modelo" required placeholder="Ej: 4 Slots Stand" value="\${chg ? chg.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+              <input type="text" id="chg_m_modelo" required placeholder="Ej: 4 Slots Stand" value="${chg ? chg.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CAPACIDAD (RANURAS):</label>
-              <input type="number" id="chg_m_capacidad" min="1" max="24" required value="\${chg ? chg.capacidad : '4'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+              <input type="number" id="chg_m_capacidad" min="1" max="24" required value="${chg ? chg.capacidad : '4'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
             </div>
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">RANURAS OPERATIVAS:</label>
-              <input type="number" id="chg_m_ranuras_ok" min="0" max="24" required value="\${chg ? chg.ranuras_ok : '4'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+              <input type="number" id="chg_m_ranuras_ok" min="0" max="24" required value="${chg ? chg.ranuras_ok : '4'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">UBICACIÓN / MESA:</label>
-              <input type="text" id="chg_m_ubicacion" required placeholder="Ej: Mesa de Carga 1" value="\${chg ? chg.ubicacion : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+              <input type="text" id="chg_m_ubicacion" required placeholder="Ej: Mesa de Carga 1" value="${chg ? chg.ubicacion : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
             </div>
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
               <select id="chg_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
-                <option value="Operativo" \${chg && chg.estado==='Operativo'?'selected':''}>OPERATIVO</option>
-                <option value="En Mantenimiento" \${chg && chg.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
-                <option value="De Baja" \${chg && chg.estado==='De Baja'?'selected':''}>DE BAJA</option>
+                <option value="Operativo" ${chg && chg.estado==='Operativo'?'selected':''}>OPERATIVO</option>
+                <option value="En Mantenimiento" ${chg && chg.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
+                <option value="De Baja" ${chg && chg.estado==='De Baja'?'selected':''}>DE BAJA</option>
               </select>
             </div>
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">COMENTARIOS / NOTAS:</label>
-            <textarea id="chg_m_comentarios" rows="3" placeholder="Comentarios sobre el estado del cargador..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">\${chg ? (chg.comentarios || '') : ''}</textarea>
+            <textarea id="chg_m_comentarios" rows="3" placeholder="Comentarios sobre el estado del cargador..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">${chg ? (chg.comentarios || '') : ''}</textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -4106,7 +4106,7 @@ const renderRFSection = (container) => {
 
       if (!isEdit) {
         if (chargers.find(c => c.codigo === codigoVal)) {
-          return alert(`❌ Error: El cargador con Código \${codigoVal} ya se encuentra registrado.`);
+          return alert(`❌ Error: El cargador con Código ${codigoVal} ya se encuentra registrado.`);
         }
       }
 
@@ -4135,7 +4135,7 @@ const renderRFSection = (container) => {
     const activeWorkers = workers.filter(w => w.active !== false);
 
     const workerOptions = activeWorkers.map(w => `
-      <option value="\${w.dni}" style="background:#0f172a;">\${w.apellidos}, \${w.nombre} (DNI: \${w.dni})</option>
+      <option value="${w.dni}" style="background:#0f172a;">${w.apellidos}, ${w.nombre} (DNI: ${w.dni})</option>
     `).join('');
 
     const modal = document.createElement('div');
@@ -4145,14 +4145,14 @@ const renderRFSection = (container) => {
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
           👷 ASIGNAR EQUIPO RF
         </h3>
-        <p style="margin:-1rem 0 1.5rem 0; text-align:center; color:var(--primary); font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: \${serie}</p>
+        <p style="margin:-1rem 0 1.5rem 0; text-align:center; color:var(--primary); font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
         
         <form id="form_rf_assign" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">SELECCIONAR TRABAJADOR:</label>
             <select id="rf_a_worker" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.65rem; border-radius:8px; font-weight:700; cursor:pointer;">
               <option value="" style="background:#0f172a;">-- Seleccionar operario activo --</option>
-              \${workerOptions}
+              ${workerOptions}
             </select>
           </div>
 
@@ -4207,7 +4207,7 @@ const renderRFSection = (container) => {
 
       const workerActiveRf = rfs.find(r => r.asignadoDni === workerDni);
       if (workerActiveRf) {
-        if (!confirm(`⚠️ El operario \${worker.nombre} ya tiene asignado el equipo \${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
+        if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
           return;
         }
       }
@@ -4216,7 +4216,7 @@ const renderRFSection = (container) => {
       const rfIdx = listRfs.findIndex(r => r.serie === serie);
       if (rfIdx !== -1) {
         listRfs[rfIdx].asignadoDni = workerDni;
-        listRfs[rfIdx].asignadoNombre = `\${worker.apellidos}, \${worker.nombre}`;
+        listRfs[rfIdx].asignadoNombre = `${worker.apellidos}, ${worker.nombre}`;
         listRfs[rfIdx].asignadoTurno = turnVal;
       }
 
@@ -4225,7 +4225,7 @@ const renderRFSection = (container) => {
         id: 'ASIG_' + Date.now(),
         rf_serial: serie,
         worker_dni: workerDni,
-        worker_name: `\${worker.apellidos}, \${worker.nombre}`,
+        worker_name: `${worker.apellidos}, ${worker.nombre}`,
         turn: turnVal,
         assigned_at: new Date().toISOString(),
         returned_at: null,
@@ -4238,7 +4238,7 @@ const renderRFSection = (container) => {
       await adminService.saveRfs(listRfs);
       await adminService.saveRfAssignments(listAssignments);
 
-      alert(`✅ Equipo RF \${serie} asignado correctamente.`);
+      alert(`✅ Equipo RF ${serie} asignado correctamente.`);
       modal.remove();
       renderRFSection(container);
     };
@@ -4263,18 +4263,18 @@ const renderRFSection = (container) => {
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
           📥 RECIBIR EQUIPO RF (DEVOLUCIÓN)
         </h3>
-        <p style="margin:-1rem 0 0.5rem 0; text-align:center; color:#f97316; font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: \${serie}</p>
+        <p style="margin:-1rem 0 0.5rem 0; text-align:center; color:#f97316; font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
         <div style="background:rgba(255,255,255,0.02); padding:0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.05); margin-bottom:1.2rem; font-size:0.7rem; text-align:center; color:var(--text-muted);">
-          Operario: <b style="color:#fff;">\${rf.asignadoNombre || 'Operario'}</b><br>
+          Operario: <b style="color:#fff;">${rf.asignadoNombre || 'Operario'}</b><br>
           <span style="display:inline-block; margin-top:3px;">
-            Condición inicial: <span style="color:#38bdf8;">\${pantallaInicialText}</span> | <span style="color:#38bdf8;">\${numeracionInicialText}</span>
+            Condición inicial: <span style="color:#38bdf8;">${pantallaInicialText}</span> | <span style="color:#38bdf8;">${numeracionInicialText}</span>
           </span>
         </div>
         
         <form id="form_rf_receive" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÍA DE RETORNO (%):</label>
-            <input type="number" id="rf_r_bateria" min="0" max="100" required value="\${rf.bateria}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+            <input type="number" id="rf_r_bateria" min="0" max="100" required value="${rf.bateria}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
           </div>
 
           <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
@@ -4282,12 +4282,12 @@ const renderRFSection = (container) => {
             
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
               <span>🖥️ Pantalla devuelta OK / Sin daños</span>
-              <input type="checkbox" id="rf_r_pantalla" \${!activeAssignment || activeAssignment.pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+              <input type="checkbox" id="rf_r_pantalla" ${!activeAssignment || activeAssignment.pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
             </label>
             
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
               <span>🏷️ Numeración devuelta legible / OK</span>
-              <input type="checkbox" id="rf_r_numeracion" \${!activeAssignment || activeAssignment.numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+              <input type="checkbox" id="rf_r_numeracion" ${!activeAssignment || activeAssignment.numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
             </label>
           </div>
 
@@ -4325,7 +4325,7 @@ const renderRFSection = (container) => {
         listRfs[rfIdx].bateria = batVal;
         listRfs[rfIdx].estado = nuevoEstado;
         if (nuevoEstado === 'En Mantenimiento') {
-          listRfs[rfIdx].comentarios = `Devuelto con daños. Pantalla: \${pantallaDevuelta?'OK':'DAÑADA'} | Numeración: \${numeracionDevuelta?'OK':'DAÑADA'}. Observaciones: \${notesVal}`;
+          listRfs[rfIdx].comentarios = `Devuelto con daños. Pantalla: ${pantallaDevuelta?'OK':'DAÑADA'} | Numeración: ${numeracionDevuelta?'OK':'DAÑADA'}. Observaciones: ${notesVal}`;
         }
       }
 
@@ -4337,11 +4337,11 @@ const renderRFSection = (container) => {
           listAssignments[asigIdx].retorno_pantalla_ok = pantallaDevuelta;
           listAssignments[asigIdx].retorno_numeracion_ok = numeracionDevuelta;
           
-          let alertDetails = `Devolución Conforme con \${batVal}% bat.`;
+          let alertDetails = `Devolución Conforme con ${batVal}% bat.`;
           if (nuevoEstado === 'En Mantenimiento') {
              alertDetails = `⚠️ DEVOLUCIÓN REGISTRADA CON DAÑOS. El terminal ha sido enviado automáticamente a Taller/Mantenimiento.`;
           }
-          listAssignments[asigIdx].return_notes = `\${alertDetails} \${notesVal ? '- ' + notesVal : ''}`;
+          listAssignments[asigIdx].return_notes = `${alertDetails} ${notesVal ? '- ' + notesVal : ''}`;
         }
       }
 
@@ -4349,8 +4349,8 @@ const renderRFSection = (container) => {
       await adminService.saveRfAssignments(listAssignments);
 
       const successMsg = nuevoEstado === 'En Mantenimiento' 
-        ? `⚠️ Equipo RF \${serie} devuelto CON DAÑOS. Se envió automáticamente al taller.`
-        : `✅ Equipo RF \${serie} devuelto conforme y disponible.`;
+        ? `⚠️ Equipo RF ${serie} devuelto CON DAÑOS. Se envió automáticamente al taller.`
+        : `✅ Equipo RF ${serie} devuelto conforme y disponible.`;
       
       alert(successMsg);
       modal.remove();
