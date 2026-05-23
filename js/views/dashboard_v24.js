@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.35';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.36';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.35';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.35';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.35';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.35';
+import * as adminService from '../services_v245/adminService.js?v=26.5.36';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.36';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.36';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.36';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.35';
+const VERSION = '26.5.36';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3554,6 +3554,7 @@ const renderRFSection = (container) => {
                 <th style="padding:0.8rem; text-align:left;">Asignación (Entrega)</th>
                 <th style="padding:0.8rem; text-align:left;">Devolución (Retorno)</th>
                 <th style="padding:0.8rem; text-align:left;">Bitácora de Control y Observaciones</th>
+                <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -3601,10 +3602,7 @@ const renderRFSection = (container) => {
                   }
                 } else {
                   returnStatusHtml = `
-                    <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
-                      <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">⏳ EN USO</span>
-                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.65rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 3px 8px rgba(234,88,12,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
-                    </div>
+                    <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">⏳ EN USO</span>
                   `;
                 }
 
@@ -3637,8 +3635,15 @@ const renderRFSection = (container) => {
                         </div>
                       ` : ''}
                     </td>
+                    <td style="padding:0.8rem; text-align:center; border-left:1px solid rgba(255,255,255,0.02);">
+                      ${isPending ? `
+                        <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.65rem; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 3px 8px rgba(234,88,12,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
+                      ` : `
+                        <span style="color:var(--text-muted); font-size:0.75rem; font-weight:700;">-</span>
+                      `}
+                    </td>
                   </tr>`;
-              }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
+              }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
             </tbody>
           </table>
         </div>
