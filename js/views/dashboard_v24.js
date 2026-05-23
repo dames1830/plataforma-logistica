@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.25';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.35';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.25';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.25';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.25';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.25';
+import * as adminService from '../services_v245/adminService.js?v=26.5.35';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.35';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.35';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.35';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.27';
+const VERSION = '26.5.35';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3206,16 +3206,16 @@ const renderRFSection = (container) => {
       </div>
 
       <!-- HEADER ACTION BAR -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); flex-wrap:wrap; gap:1rem; width:100%;">
         <!-- TAB SELECTOR -->
-        <div style="display:flex; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:3px; border-radius:10px;">
-          <button id="rf_tab_inventario" class="btn" style="background:${activeRFTab==='inventario'?'var(--primary)':'none'}; color:${activeRFTab==='inventario'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='inventario'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📁 INVENTARIO</button>
-          <button id="rf_tab_asignar" class="btn" style="background:${activeRFTab==='asignar'?'var(--primary)':'none'}; color:${activeRFTab==='asignar'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='asignar'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">🔑 ASIGNAR RF</button>
-          <button id="rf_tab_asignaciones" class="btn" style="background:${activeRFTab==='asignaciones'?'var(--primary)':'none'}; color:${activeRFTab==='asignaciones'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='asignaciones'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📝 BITÁCORA</button>
-        </div>
+        <nav style="display:flex; gap:1.2rem;">
+          <a class="perf-sub-item ${activeRFTab==='inventario'?'active':''}" id="rf_tab_inventario">📁 INVENTARIO</a>
+          <a class="perf-sub-item ${activeRFTab==='asignar'?'active':''}" id="rf_tab_asignar">🔑 ASIGNAR RF</a>
+          <a class="perf-sub-item ${activeRFTab==='asignaciones'?'active':''}" id="rf_tab_asignaciones">📝 BITÁCORA</a>
+        </nav>
 
         <!-- SEARCH AND ADD -->
-        <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; padding-bottom:0.3rem;">
           <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
           
           ${activeRFTab === 'inventario' ? `
@@ -3239,10 +3239,10 @@ const renderRFSection = (container) => {
       <!-- MAIN CONTENT -->
       ${activeRFTab === 'inventario' ? `
         <!-- SUB-TAB SELECTOR -->
-        <div style="display:flex; background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:3px; border-radius:10px; margin-bottom:1.2rem; width:fit-content;">
-          <button id="rf_sub_tab_rfs" class="btn" style="background:${activeInventorySubTab==='rfs'?'linear-gradient(135deg, var(--primary) 0%, #312e81 150%)':'none'}; color:${activeInventorySubTab==='rfs'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeInventorySubTab==='rfs'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📡 EQUIPOS RF</button>
-          <button id="rf_sub_tab_baterias" class="btn" style="background:${activeInventorySubTab==='baterias'?'linear-gradient(135deg, var(--primary) 0%, #312e81 150%)':'none'}; color:${activeInventorySubTab==='baterias'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeInventorySubTab==='baterias'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">🔋 BATERÍAS</button>
-          <button id="rf_sub_tab_cargadores" class="btn" style="background:${activeInventorySubTab==='cargadores'?'linear-gradient(135deg, var(--primary) 0%, #312e81 150%)':'none'}; color:${activeInventorySubTab==='cargadores'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeInventorySubTab==='cargadores'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">🔌 CARGADORES</button>
+        <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.03); margin-bottom:1.2rem; width:100%; gap:1.2rem;">
+          <a class="perf-sub-item ${activeInventorySubTab==='rfs'?'active':''}" id="rf_sub_tab_rfs">📡 EQUIPOS RF</a>
+          <a class="perf-sub-item ${activeInventorySubTab==='baterias'?'active':''}" id="rf_sub_tab_baterias">🔋 BATERÍAS</a>
+          <a class="perf-sub-item ${activeInventorySubTab==='cargadores'?'active':''}" id="rf_sub_tab_cargadores">🔌 CARGADORES</a>
         </div>
         
         ${activeInventorySubTab === 'rfs' ? `
