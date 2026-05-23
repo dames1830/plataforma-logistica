@@ -3790,7 +3790,9 @@ export const renderDashboard = async (container, user, onLogout) => {
       modal.remove();
       renderRFSection(container);
     };
-  };\n\n  const renderConfigTab = async () => {
+  };
+
+  const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
