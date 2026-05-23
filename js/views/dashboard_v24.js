@@ -2948,10 +2948,6 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
 
-  let activeRFTab = 'inventario';
-  let rfSearchQuery = '';
-  let rfStatusFilter = 'todos';
-
   const renderRFSection = (container) => {
     const rfs = adminService.getRfs() || [];
     const assignments = adminService.getRfAssignments() || [];
