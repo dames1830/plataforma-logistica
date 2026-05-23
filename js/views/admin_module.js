@@ -1020,6 +1020,7 @@ const renderRFSection = (container, user, TABS) => {
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
                   <th style="padding:0.8rem; text-align:left;">Serie</th>
                   <th style="padding:0.8rem; text-align:left;">Marca / Modelo</th>
+                  <th style="padding:0.8rem; text-align:left;">Número</th>
                   <th style="padding:0.8rem; text-align:left;">Batería</th>
                   <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
@@ -1050,6 +1051,9 @@ const renderRFSection = (container, user, TABS) => {
                       <td style="padding:0.8rem;">
                         <span style="font-weight:600; color:#cbd5e1;">${r.marca || ''}</span> 
                         <span style="color:var(--text-muted); font-size:0.7rem;">${r.modelo || ''}</span>
+                      </td>
+                      <td style="padding:0.8rem;">
+                        ${r.numero ? `<span style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); color:#a5b4fc; padding:3px 9px; border-radius:6px; font-family:monospace; font-size:0.8rem; font-weight:700;">${r.numero}</span>` : `<span style="color:rgba(255,255,255,0.2); font-size:0.75rem;">—</span>`}
                       </td>
                       <td style="padding:0.8rem;">
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -1828,6 +1832,11 @@ const renderRFSection = (container, user, TABS) => {
             </div>
           </div>
 
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">NÚMERO:</label>
+            <input type="text" id="rf_m_numero" placeholder="Ej: 001, A-12, RF-05..." value="${rf ? (rf.numero || '') : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(99,102,241,0.35); color:#a5b4fc; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:700; font-size:0.85rem;">
+          </div>
+
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
               <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÍA (%):</label>
@@ -1864,6 +1873,7 @@ const renderRFSection = (container, user, TABS) => {
       const serieVal = modal.querySelector('#rf_m_serie').value.trim().toUpperCase();
       const marcaVal = modal.querySelector('#rf_m_marca').value.trim();
       const modeloVal = modal.querySelector('#rf_m_modelo').value.trim();
+      const numeroVal = modal.querySelector('#rf_m_numero').value.trim();
       const bateriaVal = modal.querySelector('#rf_m_bateria').value;
       const estadoVal = modal.querySelector('#rf_m_estado').value;
       const comentariosVal = modal.querySelector('#rf_m_comentarios').value.trim();
@@ -1878,7 +1888,7 @@ const renderRFSection = (container, user, TABS) => {
       if (isEdit) {
         const idx = list.findIndex(r => r.serie === serieVal);
         if (idx !== -1) {
-          list[idx] = { ...list[idx], marca: marcaVal, modelo: modeloVal, bateria: bateriaVal, estado: estadoVal, comentarios: comentariosVal };
+          list[idx] = { ...list[idx], marca: marcaVal, modelo: modeloVal, numero: numeroVal, bateria: bateriaVal, estado: estadoVal, comentarios: comentariosVal };
           if (estadoVal !== 'Operativo' && list[idx].asignadoDni) {
             const activeAssignment = assignments.find(a => a.rf_serial === serieVal && !a.returned_at);
             if (activeAssignment) {
@@ -1892,7 +1902,7 @@ const renderRFSection = (container, user, TABS) => {
           }
         }
       } else {
-        list.push({ serie: serieVal, marca: marcaVal, modelo: modeloVal, bateria: bateriaVal, estado: estadoVal, comentarios: comentariosVal, asignadoDni: null });
+        list.push({ serie: serieVal, marca: marcaVal, modelo: modeloVal, numero: numeroVal, bateria: bateriaVal, estado: estadoVal, comentarios: comentariosVal, asignadoDni: null });
       }
 
       await adminService.saveRfs(list);
