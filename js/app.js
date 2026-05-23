@@ -1,10 +1,10 @@
-/**
+﻿/**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
 import { getSession, logout } from './services_v245/auth.js?v=26.5.36';
 import * as adminService from './services_v245/adminService.js?v=26.5.36';
 
-// --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
+// --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÃ“RFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
         const backdrop = document.createElement('div');
@@ -23,20 +23,20 @@ window.showPremiumAlert = (title, message, type = 'error') => {
         backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
         
         let accentColor = '#ef4444'; // Red
-        let icon = '❌';
+        let icon = 'âŒ';
         let glowColor = 'rgba(239, 68, 68, 0.3)';
         
         if (type === 'success') {
             accentColor = '#10b981'; // Green
-            icon = '✅';
+            icon = 'âœ…';
             glowColor = 'rgba(16, 185, 129, 0.3)';
         } else if (type === 'warning') {
             accentColor = '#f59e0b'; // Amber
-            icon = '⚠️';
+            icon = 'âš ï¸';
             glowColor = 'rgba(245, 158, 11, 0.3)';
         } else if (type === 'info') {
             accentColor = '#3b82f6'; // Blue
-            icon = 'ℹ️';
+            icon = 'â„¹ï¸';
             glowColor = 'rgba(59, 130, 246, 0.3)';
         }
 
@@ -147,7 +147,7 @@ window.showPremiumAlert = (title, message, type = 'error') => {
     });
 };
 
-// --- SISTEMA GLOBAL DE CONFIRMACIONES PREMIUM GLASSMÓRFICAS ---
+// --- SISTEMA GLOBAL DE CONFIRMACIONES PREMIUM GLASSMÃ“RFICAS ---
 window.showPremiumConfirm = (title, message, type = 'warning') => {
     return new Promise((resolve) => {
         const backdrop = document.createElement('div');
@@ -166,20 +166,20 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
         backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
         
         let accentColor = '#f59e0b'; // Amber
-        let icon = '❓';
+        let icon = 'â“';
         let glowColor = 'rgba(245, 158, 11, 0.3)';
         
         if (type === 'danger') {
             accentColor = '#ef4444'; // Red
-            icon = '🚨';
+            icon = 'ðŸš¨';
             glowColor = 'rgba(239, 68, 68, 0.3)';
         } else if (type === 'info') {
             accentColor = '#3b82f6'; // Blue
-            icon = 'ℹ️';
+            icon = 'â„¹ï¸';
             glowColor = 'rgba(59, 130, 246, 0.3)';
         } else if (type === 'success') {
             accentColor = '#10b981'; // Green
-            icon = '✅';
+            icon = 'âœ…';
             glowColor = 'rgba(16, 185, 129, 0.3)';
         }
 
@@ -317,25 +317,25 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
 
 window.alert = function(message) {
     let type = 'warning';
-    let title = 'ATENCIÓN';
+    let title = 'ATENCIÃ“N';
     let cleanMessage = String(message || '');
 
-    if (cleanMessage.includes('✅')) {
+    if (cleanMessage.includes('âœ…')) {
         type = 'success';
-        title = '¡ÉXITO!';
-        cleanMessage = cleanMessage.replace(/✅/g, '').trim();
-    } else if (cleanMessage.includes('❌') || cleanMessage.includes('🚨') || cleanMessage.toLowerCase().includes('error')) {
+        title = 'Â¡Ã‰XITO!';
+        cleanMessage = cleanMessage.replace(/âœ…/g, '').trim();
+    } else if (cleanMessage.includes('âŒ') || cleanMessage.includes('ðŸš¨') || cleanMessage.toLowerCase().includes('error')) {
         type = 'error';
         title = 'ERROR';
-        cleanMessage = cleanMessage.replace(/[❌🚨]/g, '').trim();
-    } else if (cleanMessage.includes('⚠️') || cleanMessage.includes('🚧') || cleanMessage.includes('🏗️')) {
+        cleanMessage = cleanMessage.replace(/[âŒðŸš¨]/g, '').trim();
+    } else if (cleanMessage.includes('âš ï¸') || cleanMessage.includes('ðŸš§') || cleanMessage.includes('ðŸ—ï¸')) {
         type = 'warning';
         title = 'ADVERTENCIA';
-        cleanMessage = cleanMessage.replace(/[⚠️🚧🏗️]/g, '').trim();
-    } else if (cleanMessage.includes('📦') || cleanMessage.includes('📡') || cleanMessage.includes('☁️') || cleanMessage.includes('🔒')) {
+        cleanMessage = cleanMessage.replace(/[âš ï¸ðŸš§ðŸ—ï¸]/g, '').trim();
+    } else if (cleanMessage.includes('ðŸ“¦') || cleanMessage.includes('ðŸ“¡') || cleanMessage.includes('â˜ï¸') || cleanMessage.includes('ðŸ”’')) {
         type = 'info';
-        title = 'INFORMACIÓN';
-        cleanMessage = cleanMessage.replace(/[📦📡☁️🔒]/g, '').trim();
+        title = 'INFORMACIÃ“N';
+        cleanMessage = cleanMessage.replace(/[ðŸ“¦ðŸ“¡â˜ï¸ðŸ”’]/g, '').trim();
     }
 
     cleanMessage = cleanMessage.replace(/^[:!\s\-]+/, '');
@@ -345,12 +345,12 @@ window.alert = function(message) {
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v26.5.36';
+    this.APP_VERSION = 'v26.5.37';
     
-    // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
+    // --- LIMPIEZA DE CACHÃ‰ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
     if (lastVer !== this.APP_VERSION) {
-        console.warn("🧹 [PULSE] Detectada versión nueva. Limpiando caché de scripts...");
+        console.warn("ðŸ§¹ [PULSE] Detectada versiÃ³n nueva. Limpiando cachÃ© de scripts...");
         localStorage.setItem('PULSE_INSTALLED_VERSION', this.APP_VERSION);
     }
     this.isRendered = false;
@@ -377,7 +377,7 @@ class App {
       // 20 minutos = 20 * 60 * 1000 = 1200000 ms
       this.inactivityTimeout = setTimeout(() => {
           if (getSession()) {
-              console.warn("⏳ [PULSE] Sesión expirada por inactividad (20 min).");
+              console.warn("â³ [PULSE] SesiÃ³n expirada por inactividad (20 min).");
               logout();
               window.location.reload();
           }
@@ -387,12 +387,12 @@ class App {
   async init() {
     try {
         if (this.root) {
-            // [CRÍTICO] Limpiar clases heredadas para evitar bugs de desbordamiento de scroll y franjas horizontales
+            // [CRÃTICO] Limpiar clases heredadas para evitar bugs de desbordamiento de scroll y franjas horizontales
             this.root.className = 'app-loading-layout';
             this.root.innerHTML = `
             <div style="text-align: center; max-width: 420px; width: 90%; display: flex; flex-direction: column; align-items: center;">
                 <h2 style="margin:0; font-weight: 300; letter-spacing: 4px; font-size: 1.8rem; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.1);">
-                    LOGÍSTICA <span style="font-weight: 900; background: linear-gradient(to right, #0ea5e9, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DEAM1830</span>
+                    LOGÃSTICA <span style="font-weight: 900; background: linear-gradient(to right, #0ea5e9, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DEAM1830</span>
                 </h2>
                 <div class="premium-progress-bar">
                     <div class="premium-progress-fill"></div>
@@ -409,14 +409,14 @@ class App {
             </style>`;
         }
         
-        // 1. Sincronización proactiva con la nube
+        // 1. SincronizaciÃ³n proactiva con la nube
         await adminService.initializeAdminData().catch(e => console.warn("Sync error:", e));
         
         const user = getSession();
         this.render(user);
 
     } catch (err) {
-        console.error("[BOOT] Error Crítico:", err);
+        console.error("[BOOT] Error CrÃ­tico:", err);
     }
   }
 
@@ -448,5 +448,5 @@ class App {
   }
 }
 
-// Inicialización
+// InicializaciÃ³n
 new App('app');

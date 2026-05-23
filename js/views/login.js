@@ -1,14 +1,14 @@
-import { login as authLogin } from '../services_v245/auth.js?v=26.5.36';
+﻿import { login as authLogin } from '../services_v245/auth.js?v=26.5.36';
 
 export const renderLogin = (container, onLoginSuccess) => {
-  // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
+  // Establecer clase para el diseÃ±o degradado premium claro (inspirado en la referencia)
   container.className = 'login-view-wrapper';
   
   container.innerHTML = `
     <!-- Bloque de Login Principal -->
     <div id="loginCard" class="login-box-premium animate-fade-in">
       
-      <!-- SVG Vectorial de los 3 Avatares Superpuestos con Recorte 3D (Máxima Nitidez) -->
+      <!-- SVG Vectorial de los 3 Avatares Superpuestos con Recorte 3D (MÃ¡xima Nitidez) -->
       <div style="display: flex; justify-content: center; margin-bottom: 2.25rem;">
         <svg viewBox="0 0 120 100" class="login-avatar-svg" style="width: 120px; height: 100px; color: #0ea5e9; fill: currentColor;">
           <!-- Avatar Izquierda -->
@@ -27,21 +27,21 @@ export const renderLogin = (container, onLoginSuccess) => {
 
       <form id="loginForm" style="display: flex; flex-direction: column;">
         
-        <!-- Campo Usuario Tipo Píldora -->
+        <!-- Campo Usuario Tipo PÃ­ldora -->
         <div class="pill-input-group">
           <div class="pill-input-wrapper">
-            <span class="pill-input-icon">👤</span>
+            <span class="pill-input-icon">ðŸ‘¤</span>
             <span class="pill-input-separator"></span>
             <input type="text" id="username" placeholder="USUARIO" required autocomplete="off">
           </div>
         </div>
 
-        <!-- Campo Contraseña Tipo Píldora -->
+        <!-- Campo ContraseÃ±a Tipo PÃ­ldora -->
         <div class="pill-input-group">
           <div class="pill-input-wrapper">
-            <span class="pill-input-icon">🔒</span>
+            <span class="pill-input-icon">ðŸ”’</span>
             <span class="pill-input-separator"></span>
-            <input type="password" id="password" placeholder="CONTRASEÑA" required>
+            <input type="password" id="password" placeholder="CONTRASEÃ‘A" required>
           </div>
         </div>
         
@@ -51,12 +51,12 @@ export const renderLogin = (container, onLoginSuccess) => {
             <input type="checkbox" id="rememberMe" class="remember-me-checkbox" checked>
             Recordarme
           </label>
-          <a href="#" class="forgot-password-link" id="forgotPass">¿Olvidaste tu contraseña?</a>
+          <a href="#" class="forgot-password-link" id="forgotPass">Â¿Olvidaste tu contraseÃ±a?</a>
         </div>
         
         <div id="loginError" class="error-message"></div>
         
-        <!-- Botón Píldora de Envío -->
+        <!-- BotÃ³n PÃ­ldora de EnvÃ­o -->
         <button type="submit" class="btn-pill" id="loginBtn">LOGIN</button>
       
       </form>
@@ -68,11 +68,11 @@ export const renderLogin = (container, onLoginSuccess) => {
   const btn = document.getElementById('loginBtn');
   const forgotLink = document.getElementById('forgotPass');
 
-  // Funcionalidad de Olvidó Contraseña
+  // Funcionalidad de OlvidÃ³ ContraseÃ±a
   if (forgotLink) {
     forgotLink.addEventListener('click', (e) => {
       e.preventDefault();
-      alert("🔒 Por seguridad de la plataforma, solicita la restauración o cambio de tu contraseña directamente con el Administrador de Sistemas (Daniel Ames).");
+      alert("ðŸ”’ Por seguridad de la plataforma, solicita la restauraciÃ³n o cambio de tu contraseÃ±a directamente con el Administrador de Sistemas (Daniel Ames).");
     });
   }
 
@@ -88,11 +88,11 @@ export const renderLogin = (container, onLoginSuccess) => {
     const result = await authLogin(userVal, passVal);
 
     if (result.success) {
-      btn.innerHTML = '¡ACCESO CONCEDIDO! 🚀';
+      btn.innerHTML = 'Â¡ACCESO CONCEDIDO! ðŸš€';
       btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
       btn.style.boxShadow = '0 4px 15px rgba(34, 197, 94, 0.4)';
       
-      // Animación premium y desvanecimiento de salida conjunta
+      // AnimaciÃ³n premium y desvanecimiento de salida conjunta
       setTimeout(() => {
         container.classList.add('fade-out');
         document.getElementById('loginCard').classList.add('fade-out-up');

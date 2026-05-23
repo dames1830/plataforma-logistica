@@ -3602,7 +3602,10 @@ const renderRFSection = (container) => {
                   }
                 } else {
                   returnStatusHtml = `
-                    <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">⏳ EN USO</span>
+                    <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                      <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">⏳ EN USO</span>
+                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.62rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 2px 6px rgba(234,88,12,0.35); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
+                    </div>
                   `;
                 }
 
@@ -3636,11 +3639,10 @@ const renderRFSection = (container) => {
                       ` : ''}
                     </td>
                     <td style="padding:0.8rem; text-align:center; border-left:1px solid rgba(255,255,255,0.02);">
-                      ${isPending ? `
-                        <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.65rem; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 3px 8px rgba(234,88,12,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
-                      ` : `
-                        <span style="color:var(--text-muted); font-size:0.75rem; font-weight:700;">-</span>
-                      `}
+                      <div style="display:flex; gap:0.5rem; justify-content:center; align-items:center;">
+                        <button class="btn-edit-assignment" data-id="${a.id}" title="Editar registro" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.35); color:#a5b4fc; font-size:0.85rem; padding:5px 9px; border-radius:7px; cursor:pointer; outline:none; transition:all 0.2s; font-weight:700;" onmouseover="this.style.background='rgba(99,102,241,0.3)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(99,102,241,0.15)'; this.style.color='#a5b4fc';">✏️</button>
+                        <button class="btn-delete-assignment" data-id="${a.id}" data-serial="${a.rf_serial}" data-pending="${isPending}" title="Eliminar registro" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.85rem; padding:5px 9px; border-radius:7px; cursor:pointer; outline:none; transition:all 0.2s; font-weight:700;" onmouseover="this.style.background='rgba(239,68,68,0.28)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239,68,68,0.12)'; this.style.color='#fca5a5';">🗑️</button>
+                      </div>
                     </td>
                   </tr>`;
               }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
@@ -3817,7 +3819,7 @@ const renderRFSection = (container) => {
         };
       });
 
-      // BOTÓN DE RECIBIR EN TABLA
+      // BOTÓN DE RECIBIR EN TABLA (dentro de celda Devolución)
       container.querySelectorAll('.btn-recibir-rf').forEach(btn => {
         btn.onclick = (e) => {
           const serie = e.currentTarget.dataset.serie;
@@ -3825,7 +3827,214 @@ const renderRFSection = (container) => {
         };
       });
 
+      // EDITAR ASIGNACIÓN EN BITÁCORA
+      container.querySelectorAll('.btn-edit-assignment').forEach(btn => {
+        btn.onclick = (e) => {
+          const id = e.currentTarget.dataset.id;
+          abrirModalEditarAsignacion(container, id);
+        };
+      });
+
+      // BORRAR ASIGNACIÓN EN BITÁCORA
+      container.querySelectorAll('.btn-delete-assignment').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = e.currentTarget.dataset.id;
+          const serial = e.currentTarget.dataset.serial;
+          const isPendingDel = e.currentTarget.dataset.pending === 'true';
+          if (!confirm(`¿Eliminar este registro de asignación del equipo ${serial}?\nEsta acción no se puede deshacer.`)) return;
+          let listAsig = adminService.getRfAssignments().filter(a => a.id !== id);
+          await adminService.saveRfAssignments(listAsig);
+          // Si estaba activa (en uso), liberar el RF
+          if (isPendingDel) {
+            const listRfs = adminService.getRfs();
+            const rfIdx = listRfs.findIndex(r => r.serie === serial);
+            if (rfIdx !== -1) {
+              listRfs[rfIdx].asignadoDni = null;
+              listRfs[rfIdx].asignadoNombre = null;
+              listRfs[rfIdx].asignadoTurno = null;
+              await adminService.saveRfs(listRfs);
+            }
+          }
+          alert('✅ Registro eliminado correctamente.');
+          renderRFSection(container);
+        };
+      });
+
     }, 10);
+  };
+
+  const abrirModalEditarAsignacion = (container, asigId) => {
+    const allAssignments = adminService.getRfAssignments() || [];
+    const allWorkers = adminService.getWorkers() || [];
+    const a = allAssignments.find(x => x.id === asigId);
+    if (!a) return alert('No se encontró el registro.');
+
+    const toLocalDT = (isoStr) => {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    const modal = document.createElement('div');
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(12px); overflow-y:auto; padding:2rem 0;";
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:min(600px,96vw); padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(99,102,241,0.25); background:linear-gradient(135deg, rgba(30,41,59,0.97) 0%, rgba(15,23,42,0.99) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.6), 0 0 40px rgba(99,102,241,0.15); position:relative; max-height:90vh; overflow-y:auto;">
+        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit',sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
+          ✏️ EDITAR REGISTRO DE ASIGNACIÓN
+        </h3>
+        <div style="font-size:0.7rem; color:rgba(255,255,255,0.35); text-align:center; margin-bottom:1.5rem; font-family:monospace;">ID: ${a.id}</div>
+
+        <form id="form_edit_asig" style="display:flex; flex-direction:column; gap:1.2rem;">
+
+          <!-- TRABAJADOR -->
+          <div>
+            <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">👷 TRABAJADOR:</label>
+            <select id="ea_worker" style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.78rem;">
+              ${allWorkers.filter(w => w.active !== false).map(w =>
+                `<option value="${w.dni}|${w.apellidos}, ${w.nombre}" style="background:#0f172a;" ${a.worker_dni === w.dni ? 'selected' : ''}>${w.apellidos}, ${w.nombre} (${w.dni})</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <!-- TURNO -->
+          <div>
+            <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">🔄 TURNO:</label>
+            <select id="ea_turn" style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.78rem;">
+              <option value="DIA" style="background:#0f172a;" ${a.turn === 'DIA' ? 'selected' : ''}>DIA</option>
+              <option value="NOCHE" style="background:#0f172a;" ${a.turn === 'NOCHE' ? 'selected' : ''}>NOCHE</option>
+            </select>
+          </div>
+
+          <!-- SEPARADOR: ASIGNACIÓN (ENTREGA) -->
+          <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+            <p style="margin:0 0 0.8rem 0; font-size:0.72rem; color:#818cf8; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📦 ASIGNACIÓN (ENTREGA):</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
+              <div>
+                <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">FECHA / HORA:</label>
+                <input type="datetime-local" id="ea_assigned_at" value="${toLocalDT(a.assigned_at)}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; font-weight:600;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:0.6rem; padding-top:0.3rem;">
+                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
+                  <span>🖥️ Pantalla OK</span>
+                  <input type="checkbox" id="ea_pantalla_ok" ${a.pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
+                </label>
+                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
+                  <span>🏷️ Numeración OK</span>
+                  <input type="checkbox" id="ea_numeracion_ok" ${a.numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
+                </label>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES ENTREGA:</label>
+              <textarea id="ea_notes" rows="2" placeholder="Observaciones al momento de la entrega..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;">${a.notes || ''}</textarea>
+            </div>
+          </div>
+
+          <!-- SEPARADOR: DEVOLUCIÓN (RETORNO) -->
+          <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+            <p style="margin:0 0 0.8rem 0; font-size:0.72rem; color:#34d399; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📥 DEVOLUCIÓN (RETORNO):</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
+              <div>
+                <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">FECHA / HORA:</label>
+                <input type="datetime-local" id="ea_returned_at" value="${toLocalDT(a.returned_at)}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; font-weight:600;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:0.6rem; padding-top:0.3rem;">
+                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
+                  <span>🖥️ Pantalla OK</span>
+                  <input type="checkbox" id="ea_ret_pantalla_ok" ${a.retorno_pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#10b981;">
+                </label>
+                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
+                  <span>🏷️ Numeración OK</span>
+                  <input type="checkbox" id="ea_ret_numeracion_ok" ${a.retorno_numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#10b981;">
+                </label>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES RETORNO (Bitácora):</label>
+              <textarea id="ea_return_notes" rows="2" placeholder="Observaciones al momento del retorno..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;">${a.return_notes || ''}</textarea>
+            </div>
+          </div>
+
+          <!-- BOTONES -->
+          <div style="display:flex; gap:10px; margin-top:0.8rem;">
+            <button type="button" id="ea_cancel" style="flex:1; padding:0.8rem; border:1px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:0.85rem; font-weight:700; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">CANCELAR</button>
+            <button type="submit" style="flex:2; padding:0.8rem; border:none; border-radius:12px; background:linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color:#fff; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(99,102,241,0.35); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">💾 GUARDAR CAMBIOS</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.querySelector('#ea_cancel').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+    modal.querySelector('#form_edit_asig').onsubmit = async (e) => {
+      e.preventDefault();
+      const workerRaw = modal.querySelector('#ea_worker').value.split('|');
+      const newDni = workerRaw[0];
+      const newName = workerRaw.slice(1).join('|');
+      const newTurn = modal.querySelector('#ea_turn').value;
+      const newAssignedAt = modal.querySelector('#ea_assigned_at').value;
+      const newReturnedAt = modal.querySelector('#ea_returned_at').value;
+      const newPantallaOk = modal.querySelector('#ea_pantalla_ok').checked;
+      const newNumOk = modal.querySelector('#ea_numeracion_ok').checked;
+      const newNotes = modal.querySelector('#ea_notes').value.trim();
+      const newRetPantallaOk = modal.querySelector('#ea_ret_pantalla_ok').checked;
+      const newRetNumOk = modal.querySelector('#ea_ret_numeracion_ok').checked;
+      const newRetNotes = modal.querySelector('#ea_return_notes').value.trim();
+
+      const wasActive = !a.returned_at;
+      const nowActive = !newReturnedAt;
+
+      const updatedList = allAssignments.map(x => {
+        if (x.id !== asigId) return x;
+        return {
+          ...x,
+          worker_dni: newDni,
+          worker_name: newName,
+          turn: newTurn,
+          assigned_at: newAssignedAt ? new Date(newAssignedAt).toISOString() : x.assigned_at,
+          returned_at: newReturnedAt ? new Date(newReturnedAt).toISOString() : null,
+          pantalla_ok: newPantallaOk,
+          numeracion_ok: newNumOk,
+          notes: newNotes,
+          retorno_pantalla_ok: newRetPantallaOk,
+          retorno_numeracion_ok: newRetNumOk,
+          return_notes: newRetNotes || null
+        };
+      });
+      await adminService.saveRfAssignments(updatedList);
+
+      // Sincronizar estado del RF si cambió de activo a devuelto o viceversa
+      const listRfs = adminService.getRfs();
+      const rfIdx = listRfs.findIndex(r => r.serie === a.rf_serial);
+      if (rfIdx !== -1) {
+        if (wasActive && !nowActive) {
+          // Era activo, ahora fue devuelto → liberar RF
+          listRfs[rfIdx].asignadoDni = null;
+          listRfs[rfIdx].asignadoNombre = null;
+          listRfs[rfIdx].asignadoTurno = null;
+          await adminService.saveRfs(listRfs);
+        } else if (!wasActive && nowActive) {
+          // Era devuelto, ahora vuelve a estar activo → re-asignar RF
+          listRfs[rfIdx].asignadoDni = newDni;
+          listRfs[rfIdx].asignadoNombre = newName;
+          listRfs[rfIdx].asignadoTurno = newTurn;
+          await adminService.saveRfs(listRfs);
+        } else if (wasActive && nowActive) {
+          // Sigue activo, actualizar nombre/turno si cambió
+          listRfs[rfIdx].asignadoDni = newDni;
+          listRfs[rfIdx].asignadoNombre = newName;
+          listRfs[rfIdx].asignadoTurno = newTurn;
+          await adminService.saveRfs(listRfs);
+        }
+      }
+
+      alert('✅ Registro de asignación actualizado correctamente.');
+      modal.remove();
+      renderRFSection(container);
+    };
   };
 
   const abrirModalRF = (container, rf = null) => {
