@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.26';
+const VERSION = '26.5.27';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8181,8 +8181,17 @@ export const renderDashboard = async (container, user, onLogout) => {
             <nav style="display:flex; gap:1.5rem; align-items:center;">
                 <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
                 <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+            </nav>
+            <div style="display:flex; align-items:center; gap:15px; margin-left:auto; flex-wrap:wrap;">
+                <!-- BOTONES DE ACCIÓN PRINCIPALES -->
+                <div style="display:flex; gap:10px; align-items:center;">
+                    ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
+                </div>
+
                 ${isDetail ? `
-                <div style="position:relative; display:flex; align-items:center; margin-left:1rem;">
+                <!-- BUSCADOR DETALLE -->
+                <div style="position:relative; display:flex; align-items:center;">
                     <span style="position:absolute; left:12px; color:rgba(255,255,255,0.4); pointer-events:none; font-size:0.75rem;">🔍</span>
                     <input type="text" id="almacenaje_detail_search" placeholder="Filtrar por código, ubi, sku, creador..." 
                            value="${window.__almacenajeDetailSearchQuery || ''}"
@@ -8192,13 +8201,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                            oninput="window.setAlmacenajeDetailSearch(this.value)">
                 </div>
                 ` : ''}
-            </nav>
-            <div style="display:flex; align-items:center; gap:15px; margin-left:auto; flex-wrap:wrap;">
-                <!-- BOTONES DE ACCIÓN PRINCIPALES -->
-                <div style="display:flex; gap:10px; align-items:center;">
-                    ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
-                </div>
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
