@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.25';
+const VERSION = '26.5.26';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8121,6 +8121,36 @@ export const renderDashboard = async (container, user, onLogout) => {
                 });
             });
         });
+
+        // --- FILTRADO BÚSQUEDA DETALLE ---
+        if (window.__almacenajeDetailSearchQuery) {
+            const query = String(window.__almacenajeDetailSearchQuery).trim().toLowerCase();
+            const filteredDetailedItems = detailedItems.filter(di => {
+                const artSku = String(di.art.sku7 || '').toLowerCase();
+                const ubi = String(di.item.ubi || '').toLowerCase();
+                const skuFull = String(di.item.skuFull || di.item.sku || '').toLowerCase();
+                const talla = String(di.item.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[di.item.skuFull]) || (di.item.skuFull && di.item.skuFull.split('-').pop()) || '').toLowerCase();
+                const taskId = String(di.task.id || '').toLowerCase();
+                const taskCleanId = taskId.includes('_') ? taskId.split('_')[1] : taskId;
+                const creator = String(di.task.creador || '').toLowerCase();
+                const status = String(di.task.status || '').toLowerCase();
+                const u1 = String(di.task.u1 || '').toLowerCase();
+                const u2 = String(di.task.u2 || '').toLowerCase();
+                
+                return artSku.includes(query) ||
+                       ubi.includes(query) ||
+                       skuFull.includes(query) ||
+                       talla.includes(query) ||
+                       taskId.includes(query) ||
+                       taskCleanId.includes(query) ||
+                       creator.includes(query) ||
+                       status.includes(query) ||
+                       u1.includes(query) ||
+                       u2.includes(query);
+            });
+            detailedItems.length = 0;
+            detailedItems.push(...filteredDetailedItems);
+        }
     }
 
     // Inicializar o ajustar variables de paginación
@@ -8151,12 +8181,23 @@ export const renderDashboard = async (container, user, onLogout) => {
             <nav style="display:flex; gap:1.5rem; align-items:center;">
                 <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
                 <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
+                ${isDetail ? `
+                <div style="position:relative; display:flex; align-items:center; margin-left:1rem;">
+                    <span style="position:absolute; left:12px; color:rgba(255,255,255,0.4); pointer-events:none; font-size:0.75rem;">🔍</span>
+                    <input type="text" id="almacenaje_detail_search" placeholder="Filtrar por código, ubi, sku, creador..." 
+                           value="${window.__almacenajeDetailSearchQuery || ''}"
+                           style="background:rgba(255, 255, 255, 0.03); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:5px 12px 5px 32px; color:#fff; font-size:0.75rem; width:220px; outline:none; transition:all 0.3s ease; font-family:'Inter', sans-serif;"
+                           onfocus="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.06)';"
+                           onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.03)';"
+                           oninput="window.setAlmacenajeDetailSearch(this.value)">
+                </div>
+                ` : ''}
             </nav>
             <div style="display:flex; align-items:center; gap:15px; margin-left:auto; flex-wrap:wrap;">
                 <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    <button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
                 </div>
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
@@ -9154,7 +9195,25 @@ export const renderDashboard = async (container, user, onLogout) => {
 </div>
     `;
 
-    window.setTaskMode = (mode) => { almacenajeTaskMode = mode; localStorage.setItem('almacenajeTaskMode', mode); renderAlmacenajeTareas(container); };
+    window.setTaskMode = (mode) => { 
+        almacenajeTaskMode = mode; 
+        localStorage.setItem('almacenajeTaskMode', mode); 
+        window.__almacenajeDetailSearchQuery = ''; // Reset filter when switching tabs
+        renderAlmacenajeTareas(container); 
+    };
+    window.setAlmacenajeDetailSearch = (query) => {
+        window.__almacenajeDetailSearchQuery = query;
+        window.__detailCurrentPage = 1; // Reset page
+        renderAlmacenajeTareas(container);
+        
+        // Restore focus to input element
+        const searchInput = document.getElementById('almacenaje_detail_search');
+        if (searchInput) {
+            searchInput.focus();
+            const len = searchInput.value.length;
+            searchInput.setSelectionRange(len, len);
+        }
+    };
     window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
     window.resetTask = async (id) => {
