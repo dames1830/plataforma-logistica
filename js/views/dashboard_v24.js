@@ -1502,6 +1502,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   let activeAdminSub = 'trabajadores';
+  let activeRFTab = 'inventario';
+  let rfSearchQuery = '';
+  let rfStatusFilter = 'todos';
   const renderAdminTab = () => {
     // [SUPER PULL v25.0.4] Forzamos descarga REAL de historial reciente al entrar
     syncEngine.pullGlobal(['performance_log', 'almacenaje_tasks'], true);
@@ -2945,21 +2948,621 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
 
+  let activeRFTab = 'inventario';
+  let rfSearchQuery = '';
+  let rfStatusFilter = 'todos';
+
   const renderRFSection = (container) => {
+    const rfs = adminService.getRfs() || [];
+    const assignments = adminService.getRfAssignments() || [];
+    const workers = adminService.getWorkers() || [];
+
+    // Calcular métricas
+    const totalRFs = rfs.length;
+    const operativeRFs = rfs.filter(r => r.estado === 'Operativo').length;
+    const maintenanceRFs = rfs.filter(r => r.estado === 'En Mantenimiento').length;
+    const assignedRFs = rfs.filter(r => r.asignadoDni).length;
+    const availableRFs = rfs.filter(r => r.estado === 'Operativo' && !r.asignadoDni).length;
+    const avgBattery = totalRFs ? Math.round(rfs.reduce((sum, r) => sum + parseInt(r.bateria || 0), 0) / totalRFs) : 0;
+
+    // Filtrar equipos
+    let filteredRfs = [...rfs];
+    if (rfSearchQuery) {
+      const q = rfSearchQuery.toLowerCase().trim();
+      filteredRfs = filteredRfs.filter(r => 
+        (r.serie || '').toLowerCase().includes(q) || 
+        (r.marca || '').toLowerCase().includes(q) || 
+        (r.modelo || '').toLowerCase().includes(q) ||
+        (r.asignadoNombre || '').toLowerCase().includes(q)
+      );
+    }
+    if (rfStatusFilter && rfStatusFilter !== 'todos') {
+      filteredRfs = filteredRfs.filter(r => r.estado === rfStatusFilter);
+    }
+
+    // Filtrar asignaciones
+    let filteredAssignments = [...assignments].sort((a,b) => new Date(b.assigned_at) - new Date(a.assigned_at));
+    if (rfSearchQuery) {
+      const q = rfSearchQuery.toLowerCase().trim();
+      filteredAssignments = filteredAssignments.filter(a => 
+        (a.rf_serial || '').toLowerCase().includes(q) || 
+        (a.worker_name || '').toLowerCase().includes(q) || 
+        (a.worker_dni || '').toLowerCase().includes(q) ||
+        (a.notes || '').toLowerCase().includes(q)
+      );
+    }
+
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h3 style="color:var(--primary); margin:0;">Gestión de Equipos RF</h3>
-            <button class="btn" style="width:auto; background:var(--primary); padding:0.5rem 1.2rem; font-size:0.8rem;">➕ REGISTRAR EQUIPO</button>
+      <!-- METRICS CARDS -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--primary); background:rgba(79,70,229,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(79,70,229,0.4));">📡</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Equipos</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalRFs}</p>
+          </div>
         </div>
-        <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-            <div style="margin-bottom:1.5rem;">
-                 <p style="margin:0; font-size:0.75rem; opacity:0.8;">Versión v12.4.36 | © 2026 Pulse Logística</p>
-                 <span style="font-size:3rem; opacity:0.3;">🔋</span>
-            </div>
-            <h4 style="color:#fff;">Módulo de Equipos RF (Mantenimiento)</h4>
-            <p style="font-size:0.85rem; max-width:400px; margin:0.5rem auto;">Próximamente podrás gestionar números de serie, asignaciones diarias y estado de baterías de los terminales RF.</p>
+        
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✅</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Disponibles</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${availableRFs}</p>
+          </div>
         </div>
+
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #06b6d4; background:rgba(6,182,212,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">👷</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Uso</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#06b6d4;">${assignedRFs}</p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">🛠️</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Taller</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#f59e0b;">${maintenanceRFs}</p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #10b981; background:rgba(16,185,129,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">🔋</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Promedio Batería</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#10b981;">${avgBattery}%</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- HEADER ACTION BAR -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:1rem;">
+        <!-- TAB SELECTOR -->
+        <div style="display:flex; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:3px; border-radius:10px;">
+          <button id="rf_tab_inventario" class="btn" style="background:${activeRFTab==='inventario'?'var(--primary)':'none'}; color:${activeRFTab==='inventario'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='inventario'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📁 INVENTARIO</button>
+          <button id="rf_tab_asignaciones" class="btn" style="background:${activeRFTab==='asignaciones'?'var(--primary)':'none'}; color:${activeRFTab==='asignaciones'?'#fff':'var(--text-muted)'}; border:none; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:800; border-radius:8px; cursor:pointer; width:auto; box-shadow:${activeRFTab==='asignaciones'?'0 4px 10px rgba(79,70,229,0.3)':'none'};">📝 BITÁCORA ASIGNACIONES</button>
+        </div>
+
+        <!-- SEARCH AND ADD -->
+        <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="rf_search_input" placeholder="🔍 Buscar serie, marca, modelo..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
+          
+          ${activeRFTab === 'inventario' ? `
+            <select id="rf_status_filter" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; font-size:0.8rem; outline:none; cursor:pointer;">
+              <option value="todos" ${rfStatusFilter==='todos'?'selected':''}>- TODOS LOS ESTADOS -</option>
+              <option value="Operativo" ${rfStatusFilter==='Operativo'?'selected':''}>OPERATIVO</option>
+              <option value="En Mantenimiento" ${rfStatusFilter==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
+              <option value="De Baja" ${rfStatusFilter==='De Baja'?'selected':''}>DE BAJA</option>
+            </select>
+            <button id="btn_new_rf" class="btn" style="width:auto; background:var(--primary); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px;">➕ REGISTRAR EQUIPO</button>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT GRID -->
+      <div class="glass-panel" style="padding:0; overflow-x:auto;">
+        ${activeRFTab === 'inventario' ? `
+          <!-- TABLE INVENTARIO -->
+          <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+            <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
+              <tr>
+                <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
+                <th style="padding:0.8rem; text-align:left;">Serie</th>
+                <th style="padding:0.8rem; text-align:left;">Marca / Modelo</th>
+                <th style="padding:0.8rem; text-align:left;">Batería</th>
+                <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
+                <th style="padding:0.8rem; text-align:left;">Asignación Shift</th>
+                <th style="padding:0.8rem; text-align:center; width:180px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredRfs.length ? filteredRfs.map((r, idx) => {
+                const bat = parseInt(r.bateria || 0);
+                const batColor = bat >= 70 ? '#10b981' : (bat >= 30 ? '#f59e0b' : '#ef4444');
+                const isPulsing = bat < 30 ? 'animation: pulse-bat 1.2s infinite alternate;' : '';
+                
+                let stateColor = '#10b981';
+                let stateGlow = 'rgba(16, 185, 129, 0.2)';
+                if (r.estado === 'En Mantenimiento') {
+                  stateColor = '#f59e0b';
+                  stateGlow = 'rgba(245, 158, 11, 0.2)';
+                } else if (r.estado === 'De Baja') {
+                  stateColor = '#ef4444';
+                  stateGlow = 'rgba(239, 68, 68, 0.2)';
+                }
+
+                return `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                    <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
+                    <td style="padding:0.8rem; font-weight:900; color:#fff; font-size:0.85rem; letter-spacing:0.5px;">
+                      <span style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:3px 8px; border-radius:6px; font-family:monospace;">${r.serie}</span>
+                    </td>
+                    <td style="padding:0.8rem;">
+                      <span style="font-weight:600; color:#cbd5e1;">${r.marca || ''}</span> 
+                      <span style="color:var(--text-muted); font-size:0.7rem;">${r.modelo || ''}</span>
+                    </td>
+                    <td style="padding:0.8rem;">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:38px; height:18px; border:1.5px solid rgba(255,255,255,0.3); border-radius:4px; padding:2px; position:relative; display:flex; ${isPulsing}">
+                          <div style="width:${bat}%; height:100%; background:${batColor}; border-radius:2px; transition: width 0.3s ease;"></div>
+                          <div style="width:3px; height:6px; background:rgba(255,255,255,0.3); position:absolute; right:-4.5px; top:4.5px; border-radius: 0 1px 1px 0;"></div>
+                        </div>
+                        <span style="font-weight:800; color:#fff; font-size:0.75rem;">${bat}%</span>
+                      </div>
+                    </td>
+                    <td style="padding:0.8rem; text-align:center;">
+                      <span style="background:${stateGlow}; color:${stateColor}; border:1px solid ${stateColor}44; padding:3px 10px; border-radius:20px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
+                        ${r.estado || 'Operativo'}
+                      </span>
+                    </td>
+                    <td style="padding:0.8rem;">
+                      ${r.asignadoDni ? `
+                        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(14,165,233,0.1); border:1px solid rgba(14,165,233,0.3); padding:4px 10px; border-radius:10px;">
+                          <span style="font-size:0.85rem;">👷</span>
+                          <span style="font-weight:700; color:#38bdf8;">${r.asignadoNombre}</span>
+                          <span style="background:rgba(255,255,255,0.1); color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:4px; font-weight:800;">${r.asignadoTurno}</span>
+                        </div>
+                      ` : `
+                        <span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
+                          <span style="width:6px; height:6px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981; display:inline-block;"></span>
+                          Disponible
+                        </span>
+                      `}
+                    </td>
+                    <td style="padding:0.8rem; text-align:center;">
+                      <div style="display:flex; gap:0.5rem; justify-content:center; align-items:center;">
+                        ${r.asignadoDni ? `
+                          <button class="btn-recibir-rf" data-serie="${r.serie}" style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(234,88,12,0.3); outline:none;">📥 RECIBIR</button>
+                        ` : (r.estado === 'Operativo' ? `
+                          <button class="btn-asignar-rf" data-serie="${r.serie}" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(29,78,216,0.3); outline:none;">👷 ASIGNAR</button>
+                        ` : `
+                          <button style="background:rgba(255,255,255,0.05); border:none; color:var(--text-muted); font-weight:700; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:not-allowed; outline:none;" disabled>BLOQUEADO</button>
+                        `)}
+                        <button class="btn-edit-rf" data-rf='${JSON.stringify(r).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
+                        <button class="btn-delete-rf" data-serie="${r.serie}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
+                      </div>
+                    </td>
+                  </tr>`;
+              }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se encontraron equipos registrados.</td></tr>'}
+            </tbody>
+          </table>
+          <style>
+            @keyframes pulse-bat {
+              0% { box-shadow: 0 0 3px rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.3); }
+              100% { box-shadow: 0 0 10px rgba(239,68,68,0.7); border-color: rgba(239,68,68,0.8); }
+            }
+          </style>
+        ` : `
+          <!-- TABLE BITÁCORA ASIGNACIONES -->
+          <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+            <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
+              <tr>
+                <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
+                <th style="padding:0.8rem; text-align:left;">Equipo RF</th>
+                <th style="padding:0.8rem; text-align:left;">Trabajador</th>
+                <th style="padding:0.8rem; text-align:center;">Turno</th>
+                <th style="padding:0.8rem; text-align:left;">Asignación</th>
+                <th style="padding:0.8rem; text-align:left;">Devolución</th>
+                <th style="padding:0.8rem; text-align:left;">Observaciones / Entrega</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredAssignments.length ? filteredAssignments.map((a, idx) => {
+                const assignedTime = new Date(a.assigned_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+                const returnedTime = a.returned_at ? new Date(a.returned_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : null;
+                
+                return `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity:${a.returned_at?'0.65':'1'}">
+                    <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
+                    <td style="padding:0.8rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-family:monospace;">${a.rf_serial}</span></td>
+                    <td style="padding:0.8rem;">
+                      <div style="font-weight:700; color:#fff;">${a.worker_name}</div>
+                      <div style="font-size:0.65rem; color:var(--text-muted);">DNI: ${a.worker_dni}</div>
+                    </td>
+                    <td style="padding:0.8rem; text-align:center;">
+                      <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:800; color:#e2e8f0;">${a.turn}</span>
+                    </td>
+                    <td style="padding:0.8rem; color:#cbd5e1; font-weight:500;">📅 ${assignedTime}</td>
+                    <td style="padding:0.8rem;">
+                      ${returnedTime ? `
+                        <span style="color:#10b981; font-weight:600;">✅ ${returnedTime}</span>
+                      ` : `
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <span class="pulse-pendiente-dot" style="background:#ea580c; color:#fff; font-weight:800; font-size:0.6rem; padding:2px 8px; border-radius:20px; box-shadow:0 0 8px #ea580c; letter-spacing:0.5px; animation:pulse-orange 1.2s infinite alternate;">PENDIENTE</span>
+                          <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; font-size:0.6rem; padding:3px 8px; border-radius:5px; cursor:pointer; font-weight:700; outline:none;" onmouseover="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#cbd5e1';">📥 RECIBIR</button>
+                        </div>
+                      `}
+                    </td>
+                    <td style="padding:0.8rem; color:var(--text-muted); font-size:0.7rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${a.notes || ''}">
+                      ${a.notes ? `<span>🗣️ ${a.notes}</span>` : 'Sin comentarios'}
+                      ${a.return_notes ? `<div style="color:#10b981; font-size:0.65rem; margin-top:2px;">📥 ${a.return_notes}</div>` : ''}
+                    </td>
+                  </tr>`;
+              }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
+            </tbody>
+          </table>
+          <style>
+            @keyframes pulse-orange {
+              0% { box-shadow: 0 0 3px rgba(234,88,12,0.3); opacity: 0.8; }
+              100% { box-shadow: 0 0 10px rgba(234,88,12,0.8); opacity: 1; }
+            }
+          </style>
+        `}
+      </div>
     `;
+
+    // AÑADIR LISTENERS DE EVENTOS
+    setTimeout(() => {
+      // TAB CLICKS
+      const tabInv = document.getElementById('rf_tab_inventario');
+      const tabAsig = document.getElementById('rf_tab_asignaciones');
+      if (tabInv) tabInv.onclick = () => { activeRFTab = 'inventario'; renderRFSection(container); };
+      if (tabAsig) tabAsig.onclick = () => { activeRFTab = 'asignaciones'; renderRFSection(container); };
+
+      // SEARCH & FILTER INPUTS
+      const searchInput = document.getElementById('rf_search_input');
+      if (searchInput) {
+        searchInput.oninput = (e) => {
+          rfSearchQuery = e.target.value;
+          renderRFSection(container);
+          document.getElementById('rf_search_input').focus();
+          document.getElementById('rf_search_input').selectionStart = document.getElementById('rf_search_input').selectionEnd = rfSearchQuery.length;
+        };
+      }
+
+      const statusFilter = document.getElementById('rf_status_filter');
+      if (statusFilter) {
+        statusFilter.onchange = (e) => {
+          rfStatusFilter = e.target.value;
+          renderRFSection(container);
+        };
+      }
+
+      // NUEVO REGISTRO EQUIPO RF
+      const btnNewRf = document.getElementById('btn_new_rf');
+      if (btnNewRf) btnNewRf.onclick = () => abrirModalRF(container);
+
+      // ACCIONES INDIVIDUALES
+      container.querySelectorAll('.btn-edit-rf').forEach(btn => {
+        btn.onclick = (e) => {
+          const rf = JSON.parse(e.currentTarget.dataset.rf);
+          abrirModalRF(container, rf);
+        };
+      });
+
+      container.querySelectorAll('.btn-delete-rf').forEach(btn => {
+        btn.onclick = async (e) => {
+          const serie = e.currentTarget.dataset.serie;
+          if (await showPremiumConfirm("ELIMINAR EQUIPO RF", `¿Estás seguro de eliminar el terminal RF ${serie} de forma permanente?`, "danger")) {
+            const list = adminService.getRfs().filter(r => r.serie !== serie);
+            await adminService.saveRfs(list);
+            alert("✅ Equipo eliminado con éxito.");
+            renderRFSection(container);
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-asignar-rf').forEach(btn => {
+        btn.onclick = (e) => {
+          const serie = e.currentTarget.dataset.serie;
+          abrirModalAsignar(container, serie);
+        };
+      });
+
+      container.querySelectorAll('.btn-recibir-rf').forEach(btn => {
+        btn.onclick = (e) => {
+          const serie = e.currentTarget.dataset.serie;
+          abrirModalRecibir(container, serie);
+        };
+      });
+    }, 10);
+  };
+
+  const abrirModalRF = (container, rf = null) => {
+    const isEdit = !!rf;
+    const rfs = adminService.getRfs() || [];
+    const assignments = adminService.getRfAssignments() || [];
+
+    const modal = document.createElement('div');
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.2);">
+        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
+          ${isEdit ? '✏️ EDITAR EQUIPO RF' : '➕ REGISTRAR EQUIPO RF'}
+        </h3>
+        
+        <form id="form_rf_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">SERIE / IDENTIFICADOR:</label>
+            <input type="text" id="rf_m_serie" required value="${rf ? rf.serie : ''}" ${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">MARCA:</label>
+              <input type="text" id="rf_m_marca" required placeholder="Ej: Zebra" value="${rf ? rf.marca : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">MODELO:</label>
+              <input type="text" id="rf_m_modelo" required placeholder="Ej: MC3300" value="${rf ? rf.modelo : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÍA (%):</label>
+              <input type="number" id="rf_m_bateria" min="0" max="100" required value="${rf ? rf.bateria : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
+              <select id="rf_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
+                <option value="Operativo" ${rf && rf.estado==='Operativo'?'selected':''}>OPERATIVO</option>
+                <option value="En Mantenimiento" ${rf && rf.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
+                <option value="De Baja" ${rf && rf.estado==='De Baja'?'selected':''}>DE BAJA</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">COMENTARIOS / NOTAS:</label>
+            <textarea id="rf_m_comentarios" rows="3" placeholder="Detalles de estado del terminal..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">${rf ? (rf.comentarios || '') : ''}</textarea>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:1rem;">
+            <button type="button" id="rf_m_cancel" style="flex:1; padding:0.8rem; border:1px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:0.85rem; font-weight:700; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">CANCELAR</button>
+            <button type="submit" style="flex:1; padding:0.8rem; border:none; border-radius:12px; background:linear-gradient(135deg, var(--primary) 0%, #000 150%); color:#fff; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(79,70,229,0.3); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">GUARDAR</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('#rf_m_cancel').onclick = () => modal.remove();
+    modal.querySelector('#form_rf_modal').onsubmit = async (e) => {
+      e.preventDefault();
+      const serieVal = modal.querySelector('#rf_m_serie').value.trim().toUpperCase();
+      const marcaVal = modal.querySelector('#rf_m_marca').value.trim();
+      const modeloVal = modal.querySelector('#rf_m_modelo').value.trim();
+      const bateriaVal = modal.querySelector('#rf_m_bateria').value;
+      const estadoVal = modal.querySelector('#rf_m_estado').value;
+      const comentariosVal = modal.querySelector('#rf_m_comentarios').value.trim();
+
+      if (!isEdit) {
+        // Validar serie duplicada
+        if (rfs.find(r => r.serie === serieVal)) {
+          return alert(`❌ Error: El equipo con Serie ${serieVal} ya se encuentra registrado.`);
+        }
+      }
+
+      const list = [...rfs];
+      if (isEdit) {
+        const idx = list.findIndex(r => r.serie === serieVal);
+        if (idx !== -1) {
+          list[idx] = { ...list[idx], marca: marcaVal, modelo: modeloVal, bateria: bateriaVal, estado: estadoVal, comentarios: comentariosVal };
+          // Si pasa a Mantenimiento o Baja, limpiar asignación actual
+          if (estadoVal !== 'Operativo' && list[idx].asignadoDni) {
+            // Completar la asignación en el log
+            const activeAssignment = assignments.find(a => a.rf_serial === serieVal && !a.returned_at);
+            if (activeAssignment) {
+              activeAssignment.returned_at = new Date().toISOString();
+              activeAssignment.return_notes = `Retorno forzado: El equipo pasó a estado ${estadoVal}.`;
+              await adminService.saveRfAssignments(assignments);
+            }
+            list[idx].asignadoDni = null;
+            list[idx].asignadoNombre = null;
+            list[idx].asignadoTurno = null;
+          }
+        }
+      } else {
+        list.push({ serie: serieVal, marca: marcaVal, modelo: modeloVal, bateria: bateriaVal, estado: estadoVal, comentarios: comentariosVal, asignadoDni: null });
+      }
+
+      await adminService.saveRfs(list);
+      alert(isEdit ? "✅ Datos del equipo actualizados." : "✅ Equipo RF registrado con éxito.");
+      modal.remove();
+      renderRFSection(container);
+    };
+  };
+
+  const abrirModalAsignar = (container, serie) => {
+    const workers = adminService.getWorkers() || [];
+    const rfs = adminService.getRfs() || [];
+    const assignments = adminService.getRfAssignments() || [];
+
+    const activeWorkers = workers.filter(w => w.active !== false);
+
+    const workerOptions = activeWorkers.map(w => `
+      <option value="${w.dni}" style="background:#0f172a;">${w.apellidos}, ${w.nombre} (DNI: ${w.dni})</option>
+    `).join('');
+
+    const modal = document.createElement('div');
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.2);">
+        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
+          👷 ASIGNAR EQUIPO RF
+        </h3>
+        <p style="margin:-1rem 0 1.5rem 0; text-align:center; color:var(--primary); font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
+        
+        <form id="form_rf_assign" style="display:flex; flex-direction:column; gap:1.2rem;">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">SELECCIONAR TRABAJADOR:</label>
+            <select id="rf_a_worker" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.65rem; border-radius:8px; font-weight:700; cursor:pointer;">
+              <option value="" style="background:#0f172a;">-- Seleccionar operario activo --</option>
+              ${workerOptions}
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">TURNO DE TRABAJO:</label>
+            <select id="rf_a_turn" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.65rem; border-radius:8px; font-weight:700; cursor:pointer;">
+              <option value="DIA" style="background:#0f172a;">DIA</option>
+              <option value="NOCHE" style="background:#0f172a;">NOCHE</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / NOTAS DE ENTREGA:</label>
+            <textarea id="rf_a_notes" rows="3" placeholder="Ej: Entregado con correa de sujeción..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:1rem;">
+            <button type="button" id="rf_a_cancel" style="flex:1; padding:0.8rem; border:1px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:0.85rem; font-weight:700; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">CANCELAR</button>
+            <button type="submit" style="flex:1; padding:0.8rem; border:none; border-radius:12px; background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color:#fff; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(29,78,216,0.3); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">ASIGNAR EQUIPO</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('#rf_a_cancel').onclick = () => modal.remove();
+    modal.querySelector('#form_rf_assign').onsubmit = async (e) => {
+      e.preventDefault();
+      const workerDni = modal.querySelector('#rf_a_worker').value;
+      const turnVal = modal.querySelector('#rf_a_turn').value;
+      const notesVal = modal.querySelector('#rf_a_notes').value.trim();
+
+      const worker = activeWorkers.find(w => w.dni === workerDni);
+      if (!worker) return alert("Trabajador inválido.");
+
+      // Validar si el trabajador ya tiene asignado un RF activo
+      const workerActiveRf = rfs.find(r => r.asignadoDni === workerDni);
+      if (workerActiveRf) {
+        if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
+          return;
+        }
+      }
+
+      // Actualizar el equipo RF
+      const listRfs = [...rfs];
+      const rfIdx = listRfs.findIndex(r => r.serie === serie);
+      if (rfIdx !== -1) {
+        listRfs[rfIdx].asignadoDni = workerDni;
+        listRfs[rfIdx].asignadoNombre = `${worker.apellidos}, ${worker.nombre}`;
+        listRfs[rfIdx].asignadoTurno = turnVal;
+      }
+
+      // Crear asignación
+      const listAssignments = [...assignments];
+      listAssignments.push({
+        id: 'ASIG_' + Date.now(),
+        rf_serial: serie,
+        worker_dni: workerDni,
+        worker_name: `${worker.apellidos}, ${worker.nombre}`,
+        turn: turnVal,
+        assigned_at: new Date().toISOString(),
+        returned_at: null,
+        notes: notesVal,
+        return_notes: null
+      });
+
+      await adminService.saveRfs(listRfs);
+      await adminService.saveRfAssignments(listAssignments);
+
+      alert(`✅ Equipo RF ${serie} asignado a ${worker.nombre} correctamente.`);
+      modal.remove();
+      renderRFSection(container);
+    };
+  };
+
+  const abrirModalRecibir = (container, serie) => {
+    const rfs = adminService.getRfs() || [];
+    const assignments = adminService.getRfAssignments() || [];
+
+    const rf = rfs.find(r => r.serie === serie);
+    if (!rf) return alert("Equipo no encontrado.");
+
+    const activeAssignment = assignments.find(a => a.rf_serial === serie && !a.returned_at);
+
+    const modal = document.createElement('div');
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(244,117,34,0.2);">
+        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
+          📥 RECIBIR EQUIPO RF (DEVOLUCIÓN)
+        </h3>
+        <p style="margin:-1rem 0 0.5rem 0; text-align:center; color:#f97316; font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
+        <p style="margin:0 0 1.5rem 0; text-align:center; color:var(--text-muted); font-size:0.75rem; font-weight:500;">
+          Asignado a: <b style="color:#fff;">${rf.asignadoNombre || 'Operario'}</b>
+        </p>
+        
+        <form id="form_rf_receive" style="display:flex; flex-direction:column; gap:1.2rem;">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">NIVEL DE BATERÍA DE RETORNO (%):</label>
+            <input type="number" id="rf_r_bateria" min="0" max="100" required value="${rf.bateria}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / NOTAS DE RETORNO:</label>
+            <textarea id="rf_r_notes" rows="3" placeholder="Ej: Devuelto operativo, batería baja..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:1rem;">
+            <button type="button" id="rf_r_cancel" style="flex:1; padding:0.8rem; border:1px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:0.85rem; font-weight:700; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">CANCELAR</button>
+            <button type="submit" style="flex:1; padding:0.8rem; border:none; border-radius:12px; background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); color:#fff; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(234,88,12,0.3); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">PROCESAR RETORNO</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('#rf_r_cancel').onclick = () => modal.remove();
+    modal.querySelector('#form_rf_receive').onsubmit = async (e) => {
+      e.preventDefault();
+      const batVal = modal.querySelector('#rf_r_bateria').value;
+      const notesVal = modal.querySelector('#rf_r_notes').value.trim();
+
+      // Actualizar el equipo RF
+      const listRfs = [...rfs];
+      const rfIdx = listRfs.findIndex(r => r.serie === serie);
+      if (rfIdx !== -1) {
+        listRfs[rfIdx].asignadoDni = null;
+        listRfs[rfIdx].asignadoNombre = null;
+        listRfs[rfIdx].asignadoTurno = null;
+        listRfs[rfIdx].bateria = batVal;
+      }
+
+      // Actualizar asignación
+      const listAssignments = [...assignments];
+      if (activeAssignment) {
+        const asigIdx = listAssignments.findIndex(a => a.id === activeAssignment.id);
+        if (asigIdx !== -1) {
+          listAssignments[asigIdx].returned_at = new Date().toISOString();
+          listAssignments[asigIdx].return_notes = `Retornado con ${batVal}% bat. ${notesVal ? '- ' + notesVal : ''}`;
+        }
+      }
+
+      await adminService.saveRfs(listRfs);
+      await adminService.saveRfAssignments(listAssignments);
+
+      alert(`✅ Equipo RF ${serie} recibido correctamente y marcado como Disponible.`);
+      modal.remove();
+      renderRFSection(container);
+    };
   };
 
   const renderConfigTab = async () => {

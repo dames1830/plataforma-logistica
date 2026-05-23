@@ -272,3 +272,17 @@ export const resetProductionData = async () => {
     console.log("🌪️ [PULSE] Purga completada. La nube está vacía.");
     return true;
 };
+
+// --- GESTIÓN DE EQUIPOS RF & ASIGNACIONES ---
+export const getRfs = () => adminStore.rfs || [];
+export const saveRfs = async (data) => {
+    adminStore.rfs = data;
+    return await save('rfs', data, 'MASTER');
+};
+
+export const getRfAssignments = () => adminStore.rf_assignments || [];
+export const saveRfAssignments = async (data) => {
+    adminStore.rf_assignments = data;
+    return await save('rf_assignments', data, 'MASTER');
+};
+
