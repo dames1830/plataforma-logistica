@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.36';
+﻿import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.36';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.36';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.36';
@@ -3514,7 +3514,6 @@ const renderRFSection = (container) => {
                 <tbody>
                   ${activeAssignments.length ? activeAssignments.map(a => {
                     const activeTime = new Date(a.assigned_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
-                    
                     const screenStyle = a.pantalla_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
                     const numStyle = a.numeracion_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
 
@@ -3529,15 +3528,15 @@ const renderRFSection = (container) => {
                           <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-weight:800;">${a.turn}</span>
                         </td>
                         <td style="padding:0.7rem; color:#cbd5e1;">🕒 ${activeTime}</td>
-                        <td style="padding:0.7rem; text-align:center;">
-                          <div style="display:flex; flex-direction:column; gap:2px; font-size:0.65rem;">
-                            <span style="${screenStyle}">🖥️ ${a.pantalla_ok !== false ? 'PANTALLA OK' : 'PANTALLA MAL'}</span>
-                            <span style="${numStyle}">🏷️ ${a.numeracion_ok !== false ? 'NUMERACIÓN OK' : 'NUMERACIÓN MAL'}</span>
-                          </div>
-                        </td>
-                        <td style="padding:0.7rem; text-align:center;">
-                          <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(234,88,12,0.3); outline:none;">📥 RECIBIR RF</button>
-                        </td>
+                         <td style="padding:0.7rem; text-align:center;">
+                           <div style="display:flex; flex-direction:column; gap:2px; font-size:0.65rem;">
+                             <span style="${screenStyle}">🖥️ ${a.pantalla_ok !== false ? 'PANTALLA OK' : 'PANTALLA MAL'}</span>
+                             <span style="${numStyle}">🏷️ ${a.numeracion_ok !== false ? 'NUMERACIÓN OK' : 'NUMERACIÓN MAL'}</span>
+                           </div>
+                         </td>
+                         <td style="padding:0.7rem; text-align:center;">
+                           <button class="btn-recibir-asignar" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(234,88,12,0.3); outline:none; transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
+                         </td>
                       </tr>`;
                   }).join('') : '<tr><td colspan="6" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600;">No hay terminales asignados en uso en este turno.</td></tr>'}
                 </tbody>
@@ -3823,9 +3822,19 @@ const renderRFSection = (container) => {
         };
       });
 
-      // BOTÓN DE RECIBIR EN TABLA (dentro de celda Devolución)
+      // BOTÓN DE RECIBIR en la tabla ASIGNAR RF
+      container.querySelectorAll('.btn-recibir-asignar').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const serie = e.currentTarget.dataset.serie;
+          abrirModalRecibir(container, serie);
+        };
+      });
+
+      // BOTÓN DE RECIBIR en Bitácora (dentro de celda Devolución)
       container.querySelectorAll('.btn-recibir-rf').forEach(btn => {
         btn.onclick = (e) => {
+          e.stopPropagation();
           const serie = e.currentTarget.dataset.serie;
           abrirModalRecibir(container, serie);
         };
