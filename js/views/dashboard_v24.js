@@ -1,4 +1,4 @@
-﻿import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.36';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.36';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.36';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.36';
@@ -8819,7 +8819,7 @@ const renderRFSection = (container) => {
             evenHeader: "&C Página &P de &N"
         };
 
-        // 7. Configurar anchos de columna (16 columnas en total: A a P)
+        // 7. Configurar anchos de columna (10 columnas en total: A a J)
         ws.columns = [
             { key: 'articulo', width: 20.50 }, // A
             { key: 'ubicacion', width: 26.00 }, // B
@@ -8830,13 +8830,7 @@ const renderRFSection = (container) => {
             { key: 'coleccion', width: 16.00 }, // G
             { key: 'qty_buffer', width: 13.60 },// H
             { key: 'qty_zona', width: 14.29 },  // I
-            { key: 'avance', width: 14.29 },    // J (Avance)
-            { key: 'tareas', width: 15.00 },    // K (Tareas / ID)
-            { key: 'creador', width: 20.00 },   // L (Usuario Creación)
-            { key: 'f_procesado', width: 22.00 }, // M (F. Procesado)
-            { key: 'f_asignado', width: 22.00 }, // N (F. Asignado)
-            { key: 'f_finalizado', width: 22.00 }, // O (F. Finalizado)
-            { key: 'status', width: 15.00 }     // P (Status)
+            { key: 'tareas', width: 15.00 }     // J (Tareas / ID)
         ];
 
         // 3. Toda la pestaña en fuente 16
@@ -8854,7 +8848,7 @@ const renderRFSection = (container) => {
         [2, 3, 4].forEach(rowNum => {
             const row = ws.getRow(rowNum);
             row.height = 30.00;
-            for (let col = 1; col <= 16; col++) {
+            for (let col = 1; col <= 10; col++) {
                 row.getCell(col).alignment = { vertical: 'middle', horizontal: 'left' };
             }
         });
@@ -8869,12 +8863,11 @@ const renderRFSection = (container) => {
         const cellA5 = ws.getCell('A5');
         cellA5.font = { size: 10, color: { argb: 'FF555555' }, name: 'Calibri' };
 
-        // 2. Fila 6 Columnas A hasta la P, Fondo Negro, texto blanco en negrita
+        // 2. Fila 6 Columnas A hasta la J, Fondo Negro, texto blanco en negrita
         const headerRow = ws.getRow(6);
         headerRow.values = [
             "Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", 
-            "Qty Buffer", "Qty Zona", "Avance", "Tareas", "Usuario Creación", 
-            "F. Procesado", "F. Asignado", "F. Finalizado", "Status"
+            "Qty Buffer", "Qty Zona", "Tareas"
         ];
         headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
         headerRow.eachCell((cell) => {
@@ -8908,35 +8901,24 @@ const renderRFSection = (container) => {
                 zonaRows.sort(sortBySku);
 
                 // Fechas formateadas
-                const rawFechaProcesado = task.fechaProcesado || (task.fecha ? task.fecha + 'T00:00:00' : '');
-                const fProcesado = formatDateTime(rawFechaProcesado);
-                const fAsignado = formatDateTime(task.inicio);
-                const fFinalizado = formatDateTime(task.termino);
-                const userCreacion = task.creador || '---';
-
                 // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía, Avance según estado)
                 bufferRows.forEach(i => {
-                    const avanceVal = task.status === 'Finalizado' ? i.qty : 0;
                     dataRows.push([
                         art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, 
-                        i.qty, "", avanceVal, task.id.includes('_') ? task.id.split('_')[1] : task.id, 
-                        userCreacion, fProcesado, fAsignado, fFinalizado, task.status
+                        i.qty, "", task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
                 // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra, Avance es "---")
                 zonaRows.forEach(i => {
                     dataRows.push([
                         art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, 
-                        "", i.qty, "---", task.id.includes('_') ? task.id.split('_')[1] : task.id, 
-                        userCreacion, fProcesado, fAsignado, fFinalizado, task.status
+                        "", i.qty, task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
                 // Subtotal
-                const subtotalAvance = task.status === 'Finalizado' ? art.bufferQty : 0;
                 dataRows.push([
                     `Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, 
-                    subtotalAvance, task.id.includes('_') ? task.id.split('_')[1] : task.id, 
-                    "", "", "", "", ""
+                    task.id.includes('_') ? task.id.split('_')[1] : task.id
                 ]);
             });
         });
@@ -8946,8 +8928,8 @@ const renderRFSection = (container) => {
             const row = ws.addRow(rowData);
             row.font = { size: 16, name: 'Calibri' };
             
-            // Centrar columnas numéricas, de fechas y estado (H a P / 8 a 16)
-            [8, 9, 10, 11, 12, 13, 14, 15, 16].forEach(colIdx => {
+            // Centrar columnas numéricas, de fechas y estado (H a J / 8 a 10)
+            [8, 9, 10].forEach(colIdx => {
                 row.getCell(colIdx).alignment = { horizontal: 'center', vertical: 'middle' };
             });
 
