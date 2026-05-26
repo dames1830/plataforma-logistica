@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.52';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.53';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.52';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.52';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.52';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.52';
+import * as adminService from '../services_v245/adminService.js?v=26.5.53';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.53';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.53';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.52';
+const VERSION = '26.5.53';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3201,7 +3201,30 @@ const renderRFSection = (container) => {
       return numA - numB;
     });
     const activeWorkers = workers.filter(w => w.active !== false);
-    const activeAssignments = assignments.filter(a => !a.returned_at);
+    let activeAssignments = assignments.filter(a => !a.returned_at);
+    
+    if (rfSearchQuery) {
+      const q = rfSearchQuery.toLowerCase();
+      activeAssignments = activeAssignments.filter(a => {
+        const rfInfo = rfs.find(r => r.serie === a.rf_serial);
+        const numero = rfInfo && rfInfo.numero ? rfInfo.numero : '';
+        return (
+          (a.rf_serial || '').toLowerCase().includes(q) || 
+          (a.worker_name || '').toLowerCase().includes(q) || 
+          (a.worker_dni || '').toLowerCase().includes(q) ||
+          (a.notes || '').toLowerCase().includes(q) ||
+          numero.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    activeAssignments.sort((a, b) => {
+      const rfA = rfs.find(r => r.serie === a.rf_serial);
+      const rfB = rfs.find(r => r.serie === b.rf_serial);
+      const numA = parseInt(rfA && rfA.numero ? rfA.numero : 0) || 0;
+      const numB = parseInt(rfB && rfB.numero ? rfB.numero : 0) || 0;
+      return numA - numB;
+    });
 
     container.innerHTML = `
       <!-- METRICS CARDS -->

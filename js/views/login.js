@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services_v245/auth.js?v=26.5.52';
+import { login as authLogin } from '../services_v245/auth.js?v=26.5.53';
 
 export const renderLogin = (container, onLoginSuccess) => {
   // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
