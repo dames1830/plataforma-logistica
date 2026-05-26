@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.46';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.47';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.46';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.46';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.46';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.46';
+import * as adminService from '../services_v245/adminService.js?v=26.5.47';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.47';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.47';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.47';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.46';
+const VERSION = '26.5.47';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3217,6 +3217,7 @@ const renderRFSection = (container) => {
         <!-- SEARCH AND ADD -->
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; padding-bottom:0.3rem;">
           <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
+          <button id="rf_btn_sync" class="btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; cursor:pointer;" title="Sincronizar">🔄</button>
           
           ${activeRFTab === 'inventario' ? `
             <select id="rf_status_filter" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; font-size:0.8rem; outline:none; cursor:pointer;">
@@ -3257,6 +3258,7 @@ const renderRFSection = (container) => {
                   <th style="padding:0.8rem; text-align:left;">Número</th>
                   <th style="padding:0.8rem; text-align:left;">Batería</th>
                   <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
+                  <th style="padding:0.8rem; text-align:left;">Observación</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -3303,6 +3305,9 @@ const renderRFSection = (container) => {
                           ${r.estado || 'Operativo'}
                         </span>
                       </td>
+                      <td style="padding:0.8rem; font-size:0.75rem; color:var(--text-muted); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.comentarios || ''}">
+                        ${r.comentarios || '—'}
+                      </td>
                       <td style="padding:0.8rem; text-align:center;">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
                           <button class="btn-edit-rf" data-rf='${JSON.stringify(r).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
@@ -3310,7 +3315,7 @@ const renderRFSection = (container) => {
                         </div>
                       </td>
                     </tr>`;
-                }) : '<tr><td colspan="6" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se encontraron equipos registrados.</td></tr>'}
+                }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se encontraron equipos registrados.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -3749,6 +3754,10 @@ const renderRFSection = (container) => {
           renderRFSection(container);
         };
       }
+
+      // BOTÓN SINCRONIZAR
+      const btnSyncRf = document.getElementById('rf_btn_sync');
+      if (btnSyncRf) btnSyncRf.onclick = () => renderRFSection(container);
 
       // NUEVO REGISTRO EQUIPO RF
       const btnNewRf = document.getElementById('btn_new_rf');
