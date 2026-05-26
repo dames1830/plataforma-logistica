@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.49';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.50';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.49';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.49';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.49';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.49';
+import * as adminService from '../services_v245/adminService.js?v=26.5.50';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.50';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.50';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.50';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.49';
+const VERSION = '26.5.50';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3526,10 +3526,12 @@ const renderRFSection = (container) => {
                     const activeTime = new Date(a.assigned_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
                     const screenStyle = a.pantalla_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
                     const numStyle = a.numeracion_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
+                    const rfInfo = rfs.find(r => r.serie === a.rf_serial);
+                    const rfNumero = rfInfo && rfInfo.numero ? `N° ${rfInfo.numero} | ` : '';
 
                     return `
                       <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
-                        <td style="padding:0.7rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-family:monospace;">${a.rf_serial}</span></td>
+                        <td style="padding:0.7rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-family:monospace;">${rfNumero}${a.rf_serial}</span></td>
                         <td style="padding:0.7rem;">
                           <div style="font-weight:700; color:#fff;">${a.worker_name}</div>
                           <div style="font-size:0.6rem; color:var(--text-muted);">DNI: ${a.worker_dni}</div>
@@ -3621,11 +3623,13 @@ const renderRFSection = (container) => {
                     </div>
                   `;
                 }
+                const rfInfo = rfs.find(r => r.serie === a.rf_serial);
+                const rfNumero = rfInfo && rfInfo.numero ? `N° ${rfInfo.numero} | ` : '';
 
                 return `
                   <tr style="${rowBg} ${rowBorder} opacity:${rowOpacity}; transition: all 0.3s ease;">
                     <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
-                    <td style="padding:0.8rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:6px; font-family:monospace; font-size:0.85rem; letter-spacing:0.5px;">${a.rf_serial}</span></td>
+                    <td style="padding:0.8rem; font-weight:900; color:#fff;"><span style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:6px; font-family:monospace; font-size:0.85rem; letter-spacing:0.5px;">${rfNumero}${a.rf_serial}</span></td>
                     <td style="padding:0.8rem;">
                       <div style="font-weight:700; color:#fff; font-size:0.8rem;">${a.worker_name}</div>
                       <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">DNI: ${a.worker_dni}</div>
