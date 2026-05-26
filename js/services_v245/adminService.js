@@ -76,8 +76,8 @@ export const saveAttendance = async (dateStr, data) => {
             const isOnTime = asist.onTime !== false;
             const existingIdx = adminStore.performance_log.findIndex(p => p.date === dateStr && String(p.dni || '').trim() === asistDni);
 
-            let pVal = isPresent ? 9 : 0;
-            let bVal = isPresent ? 9 : 0;
+            let pVal = isPresent ? 10 : 0;
+            let bVal = isPresent ? 10 : 0;
             let sVal = isPresent ? 9 : 0;
 
             if (existingIdx !== -1) {
