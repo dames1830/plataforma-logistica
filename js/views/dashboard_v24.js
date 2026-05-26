@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.48';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.49';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.48';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.48';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.48';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.48';
+import * as adminService from '../services_v245/adminService.js?v=26.5.49';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.49';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.49';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.49';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.48';
+const VERSION = '26.5.49';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3195,7 +3195,11 @@ const renderRFSection = (container) => {
     }
 
     // Listado para pestaña ASIGNAR RF
-    const availableOperativeRfs = rfs.filter(r => r.estado === 'Operativo' && !r.asignadoDni);
+    const availableOperativeRfs = rfs.filter(r => r.estado === 'Operativo' && !r.asignadoDni).sort((a, b) => {
+      const numA = parseInt(a.numero) || 0;
+      const numB = parseInt(b.numero) || 0;
+      return numA - numB;
+    });
     const activeWorkers = workers.filter(w => w.active !== false);
     const activeAssignments = assignments.filter(a => !a.returned_at);
 
@@ -3466,7 +3470,7 @@ const renderRFSection = (container) => {
                 <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">2. SELECCIONAR TERMINAL DISPONIBLE:</label>
                 <select id="rf_fast_device" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-family:monospace; font-size:0.8rem;">
                   <option value="" style="background:#0f172a;">-- Seleccionar serie RF --</option>
-                  ${availableOperativeRfs.map(r => `<option value="${r.serie}" style="background:#0f172a;">${r.serie} - ${r.marca} (${r.bateria}% bat)</option>`).join('')}
+                  ${availableOperativeRfs.map(r => `<option value="${r.serie}" style="background:#0f172a;">${r.numero ? `N° ${r.numero} | ` : ''}${r.serie} - ${r.marca} (${r.bateria}% bat)</option>`).join('')}
                 </select>
               </div>
 
@@ -3474,7 +3478,7 @@ const renderRFSection = (container) => {
                 <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">3. TURNO:</label>
                 <select id="rf_fast_turn" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.75rem;">
                   <option value="DIA" style="background:#0f172a;">DIA</option>
-                  <option value="NOCHE" style="background:#0f172a;">NOCHE</option>
+                  <option value="NOCHE" style="background:#0f172a;" selected>NOCHE</option>
                 </select>
               </div>
 
