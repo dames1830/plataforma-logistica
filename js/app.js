@@ -1,4 +1,4 @@
-﻿/**
+/**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
 import { getSession, logout } from './services_v245/auth.js?v=26.5.36';
@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v26.5.41';
+    this.APP_VERSION = 'v26.5.42';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');

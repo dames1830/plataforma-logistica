@@ -2096,7 +2096,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let localState = [];
 
   const renderAsistenciaSection = (container) => {
-    const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE'));
+    const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE') && String(w.area || w.Area || '').trim().toUpperCase() === 'AYUDANTE DE ALMACEN');
     
     const loadAttendanceState = (dateStr) => {
         const existing = adminService.getAttendance(dateStr);
