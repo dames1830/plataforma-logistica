@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.47';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.48';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.47';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.47';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.47';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.47';
+import * as adminService from '../services_v245/adminService.js?v=26.5.48';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.48';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.48';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.48';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.47';
+const VERSION = '26.5.48';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3216,9 +3216,10 @@ const renderRFSection = (container) => {
 
         <!-- SEARCH AND ADD -->
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; padding-bottom:0.3rem;">
-          <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
-          <button id="rf_btn_sync" class="btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; cursor:pointer;" title="Sincronizar">🔄</button>
-          
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
+            <button id="rf_btn_sync" class="btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; cursor:pointer;" title="Sincronizar">🔄</button>
+          </div>
           ${activeRFTab === 'inventario' ? `
             <select id="rf_status_filter" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; font-size:0.8rem; outline:none; cursor:pointer;">
               <option value="todos" ${rfStatusFilter==='todos'?'selected':''}>- TODOS LOS ESTADOS -</option>
