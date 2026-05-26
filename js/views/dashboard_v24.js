@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.50';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.51';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.50';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.50';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.50';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.50';
+import * as adminService from '../services_v245/adminService.js?v=26.5.51';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.51';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.51';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.51';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.50';
+const VERSION = '26.5.51';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9361,21 +9361,21 @@ const renderRFSection = (container) => {
         };
 
         const getActiveDayIndices = (startStr, endStr) => {
-            if (!startStr || !endStr) return [0, 1, 2, 3, 4, 5, 6];
+            if (!startStr || !endStr) return [0, 1, 2, 3, 4, 5];
             const startParts = startStr.split('-');
             const endParts = endStr.split('-');
-            if (startParts.length !== 3 || endParts.length !== 3) return [0, 1, 2, 3, 4, 5, 6];
+            if (startParts.length !== 3 || endParts.length !== 3) return [0, 1, 2, 3, 4, 5];
             
             const startObj = new Date(parseInt(startParts[0], 10), parseInt(startParts[1], 10) - 1, parseInt(startParts[2], 10));
             const endObj = new Date(parseInt(endParts[0], 10), parseInt(endParts[1], 10) - 1, parseInt(endParts[2], 10));
             
-            if (isNaN(startObj.getTime()) || isNaN(endObj.getTime()) || startObj > endObj) return [0, 1, 2, 3, 4, 5, 6];
+            if (isNaN(startObj.getTime()) || isNaN(endObj.getTime()) || startObj > endObj) return [0, 1, 2, 3, 4, 5];
             
             // Si el rango es de 7 días o más, mostramos la semana completa
             const diffTime = Math.abs(endObj - startObj);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             if (diffDays >= 6) {
-                return [0, 1, 2, 3, 4, 5, 6];
+                return [0, 1, 2, 3, 4, 5];
             }
             
             const active = new Set();
@@ -9383,7 +9383,7 @@ const renderRFSection = (container) => {
             while (current <= endObj) {
                 const day = current.getDay();
                 const idx = day === 0 ? 6 : day - 1;
-                active.add(idx);
+                if (idx !== 6) active.add(idx);
                 current.setDate(current.getDate() + 1);
             }
             return Array.from(active).sort((a, b) => a - b);
@@ -9644,6 +9644,14 @@ const renderRFSection = (container) => {
                             }
                         }
                     },
+                    layout: {
+                        padding: {
+                            left: 25,
+                            right: 25,
+                            top: 20,
+                            bottom: 10
+                        }
+                    },
                     scales: {
                         x: {
                             grid: {
@@ -9681,7 +9689,7 @@ const renderRFSection = (container) => {
                         GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
                     </h3>
                     <div style="font-size:0.68rem; color:rgba(234, 179, 8, 0.6); font-weight:700; letter-spacing:0.5px;">
-                        TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A DOMINGO)
+                        TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A SÁBADO)
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-family:'Inter', sans-serif;">
