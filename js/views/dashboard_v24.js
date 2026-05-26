@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.51';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.52';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.51';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.51';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.51';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.51';
+import * as adminService from '../services_v245/adminService.js?v=26.5.52';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.52';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.52';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.52';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.51';
+const VERSION = '26.5.52';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9581,8 +9581,12 @@ const renderRFSection = (container) => {
                             ctx.save();
                             ctx.fillStyle = dataset.borderColor || '#ffffff';
                             ctx.font = 'bold 11px "Inter", sans-serif';
-                            ctx.textAlign = 'center';
+                            let yOffset = -8;
                             ctx.textBaseline = 'bottom';
+                            if (i % 2 !== 0) {
+                                ctx.textBaseline = 'top';
+                                yOffset = 8;
+                            }
                             
                             // Sombra negra para máxima legibilidad sobre cualquier cuadrícula o fondo
                             ctx.shadowColor = '#000000';
@@ -9590,7 +9594,7 @@ const renderRFSection = (container) => {
                             ctx.shadowOffsetX = 0;
                             ctx.shadowOffsetY = 1;
                             
-                            ctx.fillText(val.toLocaleString(), point.x, point.y - 8);
+                            ctx.fillText(val.toLocaleString(), point.x, point.y + yOffset);
                             ctx.restore();
                         });
                     });
