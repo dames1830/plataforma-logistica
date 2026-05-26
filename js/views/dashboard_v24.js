@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.53';
+const VERSION = '26.5.54';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10892,8 +10892,8 @@ const renderRFSection = (container) => {
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             const t = almacenajeTasksCache.find(x => x.id === id);
             if (t) {
-                t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = ''; t.status = 'Creada';
-                saveAlmacenajeTasks();
+                t.u1 = null; t.u2 = null; t.inicio = null; t.termino = null; t.status = 'Creada';
+                await saveAlmacenajeTasks();
                 renderAlmacenajeTareas(container);
             }
         }
