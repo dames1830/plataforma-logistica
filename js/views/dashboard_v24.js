@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.54';
+const VERSION = '26.5.55';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11172,8 +11172,19 @@ const renderRFSection = (container) => {
     window.processAlmacenajeTasks = processAlmacenajeTasks;
 
     window.clearCurrentShiftTasks = async () => {
-        if (await showPremiumConfirm("BORRAR TAREAS CREADAS", `¿Borrar TODAS las tareas con status "CREADA" de todo el historial?\n\n(Esta acción es global y no importa la fecha. No se borrarán tareas asignadas o finalizadas)`, "danger")) {
-            almacenajeTasksCache = almacenajeTasksCache.filter(t => t.status !== 'Creada');
+        const startDisplay = window.__almacenajeStartDate.split('-').reverse().join('/');
+        const endDisplay = window.__almacenajeEndDate.split('-').reverse().join('/');
+        
+        if (await showPremiumConfirm(
+            "BORRAR TAREAS CREADAS", 
+            `¿Borrar TODAS las tareas con status "CREADA" del rango seleccionado (${startDisplay} al ${endDisplay})?\n\n(No se borrarán tareas asignadas o finalizadas, ni tareas fuera de estas fechas)`, 
+            "danger"
+        )) {
+            almacenajeTasksCache = almacenajeTasksCache.filter(t => {
+                if (t.status !== 'Creada') return true;
+                if (t.fecha < window.__almacenajeStartDate || t.fecha > window.__almacenajeEndDate) return true;
+                return false;
+            });
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
         }
