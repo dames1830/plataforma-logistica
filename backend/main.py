@@ -108,6 +108,39 @@ def get_area_data(area: str, date: Optional[str] = None):
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers']
         
         if area == 'users':
+            # Auto-saneamiento/sincronización en el GET si la tabla 'users' no coincide con el snapshot guardado
+            cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = 'users' AND snapshot_date = 'MASTER'")
+            snap_row = cursor.fetchone()
+            if snap_row:
+                snap_users = json.loads(snap_row[0])
+                cursor.execute("SELECT username FROM users")
+                db_usernames = {r[0] for r in cursor.fetchall()}
+                snap_usernames = {u.get('username') for u in snap_users if u.get('username')}
+                
+                if db_usernames != snap_usernames:
+                    if snap_usernames:
+                        cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(snap_usernames))), list(snap_usernames))
+                    else:
+                        cursor.execute("DELETE FROM users")
+                    
+                    for u in snap_users:
+                        username = u.get('username')
+                        password = u.get('password')
+                        name = u.get('name')
+                        role = u.get('role')
+                        active = 1 if u.get('active', True) else 0
+                        if username and password and name and role:
+                            cursor.execute("""
+                                INSERT INTO users (username, password, name, role, active)
+                                VALUES (?, ?, ?, ?, ?)
+                                ON CONFLICT(username) DO UPDATE SET 
+                                    password=excluded.password,
+                                    name=excluded.name,
+                                    role=excluded.role,
+                                    active=excluded.active
+                            """, (username, password, name, role, active))
+                    conn.commit()
+            
             cursor.execute("SELECT username, password, name, role, active FROM users")
             rows = cursor.fetchall()
             data = [{"username": r[0], "password": r[1], "name": r[2], "role": r[3], "active": bool(r[4])} for r in rows]
