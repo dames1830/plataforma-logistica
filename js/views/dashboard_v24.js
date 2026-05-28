@@ -2952,6 +2952,24 @@ export const renderDashboard = async (container, user, onLogout) => {
 const renderRFSection = (container) => {
     const rfs = adminService.getRfs() || [];
     const assignments = adminService.getRfAssignments() || [];
+
+    // Auto-sanear inconsistencias de RFs huérfanos sin asignación activa en la bitácora
+    let rfsChanged = false;
+    rfs.forEach(r => {
+      if (r.asignadoDni) {
+        const hasActive = assignments.some(a => a.rf_serial === r.serie && !a.returned_at);
+        if (!hasActive) {
+          console.warn(`[PULSE] Auto-saneando RF ${r.serie}: figuraba como asignado pero no tiene asignación activa en bitácora.`);
+          r.asignadoDni = null;
+          r.asignadoNombre = null;
+          r.asignadoTurno = null;
+          rfsChanged = true;
+        }
+      }
+    });
+    if (rfsChanged) {
+      adminService.saveRfs(rfs);
+    }
     const workers = adminService.getWorkers() || [];
     const batteries = adminService.getRfsBatteries() || [];
     const chargers = adminService.getRfsChargers() || [];

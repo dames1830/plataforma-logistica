@@ -167,6 +167,34 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
             ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
         """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit(); conn.close()
+
+        # [MOD v25.1.28] Sincronización explícita con la tabla 'users' para mantener el login operativo
+        if area == 'users' and isinstance(payload_data, list):
+            conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+            sent_usernames = [u.get('username') for u in payload_data if u.get('username')]
+            if sent_usernames:
+                cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(sent_usernames))), sent_usernames)
+            else:
+                cursor.execute("DELETE FROM users")
+            
+            for u in payload_data:
+                username = u.get('username')
+                password = u.get('password')
+                name = u.get('name')
+                role = u.get('role')
+                active = 1 if u.get('active', True) else 0
+                
+                if username and password and name and role:
+                    cursor.execute("""
+                        INSERT INTO users (username, password, name, role, active)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(username) DO UPDATE SET 
+                            password=excluded.password,
+                            name=excluded.name,
+                            role=excluded.role,
+                            active=excluded.active
+                    """, (username, password, name, role, active))
+            conn.commit(); conn.close()
         
         return {"status": "success", "area": area, "date": target_date}
     except Exception as e:
