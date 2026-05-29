@@ -508,7 +508,6 @@ table tr:hover {
   color: var(--text-muted) !important;
   text-decoration: none;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
@@ -516,11 +515,9 @@ table tr:hover {
 }
 .perf-sub-item:hover {
   color: var(--primary) !important;
-  border-bottom-color: rgba(79, 70, 229, 0.4) !important;
 }
 .perf-sub-item.active {
   color: var(--primary) !important;
   font-weight: 800 !important;
-  border-bottom-color: var(--primary) !important;
 }
 

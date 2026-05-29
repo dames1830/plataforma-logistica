@@ -8,6 +8,7 @@ const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
 if (!window._pulseSyncState) {
     window._pulseSyncState = {
         isFirstPullDone: false,
+        lastPushTimes: {},
         syncStore: {
             almacenaje_tasks: [],
             attendance: {},
@@ -23,6 +24,9 @@ if (!window._pulseSyncState) {
             rfs_chargers: []
         }
     };
+}
+if (!window._pulseSyncState.lastPushTimes) {
+    window._pulseSyncState.lastPushTimes = {};
 }
 
 export const syncStore = window._pulseSyncState.syncStore;
@@ -91,6 +95,12 @@ export async function pullGlobal(requestedAreas = null, force = false) {
 
     results.forEach(r => {
         if (r.data) {
+            // [BETA] Evitar sobrescrituras por colisiones si se realizó un push local reciente
+            const lastPush = window._pulseSyncState.lastPushTimes && window._pulseSyncState.lastPushTimes[r.area];
+            if (lastPush && (Date.now() - lastPush < 15000)) {
+                console.log(`[PULSE] Omitiendo sobrescritura por Pull en ${r.area} debido a Push local reciente.`);
+                return;
+            }
             const current = syncStore[r.area];
             const incoming = r.data;
             
@@ -125,6 +135,9 @@ export async function pushChange(area, data, date = null) {
         }
 
         const url = date ? `${API_BASE}/${area}?date=${date}` : `${API_BASE}/${area}`;
+        if (window._pulseSyncState.lastPushTimes) {
+            window._pulseSyncState.lastPushTimes[area] = Date.now();
+        }
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -2953,8 +2953,10 @@ const renderRFSection = (container) => {
     const rfs = adminService.getRfs() || [];
     const assignments = adminService.getRfAssignments() || [];
 
-    // Auto-sanear inconsistencias de RFs huérfanos sin asignación activa en la bitácora
+    // Auto-sanear inconsistencias de RFs de forma bidireccional
     let rfsChanged = false;
+    
+    // 1. Limpiar RFs que figuran como asignados pero no tienen asignación activa en la bitácora
     rfs.forEach(r => {
       if (r.asignadoDni) {
         const hasActive = assignments.some(a => a.rf_serial === r.serie && !a.returned_at);
@@ -2967,6 +2969,21 @@ const renderRFSection = (container) => {
         }
       }
     });
+
+    // 2. Asignar RFs que tienen asignación activa en la bitácora pero figuran como disponibles en inventario
+    assignments.forEach(a => {
+      if (!a.returned_at) {
+        const rf = rfs.find(r => r.serie === a.rf_serial);
+        if (rf && !rf.asignadoDni) {
+          console.warn(`[PULSE] Auto-saneando RF ${rf.serie}: tiene asignación activa para ${a.worker_name} pero figuraba como disponible.`);
+          rf.asignadoDni = a.worker_dni;
+          rf.asignadoNombre = a.worker_name;
+          rf.asignadoTurno = a.turn;
+          rfsChanged = true;
+        }
+      }
+    });
+
     if (rfsChanged) {
       adminService.saveRfs(rfs);
     }
@@ -3251,7 +3268,7 @@ const renderRFSection = (container) => {
       </div>
 
       <!-- HEADER ACTION BAR -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); flex-wrap:wrap; gap:1rem; width:100%;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; width:100%;">
         <!-- TAB SELECTOR -->
         <nav style="display:flex; gap:1.2rem;">
           <a class="perf-sub-item ${activeRFTab==='inventario'?'active':''}" id="rf_tab_inventario">📁 INVENTARIO</a>
@@ -3286,7 +3303,7 @@ const renderRFSection = (container) => {
       <!-- MAIN CONTENT -->
       ${activeRFTab === 'inventario' ? `
         <!-- SUB-TAB SELECTOR -->
-        <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.03); margin-bottom:1.2rem; width:100%; gap:1.2rem;">
+        <div style="display:flex; margin-bottom:1.2rem; width:100%; gap:1.2rem;">
           <a class="perf-sub-item ${activeInventorySubTab==='rfs'?'active':''}" id="rf_sub_tab_rfs">📡 EQUIPOS RF</a>
           <a class="perf-sub-item ${activeInventorySubTab==='baterias'?'active':''}" id="rf_sub_tab_baterias">🔋 BATERÍAS</a>
           <a class="perf-sub-item ${activeInventorySubTab==='cargadores'?'active':''}" id="rf_sub_tab_cargadores">🔌 CARGADORES</a>
@@ -4497,14 +4514,18 @@ const renderRFSection = (container) => {
       const worker = activeWorkers.find(w => w.dni === workerDni);
       if (!worker) return;
 
-      const workerActiveRf = rfs.find(r => r.asignadoDni === workerDni);
+      // Obtener el estado local más actualizado justo en el momento del submit para evitar sobreescrituras en clics rápidos
+      const currentRfs = adminService.getRfs() || [];
+      const currentAssignments = adminService.getRfAssignments() || [];
+
+      const workerActiveRf = currentRfs.find(r => r.asignadoDni === workerDni);
       if (workerActiveRf) {
         if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
           return;
         }
       }
 
-      const listRfs = [...rfs];
+      const listRfs = [...currentRfs];
       const rfIdx = listRfs.findIndex(r => r.serie === serie);
       if (rfIdx !== -1) {
         listRfs[rfIdx].asignadoDni = workerDni;
@@ -4512,7 +4533,7 @@ const renderRFSection = (container) => {
         listRfs[rfIdx].asignadoTurno = turnVal;
       }
 
-      const listAssignments = [...assignments];
+      const listAssignments = [...currentAssignments];
       listAssignments.push({
         id: 'ASIG_' + Date.now(),
         rf_serial: serie,
