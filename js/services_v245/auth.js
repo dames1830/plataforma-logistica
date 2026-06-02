@@ -22,7 +22,7 @@ export const login = async (username, password) => {
       // 3. VALIDACIÓN INSTANTÁNEA (Si ya lo conocemos localmente, no esperamos a la nube)
       const checkLocal = () => {
           const u = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
-          if (u && u.password === password && u.active !== false) return u;
+          if (u && String(u.password) === String(password) && u.active !== false) return u;
           return null;
       };
 
@@ -61,7 +61,7 @@ export const login = async (username, password) => {
               localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
               
               const uCloud = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
-              if (uCloud && uCloud.password === password && uCloud.active !== false) {
+              if (uCloud && String(uCloud.password) === String(password) && uCloud.active !== false) {
                   console.log("[ULTRA] Acceso concedido vía Nube.");
                   const sessionData = { id: Date.now(), username: uCloud.username, role: uCloud.role, name: uCloud.name };
                   localStorage.setItem('logistics_session', JSON.stringify(sessionData));
