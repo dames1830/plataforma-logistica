@@ -46,10 +46,15 @@ export const login = async (username, password) => {
       
       if (cloudRes.ok) {
           const result = await cloudRes.json();
-          // [AJUSTE ESTRUCTURAL] Soporte para datos anidados { data: { data: [] } }
-          const serverList = (result && result.data) 
-              ? (Array.isArray(result.data) ? result.data : (result.data.data || []))
-              : [];
+          // [AJUSTE ESTRUCTURAL ROBUSTO]
+          let serverList = [];
+          if (Array.isArray(result)) {
+              serverList = result;
+          } else if (result && result.data) {
+              serverList = Array.isArray(result.data) ? result.data : (result.data.data || []);
+          } else if (result) {
+              serverList = result;
+          }
 
           if (Array.isArray(serverList)) {
               dynamicUsers = serverList;
