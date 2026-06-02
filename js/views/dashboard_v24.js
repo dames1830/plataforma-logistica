@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.101';
+const VERSION = '26.5.102';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8699,9 +8699,10 @@ const renderRFSection = (container) => {
                 address: String(r[5] || 'Dirección de Entrega').trim(),
                 status: cachedStatuses[id]?.status || 'PENDIENTE',
                 statusDate: cachedStatuses[id]?.date || null,
-                cobroFlete: 'NO',
-                fotoCargo: null,
-                fotoLocal: null
+                liquidated: cachedStatuses[id]?.liquidated || false,
+                cobroFlete: cachedStatuses[id]?.cobroFlete || 'NO',
+                fotoCargo: cachedStatuses[id]?.fotoCargo || null,
+                fotoLocal: cachedStatuses[id]?.fotoLocal || null
             };
         });
     }
@@ -8800,7 +8801,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.101 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.102 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -8961,12 +8962,42 @@ const renderRFSection = (container) => {
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        const c = window._noRetailClients.find(x => x.id === cId);
-                        if (c) {
-                            if (type === 'cargo') c.fotoCargo = event.target.result;
-                            else c.fotoLocal = event.target.result;
-                            refreshNoRetailUI();
-                        }
+                        const img = new Image();
+                        img.onload = () => {
+                            // Compress image using canvas
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 600;
+                            const MAX_HEIGHT = 600;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // Convert to jpeg with 0.6 quality to compress size to ~30-50KB
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                            
+                            const c = window._noRetailClients.find(x => x.id === cId);
+                            if (c) {
+                                if (type === 'cargo') c.fotoCargo = compressedDataUrl;
+                                else c.fotoLocal = compressedDataUrl;
+                                refreshNoRetailUI();
+                            }
+                        };
+                        img.src = event.target.result;
                     };
                     reader.readAsDataURL(file);
                 }
@@ -8993,15 +9024,32 @@ const renderRFSection = (container) => {
                     c.statusDate = new Date().toISOString();
                     c.liquidated = true;
                     
-                    const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                    cache[c.id] = { 
-                        status: c.status, 
-                        date: c.statusDate, 
-                        liquidated: true,
-                        fotoCargo: c.fotoCargo,
-                        fotoLocal: c.fotoLocal
-                    };
-                    localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                    try {
+                        const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                        cache[c.id] = { 
+                            status: c.status, 
+                            date: c.statusDate, 
+                            liquidated: true,
+                            cobroFlete: c.cobroFlete,
+                            fotoCargo: c.fotoCargo,
+                            fotoLocal: c.fotoLocal
+                        };
+                        localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                    } catch(err) {
+                        console.error("Cache storage limit reached, saving without photos:", err);
+                        try {
+                            const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                            cache[c.id] = { 
+                                status: c.status, 
+                                date: c.statusDate, 
+                                liquidated: true,
+                                cobroFlete: c.cobroFlete
+                            };
+                            localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                        } catch(err2) {
+                            console.error("Could not write even status to localStorage:", err2);
+                        }
+                    }
                     
                     showPremiumAlert('CLIENTE LIQUIDADO', `El cliente ${c.clientName} ha sido liquidado correctamente.`, 'success');
                     refreshNoRetailUI();
