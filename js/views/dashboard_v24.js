@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.97';
+const VERSION = '26.5.98';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8460,6 +8460,7 @@ const renderRFSection = (container) => {
 
 
   
+  
   const renderTrackingNoRetailPortal = async (container) => {
       let clients = window._noRetailClients || [];
       const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
@@ -8467,6 +8468,177 @@ const renderRFSection = (container) => {
       clients = clients.map(c => {
           if(cache[c.id]) {
               return { ...c, ...cache[c.id] };
+          }
+          return c;
+      });
+
+      // Filter logic
+      const dateDesde = window._trackingFilterDesde || '';
+      const dateHasta = window._trackingFilterHasta || '';
+
+      if (dateDesde) {
+          clients = clients.filter(c => {
+              const cDate = c.statusDate ? new Date(c.statusDate) : null;
+              const fDesde = new Date(dateDesde);
+              return cDate && cDate >= fDesde;
+          });
+      }
+      if (dateHasta) {
+          clients = clients.filter(c => {
+              const cDate = c.statusDate ? new Date(c.statusDate) : null;
+              const fHasta = new Date(dateHasta);
+              return cDate && cDate <= fHasta;
+          });
+      }
+
+      // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
+      const meta = getUploadMeta('no_retail') || {};
+      const uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
+
+      // Pagination
+      const limit = 25;
+      const currentPage = window._trackingPage || 0;
+      const totalPages = Math.ceil(clients.length / limit);
+      const paginatedClients = clients.slice(currentPage * limit, (currentPage + 1) * limit);
+
+      window.exportTrackingToExcel = () => {
+          if (clients.length === 0) return alert('No hay datos para exportar');
+          let csvContent = "data:text/csv;charset=utf-8,";
+          csvContent += "Fecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete
+";
+          
+          clients.forEach(c => {
+              const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleString('es-ES') : '';
+              const row = `"${uploadDate}","${fechaEnt}","${c.agencia}","${c.clientName}","${c.pedido}","${c.status}","${c.cobroFlete}"`;
+              csvContent += row + "
+";
+          });
+          
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", `Tracking_NoRetail_${new Date().toISOString().slice(0,10)}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      };
+
+      container.innerHTML = `
+        <div style="padding: 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+              <div style="display:flex; gap:1rem;">
+                  <button onclick="exportTrackingToExcel()" style="background:#10b981; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;">
+                      <i class="fas fa-file-excel"></i> Exportar a Excel
+                  </button>
+              </div>
+              
+              <div style="display:flex; gap:1rem; align-items:center; background:rgba(255,255,255,0.02); padding:0.5rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
+                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">DESDE (Entrega):</span>
+                      <input type="date" id="tracking_desde" value="${dateDesde}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+                  </div>
+                  <div style="width:1px; height:20px; background:rgba(255,255,255,0.1);"></div>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
+                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">HASTA (Entrega):</span>
+                      <input type="date" id="tracking_hasta" value="${dateHasta}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+                  </div>
+              </div>
+          </div>
+          
+          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; overflow:hidden;">
+              <table style="width:100%; border-collapse:collapse; color:#e2e8f0; font-size:0.85rem; text-align:left;">
+                  <thead>
+                      <tr style="background:rgba(255,255,255,0.05); text-transform:uppercase; font-size:0.7rem; color:#94a3b8;">
+                          <th style="padding:1rem;">Fecha Carga</th>
+                          <th style="padding:1rem;">Fecha Entrega</th>
+                          <th style="padding:1rem;">Agencia</th>
+                          <th style="padding:1rem;">Cliente / Pedido</th>
+                          <th style="padding:1rem;">Estado</th>
+                          <th style="padding:1rem;">Cobro Flete</th>
+                          <th style="padding:1rem; text-align:center;">Fotos</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${paginatedClients.length === 0 ? `<tr><td colspan="7" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
+                      paginatedClients.map(c => `
+                          <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                              <td style="padding:1rem;">
+                                  <div style="font-weight:900; color:#fff; font-size:0.8rem;">${uploadDate}</div>
+                              </td>
+                              <td style="padding:1rem;">
+                                  <div style="font-weight:700; color:#38bdf8;">${c.statusDate ? new Date(c.statusDate).toLocaleString('es-ES') : '-'}</div>
+                              </td>
+                              <td style="padding:1rem;">
+                                  <div style="font-size:0.8rem; font-weight:800; color:#94a3b8;">${c.agencia || '-'}</div>
+                              </td>
+                              <td style="padding:1rem;">
+                                  <div style="font-weight:700; color:#bfdbfe;">${c.clientName}</div>
+                                  <div style="font-size:0.75rem; color:#94a3b8;">Pedido: ${c.pedido}</div>
+                              </td>
+                              <td style="padding:1rem;">
+                                  <span style="padding:0.3rem 0.6rem; border-radius:4px; font-size:0.7rem; font-weight:800; background:${c.status === 'ATENDIDO' ? 'rgba(34,197,94,0.15)' : c.status === 'NO ATENDIDO' ? 'rgba(239,68,68,0.15)' : c.status === 'REPROGRAMAR' ? 'rgba(234,179,8,0.15)' : 'rgba(255,255,255,0.05)'}; color:${c.status === 'ATENDIDO' ? '#4ade80' : c.status === 'NO ATENDIDO' ? '#f87171' : c.status === 'REPROGRAMAR' ? '#facc15' : '#94a3b8'}; border:1px solid ${c.status === 'ATENDIDO' ? 'rgba(34,197,94,0.3)' : c.status === 'NO ATENDIDO' ? 'rgba(239,68,68,0.3)' : c.status === 'REPROGRAMAR' ? 'rgba(234,179,8,0.3)' : 'rgba(255,255,255,0.1)'};">
+                                      ${c.status}
+                                  </span>
+                              </td>
+                              <td style="padding:1rem;">
+                                  ${c.cobroFlete === 'SI' ? '<span style="color:#10b981; font-weight:800;"><i class="fas fa-check"></i> SI</span>' : '<span style="color:#64748b;">NO</span>'}
+                              </td>
+                              <td style="padding:1rem; text-align:center;">
+                                  <div style="display:flex; justify-content:center; gap:0.5rem;">
+                                      ${c.fotoCargo ? `<a href="${c.fotoCargo}" target="_blank" title="Foto Cargo"><img src="${c.fotoCargo}" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;"></a>` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo"><i class="fas fa-camera"></i></div>'}
+                                      ${c.fotoLocal ? `<a href="${c.fotoLocal}" target="_blank" title="Foto Fachada"><img src="${c.fotoLocal}" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;"></a>` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada"><i class="fas fa-camera"></i></div>'}
+                                  </div>
+                              </td>
+                          </tr>
+                      `).join('')}
+                  </tbody>
+              </table>
+              
+              <!-- Paginación -->
+              ${totalPages > 1 ? `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05);">
+                  <div style="color:var(--text-muted); font-size:0.8rem;">
+                      Mostrando ${currentPage * limit + 1} - ${Math.min((currentPage + 1) * limit, clients.length)} de ${clients.length} registros
+                  </div>
+                  <div style="display:flex; gap:0.5rem;">
+                      <button id="btn_track_prev" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:0.4rem 0.8rem; border-radius:4px; cursor:${currentPage === 0 ? 'not-allowed' : 'pointer'}; opacity:${currentPage === 0 ? '0.5' : '1'};">
+                          <i class="fas fa-chevron-left"></i> Anterior
+                      </button>
+                      <button id="btn_track_next" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:0.4rem 0.8rem; border-radius:4px; cursor:${currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer'}; opacity:${currentPage >= totalPages - 1 ? '0.5' : '1'};">
+                          Siguiente <i class="fas fa-chevron-right"></i>
+                      </button>
+                  </div>
+              </div>` : ''}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('tracking_desde')?.addEventListener('change', (e) => {
+          window._trackingFilterDesde = e.target.value;
+          window._trackingPage = 0; // Reset page on filter
+          renderTrackingNoRetailPortal(container);
+      });
+      document.getElementById('tracking_hasta')?.addEventListener('change', (e) => {
+          window._trackingFilterHasta = e.target.value;
+          window._trackingPage = 0; // Reset page on filter
+          renderTrackingNoRetailPortal(container);
+      });
+      
+      document.getElementById('btn_track_prev')?.addEventListener('click', () => {
+          if (window._trackingPage > 0) {
+              window._trackingPage--;
+              renderTrackingNoRetailPortal(container);
+          }
+      });
+      document.getElementById('btn_track_next')?.addEventListener('click', () => {
+          if (window._trackingPage < totalPages - 1) {
+              window._trackingPage = (window._trackingPage || 0) + 1;
+              renderTrackingNoRetailPortal(container);
+          }
+      });
+  };
           }
           return c;
       });
@@ -8736,7 +8908,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.97 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.98 | MOBILE PORTAL
                         </div>
                     </div>
 
