@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.92';
+const VERSION = '26.5.93';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8617,7 +8617,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.92 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.93 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -8960,25 +8960,25 @@ const renderRFSection = (container) => {
                 const count = pStr.split(';').map(s => s.trim()).filter(s => s).length;
                 return acc + (count > 0 ? count : 1);
             }, 0);
+
             const pendingClients = clients.filter(c => c.status === 'PENDIENTE');
             
-            // Group dynamically by Fecha -> Agency -> Clients
-            const groupedEnRuta = {};
+            // Group dynamically by Agency -> Clients
+            const groupedAgencies = {};
             pendingClients.forEach(c => {
-                const f = c.fecha || 'Sin Fecha';
-                if (!groupedEnRuta[f]) groupedEnRuta[f] = {};
-                if (!groupedEnRuta[f][c.agencia]) groupedEnRuta[f][c.agencia] = [];
-                groupedEnRuta[f][c.agencia].push(c);
+                const ag = c.agencia || 'Sin Agencia';
+                if (!groupedAgencies[ag]) groupedAgencies[ag] = [];
+                groupedAgencies[ag].push(c);
             });
             
-            const activeAgenciesCount = [...new Set(pendingClients.map(c => c.agencia))].length;
+            const activeAgenciesCount = Object.keys(groupedAgencies).length;
             const agPendingCount = pendingClients.length;
+
+            const meta = getUploadMeta('archivo_no_retail') || {};
+            const uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Fecha Desconocida');
             
             return `
-                <div style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">ARCHIVO NO RETAIL</div>
-                <div style="font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 0.1rem; letter-spacing: -0.5px;">Pedidos Catálogo</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem;">Gestión de entregas y liquidación por agencia.</div>
-
+                <!-- Top stats -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:0.8rem 1rem; display:flex; flex-direction:column; justify-content:center;">
                         <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">Agencias Activas</span>
@@ -8993,132 +8993,129 @@ const renderRFSection = (container) => {
                     </div>
                 </div>
 
-                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">AGENCIAS EN RUTA (PENDIENTES)</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">AGENCIAS EN RUTA (PENDIENTES)</div>
+                <div style="font-size:0.85rem; font-weight:800; color:#eab308; margin-bottom:1rem;">
+                    📅 FECHA DE CARGA: ${uploadDate}
+                </div>
 
                 <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                    ${Object.keys(groupedEnRuta).length === 0 ? `<div style="text-align:center; color:rgba(255,255,255,0.4); font-size:0.8rem; padding: 2rem 0;">No hay pedidos pendientes en ruta.</div>` : ''}
-                    ${Object.entries(groupedEnRuta).map(([fecha, agencies]) => `
-                        <div>
-                            <div style="font-size:0.85rem; font-weight:800; color:#eab308; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
-                                📅 FECHA: ${fecha}
-                            </div>
-                            <div style="display:flex; flex-direction:column; gap:1rem;">
-                                ${Object.entries(agencies).map(([agName, agClients]) => {
-                                    const agPending = countRealPedidos(agClients);
-                                    const expandedKey = fecha.replace(/\W/g, '') + '_' + agName.replace(/\W/g, '');
-                                    const isExpanded = !!window._noRetailExpandedAgencies[expandedKey];
-                                    
-                                    return `
-                                        <div style="
-                                            background: rgba(255,255,255,0.02);
-                                            border: 1px solid ${isExpanded ? 'rgba(2, 77, 189, 0.4)' : 'rgba(255, 255, 255, 0.04)'};
-                                            border-radius: 18px;
-                                            padding: 1.2rem;
-                                            display: flex;
-                                            flex-direction: column;
-                                            gap: 0.8rem;
-                                        ">
-                                            <!-- Agency Header (Click to toggle desglosar) -->
-                                            <div class="nr-agency-card-header" data-agency="${expandedKey}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                                                <div>
-                                                    <span style="font-size:0.95rem; font-weight:900; color:#fff; display:block;">${agName}</span>
-                                                    <span style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">📍 Clic para desglosar clientes</span>
-                                                </div>
-                                                <span class="badge status-warning" style="font-size:0.6rem; padding:3px 10px; border-radius:12px;">
-                                                    ${agPending} Pendientes
-                                                </span>
-                                            </div>
+                    ${Object.keys(groupedAgencies).length === 0 ? `<div style="text-align:center; color:rgba(255,255,255,0.4); font-size:0.8rem; padding: 2rem 0;">No hay pedidos pendientes en ruta.</div>` : ''}
+                    <div style="display:flex; flex-direction:column; gap:1rem;">
+                        ${Object.entries(groupedAgencies).map(([agName, agClients]) => {
+                            const agPending = countRealPedidos(agClients);
+                            const expandedKey = agName.replace(/\W/g, '');
+                            const isExpanded = !!window._noRetailExpandedAgencies[expandedKey];
+                            
+                            return `
+                                <div style="
+                                    background: rgba(255,255,255,0.02);
+                                    border: 1px solid ${isExpanded ? 'rgba(2, 77, 189, 0.4)' : 'rgba(255, 255, 255, 0.04)'};
+                                    border-radius: 18px;
+                                    padding: 1.2rem;
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 0.8rem;
+                                ">
+                                    <!-- Agency Header (Click to toggle desglosar) -->
+                                    <div class="nr-agency-card-header" data-agency="${expandedKey}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                                        <div>
+                                            <span style="font-size:0.95rem; font-weight:900; color:#fff; display:block;">${agName}</span>
+                                            <span style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">📍 Clic para desglosar clientes</span>
+                                        </div>
+                                        <span class="badge status-warning" style="font-size:0.6rem; padding:3px 10px; border-radius:12px;">
+                                            ${agPending} Pendientes
+                                        </span>
+                                    </div>
 
-                                            <!-- Clients list (desglosado) -->
-                                            ${isExpanded ? `
-                                                <div style="display:flex; flex-direction:column; gap:1rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem;">
-                                                    <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">👤 LISTADO DE CLIENTES A LIQUIDAR:</div>
-                                                    
-                                                    ${agClients.map(c => `
-                                                        <div style="
-                                                            background: rgba(0, 0, 0, 0.2);
-                                                            border: 1px solid ${c.liquidated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.03)'};
-                                                            border-radius: 12px;
-                                                            padding: 0.9rem;
-                                                        ">
-                                                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                                                <div>
-                                                                    <span style="font-size:0.75rem; font-weight:800; color:#fff; display:block;">${c.clientName}</span>
-                                                                    <span style="font-size:0.6rem; color:var(--text-muted);">Pedido: ${c.pedido} | 📍 ${c.address}</span>
+                                    <!-- Clients list (desglosado) -->
+                                    ${isExpanded ? `
+                                        <div style="display:flex; flex-direction:column; gap:1rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem;">
+                                            <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">👤 LISTADO DE CLIENTES A LIQUIDAR:</div>
+                                            
+                                            ${agClients.map(c => `
+                                                <div style="
+                                                    background: rgba(0, 0, 0, 0.2);
+                                                    border: 1px solid ${c.liquidated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.03)'};
+                                                    border-radius: 12px;
+                                                    padding: 0.9rem;
+                                                ">
+                                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                                        <div>
+                                                            <span style="font-size:0.75rem; font-weight:800; color:#fff; display:block;">${c.clientName}</span>
+                                                            <span style="font-size:0.6rem; color:var(--text-muted);">Pedido: ${c.pedido} | 📍 ${c.address}</span>
+                                                        </div>
+                                                        <span class="badge ${c.liquidated ? 'status-success' : 'status-warning'}" style="font-size:0.55rem; padding:1px 6px;">
+                                                            ${c.liquidated ? c.status : 'PENDIENTE'}
+                                                        </span>
+                                                    </div>
+
+                                                    ${!c.liquidated ? `
+                                                        <!-- Liquidation Form -->
+                                                        <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.8rem; border-top:1px dashed rgba(255,255,255,0.05); padding-top:0.8rem;">
+                                                            <!-- Cobro Flete (SI/NO) selector -->
+                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">💰 COBRO FLETE:</span>
+                                                                <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
+                                                                    <button class="nr-flete-btn" data-client="${c.id}" data-val="SI" style="background:${c.cobroFlete === 'SI' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                                                                    <button class="nr-flete-btn" data-client="${c.id}" data-val="NO" style="background:${c.cobroFlete === 'NO' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
                                                                 </div>
-                                                                <span class="badge ${c.liquidated ? 'status-success' : 'status-warning'}" style="font-size:0.55rem; padding:1px 6px;">
-                                                                    ${c.liquidated ? c.status : 'PENDIENTE'}
-                                                                </span>
                                                             </div>
 
-                                                            ${!c.liquidated ? `
-                                                                <!-- Liquidation Form -->
-                                                                <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.8rem; border-top:1px dashed rgba(255,255,255,0.05); padding-top:0.8rem;">
-                                                                    <!-- Cobro Flete (SI/NO) selector -->
-                                                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">💰 COBRO FLETE:</span>
-                                                                        <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
-                                                                            <button class="nr-flete-btn" data-client="${c.id}" data-val="SI" style="background:${c.cobroFlete === 'SI' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
-                                                                            <button class="nr-flete-btn" data-client="${c.id}" data-val="NO" style="background:${c.cobroFlete === 'NO' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <!-- Status Buttons selection -->
-                                                                    <div>
-                                                                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">📋 ESTADO DE ENTREGA:</div>
-                                                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
-                                                                            <button class="nr-status-select-btn" data-client="${c.id}" data-status="ATENDIDO" style="background:${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
-                                                                            <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
-                                                                            <button class="nr-status-select-btn" data-client="${c.id}" data-status="REPROGRAMAR" style="background:${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <!-- Two Photo Slots -->
-                                                                    <div>
-                                                                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📸 FOTOS OBLIGATORIAS DE CARGO Y FACHADA:</div>
-                                                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-                                                                            <!-- Photo Cargo -->
-                                                                            <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
-                                                                                ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
-                                                                                <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="cargo" style="display:none;">
-                                                                            </label>
-
-                                                                            <!-- Photo Fachada -->
-                                                                            <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
-                                                                                ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
-                                                                                <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="local" style="display:none;">
-                                                                            </label>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <!-- Save Button -->
-                                                                    <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:#10b981; border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:#fff; cursor:pointer; transition:background 0.2s;">
-                                                                        ✅ LIQUIDAR CLIENTE
-                                                                    </button>
+                                                            <!-- Status Buttons selection -->
+                                                            <div>
+                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">📋 ESTADO DE ENTREGA:</div>
+                                                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="ATENDIDO" style="background:${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
+                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
+                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="REPROGRAMAR" style="background:${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
                                                                 </div>
-                                                            ` : `
-                                                                <!-- Summary of liquidated client -->
-                                                                <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; flex-direction:column; gap:0.3rem; font-size:0.65rem; color:var(--text-muted);">
-                                                                    <div>💰 Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
-                                                                    <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
-                                                                        ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
-                                                                        ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
-                                                                    </div>
+                                                            </div>
+
+                                                            <!-- Two Photo Slots -->
+                                                            <div>
+                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📸 FOTOS OBLIGATORIAS DE CARGO Y FACHADA:</div>
+                                                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                                                                    <!-- Photo Cargo -->
+                                                                    <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
+                                                                        ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
+                                                                        <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="cargo" style="display:none;">
+                                                                    </label>
+
+                                                                    <!-- Photo Fachada -->
+                                                                    <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
+                                                                        ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
+                                                                        <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="local" style="display:none;">
+                                                                    </label>
                                                                 </div>
-                                                            `}
+                                                            </div>
+
+                                                            <!-- Save Button -->
+                                                            <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:#10b981; border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:#fff; cursor:pointer; transition:background 0.2s;">
+                                                                ✅ LIQUIDAR CLIENTE
+                                                            </button>
                                                         </div>
-                                                    `).join('')}
+                                                    ` : `
+                                                        <!-- Summary of liquidated client -->
+                                                        <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; flex-direction:column; gap:0.3rem; font-size:0.65rem; color:var(--text-muted);">
+                                                            <div>💰 Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
+                                                            <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
+                                                                ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                                ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                            </div>
+                                                        </div>
+                                                    `}
                                                 </div>
-                                            ` : ''}
+                                            `).join('')}
                                         </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `).join('')}
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 </div>
             `;
         }
+
     };
 
     const filterHistoryItems = () => {
