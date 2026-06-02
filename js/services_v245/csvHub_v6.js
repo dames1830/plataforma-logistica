@@ -302,7 +302,11 @@ export const parseFile = (file, area) => {
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           
           let jsonData = [];
-          if (area === 'stockReserva' || area.endsWith('_reserva')) {
+          if (area === 'no_retail_pedidos') {
+              const targetSheetName = workbook.SheetNames.find(name => name.toLowerCase().startsWith('orden_despacho')) || workbook.SheetNames[0];
+              const targetSheet = workbook.Sheets[targetSheetName];
+              jsonData = XLSX.utils.sheet_to_json(targetSheet, { header: 1, range: 8, defval: "" });
+          } else if (area === 'stockReserva' || area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
               const dc = (s) => String(s || '').trim();
               const cleanUbi = (s) => dc(s).toUpperCase().replace(/[^A-Z0-9]/g, '');

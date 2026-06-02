@@ -8454,48 +8454,7 @@ const renderRFSection = (container) => {
     });
 
     // Simulate GPS movement
-    document.getElementById('btn_simulate_gps')?.addEventListener('click', () => {
-        const allRoutes = getDispatchRoutes();
-        const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
-        if (rIdx !== -1) {
-            const nextStop = allRoutes[rIdx].stops.find(s => s.status !== 'Entregado');
-            if (nextStop) {
-                // Animate coordinates movement closer to the next stop
-                const stopsMap = {
-                    'S-01': { x: 400, y: 150 },
-                    'S-02': { x: 280, y: 300 },
-                    'S-03': { x: 60, y: 180 },
-                    'S-04': { x: 70, y: 120 }
-                };
-                const targetPt = stopsMap[nextStop.id];
-                if (targetPt) {
-                    // Inject a mock GPS point in history
-                    const currentHistory = allRoutes[rIdx].gpsHistory || [];
-                    const newPt = {
-                        lat: -12.08 + (Math.random() - 0.5) * 0.05,
-                        lng: -77.02 + (Math.random() - 0.5) * 0.05,
-                        time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
-                        x: Math.round(targetPt.x - 20 + Math.random() * 40),
-                        y: Math.round(targetPt.y - 20 + Math.random() * 40)
-                    };
-                    allRoutes[rIdx].gpsHistory.push(newPt);
-                    saveDispatchRoutes(allRoutes);
-                    activeRoute = allRoutes[rIdx];
-                    alert(`📡 Coordenadas GPS del camión actualizadas en ruta a ${nextStop.storeName.split(' - ')[0]}.`);
-                }
-            }
-        }
-        refreshDriverUI();
-    });
-
-    document.getElementById('btn_driver_logout')?.addEventListener('click', async () => {
-        if (await showPremiumConfirm('CERRAR SESIÓN', '¿Estás seguro de cerrar sesión en la plataforma?', 'warning')) {
-            onLogout();
-        }
-    });
-  };
-
-  const renderDespachoNoRetailPortal = async (container) => {
+    document.getElementById('bt  const renderDespachoNoRetailPortal = async (container) => {
     const isMobile = window.innerWidth <= 768;
     const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
                          ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
@@ -8513,52 +8472,62 @@ const renderRFSection = (container) => {
         catalogData = getAreaData('no_retail_pedidos') || [];
     } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
-    let dynamicAgencies = [
-        { id: 'AG-01', name: 'Agencia Sur Central', clients: 42, address: 'Zona Industrial II, Edificio B', status: 'En Ruta', isDotted: true, team: ['👩🏻‍💼', '👨🏻‍✈️'] },
-        { id: 'AG-02', name: 'Agencia Norte Logística', clients: 28, address: 'Av. Periférico Norte 445', status: 'En Ruta', isDotted: false, team: ['👨🏻‍🏭', '🎥'] },
-        { id: 'AG-03', name: 'Agencia Este Express', clients: 35, address: 'Av. Javier Prado 2500', status: 'Liquidado', isDotted: false, team: ['👮🏻', '👨🏻‍💻'] },
-        { id: 'AG-04', name: 'Agencia Oeste Marítima', clients: 23, address: 'Puerto del Callao Terminal A', status: 'Pendiente', isDotted: false, team: ['👨🏻‍🔧', '👩🏻‍💻'] }
-    ];
+    // Parse Excel array of arrays if available, otherwise mock fallback
+    let clientsData = [];
+    if (catalogData && catalogData.length > 1) {
+        const rows = catalogData.slice(1).filter(r => r && r.length >= 5 && r[4]);
+        clientsData = rows.map((r, idx) => ({
+            id: String(r[0] || `PED-${10000 + idx}`).trim(),
+            pedido: String(r[0] || `PED-${10000 + idx}`).trim(),
+            clientName: String(r[2] || r[3] || `Cliente #${idx + 1}`).trim(),
+            agencia: String(r[4] || 'Agencia General').trim(),
+            address: String(r[5] || 'Dirección de Entrega').trim(),
+            status: 'PENDIENTE',
+            cobroFlete: 'NO',
+            fotoCargo: null,
+            fotoLocal: null
+        }));
+    } else {
+        // High quality mock catalog orders matching Image 3
+        clientsData = [
+            { id: 'PED-98301', pedido: 'PED-98301', clientName: 'Distribuidora Santa Rosa', agencia: 'Agencia Sur Central', address: 'Calle Misti 450, Surquillo', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
+            { id: 'PED-98302', pedido: 'PED-98302', clientName: 'Tiendas Huaraz S.A.C.', agencia: 'Agencia Sur Central', address: 'Av. Paseo de la República 3200', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
+            { id: 'PED-98303', pedido: 'PED-98303', clientName: 'Inversiones Multi-Rutas', agencia: 'Agencia Sur Central', address: 'Jr. Carabaya 880, Cercado', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
+            { id: 'PED-98304', pedido: 'PED-98304', clientName: 'Comercializadora Norte', agencia: 'Agencia Norte Logística', address: 'Av. Túpac Amaru 1250, Comas', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
+            { id: 'PED-98305', pedido: 'PED-98305', clientName: 'Bodega El Golazo', agencia: 'Agencia Norte Logística', address: 'Jr. Trujillo 415, Rímac', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
+            { id: 'PED-98306', pedido: 'PED-98306', clientName: 'Market Bella Vista', agencia: 'Agencia Este Express', address: 'Av. La Molina 2300', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
+            { id: 'PED-98307', pedido: 'PED-98307', clientName: 'Ferretería El Progreso', agencia: 'Agencia Oeste Marítima', address: 'Av. Argentina 5050, Callao', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null }
+        ];
+    }
 
+    // Dynamic reset when a new catalog is uploaded
     if (catalogData && catalogData.length > 0) {
-        const findKey = (obj, possibilities) => {
-            const keys = Object.keys(obj);
-            return keys.find(k => possibilities.some(p => k.toLowerCase().includes(p.toLowerCase())));
-        };
-        const agKey = findKey(catalogData[0], ['agencia', 'agency', 'reparto', 'sucursal']);
-        const clientKey = findKey(catalogData[0], ['cliente', 'client', 'nombre', 'destinatario']);
-        const dirKey = findKey(catalogData[0], ['direccion', 'address', 'destino', 'ubicacion']);
-        const statusKey = findKey(catalogData[0], ['estado', 'status', 'situacion']);
-
-        if (agKey) {
-            const groups = {};
-            catalogData.forEach(row => {
-                const agName = row[agKey] || 'Agencia General';
-                if (!groups[agName]) {
-                    groups[agName] = { name: agName, clients: 0, address: row[dirKey] || 'Dirección de Agencia', status: row[statusKey] || 'En Ruta', team: ['👨🏻‍✈️', '👩🏻‍💼'], rows: [] };
-                }
-                groups[agName].clients++;
-                groups[agName].rows.push(row);
-            });
-            dynamicAgencies = Object.values(groups).map((g, idx) => ({
-                id: `AG-NEW-${idx}`,
-                name: g.name,
-                clients: g.clients,
-                address: g.address,
-                status: g.status,
-                isDotted: idx === 0,
-                team: g.team
-            }));
+        const fileKey = 'no_retail_file_ts';
+        const lastTs = localStorage.getItem(fileKey);
+        const meta = getUploadMeta('no_retail_pedidos');
+        const currentTs = meta ? meta.ts : '';
+        if (currentTs && lastTs !== String(currentTs)) {
+            window._noRetailClients = clientsData;
+            localStorage.setItem(fileKey, String(currentTs));
         }
+    }
+
+    if (!window._noRetailClients) {
+        window._noRetailClients = clientsData;
     }
 
     if (!window._noRetailActiveTab) window._noRetailActiveTab = 'inicio';
     if (!window._noRetailSearchQuery) window._noRetailSearchQuery = '';
+    if (!window._noRetailExpandedAgencies) window._noRetailExpandedAgencies = {};
 
     const refreshNoRetailUI = () => {
         const activeTab = window._noRetailActiveTab;
         const today = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         const capitalizedToday = today.charAt(0).toUpperCase() + today.slice(1);
+
+        const clients = window._noRetailClients || [];
+        const totalCount = clients.length;
+        const pendingCount = clients.filter(c => c.status === 'PENDIENTE').length;
 
         container.innerHTML = `
             ${showBackToOffice ? `
@@ -8615,14 +8584,14 @@ const renderRFSection = (container) => {
                         <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
                     </div>
 
-                    <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4rem;" id="nr_content_wrapper">
-                        ${renderActiveTabContent(activeTab, capitalizedToday, dynamicAgencies)}
+                    <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
+                        ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.73 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.74 | MOBILE PORTAL
                         </div>
                     </div>
 
-                    <!-- Glass Bottom Bar Navigation inside phone mockup -->
+                    <!-- Glass Bottom Bar Navigation -->
                     <div style="
                         position: absolute;
                         bottom: 0;
@@ -8689,6 +8658,7 @@ const renderRFSection = (container) => {
             </div>
         `;
 
+        // Wire bottom navigation events
         document.querySelectorAll('.nr-nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 window._noRetailActiveTab = e.currentTarget.dataset.tab;
@@ -8696,6 +8666,7 @@ const renderRFSection = (container) => {
             });
         });
 
+        // Search action
         const searchInput = document.getElementById('nr_search_input');
         if (searchInput) {
             searchInput.value = window._noRetailSearchQuery;
@@ -8705,6 +8676,7 @@ const renderRFSection = (container) => {
             });
         }
 
+        // Accordion expand/collapse
         document.querySelectorAll('.nr-accordion-header').forEach(header => {
             header.addEventListener('click', (e) => {
                 const body = e.currentTarget.nextElementSibling;
@@ -8719,19 +8691,92 @@ const renderRFSection = (container) => {
             });
         });
 
-        document.querySelectorAll('.btn-nr-liquidar').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                showPremiumAlert('LIQUIDACIÓN INICIADA', `Se ha iniciado el proceso de liquidación de despachos para: ${e.currentTarget.dataset.agency}`, 'success');
+        // En Ruta Agency Card click to desglosar clientes
+        document.querySelectorAll('.nr-agency-card-header').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const agencyName = e.currentTarget.dataset.agency;
+                window._noRetailExpandedAgencies[agencyName] = !window._noRetailExpandedAgencies[agencyName];
+                refreshNoRetailUI();
             });
         });
 
+        // Cobro Flete option toggles
+        document.querySelectorAll('.nr-flete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const val = e.currentTarget.dataset.val;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    c.cobroFlete = val;
+                    refreshNoRetailUI();
+                }
+            });
+        });
+
+        // Status selection buttons
+        document.querySelectorAll('.nr-status-select-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const status = e.currentTarget.dataset.status;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    c.status = status;
+                    refreshNoRetailUI();
+                }
+            });
+        });
+
+        // Photo file input change handlers
+        document.querySelectorAll('.nr-photo-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const type = e.currentTarget.dataset.type; // 'cargo' or 'local'
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const c = window._noRetailClients.find(x => x.id === cId);
+                        if (c) {
+                            if (type === 'cargo') c.fotoCargo = event.target.result;
+                            else c.fotoLocal = event.target.result;
+                            refreshNoRetailUI();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Liquidar button
+        document.querySelectorAll('.btn-nr-liquidar-client').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    if (c.status === 'PENDIENTE') {
+                        showPremiumAlert('SELECCIONA UN ESTADO', 'Debes seleccionar un estado diferente de PENDIENTE para liquidar (ATENDIDO, NO ATENDIDO o REPROGRAMAR).', 'warning');
+                        return;
+                    }
+                    if (!c.fotoCargo) {
+                        showPremiumAlert('FOTO OBLIGATORIA', 'Es obligatorio tomar la foto de los cargos para poder liquidar el cliente.', 'warning');
+                        return;
+                    }
+                    // Liquidate successfully
+                    c.liquidated = true;
+                    showPremiumAlert('CLIENTE LIQUIDADO', `El cliente ${c.clientName} ha sido liquidado correctamente.`, 'success');
+                    refreshNoRetailUI();
+                }
+            });
+        });
+
+        // Back to Office simulator button
         document.getElementById('btn_back_to_office')?.addEventListener('click', () => {
-            const targetSub = 'archivo_no_retail';
-            localStorage.setItem(`activeSub_no_retail`, targetSub);
+            localStorage.setItem(`activeSub_no_retail`, 'archivo_no_retail');
             updateMobileDriverClass();
             renderTabContent();
         });
 
+        // Menu icon back to office
         document.getElementById('btn_nr_menu').addEventListener('click', async () => {
             if (await showPremiumConfirm('VOLVER AL PANEL', '¿Estás seguro de regresar al panel general?', 'info')) {
                 document.body.classList.remove('mobile-driver-active');
@@ -8740,79 +8785,51 @@ const renderRFSection = (container) => {
         });
     };
 
-    const renderActiveTabContent = (tab, dateStr, agencies) => {
+    const renderActiveTabContent = (tab, dateStr, pendingCount, totalCount) => {
+        const clients = window._noRetailClients || [];
+
         if (tab === 'inicio') {
             return `
                 <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem;">Panel de Control</div>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">${dateStr}</div>
 
+                <!-- Stats Grid (Hoy vs Acumulado) - Only these two cards rendered -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
+                    <!-- Hoy Card -->
                     <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(2, 77, 189, 0.2);">
                         <span style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">HOY</span>
-                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">24</span>
+                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${pendingCount}</span>
                         <span style="font-size:0.65rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Pedidos para entrega</span>
                         <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.15; user-select:none;">🚚</span>
                     </div>
 
+                    <!-- Acumulado Card -->
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative;">
                         <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">ACUMULADO</span>
-                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">156</span>
+                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${totalCount}</span>
                         <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos pendientes</span>
                         <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.05; user-select:none;">📋</span>
-                    </div>
-                </div>
-
-                <div style="background: rgba(2,77,189,0.08); border: 1.5px solid rgba(2,77,189,0.25); border-radius: 18px; padding: 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:1.8rem; cursor:pointer;" id="card_active_route">
-                    <div style="background:#024dbd; width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(2,77,189,0.3);">
-                        <span style="color:#fff; font-size:1.3rem; transform: rotate(45deg); display:inline-block; line-height:1; font-weight:900;">▲</span>
-                    </div>
-                    <div style="flex-grow:1;">
-                        <div style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">Ruta actual activa</div>
-                        <div style="font-size:0.95rem; font-weight:900; color:#fff; padding: 2px 6px; border: 1px dashed rgba(147, 197, 253, 0.4); border-radius: 6px; display: inline-block; margin-top: 2px; width:100%; box-sizing:border-box;">
-                            Zona Norte - Sector B
-                        </div>
-                    </div>
-                    <span style="font-size:1rem; color:rgba(255,255,255,0.3); font-weight:bold;">&gt;</span>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-                    <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">ENVÍOS PRIORITARIOS</span>
-                    <a href="#" style="font-size:0.7rem; color:var(--primary); font-weight:800; text-decoration:none; padding: 2px 6px; border: 1px dashed var(--primary); border-radius: 4px;" id="nr_view_all_shipments">Ver todos</a>
-                </div>
-
-                <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; padding:1rem; display:flex; flex-direction:column; gap:0.4rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">#LP-98234</span>
-                            <span class="badge status-warning" style="font-size:0.55rem; padding:2px 8px; border-radius:10px;">En Tránsito</span>
-                        </div>
-                        <div style="font-size:0.9rem; font-weight:800; color:#fff; line-height:1.3;">
-                            Almacén Central → Centro Cívico
-                        </div>
-                        <div style="display:flex; align-items:center; gap:4px; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
-                            <span>🕒</span>
-                            <span>Llegada estimada: 14:30 PM</span>
-                        </div>
-                    </div>
-
-                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; padding:1rem; display:flex; flex-direction:column; gap:0.4rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">#LP-98212</span>
-                            <span class="badge status-success" style="font-size:0.55rem; padding:2px 8px; border-radius:10px;">Entregado</span>
-                        </div>
-                        <div style="font-size:0.9rem; font-weight:800; color:#fff; line-height:1.3;">
-                            Sede Norte → Distrito Tecnológico
-                        </div>
-                        <div style="display:flex; align-items:center; gap:4px; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
-                            <span>✅</span>
-                            <span>Finalizado a las 11:15 AM</span>
-                        </div>
                     </div>
                 </div>
             `;
         }
 
         if (tab === 'historial') {
+            // Group dynamically by Week -> Day -> Agency -> Clients
+            const grouped = {
+                'Semana 23 (Junio 2026)': {
+                    'Martes, 2 de Junio': {}
+                }
+            };
+
+            clients.forEach(c => {
+                const dayGroup = grouped['Semana 23 (Junio 2026)']['Martes, 2 de Junio'];
+                if (!dayGroup[c.agencia]) {
+                    dayGroup[c.agencia] = [];
+                }
+                dayGroup[c.agencia].push(c);
+            });
+
             return `
                 <div style="position:relative; margin-bottom:1.5rem;">
                     <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; color:rgba(255,255,255,0.3);">🔍</span>
@@ -8822,90 +8839,71 @@ const renderRFSection = (container) => {
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">HISTORIAL DE ACTIVIDAD</div>
 
                 <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;" id="nr_history_accordion_list">
-                    <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden;">
-                        <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                            <div>
-                                <div style="font-size:0.85rem; font-weight:800; color:#fff;">Hoy, 24 de Mayo</div>
-                                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">4 Agencias • 12 Pedidos Totales</div>
+                    ${Object.entries(grouped).map(([week, days]) => `
+                        <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden; margin-bottom:0.5rem;">
+                            <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                                <div>
+                                    <div style="font-size:0.85rem; font-weight:800; color:#fff;">${week}</div>
+                                    <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Resumen semanal de entregas</div>
+                                </div>
+                                <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
                             </div>
-                            <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
-                        </div>
-                        <div class="nr-accordion-body" style="display:none; padding:0.2rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
-                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted);">
-                                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">
-                                    <span style="color:#fff; font-weight:700;">Agencia Sur Central</span>
-                                    <span>3 Pedidos • Entregados</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">
-                                    <span style="color:#fff; font-weight:700;">Agencia Norte Logística</span>
-                                    <span>4 Pedidos • Entregados</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">
-                                    <span style="color:#fff; font-weight:700;">Agencia Este Express</span>
-                                    <span>2 Pedidos • Entregados</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; padding:4px 0;">
-                                    <span style="color:#fff; font-weight:700;">Agencia Oeste Marítima</span>
-                                    <span>3 Pedidos • Entregados</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden;">
-                        <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                            <div>
-                                <div style="font-size:0.85rem; font-weight:800; color:#fff;">Ayer, 23 de Mayo</div>
-                                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">6 Agencias • 28 Pedidos Totales</div>
-                            </div>
-                            <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
-                        </div>
-                        <div class="nr-accordion-body" style="display:none; padding:0.2rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
-                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted);">
-                                <div style="display:flex; justify-content:space-between; padding:4px 0;">
-                                    <span style="color:#fff; font-weight:700;">Desglose General</span>
-                                    <span>28 Pedidos • Entregados y Liquidados</span>
-                                </div>
+                            <div class="nr-accordion-body" style="display:none; padding:0.5rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
+                                ${Object.entries(days).map(([day, agencies]) => `
+                                    <div style="margin-top:0.4rem; margin-bottom:0.8rem;">
+                                        <div style="font-size:0.75rem; font-weight:800; color:var(--primary); margin-bottom:0.3rem;">📆 ${day}</div>
+                                        
+                                        ${Object.entries(agencies).map(([agency, cList]) => `
+                                            <div style="margin-left:0.5rem; margin-bottom:0.6rem; border-left:2px solid rgba(255,255,255,0.05); padding-left:0.6rem;">
+                                                <div style="font-size:0.7rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
+                                                    <span>🏢 ${agency}</span>
+                                                    <span style="color:var(--text-muted);">${cList.length} Clientes</span>
+                                                </div>
+                                                
+                                                <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
+                                                    ${cList.map(c => `
+                                                        <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+                                                            <span>👤 ${c.clientName} (${c.pedido})</span>
+                                                            <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
+                                                                ${c.status}
+                                                            </span>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-                    </div>
-
-                    <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden;">
-                        <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                            <div>
-                                <div style="font-size:0.85rem; font-weight:800; color:#fff;">22 de Mayo</div>
-                                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">3 Agencias • 15 Pedidos Totales</div>
-                            </div>
-                            <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
-                        </div>
-                        <div class="nr-accordion-body" style="display:none; padding:0.2rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
-                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted);">
-                                <div style="display:flex; justify-content:space-between; padding:4px 0;">
-                                    <span style="color:#fff; font-weight:700;">Desglose General</span>
-                                    <span>15 Pedidos • Entregados y Liquidados</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    `).join('')}
                 </div>
 
+                <!-- Bottom Stats Grid -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
                     <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; box-shadow:0 4px 15px rgba(2, 77, 189, 0.2);">
                         <span style="font-size:1.4rem; margin-bottom:0.2rem;">📈</span>
                         <span style="font-size:0.6rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">EFICIENCIA</span>
-                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">98.2%</span>
+                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">
+                            ${Math.round(((totalCount - pendingCount) / (totalCount || 1)) * 100)}%
+                        </span>
                     </div>
 
                     <div style="background:rgba(2,77,189,0.08); border:1px solid rgba(2,77,189,0.2); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column;">
                         <span style="font-size:1.4rem; margin-bottom:0.2rem; color:#60a5fa;">🛡️</span>
                         <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">COMPLETADOS</span>
-                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">142</span>
+                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">
+                            ${totalCount - pendingCount}
+                        </span>
                     </div>
                 </div>
             `;
         }
 
         if (tab === 'en_ruta') {
+            // Group unique agencies
+            const agenciesList = [...new Set(clients.map(c => c.agencia))];
+            
             return `
                 <div style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">ARCHIVO NO RETAIL</div>
                 <div style="font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 0.1rem; letter-spacing: -0.5px;">Pedidos Catálogo</div>
@@ -8914,88 +8912,130 @@ const renderRFSection = (container) => {
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:0.8rem 1rem; display:flex; flex-direction:column; justify-content:center;">
                         <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">Agencias Activas</span>
-                        <span style="font-size:1.4rem; font-weight:900; color:#3b82f6; margin-top:2px;">04</span>
+                        <span style="font-size:1.4rem; font-weight:900; color:#3b82f6; margin-top:2px;">
+                            ${agenciesList.length.toString().padStart(2, '0')}
+                        </span>
                     </div>
 
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:0.8rem 1rem; display:flex; flex-direction:column; justify-content:center;">
                         <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">Total Pendientes</span>
-                        <span style="font-size:1.4rem; font-weight:900; color:#10b981; margin-top:2px;">128</span>
+                        <span style="font-size:1.4rem; font-weight:900; color:#10b981; margin-top:2px;">${pendingCount}</span>
                     </div>
                 </div>
 
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">AGENCIAS EN RUTA</div>
 
                 <div style="display:flex; flex-direction:column; gap:1rem;">
-                    ${agencies.map(ag => `
-                        <div style="
-                            background: rgba(255,255,255,0.02);
-                            border: 1px solid rgba(255,255,255,0.04);
-                            border-radius: 18px;
-                            padding: 1.2rem;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 0.8rem;
-                        ">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.95rem; font-weight:900; color:#fff;">${ag.name}</span>
-                                <span class="badge ${ag.id.includes('02') ? 'status-success' : 'status-primary'}" style="font-size:0.6rem; padding:3px 10px; border-radius:12px;">
-                                    ${ag.clients} Clientes
-                                </span>
-                            </div>
-
-                            <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-                                <span>📍</span>
-                                <span>${ag.address}</span>
-                            </div>
-
-                            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.2rem;">
-                                <div style="display:flex;">
-                                    ${ag.team.map((avatar, idx) => `
-                                        <div style="
-                                            width: 24px;
-                                            height: 24px;
-                                            border-radius: 50%;
-                                            background: #1e293b;
-                                            border: 1.5px solid #0b1329;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                            font-size: 0.75rem;
-                                            margin-left: ${idx > 0 ? '-8px' : '0'};
-                                            z-index: ${10 - idx};
-                                        ">${avatar}</div>
-                                    `).join('')}
-                                </div>
-                                <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">Equipo de reparto asignado</span>
-                            </div>
-
-                            <button class="btn btn-nr-liquidar" data-agency="${ag.name}" style="
+                    ${agenciesList.map(agName => {
+                        const agClients = clients.filter(c => c.agencia === agName);
+                        const agPending = agClients.filter(c => c.status === 'PENDIENTE').length;
+                        const isExpanded = !!window._noRetailExpandedAgencies[agName];
+                        
+                        return `
+                            <div style="
+                                background: rgba(255,255,255,0.02);
+                                border: 1px solid ${isExpanded ? 'rgba(2, 77, 189, 0.4)' : 'rgba(255, 255, 255, 0.04)'};
+                                border-radius: 18px;
+                                padding: 1.2rem;
                                 display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 6px;
-                                width: 100%;
-                                padding: 0.7rem;
-                                font-size: 0.75rem;
-                                font-weight: bold;
-                                border-radius: 12px;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                                box-sizing: border-box;
-                                ${ag.isDotted ? `
-                                    background: transparent;
-                                    border: 1.5px dashed #024dbd;
-                                    color: #93c5fd;
-                                ` : `
-                                    background: #024dbd;
-                                    border: none;
-                                    color: #fff;
-                                `}
+                                flex-direction: column;
+                                gap: 0.8rem;
                             ">
-                                <span style="font-size:0.9rem;">▶️</span> Iniciar Liquidación
-                            </button>
-                        </div>
-                    `).join('')}
+                                <!-- Agency Header (Click to toggle desglosar) -->
+                                <div class="nr-agency-card-header" data-agency="${agName}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                                    <div>
+                                        <span style="font-size:0.95rem; font-weight:900; color:#fff; display:block;">${agName}</span>
+                                        <span style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">📍 Clic para desglosar clientes</span>
+                                    </div>
+                                    <span class="badge ${agPending > 0 ? 'status-warning' : 'status-success'}" style="font-size:0.6rem; padding:3px 10px; border-radius:12px;">
+                                        ${agPending > 0 ? `${agPending} Pendientes` : 'Liquidada ✅'}
+                                    </span>
+                                </div>
+
+                                <!-- Clients list (desglosado) -->
+                                ${isExpanded ? `
+                                    <div style="display:flex; flex-direction:column; gap:1rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem;">
+                                        <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">👤 LISTADO DE CLIENTES A LIQUIDAR:</div>
+                                        
+                                        ${agClients.map(c => `
+                                            <div style="
+                                                background: rgba(0, 0, 0, 0.2);
+                                                border: 1px solid ${c.liquidated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.03)'};
+                                                border-radius: 12px;
+                                                padding: 0.9rem;
+                                            ">
+                                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                                    <div>
+                                                        <span style="font-size:0.75rem; font-weight:800; color:#fff; display:block;">${c.clientName}</span>
+                                                        <span style="font-size:0.6rem; color:var(--text-muted);">Pedido: ${c.pedido} | 📍 ${c.address}</span>
+                                                    </div>
+                                                    <span class="badge ${c.liquidated ? 'status-success' : 'status-warning'}" style="font-size:0.55rem; padding:1px 6px;">
+                                                        ${c.liquidated ? c.status : 'PENDIENTE'}
+                                                    </span>
+                                                </div>
+
+                                                ${!c.liquidated ? `
+                                                    <!-- Liquidation Form -->
+                                                    <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.8rem; border-top:1px dashed rgba(255,255,255,0.05); padding-top:0.8rem;">
+                                                        <!-- Cobro Flete (SI/NO) selector -->
+                                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                            <span style="font-size:0.65rem; color:#fff; font-weight:700;">💰 COBRO FLETE:</span>
+                                                            <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
+                                                                <button class="nr-flete-btn" data-client="${c.id}" data-val="SI" style="background:${c.cobroFlete === 'SI' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                                                                <button class="nr-flete-btn" data-client="${c.id}" data-val="NO" style="background:${c.cobroFlete === 'NO' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Status Buttons selection -->
+                                                        <div>
+                                                            <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">📋 ESTADO DE ENTREGA:</div>
+                                                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+                                                                <button class="nr-status-select-btn" data-client="${c.id}" data-status="ATENDIDO" style="background:${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
+                                                                <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
+                                                                <button class="nr-status-select-btn" data-client="${c.id}" data-status="REPROGRAMAR" style="background:${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Two Photo Slots -->
+                                                        <div>
+                                                            <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📷 FOTOS OBLIGATORIAS DE CARGO Y FACHADA:</div>
+                                                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                                                                <!-- Photo Cargo -->
+                                                                <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
+                                                                    ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
+                                                                    <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="cargo" style="display:none;">
+                                                                </label>
+
+                                                                <!-- Photo Fachada -->
+                                                                <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
+                                                                    ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
+                                                                    <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="local" style="display:none;">
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Save Button -->
+                                                        <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:#10b981; border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:#fff; cursor:pointer; transition:background 0.2s;">
+                                                            📦 LIQUIDAR CLIENTE
+                                                        </button>
+                                                    </div>
+                                                ` : `
+                                                    <!-- Summary of liquidated client -->
+                                                    <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; flex-direction:column; gap:0.3rem; font-size:0.65rem; color:var(--text-muted);">
+                                                        <div>💰 Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
+                                                        <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
+                                                            ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                            ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                        </div>
+                                                    </div>
+                                                `}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             `;
         }
@@ -9015,6 +9055,7 @@ const renderRFSection = (container) => {
 
     refreshNoRetailUI();
   };
+
 
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "Consulta profunda de Artículos";
