@@ -8990,8 +8990,8 @@ const renderRFSection = (container) => {
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">AGENCIAS EN RUTA (PENDIENTES)</div>
 
                 <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                    ${Object.keys(groupedEnRuta).length === 0 ? \`<div style="text-align:center; color:rgba(255,255,255,0.4); font-size:0.8rem; padding: 2rem 0;">No hay pedidos pendientes en ruta.</div>\` : ''}
-                    ${Object.entries(groupedEnRuta).map(([fecha, agencies]) => \`
+                    ${Object.keys(groupedEnRuta).length === 0 ? `<div style="text-align:center; color:rgba(255,255,255,0.4); font-size:0.8rem; padding: 2rem 0;">No hay pedidos pendientes en ruta.</div>` : ''}
+                    ${Object.entries(groupedEnRuta).map(([fecha, agencies]) => `
                         <div>
                             <div style="font-size:0.85rem; font-weight:800; color:#eab308; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">
                                 📅 FECHA: ${fecha}
@@ -9002,7 +9002,7 @@ const renderRFSection = (container) => {
                                     const expandedKey = fecha.replace(/\W/g, '') + '_' + agName.replace(/\W/g, '');
                                     const isExpanded = !!window._noRetailExpandedAgencies[expandedKey];
                                     
-                                    return \`
+                                    return `
                                         <div style="
                                             background: rgba(255,255,255,0.02);
                                             border: 1px solid ${isExpanded ? 'rgba(2, 77, 189, 0.4)' : 'rgba(255, 255, 255, 0.04)'};
@@ -9024,11 +9024,11 @@ const renderRFSection = (container) => {
                                             </div>
 
                                             <!-- Clients list (desglosado) -->
-                                            ${isExpanded ? \`
+                                            ${isExpanded ? `
                                                 <div style="display:flex; flex-direction:column; gap:1rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem;">
                                                     <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">👤 LISTADO DE CLIENTES A LIQUIDAR:</div>
                                                     
-                                                    ${agClients.map(c => \`
+                                                    ${agClients.map(c => `
                                                         <div style="
                                                             background: rgba(0, 0, 0, 0.2);
                                                             border: 1px solid ${c.liquidated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.03)'};
@@ -9045,7 +9045,7 @@ const renderRFSection = (container) => {
                                                                 </span>
                                                             </div>
 
-                                                            ${!c.liquidated ? \`
+                                                            ${!c.liquidated ? `
                                                                 <!-- Liquidation Form -->
                                                                 <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.8rem; border-top:1px dashed rgba(255,255,255,0.05); padding-top:0.8rem;">
                                                                     <!-- Cobro Flete (SI/NO) selector -->
@@ -9073,13 +9073,13 @@ const renderRFSection = (container) => {
                                                                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                                                                             <!-- Photo Cargo -->
                                                                             <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
-                                                                                ${c.fotoCargo ? \`<img src="\${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">\` : \`<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>\`}
+                                                                                ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
                                                                                 <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="cargo" style="display:none;">
                                                                             </label>
 
                                                                             <!-- Photo Fachada -->
                                                                             <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
-                                                                                ${c.fotoLocal ? \`<img src="\${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">\` : \`<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>\`}
+                                                                                ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
                                                                                 <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="local" style="display:none;">
                                                                             </label>
                                                                         </div>
@@ -9090,26 +9090,26 @@ const renderRFSection = (container) => {
                                                                         ✅ LIQUIDAR CLIENTE
                                                                     </button>
                                                                 </div>
-                                                            \` : \`
+                                                            ` : `
                                                                 <!-- Summary of liquidated client -->
                                                                 <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; flex-direction:column; gap:0.3rem; font-size:0.65rem; color:var(--text-muted);">
                                                                     <div>💰 Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
                                                                     <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
-                                                                        ${c.fotoCargo ? \`<img src="\${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">\` : ''}
-                                                                        ${c.fotoLocal ? \`<img src="\${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">\` : ''}
+                                                                        ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                                        ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
                                                                     </div>
                                                                 </div>
-                                                            \`}
+                                                            `}
                                                         </div>
-                                                    \`).join('')}
+                                                    `).join('')}
                                                 </div>
-                                            \` : ''}
+                                            ` : ''}
                                         </div>
-                                    \`;
+                                    `;
                                 }).join('')}
                             </div>
                         </div>
-                    \`).join('')}
+                    `).join('')}
                 </div>
             `;
         }
