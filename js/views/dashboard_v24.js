@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.80';
+const VERSION = '26.5.82';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7711,7 +7711,7 @@ const renderRFSection = (container) => {
             getAreaData(resKey),
             (tabId === 'almacenaje' || tabId === 'recepcion') ? getAreaData('articulos') : Promise.resolve(null),
             (tabId === 'inventario') ? getAreaData('matriz_ubicaciones') : Promise.resolve(null),
-            (tabId === 'no_retail') ? getAreaData(`${tabId}_pedidos`) : Promise.resolve(null)
+            (tabId === 'no_retail') ? getAreaData(`${tabId}`) : Promise.resolve(null)
         ]);
 
         renderUploadArea(wrap, actKey, activoData, '.csv', 'STOCK ACTIVO');
@@ -7723,7 +7723,7 @@ const renderRFSection = (container) => {
             renderUploadArea(wrap, 'matriz_ubicaciones', matrizData, '.xlsx', 'MATRIZ UBICACIONES ALTO');
         }
         if (tabId === 'no_retail') {
-            renderUploadArea(wrap, `${tabId}_pedidos`, pedidosData, '.xlsx', 'PEDIDOS CATÁLOGO');
+            renderUploadArea(wrap, `${tabId}`, pedidosData, '.xlsx', 'PEDIDOS CATÁLOGO');
         }
     } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
         const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');
@@ -8470,20 +8470,15 @@ const renderRFSection = (container) => {
 
     let catalogData = [];
     try {
-        catalogData = (await getAreaData('no_retail_pedidos')) || [];
+        catalogData = (await getAreaData('no_retail')) || [];
     } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
     // Parse Excel array of arrays if available, otherwise empty
     let clientsData = [];
-    let debugInfo = "catalogData length: " + (catalogData ? catalogData.length : 'undefined') + "\n";
-    if (catalogData && catalogData.length > 0) {
-        debugInfo += "First row length: " + (catalogData[0] ? catalogData[0].length : 'null') + "\n";
-        debugInfo += "First row content: " + JSON.stringify(catalogData[0]).substring(0, 50) + "...\n";
-    }
 
-    if (catalogData && catalogData.length > 1) {
-        // La primera fila (index 0) es la cabecera (fila 9 del Excel). La saltamos.
-        const rows = catalogData.slice(1);
+    if (catalogData && catalogData.length > 0) {
+        // Toda la data después de saltar 8 filas es válida. No saltamos la fila 9.
+        const rows = catalogData;
         
         // Filtramos solo filas que estén completamente vacías
         const validRows = rows.filter(r => {
@@ -8492,13 +8487,11 @@ const renderRFSection = (container) => {
             return r.some(cell => String(cell).trim() !== '');
         });
 
-        debugInfo += "Valid rows after filter: " + validRows.length + "\n";
-
         clientsData = validRows.map((r, idx) => ({
             id: String(r[0] || `PED-${10000 + idx}`).trim(),
             pedido: String(r[0] || `PED-${10000 + idx}`).trim(),
-            clientName: String(r[3] || `Cliente #${idx + 1}`).trim(), // Column D
-            agencia: String(r[4] || 'Agencia General').trim(), // Column E
+            clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(), // Column D
+            agencia: String(r[4] || 'Agencia General').trim().toUpperCase(), // Column E
             address: String(r[5] || 'Dirección de Entrega').trim(),
             status: 'PENDIENTE',
             cobroFlete: 'NO',
@@ -8507,36 +8500,15 @@ const renderRFSection = (container) => {
         }));
     }
 
-    // --- TEMPORARY DEBUG FLOATER ---
-    const debugDiv = document.createElement('div');
-    debugDiv.style.position = 'fixed';
-    debugDiv.style.top = '10px';
-    debugDiv.style.left = '50%';
-    debugDiv.style.transform = 'translateX(-50%)';
-    debugDiv.style.backgroundColor = 'rgba(255,0,0,0.9)';
-    debugDiv.style.color = 'white';
-    debugDiv.style.padding = '10px';
-    debugDiv.style.zIndex = '999999';
-    debugDiv.style.fontSize = '12px';
-    debugDiv.style.borderRadius = '5px';
-    debugDiv.style.whiteSpace = 'pre-wrap';
-    debugDiv.style.maxWidth = '90vw';
-    debugDiv.innerText = "NO RETAIL DEBUG:\n" + debugInfo;
-    
     // Remove old debug div if exists
     const oldDebug = document.getElementById('nr_debug_floater');
     if (oldDebug) oldDebug.remove();
-    debugDiv.id = 'nr_debug_floater';
-    
-    // Append to body after a slight delay to ensure DOM is ready
-    setTimeout(() => document.body.appendChild(debugDiv), 500);
-    // -------------------------------
 
     // Dynamic reset when a new catalog is uploaded
     if (catalogData && catalogData.length > 0) {
         const fileKey = 'no_retail_file_ts';
         const lastTs = localStorage.getItem(fileKey);
-        const meta = getUploadMeta('no_retail_pedidos');
+        const meta = getUploadMeta('no_retail');
         const currentTs = meta ? meta.ts : '';
         if (currentTs && lastTs !== String(currentTs)) {
             window._noRetailClients = clientsData;
@@ -8619,7 +8591,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.80 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.82 | MOBILE PORTAL
                         </div>
                     </div>
 

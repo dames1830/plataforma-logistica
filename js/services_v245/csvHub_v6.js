@@ -302,7 +302,7 @@ export const parseFile = (file, area) => {
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           
           let jsonData = [];
-          if (area === 'no_retail_pedidos') {
+          if (area === 'no_retail') {
               const targetSheetName = workbook.SheetNames.find(name => name.toLowerCase().startsWith('orden_despacho')) || workbook.SheetNames[0];
               const targetSheet = workbook.Sheets[targetSheetName];
               const rawData = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: "" });
