@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.61';
+const VERSION = '26.5.62';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -956,6 +956,18 @@ export const renderDashboard = async (container, user, onLogout) => {
   // [CRÍTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
   const rolePermissions = adminService.getPermissions(user.role) || {};
 
+  const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
+                       ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
+  
+  if (isDriverRole) {
+      container.className = 'animate-fade-in';
+      container.innerHTML = `<div id="contentArea" style="width:100%; min-height:100vh; background:#0b1329;"></div>`;
+      const contentArea = document.getElementById('contentArea');
+      document.body.classList.add('mobile-driver-active');
+      renderDespachoChoferPortal(contentArea);
+      return;
+  }
+
   // [PROTECCIÓN] Evitar crash si no hay pestañas permitidas
   const allowedTabs = TABS.filter(t => {
       if (user.role === 'admin') return true;
@@ -978,7 +990,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     const activeSub = localStorage.getItem('activeSub_' + currentTab);
     const isDriverView = (currentTab === 'despacho' && activeSub === 'chofer_despacho') || 
                          (currentTab === 'no_retail' && activeSub === 'despacho_no_retail') ||
-                         (user.role === 'transporte' || user.role === 'chofer');
+                         user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
+                         ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
     if (isMobile && isDriverView) {
         document.body.classList.add('mobile-driver-active');
     } else {
@@ -8210,7 +8223,8 @@ const renderRFSection = (container) => {
     };
 
     const isMobile = window.innerWidth <= 768;
-    const isDriverRole = user.role === 'transporte' || user.role === 'chofer';
+    const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
+                         ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
     const hideFrame = isMobile || isDriverRole;
     const showBackToOffice = hideFrame && !isDriverRole;
 

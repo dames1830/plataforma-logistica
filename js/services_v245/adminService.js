@@ -191,7 +191,7 @@ export const FORCED_ASISTENTE = [
 ];
 
 export const initPermissions = (tabs) => {
-    const roles = ['admin', 'jefe', 'coordinador', 'supervisor', 'encargado', 'asistente'];
+    const roles = ['admin', 'jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'transporte', 'transportista', 'chofer'];
     roles.forEach(role => {
         if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
         const p = adminStore.permissions[role];
