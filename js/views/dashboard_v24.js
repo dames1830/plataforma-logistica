@@ -8588,7 +8588,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.74 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.75 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -8788,6 +8788,7 @@ const renderRFSection = (container) => {
 
     const renderActiveTabContent = (tab, dateStr, pendingCount, totalCount) => {
         const clients = window._noRetailClients || [];
+        const pendingAgenciesCount = [...new Set(clients.filter(c => c.status === 'PENDIENTE').map(c => c.agencia))].length;
 
         if (tab === 'inicio') {
             return `
@@ -8799,8 +8800,8 @@ const renderRFSection = (container) => {
                     <!-- Hoy Card -->
                     <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(2, 77, 189, 0.2);">
                         <span style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">HOY</span>
-                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${pendingCount}</span>
-                        <span style="font-size:0.65rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Pedidos para entrega</span>
+                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${pendingAgenciesCount}</span>
+                        <span style="font-size:0.65rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Agencias para entregar</span>
                         <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.15; user-select:none;">🚚</span>
                     </div>
 
@@ -8808,7 +8809,7 @@ const renderRFSection = (container) => {
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative;">
                         <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">ACUMULADO</span>
                         <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${totalCount}</span>
-                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos pendientes</span>
+                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos en total</span>
                         <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.05; user-select:none;">📋</span>
                     </div>
                 </div>
