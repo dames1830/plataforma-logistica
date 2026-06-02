@@ -8473,32 +8473,23 @@ const renderRFSection = (container) => {
         catalogData = getAreaData('no_retail_pedidos') || [];
     } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
-    // Parse Excel array of arrays if available, otherwise mock fallback
+    // Parse Excel array of arrays if available, otherwise empty
     let clientsData = [];
-    if (catalogData && catalogData.length > 1) {
-        const rows = catalogData.slice(1).filter(r => r && r.length >= 5 && r[4]);
+    if (catalogData && catalogData.length > 0) {
+        // If there are header rows skipped, catalogData[0] is the first row we get.
+        // We will process all rows that have data.
+        const rows = catalogData.filter(r => r && r.length >= 4); // Relaxed filter
         clientsData = rows.map((r, idx) => ({
             id: String(r[0] || `PED-${10000 + idx}`).trim(),
             pedido: String(r[0] || `PED-${10000 + idx}`).trim(),
-            clientName: String(r[2] || r[3] || `Cliente #${idx + 1}`).trim(),
-            agencia: String(r[4] || 'Agencia General').trim(),
+            clientName: String(r[3] || `Cliente #${idx + 1}`).trim(), // Column D
+            agencia: String(r[4] || 'Agencia General').trim(), // Column E
             address: String(r[5] || 'Dirección de Entrega').trim(),
             status: 'PENDIENTE',
             cobroFlete: 'NO',
             fotoCargo: null,
             fotoLocal: null
         }));
-    } else {
-        // High quality mock catalog orders matching Image 3
-        clientsData = [
-            { id: 'PED-98301', pedido: 'PED-98301', clientName: 'Distribuidora Santa Rosa', agencia: 'Agencia Sur Central', address: 'Calle Misti 450, Surquillo', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
-            { id: 'PED-98302', pedido: 'PED-98302', clientName: 'Tiendas Huaraz S.A.C.', agencia: 'Agencia Sur Central', address: 'Av. Paseo de la República 3200', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
-            { id: 'PED-98303', pedido: 'PED-98303', clientName: 'Inversiones Multi-Rutas', agencia: 'Agencia Sur Central', address: 'Jr. Carabaya 880, Cercado', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
-            { id: 'PED-98304', pedido: 'PED-98304', clientName: 'Comercializadora Norte', agencia: 'Agencia Norte Logística', address: 'Av. Túpac Amaru 1250, Comas', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
-            { id: 'PED-98305', pedido: 'PED-98305', clientName: 'Bodega El Golazo', agencia: 'Agencia Norte Logística', address: 'Jr. Trujillo 415, Rímac', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
-            { id: 'PED-98306', pedido: 'PED-98306', clientName: 'Market Bella Vista', agencia: 'Agencia Este Express', address: 'Av. La Molina 2300', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null },
-            { id: 'PED-98307', pedido: 'PED-98307', clientName: 'Ferretería El Progreso', agencia: 'Agencia Oeste Marítima', address: 'Av. Argentina 5050, Callao', status: 'PENDIENTE', cobroFlete: 'NO', fotoCargo: null, fotoLocal: null }
-        ];
     }
 
     // Dynamic reset when a new catalog is uploaded
