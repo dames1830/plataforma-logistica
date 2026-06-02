@@ -973,6 +973,20 @@ export const renderDashboard = async (container, user, onLogout) => {
   }
   let currentTab = allowedTabs[0]?.id;
 
+  const updateMobileDriverClass = () => {
+    const isMobile = window.innerWidth <= 768;
+    const activeSub = localStorage.getItem('activeSub_' + currentTab);
+    const isDriverView = (currentTab === 'despacho' && activeSub === 'chofer_despacho') || 
+                         (currentTab === 'no_retail' && activeSub === 'despacho_no_retail') ||
+                         (user.role === 'transporte' || user.role === 'chofer');
+    if (isMobile && isDriverView) {
+        document.body.classList.add('mobile-driver-active');
+    } else {
+        document.body.classList.remove('mobile-driver-active');
+    }
+  };
+  window.addEventListener('resize', updateMobileDriverClass);
+
   container.innerHTML = `
     <header class="topbar">
       <div class="topbar-brand">
@@ -1021,6 +1035,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderTabContent = async (silent = false) => {
+    updateMobileDriverClass();
     const tabObj = allowedTabs.find(t => t.id === currentTab);
     if (!tabObj) return; // Evitar crash
     const dateTag = currentDateFilter ? ` <span style="background:var(--warning); color:#000; padding:2px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;">Snapshot: ${currentDateFilter}</span>` : '';
@@ -7675,6 +7690,7 @@ const renderRFSection = (container) => {
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         const s = e.currentTarget.dataset.s;
         localStorage.setItem(`activeSub_${tabId}`, s);
+        updateMobileDriverClass();
         renderGenericAreaTab(tabId, subtitle);
     }));
 
@@ -8193,8 +8209,13 @@ const renderRFSection = (container) => {
         renderDespachoChoferPortal(container);
     };
 
+    const isMobile = window.innerWidth <= 768;
+    const isDriverRole = user.role === 'transporte' || user.role === 'chofer';
+    const hideFrame = isMobile || isDriverRole;
+
     container.innerHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; padding:1rem 0;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:100%; padding:${hideFrame ? '0' : '1rem 0'};">
+            ${hideFrame ? '' : `
             <!-- Simulation info -->
             <div style="max-width:380px; width:100%; text-align:center; color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem; line-height:1.4;">
                 <span style="color:#eab308; font-weight:800;">⚡ SIMULADOR DE TRANSPORTISTA 📲</span><br>
@@ -8208,9 +8229,18 @@ const renderRFSection = (container) => {
                     ${routes.map(r => `<option value="${r.id}" ${r.id === selectedDriverId ? 'selected' : ''}>${r.driver} (${r.id})</option>`).join('')}
                 </select>
             </div>
+            `}
 
-            <!-- Smartphone Mock Frame -->
-            <div style="
+            <!-- Smartphone Mock Frame / Mobile Direct Screen -->
+            <div style="${hideFrame ? `
+                width: 100%;
+                background: #0b1329;
+                padding: 1.25rem;
+                position: relative;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            ` : `
                 max-width: 380px;
                 width: 100%;
                 background: #0b1329;
@@ -8221,7 +8251,8 @@ const renderRFSection = (container) => {
                 position: relative;
                 overflow: hidden;
                 border-bottom-width: 14px;
-            ">
+            `}">
+                ${hideFrame ? '' : `
                 <!-- Status Bar -->
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.65rem; color:#64748b; font-weight:bold; margin-bottom:1rem;">
                     <div>12:45</div>
@@ -8231,6 +8262,7 @@ const renderRFSection = (container) => {
                         <span>🔋 88%</span>
                     </div>
                 </div>
+                `}
 
                 <!-- Driver App Header -->
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem; margin-bottom:1rem;">
