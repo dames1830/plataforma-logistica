@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.103';
+const VERSION = '26.5.104';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8461,6 +8461,68 @@ const renderRFSection = (container) => {
 
   
   
+  const fetchAndParseNoRetailClients = async () => {
+      let catalogData = [];
+      try {
+          const response = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail', { headers: { 'X-Environment': 'production' } });
+          if (response.ok) {
+              const serverResponse = await response.json();
+              catalogData = serverResponse.data || [];
+          }
+      } catch(e) { console.warn("No retail catalog loading failed:", e); }
+
+      let clientsData = [];
+
+      if (catalogData && catalogData.length > 0) {
+          const rows = catalogData;
+          const validRows = rows.filter(r => {
+              if (!r || !Array.isArray(r)) return false;
+              const hasData = r.some(cell => String(cell).trim() !== '');
+              if (!hasData) return false;
+              const cleanText = (str) => String(str || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/g, '');
+              const textAgencia = cleanText(r[4]);
+              if (textAgencia === 'AGENCIA') return false;
+              if (!String(r[6]).trim() && !String(r[4]).trim()) return false;
+              return true;
+          });
+
+          let cachedStatuses = {};
+          try {
+              const cacheRes = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
+              if (cacheRes.ok) {
+                  const serverCache = await cacheRes.json();
+                  cachedStatuses = serverCache.data || {};
+                  localStorage.setItem('nr_cache_v1', JSON.stringify(cachedStatuses));
+              } else {
+                  cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+              }
+          } catch(e) {
+              console.warn("Could not load tracking cache from server, using local storage fallback:", e);
+              cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+          }
+
+          clientsData = validRows.map((r, idx) => {
+              const id = String(r[0] || `PED-${10000 + idx}`).trim() + '-' + idx;
+              return {
+                  id,
+                  fecha: String(r[1] || 'Sin Fecha').trim(),
+                  pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
+                  clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(),
+                  agencia: String(r[4] || 'Agencia General').trim().toUpperCase(),
+                  address: String(r[5] || 'Dirección de Entrega').trim(),
+                  status: cachedStatuses[id]?.status || 'PENDIENTE',
+                  statusDate: cachedStatuses[id]?.date || null,
+                  liquidated: cachedStatuses[id]?.liquidated || false,
+                  cobroFlete: cachedStatuses[id]?.cobroFlete || 'NO',
+                  fotoCargo: cachedStatuses[id]?.fotoCargo || null,
+                  fotoLocal: cachedStatuses[id]?.fotoLocal || null
+              };
+          });
+      }
+      window._noRetailClients = clientsData;
+      return clientsData;
+  };
+
   const renderTrackingNoRetailPortal = async (container) => {
       let cache = {};
       try {
@@ -8475,6 +8537,10 @@ const renderRFSection = (container) => {
       } catch (e) {
           console.warn("Could not load tracking cache from server, using local storage fallback:", e);
           cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+      }
+
+      if (!window._noRetailClients || window._noRetailClients.length === 0) {
+          await fetchAndParseNoRetailClients();
       }
 
       let clients = window._noRetailClients || [];
@@ -8664,82 +8730,11 @@ const renderRFSection = (container) => {
         document.body.classList.remove('mobile-driver-active');
     }
 
-    let catalogData = [];
-    try {
-        const response = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail', { headers: { 'X-Environment': 'production' } });
-        if (response.ok) {
-            const serverResponse = await response.json();
-            catalogData = serverResponse.data || [];
-        }
-    } catch(e) { console.warn("No retail catalog loading failed:", e); }
-
-    // Parse Excel array of arrays if available, otherwise empty
-    let clientsData = [];
-
-    if (catalogData && catalogData.length > 0) {
-        // Toda la data después de saltar 8 filas es válida. No saltamos la fila 9.
-        const rows = catalogData;
-        
-        // Filtramos solo filas que estén completamente vacías o sean basura/cabecera
-        const validRows = rows.filter(r => {
-            if (!r || !Array.isArray(r)) return false;
-            
-            // Verificar si hay al menos algún dato en la fila
-            const hasData = r.some(cell => String(cell).trim() !== '');
-            if (!hasData) return false;
-
-            // Limpiamos los textos de posibles caracteres raros del excel
-            const cleanText = (str) => String(str || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/g, '');
-            
-            const textAgencia = cleanText(r[4]);
-            if (textAgencia === 'AGENCIA') return false; // Es la fila de cabecera
-            
-            // Si el pedido está vacío y la agencia está vacía, es una fila de resumen (ej. Total Monto)
-            if (!String(r[6]).trim() && !String(r[4]).trim()) return false;
-            
-            return true;
-        });
-
-        let cachedStatuses = {};
-        try {
-            const cacheRes = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
-            if (cacheRes.ok) {
-                const serverCache = await cacheRes.json();
-                cachedStatuses = serverCache.data || {};
-                localStorage.setItem('nr_cache_v1', JSON.stringify(cachedStatuses));
-            } else {
-                cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-            }
-        } catch(e) {
-            console.warn("Could not load tracking cache from server, using local storage fallback:", e);
-            cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-        }
-
-        clientsData = validRows.map((r, idx) => {
-            const id = String(r[0] || `PED-${10000 + idx}`).trim() + '-' + idx;
-            return {
-                id,
-                fecha: String(r[1] || 'Sin Fecha').trim(),
-                pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
-                clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(), // Column D
-                agencia: String(r[4] || 'Agencia General').trim().toUpperCase(), // Column E
-                address: String(r[5] || 'Dirección de Entrega').trim(),
-                status: cachedStatuses[id]?.status || 'PENDIENTE',
-                statusDate: cachedStatuses[id]?.date || null,
-                liquidated: cachedStatuses[id]?.liquidated || false,
-                cobroFlete: cachedStatuses[id]?.cobroFlete || 'NO',
-                fotoCargo: cachedStatuses[id]?.fotoCargo || null,
-                fotoLocal: cachedStatuses[id]?.fotoLocal || null
-            };
-        });
-    }
+    const clientsData = await fetchAndParseNoRetailClients();
 
     // Remove old debug div if exists
     const oldDebug = document.getElementById('nr_debug_floater');
     if (oldDebug) oldDebug.remove();
-
-    // Siempre usamos la data fresca (ya sea de IndexedDB en desktop o del fetch directo en celular)
-    window._noRetailClients = clientsData;
 
     if (!window._noRetailActiveTab) window._noRetailActiveTab = 'inicio';
     if (!window._noRetailSearchQuery) window._noRetailSearchQuery = '';
@@ -8828,7 +8823,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.103 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.104 | MOBILE PORTAL
                         </div>
                     </div>
 
