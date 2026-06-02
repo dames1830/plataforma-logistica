@@ -8470,7 +8470,11 @@ const renderRFSection = (container) => {
 
     let catalogData = [];
     try {
-        catalogData = (await getAreaData('no_retail')) || [];
+        const response = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail', { headers: { 'X-Environment': 'production' } });
+        if (response.ok) {
+            const serverResponse = await response.json();
+            catalogData = serverResponse.data || [];
+        }
     } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
     // Parse Excel array of arrays if available, otherwise empty
@@ -8504,21 +8508,8 @@ const renderRFSection = (container) => {
     const oldDebug = document.getElementById('nr_debug_floater');
     if (oldDebug) oldDebug.remove();
 
-    // Dynamic reset when a new catalog is uploaded
-    if (catalogData && catalogData.length > 0) {
-        const fileKey = 'no_retail_file_ts';
-        const lastTs = localStorage.getItem(fileKey);
-        const meta = getUploadMeta('no_retail');
-        const currentTs = meta ? meta.ts : '';
-        if (currentTs && lastTs !== String(currentTs)) {
-            window._noRetailClients = clientsData;
-            localStorage.setItem(fileKey, String(currentTs));
-        }
-    }
-
-    if (!window._noRetailClients) {
-        window._noRetailClients = clientsData;
-    }
+    // Siempre usamos la data fresca (ya sea de IndexedDB en desktop o del fetch directo en celular)
+    window._noRetailClients = clientsData;
 
     if (!window._noRetailActiveTab) window._noRetailActiveTab = 'inicio';
     if (!window._noRetailSearchQuery) window._noRetailSearchQuery = '';
