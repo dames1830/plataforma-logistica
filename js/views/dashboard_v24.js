@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.60';
+const VERSION = '26.5.61';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8212,8 +8212,18 @@ const renderRFSection = (container) => {
     const isMobile = window.innerWidth <= 768;
     const isDriverRole = user.role === 'transporte' || user.role === 'chofer';
     const hideFrame = isMobile || isDriverRole;
+    const showBackToOffice = hideFrame && !isDriverRole;
 
     container.innerHTML = `
+        ${showBackToOffice ? `
+        <!-- Simulation back to office bar for admin testing -->
+        <div style="background: rgba(15,23,42,0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+            <span style="font-size:0.65rem; color:#f59e0b; font-weight:800; letter-spacing:0.5px;">📲 VISTA CHOFER (SIMULADO)</span>
+            <button id="btn_back_to_office" style="background:#4f46e5; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
+                🏢 VOLVER A OFICINA
+            </button>
+        </div>
+        ` : ''}
         <div style="display:flex; flex-direction:column; align-items:center; width:100%; padding:${hideFrame ? '0' : '1rem 0'};">
             ${hideFrame ? '' : `
             <!-- Simulation info -->
@@ -8345,6 +8355,14 @@ const renderRFSection = (container) => {
             </div>
         </div>
     `;
+
+    // Return to office simulator button
+    document.getElementById('btn_back_to_office')?.addEventListener('click', () => {
+        const targetSub = currentTab === 'no_retail' ? 'archivo_no_retail' : 'archivo_despacho';
+        localStorage.setItem(`activeSub_${currentTab}`, targetSub);
+        updateMobileDriverClass();
+        renderTabContent();
+    });
 
     // Listen to driver selector
     document.getElementById('driver_selector')?.addEventListener('change', (e) => {
