@@ -8504,17 +8504,22 @@ const renderRFSection = (container) => {
             return true;
         });
 
-        clientsData = validRows.map((r, idx) => ({
-            id: String(r[0] || `PED-${10000 + idx}`).trim() + '-' + idx,
-            pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
-            clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(), // Column D
-            agencia: String(r[4] || 'Agencia General').trim().toUpperCase(), // Column E
-            address: String(r[5] || 'Dirección de Entrega').trim(),
-            status: 'PENDIENTE',
-            cobroFlete: 'NO',
-            fotoCargo: null,
-            fotoLocal: null
-        }));
+        const cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+        clientsData = validRows.map((r, idx) => {
+            const id = String(r[0] || `PED-${10000 + idx}`).trim() + '-' + idx;
+            return {
+                id,
+                pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
+                clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(), // Column D
+                agencia: String(r[4] || 'Agencia General').trim().toUpperCase(), // Column E
+                address: String(r[5] || 'Dirección de Entrega').trim(),
+                status: cachedStatuses[id]?.status || 'PENDIENTE',
+                statusDate: cachedStatuses[id]?.date || null,
+                cobroFlete: 'NO',
+                fotoCargo: null,
+                fotoLocal: null
+            };
+        });
     }
 
     // Remove old debug div if exists
@@ -8594,10 +8599,13 @@ const renderRFSection = (container) => {
                         <div style="display:flex; align-items:center; gap:0.8rem;">
                             <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">☰</span>
                             <span style="font-size:1.1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
-                                ${activeTab === 'inicio' ? 'Deam1830' : 'Logistics Pro'}
+                                Deam1830
                             </span>
                         </div>
-                        <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
+                        <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;">
+                            <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
+                            <input type="date" id="nr_date_filter" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+                        </div>
                     </div>
 
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
@@ -8737,10 +8745,27 @@ const renderRFSection = (container) => {
                 const c = window._noRetailClients.find(x => x.id === cId);
                 if (c) {
                     c.status = status;
+                    c.statusDate = new Date().toISOString();
+                    const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                    cache[c.id] = { status: c.status, date: c.statusDate };
+                    localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
                     refreshNoRetailUI();
                 }
             });
         });
+        
+        // Date filter
+        const dateInput = document.getElementById('nr_date_filter');
+        if (dateInput) {
+            if (window._noRetailHistorialDate) dateInput.value = window._noRetailHistorialDate;
+            dateInput.addEventListener('change', (e) => {
+                window._noRetailHistorialDate = e.target.value;
+                if (window._noRetailActiveTab !== 'historial') {
+                    window._noRetailActiveTab = 'historial';
+                }
+                refreshNoRetailUI();
+            });
+        }
 
         // Photo file input change handlers
         document.querySelectorAll('.nr-photo-input').forEach(input => {
@@ -8832,87 +8857,84 @@ const renderRFSection = (container) => {
         }
 
         if (tab === 'historial') {
-            // Group dynamically by Week -> Day -> Agency -> Clients
-            const grouped = {
-                'Semana 23 (Junio 2026)': {
-                    'Martes, 2 de Junio': {}
-                }
-            };
+            const filterDate = window._noRetailHistorialDate;
+            const now = new Date();
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(now.getDate() - 7);
+            
+            // Filter clients
+            const validStatuses = ['ATENDIDO', 'NO ATENDIDO', 'REPROGRAMAR'];
+            const historyClients = clients.filter(c => validStatuses.includes(c.status) && c.statusDate);
 
-            clients.forEach(c => {
-                const dayGroup = grouped['Semana 23 (Junio 2026)']['Martes, 2 de Junio'];
-                if (!dayGroup[c.agencia]) {
-                    dayGroup[c.agencia] = [];
+            // Group dynamically by Day -> Agency -> Clients
+            const grouped = {};
+            
+            historyClients.forEach(c => {
+                const cDate = new Date(c.statusDate);
+                let include = false;
+                if (filterDate) {
+                    const fD = new Date(filterDate + 'T00:00:00');
+                    if (cDate.getFullYear() === fD.getFullYear() && cDate.getMonth() === fD.getMonth() && cDate.getDate() === fD.getDate()) {
+                        include = true;
+                    }
+                } else {
+                    if (cDate >= sevenDaysAgo) {
+                        include = true;
+                    }
                 }
-                dayGroup[c.agencia].push(c);
+
+                if (include) {
+                    const dayStr = cDate.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const capDay = dayStr.charAt(0).toUpperCase() + dayStr.slice(1);
+                    if (!grouped[capDay]) grouped[capDay] = {};
+                    if (!grouped[capDay][c.agencia]) grouped[capDay][c.agencia] = [];
+                    grouped[capDay][c.agencia].push(c);
+                }
             });
 
             return `
                 <div style="position:relative; margin-bottom:1.5rem;">
                     <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; color:rgba(255,255,255,0.3);">🔍</span>
-                    <input type="text" id="nr_search_input" placeholder="Buscar por fecha o agencia" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; padding:0.65rem 0.65rem 0.65rem 2.2rem; font-size:0.8rem; outline:none; box-sizing:border-box;">
+                    <input type="text" id="nr_search_input" placeholder="Buscar por fecha o agencia" value="${window._noRetailSearchQuery || ''}" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; padding:0.65rem 0.65rem 0.65rem 2.2rem; font-size:0.8rem; outline:none; box-sizing:border-box;">
                 </div>
 
-                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">HISTORIAL DE ACTIVIDAD</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">
+                    HISTORIAL DE ACTIVIDAD ${filterDate ? `(Filtrado: ${filterDate})` : '(Últimos 7 días)'}
+                </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;" id="nr_history_accordion_list">
-                    ${Object.entries(grouped).map(([week, days]) => `
+                    ${Object.keys(grouped).length === 0 ? `<div style="text-align:center; color:rgba(255,255,255,0.4); font-size:0.8rem; padding: 2rem 0;">No hay registros para este periodo.</div>` : ''}
+                    ${Object.entries(grouped).map(([day, agencies]) => `
                         <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden; margin-bottom:0.5rem;">
                             <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
                                 <div>
-                                    <div style="font-size:0.85rem; font-weight:800; color:#fff;">${week}</div>
-                                    <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Resumen semanal de entregas</div>
+                                    <div style="font-size:0.85rem; font-weight:800; color:#fff;">${day}</div>
                                 </div>
                                 <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
                             </div>
                             <div class="nr-accordion-body" style="display:none; padding:0.5rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
-                                ${Object.entries(days).map(([day, agencies]) => `
-                                    <div style="margin-top:0.4rem; margin-bottom:0.8rem;">
-                                        <div style="font-size:0.75rem; font-weight:800; color:var(--primary); margin-bottom:0.3rem;">📆 ${day}</div>
+                                ${Object.entries(agencies).map(([agency, cList]) => `
+                                    <div style="margin-left:0.5rem; margin-bottom:0.6rem; border-left:2px solid rgba(255,255,255,0.05); padding-left:0.6rem;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
+                                            <span>🏢 ${agency}</span>
+                                            <span style="color:var(--text-muted);">${cList.length} Clientes</span>
+                                        </div>
                                         
-                                        ${Object.entries(agencies).map(([agency, cList]) => `
-                                            <div style="margin-left:0.5rem; margin-bottom:0.6rem; border-left:2px solid rgba(255,255,255,0.05); padding-left:0.6rem;">
-                                                <div style="font-size:0.7rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
-                                                    <span>🏢 ${agency}</span>
-                                                    <span style="color:var(--text-muted);">${cList.length} Clientes</span>
+                                        <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
+                                            ${cList.map(c => `
+                                                <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+                                                    <span>👤 ${c.clientName} (${c.pedido})</span>
+                                                    <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
+                                                        ${c.status}
+                                                    </span>
                                                 </div>
-                                                
-                                                <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
-                                                    ${cList.map(c => `
-                                                        <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between;">
-                                                            <span>👤 ${c.clientName} (${c.pedido})</span>
-                                                            <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
-                                                                ${c.status}
-                                                            </span>
-                                                        </div>
-                                                    `).join('')}
-                                                </div>
-                                            </div>
-                                        `).join('')}
+                                            `).join('')}
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
                     `).join('')}
-                </div>
-
-                <!-- Bottom Stats Grid -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
-                    <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; box-shadow:0 4px 15px rgba(2, 77, 189, 0.2);">
-                        <span style="font-size:1.4rem; margin-bottom:0.2rem;">📈</span>
-                        <span style="font-size:0.6rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">EFICIENCIA</span>
-                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">
-                            ${Math.round(((totalCount - pendingCount) / (totalCount || 1)) * 100)}%
-                        </span>
-                    </div>
-
-                    <div style="background:rgba(2,77,189,0.08); border:1px solid rgba(2,77,189,0.2); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column;">
-                        <span style="font-size:1.4rem; margin-bottom:0.2rem; color:#60a5fa;">🛡️</span>
-                        <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">COMPLETADOS</span>
-                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">
-                            ${totalCount - pendingCount}
-                        </span>
-                    </div>
                 </div>
             `;
         }
