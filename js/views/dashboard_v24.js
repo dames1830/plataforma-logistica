@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.107';
+const VERSION = '26.5.108';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8526,6 +8526,37 @@ const renderRFSection = (container) => {
       return clientsData;
   };
 
+  const openImageModal = (src, title = 'Visualización de Imagen') => {
+      const backdrop = document.createElement('div');
+      backdrop.style.position = 'fixed';
+      backdrop.style.top = '0';
+      backdrop.style.left = '0';
+      backdrop.style.width = '100vw';
+      backdrop.style.height = '100vh';
+      backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.85)';
+      backdrop.style.backdropFilter = 'blur(10px)';
+      backdrop.style.display = 'flex';
+      backdrop.style.justifyContent = 'center';
+      backdrop.style.alignItems = 'center';
+      backdrop.style.zIndex = '99999';
+
+      backdrop.innerHTML = `
+          <div class="glass-panel" style="width:90%; max-width:600px; padding:1.5rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.98) 100%); position:relative;">
+              <button id="close_image_modal" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+              
+              <h4 style="margin:0 0 1rem 0; font-weight:900; color:#fff; font-size: 1rem; text-align: center;">${title}</h4>
+              
+              <div style="border-radius:12px; background:rgba(0,0,0,0.4); overflow:hidden; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:center; align-items:center; max-height: 60vh;">
+                  <img src="${src}" style="max-width:100%; max-height:60vh; object-fit:contain;" />
+              </div>
+          </div>
+      `;
+
+      document.body.appendChild(backdrop);
+      document.getElementById('close_image_modal').onclick = () => backdrop.remove();
+      backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
+  };
+
   const renderTrackingNoRetailPortal = async (container) => {
       let cache = {};
       try {
@@ -8616,18 +8647,23 @@ const renderRFSection = (container) => {
                   </button>
               </div>
               
-              <div style="display:flex; gap:1rem; align-items:center; background:rgba(255,255,255,0.02); padding:0.5rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-                  <div style="display:flex; align-items:center; gap:0.5rem;">
-                      <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">De:</span>
-                      <input type="date" id="tracking_desde" value="${dateDesde}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <div style="display:flex; gap:1rem; align-items:center; background:rgba(255,255,255,0.02); padding:0.5rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+                      <div style="display:flex; align-items:center; gap:0.5rem;">
+                          <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
+                          <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">De:</span>
+                          <input type="date" id="tracking_desde" value="${dateDesde}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+                      </div>
+                      <div style="width:1px; height:20px; background:rgba(255,255,255,0.1);"></div>
+                      <div style="display:flex; align-items:center; gap:0.5rem;">
+                          <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
+                          <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">Hasta:</span>
+                          <input type="date" id="tracking_hasta" value="${dateHasta}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+                      </div>
                   </div>
-                  <div style="width:1px; height:20px; background:rgba(255,255,255,0.1);"></div>
-                  <div style="display:flex; align-items:center; gap:0.5rem;">
-                      <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">Hasta:</span>
-                      <input type="date" id="tracking_hasta" value="${dateHasta}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
-                  </div>
+                  <button id="btn_sync_tracking" style="background:#4f46e5; color:white; border:none; padding:0.5rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; height: 38px; width: 38px;" title="Sincronizar de Servidor">
+                      <i class="fas fa-sync-alt"></i>
+                  </button>
               </div>
           </div>
           
@@ -8671,8 +8707,8 @@ const renderRFSection = (container) => {
                               </td>
                               <td style="padding:1rem; text-align:center;">
                                   <div style="display:flex; justify-content:center; gap:0.5rem;">
-                                      ${c.fotoCargo ? `<a href="${c.fotoCargo}" target="_blank" title="Foto Cargo"><img src="${c.fotoCargo}" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;"></a>` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo"><i class="fas fa-camera"></i></div>'}
-                                      ${c.fotoLocal ? `<a href="${c.fotoLocal}" target="_blank" title="Foto Fachada"><img src="${c.fotoLocal}" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;"></a>` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada"><i class="fas fa-camera"></i></div>'}
+                                      ${c.fotoCargo ? `<img src="${c.fotoCargo}" class="btn-preview-tracking-photo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Cargo">` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo"><i class="fas fa-camera"></i></div>'}
+                                      ${c.fotoLocal ? `<img src="${c.fotoLocal}" class="btn-preview-tracking-photo" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Fachada">` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada"><i class="fas fa-camera"></i></div>'}
                                   </div>
                               </td>
                           </tr>
@@ -8708,6 +8744,17 @@ const renderRFSection = (container) => {
           window._trackingFilterHasta = e.target.value;
           window._trackingPage = 0; // Reset page on filter
           renderTrackingNoRetailPortal(container);
+      });
+      
+      document.getElementById('btn_sync_tracking')?.addEventListener('click', async () => {
+          window._noRetailClients = null;
+          await renderTrackingNoRetailPortal(container);
+      });
+
+      container.querySelectorAll('.btn-preview-tracking-photo').forEach(img => {
+          img.addEventListener('click', () => {
+              openImageModal(img.src, img.getAttribute('data-title'));
+          });
       });
       
       document.getElementById('btn_track_prev')?.addEventListener('click', () => {
@@ -8829,7 +8876,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.107 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.108 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -9140,27 +9187,43 @@ const renderRFSection = (container) => {
         const clients = window._noRetailClients || [];
         const pendingAgenciesCount = [...new Set(clients.filter(c => c.status === 'PENDIENTE').map(c => c.agencia))].length;
 
+        const countRealPedidos = (arr) => arr.reduce((acc, c) => {
+            const pStr = String(c.pedido || '').trim();
+            if (!pStr) return acc + 1;
+            const count = pStr.split(';').map(s => s.trim()).filter(s => s).length;
+            return acc + (count > 0 ? count : 1);
+        }, 0);
+        const liquidatedCount = countRealPedidos(clients.filter(c => c.status !== 'PENDIENTE'));
+
         if (tab === 'inicio') {
             return `
                 <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem;">Panel de Control</div>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">${dateStr}</div>
 
-                <!-- Stats Grid (Hoy vs Acumulado) - Only these two cards rendered -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
+                <!-- Stats Grid (Hoy vs Liquidados vs Total) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.6rem; margin-bottom:1.5rem;">
                     <!-- Hoy Card -->
-                    <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(2, 77, 189, 0.2);">
-                        <span style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">HOY</span>
-                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${pendingAgenciesCount}</span>
-                        <span style="font-size:0.65rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Agencias para entregar</span>
-                        <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.15; user-select:none;">🚚</span>
+                    <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(2, 77, 189, 0.2);">
+                        <span style="font-size:0.55rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">HOY (PEND.)</span>
+                        <span style="font-size:1.8rem; font-weight:900; color:#fff; line-height:1; margin: 0.2rem 0;">${pendingAgenciesCount}</span>
+                        <span style="font-size:0.55rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Agencias</span>
+                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">🚚</span>
+                    </div>
+
+                    <!-- Liquidados Card -->
+                    <div style="background:linear-gradient(135deg, #10b981 0%, #047857 100%); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);">
+                        <span style="font-size:0.55rem; color:#a7f3d0; font-weight:800; letter-spacing:0.5px;">LIQUIDADOS</span>
+                        <span style="font-size:1.8rem; font-weight:900; color:#fff; line-height:1; margin: 0.2rem 0;">${liquidatedCount}</span>
+                        <span style="font-size:0.55rem; color:#d1fae5; font-weight:600; line-height:1.2;">Firmados</span>
+                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">✍️</span>
                     </div>
 
                     <!-- Acumulado Card -->
-                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative;">
-                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">ACUMULADO</span>
-                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">${totalCount}</span>
-                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos en total</span>
-                        <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.05; user-select:none;">📋</span>
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative;">
+                        <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">TOTAL</span>
+                        <span style="font-size:1.8rem; font-weight:900; color:#fff; line-height:1; margin: 0.2rem 0;">${totalCount}</span>
+                        <span style="font-size:0.55rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos</span>
+                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.05; user-select:none;">📋</span>
                     </div>
                 </div>
             `;
