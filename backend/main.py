@@ -193,13 +193,32 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
-        """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        conn.commit(); conn.close()
+        if area == 'no_retail_cache' and isinstance(payload_data, dict):
+            conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+            cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = 'no_retail_cache' AND snapshot_date = 'MASTER'")
+            row = cursor.fetchone()
+            existing_cache = {}
+            if row:
+                try:
+                    existing_cache = json.loads(row[0])
+                except Exception:
+                    existing_cache = {}
+            existing_cache.update(payload_data)
+            json_string = json.dumps(existing_cache)
+            cursor.execute("""
+                INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
+            """, (area, "MASTER", json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit(); conn.close()
+        else:
+            conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
+            """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit(); conn.close()
 
         # [MOD v25.1.28] Sincronización explícita con la tabla 'users' para mantener el login operativo
         if area == 'users' and isinstance(payload_data, list):

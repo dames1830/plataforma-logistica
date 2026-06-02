@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.104';
+const VERSION = '26.5.105';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8823,7 +8823,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.104 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.105 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -9076,11 +9076,22 @@ const renderRFSection = (container) => {
                          }
                     }
 
-                    // Push tracking updates to backend server
+                    // Construct delta for the current client to keep request payload small
+                    const delta = {};
+                    delta[c.id] = { 
+                        status: c.status, 
+                        date: c.statusDate, 
+                        liquidated: true,
+                        cobroFlete: c.cobroFlete,
+                        fotoCargo: c.fotoCargo,
+                        fotoLocal: c.fotoLocal
+                    };
+
+                    // Push tracking updates to backend server (delta merge on backend)
                     fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
                          method: 'POST',
                          headers: { 'Content-Type': 'application/json' },
-                         body: JSON.stringify(finalCache)
+                         body: JSON.stringify(delta)
                     })
                     .then(res => {
                          if (!res.ok) console.error("Server cache sync failed:", res.statusText);
