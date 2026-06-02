@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.102';
+const VERSION = '26.5.103';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8462,9 +8462,22 @@ const renderRFSection = (container) => {
   
   
   const renderTrackingNoRetailPortal = async (container) => {
+      let cache = {};
+      try {
+          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
+          if (res.ok) {
+              const serverData = await res.json();
+              cache = serverData.data || {};
+              localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+          } else {
+              cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+          }
+      } catch (e) {
+          console.warn("Could not load tracking cache from server, using local storage fallback:", e);
+          cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+      }
+
       let clients = window._noRetailClients || [];
-      const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-      
       clients = clients.map(c => {
           if(cache[c.id]) {
               return { ...c, ...cache[c.id] };
@@ -8687,7 +8700,21 @@ const renderRFSection = (container) => {
             return true;
         });
 
-        const cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+        let cachedStatuses = {};
+        try {
+            const cacheRes = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
+            if (cacheRes.ok) {
+                const serverCache = await cacheRes.json();
+                cachedStatuses = serverCache.data || {};
+                localStorage.setItem('nr_cache_v1', JSON.stringify(cachedStatuses));
+            } else {
+                cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+            }
+        } catch(e) {
+            console.warn("Could not load tracking cache from server, using local storage fallback:", e);
+            cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+        }
+
         clientsData = validRows.map((r, idx) => {
             const id = String(r[0] || `PED-${10000 + idx}`).trim() + '-' + idx;
             return {
@@ -8801,7 +8828,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.102 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.103 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -8966,8 +8993,8 @@ const renderRFSection = (container) => {
                         img.onload = () => {
                             // Compress image using canvas
                             const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 600;
-                            const MAX_HEIGHT = 600;
+                            const MAX_WIDTH = 1024;
+                            const MAX_HEIGHT = 1024;
                             let width = img.width;
                             let height = img.height;
                             
@@ -8987,8 +9014,8 @@ const renderRFSection = (container) => {
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             
-                            // Convert to jpeg with 0.6 quality to compress size to ~30-50KB
-                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                            // Convert to jpeg with 0.7 quality for sharp readability (~70-120KB)
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                             
                             const c = window._noRetailClients.find(x => x.id === cId);
                             if (c) {
@@ -9024,32 +9051,46 @@ const renderRFSection = (container) => {
                     c.statusDate = new Date().toISOString();
                     c.liquidated = true;
                     
+                    let finalCache = {};
                     try {
-                        const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                        cache[c.id] = { 
-                            status: c.status, 
-                            date: c.statusDate, 
-                            liquidated: true,
-                            cobroFlete: c.cobroFlete,
-                            fotoCargo: c.fotoCargo,
-                            fotoLocal: c.fotoLocal
-                        };
-                        localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                         const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                         cache[c.id] = { 
+                             status: c.status, 
+                             date: c.statusDate, 
+                             liquidated: true,
+                             cobroFlete: c.cobroFlete,
+                             fotoCargo: c.fotoCargo,
+                             fotoLocal: c.fotoLocal
+                         };
+                         localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                         finalCache = cache;
                     } catch(err) {
-                        console.error("Cache storage limit reached, saving without photos:", err);
-                        try {
-                            const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                            cache[c.id] = { 
-                                status: c.status, 
-                                date: c.statusDate, 
-                                liquidated: true,
-                                cobroFlete: c.cobroFlete
-                            };
-                            localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
-                        } catch(err2) {
-                            console.error("Could not write even status to localStorage:", err2);
-                        }
+                         console.error("Cache storage limit reached, saving without photos in local storage:", err);
+                         try {
+                             const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                             cache[c.id] = { 
+                                 status: c.status, 
+                                 date: c.statusDate, 
+                                 liquidated: true,
+                                 cobroFlete: c.cobroFlete
+                             };
+                             localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                             finalCache = cache;
+                         } catch(err2) {
+                             console.error("Could not write even status to localStorage:", err2);
+                         }
                     }
+
+                    // Push tracking updates to backend server
+                    fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(finalCache)
+                    })
+                    .then(res => {
+                         if (!res.ok) console.error("Server cache sync failed:", res.statusText);
+                    })
+                    .catch(err => console.error("Sync to server failed:", err));
                     
                     showPremiumAlert('CLIENTE LIQUIDADO', `El cliente ${c.clientName} ha sido liquidado correctamente.`, 'success');
                     refreshNoRetailUI();
