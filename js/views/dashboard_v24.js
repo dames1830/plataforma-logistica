@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.72';
+const VERSION = '26.5.73';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8496,7 +8496,17 @@ const renderRFSection = (container) => {
   };
 
   const renderDespachoNoRetailPortal = async (container) => {
-    document.body.classList.add('mobile-driver-active');
+    const isMobile = window.innerWidth <= 768;
+    const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
+                         ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
+    const hideFrame = isMobile || isDriverRole;
+    const showBackToOffice = hideFrame && !isDriverRole;
+
+    if (hideFrame) {
+        document.body.classList.add('mobile-driver-active');
+    } else {
+        document.body.classList.remove('mobile-driver-active');
+    }
 
     let catalogData = [];
     try {
@@ -8551,84 +8561,129 @@ const renderRFSection = (container) => {
         const capitalizedToday = today.charAt(0).toUpperCase() + today.slice(1);
 
         container.innerHTML = `
-            <div style="background: #0b1329; min-height: 100vh; color: #fff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; width:100%; position:relative; overflow-x:hidden;">
-                <div style="display:flex; justify-content:space-between; align-items:center; padding: 1.2rem 1.5rem 0.6rem; background:#0b1329; position:sticky; top:0; z-index:1000; border-bottom:1px solid rgba(255,255,255,0.03);">
-                    <div style="display:flex; align-items:center; gap:0.8rem;">
-                        <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">☰</span>
-                        <span style="font-size:1.1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
-                            ${activeTab === 'inicio' ? 'Deam1830' : 'Logistics Pro'}
-                        </span>
-                    </div>
-                    <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
-                </div>
+            ${showBackToOffice ? `
+            <!-- Simulation back to office bar for admin testing -->
+            <div style="background: rgba(15,23,42,0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+                <span style="font-size:0.65rem; color:#f59e0b; font-weight:800; letter-spacing:0.5px;">📲 VISTA PORTAL MÓVIL NO RETAIL</span>
+                <button id="btn_back_to_office" style="background:#4f46e5; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
+                    🏢 VOLVER A OFICINA
+                </button>
+            </div>
+            ` : ''}
 
-                <div style="flex-grow:1; padding: 1.25rem; padding-bottom: 5.5rem;" id="nr_content_wrapper">
-                    ${renderActiveTabContent(activeTab, capitalizedToday, dynamicAgencies)}
-                    <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.6rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                        SYSTEM BUILD: v26.5.72 | MOBILE PORTAL
-                    </div>
+            <div style="display:flex; flex-direction:column; align-items:center; width:100%; padding:${hideFrame ? '0' : '1rem 0'};">
+                ${hideFrame ? '' : `
+                <!-- Simulation info -->
+                <div style="max-width:380px; width:100%; text-align:center; color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem; line-height:1.4;">
+                    <span style="color:#eab308; font-weight:800;">⚡ PORTAL MÓVIL NO RETAIL 📲</span><br>
+                    Usa este portal móvil para actuar como transportista. Los cambios realizados aquí se verán reflejados de inmediato.
                 </div>
+                `}
 
-                <div style="
-                    position: fixed;
-                    bottom: 0;
-                    left: 0;
+                <!-- Smartphone Mock Frame / Mobile Direct Screen -->
+                <div style="${hideFrame ? `
                     width: 100%;
-                    background: rgba(15, 23, 42, 0.95);
-                    backdrop-filter: blur(16px);
-                    border-top: 1.5px solid rgba(255, 255, 255, 0.08);
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr;
-                    padding: 0.6rem 0.5rem;
-                    z-index: 10010;
-                    box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
-                ">
-                    <div class="nr-nav-item" data-tab="inicio" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'inicio' ? 1 : 0.4};">
-                        <div style="
-                            background: ${activeTab === 'inicio' ? 'var(--primary)' : 'transparent'};
-                            width: ${activeTab === 'inicio' ? '46px' : 'auto'};
-                            height: 28px;
-                            border-radius: 14px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        ">
-                            <span style="font-size:1.2rem; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">🏠</span>
+                    background: #0b1329;
+                    position: relative;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                ` : `
+                    max-width: 380px;
+                    width: 100%;
+                    background: #0b1329;
+                    border: 10px solid #1e293b;
+                    border-radius: 36px;
+                    padding: 1.25rem 1rem;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+                    position: relative;
+                    overflow: hidden;
+                    border-bottom-width: 14px;
+                    display: flex;
+                    flex-direction: column;
+                    min-height: 720px;
+                `}">
+                    
+                    <!-- Top Bar of portal -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.2rem 0.5rem 0.6rem; background:#0b1329; border-bottom:1px solid rgba(255,255,255,0.03); margin-bottom:0.5rem;">
+                        <div style="display:flex; align-items:center; gap:0.8rem;">
+                            <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">☰</span>
+                            <span style="font-size:1.1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
+                                ${activeTab === 'inicio' ? 'Deam1830' : 'Logistics Pro'}
+                            </span>
                         </div>
-                        <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">Inicio</span>
+                        <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
                     </div>
 
-                    <div class="nr-nav-item" data-tab="historial" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'historial' ? 1 : 0.4};">
-                        <div style="
-                            background: ${activeTab === 'historial' ? 'var(--primary)' : 'transparent'};
-                            width: ${activeTab === 'historial' ? '46px' : 'auto'};
-                            height: 28px;
-                            border-radius: 14px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        ">
-                            <span style="font-size:1.2rem; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">🔄</span>
+                    <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4rem;" id="nr_content_wrapper">
+                        ${renderActiveTabContent(activeTab, capitalizedToday, dynamicAgencies)}
+                        <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
+                            SYSTEM BUILD: v26.5.73 | MOBILE PORTAL
                         </div>
-                        <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">Historial</span>
                     </div>
 
-                    <div class="nr-nav-item" data-tab="en_ruta" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'en_ruta' ? 1 : 0.4};">
-                        <div style="
-                            background: ${activeTab === 'en_ruta' ? 'var(--primary)' : 'transparent'};
-                            width: ${activeTab === 'en_ruta' ? '46px' : 'auto'};
-                            height: 28px;
-                            border-radius: 14px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        ">
-                            <span style="font-size:1.2rem; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">🚚</span>
+                    <!-- Glass Bottom Bar Navigation inside phone mockup -->
+                    <div style="
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        width: 100%;
+                        background: rgba(15, 23, 42, 0.95);
+                        backdrop-filter: blur(16px);
+                        border-top: 1.5px solid rgba(255, 255, 255, 0.08);
+                        display: grid;
+                        grid-template-columns: 1fr 1fr 1fr;
+                        padding: 0.6rem 0.5rem;
+                        z-index: 10010;
+                        box-sizing: border-box;
+                    ">
+                        <div class="nr-nav-item" data-tab="inicio" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'inicio' ? 1 : 0.4};">
+                            <div style="
+                                background: ${activeTab === 'inicio' ? 'var(--primary)' : 'transparent'};
+                                width: ${activeTab === 'inicio' ? '46px' : 'auto'};
+                                height: 28px;
+                                border-radius: 14px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            ">
+                                <span style="font-size:1.2rem; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">🏠</span>
+                            </div>
+                            <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">Inicio</span>
                         </div>
-                        <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">En Ruta</span>
+
+                        <div class="nr-nav-item" data-tab="historial" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'historial' ? 1 : 0.4};">
+                            <div style="
+                                background: ${activeTab === 'historial' ? 'var(--primary)' : 'transparent'};
+                                width: ${activeTab === 'historial' ? '46px' : 'auto'};
+                                height: 28px;
+                                border-radius: 14px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            ">
+                                <span style="font-size:1.2rem; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">🔄</span>
+                            </div>
+                            <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">Historial</span>
+                        </div>
+
+                        <div class="nr-nav-item" data-tab="en_ruta" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'en_ruta' ? 1 : 0.4};">
+                            <div style="
+                                background: ${activeTab === 'en_ruta' ? 'var(--primary)' : 'transparent'};
+                                width: ${activeTab === 'en_ruta' ? '46px' : 'auto'};
+                                height: 28px;
+                                border-radius: 14px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            ">
+                                <span style="font-size:1.2rem; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">🚚</span>
+                            </div>
+                            <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">En Ruta</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -8668,6 +8723,13 @@ const renderRFSection = (container) => {
             btn.addEventListener('click', (e) => {
                 showPremiumAlert('LIQUIDACIÓN INICIADA', `Se ha iniciado el proceso de liquidación de despachos para: ${e.currentTarget.dataset.agency}`, 'success');
             });
+        });
+
+        document.getElementById('btn_back_to_office')?.addEventListener('click', () => {
+            const targetSub = 'archivo_no_retail';
+            localStorage.setItem(`activeSub_no_retail`, targetSub);
+            updateMobileDriverClass();
+            renderTabContent();
         });
 
         document.getElementById('btn_nr_menu').addEventListener('click', async () => {
