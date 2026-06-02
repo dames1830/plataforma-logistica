@@ -8534,8 +8534,16 @@ const renderRFSection = (container) => {
         const capitalizedToday = today.charAt(0).toUpperCase() + today.slice(1);
 
         const clients = window._noRetailClients || [];
-        const totalCount = clients.length;
-        const pendingCount = clients.filter(c => c.status === 'PENDIENTE').length;
+        
+        const countRealPedidos = (arr) => arr.reduce((acc, c) => {
+            const pStr = String(c.pedido || '').trim();
+            if (!pStr) return acc + 1;
+            const count = pStr.split(';').map(s => s.trim()).filter(s => s).length;
+            return acc + (count > 0 ? count : 1);
+        }, 0);
+
+        const totalCount = countRealPedidos(clients);
+        const pendingCount = countRealPedidos(clients.filter(c => c.status === 'PENDIENTE'));
 
         container.innerHTML = `
             ${showBackToOffice ? `
@@ -8937,7 +8945,7 @@ const renderRFSection = (container) => {
                 <div style="display:flex; flex-direction:column; gap:1rem;">
                     ${agenciesList.map(agName => {
                         const agClients = clients.filter(c => c.agencia === agName);
-                        const agPending = agClients.filter(c => c.status === 'PENDIENTE').length;
+                        const agPending = countRealPedidos(agClients.filter(c => c.status === 'PENDIENTE'));
                         const isExpanded = !!window._noRetailExpandedAgencies[agName];
                         
                         return `
