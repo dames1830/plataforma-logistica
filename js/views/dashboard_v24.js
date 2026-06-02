@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.69';
+const VERSION = '26.5.70';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8286,9 +8286,14 @@ const renderRFSection = (container) => {
                         <div style="font-size:0.8rem; font-weight:800; color:#fff;">PULSE CONDUCTOR</div>
                         <div style="font-size:0.6rem; color:var(--text-muted);">Camión: ${activeRoute.plate} | ${activeRoute.id}</div>
                     </div>
-                    <span class="badge ${activeRoute.status === 'Creada' ? 'status-muted' : 'status-warning'}" style="font-size:0.6rem;">
-                        ${activeRoute.status.toUpperCase()}
-                    </span>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                        <span class="badge ${activeRoute.status === 'Creada' ? 'status-muted' : 'status-warning'}" style="font-size:0.6rem; margin: 0;">
+                            ${activeRoute.status.toUpperCase()}
+                        </span>
+                        <button id="btn_driver_logout" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:0.6rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:2px; padding:2px; margin-top:2px; transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
+                            🚪 CERRAR SESIÓN
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Active Route Actions -->
@@ -8481,6 +8486,12 @@ const renderRFSection = (container) => {
             }
         }
         refreshDriverUI();
+    });
+
+    document.getElementById('btn_driver_logout')?.addEventListener('click', async () => {
+        if (await showPremiumConfirm('CERRAR SESIÓN', '¿Estás seguro de cerrar sesión en la plataforma?', 'warning')) {
+            onLogout();
+        }
     });
   };
 
