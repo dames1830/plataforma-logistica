@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.73';
+const VERSION = '26.5.77';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8476,9 +8476,17 @@ const renderRFSection = (container) => {
     // Parse Excel array of arrays if available, otherwise empty
     let clientsData = [];
     if (catalogData && catalogData.length > 0) {
-        // If there are header rows skipped, catalogData[0] is the first row we get.
-        // We will process all rows that have data.
-        const rows = catalogData.filter(r => r && r.length >= 4); // Relaxed filter
+        // Find the first row that looks like a header or just skip empty rows
+        // We skip rows that don't have at least something in column E or D, but very relaxed.
+        // Actually, just filter completely empty rows and rows that are headers.
+        const rows = catalogData.filter((r, i) => {
+            if (!r || !Array.isArray(r)) return false;
+            const hasData = r.some(cell => String(cell).trim() !== '');
+            // Skip the header row if it contains 'agencia' or 'rotulo'
+            const isHeader = String(r[3]).toLowerCase().includes('rotulo') || String(r[4]).toLowerCase().includes('agencia');
+            return hasData && !isHeader;
+        });
+
         clientsData = rows.map((r, idx) => ({
             id: String(r[0] || `PED-${10000 + idx}`).trim(),
             pedido: String(r[0] || `PED-${10000 + idx}`).trim(),
@@ -8579,7 +8587,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.76 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.77 | MOBILE PORTAL
                         </div>
                     </div>
 
