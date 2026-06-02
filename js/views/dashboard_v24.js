@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.70';
+const VERSION = '26.5.71';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7785,7 +7785,7 @@ const renderRFSection = (container) => {
     } else if (tabId === 'despacho' && activeSub === 'chofer_despacho') {
         renderDespachoChoferPortal(container);
     } else if (tabId === 'no_retail' && activeSub === 'despacho_no_retail') {
-        renderDespachoChoferPortal(container);
+        renderDespachoNoRetailPortal(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -8493,6 +8493,462 @@ const renderRFSection = (container) => {
             onLogout();
         }
     });
+  };
+
+  const renderDespachoNoRetailPortal = async (container) => {
+    document.body.classList.add('mobile-driver-active');
+
+    let catalogData = [];
+    try {
+        catalogData = getAreaData('no_retail_pedidos') || [];
+    } catch(e) { console.warn("No retail catalog loading failed:", e); }
+
+    let dynamicAgencies = [
+        { id: 'AG-01', name: 'Agencia Sur Central', clients: 42, address: 'Zona Industrial II, Edificio B', status: 'En Ruta', isDotted: true, team: ['👩🏻‍💼', '👨🏻‍✈️'] },
+        { id: 'AG-02', name: 'Agencia Norte Logística', clients: 28, address: 'Av. Periférico Norte 445', status: 'En Ruta', isDotted: false, team: ['👨🏻‍🏭', '🎥'] },
+        { id: 'AG-03', name: 'Agencia Este Express', clients: 35, address: 'Av. Javier Prado 2500', status: 'Liquidado', isDotted: false, team: ['👮🏻', '👨🏻‍💻'] },
+        { id: 'AG-04', name: 'Agencia Oeste Marítima', clients: 23, address: 'Puerto del Callao Terminal A', status: 'Pendiente', isDotted: false, team: ['👨🏻‍🔧', '👩🏻‍💻'] }
+    ];
+
+    if (catalogData && catalogData.length > 0) {
+        const findKey = (obj, possibilities) => {
+            const keys = Object.keys(obj);
+            return keys.find(k => possibilities.some(p => k.toLowerCase().includes(p.toLowerCase())));
+        };
+        const agKey = findKey(catalogData[0], ['agencia', 'agency', 'reparto', 'sucursal']);
+        const clientKey = findKey(catalogData[0], ['cliente', 'client', 'nombre', 'destinatario']);
+        const dirKey = findKey(catalogData[0], ['direccion', 'address', 'destino', 'ubicacion']);
+        const statusKey = findKey(catalogData[0], ['estado', 'status', 'situacion']);
+
+        if (agKey) {
+            const groups = {};
+            catalogData.forEach(row => {
+                const agName = row[agKey] || 'Agencia General';
+                if (!groups[agName]) {
+                    groups[agName] = { name: agName, clients: 0, address: row[dirKey] || 'Dirección de Agencia', status: row[statusKey] || 'En Ruta', team: ['👨🏻‍✈️', '👩🏻‍💼'], rows: [] };
+                }
+                groups[agName].clients++;
+                groups[agName].rows.push(row);
+            });
+            dynamicAgencies = Object.values(groups).map((g, idx) => ({
+                id: `AG-NEW-${idx}`,
+                name: g.name,
+                clients: g.clients,
+                address: g.address,
+                status: g.status,
+                isDotted: idx === 0,
+                team: g.team
+            }));
+        }
+    }
+
+    if (!window._noRetailActiveTab) window._noRetailActiveTab = 'inicio';
+    if (!window._noRetailSearchQuery) window._noRetailSearchQuery = '';
+
+    const refreshNoRetailUI = () => {
+        const activeTab = window._noRetailActiveTab;
+        const today = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const capitalizedToday = today.charAt(0).toUpperCase() + today.slice(1);
+
+        container.innerHTML = `
+            <div style="background: #0b1329; min-height: 100vh; color: #fff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; width:100%; position:relative; overflow-x:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 1.2rem 1.5rem 0.6rem; background:#0b1329; position:sticky; top:0; z-index:1000; border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <div style="display:flex; align-items:center; gap:0.8rem;">
+                        <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">☰</span>
+                        <span style="font-size:1.1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
+                            ${activeTab === 'inicio' ? 'Deam1830' : 'Logistics Pro'}
+                        </span>
+                    </div>
+                    <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
+                </div>
+
+                <div style="flex-grow:1; padding: 1.25rem; padding-bottom: 5.5rem;" id="nr_content_wrapper">
+                    ${renderActiveTabContent(activeTab, capitalizedToday, dynamicAgencies)}
+                </div>
+
+                <div style="
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    background: rgba(15, 23, 42, 0.95);
+                    backdrop-filter: blur(16px);
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.08);
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    padding: 0.6rem 0.5rem;
+                    z-index: 10010;
+                    box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
+                ">
+                    <div class="nr-nav-item" data-tab="inicio" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'inicio' ? 1 : 0.4};">
+                        <div style="
+                            background: ${activeTab === 'inicio' ? 'var(--primary)' : 'transparent'};
+                            width: ${activeTab === 'inicio' ? '46px' : 'auto'};
+                            height: 28px;
+                            border-radius: 14px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        ">
+                            <span style="font-size:1.2rem; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">🏠</span>
+                        </div>
+                        <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">Inicio</span>
+                    </div>
+
+                    <div class="nr-nav-item" data-tab="historial" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'historial' ? 1 : 0.4};">
+                        <div style="
+                            background: ${activeTab === 'historial' ? 'var(--primary)' : 'transparent'};
+                            width: ${activeTab === 'historial' ? '46px' : 'auto'};
+                            height: 28px;
+                            border-radius: 14px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        ">
+                            <span style="font-size:1.2rem; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">🔄</span>
+                        </div>
+                        <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">Historial</span>
+                    </div>
+
+                    <div class="nr-nav-item" data-tab="en_ruta" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:4px; opacity: ${activeTab === 'en_ruta' ? 1 : 0.4};">
+                        <div style="
+                            background: ${activeTab === 'en_ruta' ? 'var(--primary)' : 'transparent'};
+                            width: ${activeTab === 'en_ruta' ? '46px' : 'auto'};
+                            height: 28px;
+                            border-radius: 14px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        ">
+                            <span style="font-size:1.2rem; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">🚚</span>
+                        </div>
+                        <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">En Ruta</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.querySelectorAll('.nr-nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                window._noRetailActiveTab = e.currentTarget.dataset.tab;
+                refreshNoRetailUI();
+            });
+        });
+
+        const searchInput = document.getElementById('nr_search_input');
+        if (searchInput) {
+            searchInput.value = window._noRetailSearchQuery;
+            searchInput.addEventListener('input', (e) => {
+                window._noRetailSearchQuery = e.target.value.toLowerCase();
+                filterHistoryItems();
+            });
+        }
+
+        document.querySelectorAll('.nr-accordion-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                const body = e.currentTarget.nextElementSibling;
+                const icon = e.currentTarget.querySelector('.nr-chevron');
+                if (body.style.display === 'none' || !body.style.display) {
+                    body.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    body.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-nr-liquidar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                showPremiumAlert('LIQUIDACIÓN INICIADA', `Se ha iniciado el proceso de liquidación de despachos para: ${e.currentTarget.dataset.agency}`, 'success');
+            });
+        });
+
+        document.getElementById('btn_nr_menu').addEventListener('click', async () => {
+            if (await showPremiumConfirm('VOLVER AL PANEL', '¿Estás seguro de regresar al panel general?', 'info')) {
+                document.body.classList.remove('mobile-driver-active');
+                window.location.reload();
+            }
+        });
+    };
+
+    const renderActiveTabContent = (tab, dateStr, agencies) => {
+        if (tab === 'inicio') {
+            return `
+                <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem;">Panel de Control</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">${dateStr}</div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
+                    <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(2, 77, 189, 0.2);">
+                        <span style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">HOY</span>
+                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">24</span>
+                        <span style="font-size:0.65rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Pedidos para entrega</span>
+                        <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.15; user-select:none;">🚚</span>
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; position:relative;">
+                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">ACUMULADO</span>
+                        <span style="font-size:2.2rem; font-weight:900; color:#fff; line-height:1; margin: 0.3rem 0;">156</span>
+                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos pendientes</span>
+                        <span style="position:absolute; right:12px; top:12px; font-size:1.8rem; opacity:0.05; user-select:none;">📋</span>
+                    </div>
+                </div>
+
+                <div style="background: rgba(2,77,189,0.08); border: 1.5px solid rgba(2,77,189,0.25); border-radius: 18px; padding: 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:1.8rem; cursor:pointer;" id="card_active_route">
+                    <div style="background:#024dbd; width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(2,77,189,0.3);">
+                        <span style="color:#fff; font-size:1.3rem; transform: rotate(45deg); display:inline-block; line-height:1; font-weight:900;">▲</span>
+                    </div>
+                    <div style="flex-grow:1;">
+                        <div style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">Ruta actual activa</div>
+                        <div style="font-size:0.95rem; font-weight:900; color:#fff; padding: 2px 6px; border: 1px dashed rgba(147, 197, 253, 0.4); border-radius: 6px; display: inline-block; margin-top: 2px; width:100%; box-sizing:border-box;">
+                            Zona Norte - Sector B
+                        </div>
+                    </div>
+                    <span style="font-size:1rem; color:rgba(255,255,255,0.3); font-weight:bold;">&gt;</span>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                    <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">ENVÍOS PRIORITARIOS</span>
+                    <a href="#" style="font-size:0.7rem; color:var(--primary); font-weight:800; text-decoration:none; padding: 2px 6px; border: 1px dashed var(--primary); border-radius: 4px;" id="nr_view_all_shipments">Ver todos</a>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; padding:1rem; display:flex; flex-direction:column; gap:0.4rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">#LP-98234</span>
+                            <span class="badge status-warning" style="font-size:0.55rem; padding:2px 8px; border-radius:10px;">En Tránsito</span>
+                        </div>
+                        <div style="font-size:0.9rem; font-weight:800; color:#fff; line-height:1.3;">
+                            Almacén Central → Centro Cívico
+                        </div>
+                        <div style="display:flex; align-items:center; gap:4px; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
+                            <span>🕒</span>
+                            <span>Llegada estimada: 14:30 PM</span>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; padding:1rem; display:flex; flex-direction:column; gap:0.4rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">#LP-98212</span>
+                            <span class="badge status-success" style="font-size:0.55rem; padding:2px 8px; border-radius:10px;">Entregado</span>
+                        </div>
+                        <div style="font-size:0.9rem; font-weight:800; color:#fff; line-height:1.3;">
+                            Sede Norte → Distrito Tecnológico
+                        </div>
+                        <div style="display:flex; align-items:center; gap:4px; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
+                            <span>✅</span>
+                            <span>Finalizado a las 11:15 AM</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (tab === 'historial') {
+            return `
+                <div style="position:relative; margin-bottom:1.5rem;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; color:rgba(255,255,255,0.3);">🔍</span>
+                    <input type="text" id="nr_search_input" placeholder="Buscar por fecha o agencia" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; padding:0.65rem 0.65rem 0.65rem 2.2rem; font-size:0.8rem; outline:none; box-sizing:border-box;">
+                </div>
+
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">HISTORIAL DE ACTIVIDAD</div>
+
+                <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;" id="nr_history_accordion_list">
+                    <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden;">
+                        <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                            <div>
+                                <div style="font-size:0.85rem; font-weight:800; color:#fff;">Hoy, 24 de Mayo</div>
+                                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">4 Agencias • 12 Pedidos Totales</div>
+                            </div>
+                            <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
+                        </div>
+                        <div class="nr-accordion-body" style="display:none; padding:0.2rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
+                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted);">
+                                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">
+                                    <span style="color:#fff; font-weight:700;">Agencia Sur Central</span>
+                                    <span>3 Pedidos • Entregados</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">
+                                    <span style="color:#fff; font-weight:700;">Agencia Norte Logística</span>
+                                    <span>4 Pedidos • Entregados</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">
+                                    <span style="color:#fff; font-weight:700;">Agencia Este Express</span>
+                                    <span>2 Pedidos • Entregados</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; padding:4px 0;">
+                                    <span style="color:#fff; font-weight:700;">Agencia Oeste Marítima</span>
+                                    <span>3 Pedidos • Entregados</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden;">
+                        <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                            <div>
+                                <div style="font-size:0.85rem; font-weight:800; color:#fff;">Ayer, 23 de Mayo</div>
+                                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">6 Agencias • 28 Pedidos Totales</div>
+                            </div>
+                            <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
+                        </div>
+                        <div class="nr-accordion-body" style="display:none; padding:0.2rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
+                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted);">
+                                <div style="display:flex; justify-content:space-between; padding:4px 0;">
+                                    <span style="color:#fff; font-weight:700;">Desglose General</span>
+                                    <span>28 Pedidos • Entregados y Liquidados</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nr-history-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:16px; overflow:hidden;">
+                        <div class="nr-accordion-header" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                            <div>
+                                <div style="font-size:0.85rem; font-weight:800; color:#fff;">22 de Mayo</div>
+                                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">3 Agencias • 15 Pedidos Totales</div>
+                            </div>
+                            <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
+                        </div>
+                        <div class="nr-accordion-body" style="display:none; padding:0.2rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
+                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted);">
+                                <div style="display:flex; justify-content:space-between; padding:4px 0;">
+                                    <span style="color:#fff; font-weight:700;">Desglose General</span>
+                                    <span>15 Pedidos • Entregados y Liquidados</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+                    <div style="background:linear-gradient(135deg, #024dbd 0%, #00368a 100%); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column; box-shadow:0 4px 15px rgba(2, 77, 189, 0.2);">
+                        <span style="font-size:1.4rem; margin-bottom:0.2rem;">📈</span>
+                        <span style="font-size:0.6rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">EFICIENCIA</span>
+                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">98.2%</span>
+                    </div>
+
+                    <div style="background:rgba(2,77,189,0.08); border:1px solid rgba(2,77,189,0.2); border-radius:16px; padding:1.2rem; display:flex; flex-direction:column;">
+                        <span style="font-size:1.4rem; margin-bottom:0.2rem; color:#60a5fa;">🛡️</span>
+                        <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">COMPLETADOS</span>
+                        <span style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1; margin-top:0.2rem;">142</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (tab === 'en_ruta') {
+            return `
+                <div style="font-size:0.65rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">ARCHIVO NO RETAIL</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 0.1rem; letter-spacing: -0.5px;">Pedidos Catálogo</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem;">Gestión de entregas y liquidación por agencia.</div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:0.8rem 1rem; display:flex; flex-direction:column; justify-content:center;">
+                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">Agencias Activas</span>
+                        <span style="font-size:1.4rem; font-weight:900; color:#3b82f6; margin-top:2px;">04</span>
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:0.8rem 1rem; display:flex; flex-direction:column; justify-content:center;">
+                        <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">Total Pendientes</span>
+                        <span style="font-size:1.4rem; font-weight:900; color:#10b981; margin-top:2px;">128</span>
+                    </div>
+                </div>
+
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">AGENCIAS EN RUTA</div>
+
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    ${agencies.map(ag => `
+                        <div style="
+                            background: rgba(255,255,255,0.02);
+                            border: 1px solid rgba(255,255,255,0.04);
+                            border-radius: 18px;
+                            padding: 1.2rem;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.8rem;
+                        ">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.95rem; font-weight:900; color:#fff;">${ag.name}</span>
+                                <span class="badge ${ag.id.includes('02') ? 'status-success' : 'status-primary'}" style="font-size:0.6rem; padding:3px 10px; border-radius:12px;">
+                                    ${ag.clients} Clientes
+                                </span>
+                            </div>
+
+                            <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                                <span>📍</span>
+                                <span>${ag.address}</span>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.2rem;">
+                                <div style="display:flex;">
+                                    ${ag.team.map((avatar, idx) => `
+                                        <div style="
+                                            width: 24px;
+                                            height: 24px;
+                                            border-radius: 50%;
+                                            background: #1e293b;
+                                            border: 1.5px solid #0b1329;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            font-size: 0.75rem;
+                                            margin-left: ${idx > 0 ? '-8px' : '0'};
+                                            z-index: ${10 - idx};
+                                        ">${avatar}</div>
+                                    `).join('')}
+                                </div>
+                                <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">Equipo de reparto asignado</span>
+                            </div>
+
+                            <button class="btn btn-nr-liquidar" data-agency="${ag.name}" style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                width: 100%;
+                                padding: 0.7rem;
+                                font-size: 0.75rem;
+                                font-weight: bold;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                                box-sizing: border-box;
+                                ${ag.isDotted ? `
+                                    background: transparent;
+                                    border: 1.5px dashed #024dbd;
+                                    color: #93c5fd;
+                                ` : `
+                                    background: #024dbd;
+                                    border: none;
+                                    color: #fff;
+                                `}
+                            ">
+                                <span style="font-size:0.9rem;">▶️</span> Iniciar Liquidación
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    };
+
+    const filterHistoryItems = () => {
+        const query = window._noRetailSearchQuery;
+        document.querySelectorAll('.nr-history-row').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(query)) {
+                row.style.display = 'block';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    };
+
+    refreshNoRetailUI();
   };
 
   const renderAnalisisSKUTab = async () => {
