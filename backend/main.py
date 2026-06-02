@@ -201,6 +201,8 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
             if row:
                 try:
                     existing_cache = json.loads(row[0])
+                    if not isinstance(existing_cache, dict):
+                        existing_cache = {}
                 except Exception:
                     existing_cache = {}
             existing_cache.update(payload_data)
