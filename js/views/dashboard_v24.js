@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.57';
+const VERSION = '26.5.58';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7684,11 +7684,12 @@ const renderRFSection = (container) => {
         const resKey = `${tabId}_reserva`;
 
         // Cargar asíncronamente de la base de datos local IndexedDB antes de renderizar
-        const [activoData, reservaData, articulosData, matrizData] = await Promise.all([
+        const [activoData, reservaData, articulosData, matrizData, pedidosData] = await Promise.all([
             getAreaData(actKey),
             getAreaData(resKey),
             (tabId === 'almacenaje' || tabId === 'recepcion') ? getAreaData('articulos') : Promise.resolve(null),
-            (tabId === 'inventario') ? getAreaData('matriz_ubicaciones') : Promise.resolve(null)
+            (tabId === 'inventario') ? getAreaData('matriz_ubicaciones') : Promise.resolve(null),
+            (tabId === 'no_retail') ? getAreaData(`${tabId}_pedidos`) : Promise.resolve(null)
         ]);
 
         renderUploadArea(wrap, actKey, activoData, '.csv', 'STOCK ACTIVO');
@@ -7698,6 +7699,9 @@ const renderRFSection = (container) => {
         }
         if (tabId === 'inventario') {
             renderUploadArea(wrap, 'matriz_ubicaciones', matrizData, '.xlsx', 'MATRIZ UBICACIONES ALTO');
+        }
+        if (tabId === 'no_retail') {
+            renderUploadArea(wrap, `${tabId}_pedidos`, pedidosData, '.xlsx', 'PEDIDOS CATÁLOGO');
         }
     } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
         const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');

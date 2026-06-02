@@ -3333,6 +3333,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (tabId === 'inventario') {
             renderUploadArea(wrap, 'matriz_ubicaciones', dataStore.matriz_ubicaciones, '.xlsx', 'MATRIZ UBICACIONES ALTO');
         }
+        if (tabId === 'no_retail') {
+            renderUploadArea(wrap, `${tabId}_pedidos`, dataStore[`${tabId}_pedidos`], '.xlsx', 'PEDIDOS CATÁLOGO');
+        }
     } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
         const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');
         let activeSubSub = localStorage.getItem('activeSubSub_inventario_main') || 'general';
