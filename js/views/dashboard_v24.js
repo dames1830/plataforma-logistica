@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.100';
+const VERSION = '26.5.101';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8493,7 +8493,8 @@ const renderRFSection = (container) => {
 
       // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
       const meta = getUploadMeta('no_retail') || {};
-      const uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
+      const uploadDateRaw = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
+      const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
 
       // Pagination
       const limit = 25;
@@ -8507,7 +8508,7 @@ const renderRFSection = (container) => {
           csvContent += "Fecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete\n";
           
           clients.forEach(c => {
-              const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleString('es-ES') : '';
+              const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '';
               const row = `\"${uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\"`;
               csvContent += row + "\n";
           });
@@ -8533,13 +8534,13 @@ const renderRFSection = (container) => {
               <div style="display:flex; gap:1rem; align-items:center; background:rgba(255,255,255,0.02); padding:0.5rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
                   <div style="display:flex; align-items:center; gap:0.5rem;">
                       <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">DESDE (Entrega):</span>
+                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">De:</span>
                       <input type="date" id="tracking_desde" value="${dateDesde}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
                   </div>
                   <div style="width:1px; height:20px; background:rgba(255,255,255,0.1);"></div>
                   <div style="display:flex; align-items:center; gap:0.5rem;">
                       <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">HASTA (Entrega):</span>
+                      <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">Hasta:</span>
                       <input type="date" id="tracking_hasta" value="${dateHasta}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
                   </div>
               </div>
@@ -8566,7 +8567,7 @@ const renderRFSection = (container) => {
                                   <div style="font-weight:900; color:#fff; font-size:0.8rem;">${uploadDate}</div>
                               </td>
                               <td style="padding:1rem;">
-                                  <div style="font-weight:700; color:#38bdf8;">${c.statusDate ? new Date(c.statusDate).toLocaleString('es-ES') : '-'}</div>
+                                  <div style="font-weight:700; color:#38bdf8;">${c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '-'}</div>
                               </td>
                               <td style="padding:1rem;">
                                   <div style="font-size:0.8rem; font-weight:800; color:#94a3b8;">${c.agencia || '-'}</div>
@@ -8625,14 +8626,14 @@ const renderRFSection = (container) => {
       });
       
       document.getElementById('btn_track_prev')?.addEventListener('click', () => {
-          if (window._trackingPage > 0) {
-              window._trackingPage--;
+          if (currentPage > 0) {
+              window._trackingPage = currentPage - 1;
               renderTrackingNoRetailPortal(container);
           }
       });
       document.getElementById('btn_track_next')?.addEventListener('click', () => {
-          if (window._trackingPage < totalPages - 1) {
-              window._trackingPage = (window._trackingPage || 0) + 1;
+          if (currentPage < totalPages - 1) {
+              window._trackingPage = currentPage + 1;
               renderTrackingNoRetailPortal(container);
           }
       });
@@ -8799,7 +8800,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.100 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.101 | MOBILE PORTAL
                         </div>
                     </div>
 
