@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.62';
+const VERSION = '26.5.63';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1869,6 +1869,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <option value="supervisor" style="background:#1e293b;">SUPERVISOR</option>
                                 <option value="encargado" style="background:#1e293b;">ENCARGADO</option>
                                 <option value="asistente" style="background:#1e293b;">ASISTENTE</option>
+                                <option value="transporte" style="background:#1e293b;">TRANSPORTE (CHOFER)</option>
+                                <option value="transportista" style="background:#1e293b;">TRANSPORTISTA</option>
+                                <option value="chofer" style="background:#1e293b;">CHOFER</option>
                             </select>
                         </div>
                         <button type="submit" id="btn_submit_user" class="btn" style="padding:0.7rem; font-weight:700; margin-top:0.5rem;">GUARDAR USUARIO</button>
@@ -2005,7 +2008,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderPermisosSection = (container) => {
-    const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente'];
+    const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'transporte', 'transportista', 'chofer'];
     const allRoles = ['admin', ...roles];
     
     container.innerHTML = `
