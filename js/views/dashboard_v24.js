@@ -8484,11 +8484,24 @@ const renderRFSection = (container) => {
         // Toda la data después de saltar 8 filas es válida. No saltamos la fila 9.
         const rows = catalogData;
         
-        // Filtramos solo filas que estén completamente vacías
+        // Filtramos solo filas que estén completamente vacías o sean basura/cabecera
         const validRows = rows.filter(r => {
             if (!r || !Array.isArray(r)) return false;
+            
             // Verificar si hay al menos algún dato en la fila
-            return r.some(cell => String(cell).trim() !== '');
+            const hasData = r.some(cell => String(cell).trim() !== '');
+            if (!hasData) return false;
+
+            // Limpiamos los textos de posibles caracteres raros del excel
+            const cleanText = (str) => String(str || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/g, '');
+            
+            const textAgencia = cleanText(r[4]);
+            if (textAgencia === 'AGENCIA') return false; // Es la fila de cabecera
+            
+            // Si el pedido está vacío y la agencia está vacía, es una fila de resumen (ej. Total Monto)
+            if (!String(r[6]).trim() && !String(r[4]).trim()) return false;
+            
+            return true;
         });
 
         clientsData = validRows.map((r, idx) => ({
