@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.94';
+const VERSION = '26.5.95';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -555,7 +555,8 @@ const TABS = [
   ]},
   { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' },
-    { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: '🚚' }
+    { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: '🚚' },
+      { id: 'tracking_no_retail', label: 'Tracking NO RETAIL', icon: '📍' }
   ]},
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' },
@@ -7786,6 +7787,8 @@ const renderRFSection = (container) => {
         renderDespachoChoferPortal(container);
     } else if (tabId === 'no_retail' && activeSub === 'despacho_no_retail') {
         renderDespachoNoRetailPortal(container);
+    } else if (tabId === 'no_retail' && activeSub === 'tracking_no_retail') {
+        renderTrackingNoRetailPortal(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -8455,6 +8458,79 @@ const renderRFSection = (container) => {
     // Simulate GPS movement (removed - was incomplete from previous version)
   }
 
+
+  const renderTrackingNoRetailPortal = async (container) => {
+    let clients = window._noRetailClients || [];
+    // Recalculate based on cache if possible
+    const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+    clients = clients.map(c => {
+        if(cache[c.id]) {
+            return { ...c, ...cache[c.id] };
+        }
+        return c;
+    });
+
+    // Create tracking interface
+    container.innerHTML = `
+      <div style="padding: 1.5rem;">
+        <h2 style="color:#fff; font-size:1.8rem; font-weight:900; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fas fa-map-marker-alt" style="color:var(--primary);"></i> Tracking NO RETAIL
+        </h2>
+        
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; overflow:hidden;">
+            <table style="width:100%; border-collapse:collapse; color:#e2e8f0; font-size:0.85rem; text-align:left;">
+                <thead>
+                    <tr style="background:rgba(255,255,255,0.05); text-transform:uppercase; font-size:0.7rem; color:#94a3b8;">
+                        <th style="padding:1rem;">Fecha / Agencia</th>
+                        <th style="padding:1rem;">Cliente / Pedido</th>
+                        <th style="padding:1rem;">Dirección</th>
+                        <th style="padding:1rem;">Estado</th>
+                        <th style="padding:1rem;">Cobro Flete</th>
+                        <th style="padding:1rem;">Liquidado</th>
+                        <th style="padding:1rem; text-align:center;">Fotos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${clients.length === 0 ? `<tr><td colspan="7" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
+                    clients.map(c => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:1rem;">
+                                <div style="font-weight:700; color:#fff;">${c.fecha}</div>
+                                <div style="font-size:0.75rem; color:#94a3b8;">${c.agencia}</div>
+                            </td>
+                            <td style="padding:1rem;">
+                                <div style="font-weight:700; color:#bfdbfe;">${c.clientName}</div>
+                                <div style="font-size:0.75rem; color:#94a3b8;">Pedido: ${c.pedido}</div>
+                            </td>
+                            <td style="padding:1rem; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.address}">
+                                ${c.address}
+                            </td>
+                            <td style="padding:1rem;">
+                                <span style="padding:0.3rem 0.6rem; border-radius:4px; font-size:0.7rem; font-weight:800; background:${c.status === 'ATENDIDO' ? 'rgba(34,197,94,0.15)' : c.status === 'NO ATENDIDO' ? 'rgba(239,68,68,0.15)' : c.status === 'REPROGRAMAR' ? 'rgba(234,179,8,0.15)' : 'rgba(255,255,255,0.05)'}; color:${c.status === 'ATENDIDO' ? '#4ade80' : c.status === 'NO ATENDIDO' ? '#f87171' : c.status === 'REPROGRAMAR' ? '#facc15' : '#94a3b8'}; border:1px solid ${c.status === 'ATENDIDO' ? 'rgba(34,197,94,0.3)' : c.status === 'NO ATENDIDO' ? 'rgba(239,68,68,0.3)' : c.status === 'REPROGRAMAR' ? 'rgba(234,179,8,0.3)' : 'rgba(255,255,255,0.1)'};">
+                                    ${c.status}
+                                </span>
+                            </td>
+                            <td style="padding:1rem;">
+                                ${c.cobroFlete === 'SI' ? '<span style="color:#10b981; font-weight:800;"><i class="fas fa-check"></i> SI</span>' : '<span style="color:#64748b;">NO</span>'}
+                            </td>
+                            <td style="padding:1rem;">
+                                ${c.liquidated ? '<span style="color:#38bdf8; font-weight:800;"><i class="fas fa-check-double"></i> SI</span>' : '<span style="color:#64748b;">NO</span>'}
+                            </td>
+                            <td style="padding:1rem; text-align:center;">
+                                <div style="display:flex; justify-content:center; gap:0.5rem;">
+                                    ${c.fotoCargo ? `<a href="${c.fotoCargo}" target="_blank" title="Foto Cargo"><img src="${c.fotoCargo}" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;"></a>` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo"><i class="fas fa-camera"></i></div>'}
+                                    ${c.fotoLocal ? `<a href="${c.fotoLocal}" target="_blank" title="Foto Fachada"><img src="${c.fotoLocal}" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;"></a>` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada"><i class="fas fa-camera"></i></div>'}
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+      </div>
+    `;
+  };
+
   const renderDespachoNoRetailPortal = async (container) => {
     const isMobile = window.innerWidth <= 768;
     const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
@@ -8617,7 +8693,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.94 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.95 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -8750,11 +8826,7 @@ const renderRFSection = (container) => {
                 const status = e.currentTarget.dataset.status;
                 const c = window._noRetailClients.find(x => x.id === cId);
                 if (c) {
-                    c.status = status;
-                    c.statusDate = new Date().toISOString();
-                    const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                    cache[c.id] = { status: c.status, date: c.statusDate };
-                    localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                    c._tempStatus = status;
                     refreshNoRetailUI();
                 }
             });
@@ -8800,7 +8872,8 @@ const renderRFSection = (container) => {
                 const cId = e.currentTarget.dataset.client;
                 const c = window._noRetailClients.find(x => x.id === cId);
                 if (c) {
-                    if (c.status === 'PENDIENTE') {
+                    const currentStatus = c._tempStatus || c.status;
+                    if (currentStatus === 'PENDIENTE') {
                         showPremiumAlert('SELECCIONA UN ESTADO', 'Debes seleccionar un estado diferente de PENDIENTE para liquidar (ATENDIDO, NO ATENDIDO o REPROGRAMAR).', 'warning');
                         return;
                     }
@@ -8809,7 +8882,20 @@ const renderRFSection = (container) => {
                         return;
                     }
                     // Liquidate successfully
+                    c.status = currentStatus;
+                    c.statusDate = new Date().toISOString();
                     c.liquidated = true;
+                    
+                    const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                    cache[c.id] = { 
+                        status: c.status, 
+                        date: c.statusDate, 
+                        liquidated: true,
+                        fotoCargo: c.fotoCargo,
+                        fotoLocal: c.fotoLocal
+                    };
+                    localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                    
                     showPremiumAlert('CLIENTE LIQUIDADO', `El cliente ${c.clientName} ha sido liquidado correctamente.`, 'success');
                     refreshNoRetailUI();
                 }
@@ -9065,9 +9151,9 @@ const renderRFSection = (container) => {
                                                             <div>
                                                                 <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">📋 ESTADO DE ENTREGA:</div>
                                                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
-                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="ATENDIDO" style="background:${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
-                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
-                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="REPROGRAMAR" style="background:${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${c.status === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${c.status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
+                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="ATENDIDO" style="background:${(c._tempStatus || c.status) === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
+                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
+                                                                    <button class="nr-status-select-btn" data-client="${c.id}" data-status="REPROGRAMAR" style="background:${(c._tempStatus || c.status) === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
                                                                 </div>
                                                             </div>
 
