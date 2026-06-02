@@ -307,22 +307,11 @@ export const parseFile = (file, area) => {
               const targetSheet = workbook.Sheets[targetSheetName];
               const rawData = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: "" });
               
-              // Find header dynamically
-              let headerIdx = -1;
-              for(let i=0; i<rawData.length; i++) {
-                  if(!rawData[i]) continue;
-                  const rowStr = rawData[i].map(x => String(x || '').toLowerCase()).join(' ');
-                  if(rowStr.includes('rotulo') || rowStr.includes('agencia')) {
-                      headerIdx = i;
-                      break;
-                  }
-              }
-              
-              if (headerIdx !== -1) {
-                  jsonData = rawData.slice(headerIdx);
+              // Eliminar estrictamente las 8 primeras filas como indica el usuario
+              if (rawData.length > 8) {
+                  jsonData = rawData.slice(8);
               } else {
-                  // Fallback: remove first 8 rows if they exist
-                  jsonData = rawData.length > 8 ? rawData.slice(8) : rawData;
+                  jsonData = rawData;
               }
           } else if (area === 'stockReserva' || area.endsWith('_reserva')) {
               const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
