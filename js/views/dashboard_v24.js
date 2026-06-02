@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.71';
+const VERSION = '26.5.72';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8564,6 +8564,9 @@ const renderRFSection = (container) => {
 
                 <div style="flex-grow:1; padding: 1.25rem; padding-bottom: 5.5rem;" id="nr_content_wrapper">
                     ${renderActiveTabContent(activeTab, capitalizedToday, dynamicAgencies)}
+                    <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.6rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
+                        SYSTEM BUILD: v26.5.72 | MOBILE PORTAL
+                    </div>
                 </div>
 
                 <div style="
@@ -11831,7 +11834,7 @@ const renderRFSection = (container) => {
       container.innerHTML = `<div id="contentArea" style="width:100%; min-height:100vh; background:#0b1329;"></div>`;
       const contentArea = document.getElementById('contentArea');
       document.body.classList.add('mobile-driver-active');
-      renderDespachoChoferPortal(contentArea);
+      renderDespachoNoRetailPortal(contentArea);
       return;
   }
 
