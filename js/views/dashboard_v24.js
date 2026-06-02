@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.66';
+const VERSION = '26.5.67';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -958,15 +958,6 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
                        ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
-  
-  if (isDriverRole) {
-      container.className = 'animate-fade-in';
-      container.innerHTML = `<div id="contentArea" style="width:100%; min-height:100vh; background:#0b1329;"></div>`;
-      const contentArea = document.getElementById('contentArea');
-      document.body.classList.add('mobile-driver-active');
-      renderDespachoChoferPortal(contentArea);
-      return;
-  }
 
   // [PROTECCIÓN] Evitar crash si no hay pestañas permitidas
   const allowedTabs = TABS.filter(t => {
@@ -11367,6 +11358,15 @@ const renderRFSection = (container) => {
         };
     }
   };
+
+  if (isDriverRole) {
+      container.className = 'animate-fade-in';
+      container.innerHTML = `<div id="contentArea" style="width:100%; min-height:100vh; background:#0b1329;"></div>`;
+      const contentArea = document.getElementById('contentArea');
+      document.body.classList.add('mobile-driver-active');
+      renderDespachoChoferPortal(contentArea);
+      return;
+  }
 
   renderNav();
   renderTabContent();
