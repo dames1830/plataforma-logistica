@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.105';
+const VERSION = '26.5.106';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8492,13 +8492,16 @@ const renderRFSection = (container) => {
               if (cacheRes.ok) {
                   const serverCache = await cacheRes.json();
                   cachedStatuses = serverCache.data || {};
+                  if (Array.isArray(cachedStatuses)) cachedStatuses = {};
                   localStorage.setItem('nr_cache_v1', JSON.stringify(cachedStatuses));
               } else {
                   cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                  if (Array.isArray(cachedStatuses)) cachedStatuses = {};
               }
           } catch(e) {
               console.warn("Could not load tracking cache from server, using local storage fallback:", e);
               cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+              if (Array.isArray(cachedStatuses)) cachedStatuses = {};
           }
 
           clientsData = validRows.map((r, idx) => {
@@ -8530,13 +8533,16 @@ const renderRFSection = (container) => {
           if (res.ok) {
               const serverData = await res.json();
               cache = serverData.data || {};
+              if (Array.isArray(cache)) cache = {};
               localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
           } else {
               cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+              if (Array.isArray(cache)) cache = {};
           }
       } catch (e) {
           console.warn("Could not load tracking cache from server, using local storage fallback:", e);
           cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+          if (Array.isArray(cache)) cache = {};
       }
 
       if (!window._noRetailClients || window._noRetailClients.length === 0) {
@@ -8823,7 +8829,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.105 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.106 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -9048,7 +9054,8 @@ const renderRFSection = (container) => {
                     
                     let finalCache = {};
                     try {
-                         const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                         let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                         if (Array.isArray(cache)) cache = {};
                          cache[c.id] = { 
                              status: c.status, 
                              date: c.statusDate, 
@@ -9062,7 +9069,8 @@ const renderRFSection = (container) => {
                     } catch(err) {
                          console.error("Cache storage limit reached, saving without photos in local storage:", err);
                          try {
-                             const cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                             let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                             if (Array.isArray(cache)) cache = {};
                              cache[c.id] = { 
                                  status: c.status, 
                                  date: c.statusDate, 

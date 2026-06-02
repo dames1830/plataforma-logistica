@@ -178,7 +178,7 @@ def get_area_data(area: str, date: Optional[str] = None):
         if row: return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
         
         # Valor por defecto según el área
-        DEFAULT_OBJECTS = ['attendance', 'permissions', 'config']
+        DEFAULT_OBJECTS = ['attendance', 'permissions', 'config', 'no_retail_cache']
         return {"area": area, "data": {} if area in DEFAULT_OBJECTS else []}
     except Exception as e: return {"status": "error", "message": str(e)}
 
