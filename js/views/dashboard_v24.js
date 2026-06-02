@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.93';
+const VERSION = '26.5.94';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8609,7 +8609,7 @@ const renderRFSection = (container) => {
                                 <input type="date" id="nr_date_filter" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
                             </div>
                             <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;">
-                                <span style="font-size:1.2rem; cursor:pointer; color:#ef4444;" id="btn_nr_logout" title="Cerrar Sesión">🚪</span>
+                                <span style="font-size:1.2rem; cursor:pointer; color:#ef4444;" id="btn_nr_logout" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i></span>
                             </div>
                         </div>
                     </div>
@@ -8617,7 +8617,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.93 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.94 | MOBILE PORTAL
                         </div>
                     </div>
 
