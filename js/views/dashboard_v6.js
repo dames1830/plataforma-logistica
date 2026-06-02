@@ -96,7 +96,8 @@ const TABS = [
     { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' }
   ]},
   { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
+    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' },
+    { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: '🚚' }
   ]},
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' }

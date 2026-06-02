@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.58';
+const VERSION = '26.5.59';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -554,7 +554,8 @@ const TABS = [
     { id: 'chofer_despacho', label: 'Portal Chofer', icon: '📱' }
   ]},
   { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' }
+    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' },
+    { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: '🚚' }
   ]},
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' },
@@ -7761,6 +7762,8 @@ const renderRFSection = (container) => {
     } else if (tabId === 'despacho' && activeSub === 'monitoreo_despacho') {
         renderDespachoMonitoreo(container);
     } else if (tabId === 'despacho' && activeSub === 'chofer_despacho') {
+        renderDespachoChoferPortal(container);
+    } else if (tabId === 'no_retail' && activeSub === 'despacho_no_retail') {
         renderDespachoChoferPortal(container);
     } else {
         const data = await getAreaData(tabId);
