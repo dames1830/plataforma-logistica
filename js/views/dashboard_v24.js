@@ -8452,9 +8452,10 @@ const renderRFSection = (container) => {
         alert("📦 ¡Entrega completada con éxito!");
         refreshDriverUI();
     });
+    // Simulate GPS movement (removed - was incomplete from previous version)
+  }
 
-    // Simulate GPS movement
-    document.getElementById('bt  const renderDespachoNoRetailPortal = async (container) => {
+  const renderDespachoNoRetailPortal = async (container) => {
     const isMobile = window.innerWidth <= 768;
     const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
                          ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
