@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.79';
+const VERSION = '26.5.80';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8470,7 +8470,7 @@ const renderRFSection = (container) => {
 
     let catalogData = [];
     try {
-        catalogData = getAreaData('no_retail_pedidos') || [];
+        catalogData = (await getAreaData('no_retail_pedidos')) || [];
     } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
     // Parse Excel array of arrays if available, otherwise empty
@@ -8619,7 +8619,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.79 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.80 | MOBILE PORTAL
                         </div>
                     </div>
 
