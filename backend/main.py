@@ -82,7 +82,9 @@ def debug_disk():
         import sqlite3
         from datetime import datetime
         results = {}
+        # Search in /data
         data_dir = "/data"
+        results["data_dir_exists"] = os.path.exists(data_dir)
         if os.path.exists(data_dir):
             files = os.listdir(data_dir)
             file_details = []
@@ -94,25 +96,40 @@ def debug_disk():
                     "size_mb": stat.st_size / (1024*1024),
                     "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
                 })
-            results["files"] = file_details
+            results["data_files"] = file_details
             
-            # Try to connect to /data/database.db and inspect tables or dates
-            db_path = "/data/database.db"
-            if os.path.exists(db_path):
-                conn = sqlite3.connect(db_path)
-                cursor = conn.cursor()
-                # Check tables
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-                tables = [r[0] for r in cursor.fetchall()]
-                results["tables"] = tables
-                
-                # Check snapshot dates for attendance, almacenaje, performance
-                if "logistics_snapshots" in tables:
-                    cursor.execute("SELECT DISTINCT area_id, snapshot_date FROM logistics_snapshots")
-                    results["snapshots"] = [{"area": r[0], "date": r[1]} for r in cursor.fetchall()]
-                conn.close()
-        else:
-            results["error"] = "/data directory does not exist"
+        # Search in app directory
+        app_dir = os.getcwd()
+        results["app_dir"] = app_dir
+        app_db_files = []
+        for root, dirs, files in os.walk(app_dir):
+            # Skip virtual environments
+            if "venv" in root or ".git" in root or "__pycache__" in root:
+                continue
+            for f in files:
+                if f.endswith(".db"):
+                    fpath = os.path.join(root, f)
+                    stat = os.stat(fpath)
+                    app_db_files.append({
+                        "path": os.path.relpath(fpath, app_dir),
+                        "size_mb": stat.st_size / (1024*1024),
+                        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
+                    })
+        results["app_db_files"] = app_db_files
+        
+        # Check snapshot dates in active database
+        db_path = DB_PATH
+        results["active_db_path"] = db_path
+        if os.path.exists(db_path):
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [r[0] for r in cursor.fetchall()]
+            results["tables"] = tables
+            if "logistics_snapshots" in tables:
+                cursor.execute("SELECT DISTINCT area_id, snapshot_date FROM logistics_snapshots")
+                results["snapshots"] = [{"area": r[0], "date": r[1]} for r in cursor.fetchall()]
+            conn.close()
         return results
     except Exception as e:
         return {"status": "error", "message": str(e)}
