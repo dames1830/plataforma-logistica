@@ -75,6 +75,48 @@ def init_db():
 
 init_db()
 
+@app.get("/api/debug/disk")
+def debug_disk():
+    try:
+        import os
+        import sqlite3
+        from datetime import datetime
+        results = {}
+        data_dir = "/data"
+        if os.path.exists(data_dir):
+            files = os.listdir(data_dir)
+            file_details = []
+            for f in files:
+                fpath = os.path.join(data_dir, f)
+                stat = os.stat(fpath)
+                file_details.append({
+                    "name": f,
+                    "size_mb": stat.st_size / (1024*1024),
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
+                })
+            results["files"] = file_details
+            
+            # Try to connect to /data/database.db and inspect tables or dates
+            db_path = "/data/database.db"
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                # Check tables
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                tables = [r[0] for r in cursor.fetchall()]
+                results["tables"] = tables
+                
+                # Check snapshot dates for attendance, almacenaje, performance
+                if "logistics_snapshots" in tables:
+                    cursor.execute("SELECT DISTINCT area_id, snapshot_date FROM logistics_snapshots")
+                    results["snapshots"] = [{"area": r[0], "date": r[1]} for r in cursor.fetchall()]
+                conn.close()
+        else:
+            results["error"] = "/data directory does not exist"
+        return results
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/api/health")
 def health():
     try:
