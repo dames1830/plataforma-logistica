@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.111';
+const VERSION = '26.5.112';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3976,10 +3976,10 @@ const renderRFSection = (container) => {
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                               <td style="padding:0.7rem; font-weight:900; color:#fff; font-family:monospace;">${ser}</td>
                               <td style="padding:0.7rem;">
-                                <div style="font-weight:700; color:#cbd5e1;">${detail.worker_name}</div>
+                                <div style="font-weight:700; color:#cbd5e1;">${detail ? detail.worker_name : '—'}</div>
                               </td>
                               <td style="padding:0.7rem; text-align:center; color:var(--text-muted);">
-                                ${detail.turn}
+                                ${detail ? detail.turn : '—'}
                               </td>
                             </tr>
                           `;
@@ -4094,7 +4094,9 @@ const renderRFSection = (container) => {
           if (missing.length) {
             missing.forEach(ser => {
               const detail = expectedRFDetails[ser];
-              reportContent += `Serial: ${ser} - Asignado a: ${detail.worker_name} (${detail.turn})\n`;
+              const workerName = detail ? detail.worker_name : 'Sin registro';
+              const turnName = detail ? detail.turn : '—';
+              reportContent += `Serial: ${ser} - Asignado a: ${workerName} (${turnName})\n`;
             });
           } else {
             reportContent += `¡Ningún equipo faltante! Todos fueron encontrados.\n`;
@@ -9235,7 +9237,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.111 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.112 | MOBILE PORTAL
                         </div>
                     </div>
 

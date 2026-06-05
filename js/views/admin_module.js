@@ -1664,10 +1664,10 @@ const renderRFSection = (container, user, TABS) => {
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                               <td style="padding:0.7rem; font-weight:900; color:#fff; font-family:monospace;">${ser}</td>
                               <td style="padding:0.7rem;">
-                                <div style="font-weight:700; color:#cbd5e1;">${detail.worker_name}</div>
+                                <div style="font-weight:700; color:#cbd5e1;">${detail ? detail.worker_name : '—'}</div>
                               </td>
                               <td style="padding:0.7rem; text-align:center; color:var(--text-muted);">
-                                ${detail.turn}
+                                ${detail ? detail.turn : '—'}
                               </td>
                             </tr>
                           `;
@@ -1782,7 +1782,9 @@ const renderRFSection = (container, user, TABS) => {
           if (missing.length) {
             missing.forEach(ser => {
               const detail = expectedRFDetails[ser];
-              reportContent += `Serial: ${ser} - Asignado a: ${detail.worker_name} (${detail.turn})\n`;
+              const workerName = detail ? detail.worker_name : 'Sin registro';
+              const turnName = detail ? detail.turn : '—';
+              reportContent += `Serial: ${ser} - Asignado a: ${workerName} (${turnName})\n`;
             });
           } else {
             reportContent += `¡Ningún equipo faltante! Todos fueron encontrados.\n`;
