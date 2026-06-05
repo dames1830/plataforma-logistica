@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.112';
+const VERSION = '26.5.113';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3872,9 +3872,12 @@ const renderRFSection = (container) => {
               </div>
 
               <!-- BOTONES AUXILIARES -->
-              <div style="display:flex; gap:10px; margin-top:0.5rem;">
-                <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.background='rgba(239,68,68,0.1)';">🗑️ Limpiar Lecturas</button>
-                <button id="btn_export_revision" class="btn" style="flex:1.2; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.2)';" onmouseout="this.style.background='rgba(16,185,129,0.1)';">📥 Exportar Reporte</button>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:0.5rem;">
+                <button id="btn_generate_summary" class="btn" style="width:100%; background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); color:#fff; font-size:0.8rem; padding:0.7rem; font-weight:800; border-radius:8px; box-shadow:0 4px 12px rgba(79,70,229,0.35); border:none; cursor:pointer;">📊 Generar Resumen</button>
+                <div style="display:flex; gap:10px;">
+                  <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.background='rgba(239,68,68,0.1)';">🗑️ Limpiar Lecturas</button>
+                  <button id="btn_export_revision" class="btn" style="flex:1; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.2)';" onmouseout="this.style.background='rgba(16,185,129,0.1)';">📥 Exportar Reporte</button>
+                </div>
               </div>
 
               <!-- ULTIMO ESCANEO DETALLE -->
@@ -4058,11 +4061,96 @@ const renderRFSection = (container) => {
         };
       }
 
+      const btnGenSummary = document.getElementById('btn_generate_summary');
+      if (btnGenSummary) {
+        btnGenSummary.onclick = () => {
+          const missing = expectedRFSerials.filter(ser => !scannedRfs.some(s => s.serial === ser));
+          const unexpected = scannedRfs.filter(s => !expectedRFSerials.includes(s.serial));
+          
+          const modal = document.createElement('div');
+          modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+          modal.innerHTML = `
+            <div class="glass-panel" style="width:580px; max-height:85vh; display:flex; flex-direction:column; padding:2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.25); overflow:hidden;">
+              <h3 style="margin:0 0 1.2rem 0; color:#fff; font-size:1.15rem; font-weight:800; text-align:center; letter-spacing:0.5px;">
+                📊 RESUMEN DE VALIDACIÓN RF
+              </h3>
+              
+              <!-- METRICS GRID -->
+              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:1.5rem;">
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:8px; text-align:center;">
+                  <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Esperados</div>
+                  <div style="font-size:1.2rem; font-weight:900; color:#fff; margin-top:4px;">${totalExpected}</div>
+                </div>
+                <div style="background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.2); padding:10px; border-radius:8px; text-align:center;">
+                  <div style="font-size:0.6rem; color:#86efac; font-weight:800; text-transform:uppercase;">Coincidentes</div>
+                  <div style="font-size:1.2rem; font-weight:900; color:var(--success); margin-top:4px;">${uniqueFoundExpected}</div>
+                </div>
+                <div style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); padding:10px; border-radius:8px; text-align:center;">
+                  <div style="font-size:0.6rem; color:#fca5a5; font-weight:800; text-transform:uppercase;">Faltantes</div>
+                  <div style="font-size:1.2rem; font-weight:900; color:#ef4444; margin-top:4px;">${pendingCount}</div>
+                </div>
+                <div style="background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.2); padding:10px; border-radius:8px; text-align:center;">
+                  <div style="font-size:0.6rem; color:#93c5fd; font-weight:800; text-transform:uppercase;">Inesperados</div>
+                  <div style="font-size:1.2rem; font-weight:900; color:#3b82f6; margin-top:4px;">${uniqueUnexpected}</div>
+                </div>
+              </div>
+
+              <!-- DETAILS CONTAINER -->
+              <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1.2rem; margin-bottom:1.5rem; padding-right:5px;">
+                <!-- SECCIÓN FALTANTES -->
+                <div>
+                  <h4 style="margin:0 0 8px 0; color:#ef4444; font-size:0.78rem; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                    ⏳ FALTANTES POR ENCONTRAR (${missing.length})
+                  </h4>
+                  <div style="background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:8px; font-size:0.72rem; max-height:180px; overflow-y:auto;">
+                    ${missing.length ? missing.map(ser => {
+                      const detail = expectedRFDetails[ser];
+                      return `<div style="padding:6px; border-bottom:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between;">
+                        <span style="font-family:monospace; font-weight:800; color:#fff;">${ser}</span>
+                        <span style="color:var(--text-muted); font-size:0.68rem;">Anterior: ${detail ? detail.worker_name : '—'} (${detail ? detail.turn : '—'})</span>
+                      </div>`;
+                    }).join('') : '<div style="color:var(--success); text-align:center; padding:8px; font-weight:700;">¡Ningún equipo faltante! Todos fueron validados.</div>'}
+                  </div>
+                </div>
+
+                <!-- SECCIÓN INESPERADOS -->
+                <div>
+                  <h4 style="margin:0 0 8px 0; color:#3b82f6; font-size:0.78rem; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                    ❌ INESPERADOS / NUEVOS DETECTADOS (${unexpected.length})
+                  </h4>
+                  <div style="background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:8px; font-size:0.72rem; max-height:180px; overflow-y:auto;">
+                    ${unexpected.length ? unexpected.map(s => {
+                      return `<div style="padding:6px; border-bottom:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between;">
+                        <span style="font-family:monospace; font-weight:800; color:#fff;">${s.serial}</span>
+                        <span style="color:#93c5fd; font-size:0.65rem; font-weight:700;">[${s.timestamp}] -> NO ESPERADO</span>
+                      </div>`;
+                    }).join('') : '<div style="color:var(--text-muted); text-align:center; padding:8px;">No se detectaron equipos fuera de turno.</div>'}
+                  </div>
+                </div>
+              </div>
+
+              <!-- BUTTONS -->
+              <div style="display:flex; justify-content:flex-end;">
+                <button id="btn_close_summary_modal" class="btn" style="width:120px; background:rgba(255,255,255,0.08); border:1px solid var(--border); color:#fff; font-weight:800; font-size:0.78rem; border-radius:8px; padding:0.6rem;">Cerrar</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+          
+          document.getElementById('btn_close_summary_modal').onclick = () => {
+            document.body.removeChild(modal);
+          };
+        };
+      }
+
       const btnExportRev = document.getElementById('btn_export_revision');
       if (btnExportRev) {
         btnExportRev.onclick = () => {
-          if (!scannedRfs.length) {
-            alert("⚠️ No hay lecturas escaneadas para exportar.");
+          const missing = expectedRFSerials.filter(ser => !scannedRfs.some(s => s.serial === ser));
+          const unexpected = scannedRfs.filter(s => !expectedRFSerials.includes(s.serial));
+          
+          if (!scannedRfs.length && !missing.length) {
+            alert("⚠️ No hay lecturas escaneadas ni faltantes para exportar.");
             return;
           }
           
@@ -4078,28 +4166,27 @@ const renderRFSection = (container) => {
           reportContent += `Faltantes: ${pendingCount}\n`;
           reportContent += `Inesperados: ${uniqueUnexpected}\n\n`;
           
-          reportContent += `DETALLE DE EQUIPOS LEÍDOS / ESCANEADOS:\n`;
+          reportContent += `DETALLE DE EQUIPOS FALTANTES E INESPERADOS (NUEVOS):\n`;
           reportContent += `----------------------------------------\n`;
-          scannedRfs.forEach(s => {
-            const isExpected = expectedRFSerials.includes(s.serial);
-            const detail = expectedRFDetails[s.serial];
-            const status = isExpected ? 'CONFORME (OK)' : 'INESPERADO (FUERA DE TURNO)';
-            const workerStr = detail ? ` - Anterior: ${detail.worker_name}` : '';
-            reportContent += `[${s.timestamp}] Serial: ${s.serial} -> ${status}${workerStr}\n`;
-          });
-          
-          reportContent += `\nDETALLE DE EQUIPOS FALTANTES / PENDIENTES:\n`;
-          reportContent += `----------------------------------------\n`;
-          const missing = expectedRFSerials.filter(ser => !scannedRfs.some(s => s.serial === ser));
+          reportContent += `FALTANTES POR ENCONTRAR:\n`;
           if (missing.length) {
             missing.forEach(ser => {
               const detail = expectedRFDetails[ser];
               const workerName = detail ? detail.worker_name : 'Sin registro';
               const turnName = detail ? detail.turn : '—';
-              reportContent += `Serial: ${ser} - Asignado a: ${workerName} (${turnName})\n`;
+              reportContent += `- Serial: ${ser} - Anterior: ${workerName} (${turnName})\n`;
             });
           } else {
             reportContent += `¡Ningún equipo faltante! Todos fueron encontrados.\n`;
+          }
+          
+          reportContent += `\nINESPERADOS / NUEVOS DETECTADOS:\n`;
+          if (unexpected.length) {
+            unexpected.forEach(s => {
+              reportContent += `- [${s.timestamp}] Serial: ${s.serial} -> NO ESPERADO\n`;
+            });
+          } else {
+            reportContent += `Ninguno.\n`;
           }
           
           const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
@@ -9237,7 +9324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.112 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.113 | MOBILE PORTAL
                         </div>
                     </div>
 
