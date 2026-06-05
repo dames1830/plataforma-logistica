@@ -770,40 +770,18 @@ const renderRFSection = (container, user, TABS) => {
     const batteries = adminService.getRfsBatteries() || [];
     const chargers = adminService.getRfsChargers() || [];
 
-    const expectedAssignments = assignments.filter(a => {
-      if (a.turn !== revisionTurn) return false;
-      if (!a.assigned_at) return false;
-      
-      const aDateStr = a.assigned_at.split('T')[0];
-      
-      if (revisionTurn === 'NOCHE') {
-        const targetDate = new Date(revisionDate + 'T12:00:00');
-        const prevDate = new Date(targetDate.getTime() - 24 * 60 * 60 * 1000);
-        const prevStr = prevDate.toISOString().split('T')[0];
-        const targetStr = revisionDate;
-        
-        const aDate = new Date(a.assigned_at);
-        const aHour = aDate.getHours();
-        
-        if (aDateStr === prevStr && aHour >= 18) return true;
-        if (aDateStr === targetStr && aHour < 8) return true;
-        return false;
-      } else {
-        return aDateStr === revisionDate;
-      }
-    });
-
-    const expectedRFSerials = [];
+        const expectedRFSerials = [];
     const expectedRFDetails = {};
-    expectedAssignments.forEach(a => {
-      const serial = a.rf_serial;
-      const rfObj = rfs.find(r => r.serie === serial);
-      if (rfObj && (rfObj.estado === 'En Mantenimiento' || rfObj.estado === 'De Baja')) {
-        return;
-      }
-      if (!expectedRFSerials.includes(serial)) {
-        expectedRFSerials.push(serial);
-        expectedRFDetails[serial] = a;
+    
+    rfs.forEach(r => {
+      if (r.estado === 'Operativo') {
+        expectedRFSerials.push(r.serie);
+        // Buscar la última asignación de este equipo para mostrar detalles de quién lo usó por última vez
+        const rfAsigs = assignments.filter(a => a.rf_serial === r.serie);
+        if (rfAsigs.length > 0) {
+          rfAsigs.sort((a, b) => new Date(b.assigned_at) - new Date(a.assigned_at));
+          expectedRFDetails[r.serie] = rfAsigs[0];
+        }
       }
     });
 

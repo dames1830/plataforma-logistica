@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.110';
+const VERSION = '26.5.111';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3005,40 +3005,18 @@ const renderRFSection = (container) => {
     const rfs = adminService.getRfs() || [];
     const assignments = adminService.getRfAssignments() || [];
 
-    const expectedAssignments = assignments.filter(a => {
-      if (a.turn !== revisionTurn) return false;
-      if (!a.assigned_at) return false;
-      
-      const aDateStr = a.assigned_at.split('T')[0];
-      
-      if (revisionTurn === 'NOCHE') {
-        const targetDate = new Date(revisionDate + 'T12:00:00');
-        const prevDate = new Date(targetDate.getTime() - 24 * 60 * 60 * 1000);
-        const prevStr = prevDate.toISOString().split('T')[0];
-        const targetStr = revisionDate;
-        
-        const aDate = new Date(a.assigned_at);
-        const aHour = aDate.getHours();
-        
-        if (aDateStr === prevStr && aHour >= 18) return true;
-        if (aDateStr === targetStr && aHour < 8) return true;
-        return false;
-      } else {
-        return aDateStr === revisionDate;
-      }
-    });
-
-    const expectedRFSerials = [];
+        const expectedRFSerials = [];
     const expectedRFDetails = {};
-    expectedAssignments.forEach(a => {
-      const serial = a.rf_serial;
-      const rfObj = rfs.find(r => r.serie === serial);
-      if (rfObj && (rfObj.estado === 'En Mantenimiento' || rfObj.estado === 'De Baja')) {
-        return;
-      }
-      if (!expectedRFSerials.includes(serial)) {
-        expectedRFSerials.push(serial);
-        expectedRFDetails[serial] = a;
+    
+    rfs.forEach(r => {
+      if (r.estado === 'Operativo') {
+        expectedRFSerials.push(r.serie);
+        // Buscar la última asignación de este equipo para mostrar detalles de quién lo usó por última vez
+        const rfAsigs = assignments.filter(a => a.rf_serial === r.serie);
+        if (rfAsigs.length > 0) {
+          rfAsigs.sort((a, b) => new Date(b.assigned_at) - new Date(a.assigned_at));
+          expectedRFDetails[r.serie] = rfAsigs[0];
+        }
       }
     });
 
@@ -9257,7 +9235,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.110 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.111 | MOBILE PORTAL
                         </div>
                     </div>
 
