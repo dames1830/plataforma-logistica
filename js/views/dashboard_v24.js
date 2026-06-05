@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.109';
+const VERSION = '26.5.110';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1527,6 +1527,36 @@ export const renderDashboard = async (container, user, onLogout) => {
   let activeInventorySubTab = 'rfs';
   let rfSearchQuery = '';
   let rfStatusFilter = 'todos';
+  let scannedRfs = [];
+  let revisionDate = new Date().toISOString().split('T')[0];
+  let revisionTurn = 'NOCHE';
+
+  const playBeep = (type) => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      if (type === 'success') {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+      } else {
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.25);
+      }
+    } catch (e) {
+      console.error("Web Audio beep failed:", e);
+    }
+  };
   const renderAdminTab = () => {
     // [SUPER PULL v25.0.4] Forzamos descarga REAL de historial reciente al entrar
     syncEngine.pullGlobal(['performance_log', 'almacenaje_tasks'], true);
@@ -2975,6 +3005,51 @@ const renderRFSection = (container) => {
     const rfs = adminService.getRfs() || [];
     const assignments = adminService.getRfAssignments() || [];
 
+    const expectedAssignments = assignments.filter(a => {
+      if (a.turn !== revisionTurn) return false;
+      if (!a.assigned_at) return false;
+      
+      const aDateStr = a.assigned_at.split('T')[0];
+      
+      if (revisionTurn === 'NOCHE') {
+        const targetDate = new Date(revisionDate + 'T12:00:00');
+        const prevDate = new Date(targetDate.getTime() - 24 * 60 * 60 * 1000);
+        const prevStr = prevDate.toISOString().split('T')[0];
+        const targetStr = revisionDate;
+        
+        const aDate = new Date(a.assigned_at);
+        const aHour = aDate.getHours();
+        
+        if (aDateStr === prevStr && aHour >= 18) return true;
+        if (aDateStr === targetStr && aHour < 8) return true;
+        return false;
+      } else {
+        return aDateStr === revisionDate;
+      }
+    });
+
+    const expectedRFSerials = [];
+    const expectedRFDetails = {};
+    expectedAssignments.forEach(a => {
+      const serial = a.rf_serial;
+      const rfObj = rfs.find(r => r.serie === serial);
+      if (rfObj && (rfObj.estado === 'En Mantenimiento' || rfObj.estado === 'De Baja')) {
+        return;
+      }
+      if (!expectedRFSerials.includes(serial)) {
+        expectedRFSerials.push(serial);
+        expectedRFDetails[serial] = a;
+      }
+    });
+
+    const totalExpected = expectedRFSerials.length;
+    const foundExpectedSerials = scannedRfs.filter(s => expectedRFSerials.includes(s.serial)).map(s => s.serial);
+    const uniqueFoundExpected = [...new Set(foundExpectedSerials)].length;
+    const pendingCount = totalExpected - uniqueFoundExpected;
+    
+    const unexpectedScans = scannedRfs.filter(s => !expectedRFSerials.includes(s.serial));
+    const uniqueUnexpected = [...new Set(unexpectedScans.map(s => s.serial))].length;
+
     // Auto-sanear inconsistencias de RFs de forma bidireccional
     let rfsChanged = false;
     
@@ -3015,7 +3090,38 @@ const renderRFSection = (container) => {
 
     // Calcular métricas dinámicas según pestaña
     let metricsHtml = '';
-    if (activeRFTab === 'inventario') {
+    if (activeRFTab === 'revision') {
+      metricsHtml = `
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">📋</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Esperados</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalExpected}</p>
+          </div>
+        </div>
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✔️</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Coincidentes OK</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${uniqueFoundExpected}</p>
+          </div>
+        </div>
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #ef4444; background:rgba(239,68,68,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(239,68,68,0.4));">⏳</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Pendientes</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#ef4444;">${pendingCount}</p>
+          </div>
+        </div>
+        <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #3b82f6; background:rgba(59,130,246,0.03);">
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">❌</span>
+          <div>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Inesperados</h5>
+            <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#3b82f6;">${uniqueUnexpected}</p>
+          </div>
+        </div>
+      `;
+    } else if (activeRFTab === 'inventario') {
       if (activeInventorySubTab === 'rfs') {
         const totalRFs = rfs.length;
         const availableRFs = rfs.filter(r => r.estado === 'Operativo' && !r.asignadoDni).length;
@@ -3296,9 +3402,11 @@ const renderRFSection = (container) => {
           <a class="perf-sub-item ${activeRFTab==='inventario'?'active':''}" id="rf_tab_inventario">📁 INVENTARIO</a>
           <a class="perf-sub-item ${activeRFTab==='asignar'?'active':''}" id="rf_tab_asignar">🔑 ASIGNAR RF</a>
           <a class="perf-sub-item ${activeRFTab==='asignaciones'?'active':''}" id="rf_tab_asignaciones">📝 BITÁCORA</a>
+          <a class="perf-sub-item ${activeRFTab==='revision'?'active':''}" id="rf_tab_revision">🔍 REVISIÓN RF</a>
         </nav>
 
         <!-- SEARCH AND ADD -->
+        ${activeRFTab !== 'revision' ? `
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; padding-bottom:0.3rem;">
           <div style="display:flex; gap:0.4rem; align-items:center;">
             <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
@@ -3320,6 +3428,11 @@ const renderRFSection = (container) => {
             `}
           ` : ''}
         </div>
+        ` : `
+        <div style="font-size:0.75rem; color:#818cf8; font-weight:800; background:rgba(129,140,248,0.1); border:1px solid rgba(129,140,248,0.2); padding:5px 12px; border-radius:20px; letter-spacing:0.5px;">
+          🖥️ MÓDULO DE VERIFICACIÓN AUTOMÁTICO
+        </div>
+        `}
       </div>
 
       <!-- MAIN CONTENT -->
@@ -3636,7 +3749,7 @@ const renderRFSection = (container) => {
             </div>
           </div>
         </div>
-      ` : `
+      ` : activeRFTab === 'asignaciones' ? `
         <!-- TABLE BITÁCORA ASIGNACIONES -->
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
@@ -3746,6 +3859,160 @@ const renderRFSection = (container) => {
             </tbody>
           </table>
         </div>
+      ` : `
+        <!-- REVISIÓN RF SECTION -->
+        <div style="display:grid; grid-template-columns: 380px 1fr; gap:1.5rem; align-items:start;">
+          <!-- COLUMNA IZQUIERDA: CONTROL Y ESCANEO -->
+          <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08);">
+            <h4 style="margin:0 0 1.2rem 0; color:var(--primary); font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🔍 Panel de Validación</h4>
+            
+            <div style="display:flex; flex-direction:column; gap:0.9rem;">
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">1. FECHA DEL TURNO REFERENCIA (FIN DE TURNO):</label>
+                <input type="date" id="rf_rev_date" value="${revisionDate}" style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; font-size:0.75rem; cursor:pointer;">
+              </div>
+
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">2. TURNO A REVISAR (ANTERIOR):</label>
+                <select id="rf_rev_turn" style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.75rem;">
+                  <option value="NOCHE" ${revisionTurn==='NOCHE'?'selected':''}>NOCHE (Salida: 6:00 AM)</option>
+                  <option value="DIA" ${revisionTurn==='DIA'?'selected':''}>DIA (Salida: 6:00 PM)</option>
+                </select>
+              </div>
+
+              <!-- LECTORA DE BARRAS DE RF -->
+              <div style="background:rgba(0, 0, 0, 0.25); border:2px dashed rgba(99,102,241,0.4); padding:1.2rem; border-radius:12px; margin-top:0.5rem; text-align:center; position:relative; box-shadow:inset 0 0 15px rgba(99,102,241,0.05);">
+                <div style="position:absolute; top:8px; right:12px; display:flex; align-items:center; gap:5px;">
+                  <span style="display:inline-block; width:8px; height:8px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981; animation:pulse-bat 1s infinite alternate;"></span>
+                  <span style="font-size:0.6rem; color:#10b981; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Listo</span>
+                </div>
+
+                <label style="font-size:0.75rem; color:#fff; display:block; margin-bottom:10px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">⚡ Escanear Terminal RF:</label>
+                <input type="text" id="rf_rev_scanner_input" placeholder="Pistolear Código..." autofocus autocomplete="off" style="width:100%; background:rgba(15,23,42,0.9); border:2px solid rgba(99,102,241,0.6); color:#fff; font-size:1.1rem; font-weight:900; letter-spacing:1px; outline:none; padding:0.7rem; border-radius:8px; text-align:center; box-shadow:0 0 10px rgba(99,102,241,0.25); transition:all 0.2s;" onfocus="this.style.borderColor='#818cf8'; this.style.boxShadow='0 0 15px rgba(129,140,248,0.4)';" onblur="this.style.borderColor='rgba(99,102,241,0.6)';">
+                
+                <span style="font-size:0.6rem; color:var(--text-muted); display:block; margin-top:8px;">Haga clic en la caja si pierde el foco para seguir pistoleando.</span>
+              </div>
+
+              <!-- BOTONES AUXILIARES -->
+              <div style="display:flex; gap:10px; margin-top:0.5rem;">
+                <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.background='rgba(239,68,68,0.1)';">🗑️ Limpiar Lecturas</button>
+                <button id="btn_export_revision" class="btn" style="flex:1.2; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.2)';" onmouseout="this.style.background='rgba(16,185,129,0.1)';">📥 Exportar Reporte</button>
+              </div>
+
+              <!-- ULTIMO ESCANEO DETALLE -->
+              ${scannedRfs.length ? (() => {
+                const last = scannedRfs[0];
+                const isExpected = expectedRFSerials.includes(last.serial);
+                const bg = isExpected ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)';
+                const border = isExpected ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)';
+                const color = isExpected ? '#34d399' : '#f87171';
+                
+                return `
+                  <div style="background:${bg}; border:${border}; border-radius:10px; padding:0.8rem; margin-top:0.3rem;">
+                    <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px;">Última RF Escaneada:</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span style="font-size:1.1rem; font-weight:900; color:#fff; font-family:monospace;">${last.serial}</span>
+                      <span style="background:${isExpected?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'}; color:${color}; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid ${color}44;">
+                        ${isExpected ? '✔️ CONFORME' : '❌ NO ESPERADO'}
+                      </span>
+                    </div>
+                  </div>
+                `;
+              })() : ''}
+            </div>
+          </div>
+
+          <!-- COLUMNA DERECHA: COMPARACIÓN Y LISTAS -->
+          <div style="display:flex; flex-direction:column; gap:1.5rem; flex:1; width:100%; overflow:hidden;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+              <!-- EQUIPOS LEÍDOS / HISTORIAL -->
+              <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:420px;">
+                <h4 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
+                  📋 Equipos Escaneados (${scannedRfs.length})
+                </h4>
+                
+                <div style="overflow-y:auto; max-height:350px; flex:1;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                    <thead style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:1;">
+                      <tr>
+                        <th style="padding:0.6rem; text-align:left;">Equipo RF</th>
+                        <th style="padding:0.6rem; text-align:left;">Estado anterior / Operario</th>
+                        <th style="padding:0.6rem; text-align:center; width:90px;">Validación</th>
+                        <th style="padding:0.6rem; text-align:center; width:40px;"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${scannedRfs.length ? scannedRfs.map((s, sIdx) => {
+                        const isExpected = expectedRFSerials.includes(s.serial);
+                        const detail = expectedRFDetails[s.serial];
+                        
+                        return `
+                          <tr style="border-bottom:1px solid rgba(255,255,255,0.02); background:${isExpected?'rgba(16,185,129,0.02)':'rgba(239,68,68,0.02)'};">
+                            <td style="padding:0.7rem; font-weight:900; color:#fff; font-family:monospace;">${s.serial}</td>
+                            <td style="padding:0.7rem;">
+                              ${isExpected && detail ? `
+                                <div style="font-weight:700; color:#cbd5e1;">${detail.worker_name}</div>
+                                <div style="font-size:0.6rem; color:var(--text-muted);">Turno anterior: ${detail.turn}</div>
+                              ` : `
+                                <div style="color:var(--text-muted); font-style:italic;">No estuvo en uso en el turno</div>
+                              `}
+                            </td>
+                            <td style="padding:0.7rem; text-align:center;">
+                              ${isExpected ? `
+                                <span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">✔️ BIEN</span>
+                              ` : `
+                                <span style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">❌ X</span>
+                              `}
+                            </td>
+                            <td style="padding:0.7rem; text-align:center;">
+                              <button class="btn-delete-scan" data-idx="${sIdx}" style="background:none; border:none; cursor:pointer; font-size:0.8rem; filter:grayscale(0.5); outline:none;">🗑️</button>
+                            </td>
+                          </tr>
+                        `;
+                      }).join('') : '<tr><td colspan="4" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-style:italic;">Use su lectora para escanear los equipos.</td></tr>'}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- EQUIPOS PENDIENTES / FALTANTES -->
+              <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:420px;">
+                <h4 style="margin:0 0 1rem 0; color:#ef4444; font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
+                  ⏳ Pendientes por Encontrar (${pendingCount})
+                </h4>
+                
+                <div style="overflow-y:auto; max-height:350px; flex:1;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                    <thead style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:1;">
+                      <tr>
+                        <th style="padding:0.6rem; text-align:left;">Equipo RF</th>
+                        <th style="padding:0.6rem; text-align:left;">Operario Turno Anterior</th>
+                        <th style="padding:0.6rem; text-align:center; width:90px;">Turno anterior</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${expectedRFSerials.filter(ser => !scannedRfs.some(s => s.serial === ser)).length ? 
+                        expectedRFSerials.filter(ser => !scannedRfs.some(s => s.serial === ser)).map(ser => {
+                          const detail = expectedRFDetails[ser];
+                          return `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                              <td style="padding:0.7rem; font-weight:900; color:#fff; font-family:monospace;">${ser}</td>
+                              <td style="padding:0.7rem;">
+                                <div style="font-weight:700; color:#cbd5e1;">${detail.worker_name}</div>
+                              </td>
+                              <td style="padding:0.7rem; text-align:center; color:var(--text-muted);">
+                                ${detail.turn}
+                              </td>
+                            </tr>
+                          `;
+                        }).join('') : '<tr><td colspan="3" style="padding:3rem; text-align:center; color:#10b981; font-weight:800; font-size:0.85rem;">🎉 ¡Todos los equipos esperados han sido validados!</td></tr>'}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       `}
     `;
 
@@ -3755,9 +4022,123 @@ const renderRFSection = (container) => {
       const tabInv = document.getElementById('rf_tab_inventario');
       const tabAsig = document.getElementById('rf_tab_asignaciones');
       const tabAsigar = document.getElementById('rf_tab_asignar');
+      const tabRev = document.getElementById('rf_tab_revision');
       if (tabInv) tabInv.onclick = () => { activeRFTab = 'inventario'; renderRFSection(container); };
       if (tabAsig) tabAsig.onclick = () => { activeRFTab = 'asignaciones'; renderRFSection(container); };
       if (tabAsigar) tabAsigar.onclick = () => { activeRFTab = 'asignar'; renderRFSection(container); };
+      if (tabRev) tabRev.onclick = () => { activeRFTab = 'revision'; renderRFSection(container); };
+
+      // REVISION SUB-TAB LISTENERS
+      const revDateInput = document.getElementById('rf_rev_date');
+      if (revDateInput) {
+        revDateInput.onchange = (e) => {
+          revisionDate = e.target.value;
+          renderRFSection(container);
+        };
+      }
+
+      const revTurnInput = document.getElementById('rf_rev_turn');
+      if (revTurnInput) {
+        revTurnInput.onchange = (e) => {
+          revisionTurn = e.target.value;
+          renderRFSection(container);
+        };
+      }
+
+      const scannerInput = document.getElementById('rf_rev_scanner_input');
+      if (scannerInput) {
+        scannerInput.focus();
+        scannerInput.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            const val = e.target.value.trim();
+            if (val) {
+              if (scannedRfs.some(s => s.serial === val)) {
+                alert(`⚠️ El equipo ${val} ya fue escaneado en esta sesión.`);
+                e.target.value = '';
+                return;
+              }
+              const isExpected = expectedRFSerials.includes(val);
+              playBeep(isExpected ? 'success' : 'error');
+              scannedRfs.unshift({
+                serial: val,
+                timestamp: new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
+              });
+              renderRFSection(container);
+            }
+            e.target.value = '';
+          }
+        };
+      }
+
+      const btnClearRev = document.getElementById('btn_clear_revision');
+      if (btnClearRev) {
+        btnClearRev.onclick = () => {
+          if (confirm("¿Está seguro de limpiar todas las lecturas de la sesión de validación actual?")) {
+            scannedRfs = [];
+            renderRFSection(container);
+          }
+        };
+      }
+
+      const btnExportRev = document.getElementById('btn_export_revision');
+      if (btnExportRev) {
+        btnExportRev.onclick = () => {
+          if (!scannedRfs.length) {
+            alert("⚠️ No hay lecturas escaneadas para exportar.");
+            return;
+          }
+          
+          let reportContent = `REPORTE DE VALIDACIÓN Y REVISIÓN DE RF\n`;
+          reportContent += `========================================\n`;
+          reportContent += `Fecha Referencia: ${revisionDate}\n`;
+          reportContent += `Turno Referencia: ${revisionTurn}\n`;
+          reportContent += `Fecha de Generación: ${new Date().toLocaleString('es-ES')}\n`;
+          reportContent += `----------------------------------------\n\n`;
+          reportContent += `RESUMEN DE EQUIPOS:\n`;
+          reportContent += `Esperados: ${totalExpected}\n`;
+          reportContent += `Coincidentes OK: ${uniqueFoundExpected}\n`;
+          reportContent += `Faltantes: ${pendingCount}\n`;
+          reportContent += `Inesperados: ${uniqueUnexpected}\n\n`;
+          
+          reportContent += `DETALLE DE EQUIPOS LEÍDOS / ESCANEADOS:\n`;
+          reportContent += `----------------------------------------\n`;
+          scannedRfs.forEach(s => {
+            const isExpected = expectedRFSerials.includes(s.serial);
+            const detail = expectedRFDetails[s.serial];
+            const status = isExpected ? 'CONFORME (OK)' : 'INESPERADO (FUERA DE TURNO)';
+            const workerStr = detail ? ` - Anterior: ${detail.worker_name}` : '';
+            reportContent += `[${s.timestamp}] Serial: ${s.serial} -> ${status}${workerStr}\n`;
+          });
+          
+          reportContent += `\nDETALLE DE EQUIPOS FALTANTES / PENDIENTES:\n`;
+          reportContent += `----------------------------------------\n`;
+          const missing = expectedRFSerials.filter(ser => !scannedRfs.some(s => s.serial === ser));
+          if (missing.length) {
+            missing.forEach(ser => {
+              const detail = expectedRFDetails[ser];
+              reportContent += `Serial: ${ser} - Asignado a: ${detail.worker_name} (${detail.turn})\n`;
+            });
+          } else {
+            reportContent += `¡Ningún equipo faltante! Todos fueron encontrados.\n`;
+          }
+          
+          const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `Reporte_Revision_RF_${revisionDate}_${revisionTurn}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+      }
+
+      container.querySelectorAll('.btn-delete-scan').forEach(btn => {
+        btn.onclick = (e) => {
+          const idx = parseInt(e.currentTarget.dataset.idx);
+          scannedRfs.splice(idx, 1);
+          renderRFSection(container);
+        };
+      });
 
       // SUB-TABS CLICKS
       const subTabRfs = document.getElementById('rf_sub_tab_rfs');
@@ -8876,7 +9257,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.109 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.110 | MOBILE PORTAL
                         </div>
                     </div>
 
