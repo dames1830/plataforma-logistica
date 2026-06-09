@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.115';
+const VERSION = '26.5.116';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9324,7 +9324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.115 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.116 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -10824,6 +10824,18 @@ const renderRFSection = (container) => {
         const allBrandsSet = new Set();
         const allGendersPerWeek = {};
 
+        // Build a dynamic map of sku7 to live Column C (G. Gender) from the current maestro dataStore.articulos
+        const liveGenderMap = new Map();
+        const activeMaestro = dataStore.articulos || [];
+        activeMaestro.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku7 = String(raw[1] || '').trim().substring(0, 7);
+            if (sku7 && !liveGenderMap.has(sku7)) {
+                // Column C (index 2) is G. Gender
+                liveGenderMap.set(sku7, String(raw[2] || '').trim().toUpperCase());
+            }
+        });
+
         const getWeekStr = (dateStr) => {
             if (!dateStr || dateStr === '---') return '---';
             const parts = dateStr.split('-');
@@ -10858,7 +10870,8 @@ const renderRFSection = (container) => {
                 allGendersPerWeek[weekStr] = new Set();
             }
             (t.items || []).forEach(art => {
-                const gender = String(art.gender || 'S/G').trim().toUpperCase() || 'S/G';
+                const liveGender = liveGenderMap.get(art.sku7);
+                const gender = (liveGender && liveGender !== '') ? liveGender : (String(art.gender || 'S/G').trim().toUpperCase() || 'S/G');
                 allGendersPerWeek[weekStr].add(gender);
                 if (!weeklyBrandGenderData[weekStr][gender]) {
                     weeklyBrandGenderData[weekStr][gender] = {};
