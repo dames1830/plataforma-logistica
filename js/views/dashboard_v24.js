@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.113';
+const VERSION = '26.5.114';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9324,7 +9324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.113 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.114 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -10594,6 +10594,19 @@ const renderRFSection = (container) => {
         }
     };
 
+    window.toggleStorageReportWeek = (week) => {
+        if (!window.__expandedStorageReportWeeks) window.__expandedStorageReportWeeks = [];
+        const idx = window.__expandedStorageReportWeeks.indexOf(week);
+        if (idx > -1) {
+            window.__expandedStorageReportWeeks.splice(idx, 1);
+        } else {
+            window.__expandedStorageReportWeeks.push(week);
+        }
+        if (window.__almacenajeContainer) {
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+        }
+    };
+
     window.setChartDateRange = (start, end) => {
         if (start !== null) window.__chartStartDate = start;
         if (end !== null) window.__chartEndDate = end;
@@ -10807,7 +10820,9 @@ const renderRFSection = (container) => {
 
     const renderWeeklyStorageReport = (tasksList) => {
         const weeklyBrandData = {};
+        const weeklyBrandGenderData = {};
         const allBrandsSet = new Set();
+        const allGendersPerWeek = {};
 
         const getWeekStr = (dateStr) => {
             if (!dateStr || dateStr === '---') return '---';
@@ -10836,6 +10851,33 @@ const renderRFSection = (container) => {
                 weeklyBrandData[weekStr][brand] = 0;
             }
             weeklyBrandData[weekStr][brand] += parseFloat(t.qty) || 0;
+
+            // Group by gender for drilldown
+            if (!weeklyBrandGenderData[weekStr]) {
+                weeklyBrandGenderData[weekStr] = {};
+                allGendersPerWeek[weekStr] = new Set();
+            }
+            (t.items || []).forEach(art => {
+                const gender = String(art.gender || 'S/G').trim().toUpperCase() || 'S/G';
+                allGendersPerWeek[weekStr].add(gender);
+                if (!weeklyBrandGenderData[weekStr][gender]) {
+                    weeklyBrandGenderData[weekStr][gender] = {};
+                }
+                if (!weeklyBrandGenderData[weekStr][gender][brand]) {
+                    weeklyBrandGenderData[weekStr][gender][brand] = 0;
+                }
+                let artQty = 0;
+                (art.items || []).forEach(i => {
+                    const ubi = String(i.ubi || '').toUpperCase();
+                    if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
+                        artQty += parseFloat(i.qty) || 0;
+                    }
+                });
+                if (artQty === 0) {
+                    artQty = parseFloat(art.bufferQty) || 0;
+                }
+                weeklyBrandGenderData[weekStr][gender][brand] += artQty;
+            });
         });
 
         const predefinedBrands = ['Bata', 'North Star', 'Adidas', 'Puma'];
@@ -10877,7 +10919,7 @@ const renderRFSection = (container) => {
                     REPORTE DE ALMACENADO POR SEMANA Y MARCA
                 </h3>
                 <div style="font-size:0.68rem; color:rgba(167, 139, 250, 0.6); font-weight:700; letter-spacing:0.5px;">
-                    DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES
+                    DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES (HAGA CLIC EN UNA SEMANA PARA EXPANDIR POR GÉNERO)
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
@@ -10893,15 +10935,36 @@ const renderRFSection = (container) => {
                         ${sortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:rgba(167, 139, 250, 0.4); font-weight:700;">No hay datos semanales registrados.</td></tr>` : sortedWeeks.map(w => {
                             const rowData = weeklyBrandData[w];
                             const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
+                            const isExpanded = window.__expandedStorageReportWeeks && window.__expandedStorageReportWeeks.includes(w);
+                            
+                            const genderRowsHtml = isExpanded ? Array.from(allGendersPerWeek[w] || []).sort().map(gender => {
+                                const genderData = weeklyBrandGenderData[w][gender] || {};
+                                const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
+                                return `
+                                    <tr style="background: rgba(139, 92, 246, 0.04); border-bottom: 1px solid rgba(139,92,246,0.06); font-size:0.74rem;">
+                                        <td style="padding:5px 8px 5px 24px; color:rgba(255,255,255,0.7); font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
+                                        ${sortedBrands.map(b => {
+                                            const qty = genderData[b] || 0;
+                                            return `<td style="padding:5px 8px; text-align:center; color:rgba(255,255,255,0.65);">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                        }).join('')}
+                                        <td style="padding:5px 8px; text-align:center; color:#a78bfa; font-weight:700; background:rgba(139,92,246,0.04);">${genderRowTotal.toLocaleString()}</td>
+                                    </tr>
+                                `;
+                            }).join('') : '';
+
                             return `
-                                <tr style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000;">
-                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">${w}</td>
+                                <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='#000000'">
+                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">
+                                        <span style="color:#8b5cf6; margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
+                                        ${w}
+                                    </td>
                                     ${sortedBrands.map(b => {
                                         const qty = rowData[b] || 0;
                                         return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
                                     <td style="padding:6px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.05);">${rowTotal.toLocaleString()}</td>
                                 </tr>
+                                ${genderRowsHtml}
                             `;
                         }).join('')}
                         ${sortedWeeks.length > 0 ? `
