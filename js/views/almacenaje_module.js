@@ -264,7 +264,11 @@ const processAlmacenajeTasks = async (mode = 'update', container) => {
         const raw = Array.isArray(row) ? row : Object.values(row);
         const sku7 = String(raw[1] || '').trim().substring(0, 7);
         if (sku7 && !artMap.has(sku7)) {
-            artMap.set(sku7, { marca: String(raw[13] || 'S/M').trim(), gender: String(raw[2] || '').trim().toUpperCase() });
+            artMap.set(sku7, { 
+                marca: String(raw[13] || 'S/M').trim(), 
+                gender: String(raw[2] || '').trim().toUpperCase(),
+                genderRims: String(raw[3] || '').trim().toUpperCase()
+            });
         }
     });
 
@@ -275,8 +279,8 @@ const processAlmacenajeTasks = async (mode = 'update', container) => {
         const skuFull = String(row['ArtÃculo'] || row['Articulo'] || row['Artículo'] || row['Sku'] || '').trim();
         const sku7 = skuFull.substring(0, 7);
         const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
-        const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G' };
-        if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, items: [], bufferQty: 0, zonaQty: 0 };
+        const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', genderRims: 'S/GR' };
+        if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, genderRims: info.genderRims, items: [], bufferQty: 0, zonaQty: 0 };
         groups[sku7].items.push({ ...row, skuFull, qty, area });
         if (area.includes('CDBUFFER')) groups[sku7].bufferQty += qty;
         else groups[sku7].zonaQty += qty;
@@ -286,18 +290,53 @@ const processAlmacenajeTasks = async (mode = 'update', container) => {
     const byMarca = {};
     eligible.forEach(art => { if (!byMarca[art.marca]) byMarca[art.marca] = []; byMarca[art.marca].push(art); });
 
+    const specialCategories = [
+        '11 NON COMMERCIAL COMPLEMENTS',
+        '08 ACCESORIES',
+        '09 CLOTHING',
+        '06 OTHERS',
+        '10 PROMOTIONS'
+    ];
+    const isSpecialCategory = (gr) => {
+        if (!gr) return false;
+        const clean = String(gr).trim().toUpperCase();
+        return specialCategories.some(cat => clean.includes(cat));
+    };
+
     const finalTasks = [];
     let taskCounter = 1;
     Object.keys(byMarca).forEach(marca => {
         const arts = byMarca[marca];
-        arts.forEach(a => {
-            if (a.gender.includes('ACCESORIES') || a.bufferQty >= 300) {
-                finalTasks.push({ id: `Tarea${taskCounter++}`, marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], fecha: logicalDate });
-            }
+        
+        // Separate special category articles and normal articles
+        const specialArts = arts.filter(a => isSpecialCategory(a.genderRims));
+        const normalArts = arts.filter(a => !isSpecialCategory(a.genderRims));
+
+        // Group special articles by genderRims
+        const specialGroups = {};
+        specialArts.forEach(a => {
+            const cat = String(a.genderRims || 'OTHER_SPECIAL').trim().toUpperCase();
+            if (!specialGroups[cat]) specialGroups[cat] = [];
+            specialGroups[cat].push(a);
         });
+
+        // Create a single task for each special category group
+        Object.keys(specialGroups).forEach(cat => {
+            const groupArts = specialGroups[cat];
+            const totalQty = groupArts.reduce((sum, a) => sum + a.bufferQty, 0);
+            finalTasks.push({ id: `Tarea${taskCounter++}`, marca, qty: totalQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: groupArts, fecha: logicalDate });
+        });
+
+        const bigNormals = normalArts.filter(a => a.bufferQty >= 300);
+        const smallNormals = normalArts.filter(a => a.bufferQty < 300);
+
+        bigNormals.forEach(a => {
+            finalTasks.push({ id: `Tarea${taskCounter++}`, marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], fecha: logicalDate });
+        });
+        
         // Group smalls
         let currentGroup = []; let currentQty = 0;
-        arts.filter(a => !a.gender.includes('ACCESORIES') && a.bufferQty < 300).forEach((art, idx, arr) => {
+        smallNormals.forEach((art, idx, arr) => {
             currentGroup.push(art); currentQty += art.bufferQty;
             if (currentQty >= 300 || idx === arr.length - 1) {
                 finalTasks.push({ id: `Tarea${taskCounter++}`, marca, qty: currentQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup], fecha: logicalDate });

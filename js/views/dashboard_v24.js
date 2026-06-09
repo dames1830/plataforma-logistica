@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.116';
+const VERSION = '26.5.117';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9324,7 +9324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.116 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.117 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -10230,6 +10230,7 @@ const renderRFSection = (container) => {
                 artMap.set(sku7, {
                     marca: String(raw[13] || 'S/M').trim(),
                     gender: String(raw[2] || '').trim().toUpperCase(), 
+                    genderRims: String(raw[3] || '').trim().toUpperCase(), 
                     coleccion: String(raw[9] || 'S/C').trim()
                 });
             }
@@ -10253,9 +10254,9 @@ const renderRFSection = (container) => {
                 tallaExtraida = tallaMatch[1].trim();
             }
 
-            const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', coleccion: 'S/C' };
+            const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', genderRims: 'S/GR', coleccion: 'S/C' };
 
-            if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
+            if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, genderRims: info.genderRims, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
             // [FIX v24.9.7] Usar skuFull para que la pantalla lo reconozca
             const item = { ubi: ubi, qty: qty, area: area, skuFull: skuFull, talla: tallaExtraida }; 
             groups[sku7].items.push(item);
@@ -10292,18 +10293,60 @@ const renderRFSection = (container) => {
             return `${logicalDate}_Tarea${n}`;
         };
 
+        const specialCategories = [
+            '11 NON COMMERCIAL COMPLEMENTS',
+            '08 ACCESORIES',
+            '09 CLOTHING',
+            '06 OTHERS',
+            '10 PROMOTIONS'
+        ];
+        const isSpecialCategory = (gr) => {
+            if (!gr) return false;
+            const clean = String(gr).trim().toUpperCase();
+            return specialCategories.some(cat => clean.includes(cat));
+        };
+
         Object.keys(byMarca).forEach(marca => {
             const arts = byMarca[marca];
-            const accs = arts.filter(a => a.gender.includes('ACCESORIES'));
-            const normals = arts.filter(a => !a.gender.includes('ACCESORIES'));
-            accs.forEach(a => {
-                finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], creador: user.username, fechaProcesado: new Date().toISOString() });
+            
+            // Separate special category articles and normal articles
+            const specialArts = arts.filter(a => isSpecialCategory(a.genderRims));
+            const normalArts = arts.filter(a => !isSpecialCategory(a.genderRims));
+
+            // Group special articles by genderRims
+            const specialGroups = {};
+            specialArts.forEach(a => {
+                const cat = String(a.genderRims || 'OTHER_SPECIAL').trim().toUpperCase();
+                if (!specialGroups[cat]) specialGroups[cat] = [];
+                specialGroups[cat].push(a);
             });
-            const bigNormals = normals.filter(a => a.bufferQty >= 300);
-            const smallNormals = normals.filter(a => a.bufferQty < 300);
+
+            // Create a single task for each special category group (just group by brand + category, no qty limit)
+            Object.keys(specialGroups).forEach(cat => {
+                const groupArts = specialGroups[cat];
+                const totalQty = groupArts.reduce((sum, a) => sum + a.bufferQty, 0);
+                finalTasks.push({ 
+                    id: getNextFreeId(), 
+                    marca: marca, 
+                    qty: totalQty, 
+                    status: 'Creada', 
+                    u1: '', 
+                    u2: '', 
+                    inicio: '', 
+                    termino: '', 
+                    items: groupArts, 
+                    creador: user.username, 
+                    fechaProcesado: new Date().toISOString() 
+                });
+            });
+
+            const bigNormals = normalArts.filter(a => a.bufferQty >= 300);
+            const smallNormals = normalArts.filter(a => a.bufferQty < 300);
+            
             bigNormals.forEach(a => {
                 finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], creador: user.username, fechaProcesado: new Date().toISOString() });
             });
+            
             let currentGroup = [];
             let currentBufferQty = 0;
             smallNormals.forEach((art, index) => {
