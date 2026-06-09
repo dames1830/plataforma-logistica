@@ -264,7 +264,7 @@ const processAlmacenajeTasks = async (mode = 'update', container) => {
         const raw = Array.isArray(row) ? row : Object.values(row);
         const sku7 = String(raw[1] || '').trim().substring(0, 7);
         if (sku7 && !artMap.has(sku7)) {
-            artMap.set(sku7, { marca: String(raw[13] || 'S/M').trim(), gender: String(raw[3] || '').trim().toUpperCase() });
+            artMap.set(sku7, { marca: String(raw[13] || 'S/M').trim(), gender: String(raw[2] || '').trim().toUpperCase() });
         }
     });
 

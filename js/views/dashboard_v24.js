@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.114';
+const VERSION = '26.5.115';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -7271,7 +7271,7 @@ const renderRFSection = (container) => {
           
           if (sku7 && !articulosMap.has(sku7)) {
               articulosMap.set(sku7, {
-                  gGender: String(raw[3] || '').trim().toUpperCase(),
+                  gGender: String(raw[2] || '').trim().toUpperCase(),
                   marca: String(raw[13] || 'OTROS').trim()
               });
           }
@@ -9324,7 +9324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.114 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.115 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -10229,7 +10229,7 @@ const renderRFSection = (container) => {
             if (sku7 && !artMap.has(sku7)) {
                 artMap.set(sku7, {
                     marca: String(raw[13] || 'S/M').trim(),
-                    gender: String(raw[3] || '').trim().toUpperCase(), 
+                    gender: String(raw[2] || '').trim().toUpperCase(), 
                     coleccion: String(raw[9] || 'S/C').trim()
                 });
             }
