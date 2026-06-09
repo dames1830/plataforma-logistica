@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.117';
+const VERSION = '26.5.118';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9324,7 +9324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.117 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.118 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -10521,6 +10521,19 @@ const renderRFSection = (container) => {
 
         // Preparar datos
         const dataRows = [];
+        
+        // Build dynamic map of sku7 to live Column D (Gender RIMS) from maestro
+        const liveGenderRimsMap = new Map();
+        const activeMaestro = dataStore.articulos || [];
+        activeMaestro.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku7 = String(raw[1] || '').trim().substring(0, 7);
+            if (sku7 && !liveGenderRimsMap.has(sku7)) {
+                // Column D (index 3) is Gender RIMS
+                liveGenderRimsMap.set(sku7, String(raw[3] || '').trim().toUpperCase());
+            }
+        });
+
         almacenajeTasksCache.forEach(task => {
             // Filtrar tareas por rango de fechas
             if (task.fecha < window.__almacenajeStartDate || task.fecha > window.__almacenajeEndDate) return;
@@ -10546,15 +10559,17 @@ const renderRFSection = (container) => {
                 // Fechas formateadas
                 // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía, Avance según estado)
                 bufferRows.forEach(i => {
+                    const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
                     dataRows.push([
-                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, 
+                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, grValue, art.coleccion, 
                         i.qty, "", task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
                 // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra, Avance es "---")
                 zonaRows.forEach(i => {
+                    const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
                     dataRows.push([
-                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, art.gender, art.coleccion, 
+                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, grValue, art.coleccion, 
                         "", i.qty, task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
