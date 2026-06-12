@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.118';
+const VERSION = '26.5.119';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8912,11 +8912,7 @@ const renderRFSection = (container) => {
   const fetchAndParseNoRetailClients = async () => {
       let catalogData = [];
       try {
-          const response = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail', { headers: { 'X-Environment': 'production' } });
-          if (response.ok) {
-              const serverResponse = await response.json();
-              catalogData = serverResponse.data || [];
-          }
+          catalogData = await getAreaData('no_retail') || [];
       } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
       let clientsData = [];
@@ -9324,7 +9320,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.118 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.119 | MOBILE PORTAL
                         </div>
                     </div>
 
