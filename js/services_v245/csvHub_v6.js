@@ -470,14 +470,16 @@ export const clearAreaData = async (area, username = 'sistema') => {
     }
 };
 
-export const getAreaData = async (area) => {
-  if (dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
+export const getAreaData = async (area, forceRefresh = false) => {
+  if (!forceRefresh && dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
   
-  // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
-  const dbData = await loadFromDB(area);
-  if (dbData) { 
-      dataStore[area] = dbData; 
-      return dbData; 
+  if (!forceRefresh) {
+      // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
+      const dbData = await loadFromDB(area);
+      if (dbData) { 
+          dataStore[area] = dbData; 
+          return dbData; 
+      }
   }
 
   // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
@@ -500,8 +502,16 @@ export const getAreaData = async (area) => {
               dataStore[area] = serverResponse.data;
               await saveToDB(area, serverResponse.data); // Sincronizar cache local
               if (serverResponse.updated_at) {
+                  let safeDateStr = serverResponse.updated_at;
+                  if (safeDateStr.includes(' ') && !safeDateStr.includes('T')) {
+                      safeDateStr = safeDateStr.replace(' ', 'T');
+                  }
+                  if (!safeDateStr.endsWith('Z')) {
+                      safeDateStr += 'Z';
+                  }
+                  const parsedTime = new Date(safeDateStr).getTime();
                   localStorage.setItem('meta_' + area, JSON.stringify({
-                      ts: new Date(serverResponse.updated_at).getTime(),
+                      ts: isNaN(parsedTime) ? Date.now() : parsedTime,
                       timestamp: serverResponse.updated_at
                   }));
               }

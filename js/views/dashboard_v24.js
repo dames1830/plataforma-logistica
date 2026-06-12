@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.125';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.126';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.125';
+const VERSION = '26.5.126';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8909,10 +8909,10 @@ const renderRFSection = (container) => {
 
   
   
-  const fetchAndParseNoRetailClients = async () => {
+  const fetchAndParseNoRetailClients = async (forceRefresh = false) => {
       let catalogData = [];
       try {
-          catalogData = await getAreaData('no_retail') || [];
+          catalogData = await getAreaData('no_retail', forceRefresh) || [];
       } catch(e) { console.warn("No retail catalog loading failed:", e); }
 
       let clientsData = [];
@@ -9159,7 +9159,7 @@ const renderRFSection = (container) => {
       };
   };
 
-  const renderTrackingNoRetailPortal = async (container) => {
+  const renderTrackingNoRetailPortal = async (container, forceRefresh = false) => {
       let cache = {};
       try {
           const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
@@ -9178,8 +9178,8 @@ const renderRFSection = (container) => {
           if (Array.isArray(cache)) cache = {};
       }
 
-      if (!window._noRetailClients || window._noRetailClients.length === 0) {
-          await fetchAndParseNoRetailClients();
+      if (!window._noRetailClients || window._noRetailClients.length === 0 || forceRefresh) {
+          await fetchAndParseNoRetailClients(forceRefresh);
       }
 
       let clients = window._noRetailClients || [];
@@ -9192,10 +9192,16 @@ const renderRFSection = (container) => {
 
       // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
       const meta = getUploadMeta('no_retail') || {};
-      const uploadDateRaw = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
+      const uploadDateRaw = meta.timestamp || (meta.ts && !isNaN(new Date(meta.ts).getTime()) ? new Date(meta.ts).toLocaleString() : 'Desconocida');
       const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
-      // Si meta.ts es null o undefined, el fallback es la fecha actual (new Date())
-      const uDate = meta.ts ? new Date(meta.ts) : new Date();
+      // Si meta.ts es null, undefined o inválido, el fallback es la fecha actual (new Date())
+      let uDate = new Date();
+      if (meta.ts) {
+          const parsedMetaDate = new Date(meta.ts);
+          if (!isNaN(parsedMetaDate.getTime())) {
+              uDate = parsedMetaDate;
+          }
+      }
 
       // Filter logic
       const today = new Date();
@@ -9214,18 +9220,25 @@ const renderRFSection = (container) => {
       const dateDesde = window._trackingFilterDesde;
       const dateHasta = window._trackingFilterHasta;
 
+      const getLocalDateString = (date) => {
+          if (!date) return null;
+          const d = new Date(date);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+      };
+
       if (dateDesde) {
           clients = clients.filter(c => {
-              const cDate = c.statusDate ? new Date(c.statusDate) : uDate;
-              const fDesde = new Date(dateDesde);
-              return cDate && cDate >= fDesde;
+              const cDateStr = getLocalDateString(c.statusDate ? new Date(c.statusDate) : uDate);
+              return cDateStr && cDateStr >= dateDesde;
           });
       }
       if (dateHasta) {
           clients = clients.filter(c => {
-              const cDate = c.statusDate ? new Date(c.statusDate) : uDate;
-              const fHasta = new Date(dateHasta);
-              return cDate && cDate <= fHasta;
+              const cDateStr = getLocalDateString(c.statusDate ? new Date(c.statusDate) : uDate);
+              return cDateStr && cDateStr <= dateHasta;
           });
       }
 
@@ -9375,7 +9388,7 @@ const renderRFSection = (container) => {
           btn.style.animation = 'spin 1.5s linear infinite';
           window._noRetailClients = null;
           dataStore['no_retail'] = null; // Limpiar la caché local para forzar recarga del servidor
-          await renderTrackingNoRetailPortal(container);
+          await renderTrackingNoRetailPortal(container, true);
       });
 
       container.querySelectorAll('.btn-preview-tracking-photo').forEach(img => {
@@ -9516,7 +9529,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.125 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.126 | MOBILE PORTAL
                         </div>
                     </div>
 
