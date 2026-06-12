@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.127';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.128';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.127';
+const VERSION = '26.5.128';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8912,7 +8912,7 @@ const renderRFSection = (container) => {
   const fetchAndParseNoRetailClients = async (forceRefresh = false) => {
       let availableDates = [];
       try {
-          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail/dates');
+          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail/dates?t=' + Date.now());
           if (res.ok) {
               const datesObj = await res.json();
               availableDates = datesObj.dates || [];
@@ -8951,7 +8951,7 @@ const renderRFSection = (container) => {
               if (!forceRefresh && cached) {
                   dateData = JSON.parse(cached);
               } else {
-                  const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail?date=${dStr}`);
+                  const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail?date=${dStr}&t=${Date.now()}`);
                   if (res.ok) {
                       const jsonRes = await res.json();
                       dateData = jsonRes.data || [];
@@ -9203,7 +9203,7 @@ const renderRFSection = (container) => {
   const renderTrackingNoRetailPortal = async (container, forceRefresh = false) => {
       let cache = {};
       try {
-          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
+          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache?t=' + Date.now());
           if (res.ok) {
               const serverData = await res.json();
               cache = serverData.data || {};
@@ -9412,11 +9412,35 @@ const renderRFSection = (container) => {
       
       document.getElementById('btn_sync_tracking')?.addEventListener('click', async (e) => {
           const btn = e.currentTarget;
+          if (btn.disabled) return;
+          btn.disabled = true;
           btn.style.transformOrigin = 'center';
-          btn.style.animation = 'spin 1.5s linear infinite';
-          window._noRetailClients = null;
-          dataStore['no_retail'] = null; // Limpiar la caché local para forzar recarga del servidor
-          await renderTrackingNoRetailPortal(container, true);
+          btn.style.animation = 'spin 1.2s linear infinite';
+          
+          try {
+              // 1. Obtener listado de fechas para limpiar cachés correspondientes
+              const resDates = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail/dates?t=' + Date.now());
+              if (resDates.ok) {
+                  const datesObj = await resDates.json();
+                  const dates = datesObj.dates || [];
+                  dates.forEach(d => localStorage.removeItem(`nr_data_${d}`));
+              }
+              localStorage.removeItem('nr_cache_v1'); // Limpiar caché de liquidaciones
+              
+              window._noRetailClients = null;
+              if (typeof dataStore !== 'undefined') {
+                  dataStore['no_retail'] = null;
+              }
+              
+              // 2. Ejecutar recarga forzada
+              await renderTrackingNoRetailPortal(container, true);
+              showPremiumAlert('SINCRONIZADO', 'Los datos del servidor y liquidaciones se han actualizado con éxito.', 'success');
+          } catch (err) {
+              console.error("Sync error:", err);
+              showPremiumAlert('ERROR', 'No se pudo sincronizar con el servidor.', 'error');
+              btn.disabled = false;
+              btn.style.animation = 'none';
+          }
       });
 
       container.querySelectorAll('.btn-preview-tracking-photo').forEach(img => {
@@ -9557,7 +9581,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.127 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.128 | MOBILE PORTAL
                         </div>
                     </div>
 
