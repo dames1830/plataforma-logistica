@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.123';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.124';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.123';
+const VERSION = '26.5.124';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9001,6 +9001,164 @@ const renderRFSection = (container) => {
       backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
   };
 
+  const openEditTrackingModal = (c, container) => {
+      const backdrop = document.createElement('div');
+      backdrop.style.position = 'fixed';
+      backdrop.style.top = '0';
+      backdrop.style.left = '0';
+      backdrop.style.width = '100vw';
+      backdrop.style.height = '100vh';
+      backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.85)';
+      backdrop.style.backdropFilter = 'blur(10px)';
+      backdrop.style.display = 'flex';
+      backdrop.style.justifyContent = 'center';
+      backdrop.style.alignItems = 'center';
+      backdrop.style.zIndex = '99999';
+
+      backdrop.innerHTML = `
+          <div class="glass-panel" style="width:90%; max-width:500px; padding:2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.99) 100%); position:relative; color:#fff; font-family:'Inter', sans-serif;">
+              <button id="close_edit_modal" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+              
+              <h3 style="margin:0 0 0.5rem 0; font-weight:900; color:#fff; font-family:'Outfit', sans-serif;">Editar Seguimiento</h3>
+              <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 1.5rem 0;">Cliente: ${c.clientName} | Pedido: ${c.pedido}</p>
+              
+              <div style="display:flex; flex-direction:column; gap:1.2rem; margin-bottom:2rem;">
+                  <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                      <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">ESTADO</label>
+                      <select id="edit_status" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit;">
+                          <option value="PENDIENTE" ${c.status === 'PENDIENTE' ? 'selected' : ''}>PENDIENTE</option>
+                          <option value="ATENDIDO" ${c.status === 'ATENDIDO' ? 'selected' : ''}>ATENDIDO</option>
+                          <option value="NO ATENDIDO" ${c.status === 'NO ATENDIDO' ? 'selected' : ''}>NO ATENDIDO</option>
+                          <option value="REPROGRAMAR" ${c.status === 'REPROGRAMAR' ? 'selected' : ''}>REPROGRAMAR</option>
+                      </select>
+                  </div>
+                  
+                  <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                      <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">COBRO FLETE</label>
+                      <select id="edit_flete" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit;">
+                          <option value="NO" ${c.cobroFlete === 'NO' ? 'selected' : ''}>NO</option>
+                          <option value="SI" ${c.cobroFlete === 'SI' ? 'selected' : ''}>SI</option>
+                      </select>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                      <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                          <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">FOTO CARGO</label>
+                          <div id="preview_cargo_edit" style="width:100%; height:80px; border-radius:8px; border:1px dashed rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); overflow:hidden;">
+                              ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:100%; object-fit:cover;" />` : `<span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">Sin Foto</span>`}
+                          </div>
+                          <input type="file" id="upload_cargo_edit" accept="image/*" style="display:none;">
+                          <button id="btn_trigger_cargo_edit" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:0.4rem; font-size:0.7rem; cursor:pointer; font-weight:700; transition:0.2s;">Seleccionar</button>
+                      </div>
+
+                      <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                          <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">FOTO LOCAL</label>
+                          <div id="preview_local_edit" style="width:100%; height:80px; border-radius:8px; border:1px dashed rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); overflow:hidden;">
+                              ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:100%; object-fit:cover;" />` : `<span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">Sin Foto</span>`}
+                          </div>
+                          <input type="file" id="upload_local_edit" accept="image/*" style="display:none;">
+                          <button id="btn_trigger_local_edit" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:0.4rem; font-size:0.7rem; cursor:pointer; font-weight:700; transition:0.2s;">Seleccionar</button>
+                      </div>
+                  </div>
+              </div>
+
+              <button id="save_edit_btn" style="width:100%; background:#4f46e5; color:#fff; border:none; padding:0.8rem; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s;">
+                  GUARDAR CAMBIOS
+              </button>
+          </div>
+      `;
+
+      document.body.appendChild(backdrop);
+      
+      let tempCargo = c.fotoCargo;
+      let tempLocal = c.fotoLocal;
+
+      document.getElementById('btn_trigger_cargo_edit').onclick = () => document.getElementById('upload_cargo_edit').click();
+      document.getElementById('btn_trigger_local_edit').onclick = () => document.getElementById('upload_local_edit').click();
+
+      document.getElementById('upload_cargo_edit').onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                  tempCargo = event.target.result;
+                  document.getElementById('preview_cargo_edit').innerHTML = `<img src="${tempCargo}" style="width:100%; height:100%; object-fit:cover;" />`;
+              };
+              reader.readAsDataURL(file);
+          }
+      };
+
+      document.getElementById('upload_local_edit').onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                  tempLocal = event.target.result;
+                  document.getElementById('preview_local_edit').innerHTML = `<img src="${tempLocal}" style="width:100%; height:100%; object-fit:cover;" />`;
+              };
+              reader.readAsDataURL(file);
+          }
+      };
+
+      document.getElementById('close_edit_modal').onclick = () => backdrop.remove();
+      backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
+
+      document.getElementById('save_edit_btn').onclick = async () => {
+          const newStatus = document.getElementById('edit_status').value;
+          const newFlete = document.getElementById('edit_flete').value;
+
+          c.status = newStatus;
+          c.cobroFlete = newFlete;
+          c.fotoCargo = tempCargo;
+          c.fotoLocal = tempLocal;
+          c.statusDate = newStatus === 'PENDIENTE' ? null : (c.statusDate || new Date().toISOString());
+          c.liquidated = newStatus !== 'PENDIENTE';
+
+          // Actualizar localStorage
+          let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+          if (Array.isArray(cache)) cache = {};
+          
+          if (newStatus === 'PENDIENTE') {
+              delete cache[c.id];
+          } else {
+              cache[c.id] = {
+                  status: c.status,
+                  date: c.statusDate,
+                  liquidated: c.liquidated,
+                  cobroFlete: c.cobroFlete,
+                  fotoCargo: c.fotoCargo,
+                  fotoLocal: c.fotoLocal
+              };
+          }
+          localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+
+          // Enviar al servidor
+          const delta = {};
+          delta[c.id] = {
+              status: c.status,
+              date: c.statusDate,
+              liquidated: c.liquidated,
+              cobroFlete: c.cobroFlete,
+              fotoCargo: c.fotoCargo,
+              fotoLocal: c.fotoLocal
+          };
+
+          try {
+              await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(delta)
+              });
+          } catch(err) {
+              console.error("Error syncing to server:", err);
+          }
+
+          backdrop.remove();
+          showPremiumAlert('SEGUIMIENTO ACTUALIZADO', 'Los cambios se han guardado y sincronizado con el servidor.', 'success');
+          renderTrackingNoRetailPortal(container);
+      };
+  };
+
   const renderTrackingNoRetailPortal = async (container) => {
       let cache = {};
       try {
@@ -9036,7 +9194,8 @@ const renderRFSection = (container) => {
       const meta = getUploadMeta('no_retail') || {};
       const uploadDateRaw = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
       const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
-      const uDate = meta.ts ? new Date(meta.ts) : null;
+      // Si meta.ts es null o undefined, el fallback es la fecha actual (new Date())
+      const uDate = meta.ts ? new Date(meta.ts) : new Date();
 
       // Filter logic
       const today = new Date();
@@ -9136,10 +9295,11 @@ const renderRFSection = (container) => {
                           <th style="padding:1rem;">Estado</th>
                           <th style="padding:1rem;">Cobro Flete</th>
                           <th style="padding:1rem; text-align:center;">Fotos</th>
+                          <th style="padding:1rem; text-align:center;">Acciones</th>
                       </tr>
                   </thead>
                   <tbody>
-                      ${paginatedClients.length === 0 ? `<tr><td colspan="7" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
+                      ${paginatedClients.length === 0 ? `<tr><td colspan="8" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
                       paginatedClients.map(c => `
                           <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                               <td style="padding:1rem;">
@@ -9216,6 +9376,16 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-preview-tracking-photo').forEach(img => {
           img.addEventListener('click', () => {
               openImageModal(img.src, img.getAttribute('data-title'));
+          });
+      });
+
+      container.querySelectorAll('.btn-edit-tracking').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+              const cId = e.currentTarget.dataset.client;
+              const clientObj = clients.find(x => x.id === cId);
+              if (clientObj) {
+                  openEditTrackingModal(clientObj, container);
+              }
           });
       });
       
@@ -9341,7 +9511,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.123 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.124 | MOBILE PORTAL
                         </div>
                     </div>
 

@@ -496,11 +496,17 @@ export const getAreaData = async (area) => {
      });
      if (response.ok) {
          const serverResponse = await response.json();
-         if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
-             dataStore[area] = serverResponse.data;
-             await saveToDB(area, serverResponse.data); // Sincronizar cache local
-             return serverResponse.data;
-         }
+          if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
+              dataStore[area] = serverResponse.data;
+              await saveToDB(area, serverResponse.data); // Sincronizar cache local
+              if (serverResponse.updated_at) {
+                  localStorage.setItem('meta_' + area, JSON.stringify({
+                      ts: new Date(serverResponse.updated_at).getTime(),
+                      timestamp: serverResponse.updated_at
+                  }));
+              }
+              return serverResponse.data;
+          }
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
   
