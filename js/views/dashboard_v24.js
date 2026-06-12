@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.130';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.131';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.130';
+const VERSION = '26.5.131';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9548,15 +9548,8 @@ const renderRFSection = (container) => {
 
         const clients = window._noRetailClients || [];
         
-        const countRealPedidos = (arr) => arr.reduce((acc, c) => {
-            const pStr = String(c.pedido || '').trim();
-            if (!pStr) return acc + 1;
-            const count = pStr.split(';').map(s => s.trim()).filter(s => s).length;
-            return acc + (count > 0 ? count : 1);
-        }, 0);
-
-        const totalCount = countRealPedidos(clients);
-        const pendingCount = countRealPedidos(clients.filter(c => c.status === 'PENDIENTE'));
+        const totalCount = clients.length;
+        const pendingCount = clients.filter(c => c.status === 'PENDIENTE').length;
 
         container.innerHTML = `
             ${showBackToOffice ? `
@@ -9627,7 +9620,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.130 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.131 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -9937,13 +9930,7 @@ const renderRFSection = (container) => {
         const clients = window._noRetailClients || [];
         const pendingAgenciesCount = [...new Set(clients.filter(c => c.status === 'PENDIENTE').map(c => c.agencia))].length;
 
-        const countRealPedidos = (arr) => arr.reduce((acc, c) => {
-            const pStr = String(c.pedido || '').trim();
-            if (!pStr) return acc + 1;
-            const count = pStr.split(';').map(s => s.trim()).filter(s => s).length;
-            return acc + (count > 0 ? count : 1);
-        }, 0);
-        const liquidatedCount = countRealPedidos(clients.filter(c => c.status !== 'PENDIENTE'));
+        const liquidatedCount = clients.filter(c => c.status !== 'PENDIENTE').length;
 
         if (tab === 'inicio') {
             return `
@@ -10063,13 +10050,6 @@ const renderRFSection = (container) => {
         }
 
         if (tab === 'en_ruta') {
-            const countRealPedidos = (arr) => arr.reduce((acc, c) => {
-                const pStr = String(c.pedido || '').trim();
-                if (!pStr) return acc + 1;
-                const count = pStr.split(';').map(s => s.trim()).filter(s => s).length;
-                return acc + (count > 0 ? count : 1);
-            }, 0);
-
             const pendingClients = clients.filter(c => c.status === 'PENDIENTE');
             
             // Group dynamically by Agency -> Clients
@@ -10111,7 +10091,7 @@ const renderRFSection = (container) => {
                     ${Object.keys(groupedAgencies).length === 0 ? `<div style="text-align:center; color:rgba(255,255,255,0.4); font-size:0.8rem; padding: 2rem 0;">No hay pedidos pendientes en ruta.</div>` : ''}
                     <div style="display:flex; flex-direction:column; gap:1rem;">
                         ${Object.entries(groupedAgencies).map(([agName, agClients]) => {
-                            const agPending = countRealPedidos(agClients);
+                            const agPending = agClients.length;
                             const expandedKey = agName.replace(/\W/g, '');
                             const isExpanded = !!window._noRetailExpandedAgencies[expandedKey];
                             
