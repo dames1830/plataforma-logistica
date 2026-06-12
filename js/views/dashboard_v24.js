@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.135';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.136';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.135';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.136';
 import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.53';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
@@ -344,12 +344,35 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.135';
+const VERSION = '26.5.136';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
 
 // --- LOGICA DE FECHA OPERATIVA (Turno Noche) ---
+const getTaskTotalAvance = (t) => {
+    if (!t) return 0;
+    let sum = 0;
+    (t.items || []).forEach(art => {
+        (art.items || []).forEach(i => {
+            const ubi = String(i.ubi || '').toUpperCase().trim();
+            const isBuffer = ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C');
+            if (isBuffer) {
+                if (i.avance !== undefined && i.avance !== null) {
+                    sum += parseFloat(i.avance) || 0;
+                } else if (t.status === 'Finalizado') {
+                    sum += parseFloat(i.qty) || 0;
+                }
+            } else {
+                if (t.status === 'Finalizado') {
+                    sum += parseFloat(i.qty) || 0;
+                }
+            }
+        });
+    });
+    return sum;
+};
+
 const getLogicalDate = () => {
     const now = new Date();
     const hrs = now.getHours();
@@ -9620,7 +9643,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.135 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.136 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -11096,7 +11119,7 @@ const renderRFSection = (container) => {
                 targetHours.forEach(h => hourlyData[dateKey][h] = 0);
             }
             
-            hourlyData[dateKey][hr] += parseFloat(t.qty) || 0;
+            hourlyData[dateKey][hr] += getTaskTotalAvance(t);
         });
 
         const activeDates = Object.keys(hourlyData).filter(dateKey => {
@@ -11202,7 +11225,7 @@ const renderRFSection = (container) => {
             if (!weeklyBrandData[weekStr][brand]) {
                 weeklyBrandData[weekStr][brand] = 0;
             }
-            weeklyBrandData[weekStr][brand] += parseFloat(t.qty) || 0;
+            weeklyBrandData[weekStr][brand] += getTaskTotalAvance(t);
 
             // Group by gender for drilldown
             if (!weeklyBrandGenderData[weekStr]) {
@@ -11223,7 +11246,7 @@ const renderRFSection = (container) => {
                 (art.items || []).forEach(i => {
                     const ubi = String(i.ubi || '').toUpperCase();
                     if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
-                        artQty += parseFloat(i.qty) || 0;
+                        artQty += (i.avance !== undefined && i.avance !== null) ? parseFloat(i.avance) : (parseFloat(i.qty) || 0);
                     }
                 });
                 if (artQty === 0) {
@@ -11401,7 +11424,7 @@ const renderRFSection = (container) => {
                     const qty = parseFloat(i.qty) || 0;
                     qtyBuffer += qty;
                     if (t.status === 'Finalizado') {
-                        avance += qty;
+                        avance += (i.avance !== undefined && i.avance !== null) ? parseFloat(i.avance) : qty;
                     }
                 });
             });
@@ -11958,9 +11981,10 @@ const renderRFSection = (container) => {
                                     
                                     if (uList.length > 0) {
                                         uList.forEach((user, idx) => {
+                                            const totalAvance = getTaskTotalAvance(t);
                                             const qtyForThisUser = (uList.length === 2) 
-                                                ? (idx === 0 ? Math.ceil(t.qty / 2) : Math.floor(t.qty / 2)) 
-                                                : t.qty;
+                                                ? (idx === 0 ? Math.ceil(totalAvance / 2) : Math.floor(totalAvance / 2)) 
+                                                : totalAvance;
                                                 
                                             let uph = 0;
                                             let pct = 0;
@@ -12085,7 +12109,8 @@ const renderRFSection = (container) => {
                                     }
                                     const uList = [t.u1,t.u2].filter(u=>u&&u!=='---');
                                     uList.forEach((user,idx) => {
-                                        const qty = uList.length===2?(idx===0?Math.ceil(t.qty/2):Math.floor(t.qty/2)):t.qty;
+                                        const totalAvance = getTaskTotalAvance(t);
+                                        const qty = uList.length===2?(idx===0?Math.ceil(totalAvance/2):Math.floor(totalAvance/2)):totalAvance;
                                         const key = t.fecha+'|'+user;
                                         const cur = accMap.get(key)||{fecha:t.fecha,user,qty:0,mins:0,tasks:0};
                                         cur.qty+=qty; cur.mins+=mins; cur.tasks++;
@@ -12175,7 +12200,8 @@ const renderRFSection = (container) => {
                                     }
                                     const uList = [t.u1,t.u2].filter(u=>u&&u!=='---');
                                     uList.forEach((user,idx) => {
-                                        const qty = uList.length===2?(idx===0?Math.ceil(t.qty/2):Math.floor(t.qty/2)):t.qty;
+                                        const totalAvance = getTaskTotalAvance(t);
+                                        const qty = uList.length===2?(idx===0?Math.ceil(totalAvance/2):Math.floor(totalAvance/2)):totalAvance;
                                         const taskUph = mins>0?(qty/mins*60):0;
                                         const cur = uMap.get(user)||{user,qty:0,mins:0,bestUph:0,tasks:0};
                                         cur.qty+=qty; cur.mins+=mins; cur.tasks++;
