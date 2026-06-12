@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.133';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.134';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.133';
+const VERSION = '26.5.134';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9620,7 +9620,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.133 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.134 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -12889,7 +12889,7 @@ const renderRFSection = (container) => {
             renderAlmacenajeTareas(container);
         }
     };
-    const openPartialAvanceModal = (t, container, assignModal) => {
+        const openPartialAvanceModal = (t, container, assignModal) => {
         // Obtener todos los items tipo CDBUFFER
         const bufferItems = [];
         (t.items || []).forEach(art => {
@@ -12914,37 +12914,59 @@ const renderRFSection = (container) => {
             return;
         }
 
-        // Crear modal de avances parciales
+        // Consolidar por SKU (Artículo + Talla)
+        const grouped = {};
+        bufferItems.forEach(bi => {
+            const sku = bi.item.skuFull;
+            if (!grouped[sku]) {
+                grouped[sku] = {
+                    art: bi.art,
+                    sku: sku,
+                    talla: (bi.item.skuFull && bi.item.skuFull.split('-').pop()) || 'S/T',
+                    qty: 0,
+                    avance: 0,
+                    hasSavedAvance: false,
+                    items: []
+                };
+            }
+            grouped[sku].qty += bi.item.qty;
+            if (bi.item.avance !== undefined && bi.item.avance !== null) {
+                grouped[sku].avance += bi.item.avance;
+                grouped[sku].hasSavedAvance = true;
+            }
+            grouped[sku].items.push(bi.item);
+        });
+
+        const consolidatedList = Object.values(grouped);
+
+        // Crear modal de avances parciales consolidado
         const pModal = document.createElement('div');
         pModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1001; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);";
         
-        let rowsHtml = bufferItems.map((bi, index) => {
-            const defaultValue = bi.item.avance !== undefined ? bi.item.avance : bi.item.qty;
-            const talla = (bi.item.skuFull && bi.item.skuFull.split('-').pop()) || 'S/T';
+        let rowsHtml = consolidatedList.map((g, index) => {
+            const defaultValue = g.hasSavedAvance ? g.avance : g.qty;
             return `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.05); text-align:left;">
-                    <td style="padding:0.7rem; color:#fff;">${bi.art.sku7}</td>
-                    <td style="padding:0.7rem; color:#d1d5db;">${bi.item.ubi}</td>
-                    <td style="padding:0.7rem; text-align:center; color:#d1d5db;">${talla}</td>
-                    <td style="padding:0.7rem; text-align:center; font-weight:700; color:#d1d5db;">${bi.item.qty}</td>
+                    <td style="padding:0.7rem; color:#fff;">${g.art.sku7}</td>
+                    <td style="padding:0.7rem; text-align:center; color:#d1d5db;">${g.talla}</td>
+                    <td style="padding:0.7rem; text-align:center; font-weight:700; color:#d1d5db;">${g.qty}</td>
                     <td style="padding:0.7rem; text-align:center;">
-                        <input type="number" class="nr-partial-avance-input" data-index="${index}" min="0" max="${bi.item.qty}" value="${defaultValue}" style="width:80px; background:#0f172a; border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#fff; text-align:center; padding:4px; outline:none; font-weight:700;">
+                        <input type="number" class="nr-partial-avance-input" data-index="${index}" min="0" max="${g.qty}" value="${defaultValue}" style="width:80px; background:#0f172a; border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#fff; text-align:center; padding:4px; outline:none; font-weight:700;">
                     </td>
                 </tr>
             `;
         }).join('');
 
         pModal.innerHTML = `
-            <div class="glass-panel" style="width:520px; max-height:85vh; display:flex; flex-direction:column; padding:1.5rem; border:1px solid var(--primary); border-radius:16px; overflow:hidden; background:rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);">
+            <div class="glass-panel" style="width:450px; max-height:85vh; display:flex; flex-direction:column; padding:1.5rem; border:1px solid var(--primary); border-radius:16px; overflow:hidden; background:rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);">
                 <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.1rem; text-align:center;">Ingresar Avance Real: <span style="color:var(--primary);">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</span></h3>
-                <p style="font-size:0.7rem; color:var(--text-muted); margin:0 0 1rem 0; text-align:center;">Modifica las cantidades avanzadas si solo se completó una parte del trabajo.</p>
+                <p style="font-size:0.7rem; color:var(--text-muted); margin:0 0 1rem 0; text-align:center;">Modifica las cantidades avanzadas por artículo y talla.</p>
                 
                 <div style="flex:1; overflow-y:auto; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:8px;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
                         <thead style="background:#1e293b; position:sticky; top:0; z-index:5;">
                             <tr>
                                 <th style="padding:0.6rem; text-align:left; color:#fff;">Artículo</th>
-                                <th style="padding:0.6rem; text-align:left; color:#fff;">Ubicación</th>
                                 <th style="padding:0.6rem; text-align:center; color:#fff;">Talla</th>
                                 <th style="padding:0.6rem; text-align:center; color:#fff;">Qty Buffer</th>
                                 <th style="padding:0.6rem; text-align:center; color:#fff;">Avance</th>
@@ -12975,23 +12997,30 @@ const renderRFSection = (container) => {
             inputs.forEach(input => {
                 const idx = parseInt(input.dataset.index, 10);
                 const val = parseInt(input.value, 10);
-                const bi = bufferItems[idx];
+                const g = consolidatedList[idx];
                 if (isNaN(val) || val < 0) {
-                    showPremiumAlert("AVANCE INVÁLIDO", `El avance para el artículo ${bi.art.sku7} no puede ser vacío o negativo.`, "warning");
+                    showPremiumAlert("AVANCE INVÁLIDO", `El avance para el artículo ${g.art.sku7} no puede ser vacío o negativo.`, "warning");
                     hasError = true;
-                } else if (val > bi.item.qty) {
-                    showPremiumAlert("EXCEDE QTY BUFFER", `El avance (${val}) no puede ser mayor que la cantidad demandada (${bi.item.qty}).`, "warning");
+                } else if (val > g.qty) {
+                    showPremiumAlert("EXCEDE QTY BUFFER", `El avance (${val}) no puede ser mayor que la cantidad demandada (${g.qty}).`, "warning");
                     hasError = true;
                 }
             });
 
             if (hasError) return;
 
-            // Guardar avances reales
+            // Distribuir el avance real ingresado en los items individuales
             inputs.forEach(input => {
                 const idx = parseInt(input.dataset.index, 10);
                 const val = parseInt(input.value, 10);
-                bufferItems[idx].item.avance = val;
+                const g = consolidatedList[idx];
+                
+                let remaining = val;
+                g.items.forEach(item => {
+                    const allocated = Math.min(remaining, item.qty);
+                    item.avance = allocated;
+                    remaining -= allocated;
+                });
             });
 
             // Finalizar tarea
