@@ -471,7 +471,7 @@ export const clearAreaData = async (area, username = 'sistema') => {
 };
 
 export const getAreaData = async (area) => {
-  if (dataStore[area] !== null) return dataStore[area];
+  if (dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
   
   // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
   const dbData = await loadFromDB(area);
