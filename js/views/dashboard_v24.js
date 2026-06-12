@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.122';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.123';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.122';
+const VERSION = '26.5.123';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9032,6 +9032,12 @@ const renderRFSection = (container) => {
           return c;
       });
 
+      // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
+      const meta = getUploadMeta('no_retail') || {};
+      const uploadDateRaw = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
+      const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
+      const uDate = meta.ts ? new Date(meta.ts) : null;
+
       // Filter logic
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -9051,23 +9057,18 @@ const renderRFSection = (container) => {
 
       if (dateDesde) {
           clients = clients.filter(c => {
-              const cDate = c.statusDate ? new Date(c.statusDate) : null;
+              const cDate = c.statusDate ? new Date(c.statusDate) : uDate;
               const fDesde = new Date(dateDesde);
               return cDate && cDate >= fDesde;
           });
       }
       if (dateHasta) {
           clients = clients.filter(c => {
-              const cDate = c.statusDate ? new Date(c.statusDate) : null;
+              const cDate = c.statusDate ? new Date(c.statusDate) : uDate;
               const fHasta = new Date(dateHasta);
               return cDate && cDate <= fHasta;
           });
       }
-
-      // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
-      const meta = getUploadMeta('no_retail') || {};
-      const uploadDateRaw = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Desconocida');
-      const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
 
       // Pagination
       const limit = 25;
@@ -9118,7 +9119,7 @@ const renderRFSection = (container) => {
                           <input type="date" id="tracking_hasta" value="${dateHasta}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
                       </div>
                   </div>
-                  <button id="btn_sync_tracking" style="background:#4f46e5; color:white; border:none; padding:0.5rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; height: 38px; width: 38px;" title="Sincronizar de Servidor">
+                  <button id="btn_sync_tracking" style="background:transparent; border:none; color:white; padding:0.5rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; height: 38px; width: 38px; font-size:1.2rem; outline:none;" title="Sincronizar de Servidor">
                       🔄
                   </button>
               </div>
@@ -9203,7 +9204,10 @@ const renderRFSection = (container) => {
           renderTrackingNoRetailPortal(container);
       });
       
-      document.getElementById('btn_sync_tracking')?.addEventListener('click', async () => {
+      document.getElementById('btn_sync_tracking')?.addEventListener('click', async (e) => {
+          const btn = e.currentTarget;
+          btn.style.transformOrigin = 'center';
+          btn.style.animation = 'spin 1.5s linear infinite';
           window._noRetailClients = null;
           dataStore['no_retail'] = null; // Limpiar la caché local para forzar recarga del servidor
           await renderTrackingNoRetailPortal(container);
@@ -9337,7 +9341,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.122 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.123 | MOBILE PORTAL
                         </div>
                     </div>
 
