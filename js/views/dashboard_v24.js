@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.120';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.121';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.120';
+const VERSION = '26.5.121';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9302,17 +9302,20 @@ const renderRFSection = (container) => {
                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.2rem 0.5rem 0.6rem; background:#0b1329; border-bottom:1px solid rgba(255,255,255,0.03); margin-bottom:0.5rem;">
                         <div style="display:flex; align-items:center; gap:0.8rem;">
                             <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">☰</span>
-                            <span style="font-size:1.1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
-                                Deam1830
-                            </span>
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-size:1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
+                                    Deam1830
+                                </span>
+                                <span style="font-size:0.6rem; color:rgba(255,255,255,0.45); font-weight:700;">👤 ${user.name}</span>
+                            </div>
                         </div>
-                                                <div style="display:flex; gap:0.8rem; align-items:center;">
+                        <div style="display:flex; gap:0.8rem; align-items:center;">
                             <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;">
                                 <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
                                 <input type="date" id="nr_date_filter" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
                             </div>
-                            <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;">
-                                <span style="font-size:1.2rem; cursor:pointer; color:#ef4444;" id="btn_nr_logout" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i></span>
+                            <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;" id="btn_nr_logout" title="Cerrar Sesión">
+                                <span style="font-size:1.2rem; cursor:pointer; color:#ef4444;">🚪</span>
                             </div>
                         </div>
                     </div>
@@ -9320,7 +9323,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.120 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.121 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -9621,8 +9624,7 @@ const renderRFSection = (container) => {
         // Logout
         document.getElementById('btn_nr_logout')?.addEventListener('click', async () => {
             if (await showPremiumConfirm('CERRAR SESIÓN', '¿Estás seguro que deseas cerrar sesión?', 'warning')) {
-                localStorage.removeItem('logistics_sync_v24_session');
-                window.location.reload();
+                onLogout();
             }
         });
     };
