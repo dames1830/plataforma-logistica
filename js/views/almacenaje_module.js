@@ -37,10 +37,6 @@ const getTaskTotalAvance = (t) => {
                 } else if (t.status === 'Finalizado') {
                     sum += parseFloat(i.qty) || 0;
                 }
-            } else {
-                if (t.status === 'Finalizado') {
-                    sum += parseFloat(i.qty) || 0;
-                }
             }
         });
     });
