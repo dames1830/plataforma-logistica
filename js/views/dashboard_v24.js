@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.128';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.129';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.128';
+const VERSION = '26.5.129';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9270,6 +9270,16 @@ const renderRFSection = (container) => {
           });
       }
 
+      // Filtro de búsqueda de texto (Agencia, Cliente, Pedido)
+      const searchQuery = (window._trackingSearchQuery || '').toLowerCase().trim();
+      if (searchQuery) {
+          clients = clients.filter(c => {
+              return (c.agencia || '').toLowerCase().includes(searchQuery) ||
+                     (c.clientName || '').toLowerCase().includes(searchQuery) ||
+                     (c.pedido || '').toLowerCase().includes(searchQuery);
+          });
+      }
+
       // Pagination
       const limit = 25;
       const currentPage = window._trackingPage || 0;
@@ -9296,6 +9306,11 @@ const renderRFSection = (container) => {
           document.body.removeChild(link);
       };
 
+      // Guardar el estado del foco y cursor antes de renderizar para evitar perder foco al escribir
+      const searchInput = document.getElementById('tracking_search');
+      const hasFocus = document.activeElement === searchInput;
+      const caretPos = searchInput ? searchInput.selectionStart : 0;
+
       container.innerHTML = `
         <div style="padding: 1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
@@ -9303,6 +9318,11 @@ const renderRFSection = (container) => {
                   <button onclick="exportTrackingToExcel()" style="background:#10b981; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;">
                       <i class="fas fa-file-excel"></i> Exportar a Excel
                   </button>
+              </div>
+              
+              <!-- Filtro de Búsqueda de Texto en el Medio -->
+              <div style="flex-grow:1; max-width:420px; margin:0 2rem; position:relative;">
+                  <input type="text" id="tracking_search" value="${window._trackingSearchQuery || ''}" placeholder="🔍 Buscar por agencia, cliente o pedido..." style="width:100%; padding:0.55rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; font-size:0.8rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.06)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'">
               </div>
               
               <div style="display:flex; gap:0.5rem; align-items:center;">
@@ -9398,6 +9418,21 @@ const renderRFSection = (container) => {
           </div>
         </div>
       `;
+
+      document.getElementById('tracking_search')?.addEventListener('input', (e) => {
+          window._trackingSearchQuery = e.target.value;
+          window._trackingPage = 0; // Reset page on filter
+          renderTrackingNoRetailPortal(container);
+      });
+
+      // Restaurar foco y posición del cursor
+      if (hasFocus) {
+          const newSearchInput = document.getElementById('tracking_search');
+          if (newSearchInput) {
+              newSearchInput.focus();
+              newSearchInput.setSelectionRange(caretPos, caretPos);
+          }
+      }
 
       document.getElementById('tracking_desde')?.addEventListener('change', (e) => {
           window._trackingFilterDesde = e.target.value;
@@ -9581,7 +9616,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.128 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.129 | MOBILE PORTAL
                         </div>
                     </div>
 
