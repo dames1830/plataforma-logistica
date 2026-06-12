@@ -9777,6 +9777,41 @@ const renderRFSection = (container) => {
                 }
             });
         });
+
+        // Gasto input listener
+        document.querySelectorAll('.nr-gasto-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    c._tempGasto = e.currentTarget.value;
+                }
+            });
+        });
+
+        // Incidencia button toggles
+        document.querySelectorAll('.nr-incidencia-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const val = e.currentTarget.dataset.val;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    c._tempIncidencia = val;
+                    refreshNoRetailUI();
+                }
+            });
+        });
+
+        // Incidencia observaciones textarea listener
+        document.querySelectorAll('.nr-incidencia-obs').forEach(textarea => {
+            textarea.addEventListener('input', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    c._tempIncidenciaObs = e.currentTarget.value;
+                }
+            });
+        });
         
         // Date filter
         const dateInput = document.getElementById('nr_date_filter');
@@ -9861,6 +9896,9 @@ const renderRFSection = (container) => {
                     c.status = currentStatus;
                     c.statusDate = new Date().toISOString();
                     c.liquidated = true;
+                    c.gasto = c._tempGasto !== undefined ? c._tempGasto : (c.gasto || '');
+                    c.incidencia = c._tempIncidencia || c.incidencia || 'NO';
+                    c.incidenciaObs = c._tempIncidenciaObs !== undefined ? c._tempIncidenciaObs : (c.incidenciaObs || '');
                     
                     let finalCache = {};
                     try {
@@ -9871,6 +9909,9 @@ const renderRFSection = (container) => {
                              date: c.statusDate, 
                              liquidated: true,
                              cobroFlete: c.cobroFlete,
+                             gasto: c.gasto,
+                             incidencia: c.incidencia,
+                             incidenciaObs: c.incidenciaObs,
                              fotoCargo: c.fotoCargo,
                              fotoLocal: c.fotoLocal
                          };
@@ -10169,6 +10210,12 @@ const renderRFSection = (container) => {
                                                                 </div>
                                                             </div>
 
+                                                            <!-- Campo Gasto -->
+                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">💸 GASTO:</span>
+                                                                <input type="number" step="0.01" min="0" placeholder="S/ 0.00" class="nr-gasto-input" data-client="${c.id}" value="${c._tempGasto !== undefined ? c._tempGasto : (c.gasto || '')}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:4px 8px; border-radius:6px; outline:none; font-size:0.65rem; font-family:inherit; width:80px; text-align:right;">
+                                                            </div>
+
                                                             <!-- Status Buttons selection -->
                                                             <div>
                                                                 <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">📋 ESTADO DE ENTREGA:</div>
@@ -10177,6 +10224,21 @@ const renderRFSection = (container) => {
                                                                     <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
                                                                     <button class="nr-status-select-btn" data-client="${c.id}" data-status="REPROGRAMAR" style="background:${(c._tempStatus || c.status) === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
                                                                 </div>
+                                                            </div>
+
+                                                            <!-- Campo Incidencia -->
+                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
+                                                                <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
+                                                                    <button class="nr-incidencia-btn" data-client="${c.id}" data-val="SI" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? '#ef4444' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                                                                    <button class="nr-incidencia-btn" data-client="${c.id}" data-val="NO" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'NO' ? '#475569' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Observaciones de transporte -->
+                                                            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700;">📝 OBSERVACIONES DE TRANSPORTE:</div>
+                                                                <textarea class="nr-incidencia-obs" data-client="${c.id}" rows="2" placeholder="Describa aquí observaciones del transporte..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:8px; outline:none; font-size:0.75rem; font-family:inherit; width:100%; box-sizing:border-box; resize:none;">${c._tempIncidenciaObs !== undefined ? c._tempIncidenciaObs : (c.incidenciaObs || '')}</textarea>
                                                             </div>
 
                                                             <!-- Two Photo Slots -->
