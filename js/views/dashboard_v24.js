@@ -10268,6 +10268,9 @@ const renderRFSection = (container) => {
                                                         <!-- Summary of liquidated client -->
                                                         <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; flex-direction:column; gap:0.3rem; font-size:0.65rem; color:var(--text-muted);">
                                                             <div>💰 Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
+                                                            ${c.gasto ? `<div>💸 Gasto: <strong style="color:#fff;">S/ ${parseFloat(c.gasto).toFixed(2)}</strong></div>` : ''}
+                                                            <div>⚠️ Incidencia: <strong style="color:${c.incidencia === 'SI' ? '#ef4444' : '#fff'};">${c.incidencia || 'NO'}</strong></div>
+                                                            ${c.incidenciaObs ? `<div style="word-break: break-word;">📝 Obs: <strong style="color:#fff;">${c.incidenciaObs}</strong></div>` : ''}
                                                             <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
                                                                 ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
                                                                 ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
