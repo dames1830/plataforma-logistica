@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.136';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.137';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.136';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.137';
 import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.53';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.136';
+const VERSION = '26.5.137';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9643,7 +9643,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.136 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.137 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -12325,7 +12325,8 @@ const renderRFSection = (container) => {
                                                     
                                                     brandGroups[area][brand].buffer += qty;
                                                     if (t.status === 'Finalizado') {
-                                                        brandGroups[area][brand].avance += qty;
+                                                        const avanceVal = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
+                                                        brandGroups[area][brand].avance += avanceVal;
                                                     }
                                                 }
                                             });
