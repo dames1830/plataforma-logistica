@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.121';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.122';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.121';
+const VERSION = '26.5.122';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9033,8 +9033,21 @@ const renderRFSection = (container) => {
       });
 
       // Filter logic
-      const dateDesde = window._trackingFilterDesde || '';
-      const dateHasta = window._trackingFilterHasta || '';
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+
+      if (window._trackingFilterDesde === undefined || window._trackingFilterDesde === null) {
+          window._trackingFilterDesde = todayStr;
+      }
+      if (window._trackingFilterHasta === undefined || window._trackingFilterHasta === null) {
+          window._trackingFilterHasta = todayStr;
+      }
+
+      const dateDesde = window._trackingFilterDesde;
+      const dateHasta = window._trackingFilterHasta;
 
       if (dateDesde) {
           clients = clients.filter(c => {
@@ -9106,7 +9119,7 @@ const renderRFSection = (container) => {
                       </div>
                   </div>
                   <button id="btn_sync_tracking" style="background:#4f46e5; color:white; border:none; padding:0.5rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; height: 38px; width: 38px;" title="Sincronizar de Servidor">
-                      <i class="fas fa-sync-alt"></i>
+                      🔄
                   </button>
               </div>
           </div>
@@ -9192,6 +9205,7 @@ const renderRFSection = (container) => {
       
       document.getElementById('btn_sync_tracking')?.addEventListener('click', async () => {
           window._noRetailClients = null;
+          dataStore['no_retail'] = null; // Limpiar la caché local para forzar recarga del servidor
           await renderTrackingNoRetailPortal(container);
       });
 
@@ -9323,7 +9337,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.121 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.122 | MOBILE PORTAL
                         </div>
                     </div>
 
