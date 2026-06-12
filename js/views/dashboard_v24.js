@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.126';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.127';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.126';
+const VERSION = '26.5.127';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8910,64 +8910,105 @@ const renderRFSection = (container) => {
   
   
   const fetchAndParseNoRetailClients = async (forceRefresh = false) => {
-      let catalogData = [];
+      let availableDates = [];
       try {
-          catalogData = await getAreaData('no_retail', forceRefresh) || [];
-      } catch(e) { console.warn("No retail catalog loading failed:", e); }
-
-      let clientsData = [];
-
-      if (catalogData && catalogData.length > 0) {
-          const rows = catalogData;
-          const validRows = rows.filter(r => {
-              if (!r || !Array.isArray(r)) return false;
-              const hasData = r.some(cell => String(cell).trim() !== '');
-              if (!hasData) return false;
-              const cleanText = (str) => String(str || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/g, '');
-              const textAgencia = cleanText(r[4]);
-              if (textAgencia === 'AGENCIA') return false;
-              if (!String(r[6]).trim() && !String(r[4]).trim()) return false;
-              return true;
-          });
-
-          let cachedStatuses = {};
-          try {
-              const cacheRes = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache');
-              if (cacheRes.ok) {
-                  const serverCache = await cacheRes.json();
-                  cachedStatuses = serverCache.data || {};
-                  if (Array.isArray(cachedStatuses)) cachedStatuses = {};
-                  localStorage.setItem('nr_cache_v1', JSON.stringify(cachedStatuses));
-              } else {
-                  cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                  if (Array.isArray(cachedStatuses)) cachedStatuses = {};
-              }
-          } catch(e) {
-              console.warn("Could not load tracking cache from server, using local storage fallback:", e);
-              cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-              if (Array.isArray(cachedStatuses)) cachedStatuses = {};
+          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail/dates');
+          if (res.ok) {
+              const datesObj = await res.json();
+              availableDates = datesObj.dates || [];
           }
-
-          clientsData = validRows.map((r, idx) => {
-              const id = String(r[0] || `PED-${10000 + idx}`).trim() + '-' + idx;
-              return {
-                  id,
-                  fecha: String(r[1] || 'Sin Fecha').trim(),
-                  pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
-                  clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(),
-                  agencia: String(r[4] || 'Agencia General').trim().toUpperCase(),
-                  address: String(r[5] || 'Dirección de Entrega').trim(),
-                  status: cachedStatuses[id]?.status || 'PENDIENTE',
-                  statusDate: cachedStatuses[id]?.date || null,
-                  liquidated: cachedStatuses[id]?.liquidated || false,
-                  cobroFlete: cachedStatuses[id]?.cobroFlete || 'NO',
-                  fotoCargo: cachedStatuses[id]?.fotoCargo || null,
-                  fotoLocal: cachedStatuses[id]?.fotoLocal || null
-              };
-          });
+      } catch (e) {
+          console.warn("Could not fetch available dates for no_retail:", e);
       }
-      window._noRetailClients = clientsData;
-      return clientsData;
+
+      const dateDesde = window._trackingFilterDesde;
+      const dateHasta = window._trackingFilterHasta;
+
+      // Si no pudimos obtener fechas del servidor, intentar fallback local/genérico
+      if (availableDates.length === 0) {
+          let latestData = [];
+          try {
+              latestData = await getAreaData('no_retail', forceRefresh) || [];
+          } catch(e) {}
+          const processed = processCatalogRows(latestData, dateDesde || 'Desconocida');
+          window._noRetailClients = processed;
+          return processed;
+      }
+
+      const filteredDates = availableDates.filter(d => {
+          if (dateDesde && d < dateDesde) return false;
+          if (dateHasta && d > dateHasta) return false;
+          return true;
+      });
+
+      const allClients = [];
+      const fetchPromises = filteredDates.map(async (dStr) => {
+          try {
+              let dateData = [];
+              const cacheKey = `nr_data_${dStr}`;
+              const cached = localStorage.getItem(cacheKey);
+              
+              if (!forceRefresh && cached) {
+                  dateData = JSON.parse(cached);
+              } else {
+                  const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail?date=${dStr}`);
+                  if (res.ok) {
+                      const jsonRes = await res.json();
+                      dateData = jsonRes.data || [];
+                      localStorage.setItem(cacheKey, JSON.stringify(dateData));
+                  }
+              }
+              
+              const processed = processCatalogRows(dateData, dStr);
+              allClients.push(...processed);
+          } catch(err) {
+              console.warn(`Error loading no_retail data for date ${dStr}:`, err);
+          }
+      });
+
+      await Promise.all(fetchPromises);
+      window._noRetailClients = allClients;
+      return allClients;
+  };
+
+  const processCatalogRows = (catalogData, uploadDateStr) => {
+      if (!catalogData || catalogData.length === 0) return [];
+      const rows = catalogData;
+      const validRows = rows.filter(r => {
+          if (!r || !Array.isArray(r)) return false;
+          const hasData = r.some(cell => String(cell).trim() !== '');
+          if (!hasData) return false;
+          const cleanText = (str) => String(str || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/g, '');
+          const textAgencia = cleanText(r[4]);
+          if (textAgencia === 'AGENCIA') return false;
+          if (!String(r[6]).trim() && !String(r[4]).trim()) return false;
+          return true;
+      });
+
+      let cachedStatuses = {};
+      try {
+          cachedStatuses = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+          if (Array.isArray(cachedStatuses)) cachedStatuses = {};
+      } catch(e) {}
+
+      return validRows.map((r, idx) => {
+          const id = String(r[0] || `PED-${10000 + idx}`).trim() + '-' + uploadDateStr + '-' + idx;
+          return {
+              id,
+              fechaCargaStr: uploadDateStr,
+              fecha: String(r[1] || 'Sin Fecha').trim(),
+              pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
+              clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(),
+              agencia: String(r[4] || 'Agencia General').trim().toUpperCase(),
+              address: String(r[5] || 'Dirección de Entrega').trim(),
+              status: cachedStatuses[id]?.status || 'PENDIENTE',
+              statusDate: cachedStatuses[id]?.date || null,
+              liquidated: cachedStatuses[id]?.liquidated || false,
+              cobroFlete: cachedStatuses[id]?.cobroFlete || 'NO',
+              fotoCargo: cachedStatuses[id]?.fotoCargo || null,
+              fotoLocal: cachedStatuses[id]?.fotoLocal || null
+          };
+      });
   };
 
   const openImageModal = (src, title = 'Visualización de Imagen') => {
@@ -9178,9 +9219,7 @@ const renderRFSection = (container) => {
           if (Array.isArray(cache)) cache = {};
       }
 
-      if (!window._noRetailClients || window._noRetailClients.length === 0 || forceRefresh) {
-          await fetchAndParseNoRetailClients(forceRefresh);
-      }
+      await fetchAndParseNoRetailClients(forceRefresh);
 
       let clients = window._noRetailClients || [];
       clients = clients.map(c => {
@@ -9220,25 +9259,14 @@ const renderRFSection = (container) => {
       const dateDesde = window._trackingFilterDesde;
       const dateHasta = window._trackingFilterHasta;
 
-      const getLocalDateString = (date) => {
-          if (!date) return null;
-          const d = new Date(date);
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
-          return `${yyyy}-${mm}-${dd}`;
-      };
-
       if (dateDesde) {
           clients = clients.filter(c => {
-              const cDateStr = getLocalDateString(c.statusDate ? new Date(c.statusDate) : uDate);
-              return cDateStr && cDateStr >= dateDesde;
+              return c.fechaCargaStr && c.fechaCargaStr >= dateDesde;
           });
       }
       if (dateHasta) {
           clients = clients.filter(c => {
-              const cDateStr = getLocalDateString(c.statusDate ? new Date(c.statusDate) : uDate);
-              return cDateStr && cDateStr <= dateHasta;
+              return c.fechaCargaStr && c.fechaCargaStr <= dateHasta;
           });
       }
 
@@ -9255,7 +9283,7 @@ const renderRFSection = (container) => {
           
           clients.forEach(c => {
               const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '';
-              const row = `\"${uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\"`;
+              const row = `\"${c.fechaCargaStr || uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\"`;
               csvContent += row + "\n";
           });
           
@@ -9316,7 +9344,7 @@ const renderRFSection = (container) => {
                       paginatedClients.map(c => `
                           <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                               <td style="padding:1rem;">
-                                  <div style="font-weight:900; color:#fff; font-size:0.8rem;">${uploadDate}</div>
+                                  <div style="font-weight:900; color:#fff; font-size:0.8rem;">${c.fechaCargaStr || uploadDate}</div>
                               </td>
                               <td style="padding:1rem;">
                                   <div style="font-weight:700; color:#38bdf8;">${c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '-'}</div>
@@ -9529,7 +9557,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.126 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.127 | MOBILE PORTAL
                         </div>
                     </div>
 
