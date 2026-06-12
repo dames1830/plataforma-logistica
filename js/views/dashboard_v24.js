@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.132';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.133';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.132';
+const VERSION = '26.5.133';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9620,7 +9620,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.132 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.133 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -12747,20 +12747,24 @@ const renderRFSection = (container) => {
                                 const isBuffer = di.isBuffer;
                                 
                                 // Logic for Avance
-                                let avanceVal = '---';
-                                let avanceColor = 'var(--text-muted)';
-                                let avanceFontWeight = '500';
-                                if (isBuffer) {
-                                    if (t.status === 'Finalizado') {
-                                        avanceVal = i.qty.toString();
-                                        avanceColor = '#22c55e'; // Bold Green
-                                        avanceFontWeight = '800';
-                                    } else {
-                                        avanceVal = '0';
-                                        avanceColor = '#9ca3af'; // Bold Gray/Muted
-                                        avanceFontWeight = '600';
-                                    }
-                                }
+                                 let avanceVal = '---';
+                                 let avanceColor = 'var(--text-muted)';
+                                 let avanceFontWeight = '500';
+                                 if (isBuffer) {
+                                     if (i.avance !== undefined && i.avance !== null) {
+                                         avanceVal = i.avance.toString();
+                                         avanceColor = i.avance > 0 ? '#22c55e' : '#9ca3af';
+                                         avanceFontWeight = i.avance > 0 ? '800' : '600';
+                                     } else if (t.status === 'Finalizado') {
+                                         avanceVal = i.qty.toString();
+                                         avanceColor = '#22c55e'; // Bold Green
+                                         avanceFontWeight = '800';
+                                     } else {
+                                         avanceVal = '0';
+                                         avanceColor = '#9ca3af'; // Bold Gray/Muted
+                                         avanceFontWeight = '600';
+                                     }
+                                 }
 
                                 const userCreacion = t.creador || '---';
                                 const fProcesado = formatDateTime(t.fechaProcesado || (t.fecha + 'T00:00:00'));
@@ -12885,6 +12889,126 @@ const renderRFSection = (container) => {
             renderAlmacenajeTareas(container);
         }
     };
+    const openPartialAvanceModal = (t, container, assignModal) => {
+        // Obtener todos los items tipo CDBUFFER
+        const bufferItems = [];
+        (t.items || []).forEach(art => {
+            (art.items || []).forEach(i => {
+                const ubi = String(i.ubi || '').toUpperCase();
+                if (ubi.startsWith('CDBUFFER')) {
+                    bufferItems.push({ art, item: i });
+                }
+            });
+        });
+
+        if (bufferItems.length === 0) {
+            // Si no hay items CDBUFFER, finalizar directamente
+            t.status = 'Finalizado';
+            t.termino = new Date().toISOString();
+            saveAlmacenajeTasks().then(() => {
+                if (assignModal && assignModal.parentNode) {
+                    document.body.removeChild(assignModal);
+                }
+                renderAlmacenajeTareas(container);
+            });
+            return;
+        }
+
+        // Crear modal de avances parciales
+        const pModal = document.createElement('div');
+        pModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1001; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);";
+        
+        let rowsHtml = bufferItems.map((bi, index) => {
+            const defaultValue = bi.item.avance !== undefined ? bi.item.avance : bi.item.qty;
+            const talla = (bi.item.skuFull && bi.item.skuFull.split('-').pop()) || 'S/T';
+            return `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); text-align:left;">
+                    <td style="padding:0.7rem; color:#fff;">${bi.art.sku7}</td>
+                    <td style="padding:0.7rem; color:#d1d5db;">${bi.item.ubi}</td>
+                    <td style="padding:0.7rem; text-align:center; color:#d1d5db;">${talla}</td>
+                    <td style="padding:0.7rem; text-align:center; font-weight:700; color:#d1d5db;">${bi.item.qty}</td>
+                    <td style="padding:0.7rem; text-align:center;">
+                        <input type="number" class="nr-partial-avance-input" data-index="${index}" min="0" max="${bi.item.qty}" value="${defaultValue}" style="width:80px; background:#0f172a; border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#fff; text-align:center; padding:4px; outline:none; font-weight:700;">
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        pModal.innerHTML = `
+            <div class="glass-panel" style="width:520px; max-height:85vh; display:flex; flex-direction:column; padding:1.5rem; border:1px solid var(--primary); border-radius:16px; overflow:hidden; background:rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);">
+                <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.1rem; text-align:center;">Ingresar Avance Real: <span style="color:var(--primary);">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</span></h3>
+                <p style="font-size:0.7rem; color:var(--text-muted); margin:0 0 1rem 0; text-align:center;">Modifica las cantidades avanzadas si solo se completó una parte del trabajo.</p>
+                
+                <div style="flex:1; overflow-y:auto; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:8px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
+                        <thead style="background:#1e293b; position:sticky; top:0; z-index:5;">
+                            <tr>
+                                <th style="padding:0.6rem; text-align:left; color:#fff;">Artículo</th>
+                                <th style="padding:0.6rem; text-align:left; color:#fff;">Ubicación</th>
+                                <th style="padding:0.6rem; text-align:center; color:#fff;">Talla</th>
+                                <th style="padding:0.6rem; text-align:center; color:#fff;">Qty Buffer</th>
+                                <th style="padding:0.6rem; text-align:center; color:#fff;">Avance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button id="p_back" class="btn" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Volver</button>
+                    <button id="p_confirm" class="btn" style="background:#22c55e; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Confirmar y Finalizar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(pModal);
+
+        document.getElementById('p_back').onclick = () => {
+            document.body.removeChild(pModal);
+        };
+
+        document.getElementById('p_confirm').onclick = () => {
+            const inputs = pModal.querySelectorAll('.nr-partial-avance-input');
+            let hasError = false;
+            
+            inputs.forEach(input => {
+                const idx = parseInt(input.dataset.index, 10);
+                const val = parseInt(input.value, 10);
+                const bi = bufferItems[idx];
+                if (isNaN(val) || val < 0) {
+                    showPremiumAlert("AVANCE INVÁLIDO", `El avance para el artículo ${bi.art.sku7} no puede ser vacío o negativo.`, "warning");
+                    hasError = true;
+                } else if (val > bi.item.qty) {
+                    showPremiumAlert("EXCEDE QTY BUFFER", `El avance (${val}) no puede ser mayor que la cantidad demandada (${bi.item.qty}).`, "warning");
+                    hasError = true;
+                }
+            });
+
+            if (hasError) return;
+
+            // Guardar avances reales
+            inputs.forEach(input => {
+                const idx = parseInt(input.dataset.index, 10);
+                const val = parseInt(input.value, 10);
+                bufferItems[idx].item.avance = val;
+            });
+
+            // Finalizar tarea
+            t.status = 'Finalizado';
+            t.termino = new Date().toISOString();
+            
+            saveAlmacenajeTasks().then(() => {
+                document.body.removeChild(pModal);
+                if (assignModal && assignModal.parentNode) {
+                    document.body.removeChild(assignModal);
+                }
+                renderAlmacenajeTareas(container);
+                showPremiumAlert("TAREA FINALIZADA", `La tarea ${t.id} ha sido finalizada con los avances indicados.`, "success");
+            });
+        };
+    };
+
     window.assignTask = (id) => {
         const t = almacenajeTasksCache.find(x => x.id === id);
         if (t && t.status === 'Finalizado') {
@@ -12951,12 +13075,7 @@ const renderRFSection = (container) => {
         };
         if (document.getElementById('m_finish')) {
             document.getElementById('m_finish').onclick = () => {
-                t.status = 'Finalizado';
-                t.termino = new Date().toISOString();
-                saveAlmacenajeTasks().then(() => {
-                    document.body.removeChild(modal);
-                    renderAlmacenajeTareas(container);
-                });
+                openPartialAvanceModal(t, container, modal);
             };
         }
         document.getElementById('m_close').onclick = () => document.body.removeChild(modal);
