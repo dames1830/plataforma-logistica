@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.137';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.138';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.137';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.138';
 import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.53';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.137';
+const VERSION = '26.5.138';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9643,7 +9643,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.137 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.138 | MOBILE PORTAL
                         </div>
                     </div>
 
@@ -11250,7 +11250,10 @@ const renderRFSection = (container) => {
                     }
                 });
                 if (artQty === 0) {
-                    artQty = parseFloat(art.bufferQty) || 0;
+                    const hasAvanceInfo = (t.items || []).some(a => (a.items || []).some(item => item.avance !== undefined && item.avance !== null));
+                    if (!hasAvanceInfo) {
+                        artQty = parseFloat(art.bufferQty) || 0;
+                    }
                 }
                 weeklyBrandGenderData[weekStr][gender][brand] += artQty;
             });
@@ -12520,8 +12523,8 @@ const renderRFSection = (container) => {
                                                 shift,
                                                 logicalDate,
                                                 qtyForUser: (uList.length === 2) 
-                                                    ? (idx === 0 ? Math.ceil(t.qty / 2) : Math.floor(t.qty / 2)) 
-                                                    : t.qty
+                                                    ? (idx === 0 ? Math.ceil(getTaskTotalAvance(t) / 2) : Math.floor(getTaskTotalAvance(t) / 2)) 
+                                                    : getTaskTotalAvance(t)
                                             });
                                         });
                                     }
@@ -12734,7 +12737,8 @@ const renderRFSection = (container) => {
                                     productividad = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
                                     if (totalMinutes > 0) {
-                                        const unitsPerHour = (t.qty / totalMinutes) * 60;
+                                        const totalAvance = getTaskTotalAvance(t);
+                                        const unitsPerHour = (totalAvance / totalMinutes) * 60;
                                         if (unitsPerHour >= 300) {
                                             objetivo = 'CUMPLIÓ';
                                             objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
@@ -12748,7 +12752,7 @@ const renderRFSection = (container) => {
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
                                     <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">${t.qty.toLocaleString()}</td>
+                                    <td style="padding:0.8rem 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
                                     <td style="padding:0.8rem 1rem;">${t.marca}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
                                     <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>

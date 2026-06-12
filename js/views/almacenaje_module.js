@@ -24,6 +24,29 @@ const getLogicalDate = () => {
     return `${y}-${m}-${d}`;
 };
 
+const getTaskTotalAvance = (t) => {
+    if (!t) return 0;
+    let sum = 0;
+    (t.items || []).forEach(art => {
+        (art.items || []).forEach(i => {
+            const ubi = String(i.ubi || '').toUpperCase().trim();
+            const isBuffer = ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C');
+            if (isBuffer) {
+                if (i.avance !== undefined && i.avance !== null) {
+                    sum += parseFloat(i.avance) || 0;
+                } else if (t.status === 'Finalizado') {
+                    sum += parseFloat(i.qty) || 0;
+                }
+            } else {
+                if (t.status === 'Finalizado') {
+                    sum += parseFloat(i.qty) || 0;
+                }
+            }
+        });
+    });
+    return sum;
+};
+
 const saveAlmacenajeTasksLocal = async () => {
   try {
       localStorage.setItem('pulse_almacenaje_tasks_v1', JSON.stringify(almacenajeTasksCache));
@@ -173,7 +196,7 @@ const renderTaskTable = (container, tasks, isDetail) => {
                     <tr onclick="window.assignTask('${t.id}')">
                         <td>${t.fecha.split('-').reverse().join('/')}</td>
                         <td>${t.id}</td>
-                        <td style="text-align:center;">${t.qty.toLocaleString()}</td>
+                        <td style="text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
                         <td>${t.marca}</td>
                         <td>${t.u1 || '---'}</td>
                         <td>${t.u2 || '---'}</td>
@@ -224,7 +247,8 @@ const calculateGoal = (t) => {
     const ms = e - s;
     const totalMinutes = Math.floor(ms / (1000 * 60));
     if (totalMinutes > 0) {
-        const unitsPerHour = (t.qty / totalMinutes) * 60;
+        const totalAvance = getTaskTotalAvance(t);
+        const unitsPerHour = (totalAvance / totalMinutes) * 60;
         return unitsPerHour >= 300 ? '<span style="color:#22c55e;">CUMPLIÓ</span>' : '<span style="color:#ef4444;">NO CUMPLIÓ</span>';
     }
     return '---';
