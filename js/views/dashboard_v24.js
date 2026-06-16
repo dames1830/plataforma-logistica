@@ -1,8 +1,8 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.142';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.143';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.53';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.53';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.142';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.143';
 import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.53';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.142';
+const VERSION = '26.5.143';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9112,6 +9112,16 @@ const renderRFSection = (container) => {
                       </select>
                   </div>
 
+                  <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                      <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">GASTO (S/.)</label>
+                      <input type="number" id="edit_gasto" step="0.01" min="0" value="${c.gasto || ''}" placeholder="S/ 0.00" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit;">
+                  </div>
+
+                  <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                      <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">OBSERVACIONES DE TRANSPORTE</label>
+                      <textarea id="edit_observaciones" rows="2" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit; resize:none;" placeholder="Escriba observaciones del transportista aquí...">${c.incidenciaObs || ''}</textarea>
+                  </div>
+
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                       <div style="display:flex; flex-direction:column; gap:0.4rem;">
                           <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">FOTO CARGO</label>
@@ -9177,9 +9187,13 @@ const renderRFSection = (container) => {
       document.getElementById('save_edit_btn').onclick = async () => {
           const newStatus = document.getElementById('edit_status').value;
           const newFlete = document.getElementById('edit_flete').value;
+          const newGasto = document.getElementById('edit_gasto').value;
+          const newObs = document.getElementById('edit_observaciones').value;
 
           c.status = newStatus;
           c.cobroFlete = newFlete;
+          c.gasto = newGasto;
+          c.incidenciaObs = newObs;
           c.fotoCargo = tempCargo;
           c.fotoLocal = tempLocal;
           c.statusDate = newStatus === 'PENDIENTE' ? null : (c.statusDate || new Date().toISOString());
@@ -9197,6 +9211,8 @@ const renderRFSection = (container) => {
                   date: c.statusDate,
                   liquidated: c.liquidated,
                   cobroFlete: c.cobroFlete,
+                  gasto: c.gasto,
+                  incidenciaObs: c.incidenciaObs,
                   fotoCargo: c.fotoCargo,
                   fotoLocal: c.fotoLocal
               };
@@ -9210,6 +9226,8 @@ const renderRFSection = (container) => {
               date: c.statusDate,
               liquidated: c.liquidated,
               cobroFlete: c.cobroFlete,
+              gasto: c.gasto,
+              incidenciaObs: c.incidenciaObs,
               fotoCargo: c.fotoCargo,
               fotoLocal: c.fotoLocal
           };
@@ -9318,18 +9336,20 @@ const renderRFSection = (container) => {
 
       window.exportTrackingToExcel = () => {
           if (clients.length === 0) return alert('No hay datos para exportar');
-          let csvContent = "data:text/csv;charset=utf-8,";
-          csvContent += "Fecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete\n";
+          let csvContent = "\ufeffFecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete,Gasto,Observaciones\n";
           
           clients.forEach(c => {
               const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '';
-              const row = `\"${c.fechaCargaStr || uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\"`;
+              const obsClean = (c.incidenciaObs || '').replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
+              const gastoStr = c.gasto ? `S/ ${parseFloat(c.gasto).toFixed(2)}` : 'S/ 0.00';
+              const row = `\"${c.fechaCargaStr || uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\",\"${gastoStr}\",\"${obsClean}\"`;
               csvContent += row + "\n";
           });
           
-          const encodedUri = encodeURI(csvContent);
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement("a");
-          link.setAttribute("href", encodedUri);
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
           link.setAttribute("download", `Tracking_NoRetail_${new Date().toISOString().slice(0,10)}.csv`);
           document.body.appendChild(link);
           link.click();
@@ -9385,12 +9405,14 @@ const renderRFSection = (container) => {
                           <th style="padding:1rem;">Cliente / Pedido</th>
                           <th style="padding:1rem;">Estado</th>
                           <th style="padding:1rem;">Cobro Flete</th>
+                          <th style="padding:1rem;">Gasto</th>
+                          <th style="padding:1rem;">Observaciones</th>
                           <th style="padding:1rem; text-align:center;">Fotos</th>
                           <th style="padding:1rem; text-align:center;">Acciones</th>
                       </tr>
                   </thead>
                   <tbody>
-                      ${paginatedClients.length === 0 ? `<tr><td colspan="8" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
+                      ${paginatedClients.length === 0 ? `<tr><td colspan="10" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
                       paginatedClients.map(c => `
                           <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                               <td style="padding:1rem;">
@@ -9413,6 +9435,12 @@ const renderRFSection = (container) => {
                               </td>
                               <td style="padding:1rem;">
                                   ${c.cobroFlete === 'SI' ? '<span style="color:#10b981; font-weight:800;"><i class="fas fa-check"></i> SI</span>' : '<span style="color:#64748b;">NO</span>'}
+                              </td>
+                              <td style="padding:1rem;">
+                                  ${c.gasto ? `<span style="font-weight:700; color:#10b981;">S/ ${parseFloat(c.gasto).toFixed(2)}</span>` : '<span style="color:#64748b;">-</span>'}
+                              </td>
+                              <td style="padding:1rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${c.incidenciaObs || ''}">
+                                  <div style="font-size:0.75rem; color:#cbd5e1;">${c.incidenciaObs || '<span style="color:#64748b;">-</span>'}</div>
                               </td>
                               <td style="padding:1rem; text-align:center;">
                                   <div style="display:flex; justify-content:center; gap:0.5rem;">
@@ -9653,7 +9681,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                         <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                            SYSTEM BUILD: v26.5.142 | MOBILE PORTAL
+                            SYSTEM BUILD: v26.5.143 | MOBILE PORTAL
                         </div>
                     </div>
 
