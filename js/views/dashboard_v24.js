@@ -9685,7 +9685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.151 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.152 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10355,71 +10355,331 @@ const renderRFSection = (container) => {
     };
 
 
-        // Event delegation to capture clicks on liquidated client cards (Inicio) or history rows (Historial)
-        container.addEventListener('click', async (e) => {
-            const historyRow = e.target.closest('.nr-history-client-row');
-            const liquidatedCard = e.target.closest('.nr-liquidated-client-card');
-            const targetEl = historyRow || liquidatedCard;
-            if (targetEl) {
-                const cId = targetEl.dataset.client;
-                const c = window._noRetailClients.find(x => x.id === cId);
-                if (c) {
-                    if (await showPremiumConfirm("EDITAR LIQUIDACIÓN", `¿Deseas corregir la liquidación de ${c.clientName}? El pedido se habilitará nuevamente en la pestaña de Inicio para que puedas editarlo.`)) {
-                        // Mark as not liquidated but keep current temporary values
-                        c.liquidated = false;
-                        c._tempStatus = c.status;
-                        c.status = 'PENDIENTE'; // Reset status to PENDIENTE so it appears in En Ruta list!
-                        c._tempGasto = c.gasto;
-                        c._tempIncidencia = c.incidencia;
-                        c._tempIncidenciaObs = c.incidenciaObs;
+        // Dedicated Edit Modal Dialog for Liquidated Clients
+        const openEditClientModal = (c) => {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'nr-modal-backdrop';
+            backdrop.style.position = 'fixed';
+            backdrop.style.top = '0';
+            backdrop.style.left = '0';
+            backdrop.style.width = '100vw';
+            backdrop.style.height = '100vh';
+            backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.85)';
+            backdrop.style.backdropFilter = 'blur(12px)';
+            backdrop.style.display = 'flex';
+            backdrop.style.justifyContent = 'center';
+            backdrop.style.alignItems = 'center';
+            backdrop.style.zIndex = '999999';
+            backdrop.style.opacity = '0';
+            backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
 
-                        // Update local cache
-                        try {
-                            let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                            if (cache[c.id]) {
-                                cache[c.id].liquidated = false;
-                                cache[c.id].status = 'PENDIENTE'; // Reset status in cache too
-                                localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
-                            }
-                        } catch(err) {}
+            // Temp states for modal inputs
+            let tempCobroFlete = c.cobroFlete || 'NO';
+            let tempGasto = c.gasto || '';
+            let tempStatus = c.status || 'PENDIENTE';
+            let tempIncidencia = c.incidencia || 'NO';
+            let tempIncidenciaObs = c.incidenciaObs || '';
+            let tempFotoCargo = c.fotoCargo || null;
+            let tempFotoLocal = c.fotoLocal || null;
 
-                        // Sincronizar estado al servidor de manera asíncrona
-                        const delta = {};
-                        delta[c.id] = { 
-                            status: 'PENDIENTE',
-                            liquidated: false
+            backdrop.innerHTML = `
+                <div class="glass-panel" style="
+                    width: 92%;
+                    max-width: 450px;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    padding: 1.5rem;
+                    border-radius: 20px;
+                    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.2);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.2rem;
+                    transform: scale(0.9);
+                    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    box-sizing: border-box;
+                ">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.6rem;">
+                        <h3 style="margin:0; color:#fff; font-size:1.05rem; font-weight:900;">✏️ CORREGIR LIQUIDACIÓN</h3>
+                        <span id="btn_modal_close" style="color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; font-weight:bold;">&times;</span>
+                    </div>
+
+                    <div style="font-size:0.7rem; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">
+                        <div>Cliente: <strong style="color:#fff;">${c.clientName}</strong></div>
+                        <div>Pedido: <strong style="color:#fff;">${c.pedido}</strong> | Agencia: <strong style="color:#fff;">${c.agencia}</strong></div>
+                    </div>
+
+                    <!-- Cobro Flete -->
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">💰 COBRO FLETE:</span>
+                        <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
+                            <button id="modal-flete-si" style="background:${tempCobroFlete === 'SI' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                            <button id="modal-flete-no" style="background:${tempCobroFlete === 'NO' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
+                        </div>
+                    </div>
+
+                    <!-- Gasto -->
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">💸 GASTO:</span>
+                        <input type="number" step="0.01" min="0" id="modal-gasto-input" placeholder="S/ 0.00" value="${tempGasto}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:6px; outline:none; font-size:0.7rem; font-family:inherit; width:100px; text-align:right;">
+                    </div>
+
+                    <!-- Estado -->
+                    <div>
+                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📋 ESTADO DE ENTREGA:</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+                            <button id="modal-status-atendido" style="background:${tempStatus === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${tempStatus === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${tempStatus === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:6px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
+                            <button id="modal-status-no-atendido" style="background:${tempStatus === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${tempStatus === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${tempStatus === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:6px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
+                            <button id="modal-status-reprogramar" style="background:${tempStatus === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)'}; color:${tempStatus === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${tempStatus === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)'}; padding:6px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer; grid-column: span 2;">REPROGRAMAR</button>
+                        </div>
+                    </div>
+
+                    <!-- Incidencia -->
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
+                        <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
+                            <button id="modal-incidencia-si" style="background:${tempIncidencia === 'SI' ? '#ef4444' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                            <button id="modal-incidencia-no" style="background:${tempIncidencia === 'NO' ? '#475569' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                        <div style="font-size:0.65rem; color:#fff; font-weight:700;">📝 OBSERVACIONES DE TRANSPORTE:</div>
+                        <textarea id="modal-obs-textarea" rows="2" placeholder="Describa aquí observaciones..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:8px; outline:none; font-size:0.75rem; font-family:inherit; width:100%; box-sizing:border-box; resize:none;">${tempIncidenciaObs}</textarea>
+                    </div>
+
+                    <!-- Fotos -->
+                    <div>
+                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📸 FOTOS OBLIGATORIAS:</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                            <!-- Photo Cargo -->
+                            <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; position:relative;">
+                                <div id="modal-cargo-preview" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                                    ${tempFotoCargo ? `<img src="${tempFotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
+                                </div>
+                                <input type="file" id="modal-cargo-input" accept="image/*" capture="environment" style="display:none;">
+                            </label>
+
+                            <!-- Photo Fachada -->
+                            <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; position:relative;">
+                                <div id="modal-local-preview" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                                    ${tempFotoLocal ? `<img src="${tempFotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
+                                </div>
+                                <input type="file" id="modal-local-input" accept="image/*" capture="environment" style="display:none;">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Acciones del Modal -->
+                    <div style="display:flex; gap:0.6rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem; margin-top:0.4rem;">
+                        <button id="btn_modal_cancel" style="flex:1; background:rgba(255,255,255,0.05); color:#cbd5e1; border:1px solid rgba(255,255,255,0.15); padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">CANCELAR</button>
+                        <button id="btn_modal_save" style="flex:1; background:#10b981; color:#fff; border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">GUARDAR CAMBIOS</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(backdrop);
+            setTimeout(() => {
+                backdrop.style.opacity = '1';
+                backdrop.querySelector('.glass-panel').style.transform = 'scale(1)';
+            }, 10);
+
+            // Event: Close / Cancel
+            const closeModal = () => {
+                backdrop.style.opacity = '0';
+                backdrop.querySelector('.glass-panel').style.transform = 'scale(0.9)';
+                setTimeout(() => { backdrop.remove(); }, 250);
+            };
+            backdrop.querySelector('#btn_modal_close').onclick = closeModal;
+            backdrop.querySelector('#btn_modal_cancel').onclick = closeModal;
+
+            // Event: Flete SI/NO
+            const fleteSi = backdrop.querySelector('#modal-flete-si');
+            const fleteNo = backdrop.querySelector('#modal-flete-no');
+            fleteSi.onclick = () => {
+                tempCobroFlete = 'SI';
+                fleteSi.style.background = '#024dbd';
+                fleteNo.style.background = 'transparent';
+            };
+            fleteNo.onclick = () => {
+                tempCobroFlete = 'NO';
+                fleteNo.style.background = '#024dbd';
+                fleteSi.style.background = 'transparent';
+            };
+
+            // Event: Status selector buttons
+            const btnAtendido = backdrop.querySelector('#modal-status-atendido');
+            const btnNoAtendido = backdrop.querySelector('#modal-status-no-atendido');
+            const btnReprogramar = backdrop.querySelector('#modal-status-reprogramar');
+            
+            const setStatus = (status) => {
+                tempStatus = status;
+                btnAtendido.style.background = status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)';
+                btnAtendido.style.color = status === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)';
+                btnAtendido.style.borderColor = status === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)';
+
+                btnNoAtendido.style.background = status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)';
+                btnNoAtendido.style.color = status === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)';
+                btnNoAtendido.style.borderColor = status === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)';
+
+                btnReprogramar.style.background = status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.03)';
+                btnReprogramar.style.color = status === 'REPROGRAMAR' ? '#fff' : 'rgba(255,255,255,0.6)';
+                btnReprogramar.style.borderColor = status === 'REPROGRAMAR' ? '#eab308' : 'rgba(255,255,255,0.08)';
+            };
+            btnAtendido.onclick = () => setStatus('ATENDIDO');
+            btnNoAtendido.onclick = () => setStatus('NO ATENDIDO');
+            btnReprogramar.onclick = () => setStatus('REPROGRAMAR');
+
+            // Event: Incidencia SI/NO
+            const incSi = backdrop.querySelector('#modal-incidencia-si');
+            const incNo = backdrop.querySelector('#modal-incidencia-no');
+            incSi.onclick = () => {
+                tempIncidencia = 'SI';
+                incSi.style.background = '#ef4444';
+                incNo.style.background = 'transparent';
+            };
+            incNo.onclick = () => {
+                tempIncidencia = 'NO';
+                incNo.style.background = '#475569';
+                incSi.style.background = 'transparent';
+            };
+
+            // Events: File inputs (Photos)
+            const handlePhotoInput = (inputEl, previewId, type) => {
+                inputEl.onchange = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 600;
+                                const MAX_HEIGHT = 600;
+                                let width = img.width;
+                                let height = img.height;
+                                if (width > height) {
+                                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                                } else {
+                                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                                }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+                                
+                                if (type === 'cargo') tempFotoCargo = compressedBase64;
+                                else tempFotoLocal = compressedBase64;
+
+                                backdrop.querySelector('#' + previewId).innerHTML = `<img src="${compressedBase64}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">`;
+                            };
+                            img.src = e.target.result;
                         };
-                        fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
-                             method: 'POST',
-                             headers: { 'Content-Type': 'application/json' },
-                             body: JSON.stringify(delta)
-                        })
-                        .then(res => {
-                             if (!res.ok) console.error("Server cache sync for edit failed:", res.statusText);
-                        })
-                        .catch(err => console.error("Sync edit to server failed:", err));
+                        reader.readAsDataURL(file);
+                    }
+                };
+            };
+            handlePhotoInput(backdrop.querySelector('#modal-cargo-input'), 'modal-cargo-preview', 'cargo');
+            handlePhotoInput(backdrop.querySelector('#modal-local-input'), 'modal-local-preview', 'local');
 
-                        // Expand client agency
-                        const expandedKey = (c.agencia || 'Sin Agencia').replace(/\W/g, '');
-                        window._noRetailExpandedAgencies[expandedKey] = true;
+            // Event: Save Changes
+            backdrop.querySelector('#btn_modal_save').onclick = async () => {
+                tempGasto = backdrop.querySelector('#modal-gasto-input').value;
+                tempIncidenciaObs = backdrop.querySelector('#modal-obs-textarea').value;
 
-                        // Switch to En Ruta tab (Inicio)
-                        window._noRetailActiveTab = 'en_ruta';
-                        
-                        // Re-render UI
-                        refreshNoRetailUI();
+                if (tempStatus === 'PENDIENTE') {
+                    showPremiumAlert('SELECCIONA UN ESTADO', 'Debes seleccionar un estado (ATENDIDO, NO ATENDIDO o REPROGRAMAR) para guardar la liquidación.', 'warning');
+                    return;
+                }
+                if (tempStatus === 'ATENDIDO' && !tempFotoCargo) {
+                    showPremiumAlert('FOTO OBLIGATORIA', 'Es obligatorio tomar la foto de los cargos para guardar en estado ATENDIDO.', 'warning');
+                    return;
+                }
 
-                        // Scroll suave al cliente
-                        setTimeout(() => {
-                            const clientEl = document.querySelector(`[data-client="${cId}"]`);
-                            if (clientEl) {
-                                clientEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }, 300);
+                // Apply changes to client object
+                c.status = tempStatus;
+                c.statusDate = new Date().toISOString();
+                c.liquidated = true;
+                c.cobroFlete = tempCobroFlete;
+                c.gasto = tempGasto;
+                c.incidencia = tempIncidencia;
+                c.incidenciaObs = tempIncidenciaObs;
+                c.fotoCargo = tempFotoCargo;
+                c.fotoLocal = tempFotoLocal;
+
+                // Save to local cache
+                try {
+                    let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                    cache[c.id] = { 
+                        status: c.status, 
+                        date: c.statusDate, 
+                        liquidated: true,
+                        cobroFlete: c.cobroFlete,
+                        gasto: c.gasto,
+                        incidencia: c.incidencia,
+                        incidenciaObs: c.incidenciaObs,
+                        fotoCargo: c.fotoCargo,
+                        fotoLocal: c.fotoLocal
+                    };
+                    localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                } catch(err) {
+                    console.error("Cache limit, saving without images:", err);
+                    try {
+                        let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                        cache[c.id] = { 
+                            status: c.status, 
+                            date: c.statusDate, 
+                            liquidated: true,
+                            cobroFlete: c.cobroFlete
+                        };
+                        localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                    } catch(e) {}
+                }
+
+                // Sync delta to server
+                const delta = {};
+                delta[c.id] = { 
+                    status: c.status, 
+                    date: c.statusDate, 
+                    liquidated: true,
+                    cobroFlete: c.cobroFlete,
+                    gasto: c.gasto,
+                    incidencia: c.incidencia,
+                    incidenciaObs: c.incidenciaObs,
+                    fotoCargo: c.fotoCargo,
+                    fotoLocal: c.fotoLocal
+                };
+                fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(delta)
+                }).catch(err => console.error("Sync edit to server failed:", err));
+
+                closeModal();
+                showPremiumAlert('LIQUIDACIÓN ACTUALIZADA', `Se corrigió la liquidación del cliente ${c.clientName} con éxito.`, 'success');
+                refreshNoRetailUI();
+            };
+        };
+
+        // Event delegation to capture clicks on liquidated client cards (Inicio) or history rows (Historial) - Bind only once!
+        if (!container._hasClickEditListener) {
+            container._hasClickEditListener = true;
+            container.addEventListener('click', async (e) => {
+                const historyRow = e.target.closest('.nr-history-client-row');
+                const liquidatedCard = e.target.closest('.nr-liquidated-client-card');
+                const targetEl = historyRow || liquidatedCard;
+                if (targetEl) {
+                    const cId = targetEl.dataset.client;
+                    const c = window._noRetailClients.find(x => x.id === cId);
+                    if (c) {
+                        openEditClientModal(c);
                     }
                 }
-            }
-        });
+            });
+        }
 
     refreshNoRetailUI();
   };
