@@ -9685,7 +9685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.147 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.148 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10032,6 +10032,67 @@ const renderRFSection = (container) => {
                 onLogout();
             }
         });
+
+        // Edit history/liquidated client
+        document.querySelectorAll('.btn-nr-edit-history').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    if (await showPremiumConfirm("EDITAR LIQUIDACIÓN", `¿Deseas corregir la liquidación de ${c.clientName}? El pedido se habilitará nuevamente en la pestaña de Inicio para que puedas editarlo.`)) {
+                        // Mark as not liquidated but keep current temporary values
+                        c.liquidated = false;
+                        c._tempStatus = c.status;
+                        c._tempGasto = c.gasto;
+                        c._tempIncidencia = c.incidencia;
+                        c._tempIncidenciaObs = c.incidenciaObs;
+
+                        // Update local cache
+                        try {
+                            let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                            if (cache[c.id]) {
+                                cache[c.id].liquidated = false;
+                                localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                            }
+                        } catch(e) {}
+
+                        // Sincronizar estado al servidor de manera asíncrona
+                        const delta = {};
+                        delta[c.id] = { 
+                            status: 'PENDIENTE',
+                            liquidated: false
+                        };
+                        fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify(delta)
+                        })
+                        .then(res => {
+                             if (!res.ok) console.error("Server cache sync for edit failed:", res.statusText);
+                        })
+                        .catch(err => console.error("Sync edit to server failed:", err));
+
+                        // Expand client agency
+                        const expandedKey = (c.agencia || 'Sin Agencia').replace(/\W/g, '');
+                        window._noRetailExpandedAgencies[expandedKey] = true;
+
+                        // Switch to En Ruta tab (Inicio)
+                        window._noRetailActiveTab = 'en_ruta';
+                        
+                        // Re-render UI
+                        refreshNoRetailUI();
+
+                        // Scroll suave al cliente
+                        setTimeout(() => {
+                            const clientEl = document.querySelector(`[data-client="${cId}"]`);
+                            if (clientEl) {
+                                clientEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 300);
+                    }
+                }
+            });
+        });
     };
 
     const renderActiveTabContent = (tab, dateStr, pendingCount, totalCount) => {
@@ -10139,11 +10200,16 @@ const renderRFSection = (container) => {
                                         
                                         <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
                                             ${cList.map(c => `
-                                                <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+                                                <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.02);">
                                                     <span>👤 ${c.clientName} (${c.pedido})</span>
-                                                    <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
-                                                        ${c.status}
-                                                    </span>
+                                                    <div style="display:flex; align-items:center; gap:8px;">
+                                                        <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
+                                                            ${c.status}
+                                                        </span>
+                                                        <button class="btn-nr-edit-history" data-client="${c.id}" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; border-radius:4px; padding:2px 6px; font-size:0.55rem; cursor:pointer; font-weight:bold; outline:none;">
+                                                            ✏️ Editar
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -10319,9 +10385,14 @@ const renderRFSection = (container) => {
                                                             ${c.gasto ? `<div>💸 Gasto: <strong style="color:#fff;">S/ ${parseFloat(c.gasto).toFixed(2)}</strong></div>` : ''}
                                                             <div>⚠️ Incidencia: <strong style="color:${c.incidencia === 'SI' ? '#ef4444' : '#fff'};">${c.incidencia || 'NO'}</strong></div>
                                                             ${c.incidenciaObs ? `<div style="word-break: break-word;">📝 Obs: <strong style="color:#fff;">${c.incidenciaObs}</strong></div>` : ''}
-                                                            <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
-                                                                ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
-                                                                ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                            <div style="display:flex; gap:0.4rem; margin-top:0.2rem; justify-content:space-between; align-items:flex-end;">
+                                                                <div style="display:flex; gap:0.4rem;">
+                                                                    ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                                    ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                                </div>
+                                                                <button class="btn-nr-edit-history" data-client="${c.id}" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; border-radius:6px; padding:4px 10px; font-size:0.6rem; cursor:pointer; font-weight:bold; outline:none;">
+                                                                    ✏️ Editar
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     `}
