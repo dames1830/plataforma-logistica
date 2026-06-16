@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.156';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.157';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.156';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.156';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.156';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.156';
+import * as adminService from '../services_v245/adminService.js?v=26.5.157';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.157';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.157';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.157';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.156';
+const VERSION = '26.5.157';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9772,7 +9772,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.156 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.157 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13006,8 +13006,8 @@ const renderRFSection = (container) => {
                                             if (skuIdx === -1) skuIdx = headers.indexOf('SKU');
                                             if (skuIdx === -1) skuIdx = 1;
                                             
-                                            let grIdx = headers.indexOf('GENDER RIMS');
-                                            if (grIdx === -1) grIdx = headers.indexOf('GENDERRIMS');
+                                            // Look for column containing both GENDER and RIMS
+                                            let grIdx = headers.findIndex(h => h.includes('GENDER') && h.includes('RIMS'));
                                             if (grIdx === -1) grIdx = 3;
                                             
                                             for (let i = 1; i < activeMaestro.length; i++) {
@@ -13023,7 +13023,9 @@ const renderRFSection = (container) => {
                                                 if (!row) return;
                                                 const keys = Object.keys(row);
                                                 const skuKey = keys.find(k => ['CODARTICULO', 'SKU', 'ARTICULO'].includes(k.trim().toUpperCase())) || keys[1] || 'CodArticulo';
-                                                const grKey = keys.find(k => ['GENDER RIMS', 'GENDERRIMS'].includes(k.trim().toUpperCase())) || keys[3] || 'Gender RIMS';
+                                                
+                                                // Find key containing both GENDER and RIMS
+                                                const grKey = keys.find(k => k.toUpperCase().includes('GENDER') && k.toUpperCase().includes('RIMS')) || 'Gender RIMS';
                                                 
                                                 const sku7 = String(row[skuKey] || '').trim().substring(0, 7);
                                                 if (sku7 && !liveGenderRimsMap.has(sku7)) {
