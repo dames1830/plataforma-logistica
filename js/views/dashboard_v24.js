@@ -9685,7 +9685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.149 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.150 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10046,6 +10046,7 @@ const renderRFSection = (container) => {
                         // Mark as not liquidated but keep current temporary values
                         c.liquidated = false;
                         c._tempStatus = c.status;
+                        c.status = 'PENDIENTE'; // Reset status to PENDIENTE so it appears in En Ruta list!
                         c._tempGasto = c.gasto;
                         c._tempIncidencia = c.incidencia;
                         c._tempIncidenciaObs = c.incidenciaObs;
@@ -10055,6 +10056,7 @@ const renderRFSection = (container) => {
                             let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
                             if (cache[c.id]) {
                                 cache[c.id].liquidated = false;
+                                cache[c.id].status = 'PENDIENTE'; // Reset status in cache too
                                 localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
                             }
                         } catch(err) {}
