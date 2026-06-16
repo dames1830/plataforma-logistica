@@ -9685,7 +9685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.148 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.149 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10033,10 +10033,13 @@ const renderRFSection = (container) => {
             }
         });
 
-        // Edit history/liquidated client
-        document.querySelectorAll('.btn-nr-edit-history').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const cId = e.currentTarget.dataset.client;
+        // Event delegation to capture clicks on liquidated client cards (Inicio) or history rows (Historial)
+        container.addEventListener('click', async (e) => {
+            const historyRow = e.target.closest('.nr-history-client-row');
+            const liquidatedCard = e.target.closest('.nr-liquidated-client-card');
+            const targetEl = historyRow || liquidatedCard;
+            if (targetEl) {
+                const cId = targetEl.dataset.client;
                 const c = window._noRetailClients.find(x => x.id === cId);
                 if (c) {
                     if (await showPremiumConfirm("EDITAR LIQUIDACIÓN", `¿Deseas corregir la liquidación de ${c.clientName}? El pedido se habilitará nuevamente en la pestaña de Inicio para que puedas editarlo.`)) {
@@ -10054,7 +10057,7 @@ const renderRFSection = (container) => {
                                 cache[c.id].liquidated = false;
                                 localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
                             }
-                        } catch(e) {}
+                        } catch(err) {}
 
                         // Sincronizar estado al servidor de manera asíncrona
                         const delta = {};
@@ -10091,7 +10094,7 @@ const renderRFSection = (container) => {
                         }, 300);
                     }
                 }
-            });
+            }
         });
     };
 
@@ -10200,16 +10203,11 @@ const renderRFSection = (container) => {
                                         
                                         <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
                                             ${cList.map(c => `
-                                                <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.02);">
+                                                <div class="nr-history-client-row" data-client="${c.id}" style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor:pointer; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
                                                     <span>👤 ${c.clientName} (${c.pedido})</span>
-                                                    <div style="display:flex; align-items:center; gap:8px;">
-                                                        <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
-                                                            ${c.status}
-                                                        </span>
-                                                        <button class="btn-nr-edit-history" data-client="${c.id}" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; border-radius:4px; padding:2px 6px; font-size:0.55rem; cursor:pointer; font-weight:bold; outline:none;">
-                                                            ✏️ Editar
-                                                        </button>
-                                                    </div>
+                                                    <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
+                                                        ${c.status}
+                                                    </span>
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -10296,12 +10294,13 @@ const renderRFSection = (container) => {
                                             <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">👤 LISTADO DE CLIENTES A LIQUIDAR:</div>
                                             
                                             ${agClients.map(c => `
-                                                <div style="
+                                                <div class="${c.liquidated ? 'nr-liquidated-client-card' : ''}" data-client="${c.id}" style="
                                                     background: rgba(0, 0, 0, 0.2);
                                                     border: 1px solid ${c.liquidated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.03)'};
                                                     border-radius: 12px;
                                                     padding: 0.9rem;
-                                                ">
+                                                    ${c.liquidated ? 'cursor:pointer; transition:border-color 0.2s;' : ''}
+                                                " ${c.liquidated ? `onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.4)'" onmouseout="this.style.borderColor='rgba(34, 197, 94, 0.2)'"` : ''}>
                                                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                                         <div>
                                                             <span style="font-size:0.75rem; font-weight:800; color:#fff; display:block;">${c.clientName}</span>
@@ -10385,14 +10384,9 @@ const renderRFSection = (container) => {
                                                             ${c.gasto ? `<div>💸 Gasto: <strong style="color:#fff;">S/ ${parseFloat(c.gasto).toFixed(2)}</strong></div>` : ''}
                                                             <div>⚠️ Incidencia: <strong style="color:${c.incidencia === 'SI' ? '#ef4444' : '#fff'};">${c.incidencia || 'NO'}</strong></div>
                                                             ${c.incidenciaObs ? `<div style="word-break: break-word;">📝 Obs: <strong style="color:#fff;">${c.incidenciaObs}</strong></div>` : ''}
-                                                            <div style="display:flex; gap:0.4rem; margin-top:0.2rem; justify-content:space-between; align-items:flex-end;">
-                                                                <div style="display:flex; gap:0.4rem;">
-                                                                    ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
-                                                                    ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
-                                                                </div>
-                                                                <button class="btn-nr-edit-history" data-client="${c.id}" style="background:rgba(59, 130, 246, 0.2); border:1px solid rgba(59, 130, 246, 0.4); color:#60a5fa; border-radius:6px; padding:4px 10px; font-size:0.6rem; cursor:pointer; font-weight:bold; outline:none;">
-                                                                    ✏️ Editar
-                                                                </button>
+                                                            <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
+                                                                ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+                                                                ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
                                                             </div>
                                                         </div>
                                                     `}
