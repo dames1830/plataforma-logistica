@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.158';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.159';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.158';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.158';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.158';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.158';
+import * as adminService from '../services_v245/adminService.js?v=26.5.159';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.159';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.159';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.159';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.158';
+const VERSION = '26.5.159';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -575,7 +575,8 @@ const TABS = [
   { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' },
     { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: '🚚' },
-      { id: 'tracking_no_retail', label: 'Tracking', icon: '📍' }
+      { id: 'tracking_no_retail', label: 'Tracking', icon: '📍' },
+      { id: 'kpi_no_retail', label: 'KPI No Retail', icon: '📊' }
   ]},
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' },
@@ -8256,6 +8257,8 @@ const renderRFSection = (container) => {
         renderDespachoNoRetailPortal(container);
     } else if (tabId === 'no_retail' && activeSub === 'tracking_no_retail') {
         renderTrackingNoRetailPortal(container);
+    } else if (tabId === 'no_retail' && activeSub === 'kpi_no_retail') {
+        renderKpiNoRetailPortal(container);
     } else {
         const data = await getAreaData(tabId);
         if (!data) renderUploadArea(container, tabId);
@@ -9248,6 +9251,306 @@ const renderRFSection = (container) => {
       };
   };
 
+  const renderKpiNoRetailPortal = async (container) => {
+      let cache = {};
+      try {
+          const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache?t=' + Date.now());
+          if (res.ok) {
+              const serverData = await res.json();
+              cache = serverData.data || {};
+              if (Array.isArray(cache)) cache = {};
+              localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+          } else {
+              cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+              if (Array.isArray(cache)) cache = {};
+          }
+      } catch (e) {
+          console.warn("Could not load tracking cache for KPIs, using local storage:", e);
+          cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+          if (Array.isArray(cache)) cache = {};
+      }
+
+      await fetchAndParseNoRetailClients(false);
+
+      let clients = window._noRetailClients || [];
+      clients = clients.map(c => {
+          if(cache[c.id]) {
+              return { ...c, ...cache[c.id] };
+          }
+          return c;
+      });
+
+      // Rango de fechas compartido con el portal de tracking
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+
+      if (window._trackingFilterDesde === undefined || window._trackingFilterDesde === null) {
+          window._trackingFilterDesde = todayStr;
+      }
+      if (window._trackingFilterHasta === undefined || window._trackingFilterHasta === null) {
+          window._trackingFilterHasta = todayStr;
+      }
+
+      const dateDesde = window._trackingFilterDesde;
+      const dateHasta = window._trackingFilterHasta;
+
+      if (dateDesde) {
+          clients = clients.filter(c => c.fechaCargaStr && c.fechaCargaStr >= dateDesde);
+      }
+      if (dateHasta) {
+          clients = clients.filter(c => c.fechaCargaStr && c.fechaCargaStr <= dateHasta);
+      }
+
+      // Cálculos e Indicadores
+      const totalOrders = clients.length;
+      const atendidos = clients.filter(c => c.status === 'ATENDIDO').length;
+      const pendientes = clients.filter(c => c.status === 'PENDIENTE' || !c.status).length;
+      const noAtendidos = clients.filter(c => c.status === 'NO ATENDIDO').length;
+      const reprogramar = clients.filter(c => c.status === 'REPROGRAMAR').length;
+
+      const rateAtendidos = totalOrders > 0 ? ((atendidos / totalOrders) * 100).toFixed(1) : "0.0";
+      const ratePendientes = totalOrders > 0 ? (((pendientes + reprogramar + noAtendidos) / totalOrders) * 100).toFixed(1) : "0.0";
+
+      // Cobro Flete
+      const fleteSi = clients.filter(c => c.cobroFlete === 'SI').length;
+      const fleteNo = clients.filter(c => c.cobroFlete === 'NO' || !c.cobroFlete).length;
+      const fleteSiRate = totalOrders > 0 ? ((fleteSi / totalOrders) * 100).toFixed(1) : "0.0";
+
+      // Gasto Total
+      let totalGasto = 0;
+      clients.forEach(c => {
+          if (c.gasto && c.gasto !== '-') {
+              const val = parseFloat(c.gasto);
+              if (!isNaN(val)) totalGasto += val;
+          }
+      });
+
+      // Agencias stats
+      const agencyMap = {};
+      clients.forEach(c => {
+          const ag = c.agencia || 'SIN AGENCIA';
+          if (!agencyMap[ag]) {
+              agencyMap[ag] = { total: 0, atendidos: 0, pendientes: 0, gasto: 0 };
+          }
+          agencyMap[ag].total++;
+          if (c.status === 'ATENDIDO') agencyMap[ag].atendidos++;
+          else agencyMap[ag].pendientes++;
+
+          if (c.gasto && c.gasto !== '-') {
+              const val = parseFloat(c.gasto);
+              if (!isNaN(val)) agencyMap[ag].gasto += val;
+          }
+      });
+
+      const agencyList = Object.entries(agencyMap).map(([name, stats]) => {
+          const pct = stats.total > 0 ? ((stats.atendidos / stats.total) * 100).toFixed(1) : "0.0";
+          return { name, ...stats, pct: parseFloat(pct) };
+      }).sort((a, b) => b.total - a.total);
+
+      // Render Dashboard HTML with Rich Premium Dark-Mode Aesthetics
+      container.innerHTML = `
+          <div style="font-family:'Inter', sans-serif; color:#fff; display:flex; flex-direction:column; gap:1.5rem; animation:fadeIn 0.4s ease-out;">
+              
+              <!-- Controles de Fecha (Sincronizados) -->
+              <div class="glass-panel" style="padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border:1px solid rgba(255,255,255,0.06); border-radius:14px; background:rgba(30,41,59,0.4);">
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <span style="font-size:1.2rem;">📊</span>
+                      <div>
+                          <h3 style="margin:0; font-family:'Outfit', sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.5px;">DASHBOARD KPI NO RETAIL</h3>
+                          <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Indicadores y rendimiento de despachos No Retail</p>
+                      </div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:0.8rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); padding:0.4rem 1rem; border-radius:10px;">
+                      <div style="display:flex; align-items:center; gap:0.4rem;">
+                          <span style="color:#94a3b8; font-size:0.7rem; font-weight:800;">DE:</span>
+                          <input type="date" id="kpi_nr_desde" value="${dateDesde}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+                      </div>
+                      <div style="width:1px; height:15px; background:rgba(255,255,255,0.15);"></div>
+                      <div style="display:flex; align-items:center; gap:0.4rem;">
+                          <span style="color:#94a3b8; font-size:0.7rem; font-weight:800;">HASTA:</span>
+                          <input type="date" id="kpi_nr_hasta" value="${dateHasta}" style="background:transparent; border:none; color:#fff; font-size:0.8rem; outline:none; font-family:inherit; cursor:pointer; color-scheme:dark;">
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Fila de Tarjetas (Resumen de Métricas) -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+                  <!-- Tarjeta 1: Total Pedidos -->
+                  <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(255,255,255,0.06); background:linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%);">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:0.7rem; font-weight:800; color:#94a3b8; letter-spacing:0.5px;">TOTAL DESPACHOS</span>
+                          <span style="font-size:1.1rem; background:rgba(79,70,229,0.15); color:#818cf8; padding:4px 8px; border-radius:8px; font-weight:900;">📦</span>
+                      </div>
+                      <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; text-shadow:0 0 15px rgba(255,255,255,0.1);">${totalOrders}</h2>
+                      <p style="margin:0; font-size:0.7rem; color:#64748b;">Pedidos cargados en rango de fechas</p>
+                  </div>
+
+                  <!-- Tarjeta 2: Efectividad -->
+                  <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(16,185,129,0.2); background:linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(15,23,42,0.85) 100%); box-shadow: 0 4px 20px rgba(16,185,129,0.05);">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:0.7rem; font-weight:800; color:#a7f3d0; letter-spacing:0.5px;">TASA EFECTIVIDAD</span>
+                          <span style="font-size:1.1rem; background:rgba(16,185,129,0.15); color:#34d399; padding:4px 8px; border-radius:8px; font-weight:900;">🎯</span>
+                      </div>
+                      <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:#10b981; text-shadow:0 0 15px rgba(16,185,129,0.2);">${rateAtendidos}%</h2>
+                      <p style="margin:0; font-size:0.7rem; color:#a7f3d0; font-weight:600;">${atendidos} de ${totalOrders} pedidos completados</p>
+                  </div>
+
+                  <!-- Tarjeta 3: Gasto Distribución -->
+                  <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(245,158,11,0.2); background:linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(15,23,42,0.85) 100%); box-shadow: 0 4px 20px rgba(245,158,11,0.05);">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:0.7rem; font-weight:800; color:#fde047; letter-spacing:0.5px;">GASTO LOGÍSTICA</span>
+                          <span style="font-size:1.1rem; background:rgba(245,158,11,0.15); color:#fbbf24; padding:4px 8px; border-radius:8px; font-weight:900;">💰</span>
+                      </div>
+                      <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:#f59e0b; text-shadow:0 0 15px rgba(245,158,11,0.2);">S/. ${totalGasto.toFixed(2)}</h2>
+                      <p style="margin:0; font-size:0.7rem; color:#fde047; font-weight:600;">Inversión total en fletes y gastos extra</p>
+                  </div>
+
+                  <!-- Tarjeta 4: Cobro de Flete -->
+                  <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(6,182,212,0.2); background:linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(15,23,42,0.85) 100%); box-shadow: 0 4px 20px rgba(6,182,212,0.05);">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:0.7rem; font-weight:800; color:#cffafe; letter-spacing:0.5px;">COBRO EN DESTINO</span>
+                          <span style="font-size:1.1rem; background:rgba(6,182,212,0.15); color:#22d3ee; padding:4px 8px; border-radius:8px; font-weight:900;">💵</span>
+                      </div>
+                      <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:#06b6d4; text-shadow:0 0 15px rgba(6,182,212,0.2);">${fleteSiRate}%</h2>
+                      <p style="margin:0; font-size:0.7rem; color:#cffafe; font-weight:600;">${fleteSi} pedidos marcados con Cobro Flete (SI)</p>
+                  </div>
+              </div>
+
+              <!-- Reporte Visual y Estadísticas Detalladas -->
+              <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:1.5rem; min-height:360px; flex-wrap:wrap; @media (max-width:992px) { grid-template-columns: 1fr; }">
+                  
+                  <!-- Panel Izquierdo: Rendimiento por Agencia -->
+                  <div class="glass-panel" style="padding:1.5rem; border-radius:18px; border:1px solid rgba(255,255,255,0.06); background:rgba(15,23,42,0.6); display:flex; flex-direction:column; gap:1rem;">
+                      <h4 style="margin:0; font-family:'Outfit',sans-serif; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:0.4rem;">
+                          <span>🏢</span> RENDIMIENTO DETALLADO POR AGENCIA
+                      </h4>
+                      <div style="overflow-x:auto; flex:1;">
+                          <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+                              <thead>
+                                  <tr style="border-bottom:1.5px solid rgba(255,255,255,0.1); color:#94a3b8; font-weight:700;">
+                                      <th style="padding:0.75rem 0.5rem;">AGENCIA</th>
+                                      <th style="padding:0.75rem 0.5rem; text-align:center;">CARGAS</th>
+                                      <th style="padding:0.75rem 0.5rem; text-align:center;">ATENDIDOS</th>
+                                      <th style="padding:0.75rem 0.5rem; text-align:center;">EFECTIVIDAD</th>
+                                      <th style="padding:0.75rem 0.5rem; text-align:right;">GASTO (S/.)</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  ${agencyList.length > 0 ? agencyList.map(a => {
+                                      let colorClass = '#ef4444';
+                                      if (a.pct >= 90) colorClass = '#10b981';
+                                      else if (a.pct >= 70) colorClass = '#eab308';
+
+                                      return `
+                                          <tr style="border-bottom:1px solid rgba(255,255,255,0.05); font-weight:500; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                              <td style="padding:0.8rem 0.5rem; color:#fff; font-weight:700; font-size:0.75rem;">${a.name}</td>
+                                              <td style="padding:0.8rem 0.5rem; text-align:center; color:#94a3b8; font-weight:bold;">${a.total}</td>
+                                              <td style="padding:0.8rem 0.5rem; text-align:center; color:#10b981; font-weight:bold;">${a.atendidos}</td>
+                                              <td style="padding:0.8rem 0.5rem; text-align:center;">
+                                                  <span style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:2px 8px; border-radius:6px; color:${colorClass}; font-weight:800; font-size:0.7rem;">
+                                                      ${a.pct.toFixed(1)}%
+                                                  </span>
+                                              </td>
+                                              <td style="padding:0.8rem 0.5rem; text-align:right; color:#f59e0b; font-weight:bold;">S/. ${a.gasto.toFixed(2)}</td>
+                                          </tr>
+                                      `;
+                                  }).join('') : `
+                                      <tr>
+                                          <td colspan="5" style="text-align:center; padding:3rem; color:#64748b; font-style:italic;">No hay despachos en el rango seleccionado.</td>
+                                      </tr>
+                                  `}
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+
+                  <!-- Panel Derecho: Gráfico y Distribución de Estados -->
+                  <div class="glass-panel" style="padding:1.5rem; border-radius:18px; border:1px solid rgba(255,255,255,0.06); background:rgba(15,23,42,0.6); display:flex; flex-direction:column; gap:1.2rem;">
+                      <h4 style="margin:0; font-family:'Outfit',sans-serif; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:0.4rem;">
+                          <span>📈</span> DISTRIBUCIÓN DE ENTREGA
+                      </h4>
+
+                      <!-- Visualizador en Anillo SVG Premium -->
+                      <div style="display:flex; justify-content:center; align-items:center; height:150px; position:relative;">
+                          ${totalOrders > 0 ? `
+                              <svg width="140" height="140" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+                                  <!-- Fondo -->
+                                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="3.5" />
+                                  <!-- Pendientes / No Atendidos -->
+                                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#64748b" stroke-width="3.5" stroke-dasharray="100 100" stroke-dashoffset="0" />
+                                  <!-- Atendidos (Verde) -->
+                                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" stroke-width="3.8" stroke-dasharray="${rateAtendidos} ${100 - parseFloat(rateAtendidos)}" stroke-dashoffset="0" stroke-linecap="round" style="filter: drop-shadow(0px 0px 3px rgba(16,185,129,0.3));" />
+                              </svg>
+                              <div style="position:absolute; text-align:center;">
+                                  <span style="font-size:1.6rem; font-weight:900; color:#10b981; font-family:'Outfit',sans-serif;">${rateAtendidos}%</span>
+                                  <div style="font-size:0.55rem; color:#94a3b8; font-weight:700; letter-spacing:0.5px; margin-top:2px;">EFECTIVIDAD</div>
+                              </div>
+                          ` : `
+                              <div style="color:#64748b; font-size:0.8rem; font-style:italic;">Sin datos gráficos</div>
+                          `}
+                      </div>
+
+                      <!-- Desglose por Estado -->
+                      <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                          <!-- Atendido -->
+                          <div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:3px;">
+                                  <span style="color:#10b981; display:flex; align-items:center; gap:4px;"><span style="width:7px; height:7px; background:#10b981; border-radius:50%;"></span> ATENDIDO</span>
+                                  <span style="color:#fff;">${atendidos} (${rateAtendidos}%)</span>
+                              </div>
+                              <div style="width:100%; height:6px; background:rgba(255,255,255,0.04); border-radius:4px; overflow:hidden;">
+                                  <div style="width:${rateAtendidos}%; height:100%; background:#10b981; border-radius:4px;"></div>
+                              </div>
+                          </div>
+
+                          <!-- Pendiente -->
+                          <div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:3px;">
+                                  <span style="color:#64748b; display:flex; align-items:center; gap:4px;"><span style="width:7px; height:7px; background:#64748b; border-radius:50%;"></span> PENDIENTE</span>
+                                  <span style="color:#fff;">${pendientes} (${totalOrders > 0 ? ((pendientes / totalOrders) * 100).toFixed(1) : 0}%)</span>
+                              </div>
+                              <div style="width:100%; height:6px; background:rgba(255,255,255,0.04); border-radius:4px; overflow:hidden;">
+                                  <div style="width:${totalOrders > 0 ? ((pendientes / totalOrders) * 100).toFixed(1) : 0}%; height:100%; background:#64748b; border-radius:4px;"></div>
+                              </div>
+                          </div>
+
+                          <!-- No Atendido / Reprogramar -->
+                          <div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:3px;">
+                                  <span style="color:#ef4444; display:flex; align-items:center; gap:4px;"><span style="width:7px; height:7px; background:#ef4444; border-radius:50%;"></span> INCIDENCIAS</span>
+                                  <span style="color:#fff;">${noAtendidos + reprogramar} (${totalOrders > 0 ? (((noAtendidos + reprogramar) / totalOrders) * 100).toFixed(1) : 0}%)</span>
+                              </div>
+                              <div style="width:100%; height:6px; background:rgba(255,255,255,0.04); border-radius:4px; overflow:hidden;">
+                                  <div style="width:${totalOrders > 0 ? (((noAtendidos + reprogramar) / totalOrders) * 100).toFixed(1) : 0}%; height:100%; background:#ef4444; border-radius:4px;"></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <style>
+              @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(10px); }
+                  to { opacity: 1; transform: translateY(0); }
+              }
+          </style>
+      `;
+
+      // Handlers de cambio de fecha para KPIs (Sincronizan filtros de tracking)
+      document.getElementById('kpi_nr_desde')?.addEventListener('change', (e) => {
+          window._trackingFilterDesde = e.target.value;
+          renderKpiNoRetailPortal(container);
+      });
+      document.getElementById('kpi_nr_hasta')?.addEventListener('change', (e) => {
+          window._trackingFilterHasta = e.target.value;
+          renderKpiNoRetailPortal(container);
+      });
+  };
+
   const showNRPhotoLoader = (show) => {
       let loader = document.getElementById('nr-photo-loader');
       if (show) {
@@ -9772,7 +10075,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.158 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.159 | MOBILE PORTAL
                             </div>
                     </div>
 
