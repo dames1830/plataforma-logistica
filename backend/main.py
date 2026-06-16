@@ -404,63 +404,128 @@ async def api_login(request: Request):
 
 @app.post("/api/admin/db_cleanup")
 def force_db_cleanup():
+    temp_db_path = "/tmp/temp_database.db"
     try:
         import shutil
         db_size_before = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
         _, _, free_before = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
         
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+        # Remove any leftover temp database from previous failed attempts
+        if os.path.exists(temp_db_path):
+            try: os.remove(temp_db_path)
+            except: pass
+            
+        # Connect to both databases
+        src_conn = sqlite3.connect(DB_PATH)
+        src_cursor = src_conn.cursor()
         
+        dst_conn = sqlite3.connect(temp_db_path)
+        dst_cursor = dst_conn.cursor()
+        
+        # Create schema in the temp database
+        dst_cursor.execute('CREATE TABLE IF NOT EXISTS logistics_snapshots (area_id TEXT, snapshot_date TEXT, data_json TEXT NOT NULL, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (area_id, snapshot_date))')
+        dst_cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+        dst_cursor.execute('CREATE TABLE IF NOT EXISTS role_permissions (role TEXT NOT NULL, module TEXT NOT NULL, allowed INTEGER DEFAULT 1, PRIMARY KEY (role, module))')
+        dst_cursor.execute('CREATE TABLE IF NOT EXISTS buffer_config (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+        dst_cursor.execute('CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL, action TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+        dst_cursor.execute('CREATE TABLE IF NOT EXISTS shared_data (key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+        
+        # Copy users
+        try:
+            src_cursor.execute("SELECT id, username, password, name, role, active, created_at FROM users")
+            for row in src_cursor.fetchall():
+                dst_cursor.execute("INSERT INTO users (id, username, password, name, role, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", row)
+        except Exception as ue: print(f"Copy users err: {ue}")
+            
+        # Copy role_permissions
+        try:
+            src_cursor.execute("SELECT role, module, allowed FROM role_permissions")
+            for row in src_cursor.fetchall():
+                dst_cursor.execute("INSERT INTO role_permissions (role, module, allowed) VALUES (?, ?, ?)", row)
+        except Exception as pe: print(f"Copy permissions err: {pe}")
+            
+        # Copy buffer_config
+        try:
+            src_cursor.execute("SELECT key, value FROM buffer_config")
+            for row in src_cursor.fetchall():
+                dst_cursor.execute("INSERT INTO buffer_config (key, value) VALUES (?, ?)", row)
+        except Exception as ce: print(f"Copy config err: {ce}")
+            
+        # Copy audit_logs
+        try:
+            src_cursor.execute("SELECT id, username, action, created_at FROM audit_logs")
+            for row in src_cursor.fetchall():
+                dst_cursor.execute("INSERT INTO audit_logs (id, username, action, created_at) VALUES (?, ?, ?, ?)", row)
+        except Exception as ae: print(f"Copy audit_logs err: {ae}")
+            
+        # Copy shared_data
+        try:
+            src_cursor.execute("SELECT key, value_json, updated_by, updated_at FROM shared_data")
+            for row in src_cursor.fetchall():
+                dst_cursor.execute("INSERT INTO shared_data (key, value_json, updated_by, updated_at) VALUES (?, ?, ?, ?)", row)
+        except Exception as se: print(f"Copy shared_data err: {se}")
+            
+        # Copy snapshots (pruned)
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache']
         
-        cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
-        areas = [row[0] for row in cursor.fetchall()]
+        src_cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
+        areas = [row[0] for row in src_cursor.fetchall()]
         
-        cleaned = {}
-        total_deleted = 0
+        copied_snapshots = {}
         
         for area in areas:
             if area in SINGLETON_AREAS:
-                continue
-            
-            cursor.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
-            dates = [r[0] for r in cursor.fetchall()]
-            
-            if len(dates) > 2:
-                to_delete = dates[2:]
-                placeholders = ','.join(['?'] * len(to_delete))
-                cursor.execute(f"DELETE FROM logistics_snapshots WHERE area_id = ? AND snapshot_date IN ({placeholders})", [area] + to_delete)
-                cleaned[area] = to_delete
-                total_deleted += len(to_delete)
+                # Copy directly
+                src_cursor.execute("SELECT area_id, snapshot_date, data_json, updated_at FROM logistics_snapshots WHERE area_id = ?", (area,))
+                for row in src_cursor.fetchall():
+                    dst_cursor.execute("INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at) VALUES (?, ?, ?, ?)", row)
+                copied_snapshots[area] = ["MASTER"]
+            else:
+                # Get the 2 latest dates
+                src_cursor.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
+                dates = [r[0] for r in src_cursor.fetchall()]
+                keep_dates = dates[:2]
                 
-        conn.commit()
+                for d in keep_dates:
+                    src_cursor.execute("SELECT area_id, snapshot_date, data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, d))
+                    row = src_cursor.fetchone()
+                    if row:
+                        dst_cursor.execute("INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at) VALUES (?, ?, ?, ?)", row)
+                copied_snapshots[area] = keep_dates
+                
+        dst_conn.commit()
         
-        vacuum_success = False
-        vacuum_error = None
-        try:
-            cursor.execute("VACUUM")
-            conn.commit()
-            vacuum_success = True
-        except Exception as ve:
-            vacuum_error = str(ve)
+        # Close database connections
+        src_conn.close()
+        dst_conn.close()
+        
+        # Overwrite full database file with clean compacted version
+        shutil.copy2(temp_db_path, DB_PATH)
+        
+        # Clean up temp file
+        if os.path.exists(temp_db_path):
+            try: os.remove(temp_db_path)
+            except: pass
             
-        conn.close()
-        
         db_size_after = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
         _, _, free_after = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
         
         return {
             "status": "success",
+            "message": "Reconstrucción y compactación de la base de datos completada con éxito.",
             "db_size_before_mb": db_size_before / (1024*1024),
             "db_size_after_mb": db_size_after / (1024*1024),
             "disk_free_before_mb": free_before / (1024*1024),
             "disk_free_after_mb": free_after / (1024*1024),
-            "total_deleted_snapshots": total_deleted,
-            "cleaned_areas": cleaned,
-            "vacuum_success": vacuum_success,
-            "vacuum_error": vacuum_error
+            "copied_snapshots": copied_snapshots
         }
     except Exception as e:
+        # Clean up temp file in case of error
+        try:
+            if os.path.exists(temp_db_path):
+                os.remove(temp_db_path)
+        except:
+            pass
         return {"status": "error", "message": str(e)}
+
 
