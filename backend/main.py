@@ -216,7 +216,16 @@ def get_area_data(area: str, date: Optional[str] = None):
             cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC LIMIT 1", (area,))
         
         row = cursor.fetchone(); conn.close()
-        if row: return {"area": area, "data": json.loads(row[0]), "updated_at": row[1]}
+        if row:
+            data = json.loads(row[0])
+            if area == 'no_retail_cache' and isinstance(data, dict):
+                for key, val in data.items():
+                    if isinstance(val, dict):
+                        if val.get('fotoCargo'):
+                            val['fotoCargo'] = 'present'
+                        if val.get('fotoLocal'):
+                            val['fotoLocal'] = 'present'
+            return {"area": area, "data": data, "updated_at": row[1]}
         
         # Valor por defecto según el área
         DEFAULT_OBJECTS = ['attendance', 'permissions', 'config', 'no_retail_cache']
@@ -527,5 +536,23 @@ def force_db_cleanup():
         except:
             pass
         return {"status": "error", "message": str(e)}
+
+@app.get("/api/logistics/no_retail_cache/photo")
+def get_no_retail_photo(client_id: str, photo_type: str):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = 'no_retail_cache' AND snapshot_date = 'MASTER'")
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            cache = json.loads(row[0])
+            client_data = cache.get(client_id, {})
+            photo_data = client_data.get(photo_type)
+            return {"status": "success", "photo": photo_data}
+        return {"status": "error", "message": "Cache not found"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 
 

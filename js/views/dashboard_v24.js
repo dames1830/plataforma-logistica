@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.153';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.154';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.153';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.153';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.153';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.153';
+import * as adminService from '../services_v245/adminService.js?v=26.5.154';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.154';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.154';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.154';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.153';
+const VERSION = '26.5.154';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9248,6 +9248,39 @@ const renderRFSection = (container) => {
       };
   };
 
+  const showNRPhotoLoader = (show) => {
+      let loader = document.getElementById('nr-photo-loader');
+      if (show) {
+          if (!loader) {
+              loader = document.createElement('div');
+              loader.id = 'nr-photo-loader';
+              loader.style.position = 'fixed';
+              loader.style.top = '0';
+              loader.style.left = '0';
+              loader.style.width = '100vw';
+              loader.style.height = '100vh';
+              loader.style.backgroundColor = 'rgba(15, 23, 42, 0.6)';
+              loader.style.backdropFilter = 'blur(4px)';
+              loader.style.display = 'flex';
+              loader.style.justifyContent = 'center';
+              loader.style.alignItems = 'center';
+              loader.style.zIndex = '9999999';
+              loader.innerHTML = `
+                  <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); padding:1.5rem; border-radius:12px; display:flex; flex-direction:column; align-items:center; gap:0.8rem; box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+                      <div style="width:30px; height:30px; border:3px solid rgba(255,255,255,0.1); border-top-color:#4f46e5; border-radius:50%; animation:nr-spin 0.8s linear infinite;"></div>
+                      <span style="color:#fff; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">CARGANDO FOTOS...</span>
+                  </div>
+                  <style>
+                      @keyframes nr-spin { to { transform: rotate(360deg); } }
+                  </style>
+              `;
+              document.body.appendChild(loader);
+          }
+      } else {
+          if (loader) loader.remove();
+      }
+  };
+
   const renderTrackingNoRetailPortal = async (container, forceRefresh = false) => {
       let cache = {};
       try {
@@ -9444,8 +9477,8 @@ const renderRFSection = (container) => {
                               </td>
                               <td style="padding:1rem; text-align:center;">
                                   <div style="display:flex; justify-content:center; gap:0.5rem;">
-                                      ${c.fotoCargo ? `<img src="${c.fotoCargo}" class="btn-preview-tracking-photo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Cargo">` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo"><i class="fas fa-camera"></i></div>'}
-                                      ${c.fotoLocal ? `<img src="${c.fotoLocal}" class="btn-preview-tracking-photo" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Fachada">` : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada"><i class="fas fa-camera"></i></div>'}
+                                      ${c.fotoCargo ? (c.fotoCargo.startsWith('data:image') ? `<img src="${c.fotoCargo}" class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoCargo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Cargo">` : `<div class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoCargo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; border-radius:4px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:0.95rem; cursor:pointer;" title="Ver Foto Cargo">📸</div>`) : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo">📸</div>'}
+                                      ${c.fotoLocal ? (c.fotoLocal.startsWith('data:image') ? `<img src="${c.fotoLocal}" class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoLocal" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Fachada">` : `<div class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoLocal" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; border-radius:4px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:0.95rem; cursor:pointer;" title="Ver Foto Fachada">📸</div>`) : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada">📸</div>'}
                                   </div>
                               </td>
                               <td style="padding:1rem; text-align:center;">
@@ -9536,17 +9569,71 @@ const renderRFSection = (container) => {
           }
       });
 
-      container.querySelectorAll('.btn-preview-tracking-photo').forEach(img => {
-          img.addEventListener('click', () => {
-              openImageModal(img.src, img.getAttribute('data-title'));
+      container.querySelectorAll('.btn-preview-tracking-photo').forEach(btn => {
+          btn.addEventListener('click', async () => {
+              const cId = btn.getAttribute('data-client');
+              const type = btn.getAttribute('data-type');
+              const title = btn.getAttribute('data-title');
+              
+              let photoSrc = btn.tagName === 'IMG' ? btn.src : null;
+              
+              if (!photoSrc) {
+                  showNRPhotoLoader(true);
+                  try {
+                      const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache/photo?client_id=${cId}&photo_type=${type}`);
+                      if (res.ok) {
+                          const json = await res.json();
+                          if (json.status === 'success' && json.photo) {
+                              photoSrc = json.photo;
+                              const clientObj = clients.find(x => x.id === cId);
+                              if (clientObj) {
+                                  clientObj[type] = photoSrc;
+                              }
+                          }
+                      }
+                  } catch (e) {
+                      console.error("Error fetching photo:", e);
+                  } finally {
+                      showNRPhotoLoader(false);
+                  }
+              }
+              
+              if (photoSrc) {
+                  openImageModal(photoSrc, title);
+              } else {
+                  showPremiumAlert('ERROR', 'No se pudo cargar la foto desde el servidor.', 'error');
+              }
           });
       });
 
       container.querySelectorAll('.btn-edit-tracking').forEach(btn => {
-          btn.addEventListener('click', (e) => {
+          btn.addEventListener('click', async (e) => {
               const cId = e.currentTarget.dataset.client;
               const clientObj = clients.find(x => x.id === cId);
               if (clientObj) {
+                  if (clientObj.fotoCargo === 'present' || clientObj.fotoLocal === 'present') {
+                      showNRPhotoLoader(true);
+                      try {
+                          const fetchPhoto = async (type) => {
+                              const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache/photo?client_id=${cId}&photo_type=${type}`);
+                              if (res.ok) {
+                                  const json = await res.json();
+                                  if (json.status === 'success') return json.photo;
+                              }
+                              return null;
+                          };
+                          const [cargo, local] = await Promise.all([
+                              clientObj.fotoCargo === 'present' ? fetchPhoto('fotoCargo') : Promise.resolve(clientObj.fotoCargo),
+                              clientObj.fotoLocal === 'present' ? fetchPhoto('fotoLocal') : Promise.resolve(clientObj.fotoLocal)
+                          ]);
+                          if (cargo) clientObj.fotoCargo = cargo;
+                          if (local) clientObj.fotoLocal = local;
+                      } catch (err) {
+                          console.error(err);
+                      } finally {
+                          showNRPhotoLoader(false);
+                      }
+                  }
                   openEditTrackingModal(clientObj, container);
               }
           });
@@ -9685,7 +9772,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.153 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.154 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10675,6 +10762,29 @@ const renderRFSection = (container) => {
                     const cId = targetEl.dataset.client;
                     const c = window._noRetailClients.find(x => x.id === cId);
                     if (c) {
+                        if (c.fotoCargo === 'present' || c.fotoLocal === 'present') {
+                            showNRPhotoLoader(true);
+                            try {
+                                const fetchPhoto = async (type) => {
+                                    const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache/photo?client_id=${cId}&photo_type=${type}`);
+                                    if (res.ok) {
+                                        const json = await res.json();
+                                        if (json.status === 'success') return json.photo;
+                                    }
+                                    return null;
+                                };
+                                const [cargo, local] = await Promise.all([
+                                    c.fotoCargo === 'present' ? fetchPhoto('fotoCargo') : Promise.resolve(c.fotoCargo),
+                                    c.fotoLocal === 'present' ? fetchPhoto('fotoLocal') : Promise.resolve(c.fotoLocal)
+                                ]);
+                                if (cargo) c.fotoCargo = cargo;
+                                if (local) c.fotoLocal = local;
+                            } catch (err) {
+                                console.error(err);
+                            } finally {
+                                showNRPhotoLoader(false);
+                            }
+                        }
                         openEditClientModal(c);
                     }
                 }
