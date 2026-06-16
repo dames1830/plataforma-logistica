@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=26.5.144';
-import * as adminService from './services_v245/adminService.js?v=26.5.144';
+import { getSession, logout } from './services_v245/auth.js?v=26.5.153';
+import * as adminService from './services_v245/adminService.js?v=26.5.153';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {

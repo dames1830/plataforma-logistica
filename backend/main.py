@@ -401,3 +401,66 @@ async def api_login(request: Request):
         if row: return {"success": True, "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
         return {"success": False, "message": "Credenciales inválidas"}
     except Exception as e: return {"status": "error", "message": str(e)}
+
+@app.post("/api/admin/db_cleanup")
+def force_db_cleanup():
+    try:
+        import shutil
+        db_size_before = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
+        _, _, free_before = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache']
+        
+        cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
+        areas = [row[0] for row in cursor.fetchall()]
+        
+        cleaned = {}
+        total_deleted = 0
+        
+        for area in areas:
+            if area in SINGLETON_AREAS:
+                continue
+            
+            cursor.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
+            dates = [r[0] for r in cursor.fetchall()]
+            
+            if len(dates) > 2:
+                to_delete = dates[2:]
+                placeholders = ','.join(['?'] * len(to_delete))
+                cursor.execute(f"DELETE FROM logistics_snapshots WHERE area_id = ? AND snapshot_date IN ({placeholders})", [area] + to_delete)
+                cleaned[area] = to_delete
+                total_deleted += len(to_delete)
+                
+        conn.commit()
+        
+        vacuum_success = False
+        vacuum_error = None
+        try:
+            cursor.execute("VACUUM")
+            conn.commit()
+            vacuum_success = True
+        except Exception as ve:
+            vacuum_error = str(ve)
+            
+        conn.close()
+        
+        db_size_after = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
+        _, _, free_after = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
+        
+        return {
+            "status": "success",
+            "db_size_before_mb": db_size_before / (1024*1024),
+            "db_size_after_mb": db_size_after / (1024*1024),
+            "disk_free_before_mb": free_before / (1024*1024),
+            "disk_free_after_mb": free_after / (1024*1024),
+            "total_deleted_snapshots": total_deleted,
+            "cleaned_areas": cleaned,
+            "vacuum_success": vacuum_success,
+            "vacuum_error": vacuum_error
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
