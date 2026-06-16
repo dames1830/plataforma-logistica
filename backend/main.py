@@ -72,8 +72,49 @@ def init_db():
 
     conn.commit()
     conn.close()
+    prune_old_snapshots()
+
+def prune_old_snapshots():
+    """
+    Conserva solo los 2 snapshots más recientes para cada área que no sea singleton
+    para evitar que el tamaño de la base de datos sature el disco del servidor.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache']
+        
+        cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
+        areas = [r[0] for r in cursor.fetchall()]
+        
+        for area in areas:
+            if area in SINGLETON_AREAS:
+                continue
+            
+            cursor.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
+            dates = [r[0] for r in cursor.fetchall()]
+            
+            # Conservar solo los últimos 2 snapshots
+            if len(dates) > 2:
+                to_delete = dates[2:]
+                placeholders = ','.join(['?'] * len(to_delete))
+                cursor.execute(f"DELETE FROM logistics_snapshots WHERE area_id = ? AND snapshot_date IN ({placeholders})", [area] + to_delete)
+                print(f"[PULSE] Borrados {len(to_delete)} snapshots antiguos del área {area}")
+        conn.commit()
+        # Intentar ejecutar VACUUM para liberar espacio. Si falla por falta de espacio temporal, se ignora
+        # pero SQLite de todas formas reutilizará las páginas liberadas para futuras inserciones.
+        try:
+            cursor.execute("VACUUM")
+            conn.commit()
+            print("[PULSE] Base de datos optimizada (VACUUM completado).")
+        except sqlite3.Error as ve:
+            print(f"[PULSE] Omitido VACUUM (espacio insuficiente en disco), pero páginas liberadas: {ve}")
+        conn.close()
+    except Exception as e:
+        print(f"[PULSE] Error al podar snapshots antiguos: {e}")
 
 init_db()
+
 
 @app.get("/api/health")
 def health():
@@ -249,6 +290,10 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
                             active=excluded.active
                     """, (username, password, name, role, active))
             conn.commit(); conn.close()
+        
+        # Podar snapshots antiguos si el área guardada no es singleton para liberar espacio
+        if area not in SINGLETON_AREAS:
+            prune_old_snapshots()
         
         return {"status": "success", "area": area, "date": target_date}
     except Exception as e:
