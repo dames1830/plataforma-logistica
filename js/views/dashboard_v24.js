@@ -12995,12 +12995,25 @@ const renderRFSection = (container) => {
                             </thead>
                             <tbody>
                                 ${(() => {
+                                    // Build dynamic map of sku7 to live Column D (Gender RIMS) from maestro
+                                    const liveGenderRimsMap = new Map();
+                                    const activeMaestro = dataStore.articulos || [];
+                                    activeMaestro.forEach(row => {
+                                        const raw = Array.isArray(row) ? row : Object.values(row);
+                                        const sku7 = String(raw[1] || '').trim().substring(0, 7);
+                                        if (sku7 && !liveGenderRimsMap.has(sku7)) {
+                                            // Column D (index 3) is Gender RIMS
+                                            liveGenderRimsMap.set(sku7, String(raw[3] || '').trim().toUpperCase());
+                                        }
+                                    });
+
                                     const genderGroups = {};
                                     const filteredTasks = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
 
                                     filteredTasks.forEach(t => {
                                         (t.items || []).forEach(art => {
-                                            const genderRims = String(art.genderRims || 'S/GR').trim();
+                                            const sku7 = String(art.sku7 || '').trim().substring(0, 7);
+                                            const genderRims = String(liveGenderRimsMap.get(sku7) || art.genderRims || art.gender || 'S/GR').trim();
                                             const bufferItems = art.items || [];
                                             
                                             bufferItems.forEach(i => {
