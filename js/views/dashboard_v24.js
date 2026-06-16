@@ -9673,7 +9673,11 @@ const renderRFSection = (container) => {
                                 <input type="date" id="nr_date_filter" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
                             </div>
                             <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;" id="btn_nr_logout" title="Cerrar Sesión">
-                                <span style="font-size:1.2rem; cursor:pointer; color:#ef4444;">🚪</span>
+                                <span style="cursor:pointer; color:#ef4444; display:flex; align-items:center; justify-content:center;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -9681,7 +9685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.145 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.146 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10166,8 +10170,9 @@ const renderRFSection = (container) => {
             const activeAgenciesCount = Object.keys(groupedAgencies).length;
             const agPendingCount = pendingClients.length;
 
-            const meta = getUploadMeta('archivo_no_retail') || {};
-            const uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : 'Fecha Desconocida');
+            const selectedDate = window._noRetailHistorialDate;
+            const meta = getUploadMeta('no_retail') || {};
+            const uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : (selectedDate || 'Fecha Desconocida'));
             
             return `
                 <!-- Top stats -->
