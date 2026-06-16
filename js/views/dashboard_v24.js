@@ -9685,7 +9685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.150 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.151 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10033,71 +10033,7 @@ const renderRFSection = (container) => {
             }
         });
 
-        // Event delegation to capture clicks on liquidated client cards (Inicio) or history rows (Historial)
-        container.addEventListener('click', async (e) => {
-            const historyRow = e.target.closest('.nr-history-client-row');
-            const liquidatedCard = e.target.closest('.nr-liquidated-client-card');
-            const targetEl = historyRow || liquidatedCard;
-            if (targetEl) {
-                const cId = targetEl.dataset.client;
-                const c = window._noRetailClients.find(x => x.id === cId);
-                if (c) {
-                    if (await showPremiumConfirm("EDITAR LIQUIDACIÓN", `¿Deseas corregir la liquidación de ${c.clientName}? El pedido se habilitará nuevamente en la pestaña de Inicio para que puedas editarlo.`)) {
-                        // Mark as not liquidated but keep current temporary values
-                        c.liquidated = false;
-                        c._tempStatus = c.status;
-                        c.status = 'PENDIENTE'; // Reset status to PENDIENTE so it appears in En Ruta list!
-                        c._tempGasto = c.gasto;
-                        c._tempIncidencia = c.incidencia;
-                        c._tempIncidenciaObs = c.incidenciaObs;
 
-                        // Update local cache
-                        try {
-                            let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
-                            if (cache[c.id]) {
-                                cache[c.id].liquidated = false;
-                                cache[c.id].status = 'PENDIENTE'; // Reset status in cache too
-                                localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
-                            }
-                        } catch(err) {}
-
-                        // Sincronizar estado al servidor de manera asíncrona
-                        const delta = {};
-                        delta[c.id] = { 
-                            status: 'PENDIENTE',
-                            liquidated: false
-                        };
-                        fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
-                             method: 'POST',
-                             headers: { 'Content-Type': 'application/json' },
-                             body: JSON.stringify(delta)
-                        })
-                        .then(res => {
-                             if (!res.ok) console.error("Server cache sync for edit failed:", res.statusText);
-                        })
-                        .catch(err => console.error("Sync edit to server failed:", err));
-
-                        // Expand client agency
-                        const expandedKey = (c.agencia || 'Sin Agencia').replace(/\W/g, '');
-                        window._noRetailExpandedAgencies[expandedKey] = true;
-
-                        // Switch to En Ruta tab (Inicio)
-                        window._noRetailActiveTab = 'en_ruta';
-                        
-                        // Re-render UI
-                        refreshNoRetailUI();
-
-                        // Scroll suave al cliente
-                        setTimeout(() => {
-                            const clientEl = document.querySelector(`[data-client="${cId}"]`);
-                            if (clientEl) {
-                                clientEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }, 300);
-                    }
-                }
-            }
-        });
     };
 
     const renderActiveTabContent = (tab, dateStr, pendingCount, totalCount) => {
@@ -10417,6 +10353,73 @@ const renderRFSection = (container) => {
             }
         });
     };
+
+
+        // Event delegation to capture clicks on liquidated client cards (Inicio) or history rows (Historial)
+        container.addEventListener('click', async (e) => {
+            const historyRow = e.target.closest('.nr-history-client-row');
+            const liquidatedCard = e.target.closest('.nr-liquidated-client-card');
+            const targetEl = historyRow || liquidatedCard;
+            if (targetEl) {
+                const cId = targetEl.dataset.client;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    if (await showPremiumConfirm("EDITAR LIQUIDACIÓN", `¿Deseas corregir la liquidación de ${c.clientName}? El pedido se habilitará nuevamente en la pestaña de Inicio para que puedas editarlo.`)) {
+                        // Mark as not liquidated but keep current temporary values
+                        c.liquidated = false;
+                        c._tempStatus = c.status;
+                        c.status = 'PENDIENTE'; // Reset status to PENDIENTE so it appears in En Ruta list!
+                        c._tempGasto = c.gasto;
+                        c._tempIncidencia = c.incidencia;
+                        c._tempIncidenciaObs = c.incidenciaObs;
+
+                        // Update local cache
+                        try {
+                            let cache = JSON.parse(localStorage.getItem('nr_cache_v1') || '{}');
+                            if (cache[c.id]) {
+                                cache[c.id].liquidated = false;
+                                cache[c.id].status = 'PENDIENTE'; // Reset status in cache too
+                                localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
+                            }
+                        } catch(err) {}
+
+                        // Sincronizar estado al servidor de manera asíncrona
+                        const delta = {};
+                        delta[c.id] = { 
+                            status: 'PENDIENTE',
+                            liquidated: false
+                        };
+                        fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache', {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify(delta)
+                        })
+                        .then(res => {
+                             if (!res.ok) console.error("Server cache sync for edit failed:", res.statusText);
+                        })
+                        .catch(err => console.error("Sync edit to server failed:", err));
+
+                        // Expand client agency
+                        const expandedKey = (c.agencia || 'Sin Agencia').replace(/\W/g, '');
+                        window._noRetailExpandedAgencies[expandedKey] = true;
+
+                        // Switch to En Ruta tab (Inicio)
+                        window._noRetailActiveTab = 'en_ruta';
+                        
+                        // Re-render UI
+                        refreshNoRetailUI();
+
+                        // Scroll suave al cliente
+                        setTimeout(() => {
+                            const clientEl = document.querySelector(`[data-client="${cId}"]`);
+                            if (clientEl) {
+                                clientEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 300);
+                    }
+                }
+            }
+        });
 
     refreshNoRetailUI();
   };
