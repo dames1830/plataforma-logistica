@@ -1,5 +1,10 @@
-// URL del servidor backend para autenticación
-const AUTH_API = "https://logistics-backend-wv0x.onrender.com/api";
+const getApiBase = (defaultUrl) => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api';
+  }
+  return defaultUrl;
+};
+const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
 const VERSION = '24.8.0';
 
 // Fallback local en caso de que el servidor esté caído

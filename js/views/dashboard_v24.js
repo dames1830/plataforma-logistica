@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol } from '../services_v245/csvHub_v6.js?v=26.5.159';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.160';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.159';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.159';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.159';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.159';
+import * as adminService from '../services_v245/adminService.js?v=26.5.160';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.160';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.160';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.160';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.159';
+const VERSION = '26.5.160';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1125,13 +1125,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     }, 1000);
 
     ['stockActivo', 'stockReserva', 'buffer', 'picking'].forEach(a => {
-        getAreaData(a).then(rows => {
+        getAreaLength(a).then(count => {
             const grid = document.getElementById('homeKpiGrid');
             if(!grid) return;
             grid.innerHTML += `
                 <div class="kpi-card" style="transition:transform 0.3s ease; cursor:pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
                     <h4 style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">${a.replace('stock', 'STOCK ')}</h4>
-                    <h2 style="font-size:2.2rem; font-weight:800; color:#fff; margin:0;">${rows ? rows.length.toLocaleString() : 0}</h2>
+                    <h2 style="font-size:2.2rem; font-weight:800; color:#fff; margin:0;">${count.toLocaleString()}</h2>
                     <div style="height:4px; width:40px; background:var(--primary); margin-top:1rem; border-radius:2px;"></div>
                 </div>`;
         });
@@ -1236,6 +1236,17 @@ export const renderDashboard = async (container, user, onLogout) => {
   let activeBufferSub = 'reportes';
   const renderBufferTab = async () => {
     contentSubtitle.textContent = "Análisis de Reposición";
+    
+    // Cargar asíncronamente de la base de datos local IndexedDB antes de renderizar
+    await Promise.all([
+        getAreaData('buffer_activo'),
+        getAreaData('buffer_reserva'),
+        getAreaData('buffer'),
+        getAreaData('solicitud'),
+        getAreaData('articulos'),
+        getAreaData('tallas')
+    ]);
+    
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
     const stored = localStorage.getItem('lastBufferKPI');
@@ -10075,7 +10086,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.159 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.160 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -11100,6 +11111,16 @@ const renderRFSection = (container) => {
 
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "Consulta profunda de Artículos";
+    
+    // Cargar asíncronamente los datos requeridos para este módulo
+    await Promise.all([
+        getAreaData('analisis_sku_activo'),
+        getAreaData('analisis_sku_reserva'),
+        getAreaData('stockActivo'),
+        getAreaData('stockReserva'),
+        getAreaData('articulos')
+    ]);
+    
     const tabDef = TABS.find(t => t.id === 'analisis_sku');
     const perms = adminService.getPermissions(user.role) || {};
     const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`analisis_sku_${sub.id}`] === 1);
@@ -11981,6 +12002,15 @@ const renderRFSection = (container) => {
 
         activeDates.sort((a, b) => b.localeCompare(a));
 
+        if (!window.__hourlySetPage) window.__hourlySetPage = (p) => { const _sy=window.scrollY; window.__hourlyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+        const _hourlyPage = window.__hourlyPage || 0;
+        const _hourlyTotalPages = Math.ceil(activeDates.length / 25);
+        window.__hourlyTotalPages = _hourlyTotalPages;
+        window.__hourlyTotalRows = activeDates.length;
+        const activeHourlyPage = _hourlyPage >= _hourlyTotalPages ? 0 : _hourlyPage;
+        window.__hourlyPage = activeHourlyPage;
+        const pagedActiveDates = activeDates.slice(activeHourlyPage * 25, (activeHourlyPage + 1) * 25);
+
         const formatLogicalDate = (dateStr) => {
             if (!dateStr || dateStr === '---') return '---';
             const parts = dateStr.split('-');
@@ -12012,7 +12042,7 @@ const renderRFSection = (container) => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${activeDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producción por hora registrada.</td></tr>` : activeDates.map(dateKey => {
+                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
                             const rowData = hourlyData[dateKey];
                             const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
                             return `
@@ -12029,6 +12059,19 @@ const renderRFSection = (container) => {
                     </tbody>
                 </table>
             </div>
+            ${(() => {
+                const tp = window.__hourlyTotalPages || 1;
+                const cp = window.__hourlyPage || 0;
+                if (tp <= 1) return '';
+                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #00E5FF; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
+                const pages = Array.from({length: tp}, (_, i) => i);
+                return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
+                    <button onclick="window.__hourlySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
+                    ${pages.map(p=>`<button onclick="window.__hourlySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
+                    <button onclick="window.__hourlySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                    <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
+                </div>`;
+            })()}
         </div>
         `;
     };
@@ -12130,6 +12173,15 @@ const renderRFSection = (container) => {
             return getVal(a) - getVal(b);
         });
 
+        if (!window.__weeklySetPage) window.__weeklySetPage = (p) => { const _sy=window.scrollY; window.__weeklyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+        const _weeklyPage = window.__weeklyPage || 0;
+        const _weeklyTotalPages = Math.ceil(sortedWeeks.length / 25);
+        window.__weeklyTotalPages = _weeklyTotalPages;
+        window.__weeklyTotalRows = sortedWeeks.length;
+        const activeWeeklyPage = _weeklyPage >= _weeklyTotalPages ? 0 : _weeklyPage;
+        window.__weeklyPage = activeWeeklyPage;
+        const pagedSortedWeeks = sortedWeeks.slice(activeWeeklyPage * 25, (activeWeeklyPage + 1) * 25);
+
         const colTotals = {};
         sortedBrands.forEach(b => colTotals[b] = 0);
         let grandTotal = 0;
@@ -12163,7 +12215,7 @@ const renderRFSection = (container) => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${sortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:rgba(167, 139, 250, 0.4); font-weight:700;">No hay datos semanales registrados.</td></tr>` : sortedWeeks.map(w => {
+                        ${pagedSortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:rgba(167, 139, 250, 0.4); font-weight:700;">No hay datos semanales registrados.</td></tr>` : pagedSortedWeeks.map(w => {
                             const rowData = weeklyBrandData[w];
                             const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
                             const isExpanded = window.__expandedStorageReportWeeks && window.__expandedStorageReportWeeks.includes(w);
@@ -12211,6 +12263,19 @@ const renderRFSection = (container) => {
                     </tbody>
                 </table>
             </div>
+            ${(() => {
+                const tp = window.__weeklyTotalPages || 1;
+                const cp = window.__weeklyPage || 0;
+                if (tp <= 1) return '';
+                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #8b5cf6; background:${active?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a78bfa'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
+                const pages = Array.from({length: tp}, (_, i) => i);
+                return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(139,92,246,0.2); margin-top:0.4rem;">
+                    <button onclick="window.__weeklySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
+                    ${pages.map(p=>`<button onclick="window.__weeklySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
+                    <button onclick="window.__weeklySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                    <span style="font-size:0.7rem; color:rgba(167,139,250,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
+                </div>`;
+            })()}
         </div>
         `;
     };
@@ -13643,10 +13708,21 @@ const renderRFSection = (container) => {
                                     .sort((a, b) => b.fecha.localeCompare(a.fecha) || a.turno.localeCompare(b.turno));
 
                                 if (sortedGroupRows.length === 0) {
+                                    window.__perfTotalPages = 0;
+                                    window.__perfTotalRows = 0;
                                     return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
                                 }
 
-                                return sortedGroupRows.map(row => {
+                                if (!window.__perfSetPage) window.__perfSetPage = (p) => { const _sy=window.scrollY; window.__perfPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                const _perfPage = window.__perfPage || 0;
+                                const _perfTotalPages = Math.ceil(sortedGroupRows.length / 25);
+                                window.__perfTotalPages = _perfTotalPages;
+                                window.__perfTotalRows = sortedGroupRows.length;
+                                const activePerfPage = _perfPage >= _perfTotalPages ? 0 : _perfPage;
+                                window.__perfPage = activePerfPage;
+                                const pagedPerfRows = sortedGroupRows.slice(activePerfPage * 25, (activePerfPage + 1) * 25);
+
+                                return pagedPerfRows.map(row => {
                                     const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
                                     const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
                                     
@@ -13706,6 +13782,19 @@ const renderRFSection = (container) => {
                         </tbody>
                     </table>
                 </div>
+                ${(() => {
+                    const tp = window.__perfTotalPages || 1;
+                    const cp = window.__perfPage || 0;
+                    if (tp <= 1) return '';
+                    const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid ${active?'#00E5FF':'rgba(255,255,255,0.1)'}; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
+                    const pages = Array.from({length: tp}, (_, i) => i);
+                    return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
+                        <button onclick="window.__perfSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
+                        ${pages.map(p=>`<button onclick="window.__perfSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
+                        <button onclick="window.__perfSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                        <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
+                    </div>`;
+                })()}
             </div>
             
             ${renderHourlyProductionReport(tasks)}

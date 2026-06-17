@@ -3,7 +3,13 @@
  * Restaurada área de WORKERS y fijado error de iteración.
  */
 
-const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const getApiBase = (defaultUrl) => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api/logistics';
+  }
+  return defaultUrl;
+};
+const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api/logistics');
 // --- CENTRALIZAR STATE GLOBAL PARA EVITAR DUPLICADOS POR CACHE QUERY STRINGS ---
 if (!window._pulseSyncState) {
     window._pulseSyncState = {

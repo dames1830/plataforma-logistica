@@ -32,8 +32,9 @@ const saveToDB = async (key, data) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
         store.put({ data, ts: Date.now() }, key);
-        // Guardar meta en LS para acceso rápido UI (indicadores verdes)
-        localStorage.setItem('meta_' + key, JSON.stringify({ ts: Date.now(), hasData: true }));
+        // Guardar meta en LS para acceso rápido UI (indicadores verdes) con conteo de registros para acelerar el Home
+        const len = Array.isArray(data) ? data.length : (data ? Object.keys(data).length : 0);
+        localStorage.setItem('meta_' + key, JSON.stringify({ ts: Date.now(), hasData: true, length: len }));
     } catch (err) { console.error("Error IndexedDB Save:", err); }
 };
 
@@ -61,6 +62,27 @@ export const getUploadMeta = (area) => {
     } catch(e) { return null; }
 };
 
+export const getAreaLength = async (area) => {
+    if (dataStore[area] && Array.isArray(dataStore[area])) {
+        return dataStore[area].length;
+    }
+    const meta = getUploadMeta(area);
+    if (meta && meta.length !== undefined) {
+        return meta.length;
+    }
+    const dbData = await loadFromDB(area);
+    if (dbData) {
+        dataStore[area] = dbData;
+        const len = Array.isArray(dbData) ? dbData.length : (dbData ? Object.keys(dbData).length : 0);
+        localStorage.setItem('meta_' + area, JSON.stringify({
+            ...(meta || { ts: Date.now(), hasData: true }),
+            length: len
+        }));
+        return len;
+    }
+    return 0;
+};
+
 const clearDB = async () => {
     try {
         const db = await openDB();
@@ -70,24 +92,13 @@ const clearDB = async () => {
     } catch(e) {}
 };
 
-// Inicializar dataStore desde IndexedDB al cargar la app
+// Inicializar dataStore desde IndexedDB al cargar la app - Optimizado con lazy loading
 export const initPersistentData = async () => {
-    // Escanear localStorage para encontrar todas las áreas que tienen metadata
-    const keys = Object.keys(localStorage);
-    const areaKeys = keys
-        .filter(k => k.startsWith('meta_'))
-        .map(k => k.replace('meta_', ''));
-    
-    // Añadir áreas estáticas conocidas por si acaso
-    const staticAreas = ['buffer', 'solicitud', 'articulos', 'tallas', 'tabla_tallas', 'inventario', 'picking', 'packing', 'despacho', 'recepcion', 'almacenaje', 'no_retail'];
-    const allUniqueAreas = [...new Set([...areaKeys, ...staticAreas])];
-
-    for (const area of allUniqueAreas) {
-        const cached = await loadFromDB(area);
-        if (cached) {
-            dataStore[area] = cached;
-            console.log(`[PULSE] Recuperado ${area} de DB Local.`);
-        }
+    // Solo cargamos localmente tabla_tallas por rendimiento en el inicio
+    const cached = await loadFromDB('tabla_tallas');
+    if (cached) {
+        dataStore['tabla_tallas'] = cached;
+        console.log(`[PULSE] Recuperado tabla_tallas de DB Local.`);
     }
 };
 
@@ -98,7 +109,13 @@ initPersistentData();
 export let currentDateFilter = null;
 
 // URL MAESTRA DEL SERVIDOR (Punto de conexión)
-const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
+const getApiBase = (defaultUrl) => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api';
+  }
+  return defaultUrl;
+};
+const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
 const VERSION = '26.5.25';
 const CACHE_KEY = `logistics_v24_prod_`;
@@ -510,9 +527,11 @@ export const getAreaData = async (area, forceRefresh = false) => {
                       safeDateStr += 'Z';
                   }
                   const parsedTime = new Date(safeDateStr).getTime();
+                  const len = serverResponse.data.length;
                   localStorage.setItem('meta_' + area, JSON.stringify({
                       ts: isNaN(parsedTime) ? Date.now() : parsedTime,
-                      timestamp: serverResponse.updated_at
+                      timestamp: serverResponse.updated_at,
+                      length: len
                   }));
               }
               return serverResponse.data;

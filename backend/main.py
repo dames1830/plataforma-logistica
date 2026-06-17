@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GzipMiddleware
 import sqlite3
 import json
 import os
@@ -15,6 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(GzipMiddleware, minimum_size=1000)
 
 DB_PATH = os.environ.get("DB_PATH", "database.db")
 
