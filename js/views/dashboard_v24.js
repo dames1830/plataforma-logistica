@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.163';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.164';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.163';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.163';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.163';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.163';
+import * as adminService from '../services_v245/adminService.js?v=26.5.164';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.164';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.164';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.164';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.163';
+const VERSION = '26.5.164';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9793,10 +9793,10 @@ const renderRFSection = (container) => {
                               <td style="padding:1rem;">
                                   ${c.cobroFlete === 'SI' ? '<span style="color:#10b981; font-weight:800;"><i class="fas fa-check"></i> SI</span>' : '<span style="color:#64748b;">NO</span>'}
                               </td>
-                              <td style="padding:1rem;">
+                              <td style="padding:1rem; white-space:nowrap;">
                                   <span style="font-weight:700; color:#cbd5e1;">${c.factura || '<span style="color:#64748b;">-</span>'}</span>
                               </td>
-                              <td style="padding:1rem;">
+                              <td style="padding:1rem; white-space:nowrap;">
                                   ${c.gasto ? `<span style="font-weight:700; color:#10b981;">S/ ${parseFloat(c.gasto).toFixed(2)}</span>` : '<span style="color:#64748b;">-</span>'}
                               </td>
                               <td style="padding:1rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${c.incidenciaObs || ''}">
@@ -10110,7 +10110,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.163 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.164 | MOBILE PORTAL
                             </div>
                     </div>
 
