@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.160';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.161';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.160';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.160';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.160';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.160';
+import * as adminService from '../services_v245/adminService.js?v=26.5.161';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.161';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.161';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.161';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.160';
+const VERSION = '26.5.161';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10086,7 +10086,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.160 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.161 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10575,7 +10575,21 @@ const renderRFSection = (container) => {
 
             const selectedDate = window._noRetailHistorialDate;
             const meta = getUploadMeta('no_retail') || {};
-            const uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : (selectedDate || 'Fecha Desconocida'));
+            let uploadDate = '';
+            if (selectedDate) {
+                const parts = selectedDate.split('-');
+                if (parts.length === 3) {
+                    uploadDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                } else {
+                    uploadDate = selectedDate;
+                }
+            } else {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : `${dd}/${mm}/${yyyy}`);
+            }
             
             return `
                 <!-- Top stats -->
