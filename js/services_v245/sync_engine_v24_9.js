@@ -4,7 +4,16 @@
  */
 
 const getApiBase = (defaultUrl) => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('local')) {
+      const val = urlParams.get('local');
+      if (val === '1' || val === 'true') {
+          localStorage.setItem('PULSE_USE_LOCAL', 'true');
+      } else {
+          localStorage.removeItem('PULSE_USE_LOCAL');
+      }
+  }
+  if (localStorage.getItem('PULSE_USE_LOCAL') === 'true') {
       return 'http://localhost:8000/api/logistics';
   }
   return defaultUrl;
