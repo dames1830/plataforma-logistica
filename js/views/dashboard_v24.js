@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.161';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.162';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.161';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.161';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.161';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.161';
+import * as adminService from '../services_v245/adminService.js?v=26.5.162';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.162';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.162';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.162';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.161';
+const VERSION = '26.5.162';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -8942,7 +8942,7 @@ const renderRFSection = (container) => {
 
   
   
-  const fetchAndParseNoRetailClients = async (forceRefresh = false) => {
+  const fetchAndParseNoRetailClients = async (forceRefresh = false, isMobile = false) => {
       let availableDates = [];
       try {
           const res = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail/dates?t=' + Date.now());
@@ -8954,8 +8954,8 @@ const renderRFSection = (container) => {
           console.warn("Could not fetch available dates for no_retail:", e);
       }
 
-      let dateDesde = window._trackingFilterDesde;
-      let dateHasta = window._trackingFilterHasta;
+      let dateDesde = isMobile ? null : window._trackingFilterDesde;
+      let dateHasta = isMobile ? null : window._trackingFilterHasta;
 
       if (!dateDesde && !dateHasta) {
           const today = new Date();
@@ -9993,7 +9993,15 @@ const renderRFSection = (container) => {
         console.warn("⚠️ [PORTAL MÓVIL] Error al sincronizar caché desde el servidor, usando fallback local:", e);
     }
 
-    const clientsData = await fetchAndParseNoRetailClients();
+    if (!window._noRetailHistorialDate) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        window._noRetailHistorialDate = `${yyyy}-${mm}-${dd}`;
+    }
+
+    const clientsData = await fetchAndParseNoRetailClients(false, true);
 
     // Remove old debug div if exists
     const oldDebug = document.getElementById('nr_debug_floater');
@@ -10008,7 +10016,10 @@ const renderRFSection = (container) => {
         const today = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         const capitalizedToday = today.charAt(0).toUpperCase() + today.slice(1);
 
-        const clients = window._noRetailClients || [];
+        let clients = window._noRetailClients || [];
+        if (window._noRetailHistorialDate) {
+            clients = clients.filter(c => c.fechaCargaStr === window._noRetailHistorialDate);
+        }
         
         const totalCount = clients.length;
         const pendingCount = clients.filter(c => c.status === 'PENDIENTE').length;
@@ -10086,7 +10097,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.161 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.162 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10266,9 +10277,6 @@ const renderRFSection = (container) => {
             if (window._noRetailHistorialDate) dateInput.value = window._noRetailHistorialDate;
             dateInput.addEventListener('change', async (e) => {
                 window._noRetailHistorialDate = e.target.value;
-                if (window._noRetailActiveTab !== 'historial') {
-                    window._noRetailActiveTab = 'historial';
-                }
                 await renderDespachoNoRetailPortal(container);
             });
         }
