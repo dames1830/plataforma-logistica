@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.162';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.163';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.162';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.162';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.162';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.162';
+import * as adminService from '../services_v245/adminService.js?v=26.5.163';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.163';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.163';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.163';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.162';
+const VERSION = '26.5.163';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -9127,6 +9127,11 @@ const renderRFSection = (container) => {
                   </div>
 
                   <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                      <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">FACTURA</label>
+                      <input type="text" id="edit_factura" value="${c.factura || ''}" placeholder="Ej. F001-12345" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit;">
+                  </div>
+
+                  <div style="display:flex; flex-direction:column; gap:0.4rem;">
                       <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">GASTO (S/.)</label>
                       <input type="number" id="edit_gasto" step="0.01" min="0" value="${c.gasto || ''}" placeholder="S/ 0.00" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit;">
                   </div>
@@ -9201,11 +9206,13 @@ const renderRFSection = (container) => {
       document.getElementById('save_edit_btn').onclick = async () => {
           const newStatus = document.getElementById('edit_status').value;
           const newFlete = document.getElementById('edit_flete').value;
+          const newFactura = document.getElementById('edit_factura').value.trim();
           const newGasto = document.getElementById('edit_gasto').value;
           const newObs = document.getElementById('edit_observaciones').value;
 
           c.status = newStatus;
           c.cobroFlete = newFlete;
+          c.factura = newFactura;
           c.gasto = newGasto;
           c.incidenciaObs = newObs;
           c.fotoCargo = tempCargo;
@@ -9225,6 +9232,7 @@ const renderRFSection = (container) => {
                   date: c.statusDate,
                   liquidated: c.liquidated,
                   cobroFlete: c.cobroFlete,
+                  factura: c.factura,
                   gasto: c.gasto,
                   incidenciaObs: c.incidenciaObs,
                   fotoCargo: c.fotoCargo,
@@ -9240,6 +9248,7 @@ const renderRFSection = (container) => {
               date: c.statusDate,
               liquidated: c.liquidated,
               cobroFlete: c.cobroFlete,
+              factura: c.factura,
               gasto: c.gasto,
               incidenciaObs: c.incidenciaObs,
               fotoCargo: c.fotoCargo,
@@ -9683,13 +9692,13 @@ const renderRFSection = (container) => {
 
       window.exportTrackingToExcel = () => {
           if (clients.length === 0) return alert('No hay datos para exportar');
-          let csvContent = "\ufeffFecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete,Gasto,Observaciones\n";
+          let csvContent = "\ufeffFecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete,Factura,Gasto,Observaciones\n";
           
           clients.forEach(c => {
               const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '';
               const obsClean = (c.incidenciaObs || '').replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
               const gastoStr = c.gasto ? `S/ ${parseFloat(c.gasto).toFixed(2)}` : 'S/ 0.00';
-              const row = `\"${c.fechaCargaStr || uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\",\"${gastoStr}\",\"${obsClean}\"`;
+              const row = `\"${c.fechaCargaStr || uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\",\"${c.factura || ''}\",\"${gastoStr}\",\"${obsClean}\"`;
               csvContent += row + "\n";
           });
           
@@ -9752,6 +9761,7 @@ const renderRFSection = (container) => {
                           <th style="padding:1rem;">Cliente / Pedido</th>
                           <th style="padding:1rem;">Estado</th>
                           <th style="padding:1rem;">Cobro Flete</th>
+                          <th style="padding:1rem;">Factura</th>
                           <th style="padding:1rem;">Gasto</th>
                           <th style="padding:1rem;">Observaciones</th>
                           <th style="padding:1rem; text-align:center;">Fotos</th>
@@ -9759,7 +9769,7 @@ const renderRFSection = (container) => {
                       </tr>
                   </thead>
                   <tbody>
-                      ${paginatedClients.length === 0 ? `<tr><td colspan="10" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
+                      ${paginatedClients.length === 0 ? `<tr><td colspan="11" style="padding:2rem; text-align:center; color:#64748b;">No hay clientes en seguimiento.</td></tr>` : 
                       paginatedClients.map(c => `
                           <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                               <td style="padding:1rem;">
@@ -9782,6 +9792,9 @@ const renderRFSection = (container) => {
                               </td>
                               <td style="padding:1rem;">
                                   ${c.cobroFlete === 'SI' ? '<span style="color:#10b981; font-weight:800;"><i class="fas fa-check"></i> SI</span>' : '<span style="color:#64748b;">NO</span>'}
+                              </td>
+                              <td style="padding:1rem;">
+                                  <span style="font-weight:700; color:#cbd5e1;">${c.factura || '<span style="color:#64748b;">-</span>'}</span>
                               </td>
                               <td style="padding:1rem;">
                                   ${c.gasto ? `<span style="font-weight:700; color:#10b981;">S/ ${parseFloat(c.gasto).toFixed(2)}</span>` : '<span style="color:#64748b;">-</span>'}
@@ -10097,7 +10110,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.162 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.163 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -10247,6 +10260,17 @@ const renderRFSection = (container) => {
             });
         });
 
+        // Factura input listener
+        document.querySelectorAll('.nr-factura-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const cId = e.currentTarget.dataset.client;
+                const c = window._noRetailClients.find(x => x.id === cId);
+                if (c) {
+                    c._tempFactura = e.currentTarget.value;
+                }
+            });
+        });
+
         // Incidencia button toggles
         document.querySelectorAll('.nr-incidencia-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -10352,6 +10376,7 @@ const renderRFSection = (container) => {
                     c.statusDate = new Date().toISOString();
                     c.liquidated = true;
                     c.gasto = c._tempGasto !== undefined ? c._tempGasto : (c.gasto || '');
+                    c.factura = c._tempFactura !== undefined ? c._tempFactura : (c.factura || '');
                     c.incidencia = c._tempIncidencia || c.incidencia || 'NO';
                     c.incidenciaObs = c._tempIncidenciaObs !== undefined ? c._tempIncidenciaObs : (c.incidenciaObs || '');
                     
@@ -10364,6 +10389,7 @@ const renderRFSection = (container) => {
                              date: c.statusDate, 
                              liquidated: true,
                              cobroFlete: c.cobroFlete,
+                             factura: c.factura,
                              gasto: c.gasto,
                              incidencia: c.incidencia,
                              incidenciaObs: c.incidenciaObs,
@@ -10381,7 +10407,8 @@ const renderRFSection = (container) => {
                                  status: c.status, 
                                  date: c.statusDate, 
                                  liquidated: true,
-                                 cobroFlete: c.cobroFlete
+                                 cobroFlete: c.cobroFlete,
+                                 factura: c.factura
                              };
                              localStorage.setItem('nr_cache_v1', JSON.stringify(cache));
                              finalCache = cache;
@@ -10397,6 +10424,7 @@ const renderRFSection = (container) => {
                         date: c.statusDate, 
                         liquidated: true,
                         cobroFlete: c.cobroFlete,
+                        factura: c.factura,
                         gasto: c.gasto,
                         incidenciaObs: c.incidenciaObs,
                         fotoCargo: c.fotoCargo,
@@ -10688,6 +10716,12 @@ const renderRFSection = (container) => {
                                                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                                                 <span style="font-size:0.65rem; color:#fff; font-weight:700;">💸 GASTO:</span>
                                                                 <input type="number" step="0.01" min="0" placeholder="S/ 0.00" class="nr-gasto-input" data-client="${c.id}" value="${c._tempGasto !== undefined ? c._tempGasto : (c.gasto || '')}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:4px 8px; border-radius:6px; outline:none; font-size:0.65rem; font-family:inherit; width:80px; text-align:right;">
+                                                            </div>
+
+                                                            <!-- Campo Factura -->
+                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">📄 FACTURA:</span>
+                                                                <input type="text" placeholder="Factura" class="nr-factura-input" data-client="${c.id}" value="${c._tempFactura !== undefined ? c._tempFactura : (c.factura || '')}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:4px 8px; border-radius:6px; outline:none; font-size:0.65rem; font-family:inherit; width:100px; text-align:right;">
                                                             </div>
 
                                                             <!-- Status Buttons selection -->
