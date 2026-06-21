@@ -8,7 +8,7 @@ from datetime import datetime
 SRC_DIR = r"C:\Users\dames\.gemini\antigravity\scratch\logistics-web-app"
 RESTORE_ROOT = r"C:\Users\dames\.gemini\antigravity\scratch\restauracion"
 DB_PATH = r"C:\Users\dames\.gemini\antigravity\scratch\logistics-web-app\backend\database.db"
-SYSTEM_VERSION = "v26.5.169"
+SYSTEM_VERSION = "v26.5.170"
 
 def get_timestamp_folder_name():
     # format: DDMMYY_HHMM

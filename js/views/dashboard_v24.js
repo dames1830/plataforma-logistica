@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.169';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.167';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.169';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.169';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.169';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.169';
+import * as adminService from '../services_v245/adminService.js?v=26.5.167';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.167';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.167';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.167';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.169';
+const VERSION = '26.5.167';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5962,46 +5962,6 @@ const renderRFSection = (container) => {
     };
   };
 
-    renderRows('TODOS');
-
-    document.querySelectorAll('#filter_buttons_val button').forEach(btn => {
-        btn.onclick = (e) => {
-            document.querySelectorAll('#filter_buttons_val button').forEach(b => {
-                b.className = 'btn';
-                b.style.background = b.dataset.f === 'TODOS' ? '' : 'rgba(255,255,255,0.02)';
-            });
-            e.currentTarget.className = 'btn active';
-            e.currentTarget.style.background = 'var(--primary)';
-            renderRows(e.currentTarget.dataset.f);
-        };
-    });
-
-    document.getElementById('btn_excel_val').onclick = () => {
-        const dataRows = [
-            ["LPN", "SKU", "ORIGEN (RESERVA)", "CANTIDAD BUFFER PLANEADA", "CANTIDAD INICIAL RESERVA", "CANTIDAD FINAL RESERVA", "CANTIDAD INICIAL ACTIVO", "CANTIDAD FINAL ACTIVO", "ESTADO RESERVA", "ESTADO ACTIVO", "ESTADO GENERAL"]
-        ];
-        results.forEach(r => {
-            dataRows.push([
-                r.lpn,
-                r.sku,
-                r.ubiRes,
-                r.plannedQty,
-                r.origResQty,
-                r.finalResQty,
-                r.origActQty,
-                r.actFinalQty,
-                r.resState,
-                r.actState,
-                r.generalState
-            ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(dataRows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Conciliacion");
-        XLSX.writeFile(wb, `Reporte_Conciliacion_Buffer_\${new Date().getTime()}.xlsx`);
-    };
-  };
-
   if (document.getElementById('logoutBtn')) {
     document.getElementById('logoutBtn').addEventListener('click', onLogout);
   }
@@ -10415,7 +10375,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.169 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.167 | MOBILE PORTAL
                             </div>
                     </div>
 
