@@ -1053,7 +1053,6 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // Mapa de Stock Activo para columna QTY ACTIVO (Solo zonas de Picking autorizadas)
     const activeStockMap = {};
-    const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
     activo.forEach(f => {
         const rawF = Array.isArray(f) ? f : Object.values(f);
         let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
