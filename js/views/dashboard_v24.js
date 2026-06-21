@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.167';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.168';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.167';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.167';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.167';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.167';
+import * as adminService from '../services_v245/adminService.js?v=26.5.168';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.168';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.168';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.168';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.167';
+const VERSION = '26.5.168';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1244,7 +1244,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         getAreaData('buffer'),
         getAreaData('solicitud'),
         getAreaData('articulos'),
-        getAreaData('tallas')
+        getAreaData('tallas'),
+        getAreaData('validar_activo'),
+        getAreaData('validar_reserva')
     ]);
     
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
@@ -1300,6 +1302,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
+        renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
+        renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
     } else if (activeBufferSub === 'historial_buffer') {
         renderBufferHistory(buf);
     } else if (activeBufferSub === 'kpi_buffer') {
@@ -5627,74 +5631,284 @@ const renderRFSection = (container) => {
   };
 
   const renderBufferKPI = async (container) => {
-    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Generando indicadores...</p></div>`;
-    const history = await fetchBufferHistory();
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando datos de validación...</p></div>`;
     
-    if (!history || history.length < 2) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">Se requieren al menos 2 reportes para generar comparativas y gráficos de tendencia.</p></div>`;
+    const [validarActivo, validarReserva] = await Promise.all([
+        getAreaData('validar_activo'),
+        getAreaData('validar_reserva')
+    ]);
+
+    if (!validarActivo || !validarActivo.length || !validarReserva || !validarReserva.length) {
+        container.innerHTML = `
+            <div class="glass-panel" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
+                <div style="font-size:2.5rem; margin-bottom:1rem;">📋</div>
+                <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.1rem;">CONCILIACIÓN PENDIENTE</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
+                    Para auditar y validar el trabajo de los operarios, primero debes subir los archivos actualizados del WMS posterior a la bajada en la pestaña <b>🗂️ ARCHIVO ZONA BUFFER</b>:
+                </p>
+                <div style="display:flex; justify-content:center; gap:1.5rem; font-size:0.8rem; font-weight:700; color:var(--primary); background:rgba(255,255,255,0.02); padding:1rem; border-radius:8px;">
+                    <span style="color:${validarReserva && validarReserva.length ? '#22c55e' : '#ef4444'}">${validarReserva && validarReserva.length ? '✅' : '❌'} VALIDAR RESERVA (.xlsx)</span>
+                    <span style="color:${validarActivo && validarActivo.length ? '#22c55e' : '#ef4444'}">${validarActivo && validarActivo.length ? '✅' : '❌'} VALIDAR ACTIVO (.csv)</span>
+                </div>
+            </div>`;
         return;
     }
 
-    const sorted = [...history].sort((a,b) => new Date(a.created_at || a.ts) - new Date(b.created_at || b.ts));
-    const labels = sorted.map(item => new Date(item.created_at || item.ts).toLocaleDateString());
-    const effData = sorted.map(item => {
-        const pctStr = item.data?.waterfall?.find(w => w.nivel === 'Total')?.pct || '0%';
-        return parseFloat(pctStr);
+    const stored = localStorage.getItem('lastBufferKPI');
+    if (!stored) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;">No hay ningún análisis de buffer previo registrado en este navegador para comparar. Genera un análisis primero en la pestaña <b>Análisis Buffer</b>.</div>`;
+        return;
+    }
+
+    let plan;
+    try {
+        plan = JSON.parse(stored);
+    } catch(e) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;">Error al procesar el plan almacenado.</div>`;
+        return;
+    }
+
+    const plannedPallets = plan.detallePallets || [];
+    if (!plannedPallets.length) {
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;">El último análisis no registró movimientos planificados en reserva para validar.</div>`;
+        return;
+    }
+
+    // 1. Mapeo de Reserva Final
+    const finalReservaLPNs = {};
+    const finalReservaSkuUbi = {};
+    validarReserva.forEach(r => {
+        const lpn = String(r.LPN || '').trim().toUpperCase();
+        const sku = String(r.PRODUCTO || '').trim();
+        const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const qty = parseFloat(r.CANTIDAD) || 0;
+        if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
+        const key = `${sku}|${ubi}`;
+        finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
     });
 
+    // 2. Mapeo de Activo Final
+    const finalActivoSkuTotal = {};
+    const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+    validarActivo.forEach(r => {
+        const raw = Array.isArray(r) ? r : Object.values(r);
+        const area = String(raw[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (area === 'MATE') return;
+        const isLevel1 = activeWhitelist.some(w => area.includes(w));
+        if (!isLevel1) return;
+
+        const sku = String(raw[1] || '').trim();
+        const qty = parseFloat(raw[4]) || 0;
+        finalActivoSkuTotal[sku] = (finalActivoSkuTotal[sku] || 0) + qty;
+    });
+
+    // 3. Comparación registro por registro
+    const results = [];
+    let completedCount = 0;
+    let partialCount = 0;
+    let pendingCount = 0;
+
+    plannedPallets.forEach(p => {
+        const sku = p.SKU;
+        const lpn = String(p.LPN || '').trim().toUpperCase();
+        const ubiRes = String(p.UBICACIONES || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const plannedQty = p['QTY BUFFER'] || 0;
+        const origResQty = p['QTY RESERVA'] || 0;
+        const origActQty = p['QTY ACTIVO'] || 0;
+
+        // Comprobación Reserva (Origen)
+        let finalResQty = 0;
+        if (lpn && finalReservaLPNs[lpn] !== undefined) {
+            finalResQty = finalReservaLPNs[lpn];
+        } else {
+            const key = `${sku}|${ubiRes}`;
+            finalResQty = finalReservaSkuUbi[key] || 0;
+        }
+
+        const unitsLowered = Math.max(0, origResQty - finalResQty);
+        let resState = "BAJADO (100%)";
+        let resStatusClass = "color:#22c55e;";
+        if (finalResQty >= origResQty) {
+            resState = "NO BAJADO (0%)";
+            resStatusClass = "color:#ef4444;";
+        } else if (finalResQty > 0) {
+            resState = `PARCIAL (Quedan ${finalResQty})`;
+            resStatusClass = "color:#fbbf24;";
+        }
+
+        // Comprobación Activo (Destino)
+        const actFinalQty = finalActivoSkuTotal[sku] || 0;
+        const actDiff = actFinalQty - origActQty;
+        
+        let actState = "SIN REGISTRO";
+        let actStatusClass = "color:#ef4444;";
+        if (actDiff >= plannedQty) {
+            actState = "RECIBIDO (100%)";
+            actStatusClass = "color:#22c55e;";
+        } else if (actDiff > 0) {
+            actState = `PARCIAL (+${actDiff})`;
+            actStatusClass = "color:#fbbf24;";
+        }
+
+        // Estado General
+        let generalState = "PENDIENTE";
+        let colorDot = "#ef4444";
+        let statusTag = "🔴 PENDIENTE";
+        if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
+            generalState = "COMPLETADO";
+            colorDot = "#22c55e";
+            statusTag = "🟢 COMPLETADO";
+            completedCount++;
+        } else if (unitsLowered > 0 || actDiff > 0) {
+            generalState = "INCOMPLETO";
+            colorDot = "#fbbf24";
+            statusTag = "🟡 INCOMPLETO";
+            partialCount++;
+        } else {
+            pendingCount++;
+        }
+
+        results.push({
+            lpn,
+            sku,
+            ubiRes,
+            plannedQty,
+            origResQty,
+            finalResQty,
+            origActQty,
+            actFinalQty,
+            resState,
+            resStatusClass,
+            actState,
+            actStatusClass,
+            statusTag,
+            generalState,
+            colorDot
+        });
+    });
+
+    const totalTasks = results.length;
+    const efficiency = totalTasks > 0 ? ((completedCount / totalTasks) * 100).toFixed(1) : 0;
+
     container.innerHTML = `
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-            <div class="glass-panel animate-fade-in" style="padding:1.5rem;">
-                <h4 style="margin:0 0 1rem 0; font-size:0.9rem;">TENDENCIA DE EFICIENCIA (%)</h4>
-                <canvas id="bufferTrendChart" style="max-height:250px;"></canvas>
+        <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
+            <!-- TARJETAS KPI -->
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
+                <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">EFICIENCIA DE CONCILIACIÓN</div>
+                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">${efficiency}%</div>
+                </div>
+                <div class="glass-panel" style="padding:1rem; border-left:4px solid #22c55e; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS COMPLETADAS</div>
+                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">${completedCount}</div>
+                </div>
+                <div class="glass-panel" style="padding:1rem; border-left:4px solid #fbbf24; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS INCOMPLETAS</div>
+                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">${partialCount}</div>
+                </div>
+                <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS PENDIENTES</div>
+                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">${pendingCount}</div>
+                </div>
             </div>
-            <div class="glass-panel animate-fade-in" style="padding:1.5rem;">
-                <h4 style="margin:0 0 1rem 0; font-size:0.9rem;">VOLUMEN RQ vs ATD</h4>
-                <canvas id="bufferVolumeChart" style="max-height:250px;"></canvas>
+
+            <!-- CONTROLES FILTRADO -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex; gap:0.5rem;" id="filter_buttons_val">
+                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (${totalTasks})</button>
+                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (${pendingCount})</button>
+                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (${partialCount})</button>
+                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (${completedCount})</button>
+                </div>
+                <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
+            </div>
+
+            <!-- TABLA DE DETALLE -->
+            <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid var(--border);">
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:left;">
+                        <thead>
+                            <tr style="background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.08); color:var(--text-muted);">
+                                <th style="padding:0.8rem 1rem;">LPN</th>
+                                <th style="padding:0.8rem 1rem;">SKU</th>
+                                <th style="padding:0.8rem 1rem;">ORIGEN (RES)</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">CANT. BUFFER</th>
+                                <th style="padding:0.8rem 1rem;">ESTADO ORIGEN (RES)</th>
+                                <th style="padding:0.8rem 1rem;">ESTADO DESTINO (ACT)</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">ESTADO GENERAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="val_rows_tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     `;
 
-    setTimeout(() => {
-        const ctxTrend = document.getElementById('bufferTrendChart')?.getContext('2d');
-        if (ctxTrend) {
-            new Chart(ctxTrend, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Eficiencia de Llenado %',
-                        data: effData,
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, max: 100 } }
-                }
-            });
+    const tbody = document.getElementById('val_rows_tbody');
+    const renderRows = (filterValue) => {
+        tbody.innerHTML = '';
+        const filtered = results.filter(r => filterValue === 'TODOS' || r.generalState === filterValue);
+        
+        if (!filtered.length) {
+            tbody.innerHTML = `<tr><td colspan="7" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
+            return;
         }
 
-        const ctxVol = document.getElementById('bufferVolumeChart')?.getContext('2d');
-        if (ctxVol) {
-            new Chart(ctxVol, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'RQ (Demanda)', data: sorted.map(i => i.data?.waterfall?.find(w=>w.nivel==='Total')?.rq || 0), backgroundColor: '#fbbf24' },
-                        { label: 'ATD (Atendido)', data: sorted.map(i => i.data?.waterfall?.find(w=>w.nivel==='Total')?.atd || 0), backgroundColor: '#10b981' }
-                    ]
-                },
-                options: {
-                    scales: { y: { beginAtZero: true } }
-                }
+        filtered.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+            tr.innerHTML = `
+                <td style="padding:0.6rem 1rem; font-weight:700;">\${r.lpn || 'S/L'}</td>
+                <td style="padding:0.6rem 1rem;">\${r.sku}</td>
+                <td style="padding:0.6rem 1rem;">\${r.ubiRes}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${r.plannedQty}</td>
+                <td style="padding:0.6rem 1rem; \${r.resStatusClass}; font-weight:700;">\${r.resState}</td>
+                <td style="padding:0.6rem 1rem; \${r.actStatusClass}; font-weight:700;">\${r.actState}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${r.statusTag}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    renderRows('TODOS');
+
+    document.querySelectorAll('#filter_buttons_val button').forEach(btn => {
+        btn.onclick = (e) => {
+            document.querySelectorAll('#filter_buttons_val button').forEach(b => {
+                b.className = 'btn';
+                b.style.background = b.dataset.f === 'TODOS' ? '' : 'rgba(255,255,255,0.02)';
             });
-        }
-    }, 100);
+            e.currentTarget.className = 'btn active';
+            e.currentTarget.style.background = 'var(--primary)';
+            renderRows(e.currentTarget.dataset.f);
+        };
+    });
+
+    document.getElementById('btn_excel_val').onclick = () => {
+        const dataRows = [
+            ["LPN", "SKU", "ORIGEN (RESERVA)", "CANTIDAD BUFFER PLANEADA", "CANTIDAD INICIAL RESERVA", "CANTIDAD FINAL RESERVA", "CANTIDAD INICIAL ACTIVO", "CANTIDAD FINAL ACTIVO", "ESTADO RESERVA", "ESTADO ACTIVO", "ESTADO GENERAL"]
+        ];
+        results.forEach(r => {
+            dataRows.push([
+                r.lpn,
+                r.sku,
+                r.ubiRes,
+                r.plannedQty,
+                r.origResQty,
+                r.finalResQty,
+                r.origActQty,
+                r.actFinalQty,
+                r.resState,
+                r.actState,
+                r.generalState
+            ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(dataRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Conciliacion");
+        XLSX.writeFile(wb, `Reporte_Conciliacion_Buffer_\${new Date().getTime()}.xlsx`);
+    };
   };
 
   if (document.getElementById('logoutBtn')) {
@@ -10110,7 +10324,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.167 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.168 | MOBILE PORTAL
                             </div>
                     </div>
 
