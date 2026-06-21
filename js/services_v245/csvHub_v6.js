@@ -765,7 +765,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         let nroAnd = String(f['NRO AND'] || f['AND'] || '').trim().toUpperCase();
         if(!sku || qty <= 0) return;
 
-        if (nivel === 'ALTO') registerStock(stAltos, sku, qty, f);
+        if (nivel === 'ALTO' || nivel.includes('ALTO') || nivel === 'A') registerStock(stAltos, sku, qty, f);
         else if (nivel === 'CROSS') registerStock(stPisos, sku, qty, f);
         else if (nivel === 'AEREO') registerStock(stAereos, sku, qty, f);
         else if (nivel === 'PISO' || nivel === 'DIS') registerStock(stLogicos, sku, qty, f);
@@ -1103,7 +1103,9 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'QTY ACTIVO': activeStockMap[sku] || 0,
                                 'QTY RESERVA': qty, 
                                 'QTY BUFFER': Math.round(attributedUnits),
-                                'QTY EXTRA': getExtraBuffer(sku)
+                                'QTY EXTRA': getExtraBuffer(sku),
+                                'NIVEL': String(item['NIVEL'] || '').trim().toUpperCase(),
+                                'ES_ALTO': item['ES_ALTO'] !== false
                             });
                             
                             empaqueAggr[dSrc.src][tipo].pal.add(ubi);
@@ -1158,7 +1160,9 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'QTY ACTIVO': activeStockMap[sku] || 0,
                     'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
                     'QTY BUFFER': 0,
-                    'QTY EXTRA': getExtraBuffer(sku)
+                    'QTY EXTRA': getExtraBuffer(sku),
+                    'NIVEL': String(f['NIVEL'] || '').trim().toUpperCase(),
+                    'ES_ALTO': f['ES_ALTO'] !== false
                 });
             }
         });

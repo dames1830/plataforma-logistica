@@ -389,13 +389,14 @@ const renderBufferKPI = async (container) => {
         renderNoPlanScreen();
         return;
     }
-    const plannedPallets = plan.detallePallets;
+    const plannedPallets = (plan.detallePallets || []).filter(p => p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A');
 
     // 1. Mapeo de Reserva Final
     const finalReservaLPNs = {};
     const finalReservaSkuUbi = {};
     if (hasReserva) {
         validarReserva.forEach(r => {
+            if (r.ES_ALTO === false) return;
             const lpn = String(r.LPN || '').trim().toUpperCase();
             const sku = String(r.PRODUCTO || '').trim();
             const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
