@@ -5657,25 +5657,55 @@ const renderRFSection = (container) => {
         return;
     }
 
+    const renderNoPlanScreen = () => {
+        container.innerHTML = `
+            <div class="glass-panel animate-fade-in" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
+                <div style="font-size:2.5rem; margin-bottom:1rem;">⚠️</div>
+                <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.1rem;">PLAN DE BAJADA REQUERIDO</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
+                    Para realizar la conciliación, primero se debe calcular el plan de movimientos de la Zona Buffer. Puedes intentar generar el plan ahora mismo con los archivos maestros actuales cargados.
+                </p>
+                <button id="btn_calc_val_plan" class="btn" style="background:var(--primary); width:auto; padding:0.6rem 1.5rem; font-weight:700; border-radius:6px; transition:all 0.2s;">
+                    ⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN
+                </button>
+            </div>`;
+        
+        const btn = document.getElementById('btn_calc_val_plan');
+        if (btn) {
+            btn.onclick = async () => {
+                btn.disabled = true;
+                btn.innerHTML = '⌛ PROCESANDO PLAN...';
+                try {
+                    const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+                    const res = calculateBufferPallets(config);
+                    if (res && res.detallePallets && res.detallePallets.length) {
+                        localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                        renderBufferKPI(container);
+                    } else {
+                        alert("El análisis de buffer se ejecutó pero no generó ninguna propuesta de bajada (0 pallets planificados). Verifica que tus archivos de STOCK RESERVA y PEDIDOS tengan discrepancias por reponer.");
+                        btn.disabled = false;
+                        btn.innerHTML = '⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN';
+                    }
+                } catch(err) {
+                    alert("Error al procesar el plan: " + err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN';
+                }
+            };
+        }
+    };
+
     const stored = localStorage.getItem('lastBufferKPI');
-    if (!stored) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;">No hay ningún análisis de buffer previo registrado en este navegador para comparar. Genera un análisis primero en la pestaña <b>Análisis Buffer</b>.</div>`;
-        return;
+    let plan = null;
+    if (stored) {
+        try { plan = JSON.parse(stored); } catch(e){}
     }
 
-    let plan;
-    try {
-        plan = JSON.parse(stored);
-    } catch(e) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;">Error al procesar el plan almacenado.</div>`;
+    if (!plan || !plan.detallePallets || !plan.detallePallets.length) {
+        renderNoPlanScreen();
         return;
     }
-
-    const plannedPallets = plan.detallePallets || [];
-    if (!plannedPallets.length) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;">El último análisis no registró movimientos planificados en reserva para validar.</div>`;
-        return;
-    }
+    const plannedPallets = plan.detallePallets;
 
     // 1. Mapeo de Reserva Final
     const finalReservaLPNs = {};
