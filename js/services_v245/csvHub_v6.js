@@ -1051,13 +1051,17 @@ export const calculateBufferPallets = (configOverride = null) => {
         };
     });
 
-    // Mapa de Stock Activo para columna QTY ACTIVO
+    // Mapa de Stock Activo para columna QTY ACTIVO (Solo zonas de Picking autorizadas)
     const activeStockMap = {};
+    const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
     activo.forEach(f => {
         const rawF = Array.isArray(f) ? f : Object.values(f);
         let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (area === 'MATE') return; // EXCLUIR MATE SEGÚN INDICACIÓN
         
+        const isLevel1 = activeWhitelist.some(w => area.includes(w));
+        if (!isLevel1) return; // Omitir si no pertenece a zona de picking activa
+
         let sku = String(rawF[1] || '').trim(); // SKU en Columna B (índice 1)
         let qty = parseFloat(rawF[4]) || 0;     // Cantidad en Columna E (índice 4)
         if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
