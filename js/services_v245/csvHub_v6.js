@@ -751,8 +751,14 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // 2. Mapeo de RESERVA (COORDENADAS: NIVEL, PRODUCTO, CANTIDAD)
-    reserva.forEach(f => {
+    // 2. Mapeo de RESERVA (Ordenado de forma ascendente por UBICACION)
+    const sortedReserva = [...reserva].sort((a, b) => {
+        const ubiA = String(a['UBICACION'] || '').trim().toUpperCase();
+        const ubiB = String(b['UBICACION'] || '').trim().toUpperCase();
+        return ubiA.localeCompare(ubiB);
+    });
+
+    sortedReserva.forEach(f => {
         let nivel = String(f['NIVEL'] || '').trim().toUpperCase();
         let sku = String(f['PRODUCTO'] || '').trim();
         let qty = parseFloat(f['CANTIDAD']) || 0;
