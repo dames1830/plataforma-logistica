@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.168';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.169';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.168';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.168';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.168';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.168';
+import * as adminService from '../services_v245/adminService.js?v=26.5.169';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.169';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.169';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.169';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.168';
+const VERSION = '26.5.169';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5638,17 +5638,20 @@ const renderRFSection = (container) => {
         getAreaData('validar_reserva')
     ]);
 
-    if (!validarActivo || !validarActivo.length || !validarReserva || !validarReserva.length) {
+    const hasActivo = validarActivo && validarActivo.length > 0;
+    const hasReserva = validarReserva && validarReserva.length > 0;
+
+    if (!hasActivo && !hasReserva) {
         container.innerHTML = `
             <div class="glass-panel" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
                 <div style="font-size:2.5rem; margin-bottom:1rem;">📋</div>
                 <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.1rem;">CONCILIACIÓN PENDIENTE</h3>
                 <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
-                    Para auditar y validar el trabajo de los operarios, primero debes subir los archivos actualizados del WMS posterior a la bajada en la pestaña <b>🗂️ ARCHIVO ZONA BUFFER</b>:
+                    Para auditar y validar el trabajo de los operarios, primero debes subir al menos uno de los archivos actualizados del WMS posterior a la bajada en la pestaña <b>🗂️ ARCHIVO ZONA BUFFER</b>:
                 </p>
                 <div style="display:flex; justify-content:center; gap:1.5rem; font-size:0.8rem; font-weight:700; color:var(--primary); background:rgba(255,255,255,0.02); padding:1rem; border-radius:8px;">
-                    <span style="color:${validarReserva && validarReserva.length ? '#22c55e' : '#ef4444'}">${validarReserva && validarReserva.length ? '✅' : '❌'} VALIDAR RESERVA (.xlsx)</span>
-                    <span style="color:${validarActivo && validarActivo.length ? '#22c55e' : '#ef4444'}">${validarActivo && validarActivo.length ? '✅' : '❌'} VALIDAR ACTIVO (.csv)</span>
+                    <span style="color:#ef4444">❌ VALIDAR RESERVA (.xlsx)</span>
+                    <span style="color:#ef4444">❌ VALIDAR ACTIVO (.csv)</span>
                 </div>
             </div>`;
         return;
@@ -5677,30 +5680,34 @@ const renderRFSection = (container) => {
     // 1. Mapeo de Reserva Final
     const finalReservaLPNs = {};
     const finalReservaSkuUbi = {};
-    validarReserva.forEach(r => {
-        const lpn = String(r.LPN || '').trim().toUpperCase();
-        const sku = String(r.PRODUCTO || '').trim();
-        const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        const qty = parseFloat(r.CANTIDAD) || 0;
-        if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
-        const key = `${sku}|${ubi}`;
-        finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
-    });
+    if (hasReserva) {
+        validarReserva.forEach(r => {
+            const lpn = String(r.LPN || '').trim().toUpperCase();
+            const sku = String(r.PRODUCTO || '').trim();
+            const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const qty = parseFloat(r.CANTIDAD) || 0;
+            if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
+            const key = `${sku}|${ubi}`;
+            finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
+        });
+    }
 
     // 2. Mapeo de Activo Final
     const finalActivoSkuTotal = {};
-    const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
-    validarActivo.forEach(r => {
-        const raw = Array.isArray(r) ? r : Object.values(r);
-        const area = String(raw[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (area === 'MATE') return;
-        const isLevel1 = activeWhitelist.some(w => area.includes(w));
-        if (!isLevel1) return;
+    if (hasActivo) {
+        const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+        validarActivo.forEach(r => {
+            const raw = Array.isArray(r) ? r : Object.values(r);
+            const area = String(raw[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (area === 'MATE') return;
+            const isLevel1 = activeWhitelist.some(w => area.includes(w));
+            if (!isLevel1) return;
 
-        const sku = String(raw[1] || '').trim();
-        const qty = parseFloat(raw[4]) || 0;
-        finalActivoSkuTotal[sku] = (finalActivoSkuTotal[sku] || 0) + qty;
-    });
+            const sku = String(raw[1] || '').trim();
+            const qty = parseFloat(raw[4]) || 0;
+            finalActivoSkuTotal[sku] = (finalActivoSkuTotal[sku] || 0) + qty;
+        });
+    }
 
     // 3. Comparación registro por registro
     const results = [];
@@ -5718,54 +5725,92 @@ const renderRFSection = (container) => {
 
         // Comprobación Reserva (Origen)
         let finalResQty = 0;
-        if (lpn && finalReservaLPNs[lpn] !== undefined) {
-            finalResQty = finalReservaLPNs[lpn];
-        } else {
-            const key = `${sku}|${ubiRes}`;
-            finalResQty = finalReservaSkuUbi[key] || 0;
-        }
+        let unitsLowered = 0;
+        let resState = "S/D";
+        let resStatusClass = "color:var(--text-muted);";
 
-        const unitsLowered = Math.max(0, origResQty - finalResQty);
-        let resState = "BAJADO (100%)";
-        let resStatusClass = "color:#22c55e;";
-        if (finalResQty >= origResQty) {
-            resState = "NO BAJADO (0%)";
-            resStatusClass = "color:#ef4444;";
-        } else if (finalResQty > 0) {
-            resState = `PARCIAL (Quedan ${finalResQty})`;
-            resStatusClass = "color:#fbbf24;";
+        if (hasReserva) {
+            if (lpn && finalReservaLPNs[lpn] !== undefined) {
+                finalResQty = finalReservaLPNs[lpn];
+            } else {
+                const key = `${sku}|${ubiRes}`;
+                finalResQty = finalReservaSkuUbi[key] || 0;
+            }
+
+            unitsLowered = Math.max(0, origResQty - finalResQty);
+            resState = "BAJADO (100%)";
+            resStatusClass = "color:#22c55e;";
+            if (finalResQty >= origResQty) {
+                resState = "NO BAJADO (0%)";
+                resStatusClass = "color:#ef4444;";
+            } else if (finalResQty > 0) {
+                resState = `PARCIAL (Quedan ${finalResQty})`;
+                resStatusClass = "color:#fbbf24;";
+            }
         }
 
         // Comprobación Activo (Destino)
-        const actFinalQty = finalActivoSkuTotal[sku] || 0;
-        const actDiff = actFinalQty - origActQty;
-        
-        let actState = "SIN REGISTRO";
-        let actStatusClass = "color:#ef4444;";
-        if (actDiff >= plannedQty) {
-            actState = "RECIBIDO (100%)";
-            actStatusClass = "color:#22c55e;";
-        } else if (actDiff > 0) {
-            actState = `PARCIAL (+${actDiff})`;
-            actStatusClass = "color:#fbbf24;";
+        let actFinalQty = 0;
+        let actDiff = 0;
+        let actState = "S/D";
+        let actStatusClass = "color:var(--text-muted);";
+
+        if (hasActivo) {
+            actFinalQty = finalActivoSkuTotal[sku] || 0;
+            actDiff = actFinalQty - origActQty;
+            
+            actState = "SIN REGISTRO";
+            actStatusClass = "color:#ef4444;";
+            if (actDiff >= plannedQty) {
+                actState = "RECIBIDO (100%)";
+                actStatusClass = "color:#22c55e;";
+            } else if (actDiff > 0) {
+                actState = `PARCIAL (+${actDiff})`;
+                actStatusClass = "color:#fbbf24;";
+            }
         }
 
-        // Estado General
+        // Estado General (Semáforo según disponibilidad de archivos)
         let generalState = "PENDIENTE";
         let colorDot = "#ef4444";
         let statusTag = "🔴 PENDIENTE";
-        if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
-            generalState = "COMPLETADO";
-            colorDot = "#22c55e";
-            statusTag = "🟢 COMPLETADO";
-            completedCount++;
-        } else if (unitsLowered > 0 || actDiff > 0) {
-            generalState = "INCOMPLETO";
-            colorDot = "#fbbf24";
-            statusTag = "🟡 INCOMPLETO";
-            partialCount++;
-        } else {
-            pendingCount++;
+
+        if (hasReserva && hasActivo) {
+            if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
+                generalState = "COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
+                completedCount++;
+            } else if (unitsLowered > 0 || actDiff > 0) {
+                generalState = "INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
+                partialCount++;
+            } else {
+                pendingCount++;
+            }
+        } else if (hasReserva) {
+            if (unitsLowered >= plannedQty) {
+                generalState = "COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
+                completedCount++;
+            } else if (unitsLowered > 0) {
+                generalState = "INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
+                partialCount++;
+            } else {
+                pendingCount++;
+            }
+        } else if (hasActivo) {
+            if (actDiff >= plannedQty) {
+                generalState = "COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
+                completedCount++;
+            } else if (actDiff > 0) {
+                generalState = "INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
+                partialCount++;
+            } else {
+                pendingCount++;
+            }
         }
 
         results.push({
@@ -5796,31 +5841,37 @@ const renderRFSection = (container) => {
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">EFICIENCIA DE CONCILIACIÓN</div>
-                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">${efficiency}%</div>
+                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">\${efficiency}%</div>
                 </div>
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #22c55e; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS COMPLETADAS</div>
-                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">${completedCount}</div>
+                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">\${completedCount}</div>
                 </div>
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #fbbf24; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS INCOMPLETAS</div>
-                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">${partialCount}</div>
+                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">\${partialCount}</div>
                 </div>
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS PENDIENTES</div>
-                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">${pendingCount}</div>
+                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">\${pendingCount}</div>
                 </div>
             </div>
 
             <!-- CONTROLES FILTRADO -->
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                 <div style="display:flex; gap:0.5rem;" id="filter_buttons_val">
-                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (${totalTasks})</button>
-                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (${pendingCount})</button>
-                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (${partialCount})</button>
-                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (${completedCount})</button>
+                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (\${totalTasks})</button>
+                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (\${pendingCount})</button>
+                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (\${partialCount})</button>
+                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (\${completedCount})</button>
                 </div>
-                <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:flex; gap:10px;">
+                        <span>\${hasReserva ? '🟢 RES' : '⚪ RES'}</span>
+                        <span>\${hasActivo ? '🟢 ACT' : '⚪ ACT'}</span>
+                    </div>
+                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700; margin-left:10px;">📥 EXPORTAR CONCILIACIÓN</button>
+                </div>
             </div>
 
             <!-- TABLA DE DETALLE -->
@@ -5870,6 +5921,46 @@ const renderRFSection = (container) => {
             tbody.appendChild(tr);
         });
     };
+
+    renderRows('TODOS');
+
+    document.querySelectorAll('#filter_buttons_val button').forEach(btn => {
+        btn.onclick = (e) => {
+            document.querySelectorAll('#filter_buttons_val button').forEach(b => {
+                b.className = 'btn';
+                b.style.background = b.dataset.f === 'TODOS' ? '' : 'rgba(255,255,255,0.02)';
+            });
+            e.currentTarget.className = 'btn active';
+            e.currentTarget.style.background = 'var(--primary)';
+            renderRows(e.currentTarget.dataset.f);
+        };
+    });
+
+    document.getElementById('btn_excel_val').onclick = () => {
+        const dataRows = [
+            ["LPN", "SKU", "ORIGEN (RESERVA)", "CANTIDAD BUFFER PLANEADA", "CANTIDAD INICIAL RESERVA", "CANTIDAD FINAL RESERVA", "CANTIDAD INICIAL ACTIVO", "CANTIDAD FINAL ACTIVO", "ESTADO RESERVA", "ESTADO ACTIVO", "ESTADO GENERAL"]
+        ];
+        results.forEach(r => {
+            dataRows.push([
+                r.lpn,
+                r.sku,
+                r.ubiRes,
+                r.plannedQty,
+                r.origResQty,
+                r.finalResQty,
+                r.origActQty,
+                r.actFinalQty,
+                r.resState,
+                r.actState,
+                r.generalState
+            ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(dataRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Conciliacion");
+        XLSX.writeFile(wb, `Reporte_Conciliacion_Buffer_\${new Date().getTime()}.xlsx`);
+    };
+  };
 
     renderRows('TODOS');
 
@@ -10324,7 +10415,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.168 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.169 | MOBILE PORTAL
                             </div>
                     </div>
 
