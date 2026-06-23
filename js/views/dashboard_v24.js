@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.179';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.180';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.179';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.179';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.179';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.179';
+import * as adminService from '../services_v245/adminService.js?v=26.5.180';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.180';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.180';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.180';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.179';
+const VERSION = '26.5.180';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5733,14 +5733,15 @@ const renderRFSection = (container) => {
                 }
 
                 unitsLowered = Math.max(0, origResQty - finalResQty);
-                resState = "BAJADO (100%)";
-                resStatusClass = "color:#22c55e;";
-                if (finalResQty >= origResQty) {
+                if (unitsLowered >= plannedQty) {
+                    resState = "BAJADO (100%)";
+                    resStatusClass = "color:#22c55e;";
+                } else if (unitsLowered > 0) {
+                    resState = `PARCIAL (Bajó ${unitsLowered}/${plannedQty})`;
+                    resStatusClass = "color:#fbbf24;";
+                } else {
                     resState = "NO BAJADO (0%)";
                     resStatusClass = "color:#ef4444;";
-                } else if (finalResQty > 0) {
-                    resState = `PARCIAL (Quedan ${finalResQty})`;
-                    resStatusClass = "color:#fbbf24;";
                 }
             }
 
@@ -10459,7 +10460,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.179 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.180 | MOBILE PORTAL
                             </div>
                     </div>
 

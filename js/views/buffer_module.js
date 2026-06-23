@@ -417,14 +417,15 @@ const renderBufferKPI = async (container) => {
                 }
 
                 unitsLowered = Math.max(0, origResQty - finalResQty);
-                resState = "BAJADO (100%)";
-                resStatusClass = "color:#22c55e;";
-                if (finalResQty >= origResQty) {
+                if (unitsLowered >= plannedQty) {
+                    resState = "BAJADO (100%)";
+                    resStatusClass = "color:#22c55e;";
+                } else if (unitsLowered > 0) {
+                    resState = `PARCIAL (Bajó ${unitsLowered}/${plannedQty})`;
+                    resStatusClass = "color:#fbbf24;";
+                } else {
                     resState = "NO BAJADO (0%)";
                     resStatusClass = "color:#ef4444;";
-                } else if (finalResQty > 0) {
-                    resState = `PARCIAL (Quedan ${finalResQty})`;
-                    resStatusClass = "color:#fbbf24;";
                 }
             }
 
