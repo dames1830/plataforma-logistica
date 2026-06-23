@@ -409,7 +409,7 @@ const renderBufferKPI = async (container) => {
         renderNoPlanScreen();
         return;
     }
-    const plannedPallets = (plan.detallePallets || []).filter(p => p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A');
+    const plannedPallets = (plan.detallePallets || []).filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A');
 
     // 1. Mapeo de Reserva Final
     const finalReservaLPNs = {};
