@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.178';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.179';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.178';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.178';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.178';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.178';
+import * as adminService from '../services_v245/adminService.js?v=26.5.179';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.179';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.179';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.179';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.178';
+const VERSION = '26.5.179';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5920,37 +5920,37 @@ const renderRFSection = (container) => {
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">EFICIENCIA DE CONCILIACIÓN</div>
-                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">\${efficiency}%</div>
+                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">${efficiency}%</div>
                 </div>
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #22c55e; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS COMPLETADAS</div>
-                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">\${completedCount}</div>
+                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">${completedCount}</div>
                 </div>
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #fbbf24; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS INCOMPLETAS</div>
-                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">\${partialCount}</div>
+                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">${partialCount}</div>
                 </div>
                 <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444; text-align:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS PENDIENTES</div>
-                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">\${pendingCount}</div>
+                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">${pendingCount}</div>
                 </div>
             </div>
 
             <!-- CONTROLES FILTRADO -->
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                 <div style="display:flex; gap:0.5rem;" id="filter_buttons_val">
-                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (\${totalTasks})</button>
-                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (\${pendingCount})</button>
-                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (\${partialCount})</button>
-                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (\${completedCount})</button>
+                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (${totalTasks})</button>
+                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (${pendingCount})</button>
+                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (${partialCount})</button>
+                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (${completedCount})</button>
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:700; background:rgba(255,255,255,0.03); padding:0.3rem 0.6rem; border-radius:4px;">
-                        \${isPlannedMode ? '📋 AUDITORÍA PLAN' : '⚡ COMPARACIÓN DIRECTA STOCK'}
+                        ${isPlannedMode ? '📋 AUDITORÍA PLAN' : '⚡ COMPARACIÓN DIRECTA STOCK'}
                     </div>
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:flex; gap:10px; margin-left:10px;">
-                        <span>\${hasReserva ? '🟢 RES' : '⚪ RES'}</span>
-                        <span>\${hasActivo ? '🟢 ACT' : '⚪ ACT'}</span>
+                        <span>${hasReserva ? '🟢 RES' : '⚪ RES'}</span>
+                        <span>${hasActivo ? '🟢 ACT' : '⚪ ACT'}</span>
                     </div>
                     <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700; margin-left:10px;">📥 EXPORTAR CONCILIACIÓN</button>
                 </div>
@@ -5965,9 +5965,9 @@ const renderRFSection = (container) => {
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
-                                <th style="padding:0.8rem 1rem; text-align:center;">\${isPlannedMode ? 'CANT. BUFFER' : 'CANT. INICIAL'}</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">${isPlannedMode ? 'CANT. BUFFER' : 'CANT. INICIAL'}</th>
                                 <th style="padding:0.8rem 1rem;">ESTADO RESERVA</th>
-                                <th style="padding:0.8rem 1rem;">\${isPlannedMode ? 'ESTADO DESTINO (ACT)' : 'DIFERENCIA (BAJADO)'}</th>
+                                <th style="padding:0.8rem 1rem;">${isPlannedMode ? 'ESTADO DESTINO (ACT)' : 'DIFERENCIA (BAJADO)'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">ESTADO GENERAL</th>
                             </tr>
                         </thead>
@@ -5997,13 +5997,13 @@ const renderRFSection = (container) => {
             const plannedQtyDisplay = isPlannedMode ? r.plannedQty : r.origResQty;
 
             tr.innerHTML = `
-                <td style="padding:0.6rem 1rem; font-weight:700;">\${r.lpn || 'S/L'}</td>
-                <td style="padding:0.6rem 1rem;">\${r.sku}</td>
-                <td style="padding:0.6rem 1rem;">\${r.ubiRes}</td>
-                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${plannedQtyDisplay}</td>
-                <td style="padding:0.6rem 1rem; \${r.resStatusClass}; font-weight:700;">\${r.resState}</td>
-                <td style="padding:0.6rem 1rem; \${isPlannedMode ? r.actStatusClass : ''}; font-weight:700;">\${diffDisplay}</td>
-                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${r.statusTag}</td>
+                <td style="padding:0.6rem 1rem; font-weight:700;">${r.lpn || 'S/L'}</td>
+                <td style="padding:0.6rem 1rem;">${r.sku}</td>
+                <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${plannedQtyDisplay}</td>
+                <td style="padding:0.6rem 1rem; ${r.resStatusClass}; font-weight:700;">${r.resState}</td>
+                <td style="padding:0.6rem 1rem; ${isPlannedMode ? r.actStatusClass : ''}; font-weight:700;">${diffDisplay}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${r.statusTag}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -10459,7 +10459,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.178 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.179 | MOBILE PORTAL
                             </div>
                     </div>
 
