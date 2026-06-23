@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.172';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.173';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.172';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.172';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.172';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.172';
+import * as adminService from '../services_v245/adminService.js?v=26.5.173';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.173';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.173';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.173';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.172';
+const VERSION = '26.5.173';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5658,14 +5658,34 @@ const renderRFSection = (container) => {
     }
 
     const renderNoPlanScreen = () => {
+        const hasOrigReserva = dataStore.buffer_reserva && dataStore.buffer_reserva.length > 0;
+        const hasOrigActivo = dataStore.buffer_activo && dataStore.buffer_activo.length > 0;
+        const hasPedidos = dataStore.buffer && dataStore.buffer.length > 0;
+
+        let missingListHTML = '';
+        if (!hasOrigReserva || !hasOrigActivo || !hasPedidos) {
+            missingListHTML = `
+                <div style="margin:1rem auto; padding:0.8rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; text-align:left; max-width:400px; font-size:0.75rem; color:#f87171;">
+                    <strong style="display:block; margin-bottom:0.4rem; color:#ef4444;">⚠️ FALTAN ARCHIVOS MAESTROS EN EL SISTEMA:</strong>
+                    <ul style="margin:0; padding-left:1.2rem; display:flex; flex-direction:column; gap:0.25rem;">
+                        ${!hasOrigReserva ? '<li>Falta subir <b>STOCK RESERVA</b> (Antes de la bajada)</li>' : ''}
+                        ${!hasOrigActivo ? '<li>Falta subir <b>STOCK ACTIVO</b> (Antes de la bajada)</li>' : ''}
+                        ${!hasPedidos ? '<li>Falta subir <b>PEDIDOS</b> (Demanda del día)</li>' : ''}
+                    </ul>
+                    <span style="display:block; margin-top:0.6rem; color:var(--text-muted); font-size:0.7rem;">Cárgalos en la pestaña <b>🗂️ ARCHIVO ZONA BUFFER</b> antes de intentar procesar.</span>
+                </div>
+            `;
+        }
+
         container.innerHTML = `
             <div class="glass-panel animate-fade-in" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
                 <div style="font-size:2.5rem; margin-bottom:1rem;">⚠️</div>
                 <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.1rem;">PLAN DE BAJADA REQUERIDO</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
-                    Para realizar la conciliación, primero se debe calcular el plan de movimientos de la Zona Buffer. Puedes intentar generar el plan ahora mismo con los archivos maestros actuales cargados.
+                <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1rem;">
+                    Para realizar la conciliación, primero se debe calcular el plan de movimientos de la Zona Buffer. Puedes intentar generar el plan ahora mismo con los archivos maestros actuales cargados:
                 </p>
-                <button id="btn_calc_val_plan" class="btn" style="background:var(--primary); width:auto; padding:0.6rem 1.5rem; font-weight:700; border-radius:6px; transition:all 0.2s;">
+                ${missingListHTML}
+                <button id="btn_calc_val_plan" ${(!hasOrigReserva || !hasOrigActivo || !hasPedidos) ? 'disabled style="background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.2); cursor:not-allowed;"' : 'style="background:var(--primary);"'} class="btn" style="width:auto; padding:0.6rem 1.5rem; font-weight:700; border-radius:6px; transition:all 0.2s;">
                     ⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN
                 </button>
             </div>`;
@@ -10406,7 +10426,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.172 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.173 | MOBILE PORTAL
                             </div>
                     </div>
 
