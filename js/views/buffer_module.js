@@ -22,7 +22,7 @@ export const getActiveBufferSub = () => activeBufferSub;
 export const renderBufferTab = async (contentArea, user, TABS, renderTabContent) => {
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
-    const stored = localStorage.getItem('lastBufferKPI');
+    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
@@ -130,7 +130,7 @@ export const renderBufferTab = async (contentArea, user, TABS, renderTabContent)
                         if (res) {
                             lastBufferKPI = res;
                             lastBufferResult = res;
-                            localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                            localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res)); localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             renderBufferResults(results, res); 
                             
                             setTimeout(async () => {
@@ -383,7 +383,7 @@ const renderBufferKPI = async (container) => {
                     const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                     const res = calculateBufferPallets(config);
                     if (res && res.detallePallets && res.detallePallets.length) {
-                        localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                        localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res)); localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                         renderBufferKPI(container);
                     } else {
                         alert("El análisis de buffer se ejecutó pero no generó ninguna propuesta de bajada (0 pallets planificados). Verifica que tus archivos de STOCK RESERVA y PEDIDOS tengan discrepancias por reponer.");
@@ -399,7 +399,7 @@ const renderBufferKPI = async (container) => {
         }
     };
 
-    const stored = localStorage.getItem('lastBufferKPI');
+    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     let plan = null;
     if (stored) {
         try { plan = JSON.parse(stored); } catch(e){}

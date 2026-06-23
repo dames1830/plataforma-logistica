@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.173';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.174';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.173';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.173';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.173';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.173';
+import * as adminService from '../services_v245/adminService.js?v=26.5.174';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.174';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.174';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.174';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.173';
+const VERSION = '26.5.174';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1251,7 +1251,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
-    const stored = localStorage.getItem('lastBufferKPI');
+    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
@@ -1374,7 +1374,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             lastBufferKPI = res;
                             lastBufferResult = res;
                             try {
-                                localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                                localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res)); localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer", e); }
                             renderBufferResults(results, res); 
                             
@@ -5699,7 +5699,7 @@ const renderRFSection = (container) => {
                     const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
                     const res = calculateBufferPallets(config);
                     if (res && res.detallePallets && res.detallePallets.length) {
-                        localStorage.setItem('lastBufferKPI', JSON.stringify(res));
+                        localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res)); localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                         renderBufferKPI(container);
                     } else {
                         alert("El análisis de buffer se ejecutó pero no generó ninguna propuesta de bajada (0 pallets planificados). Verifica que tus archivos de STOCK RESERVA y PEDIDOS tengan discrepancias por reponer.");
@@ -5715,7 +5715,7 @@ const renderRFSection = (container) => {
         }
     };
 
-    const stored = localStorage.getItem('lastBufferKPI');
+    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     let plan = null;
     if (stored) {
         try { plan = JSON.parse(stored); } catch(e){}
@@ -10426,7 +10426,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.173 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.174 | MOBILE PORTAL
                             </div>
                     </div>
 
