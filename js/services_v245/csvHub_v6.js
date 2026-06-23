@@ -419,45 +419,38 @@ export const parseBufferFiles = async (files) => {
 };
 
 const persistToDatabase = async (area, payload, username = 'sistema') => {
-    // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, procesar 100% de manera local
-    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo') {
-        dataStore[area] = payload;
-        await saveToDB(area, payload);
-        if (area.startsWith('recepcion')) {
-            localStorage.removeItem('recepcion_report_processed');
-        }
-        if (area.endsWith('_activo') || area.endsWith('_reserva')) {
-            updateTablaTallas();
-        }
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/${area}`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Environment': 'production'
-            },
-            body: JSON.stringify(payload)
-        });
-        if(response.ok) {
-           dataStore[area] = payload;
-        await saveToDB(area, payload);
-           await logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length}`);
-        } else {
-           dataStore[area] = payload;
-        await saveToDB(area, payload);
-        }
-    } catch (err) {
-        dataStore[area] = payload;
-        await saveToDB(area, payload);
-    }
+    // 1. Guardar de forma inmediata en local IndexedDB y memoria
+    dataStore[area] = payload;
+    await saveToDB(area, payload);
     
     // [AUTO] Actualizar Tabla de Tallas si es Stock Activo o Reserva de cualquier área
     if (area.endsWith('_activo') || area.endsWith('_reserva')) {
         updateTablaTallas();
     }
+
+    // 2. Si es local-only, terminar aquí
+    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo') {
+        if (area.startsWith('recepcion')) {
+            localStorage.removeItem('recepcion_report_processed');
+        }
+        return;
+    }
+
+    // 3. Sincronizar con el servidor en segundo plano (SIN await para no bloquear la interfaz)
+    fetch(`${API_URL}/${area}`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-Environment': 'production'
+        },
+        body: JSON.stringify(payload)
+    }).then(response => {
+        if (response.ok) {
+            logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length} (Segundo plano)`);
+        }
+    }).catch(err => {
+        console.warn(`[PULSE] Error de sincronización de fondo para ${area}:`, err);
+    });
 };
 
 export const clearAreaData = async (area, username = 'sistema') => {
