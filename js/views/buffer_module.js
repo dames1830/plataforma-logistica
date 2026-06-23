@@ -343,10 +343,23 @@ const renderBufferKPI = async (container) => {
         return;
     }
 
-    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     let plan = null;
+    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     if (stored) {
         try { plan = JSON.parse(stored); } catch(e){}
+    }
+
+    if ((!plan || !plan.detallePallets || !plan.detallePallets.length) && dataStore.buffer_activo && dataStore.buffer_reserva && dataStore.articulos && dataStore.buffer) {
+        try {
+            const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+            const res = calculateBufferPallets(config);
+            if (res && res.detallePallets) {
+                plan = res;
+                localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res));
+            }
+        } catch(e) {
+            console.error("Error al calcular plan dinámico:", e);
+        }
     }
 
     // Si no hay plan, o el plan no tiene pallets, usaremos el modo de comparación directa
