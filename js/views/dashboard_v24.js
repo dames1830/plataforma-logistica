@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.181';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.182';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.181';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.181';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.181';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.181';
+import * as adminService from '../services_v245/adminService.js?v=26.5.182';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.182';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.182';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.182';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.181';
+const VERSION = '26.5.182';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5631,34 +5631,74 @@ const renderRFSection = (container) => {
   };
 
   const renderBufferKPI = async (container) => {
-    container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando datos de validación...</p></div>`;
-    
-    const [validarActivo, validarReserva, originalReserva] = await Promise.all([
-        getAreaData('validar_activo'),
-        getAreaData('validar_reserva'),
-        getAreaData('buffer_reserva')
+    const [hasValActivo, hasValReserva, hasStockReserva] = await Promise.all([
+        getAreaData('validar_activo').then(d => d && d.length > 0),
+        getAreaData('validar_reserva').then(d => d && d.length > 0),
+        getAreaData('buffer_reserva').then(d => d && d.length > 0)
     ]);
 
-    const hasActivo = validarActivo && validarActivo.length > 0;
-    const hasReserva = validarReserva && validarReserva.length > 0;
-
-    if (!hasActivo && !hasReserva) {
-        alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
-        container.innerHTML = `
-            <div class="glass-panel" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
-                <div style="font-size:2.5rem; margin-bottom:1rem;">📋</div>
-                <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.1rem;">CONCILIACIÓN PENDIENTE</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
-                    Para auditar y validar el trabajo de los operarios, primero debes subir al menos uno de los archivos actualizados del WMS posterior a la bajada en la pestaña <b>🗂️ ARCHIVO ZONA BUFFER</b>:
-                </p>
-                <div style="display:flex; justify-content:center; gap:1.5rem; font-size:0.8rem; font-weight:700; color:var(--primary); background:rgba(255,255,255,0.02); padding:1rem; border-radius:8px;">
-                    <span style="color:#ef4444">❌ VALIDAR RESERVA (.xlsx)</span>
-                    <span style="color:#ef4444">❌ VALIDAR ACTIVO (.csv)</span>
+    container.innerHTML = `
+        <div class="glass-panel animate-fade-in" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
+            <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.5px;">Conciliación y Auditoría Buffer KPI</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
+                Compara las paletas que debían bajarse contra el estado real del almacén posterior a los movimientos.
+            </p>
+            
+            <div style="text-align:left; max-width:400px; margin:0 auto 2rem; background:rgba(255,255,255,0.02); padding:1rem 1.5rem; border-radius:10px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:0.8rem; font-size:0.8rem;">
+                <strong style="color:rgba(255,255,255,0.7); display:block; margin-bottom:0.2rem;">ESTADO DE ARCHIVOS:</strong>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>STOCK RESERVA (Original):</span>
+                    <span style="font-weight:700; color:${hasStockReserva ? '#22c55e' : '#ef4444'}">${hasStockReserva ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
-            </div>`;
-        return;
-    }
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>VALIDAR RESERVA (Final):</span>
+                    <span style="font-weight:700; color:${hasValReserva ? '#22c55e' : '#ef4444'}">${hasValReserva ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>VALIDAR ACTIVO (Final):</span>
+                    <span style="font-weight:700; color:${hasValActivo ? '#22c55e' : '#ef4444'}">${hasValActivo ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
+                </div>
+            </div>
 
+            <button id="btn_run_kpi_analysis" class="btn" style="background:var(--primary); width:auto; padding:0.7rem 2.2rem; font-weight:800; font-size:0.85rem; border-radius:8px; box-shadow:0 0 20px rgba(99,102,241,0.3); transition:all 0.2s;">
+                ⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN
+            </button>
+        </div>
+    `;
+
+    document.getElementById('btn_run_kpi_analysis').onclick = async () => {
+        const btn = document.getElementById('btn_run_kpi_analysis');
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
+
+        // Cargar todos los archivos IndexedDB en la memoria de dataStore antes de proceder
+        const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
+            getAreaData('validar_activo'),
+            getAreaData('validar_reserva'),
+            getAreaData('buffer_reserva'),
+            getAreaData('buffer_activo'),
+            getAreaData('buffer'),
+            getAreaData('articulos'),
+            getAreaData('solicitud'),
+            getAreaData('tallas')
+        ]);
+
+        const hasActivo = validarActivo && validarActivo.length > 0;
+        const hasReserva = validarReserva && validarReserva.length > 0;
+
+        if (!hasActivo && !hasReserva) {
+            alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
+            btn.disabled = false;
+            btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
+            return;
+        }
+
+        await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva);
+    };
+  };
+
+  const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva) => {
     let plan = null;
     const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     if (stored) {
@@ -10473,7 +10513,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.181 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.182 | MOBILE PORTAL
                             </div>
                     </div>
 
