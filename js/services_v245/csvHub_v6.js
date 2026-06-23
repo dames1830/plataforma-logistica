@@ -325,7 +325,18 @@ export const parseFile = (file, area) => {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, {type: 'array'});
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          let sheetName = workbook.SheetNames[0];
+          if (area === 'stockReserva' || area.endsWith('_reserva')) {
+              const foundName = workbook.SheetNames.find(name => {
+                  const n = name.toLowerCase();
+                  return n.includes('montacarga') || n.includes('reserva') || n.includes('alto') || n.includes('detall');
+              });
+              if (foundName) {
+                  sheetName = foundName;
+                  console.log(`[PULSE] Detectada pestaña específica de Reserva: ${sheetName}`);
+              }
+          }
+          const sheet = workbook.Sheets[sheetName];
           
           let jsonData = [];
           if (area === 'no_retail') {
