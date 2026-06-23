@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.176';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.178';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.176';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.176';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.176';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.176';
+import * as adminService from '../services_v245/adminService.js?v=26.5.178';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.178';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.178';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.178';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.176';
+const VERSION = '26.5.178';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5633,15 +5633,17 @@ const renderRFSection = (container) => {
   const renderBufferKPI = async (container) => {
     container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando datos de validación...</p></div>`;
     
-    const [validarActivo, validarReserva] = await Promise.all([
+    const [validarActivo, validarReserva, originalReserva] = await Promise.all([
         getAreaData('validar_activo'),
-        getAreaData('validar_reserva')
+        getAreaData('validar_reserva'),
+        getAreaData('buffer_reserva')
     ]);
 
     const hasActivo = validarActivo && validarActivo.length > 0;
     const hasReserva = validarReserva && validarReserva.length > 0;
 
     if (!hasActivo && !hasReserva) {
+        alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
         container.innerHTML = `
             <div class="glass-panel" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
                 <div style="font-size:2.5rem; margin-bottom:1rem;">📋</div>
@@ -5657,75 +5659,16 @@ const renderRFSection = (container) => {
         return;
     }
 
-    const renderNoPlanScreen = () => {
-        const hasOrigReserva = dataStore.buffer_reserva && dataStore.buffer_reserva.length > 0;
-        const hasOrigActivo = dataStore.buffer_activo && dataStore.buffer_activo.length > 0;
-        const hasPedidos = dataStore.buffer && dataStore.buffer.length > 0;
-
-        let missingListHTML = '';
-        if (!hasOrigReserva || !hasOrigActivo || !hasPedidos) {
-            missingListHTML = `
-                <div style="margin:1rem auto; padding:0.8rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; text-align:left; max-width:400px; font-size:0.75rem; color:#f87171;">
-                    <strong style="display:block; margin-bottom:0.4rem; color:#ef4444;">⚠️ FALTAN ARCHIVOS MAESTROS EN EL SISTEMA:</strong>
-                    <ul style="margin:0; padding-left:1.2rem; display:flex; flex-direction:column; gap:0.25rem;">
-                        ${!hasOrigReserva ? '<li>Falta subir <b>STOCK RESERVA</b> (Antes de la bajada)</li>' : ''}
-                        ${!hasOrigActivo ? '<li>Falta subir <b>STOCK ACTIVO</b> (Antes de la bajada)</li>' : ''}
-                        ${!hasPedidos ? '<li>Falta subir <b>PEDIDOS</b> (Demanda del día)</li>' : ''}
-                    </ul>
-                    <span style="display:block; margin-top:0.6rem; color:var(--text-muted); font-size:0.7rem;">Cárgalos en la pestaña <b>🗂️ ARCHIVO ZONA BUFFER</b> antes de intentar procesar.</span>
-                </div>
-            `;
-        }
-
-        container.innerHTML = `
-            <div class="glass-panel animate-fade-in" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px dashed rgba(255,255,255,0.15);">
-                <div style="font-size:2.5rem; margin-bottom:1rem;">⚠️</div>
-                <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.1rem;">PLAN DE BAJADA REQUERIDO</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1rem;">
-                    Para realizar la conciliación, primero se debe calcular el plan de movimientos de la Zona Buffer. Puedes intentar generar el plan ahora mismo con los archivos maestros actuales cargados:
-                </p>
-                ${missingListHTML}
-                <button id="btn_calc_val_plan" ${(!hasOrigReserva || !hasOrigActivo || !hasPedidos) ? 'disabled style="background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.2); cursor:not-allowed;"' : 'style="background:var(--primary);"'} class="btn" style="width:auto; padding:0.6rem 1.5rem; font-weight:700; border-radius:6px; transition:all 0.2s;">
-                    ⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN
-                </button>
-            </div>`;
-        
-        const btn = document.getElementById('btn_calc_val_plan');
-        if (btn) {
-            btn.onclick = async () => {
-                btn.disabled = true;
-                btn.innerHTML = '⌛ PROCESANDO PLAN...';
-                try {
-                    const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
-                    const res = calculateBufferPallets(config);
-                    if (res && res.detallePallets && res.detallePallets.length) {
-                        localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res)); localStorage.setItem('lastBufferKPI', JSON.stringify(res));
-                        renderBufferKPI(container);
-                    } else {
-                        alert("El análisis de buffer se ejecutó pero no generó ninguna propuesta de bajada (0 pallets planificados). Verifica que tus archivos de STOCK RESERVA y PEDIDOS tengan discrepancias por reponer.");
-                        btn.disabled = false;
-                        btn.innerHTML = '⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN';
-                    }
-                } catch(err) {
-                    alert("Error al procesar el plan: " + err.message);
-                    btn.disabled = false;
-                    btn.innerHTML = '⚡ RECALCULAR PLAN Y PROCESAR CONCILIACIÓN';
-                }
-            };
-        }
-    };
-
     const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
     let plan = null;
     if (stored) {
         try { plan = JSON.parse(stored); } catch(e){}
     }
 
-    if (!plan || !plan.detallePallets || !plan.detallePallets.length) {
-        renderNoPlanScreen();
-        return;
-    }
-    const plannedPallets = (plan.detallePallets || []).filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A');
+    // Si no hay plan, o el plan no tiene pallets, usaremos el modo de comparación directa
+    const plannedPallets = plan && plan.detallePallets ? plan.detallePallets.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
+
+    const isPlannedMode = plannedPallets.length > 0;
 
     // 1. Mapeo de Reserva Final
     const finalReservaLPNs = {};
@@ -5760,128 +5703,213 @@ const renderRFSection = (container) => {
         });
     }
 
-    // 3. Comparación registro por registro
     const results = [];
     let completedCount = 0;
     let partialCount = 0;
     let pendingCount = 0;
 
-    plannedPallets.forEach(p => {
-        const sku = p.SKU;
-        const lpn = String(p.LPN || '').trim().toUpperCase();
-        const ubiRes = String(p.UBICACIONES || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        const plannedQty = p['QTY BUFFER'] || 0;
-        const origResQty = p['QTY RESERVA'] || 0;
-        const origActQty = p['QTY ACTIVO'] || 0;
+    if (isPlannedMode) {
+        // --- MODO PLANIFICADO ---
+        plannedPallets.forEach(p => {
+            const sku = p.SKU;
+            const lpn = String(p.LPN || '').trim().toUpperCase();
+            const ubiRes = String(p.UBICACIONES || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const plannedQty = p['QTY BUFFER'] || 0;
+            const origResQty = p['QTY RESERVA'] || 0;
+            const origActQty = p['QTY ACTIVO'] || 0;
 
-        // Comprobación Reserva (Origen)
-        let finalResQty = 0;
-        let unitsLowered = 0;
-        let resState = "S/D";
-        let resStatusClass = "color:var(--text-muted);";
+            // Comprobación Reserva (Origen)
+            let finalResQty = 0;
+            let unitsLowered = 0;
+            let resState = "S/D";
+            let resStatusClass = "color:var(--text-muted);";
 
-        if (hasReserva) {
-            if (lpn && finalReservaLPNs[lpn] !== undefined) {
-                finalResQty = finalReservaLPNs[lpn];
-            } else {
-                const key = `${sku}|${ubiRes}`;
-                finalResQty = finalReservaSkuUbi[key] || 0;
+            if (hasReserva) {
+                if (lpn && finalReservaLPNs[lpn] !== undefined) {
+                    finalResQty = finalReservaLPNs[lpn];
+                } else {
+                    const key = `${sku}|${ubiRes}`;
+                    finalResQty = finalReservaSkuUbi[key] || 0;
+                }
+
+                unitsLowered = Math.max(0, origResQty - finalResQty);
+                resState = "BAJADO (100%)";
+                resStatusClass = "color:#22c55e;";
+                if (finalResQty >= origResQty) {
+                    resState = "NO BAJADO (0%)";
+                    resStatusClass = "color:#ef4444;";
+                } else if (finalResQty > 0) {
+                    resState = `PARCIAL (Quedan ${finalResQty})`;
+                    resStatusClass = "color:#fbbf24;";
+                }
             }
 
-            unitsLowered = Math.max(0, origResQty - finalResQty);
-            resState = "BAJADO (100%)";
-            resStatusClass = "color:#22c55e;";
-            if (finalResQty >= origResQty) {
-                resState = "NO BAJADO (0%)";
-                resStatusClass = "color:#ef4444;";
-            } else if (finalResQty > 0) {
-                resState = `PARCIAL (Quedan ${finalResQty})`;
-                resStatusClass = "color:#fbbf24;";
-            }
-        }
+            // Comprobación Activo (Destino)
+            let actFinalQty = 0;
+            let actDiff = 0;
+            let actState = "S/D";
+            let actStatusClass = "color:var(--text-muted);";
 
-        // Comprobación Activo (Destino)
-        let actFinalQty = 0;
-        let actDiff = 0;
-        let actState = "S/D";
-        let actStatusClass = "color:var(--text-muted);";
-
-        if (hasActivo) {
-            actFinalQty = finalActivoSkuTotal[sku] || 0;
-            actDiff = actFinalQty - origActQty;
-            
-            actState = "SIN REGISTRO";
-            actStatusClass = "color:#ef4444;";
-            if (actDiff >= plannedQty) {
-                actState = "RECIBIDO (100%)";
-                actStatusClass = "color:#22c55e;";
-            } else if (actDiff > 0) {
-                actState = `PARCIAL (+${actDiff})`;
-                actStatusClass = "color:#fbbf24;";
+            if (hasActivo) {
+                actFinalQty = finalActivoSkuTotal[sku] || 0;
+                actDiff = actFinalQty - origActQty;
+                
+                actState = "SIN REGISTRO";
+                actStatusClass = "color:#ef4444;";
+                if (actDiff >= plannedQty) {
+                    actState = "RECIBIDO (100%)";
+                    actStatusClass = "color:#22c55e;";
+                } else if (actDiff > 0) {
+                    actState = `PARCIAL (+${actDiff})`;
+                    actStatusClass = "color:#fbbf24;";
+                }
             }
-        }
 
-        // Estado General (Semáforo según disponibilidad de archivos)
-        let generalState = "PENDIENTE";
-        let colorDot = "#ef4444";
-        let statusTag = "🔴 PENDIENTE";
+            // Estado General
+            let generalState = "PENDIENTE";
+            let colorDot = "#ef4444";
+            let statusTag = "🔴 PENDIENTE";
 
-        if (hasReserva && hasActivo) {
-            if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
-                generalState = "COMPLETADO";
-                statusTag = "🟢 COMPLETADO";
-                completedCount++;
-            } else if (unitsLowered > 0 || actDiff > 0) {
-                generalState = "INCOMPLETO";
-                statusTag = "🟡 INCOMPLETO";
-                partialCount++;
-            } else {
-                pendingCount++;
+            if (hasReserva && hasActivo) {
+                if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
+                    generalState = "COMPLETADO";
+                    statusTag = "🟢 COMPLETADO";
+                    completedCount++;
+                } else if (unitsLowered > 0 || actDiff > 0) {
+                    generalState = "INCOMPLETO";
+                    statusTag = "🟡 INCOMPLETO";
+                    partialCount++;
+                } else {
+                    pendingCount++;
+                }
+            } else if (hasReserva) {
+                if (unitsLowered >= plannedQty) {
+                    generalState = "COMPLETADO";
+                    statusTag = "🟢 COMPLETADO";
+                    completedCount++;
+                } else if (unitsLowered > 0) {
+                    generalState = "INCOMPLETO";
+                    statusTag = "🟡 INCOMPLETO";
+                    partialCount++;
+                } else {
+                    pendingCount++;
+                }
+            } else if (hasActivo) {
+                if (actDiff >= plannedQty) {
+                    generalState = "COMPLETADO";
+                    statusTag = "🟢 COMPLETADO";
+                    completedCount++;
+                } else if (actDiff > 0) {
+                    generalState = "INCOMPLETO";
+                    statusTag = "🟡 INCOMPLETO";
+                    partialCount++;
+                } else {
+                    pendingCount++;
+                }
             }
-        } else if (hasReserva) {
-            if (unitsLowered >= plannedQty) {
-                generalState = "COMPLETADO";
-                statusTag = "🟢 COMPLETADO";
-                completedCount++;
-            } else if (unitsLowered > 0) {
-                generalState = "INCOMPLETO";
-                statusTag = "🟡 INCOMPLETO";
-                partialCount++;
-            } else {
-                pendingCount++;
-            }
-        } else if (hasActivo) {
-            if (actDiff >= plannedQty) {
-                generalState = "COMPLETADO";
-                statusTag = "🟢 COMPLETADO";
-                completedCount++;
-            } else if (actDiff > 0) {
-                generalState = "INCOMPLETO";
-                statusTag = "🟡 INCOMPLETO";
-                partialCount++;
-            } else {
-                pendingCount++;
-            }
-        }
 
-        results.push({
-            lpn,
-            sku,
-            ubiRes,
-            plannedQty,
-            origResQty,
-            finalResQty,
-            origActQty,
-            actFinalQty,
-            resState,
-            resStatusClass,
-            actState,
-            actStatusClass,
-            statusTag,
-            generalState,
-            colorDot
+            results.push({
+                lpn,
+                sku,
+                ubiRes,
+                plannedQty,
+                origResQty,
+                finalResQty,
+                origActQty,
+                actFinalQty,
+                resState,
+                resStatusClass,
+                actState,
+                actStatusClass,
+                statusTag,
+                generalState,
+                colorDot
+            });
         });
-    });
+    } else {
+        // --- MODO COMPARACIÓN DIRECTA (STOCK INICIAL VS STOCK FINAL) ---
+        const initialRes = originalReserva || [];
+        initialRes.forEach(item => {
+            const isAlto = item.ES_ALTO || String(item.NIVEL || '').toUpperCase().includes('ALTO') || String(item.NIVEL || '').toUpperCase() === 'A';
+            if (!isAlto) return;
+
+            const sku = item.PRODUCTO;
+            const lpn = String(item.LPN || '').trim().toUpperCase();
+            const ubiRes = String(item.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const origResQty = parseFloat(item.CANTIDAD) || 0;
+
+            let finalResQty = 0;
+            if (hasReserva) {
+                if (lpn && finalReservaLPNs[lpn] !== undefined) {
+                    finalResQty = finalReservaLPNs[lpn];
+                } else {
+                    const key = `${sku}|${ubiRes}`;
+                    finalResQty = finalReservaSkuUbi[key] || 0;
+                }
+            }
+
+            const unitsLowered = Math.max(0, origResQty - finalResQty);
+            if (unitsLowered === 0 && hasReserva) {
+                // Si no bajó nada y hay archivo de validación, está pendiente
+                pendingCount++;
+                results.push({
+                    lpn,
+                    sku,
+                    ubiRes,
+                    plannedQty: 0,
+                    origResQty,
+                    finalResQty,
+                    origActQty: 0,
+                    actFinalQty: 0,
+                    resState: "NO BAJADO (0%)",
+                    resStatusClass: "color:#ef4444;",
+                    actState: "S/D",
+                    actStatusClass: "color:var(--text-muted);",
+                    statusTag: "🔴 PENDIENTE",
+                    generalState: "PENDIENTE",
+                    colorDot: "#ef4444"
+                });
+            } else if (unitsLowered >= origResQty) {
+                completedCount++;
+                results.push({
+                    lpn,
+                    sku,
+                    ubiRes,
+                    plannedQty: origResQty,
+                    origResQty,
+                    finalResQty,
+                    origActQty: 0,
+                    actFinalQty: 0,
+                    resState: "BAJADO (100%)",
+                    resStatusClass: "color:#22c55e;",
+                    actState: "S/D",
+                    actStatusClass: "color:var(--text-muted);",
+                    statusTag: "🟢 COMPLETADO",
+                    generalState: "COMPLETADO",
+                    colorDot: "#22c55e"
+                });
+            } else {
+                partialCount++;
+                results.push({
+                    lpn,
+                    sku,
+                    ubiRes,
+                    plannedQty: origResQty,
+                    origResQty,
+                    finalResQty,
+                    origActQty: 0,
+                    actFinalQty: 0,
+                    resState: `PARCIAL (Quedan ${finalResQty})`,
+                    resStatusClass: "color:#fbbf24;",
+                    actState: "S/D",
+                    actStatusClass: "color:var(--text-muted);",
+                    statusTag: "🟡 INCOMPLETO",
+                    generalState: "INCOMPLETO",
+                    colorDot: "#fbbf24"
+                });
+            }
+        });
+    }
 
     const totalTasks = results.length;
     const efficiency = totalTasks > 0 ? ((completedCount / totalTasks) * 100).toFixed(1) : 0;
@@ -5917,7 +5945,10 @@ const renderRFSection = (container) => {
                     <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (\${completedCount})</button>
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:flex; gap:10px;">
+                    <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:700; background:rgba(255,255,255,0.03); padding:0.3rem 0.6rem; border-radius:4px;">
+                        \${isPlannedMode ? '📋 AUDITORÍA PLAN' : '⚡ COMPARACIÓN DIRECTA STOCK'}
+                    </div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:flex; gap:10px; margin-left:10px;">
                         <span>\${hasReserva ? '🟢 RES' : '⚪ RES'}</span>
                         <span>\${hasActivo ? '🟢 ACT' : '⚪ ACT'}</span>
                     </div>
@@ -5933,10 +5964,10 @@ const renderRFSection = (container) => {
                             <tr style="background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.08); color:var(--text-muted);">
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
-                                <th style="padding:0.8rem 1rem;">ORIGEN (RES)</th>
-                                <th style="padding:0.8rem 1rem; text-align:center;">CANT. BUFFER</th>
-                                <th style="padding:0.8rem 1rem;">ESTADO ORIGEN (RES)</th>
-                                <th style="padding:0.8rem 1rem;">ESTADO DESTINO (ACT)</th>
+                                <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">\${isPlannedMode ? 'CANT. BUFFER' : 'CANT. INICIAL'}</th>
+                                <th style="padding:0.8rem 1rem;">ESTADO RESERVA</th>
+                                <th style="padding:0.8rem 1rem;">\${isPlannedMode ? 'ESTADO DESTINO (ACT)' : 'DIFERENCIA (BAJADO)'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">ESTADO GENERAL</th>
                             </tr>
                         </thead>
@@ -5960,13 +5991,18 @@ const renderRFSection = (container) => {
         filtered.forEach(r => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+            
+            // Si es modo directo, mostramos la diferencia numérica en lugar de estado del activo
+            const diffDisplay = isPlannedMode ? r.actState : (r.origResQty - r.finalResQty);
+            const plannedQtyDisplay = isPlannedMode ? r.plannedQty : r.origResQty;
+
             tr.innerHTML = `
                 <td style="padding:0.6rem 1rem; font-weight:700;">\${r.lpn || 'S/L'}</td>
                 <td style="padding:0.6rem 1rem;">\${r.sku}</td>
                 <td style="padding:0.6rem 1rem;">\${r.ubiRes}</td>
-                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${r.plannedQty}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${plannedQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; \${r.resStatusClass}; font-weight:700;">\${r.resState}</td>
-                <td style="padding:0.6rem 1rem; \${r.actStatusClass}; font-weight:700;">\${r.actState}</td>
+                <td style="padding:0.6rem 1rem; \${isPlannedMode ? r.actStatusClass : ''}; font-weight:700;">\${diffDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">\${r.statusTag}</td>
             `;
             tbody.appendChild(tr);
@@ -5989,27 +6025,24 @@ const renderRFSection = (container) => {
 
     document.getElementById('btn_excel_val').onclick = () => {
         const dataRows = [
-            ["LPN", "SKU", "ORIGEN (RESERVA)", "CANTIDAD BUFFER PLANEADA", "CANTIDAD INICIAL RESERVA", "CANTIDAD FINAL RESERVA", "CANTIDAD INICIAL ACTIVO", "CANTIDAD FINAL ACTIVO", "ESTADO RESERVA", "ESTADO ACTIVO", "ESTADO GENERAL"]
+            ["LPN", "SKU", "ORIGEN (RESERVA)", "CANTIDAD INICIAL RESERVA", "CANTIDAD FINAL RESERVA", "CANTIDAD BAJADA", "ESTADO RESERVA", "ESTADO GENERAL"]
         ];
         results.forEach(r => {
             dataRows.push([
                 r.lpn,
                 r.sku,
                 r.ubiRes,
-                r.plannedQty,
                 r.origResQty,
                 r.finalResQty,
-                r.origActQty,
-                r.actFinalQty,
+                r.origResQty - r.finalResQty,
                 r.resState,
-                r.actState,
                 r.generalState
             ]);
         });
         const ws = XLSX.utils.aoa_to_sheet(dataRows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Conciliacion");
-        XLSX.writeFile(wb, `Reporte_Conciliacion_Buffer_\${new Date().getTime()}.xlsx`);
+        XLSX.writeFile(wb, `Reporte_Conciliacion_Buffer_	ext{new Date().getTime()}.xlsx`);
     };
   };
 
@@ -10426,7 +10459,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.176 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.178 | MOBILE PORTAL
                             </div>
                     </div>
 
