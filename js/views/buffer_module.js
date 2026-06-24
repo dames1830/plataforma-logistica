@@ -402,10 +402,19 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         }
     }
 
-    // Si no hay plan, o el plan no tiene pallets, usaremos el modo de comparación directa
     const plannedPallets = plan && plan.detallePallets ? plan.detallePallets.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
 
-    const isPlannedMode = plannedPallets.length > 0;
+    if (plannedPallets.length === 0) {
+        alert("⚠️ ATENCIÓN: No se detectó ningún análisis de buffer activo. Primero debes procesar el cálculo en la pestaña ANÁLISIS BUFFER.");
+        const btn = document.getElementById('btn_run_kpi_analysis');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
+        }
+        return;
+    }
+
+    const isPlannedMode = true;
 
     // 1. Mapeo de Reserva Final
     const finalReservaLPNs = {};
@@ -445,209 +454,124 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
     let partialCount = 0;
     let pendingCount = 0;
 
-    if (isPlannedMode) {
-        // --- MODO PLANIFICADO ---
-        plannedPallets.forEach(p => {
-            const sku = p.SKU;
-            const lpn = String(p.LPN || '').trim().toUpperCase();
-            const ubiRes = String(p.UBICACIONES || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-            const plannedQty = p['QTY BUFFER'] || 0;
-            const origResQty = p['QTY RESERVA'] || 0;
-            const origActQty = p['QTY ACTIVO'] || 0;
+    // --- MODO PLANIFICADO ---
+    plannedPallets.forEach(p => {
+        const sku = p.SKU;
+        const lpn = String(p.LPN || '').trim().toUpperCase();
+        const ubiRes = String(p.UBICACIONES || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const plannedQty = p['QTY BUFFER'] || 0;
+        const origResQty = p['QTY RESERVA'] || 0;
+        const origActQty = p['QTY ACTIVO'] || 0;
 
-            // Comprobación Reserva (Origen)
-            let finalResQty = 0;
-            let unitsLowered = 0;
-            let resState = "S/D";
-            let resStatusClass = "color:var(--text-muted);";
+        // Comprobación Reserva (Origen)
+        let finalResQty = 0;
+        let unitsLowered = 0;
+        let resState = "S/D";
+        let resStatusClass = "color:var(--text-muted);";
 
-            if (hasReserva) {
-                if (lpn && finalReservaLPNs[lpn] !== undefined) {
-                    finalResQty = finalReservaLPNs[lpn];
-                } else {
-                    const key = `${sku}|${ubiRes}`;
-                    finalResQty = finalReservaSkuUbi[key] || 0;
-                }
-
-                unitsLowered = Math.max(0, origResQty - finalResQty);
-                if (unitsLowered >= plannedQty) {
-                    resState = "BAJADO (100%)";
-                    resStatusClass = "color:#22c55e;";
-                } else if (unitsLowered > 0) {
-                    resState = `PARCIAL (Bajó ${unitsLowered}/${plannedQty})`;
-                    resStatusClass = "color:#fbbf24;";
-                } else {
-                    resState = "NO BAJADO (0%)";
-                    resStatusClass = "color:#ef4444;";
-                }
-            }
-
-            // Comprobación Activo (Destino)
-            let actFinalQty = 0;
-            let actDiff = 0;
-            let actState = "S/D";
-            let actStatusClass = "color:var(--text-muted);";
-
-            if (hasActivo) {
-                actFinalQty = finalActivoSkuTotal[sku] || 0;
-                actDiff = actFinalQty - origActQty;
-                
-                actState = "SIN REGISTRO";
-                actStatusClass = "color:#ef4444;";
-                if (actDiff >= plannedQty) {
-                    actState = "RECIBIDO (100%)";
-                    actStatusClass = "color:#22c55e;";
-                } else if (actDiff > 0) {
-                    actState = `PARCIAL (+${actDiff})`;
-                    actStatusClass = "color:#fbbf24;";
-                }
-            }
-
-            // Estado General
-            let generalState = "PENDIENTE";
-            let colorDot = "#ef4444";
-            let statusTag = "🔴 PENDIENTE";
-
-            if (hasReserva && hasActivo) {
-                if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
-                    generalState = "COMPLETADO";
-                    statusTag = "🟢 COMPLETADO";
-                    completedCount++;
-                } else if (unitsLowered > 0 || actDiff > 0) {
-                    generalState = "INCOMPLETO";
-                    statusTag = "🟡 INCOMPLETO";
-                    partialCount++;
-                } else {
-                    pendingCount++;
-                }
-            } else if (hasReserva) {
-                if (unitsLowered >= plannedQty) {
-                    generalState = "COMPLETADO";
-                    statusTag = "🟢 COMPLETADO";
-                    completedCount++;
-                } else if (unitsLowered > 0) {
-                    generalState = "INCOMPLETO";
-                    statusTag = "🟡 INCOMPLETO";
-                    partialCount++;
-                } else {
-                    pendingCount++;
-                }
-            } else if (hasActivo) {
-                if (actDiff >= plannedQty) {
-                    generalState = "COMPLETADO";
-                    statusTag = "🟢 COMPLETADO";
-                    completedCount++;
-                } else if (actDiff > 0) {
-                    generalState = "INCOMPLETO";
-                    statusTag = "🟡 INCOMPLETO";
-                    partialCount++;
-                } else {
-                    pendingCount++;
-                }
-            }
-
-            results.push({
-                lpn,
-                sku,
-                ubiRes,
-                plannedQty,
-                origResQty,
-                finalResQty,
-                origActQty,
-                actFinalQty,
-                resState,
-                resStatusClass,
-                actState,
-                actStatusClass,
-                statusTag,
-                generalState,
-                colorDot
-            });
-        });
-    } else {
-        // --- MODO COMPARACIÓN DIRECTA (STOCK INICIAL VS STOCK FINAL) ---
-        const initialRes = originalReserva || [];
-        initialRes.forEach(item => {
-            const isAlto = item.ES_ALTO || String(item.NIVEL || '').toUpperCase().includes('ALTO') || String(item.NIVEL || '').toUpperCase() === 'A';
-            if (!isAlto) return;
-
-            const sku = item.PRODUCTO;
-            const lpn = String(item.LPN || '').trim().toUpperCase();
-            const ubiRes = String(item.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-            const origResQty = parseFloat(item.CANTIDAD) || 0;
-
-            let finalResQty = 0;
-            if (hasReserva) {
-                if (lpn && finalReservaLPNs[lpn] !== undefined) {
-                    finalResQty = finalReservaLPNs[lpn];
-                } else {
-                    const key = `${sku}|${ubiRes}`;
-                    finalResQty = finalReservaSkuUbi[key] || 0;
-                }
-            }
-
-            const unitsLowered = Math.max(0, origResQty - finalResQty);
-            if (unitsLowered === 0 && hasReserva) {
-                // Si no bajó nada y hay archivo de validación, está pendiente
-                pendingCount++;
-                results.push({
-                    lpn,
-                    sku,
-                    ubiRes,
-                    plannedQty: 0,
-                    origResQty,
-                    finalResQty,
-                    origActQty: 0,
-                    actFinalQty: 0,
-                    resState: "NO BAJADO (0%)",
-                    resStatusClass: "color:#ef4444;",
-                    actState: "S/D",
-                    actStatusClass: "color:var(--text-muted);",
-                    statusTag: "🔴 PENDIENTE",
-                    generalState: "PENDIENTE",
-                    colorDot: "#ef4444"
-                });
-            } else if (unitsLowered >= origResQty) {
-                completedCount++;
-                results.push({
-                    lpn,
-                    sku,
-                    ubiRes,
-                    plannedQty: origResQty,
-                    origResQty,
-                    finalResQty,
-                    origActQty: 0,
-                    actFinalQty: 0,
-                    resState: "BAJADO (100%)",
-                    resStatusClass: "color:#22c55e;",
-                    actState: "S/D",
-                    actStatusClass: "color:var(--text-muted);",
-                    statusTag: "🟢 COMPLETADO",
-                    generalState: "COMPLETADO",
-                    colorDot: "#22c55e"
-                });
+        if (hasReserva) {
+            if (lpn && finalReservaLPNs[lpn] !== undefined) {
+                finalResQty = finalReservaLPNs[lpn];
             } else {
-                partialCount++;
-                results.push({
-                    lpn,
-                    sku,
-                    ubiRes,
-                    plannedQty: origResQty,
-                    origResQty,
-                    finalResQty,
-                    origActQty: 0,
-                    actFinalQty: 0,
-                    resState: `PARCIAL (Quedan ${finalResQty})`,
-                    resStatusClass: "color:#fbbf24;",
-                    actState: "S/D",
-                    actStatusClass: "color:var(--text-muted);",
-                    statusTag: "🟡 INCOMPLETO",
-                    generalState: "INCOMPLETO",
-                    colorDot: "#fbbf24"
-                });
+                const key = `${sku}|${ubiRes}`;
+                finalResQty = finalReservaSkuUbi[key] || 0;
             }
+
+            unitsLowered = Math.max(0, origResQty - finalResQty);
+            if (unitsLowered >= plannedQty) {
+                resState = "BAJADO (100%)";
+                resStatusClass = "color:#22c55e;";
+            } else if (unitsLowered > 0) {
+                resState = `PARCIAL (Bajó ${unitsLowered}/${plannedQty})`;
+                resStatusClass = "color:#fbbf24;";
+            } else {
+                resState = "NO BAJADO (0%)";
+                resStatusClass = "color:#ef4444;";
+            }
+        }
+
+        // Comprobación Activo (Destino)
+        let actFinalQty = 0;
+        let actDiff = 0;
+        let actState = "S/D";
+        let actStatusClass = "color:var(--text-muted);";
+
+        if (hasActivo) {
+            actFinalQty = finalActivoSkuTotal[sku] || 0;
+            actDiff = actFinalQty - origActQty;
+            
+            actState = "SIN REGISTRO";
+            actStatusClass = "color:#ef4444;";
+            if (actDiff >= plannedQty) {
+                actState = "RECIBIDO (100%)";
+                actStatusClass = "color:#22c55e;";
+            } else if (actDiff > 0) {
+                actState = `PARCIAL (+${actDiff})`;
+                actStatusClass = "color:#fbbf24;";
+            }
+        }
+
+        // Estado General
+        let generalState = "PENDIENTE";
+        let colorDot = "#ef4444";
+        let statusTag = "🔴 PENDIENTE";
+
+        if (hasReserva && hasActivo) {
+            if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
+                generalState = "COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
+                completedCount++;
+            } else if (unitsLowered > 0 || actDiff > 0) {
+                generalState = "INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
+                partialCount++;
+            } else {
+                pendingCount++;
+            }
+        } else if (hasReserva) {
+            if (unitsLowered >= plannedQty) {
+                generalState = "COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
+                completedCount++;
+            } else if (unitsLowered > 0) {
+                generalState = "INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
+                partialCount++;
+            } else {
+                pendingCount++;
+            }
+        } else if (hasActivo) {
+            if (actDiff >= plannedQty) {
+                generalState = "COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
+                completedCount++;
+            } else if (actDiff > 0) {
+                generalState = "INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
+                partialCount++;
+            } else {
+                pendingCount++;
+            }
+        }
+
+        results.push({
+            lpn,
+            sku,
+            ubiRes,
+            plannedQty,
+            origResQty,
+            finalResQty,
+            origActQty,
+            actFinalQty,
+            resState,
+            resStatusClass,
+            actState,
+            actStatusClass,
+            statusTag,
+            generalState,
+            colorDot
         });
-    }
+    });
 
     const totalTasks = results.length;
     const efficiency = totalTasks > 0 ? ((completedCount / totalTasks) * 100).toFixed(1) : 0;
