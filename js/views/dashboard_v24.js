@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.199';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.200';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.199';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.199';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.199';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.199';
+import * as adminService from '../services_v245/adminService.js?v=26.5.200';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.200';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.200';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.200';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.199';
+const VERSION = '26.5.200';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5226,9 +5226,9 @@ const renderRFSection = (container) => {
                     <!-- Rango de fecha -->
                     <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
                         <span>📅 DE:</span>
-                        <input type="date" id="hist_date_from" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                        <input type="date" id="hist_date_from" value="${new Date().toISOString().slice(0,10)}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                         <span>HASTA:</span>
-                        <input type="date" id="hist_date_to" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                        <input type="date" id="hist_date_to" value="${new Date().toISOString().slice(0,10)}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                     </div>
                     <div style="margin-left:auto;">
                         <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -5353,11 +5353,59 @@ const renderRFSection = (container) => {
     };
 
     window._histDelete = (idx) => {
-        if (!confirm('¿Eliminar este registro del historial?')) return;
-        kpiHistory.splice(idx, 1);
-        localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
-        editingIdx = null;
-        renderHistTable();
+        // Modal premium de confirmación
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);
+            display:flex; align-items:center; justify-content:center; z-index:99999;
+            animation: fadeInOverlay 0.15s ease;
+        `;
+        overlay.innerHTML = `
+            <style>
+                @keyframes fadeInOverlay { from{opacity:0} to{opacity:1} }
+                @keyframes slideUpModal   { from{opacity:0;transform:translateY(20px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+            </style>
+            <div style="
+                background:linear-gradient(135deg,#1e293b,#0f172a);
+                border:1px solid rgba(239,68,68,0.35);
+                border-radius:16px;
+                padding:2rem 2.2rem;
+                max-width:380px;
+                width:90%;
+                box-shadow:0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+                text-align:center;
+                animation: slideUpModal 0.2s cubic-bezier(0.4,0,0.2,1);
+            ">
+                <div style="font-size:2.5rem; margin-bottom:0.8rem; filter:drop-shadow(0 0 12px rgba(239,68,68,0.5));">🗑️</div>
+                <h3 style="margin:0 0 0.5rem 0; color:#fff; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">Eliminar Registro</h3>
+                <p style="margin:0 0 1.6rem 0; color:#94a3b8; font-size:0.82rem; line-height:1.55;">¿Estás seguro de que deseas eliminar este registro del historial? Esta acción no se puede deshacer.</p>
+                <div style="display:flex; gap:0.8rem; justify-content:center;">
+                    <button id="modal_hist_cancel" style="
+                        flex:1; padding:0.65rem 1rem; border-radius:9px;
+                        background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+                        color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;
+                        transition:all 0.2s;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Cancelar</button>
+                    <button id="modal_hist_confirm" style="
+                        flex:1; padding:0.65rem 1rem; border-radius:9px;
+                        background:linear-gradient(135deg,#ef4444,#dc2626); border:none;
+                        color:#fff; font-size:0.82rem; font-weight:800; cursor:pointer;
+                        box-shadow:0 4px 15px rgba(239,68,68,0.35);
+                        transition:all 0.2s;
+                    " onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">Sí, eliminar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('modal_hist_cancel').onclick = () => overlay.remove();
+        document.getElementById('modal_hist_confirm').onclick = () => {
+            overlay.remove();
+            kpiHistory.splice(idx, 1);
+            localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
+            editingIdx = null;
+            renderHistTable();
+        };
     };
 
     // ── Exportar ──────────────────────────────────────────────────────────────
