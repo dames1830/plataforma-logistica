@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.200';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.201';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.200';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.200';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.200';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.200';
+import * as adminService from '../services_v245/adminService.js?v=26.5.201';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.201';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.201';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.201';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.200';
+const VERSION = '26.5.201';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5265,8 +5265,9 @@ const renderRFSection = (container) => {
             const [d, m, y] = fechaStr.split('/');
             return `${y}-${m}-${d}`;
         }
-        // "24 jun" → intenta parsear
-        const parsed = new Date(fechaStr + ' 2025');
+        // "24 jun" → intenta parsear con el año actual
+        const currentYear = new Date().getFullYear();
+        const parsed = new Date(fechaStr + ' ' + currentYear);
         if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
         return fechaStr;
     };
@@ -6073,15 +6074,19 @@ const renderRFSection = (container) => {
                 if (allCompleted) loweredPalletsCount++;
             });
             const requestedPalletsCount = uniquePlannedLPNs.length;
-            if (requestedPalletsCount > 0) {
+            // Fallback: si no hay LPNs, usar cantidad de resultados
+            const effectiveRequested = requestedPalletsCount > 0 ? requestedPalletsCount : results.length;
+            const effectiveLowered  = requestedPalletsCount > 0 ? loweredPalletsCount : results.filter(r => r.generalState === 'COMPLETADO').length;
+            if (effectiveRequested > 0) {
                 const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
                 const kpiHistory = JSON.parse(kpiHistoryRaw);
+                const todayISO = new Date().toISOString().slice(0, 10);
                 kpiHistory.push({
-                    fecha: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
-                    paletasSolicitadas: requestedPalletsCount,
-                    paletasBajadas: loweredPalletsCount,
-                    diferencias: Math.max(0, requestedPalletsCount - loweredPalletsCount),
-                    fillRate: ((loweredPalletsCount / requestedPalletsCount) * 100).toFixed(2) + '%',
+                    fecha: todayISO,
+                    paletasSolicitadas: effectiveRequested,
+                    paletasBajadas: effectiveLowered,
+                    diferencias: Math.max(0, effectiveRequested - effectiveLowered),
+                    fillRate: ((effectiveLowered / effectiveRequested) * 100).toFixed(2) + '%',
                     created_at: new Date().toISOString()
                 });
                 if (kpiHistory.length > 30) kpiHistory.shift();
