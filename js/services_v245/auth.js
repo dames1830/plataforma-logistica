@@ -28,28 +28,12 @@ export const login = async (username, password) => {
       return { success: true, user: sessionData };
   }
 
+  let dynamicUsers = [];
+  let isCloudSuccess = false;
+
   try {
-      // 2. CARGA INICIAL (Rápida)
-      let localRaw = localStorage.getItem('logistics_admin_v11_users');
-      let dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
-
-      // 3. VALIDACIÓN INSTANTÁNEA (Si ya lo conocemos localmente, no esperamos a la nube)
-      const checkLocal = () => {
-          const u = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
-          if (u && String(u.password) === String(password) && u.active !== false) return u;
-          return null;
-      };
-
-      const userFound = checkLocal();
-      if (userFound) {
-          console.log("[ULTRA] Acceso concedido vía Local.");
-          const sessionData = { id: Date.now(), username: userFound.username, role: userFound.role, name: userFound.name };
-          localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-          return { success: true, user: sessionData };
-      }
-
-      // 4. SINCRONIZACIÓN FORZADA (Solo si no entró por local)
-      console.log("[ULTRA] Usuario no encontrado local, consultando nube...");
+      // 2. SINCRONIZACIÓN FORZADA (Intentar siempre traer base de datos fresca del servidor)
+      console.log("[ULTRA] Consultando base de datos del servidor para validación...");
       const cloudRes = await fetch(`${AUTH_API}/logistics/users?z=${Date.now()}`, { 
           cache: 'no-store',
           headers: { 
@@ -60,7 +44,6 @@ export const login = async (username, password) => {
       
       if (cloudRes.ok) {
           const result = await cloudRes.json();
-          // [AJUSTE ESTRUCTURAL ROBUSTO]
           let serverList = [];
           if (Array.isArray(result)) {
               serverList = result;
@@ -73,18 +56,37 @@ export const login = async (username, password) => {
           if (Array.isArray(serverList)) {
               dynamicUsers = serverList;
               localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
-              
-              const uCloud = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
-              if (uCloud && String(uCloud.password) === String(password) && uCloud.active !== false) {
-                  console.log("[ULTRA] Acceso concedido vía Nube.");
-                  const sessionData = { id: Date.now(), username: uCloud.username, role: uCloud.role, name: uCloud.name };
-                  localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-                  return { success: true, user: sessionData };
-              }
+              isCloudSuccess = true;
+              console.log("[ULTRA] Base de usuarios actualizada desde el servidor.");
           }
       }
   } catch (err) {
-      console.error("[ULTRA] Error en proceso de login:", err);
+      console.warn("[ULTRA] Servidor no disponible, se usará caché local de respaldo:", err);
+  }
+
+  // 3. Si falló la red, cargar de localStorage como fail-safe
+  if (!isCloudSuccess) {
+      try {
+          const localRaw = localStorage.getItem('logistics_admin_v11_users');
+          dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
+      } catch(e) {
+          dynamicUsers = [];
+      }
+  }
+
+  // 4. VALIDACIÓN DE CREDENCIALES
+  const u = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
+  if (u) {
+      if (u.active === false) {
+          console.warn(`🚨 Acceso denegado: El usuario ${targetUsername} está desactivado.`);
+          return { success: false, message: 'Usuario inactivo o desactivado' };
+      }
+      if (String(u.password) === String(password)) {
+          console.log(`[ULTRA] Acceso concedido para ${targetUsername} (${isCloudSuccess ? 'NUBE' : 'CÓDIGO LOCAL'}).`);
+          const sessionData = { id: Date.now(), username: u.username, role: u.role, name: u.name };
+          localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+          return { success: true, user: sessionData };
+      }
   }
 
   return { success: false, message: 'Usuario no reconocido o contraseña incorrecta' };
