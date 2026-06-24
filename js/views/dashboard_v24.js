@@ -5207,16 +5207,13 @@ const renderRFSection = (container) => {
             <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Historial...</p>
         </div>`;
     
-    const history = await fetchBufferHistory();
     const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
     const kpiHistory = JSON.parse(kpiHistoryRaw).sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
 
-    if ((!history || history.length === 0) && kpiHistory.length === 0) {
+    if (kpiHistory.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
         return;
     }
-
-    const sorted = history ? [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts)) : [];
 
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:2rem;">
@@ -5235,11 +5232,7 @@ const renderRFSection = (container) => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${kpiHistory.length === 0 ? `
-                                <tr>
-                                    <td colspan="5" style="padding:1.5rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">No hay registros de conciliación disponibles.</td>
-                                </tr>
-                            ` : kpiHistory.map(row => `
+                            ${kpiHistory.map(row => `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                     <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
                                     <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
@@ -5252,76 +5245,8 @@ const renderRFSection = (container) => {
                     </table>
                 </div>
             </div>
-
-            <!-- SECCIÓN EXISTENTE: REPORTE DE BUFFER DÍA -->
-            ${sorted.length > 0 ? `
-            <div>
-                <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
-                <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
-                    <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
-                        <thead>
-                            <tr style="background:#facc15; color:#000;">
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sorted.map((report, rIdx) => {
-                                const ts = report.created_at || report.ts || Date.now();
-                                const dObj = new Date(ts);
-                                const semana = getWeekNumber(dObj);
-                                const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
-                                const repData = report.data || {};
-                                const niveles = repData.resumenNiveles || [];
-                                
-                                if (niveles.length === 0) {
-                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                        <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
-                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                            <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
-                                        </td>
-                                    </tr>`;
-                                }
-
-                                return `
-                                    ${niveles.map((n, nIdx) => `
-                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
-                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
-                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
-                                        </tr>
-                                    `).join('')}
-                                    <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            ` : ''}
         </div>
     `;
-
-    container.querySelectorAll('.btn-restore').forEach(btn => {
-        btn.onclick = () => {
-            const item = sorted[parseInt(btn.dataset.idx)];
-            lastBufferKPI = item.data;
-            try {
-                localStorage.setItem('lastBufferKPI', JSON.stringify(item.data));
-            } catch(e) { console.warn("[PULSE] Quota Full en Historial", e); }
-            activeBufferSub = 'reportes';
-            renderBufferTab();
-        };
-    });
   };
 
   const renderBufferConfig = async (container) => {
