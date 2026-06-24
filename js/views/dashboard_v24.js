@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.198';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.199';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.198';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.198';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.198';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.198';
+import * as adminService from '../services_v245/adminService.js?v=26.5.199';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.199';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.199';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.199';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.198';
+const VERSION = '26.5.199';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5217,10 +5217,27 @@ const renderRFSection = (container) => {
 
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:2rem;">
-            <!-- SECCIÓN: REPORTE DE CONCILIACIÓN DE PALETAS (IMAGEN 2) -->
+            <!-- SECCIÓN: REPORTE DE CONCILIACIÓN DE PALETAS -->
             <div>
                 <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Conciliación de Paletas</h3>
-                <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+
+                <!-- TOOLBAR: filtros + exportar -->
+                <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                    <!-- Rango de fecha -->
+                    <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
+                        <span>📅 DE:</span>
+                        <input type="date" id="hist_date_from" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                        <span>HASTA:</span>
+                        <input type="date" id="hist_date_to" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                    </div>
+                    <div style="margin-left:auto;">
+                        <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            📥 EXPORTAR
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding:0; overflow-x:auto; border:1px solid rgba(255,255,255,0.1);">
                     <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; text-align:center;">
                         <thead>
                             <tr style="background:#22c55e; color:#000; font-weight:800;">
@@ -5229,24 +5246,141 @@ const renderRFSection = (container) => {
                                 <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Bajadas</th>
                                 <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Diferencias</th>
                                 <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fill Rate</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${kpiHistory.map(row => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
-                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
-                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#22c55e;">${row.paletasBajadas}</td>
-                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#ef4444;">${row.diferencias}</td>
-                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
+                        <tbody id="hist_concil_tbody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     `;
+
+    // ── Helpers de fecha ──────────────────────────────────────────────────────
+    const toISO = (fechaStr) => {
+        // Acepta "24 jun", "24/06/2025", "2025-06-24"
+        if (!fechaStr) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) return fechaStr;
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(fechaStr)) {
+            const [d, m, y] = fechaStr.split('/');
+            return `${y}-${m}-${d}`;
+        }
+        // "24 jun" → intenta parsear
+        const parsed = new Date(fechaStr + ' 2025');
+        if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+        return fechaStr;
+    };
+
+    // ── Estado edición ────────────────────────────────────────────────────────
+    let editingIdx = null;
+
+    const renderHistTable = () => {
+        const tbody = document.getElementById('hist_concil_tbody');
+        if (!tbody) return;
+        const fromVal = document.getElementById('hist_date_from').value;
+        const toVal   = document.getElementById('hist_date_to').value;
+
+        const filtered = kpiHistory.map((row, idx) => ({ row, idx })).filter(({ row }) => {
+            if (!fromVal && !toVal) return true;
+            const d = toISO(row.fecha || '');
+            return (!fromVal || d >= fromVal) && (!toVal || d <= toVal);
+        });
+
+        if (!filtered.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay registros en ese rango de fechas.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(({ row, idx }) => {
+            if (editingIdx === idx) {
+                // Fila en modo edición
+                return `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(99,102,241,0.08);">
+                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
+                        <input id="ed_fecha_${idx}" value="${row.fecha || ''}" style="width:90px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.3rem 0.4rem; font-size:0.75rem; text-align:center;" />
+                    </td>
+                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
+                        <input id="ed_sol_${idx}" value="${row.paletasSolicitadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.3rem 0.4rem; font-size:0.75rem; text-align:center;" />
+                    </td>
+                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
+                        <input id="ed_baj_${idx}" value="${row.paletasBajadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.3rem 0.4rem; font-size:0.75rem; text-align:center;" />
+                    </td>
+                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05); color:#ef4444; font-weight:700;">${row.diferencias}</td>
+                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:800;">${row.fillRate}</td>
+                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="display:flex; gap:0.4rem; justify-content:center;">
+                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#22c55e; border:none; border-radius:5px; padding:0.3rem 0.5rem; cursor:pointer; font-size:0.85rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
+                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:rgba(255,255,255,0.08); border:none; border-radius:5px; padding:0.3rem 0.5rem; cursor:pointer; font-size:0.85rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }
+            return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
+                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
+                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#22c55e;">${row.paletasBajadas}</td>
+                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#ef4444;">${row.diferencias}</td>
+                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
+                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; gap:0.5rem; justify-content:center;">
+                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">✏️</button>
+                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:6px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.28)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">🗑️</button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    };
+
+    // ── Acciones globales ─────────────────────────────────────────────────────
+    window._histEdit = (idx) => { editingIdx = idx; renderHistTable(); };
+    window._histCancelEdit = () => { editingIdx = null; renderHistTable(); };
+
+    window._histSave = (idx) => {
+        const newFecha = document.getElementById(`ed_fecha_${idx}`).value;
+        const newSol   = parseInt(document.getElementById(`ed_sol_${idx}`).value) || 0;
+        const newBaj   = parseInt(document.getElementById(`ed_baj_${idx}`).value) || 0;
+        const newDif   = newSol - newBaj;
+        const newFill  = newSol > 0 ? ((newBaj / newSol) * 100).toFixed(2) + '%' : '0.00%';
+        kpiHistory[idx].fecha              = newFecha;
+        kpiHistory[idx].paletasSolicitadas = newSol;
+        kpiHistory[idx].paletasBajadas     = newBaj;
+        kpiHistory[idx].diferencias        = newDif;
+        kpiHistory[idx].fillRate           = newFill;
+        localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
+        editingIdx = null;
+        renderHistTable();
+    };
+
+    window._histDelete = (idx) => {
+        if (!confirm('¿Eliminar este registro del historial?')) return;
+        kpiHistory.splice(idx, 1);
+        localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
+        editingIdx = null;
+        renderHistTable();
+    };
+
+    // ── Exportar ──────────────────────────────────────────────────────────────
+    document.getElementById('btn_hist_export').onclick = () => {
+        const fromVal = document.getElementById('hist_date_from').value;
+        const toVal   = document.getElementById('hist_date_to').value;
+        const rows = kpiHistory.filter(row => {
+            const d = toISO(row.fecha || '');
+            return (!fromVal || d >= fromVal) && (!toVal || d <= toVal);
+        });
+        const data = [['Fecha','Paletas Solicitadas','Paletas Bajadas','Diferencias','Fill Rate']];
+        rows.forEach(r => data.push([r.fecha, r.paletasSolicitadas, r.paletasBajadas, r.diferencias, r.fillRate]));
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Conciliacion Paletas');
+        XLSX.writeFile(wb, `Historial_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
+    };
+
+    // ── Filtros de fecha ──────────────────────────────────────────────────────
+    document.getElementById('hist_date_from').addEventListener('change', renderHistTable);
+    document.getElementById('hist_date_to').addEventListener('change', renderHistTable);
+
+    renderHistTable();
   };
 
   const renderBufferConfig = async (container) => {
