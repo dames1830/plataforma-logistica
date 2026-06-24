@@ -630,9 +630,9 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
-                                <th style="padding:0.8rem 1rem; text-align:center;">${isPlannedMode ? 'CANT. BUFFER' : 'CANT. INICIAL'}</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">QTY SOLICITADO</th>
                                 <th style="padding:0.8rem 1rem;">ESTADO RESERVA</th>
-                                <th style="padding:0.8rem 1rem;">${isPlannedMode ? 'ESTADO DESTINO (ACT)' : 'DIFERENCIA (BAJADO)'}</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">QTY BAJADO</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">ESTADO GENERAL</th>
                             </tr>
                         </thead>
@@ -657,9 +657,9 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
             
-            // Si es modo directo, mostramos la diferencia numérica en lugar de estado del activo
-            const diffDisplay = isPlannedMode ? r.actState : (r.origResQty - r.finalResQty);
-            const plannedQtyDisplay = isPlannedMode ? r.plannedQty : r.origResQty;
+            // Cantidad bajada es la diferencia (inicial - final) de Reserva
+            const diffDisplay = hasReserva ? (r.origResQty - r.finalResQty) : 0;
+            const plannedQtyDisplay = r.plannedQty;
 
             tr.innerHTML = `
                 <td style="padding:0.6rem 1rem; font-weight:700;">${r.lpn || 'S/L'}</td>
@@ -667,7 +667,7 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
                 <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${plannedQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; ${r.resStatusClass}; font-weight:700;">${r.resState}</td>
-                <td style="padding:0.6rem 1rem; ${isPlannedMode ? r.actStatusClass : ''}; font-weight:700;">${diffDisplay}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${diffDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${r.statusTag}</td>
             `;
             tbody.appendChild(tr);
