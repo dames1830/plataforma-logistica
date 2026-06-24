@@ -175,28 +175,11 @@ export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
             ts: Date.now(),
             created_at: new Date().toISOString()
         };
-
-        const response = await fetch(BUFFER_HISTORY_URL, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Environment': 'production'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            console.log('✅ Reporte Buffer guardado en DB Principal.');
-            saveToLocalHistory(payload);
-            return true;
-        } else {
-            console.warn(`⚠️ Error DB (${response.status}): Guardando solo localmente.`);
-            saveToLocalHistory(payload);
-            return false;
-        }
+        saveToLocalHistory(payload);
+        console.log('✅ Reporte Buffer guardado localmente (Modo 100% Local).');
+        return true;
     } catch (e) {
-        console.warn('⚠️ Fallo de conexión: Guardando solo localmente.', e);
-        saveToLocalHistory({ data: bufferKPIObj, updated_by: username, ts: Date.now() });
+        console.warn('⚠️ Fallo al guardar reporte localmente:', e);
         return false;
     }
 };
@@ -214,58 +197,24 @@ const saveToLocalHistory = (report) => {
 
 export const loadBufferReport = async () => {
     try {
-        const res = await fetch(`${SHARED_API}/buffer_report`, {
-            headers: { 'X-Environment': 'production' }
-        });
-        if (!res.ok) return null;
-        const json = await res.json();
-        if (json.status === 'ok' && json.data) {
-            console.log(`✅ Reporte Buffer cargado del servidor.`);
-            // Si devuelve un array, tomamos el último
-            if (Array.isArray(json.data)) return json.data[json.data.length - 1];
-            return json.data;
+        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
+        const history = JSON.parse(raw);
+        if (history.length > 0) {
+            return history[history.length - 1].data;
         }
     } catch (e) {
-        console.warn('⚠️ No se pudo cargar el reporte del servidor:', e);
+        console.warn('⚠️ No se pudo cargar el reporte local:', e);
     }
     return null;
 };
 
 export const fetchBufferHistory = async () => {
-    let serverHistory = [];
-    try {
-        const res = await fetch(BUFFER_HISTORY_URL, {
-            headers: { 'X-Environment': 'production' }
-        });
-        if (res.ok) {
-            const json = await res.json();
-            if (json.data) {
-                serverHistory = Array.isArray(json.data) ? json.data : [json.data];
-                console.log(`✅ ${serverHistory.length} reportes cargados de DB Principal.`);
-            }
-        }
-    } catch (e) {
-        console.warn('⚠️ Error obteniendo historial de DB:', e);
-    }
-    
     try {
         const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
         const localHistory = JSON.parse(localRaw);
-        
-        const combined = [...serverHistory];
-        localHistory.forEach(lh => {
-            const exists = combined.some(sh => (sh.ts === lh.ts) || (sh.created_at === lh.created_at));
-            if (!exists) combined.push(lh);
-        });
-        
-        // Limpieza de Quota: Solo mantener los últimos 10 locales si hay muchos
-        if (localHistory.length > 10) {
-            localStorage.setItem('logistics_buffer_history_local', JSON.stringify(localHistory.slice(-10)));
-        }
-
-        return combined;
+        return localHistory;
     } catch(e) { 
-        return serverHistory; 
+        return []; 
     }
 };
 
@@ -440,7 +389,8 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     }
 
     // 2. Si es local-only, terminar aquí
-    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo') {
+    const isLocalOnly = area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas';
+    if (isLocalOnly) {
         if (area.startsWith('recepcion')) {
             localStorage.removeItem('recepcion_report_processed');
         }
@@ -469,7 +419,7 @@ export const clearAreaData = async (area, username = 'sistema') => {
     localStorage.removeItem('meta_' + area);
     
     // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, procesar 100% de manera local
-    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo') {
+    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas') {
         try {
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -513,7 +463,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
   }
 
   // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
-  if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo') {
+  if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas') {
       if (area.endsWith('_activo') || area.endsWith('_reserva')) {
           updateTablaTallas();
       }
@@ -646,43 +596,22 @@ export const generateKPIs = (data, area) => {
 
 export const fetchBufferConfig = async () => {
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000); 
-        try {
-            const response = await fetch(`${API_BASE}/buffer/config`, { 
-                signal: controller.signal,
-                headers: { 'X-Environment': 'production' }
-            });
-            clearTimeout(timeoutId);
-            if (response.ok) {
-                const res = await response.json();
-                return res.data || res;
-            }
-        } catch (err) {
-            if (err.name === 'AbortError') console.warn("Timeout config buffer (2s): usando local default");
-            else console.warn("Error config buffer:", err);
+        const local = localStorage.getItem('logistics_buffer_config_local');
+        if (local) {
+            return JSON.parse(local);
         }
-    } catch (e) { console.error("Error crítico fetchBufferConfig:", e); }
+    } catch (e) { console.error("Error config buffer local:", e); }
     return { include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1', include_merma: '1' };
 };
 
 export const saveBufferConfig = async (config) => {
     try {
-        const response = await fetch(`${API_BASE}/buffer/config`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Environment': 'production'
-            },
-            body: JSON.stringify(config)
-        });
-        if (response.ok) {
-            return await response.json();
-        }
+        localStorage.setItem('logistics_buffer_config_local', JSON.stringify(config));
+        return { status: 'success' };
     } catch (e) {
-        console.error("Error al guardar la configuración de buffer:", e);
+        console.error("Error al guardar la configuración de buffer local:", e);
     }
-    return { status: 'error', message: 'Error de conexión con el servidor' };
+    return { status: 'error', message: 'Error al guardar la configuración local' };
 };
 
 export const calculateBufferPallets = (configOverride = null) => {
