@@ -389,11 +389,13 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         try { plan = JSON.parse(stored); } catch(e){}
     }
 
-    if ((!plan || !plan.detallePallets || !plan.detallePallets.length) && dataStore.buffer_activo && dataStore.buffer_reserva && dataStore.articulos && dataStore.buffer) {
+    const planDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
+    if ((!plan || !planDetalle || !planDetalle.length) && dataStore.buffer_activo && dataStore.buffer_reserva && dataStore.articulos && dataStore.buffer) {
         try {
             const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
             const res = calculateBufferPallets(config);
-            if (res && res.detallePallets) {
+            const resDetalle = res ? (res.detalle || res.detallePallets) : null;
+            if (res && resDetalle) {
                 plan = res;
                 localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res));
             }
@@ -402,7 +404,8 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         }
     }
 
-    const plannedPallets = plan && plan.detallePallets ? plan.detallePallets.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
+    const currentPlanDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
+    const plannedPallets = currentPlanDetalle ? currentPlanDetalle.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
 
     if (plannedPallets.length === 0) {
         alert("⚠️ ATENCIÓN: No se detectó ningún análisis de buffer activo. Primero debes procesar el cálculo en la pestaña ANÁLISIS BUFFER.");
