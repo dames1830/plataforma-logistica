@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.190';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.191';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.190';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.190';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.190';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.190';
+import * as adminService from '../services_v245/adminService.js?v=26.5.191';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.191';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.191';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.191';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.190';
+const VERSION = '26.5.191';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5685,29 +5685,36 @@ const renderRFSection = (container) => {
         btn.disabled = true;
         btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
 
-        // Cargar todos los archivos IndexedDB en la memoria de dataStore antes de proceder
-        const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
-            getAreaData('validar_activo'),
-            getAreaData('validar_reserva'),
-            getAreaData('buffer_reserva'),
-            getAreaData('buffer_activo'),
-            getAreaData('buffer'),
-            getAreaData('articulos'),
-            getAreaData('solicitud'),
-            getAreaData('tallas')
-        ]);
+        try {
+            // Cargar todos los archivos IndexedDB en la memoria de dataStore antes de proceder
+            const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
+                getAreaData('validar_activo'),
+                getAreaData('validar_reserva'),
+                getAreaData('buffer_reserva'),
+                getAreaData('buffer_activo'),
+                getAreaData('buffer'),
+                getAreaData('articulos'),
+                getAreaData('solicitud'),
+                getAreaData('tallas')
+            ]);
 
-        const hasActivo = validarActivo && validarActivo.length > 0;
-        const hasReserva = validarReserva && validarReserva.length > 0;
+            const hasActivo = validarActivo && validarActivo.length > 0;
+            const hasReserva = validarReserva && validarReserva.length > 0;
 
-        if (!hasActivo && !hasReserva) {
-            alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
+            if (!hasActivo && !hasReserva) {
+                alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
+                btn.disabled = false;
+                btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
+                return;
+            }
+
+            await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva);
+        } catch(error) {
+            console.error("Error durante conciliacion buffer kpi:", error);
+            alert("❌ Ocurrió un error al procesar la conciliación:\n" + error.message);
             btn.disabled = false;
             btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
-            return;
         }
-
-        await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva);
     };
   };
 
@@ -10479,7 +10486,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.190 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.191 | MOBILE PORTAL
                             </div>
                     </div>
 

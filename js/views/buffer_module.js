@@ -369,29 +369,36 @@ const renderBufferKPI = async (container) => {
         btn.disabled = true;
         btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
 
-        // Cargar todos los archivos IndexedDB en la memoria de dataStore antes de proceder
-        const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
-            getAreaData('validar_activo'),
-            getAreaData('validar_reserva'),
-            getAreaData('buffer_reserva'),
-            getAreaData('buffer_activo'),
-            getAreaData('buffer'),
-            getAreaData('articulos'),
-            getAreaData('solicitud'),
-            getAreaData('tallas')
-        ]);
+        try {
+            // Cargar todos los archivos IndexedDB en la memoria de dataStore antes de proceder
+            const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
+                getAreaData('validar_activo'),
+                getAreaData('validar_reserva'),
+                getAreaData('buffer_reserva'),
+                getAreaData('buffer_activo'),
+                getAreaData('buffer'),
+                getAreaData('articulos'),
+                getAreaData('solicitud'),
+                getAreaData('tallas')
+            ]);
 
-        const hasActivo = validarActivo && validarActivo.length > 0;
-        const hasReserva = validarReserva && validarReserva.length > 0;
+            const hasActivo = validarActivo && validarActivo.length > 0;
+            const hasReserva = validarReserva && validarReserva.length > 0;
 
-        if (!hasActivo && !hasReserva) {
-            alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
+            if (!hasActivo && !hasReserva) {
+                alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
+                btn.disabled = false;
+                btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
+                return;
+            }
+
+            await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva);
+        } catch(error) {
+            console.error("Error durante conciliacion buffer kpi:", error);
+            alert("❌ Ocurrió un error al procesar la conciliación:\n" + error.message);
             btn.disabled = false;
             btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
-            return;
         }
-
-        await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva);
     };
 };
 
