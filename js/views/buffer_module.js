@@ -453,6 +453,7 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
 
         // 1. Mapeo de Reserva Final
         const finalReservaLPNs = {};
+        const finalReservaLPNSet = new Set();
         const finalReservaSkuUbi = {};
         if (hasReserva) {
             validarReserva.forEach(r => {
@@ -461,7 +462,11 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
                 const sku = String(r.PRODUCTO || '').trim();
                 const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const qty = parseFloat(r.CANTIDAD) || 0;
-                if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
+                if (lpn) {
+                    const lpnSkuKey = `${lpn}|${sku}`;
+                    finalReservaLPNs[lpnSkuKey] = (finalReservaLPNs[lpnSkuKey] || 0) + qty;
+                    finalReservaLPNSet.add(lpn);
+                }
                 const key = `${sku}|${ubi}`;
                 finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
             });
@@ -500,8 +505,9 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         let resStatusClass = "color:var(--text-muted);";
 
         if (hasReserva) {
-            if (lpn && finalReservaLPNs[lpn] !== undefined) {
-                finalResQty = finalReservaLPNs[lpn];
+            const lpnSkuKey = `${lpn}|${sku}`;
+            if (lpn && finalReservaLPNSet.has(lpn)) {
+                finalResQty = finalReservaLPNs[lpnSkuKey] || 0;
             } else {
                 const key = `${sku}|${ubiRes}`;
                 finalResQty = finalReservaSkuUbi[key] || 0;

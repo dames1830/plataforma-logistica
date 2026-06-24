@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.194';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.195';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.194';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.194';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.194';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.194';
+import * as adminService from '../services_v245/adminService.js?v=26.5.195';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.195';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.195';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.195';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.194';
+const VERSION = '26.5.195';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5772,6 +5772,7 @@ const renderRFSection = (container) => {
 
         // 1. Mapeo de Reserva Final
         const finalReservaLPNs = {};
+        const finalReservaLPNSet = new Set();
         const finalReservaSkuUbi = {};
         if (hasReserva) {
             validarReserva.forEach(r => {
@@ -5780,7 +5781,11 @@ const renderRFSection = (container) => {
                 const sku = String(r.PRODUCTO || '').trim();
                 const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const qty = parseFloat(r.CANTIDAD) || 0;
-                if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
+                if (lpn) {
+                    const lpnSkuKey = `${lpn}|${sku}`;
+                    finalReservaLPNs[lpnSkuKey] = (finalReservaLPNs[lpnSkuKey] || 0) + qty;
+                    finalReservaLPNSet.add(lpn);
+                }
                 const key = `${sku}|${ubi}`;
                 finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
             });
@@ -5819,8 +5824,9 @@ const renderRFSection = (container) => {
         let resStatusClass = "color:var(--text-muted);";
 
         if (hasReserva) {
-            if (lpn && finalReservaLPNs[lpn] !== undefined) {
-                finalResQty = finalReservaLPNs[lpn];
+            const lpnSkuKey = `${lpn}|${sku}`;
+            if (lpn && finalReservaLPNSet.has(lpn)) {
+                finalResQty = finalReservaLPNs[lpnSkuKey] || 0;
             } else {
                 const key = `${sku}|${ubiRes}`;
                 finalResQty = finalReservaSkuUbi[key] || 0;
@@ -10490,7 +10496,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.194 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.195 | MOBILE PORTAL
                             </div>
                     </div>
 
