@@ -388,6 +388,59 @@ export const fetchKPIDates = async () => {
     } catch(e) { return []; }
 };
 
+/**
+ * Carga y combina resultados del Buffer KPI para un rango de fechas (DE → HASTA).
+ * Llama al endpoint /range del servidor. Fallback a localStorage.
+ * @param {string} fechaFrom - YYYY-MM-DD
+ * @param {string} fechaTo   - YYYY-MM-DD
+ * @returns {{ data: Array, row_count: number, dates: string[], from_server: boolean }}
+ */
+export const loadKPIResultsRange = async (fechaFrom, fechaTo) => {
+    const params = new URLSearchParams({ t: Date.now() });
+    if (fechaFrom) params.set('fecha_from', fechaFrom);
+    if (fechaTo)   params.set('fecha_to',   fechaTo);
+
+    try {
+        const res  = await fetch(`${API_BASE}/buffer/kpi/results/range?${params}`, {
+            headers: { 'X-Environment': 'production' }
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success') {
+                // Actualizar caché local con los resultados recibidos
+                if (json.dates && json.dates.length > 0) {
+                    try {
+                        const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+                        // Reconstituir por fecha para el caché
+                        json.dates.forEach(f => {
+                            raw[f] = json.data.filter(r => {
+                                const d = (r.fecha || '').split('/').reverse().join('-'); // dd/mm/yyyy → yyyy-mm-dd
+                                return d === f || r.fecha === f;
+                            });
+                        });
+                        localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
+                    } catch(e) {}
+                }
+                return { data: json.data || [], row_count: json.row_count || 0, dates: json.dates || [], from_server: true };
+            }
+        }
+    } catch(e) {
+        console.warn('[KPI] ⚠️ Rango desde servidor falló. Usando localStorage.', e);
+    }
+
+    // Fallback: filtrar localStorage por rango
+    try {
+        const raw  = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+        const keys = Object.keys(raw).filter(f => {
+            if (fechaFrom && f < fechaFrom) return false;
+            if (fechaTo   && f > fechaTo)   return false;
+            return true;
+        }).sort();
+        const combined = keys.flatMap(f => raw[f] || []);
+        return { data: combined, row_count: combined.length, dates: keys, from_server: false };
+    } catch(e) { return { data: [], row_count: 0, dates: [], from_server: false }; }
+};
+
 export const fetchAvailableDates = async () => {
     try {
         const response = await fetch(`${API_URL}/dates`, {

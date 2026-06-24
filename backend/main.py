@@ -760,3 +760,56 @@ def get_kpi_dates():
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/buffer/kpi/results/range")
+def get_kpi_results_range(fecha_from: Optional[str] = None, fecha_to: Optional[str] = None):
+    """
+    Devuelve los resultados del Buffer KPI para un rango de fechas.
+    Combina las filas de todos los días en ese rango.
+    Query params: ?fecha_from=YYYY-MM-DD&fecha_to=YYYY-MM-DD
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        if fecha_from and fecha_to:
+            cursor.execute("""
+                SELECT fecha, results_json FROM buffer_kpi_results
+                WHERE fecha >= ? AND fecha <= ?
+                ORDER BY fecha ASC
+            """, (fecha_from, fecha_to))
+        elif fecha_from:
+            cursor.execute("""
+                SELECT fecha, results_json FROM buffer_kpi_results
+                WHERE fecha >= ? ORDER BY fecha ASC
+            """, (fecha_from,))
+        elif fecha_to:
+            cursor.execute("""
+                SELECT fecha, results_json FROM buffer_kpi_results
+                WHERE fecha <= ? ORDER BY fecha DESC LIMIT 30
+            """, (fecha_to,))
+        else:
+            cursor.execute("""
+                SELECT fecha, results_json FROM buffer_kpi_results
+                ORDER BY fecha DESC LIMIT 30
+            """)
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        combined = []
+        for row in rows:
+            try:
+                combined.extend(json.loads(row[1]))
+            except Exception:
+                pass
+
+        return {
+            "status":    "success",
+            "row_count": len(combined),
+            "dates":     [r[0] for r in rows],
+            "data":      combined
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
