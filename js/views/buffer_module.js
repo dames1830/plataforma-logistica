@@ -630,6 +630,7 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">QTY STOCK</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">QTY SOLICITADO</th>
                                 <th style="padding:0.8rem 1rem;">ESTADO RESERVA</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">QTY BAJADO</th>
@@ -649,7 +650,7 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         const filtered = results.filter(r => filterValue === 'TODOS' || r.generalState === filterValue);
         
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="7" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
             return;
         }
 
@@ -660,11 +661,13 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
             // Cantidad bajada es la diferencia (inicial - final) de Reserva
             const diffDisplay = hasReserva ? (r.origResQty - r.finalResQty) : 0;
             const plannedQtyDisplay = r.plannedQty;
+            const stockQtyDisplay = r.origResQty;
 
             tr.innerHTML = `
                 <td style="padding:0.6rem 1rem; font-weight:700;">${r.lpn || 'S/L'}</td>
                 <td style="padding:0.6rem 1rem;">${r.sku}</td>
                 <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
+                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${stockQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${plannedQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; ${r.resStatusClass}; font-weight:700;">${r.resState}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${diffDisplay}</td>
