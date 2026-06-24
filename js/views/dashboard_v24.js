@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.205';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.206';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.205';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.205';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.205';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.205';
+import * as adminService from '../services_v245/adminService.js?v=26.5.206';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.206';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.206';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.206';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.205';
+const VERSION = '26.5.206';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5857,12 +5857,15 @@ const renderRFSection = (container) => {
     `;
 
     document.getElementById('btn_run_kpi_analysis').onclick = async () => {
+        // ── Pedir la fecha del proceso al usuario ─────────────────────────
+        const fechaElegida = await pickKPIDate();
+        if (!fechaElegida) return; // Canceló el modal
+
         const btn = document.getElementById('btn_run_kpi_analysis');
         btn.disabled = true;
         btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
 
         try {
-            // Cargar todos los archivos IndexedDB en la memoria de dataStore antes de proceder
             const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
                 getAreaData('validar_activo'),
                 getAreaData('validar_reserva'),
@@ -5884,7 +5887,7 @@ const renderRFSection = (container) => {
                 return;
             }
 
-            await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva);
+            await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, null, fechaElegida);
         } catch(error) {
             console.error("Error durante conciliacion buffer kpi:", error);
             alert("❌ Ocurrió un error al procesar la conciliación:\n" + error.message);
@@ -5894,7 +5897,55 @@ const renderRFSection = (container) => {
     };
   };
 
-  const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, preCalculatedResults = null) => {
+  // ── Modal de selección de fecha de proceso ──────────────────────────────
+  const pickKPIDate = () => new Promise(resolve => {
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);animation:fadeIn 0.2s ease;`;
+    overlay.innerHTML = `
+      <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:2rem 2.5rem;min-width:340px;max-width:400px;box-shadow:0 25px 80px rgba(0,0,0,0.6);animation:slideUp 0.3s ease;">
+        <div style="text-align:center;margin-bottom:1.5rem;">
+          <div style="font-size:2.5rem;margin-bottom:0.6rem;">📅</div>
+          <h3 style="color:#fff;font-size:1.1rem;font-weight:800;margin:0 0 0.4rem;letter-spacing:0.5px;">FECHA DEL PROCESO</h3>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin:0;line-height:1.5;">
+            Selecciona el día al que pertenece este proceso.<br>
+            <span style="color:#a5b4fc;">Útil si trabajas turno de amanecida.</span>
+          </p>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem;">
+          <label style="color:rgba(255,255,255,0.6);font-size:0.72rem;font-weight:700;letter-spacing:0.5px;display:block;margin-bottom:0.5rem;">📆 FECHA DE PROCESO</label>
+          <input type="date" id="kpi_pick_date" value="${todayISO}"
+            style="width:100%;background:transparent;color:#fff;border:none;font-size:1.1rem;font-weight:800;outline:none;cursor:pointer;color-scheme:dark;font-family:inherit;"
+          />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;">
+          <button id="kpi_pick_yesterday" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);padding:0.5rem;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+            ← Ayer
+          </button>
+          <button id="kpi_pick_today" style="background:rgba(99,102,241,0.2);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:0.5rem;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+            Hoy →
+          </button>
+        </div>
+
+        <div style="display:flex;gap:0.8rem;">
+          <button id="kpi_pick_cancel" style="flex:1;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08);padding:0.7rem;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s;">CANCELAR</button>
+          <button id="kpi_pick_confirm" style="flex:2;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:0.7rem;border-radius:10px;font-size:0.8rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:all 0.2s;">⚡ PROCESAR ESTA FECHA</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector('#kpi_pick_date');
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    overlay.querySelector('#kpi_pick_yesterday').onclick = () => { inp.value = yesterday.toISOString().slice(0,10); };
+    overlay.querySelector('#kpi_pick_today').onclick    = () => { inp.value = todayISO; };
+    overlay.querySelector('#kpi_pick_cancel').onclick   = () => { overlay.remove(); resolve(null); };
+    overlay.querySelector('#kpi_pick_confirm').onclick  = () => { const v = inp.value; overlay.remove(); resolve(v || todayISO); };
+    overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(null); } };
+  });
+
+  const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, preCalculatedResults = null, fechaProceso = null) => {
     const isPlannedMode = true;
     const results = [];
     let completedCount = 0;
@@ -6100,13 +6151,13 @@ const renderRFSection = (container) => {
             statusTag,
             generalState,
             colorDot,
-            fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            fecha: (() => { const d = fechaProceso ? new Date(fechaProceso + 'T12:00:00') : new Date(); return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }); })()
         });
     });
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
 
         // ✅ Sincronizar resultados completos con el servidor (indexado por fecha)
-        const todayKPI = new Date().toISOString().slice(0, 10);
+        const todayKPI = fechaProceso || new Date().toISOString().slice(0, 10);
         saveKPIResults(todayKPI, results).then(ok => {
             console.log(ok
                 ? `[KPI] ✅ Resultados del ${todayKPI} sincronizados con el servidor (${results.length} filas).`
@@ -6298,6 +6349,10 @@ const renderRFSection = (container) => {
     const btnReprocess = document.getElementById('btn_reprocess_kpi');
     if (btnReprocess) {
         btnReprocess.onclick = async () => {
+            // Pedir fecha antes de reprocesar
+            const fechaElegida = await pickKPIDate();
+            if (!fechaElegida) return;
+
             btnReprocess.disabled = true;
             btnReprocess.innerHTML = `⏳...`;
             const [valActivo, valReserva, origReserva] = await Promise.all([
@@ -6305,7 +6360,7 @@ const renderRFSection = (container) => {
                 getAreaData('validar_reserva'),
                 getAreaData('buffer_reserva')
             ]);
-            await runProcessBufferKPI(container, valActivo, valReserva, origReserva, valActivo && valActivo.length > 0, valReserva && valReserva.length > 0, null);
+            await runProcessBufferKPI(container, valActivo, valReserva, origReserva, valActivo && valActivo.length > 0, valReserva && valReserva.length > 0, null, fechaElegida);
         };
     }
     document.getElementById('btn_excel_val').onclick = () => {
