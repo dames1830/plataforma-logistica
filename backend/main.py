@@ -57,6 +57,7 @@ def init_db():
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_config (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
     cursor.execute('CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL, action TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS shared_data (key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS buffer_history (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, paletas_solicitadas INTEGER NOT NULL, paletas_bajadas INTEGER NOT NULL, diferencias INTEGER NOT NULL, fill_rate TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     
     # Sembrar Usuarios Base (Recuperados de Captura)
     if cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
@@ -85,7 +86,7 @@ def prune_old_snapshots():
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history']
         
         cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
         areas = [r[0] for r in cursor.fetchall()]
@@ -149,7 +150,7 @@ def get_area_data(area: str, date: Optional[str] = None):
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
         
         # ÁREAS SINGLETON (Siempre un solo registro maestro)
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history']
         
         if area == 'users':
             # Auto-saneamiento/sincronización en el GET si la tabla 'users' no coincide con el snapshot guardado
@@ -242,7 +243,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         json_string = json.dumps(payload_data)
         
         # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history']
         
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
@@ -558,4 +559,106 @@ def get_no_retail_photo(client_id: str, photo_type: str):
         return {"status": "error", "message": str(e)}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# BUFFER HISTORY — Endpoints dedicados para Historial Buffer sincronizado
+# ─────────────────────────────────────────────────────────────────────────────
 
+@app.get("/api/buffer/history")
+def get_buffer_history():
+    """Devuelve todos los registros del historial de Buffer KPI, del más reciente al más antiguo."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, created_at
+            FROM buffer_history
+            ORDER BY created_at DESC
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        records = []
+        for r in rows:
+            records.append({
+                "id":                  r[0],
+                "fecha":               r[1],
+                "paletasSolicitadas":  r[2],
+                "paletasBajadas":      r[3],
+                "diferencias":         r[4],
+                "fillRate":            r[5],
+                "created_at":          r[6]
+            })
+        return {"status": "success", "data": records}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/buffer/history")
+async def add_buffer_history(request: Request):
+    """Agrega un nuevo registro al historial de Buffer KPI."""
+    try:
+        body = await request.json()
+        fecha               = body.get("fecha", datetime.now().strftime("%Y-%m-%d"))
+        paletas_solicitadas = int(body.get("paletasSolicitadas", 0))
+        paletas_bajadas     = int(body.get("paletasBajadas", 0))
+        diferencias         = int(body.get("diferencias", 0))
+        fill_rate           = str(body.get("fillRate", "0.00%"))
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO buffer_history (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, datetime.now().isoformat()))
+        new_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        print(f"[BUFFER_HIST] Registro añadido id={new_id} fecha={fecha} sol={paletas_solicitadas} baj={paletas_bajadas}")
+        return {"status": "success", "id": new_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.put("/api/buffer/history/{record_id}")
+async def update_buffer_history(record_id: int, request: Request):
+    """Actualiza un registro existente del historial de Buffer KPI por su id."""
+    try:
+        body = await request.json()
+        fecha               = body.get("fecha")
+        paletas_solicitadas = int(body.get("paletasSolicitadas", 0))
+        paletas_bajadas     = int(body.get("paletasBajadas", 0))
+        diferencias         = int(body.get("diferencias", 0))
+        fill_rate           = str(body.get("fillRate", "0.00%"))
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE buffer_history
+            SET fecha=?, paletas_solicitadas=?, paletas_bajadas=?, diferencias=?, fill_rate=?
+            WHERE id=?
+        """, (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, record_id))
+        updated = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if updated == 0:
+            return {"status": "error", "message": f"Registro id={record_id} no encontrado"}
+        return {"status": "success", "id": record_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.delete("/api/buffer/history/{record_id}")
+def delete_buffer_history(record_id: int):
+    """Elimina un registro del historial de Buffer KPI por su id."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM buffer_history WHERE id=?", (record_id,))
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if deleted == 0:
+            return {"status": "error", "message": f"Registro id={record_id} no encontrado"}
+        print(f"[BUFFER_HIST] Registro eliminado id={record_id}")
+        return {"status": "success", "id": record_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

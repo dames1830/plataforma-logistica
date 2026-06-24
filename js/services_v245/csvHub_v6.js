@@ -164,58 +164,123 @@ export const pingServer = () => {
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
 
-// URL para Historial de Buffer en la DB Principal
-const BUFFER_HISTORY_URL = `${API_URL}/buffer_history`;
+// URL dedicada para Historial de Buffer KPI
+const BUFFER_HISTORY_API = `${API_BASE}/buffer/history`;
+const BUFFER_HIST_LOCAL_KEY = 'logistics_buffer_kpi_history_local';
 
-export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
+/**
+ * Guarda un registro de conciliación en el servidor Y en localStorage (fallback).
+ * @param {Object} record - { fecha, paletasSolicitadas, paletasBajadas, diferencias, fillRate }
+ * @returns {number|null} - El id del servidor, o null si falló
+ */
+export const saveBufferHistoryRecord = async (record) => {
+    // 1. Siempre guardar localmente primero (offline-first)
     try {
-        const payload = {
-            data: bufferKPIObj,
-            updated_by: username,
-            ts: Date.now(),
-            created_at: new Date().toISOString()
-        };
-        saveToLocalHistory(payload);
-        console.log('✅ Reporte Buffer guardado localmente (Modo 100% Local).');
-        return true;
-    } catch (e) {
-        console.warn('⚠️ Fallo al guardar reporte localmente:', e);
-        return false;
-    }
-};
+        const localRaw = localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]';
+        const local = JSON.parse(localRaw);
+        // Agregar con id temporal negativo para distinguirlo del servidor
+        local.unshift({ ...record, _local: true });
+        if (local.length > 90) local.pop();
+        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(local));
+    } catch(e) { console.warn('[BH] Error guardando localmente:', e); }
 
-const saveToLocalHistory = (report) => {
+    // 2. Intentar enviar al servidor
     try {
-        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
-        const history = JSON.parse(raw);
-        history.push(report);
-        // Mantener solo los últimos 20 reportes localmente
-        if (history.length > 20) history.shift();
-        localStorage.setItem('logistics_buffer_history_local', JSON.stringify(history));
-    } catch(e) { console.warn('⚠️ No se pudo guardar historial local:', e); }
-};
-
-export const loadBufferReport = async () => {
-    try {
-        const raw = localStorage.getItem('logistics_buffer_history_local') || '[]';
-        const history = JSON.parse(raw);
-        if (history.length > 0) {
-            return history[history.length - 1].data;
+        const res = await fetch(BUFFER_HISTORY_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+            body: JSON.stringify(record)
+        });
+        const json = await res.json();
+        if (json.status === 'success') {
+            console.log(`[BH] ✅ Sincronizado con servidor. id=${json.id}`);
+            // Actualizar el registro local con el id real del servidor
+            try {
+                const localRaw2 = localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]';
+                const local2 = JSON.parse(localRaw2);
+                if (local2[0]?._local) { local2[0].id = json.id; delete local2[0]._local; }
+                localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(local2));
+            } catch(e) {}
+            return json.id;
         }
-    } catch (e) {
-        console.warn('⚠️ No se pudo cargar el reporte local:', e);
+    } catch(e) {
+        console.warn('[BH] ⚠️ Servidor no disponible. Guardado solo en localStorage.', e);
     }
     return null;
 };
 
+/**
+ * Carga el historial completo desde el servidor. Fallback a localStorage si falla.
+ * @returns {Array} - Array de registros ordenados del más reciente al más antiguo
+ */
 export const fetchBufferHistory = async () => {
     try {
-        const localRaw = localStorage.getItem('logistics_buffer_history_local') || '[]';
-        const localHistory = JSON.parse(localRaw);
-        return localHistory;
-    } catch(e) { 
-        return []; 
+        const res = await fetch(`${BUFFER_HISTORY_API}?t=${Date.now()}`, {
+            headers: { 'X-Environment': 'production' }
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success' && Array.isArray(json.data)) {
+                // Actualizar caché local con datos del servidor
+                localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(json.data));
+                console.log(`[BH] ✅ ${json.data.length} registros cargados del servidor.`);
+                return json.data;
+            }
+        }
+    } catch(e) {
+        console.warn('[BH] ⚠️ Servidor no disponible. Usando localStorage.', e);
     }
+    // Fallback: datos locales
+    try {
+        const localRaw = localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]';
+        return JSON.parse(localRaw);
+    } catch(e) { return []; }
+};
+
+/**
+ * Actualiza un registro en el servidor Y en localStorage.
+ */
+export const updateBufferHistoryRecord = async (id, record) => {
+    try {
+        const res = await fetch(`${BUFFER_HISTORY_API}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+            body: JSON.stringify(record)
+        });
+        const json = await res.json();
+        return json.status === 'success';
+    } catch(e) {
+        console.warn('[BH] ⚠️ Error actualizando en servidor:', e);
+        return false;
+    }
+};
+
+/**
+ * Elimina un registro en el servidor Y en localStorage.
+ */
+export const deleteBufferHistoryRecord = async (id) => {
+    try {
+        const res = await fetch(`${BUFFER_HISTORY_API}/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-Environment': 'production' }
+        });
+        const json = await res.json();
+        return json.status === 'success';
+    } catch(e) {
+        console.warn('[BH] ⚠️ Error eliminando en servidor:', e);
+        return false;
+    }
+};
+
+// ── Funciones legacy mantenidas por compatibilidad ────────────────────────
+export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
+    console.warn('[BH] saveBufferReport() es legacy. Usar saveBufferHistoryRecord()');
+    return true;
+};
+
+export const loadBufferReport = async () => {
+    const history = await fetchBufferHistory();
+    return history.length > 0 ? history[0] : null;
 };
 
 export const fetchAvailableDates = async () => {

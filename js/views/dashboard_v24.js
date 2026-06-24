@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.201';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.202';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.201';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.201';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.201';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.201';
+import * as adminService from '../services_v245/adminService.js?v=26.5.202';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.202';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.202';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.202';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.201';
+const VERSION = '26.5.202';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5207,11 +5207,22 @@ const renderRFSection = (container) => {
             <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Historial...</p>
         </div>`;
     
-    const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
-    const kpiHistory = JSON.parse(kpiHistoryRaw).sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
+    // ── Cargar desde servidor (con fallback a localStorage) ───────────────────
+    let kpiHistory = [];
+    let serverOnline = false;
+    try {
+        kpiHistory = await fetchBufferHistory();
+        serverOnline = true;
+    } catch(e) {
+        console.warn('[BH] Fallback a localStorage:', e);
+        try {
+            kpiHistory = JSON.parse(localStorage.getItem('logistics_buffer_kpi_history_local') || '[]');
+        } catch(_) { kpiHistory = []; }
+    }
+    kpiHistory = kpiHistory.sort((a, b) => new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha));
 
     if (kpiHistory.length === 0) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
+        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No hay registros en el historial. Procesa un Buffer KPI para generar el primero.</p></div>`;
         return;
     }
 
@@ -5337,17 +5348,33 @@ const renderRFSection = (container) => {
     window._histEdit = (idx) => { editingIdx = idx; renderHistTable(); };
     window._histCancelEdit = () => { editingIdx = null; renderHistTable(); };
 
-    window._histSave = (idx) => {
+    window._histSave = async (idx) => {
         const newFecha = document.getElementById(`ed_fecha_${idx}`).value;
         const newSol   = parseInt(document.getElementById(`ed_sol_${idx}`).value) || 0;
         const newBaj   = parseInt(document.getElementById(`ed_baj_${idx}`).value) || 0;
         const newDif   = newSol - newBaj;
         const newFill  = newSol > 0 ? ((newBaj / newSol) * 100).toFixed(2) + '%' : '0.00%';
-        kpiHistory[idx].fecha              = newFecha;
-        kpiHistory[idx].paletasSolicitadas = newSol;
-        kpiHistory[idx].paletasBajadas     = newBaj;
-        kpiHistory[idx].diferencias        = newDif;
-        kpiHistory[idx].fillRate           = newFill;
+
+        const updatedRecord = {
+            fecha:              newFecha,
+            paletasSolicitadas: newSol,
+            paletasBajadas:     newBaj,
+            diferencias:        newDif,
+            fillRate:           newFill
+        };
+
+        // Actualizar array local
+        kpiHistory[idx] = { ...kpiHistory[idx], ...updatedRecord };
+
+        // Sincronizar con servidor si tiene id
+        const recordId = kpiHistory[idx]?.id;
+        if (recordId) {
+            updateBufferHistoryRecord(recordId, updatedRecord).then(ok => {
+                console.log(ok ? `[BH] ✅ Registro ${recordId} actualizado en servidor.` : `[BH] ⚠️ Error actualizando registro ${recordId}.`);
+            });
+        }
+
+        // Actualizar localStorage
         localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
         editingIdx = null;
         renderHistTable();
@@ -5400,8 +5427,15 @@ const renderRFSection = (container) => {
         document.body.appendChild(overlay);
 
         document.getElementById('modal_hist_cancel').onclick = () => overlay.remove();
-        document.getElementById('modal_hist_confirm').onclick = () => {
+        document.getElementById('modal_hist_confirm').onclick = async () => {
             overlay.remove();
+            const recordId = kpiHistory[idx]?.id;
+            // Eliminar del servidor si tiene id
+            if (recordId) {
+                deleteBufferHistoryRecord(recordId).then(ok => {
+                    console.log(ok ? `[BH] ✅ Registro ${recordId} eliminado del servidor.` : `[BH] ⚠️ Error eliminando registro ${recordId}.`);
+                });
+            }
             kpiHistory.splice(idx, 1);
             localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
             editingIdx = null;
@@ -6078,20 +6112,22 @@ const renderRFSection = (container) => {
             const effectiveRequested = requestedPalletsCount > 0 ? requestedPalletsCount : results.length;
             const effectiveLowered  = requestedPalletsCount > 0 ? loweredPalletsCount : results.filter(r => r.generalState === 'COMPLETADO').length;
             if (effectiveRequested > 0) {
-                const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
-                const kpiHistory = JSON.parse(kpiHistoryRaw);
                 const todayISO = new Date().toISOString().slice(0, 10);
-                kpiHistory.push({
-                    fecha: todayISO,
-                    paletasSolicitadas: effectiveRequested,
-                    paletasBajadas: effectiveLowered,
-                    diferencias: Math.max(0, effectiveRequested - effectiveLowered),
-                    fillRate: ((effectiveLowered / effectiveRequested) * 100).toFixed(2) + '%',
-                    created_at: new Date().toISOString()
+                const record = {
+                    fecha:               todayISO,
+                    paletasSolicitadas:  effectiveRequested,
+                    paletasBajadas:      effectiveLowered,
+                    diferencias:         Math.max(0, effectiveRequested - effectiveLowered),
+                    fillRate:            ((effectiveLowered / effectiveRequested) * 100).toFixed(2) + '%'
+                };
+                // ✅ Guarda en servidor (+ localStorage como fallback automático)
+                saveBufferHistoryRecord(record).then(serverId => {
+                    if (serverId) {
+                        console.log(`[BH] ✅ Registro sincronizado. Servidor id=${serverId}`);
+                    } else {
+                        console.warn('[BH] ⚠️ Guardado solo en localStorage (servidor no disponible).');
+                    }
                 });
-                if (kpiHistory.length > 30) kpiHistory.shift();
-                localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
-                console.log("[PULSE] Auto-saved KPI validation run in history:", loweredPalletsCount, "/", requestedPalletsCount);
             }
         } catch(e) {
             console.warn("[PULSE] Error auto-saving KPI validation run:", e);
