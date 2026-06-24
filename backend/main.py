@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GzipMiddleware
+from starlette.middleware.gzip import GzipMiddleware
 import sqlite3
 import json
 import os
