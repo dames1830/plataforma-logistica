@@ -5637,6 +5637,19 @@ const renderRFSection = (container) => {
         getAreaData('buffer_reserva').then(d => d && d.length > 0)
     ]);
 
+    const storedKPI = localStorage.getItem('logistics_v24_prod_lastKPIResults');
+    if (storedKPI) {
+        try {
+            const parsed = JSON.parse(storedKPI);
+            if (parsed && parsed.length > 0) {
+                await runProcessBufferKPI(container, null, null, null, hasValActivo, hasValReserva, parsed);
+                return;
+            }
+        } catch(e) {
+            localStorage.removeItem('logistics_v24_prod_lastKPIResults');
+        }
+    }
+
     container.innerHTML = `
         <div class="glass-panel animate-fade-in" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px solid rgba(255,255,255,0.08);">
             <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
@@ -5698,83 +5711,89 @@ const renderRFSection = (container) => {
     };
   };
 
-  const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva) => {
-    let plan = null;
-    const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
-    if (stored) {
-        try { plan = JSON.parse(stored); } catch(e){}
-    }
-
-    const planDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
-    if ((!plan || !planDetalle || !planDetalle.length) && dataStore.buffer_activo && dataStore.buffer_reserva && dataStore.articulos && dataStore.buffer) {
-        try {
-            const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
-            const res = calculateBufferPallets(config);
-            const resDetalle = res ? (res.detalle || res.detallePallets) : null;
-            if (res && resDetalle) {
-                plan = res;
-                localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res));
-            }
-        } catch(e) {
-            console.error("Error al calcular plan dinámico:", e);
-        }
-    }
-
-    const currentPlanDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
-    const plannedPallets = currentPlanDetalle ? currentPlanDetalle.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
-
-    if (plannedPallets.length === 0) {
-        alert("⚠️ ATENCIÓN: No se detectó ningún análisis de buffer activo. Primero debes procesar el cálculo en la pestaña ANÁLISIS BUFFER.");
-        const btn = document.getElementById('btn_run_kpi_analysis');
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
-        }
-        return;
-    }
-
-    const isPlannedMode = true;
-
-    // 1. Mapeo de Reserva Final
-    const finalReservaLPNs = {};
-    const finalReservaSkuUbi = {};
-    if (hasReserva) {
-        validarReserva.forEach(r => {
-            if (r.ES_ALTO === false) return;
-            const lpn = String(r.LPN || '').trim().toUpperCase();
-            const sku = String(r.PRODUCTO || '').trim();
-            const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-            const qty = parseFloat(r.CANTIDAD) || 0;
-            if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
-            const key = `${sku}|${ubi}`;
-            finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
-        });
-    }
-
-    // 2. Mapeo de Activo Final
-    const finalActivoSkuTotal = {};
-    if (hasActivo) {
-        const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
-        validarActivo.forEach(r => {
-            const raw = Array.isArray(r) ? r : Object.values(r);
-            const area = String(raw[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-            if (area === 'MATE') return;
-            const isLevel1 = activeWhitelist.some(w => area.includes(w));
-            if (!isLevel1) return;
-
-            const sku = String(raw[1] || '').trim();
-            const qty = parseFloat(raw[4]) || 0;
-            finalActivoSkuTotal[sku] = (finalActivoSkuTotal[sku] || 0) + qty;
-        });
-    }
-
+  const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, preCalculatedResults = null) => {
     const results = [];
     let completedCount = 0;
     let partialCount = 0;
     let pendingCount = 0;
 
-    // --- MODO PLANIFICADO ---
-    plannedPallets.forEach(p => {
+    if (preCalculatedResults) {
+        preCalculatedResults.forEach(r => {
+            results.push(r);
+            if (r.generalState === "COMPLETADO") completedCount++;
+            else if (r.generalState === "INCOMPLETO") partialCount++;
+            else if (r.generalState === "PENDIENTE") pendingCount++;
+        });
+    } else {
+        let plan = null;
+        const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI') || localStorage.getItem('lastBufferKPI');
+        if (stored) {
+            try { plan = JSON.parse(stored); } catch(e){}
+        }
+
+        const planDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
+        if ((!plan || !planDetalle || !planDetalle.length) && dataStore.buffer_activo && dataStore.buffer_reserva && dataStore.articulos && dataStore.buffer) {
+            try {
+                const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+                const res = calculateBufferPallets(config);
+                const resDetalle = res ? (res.detalle || res.detallePallets) : null;
+                if (res && resDetalle) {
+                    plan = res;
+                    localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res));
+                }
+            } catch(e) {
+                console.error("Error al calcular plan dinámico:", e);
+            }
+        }
+
+        const currentPlanDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
+        const plannedPallets = currentPlanDetalle ? currentPlanDetalle.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
+
+        if (plannedPallets.length === 0) {
+            alert("⚠️ ATENCIÓN: No se detectó ningún análisis de buffer activo. Primero debes procesar el cálculo en la pestaña ANÁLISIS BUFFER.");
+            const btn = document.getElementById('btn_run_kpi_analysis');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
+            }
+            return;
+        }
+
+        // 1. Mapeo de Reserva Final
+        const finalReservaLPNs = {};
+        const finalReservaSkuUbi = {};
+        if (hasReserva) {
+            validarReserva.forEach(r => {
+                if (r.ES_ALTO === false) return;
+                const lpn = String(r.LPN || '').trim().toUpperCase();
+                const sku = String(r.PRODUCTO || '').trim();
+                const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const qty = parseFloat(r.CANTIDAD) || 0;
+                if (lpn) finalReservaLPNs[lpn] = (finalReservaLPNs[lpn] || 0) + qty;
+                const key = `${sku}|${ubi}`;
+                finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
+            });
+        }
+
+        // 2. Mapeo de Activo Final
+        const finalActivoSkuTotal = {};
+        if (hasActivo) {
+            const activeWhitelist = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+            validarActivo.forEach(r => {
+                const raw = Array.isArray(r) ? r : Object.values(r);
+                const area = String(raw[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (area === 'MATE') return;
+                const isLevel1 = activeWhitelist.some(w => area.includes(w));
+                if (!isLevel1) return;
+
+                const sku = String(raw[1] || '').trim();
+                const qty = parseFloat(raw[4]) || 0;
+                finalActivoSkuTotal[sku] = (finalActivoSkuTotal[sku] || 0) + qty;
+            });
+        }
+
+        // --- MODO PLANIFICADO ---
+        plannedPallets.forEach(p => {
         const sku = p.SKU;
         const lpn = String(p.LPN || '').trim().toUpperCase();
         const ubiRes = String(p.UBICACIONES || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -5891,6 +5910,8 @@ const renderRFSection = (container) => {
             colorDot
         });
     });
+        localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
+    }
 
     const totalTasks = results.length;
     const efficiency = totalTasks > 0 ? ((completedCount / totalTasks) * 100).toFixed(1) : 0;
@@ -5933,6 +5954,7 @@ const renderRFSection = (container) => {
                         <span>${hasReserva ? '🟢 RES' : '⚪ RES'}</span>
                         <span>${hasActivo ? '🟢 ACT' : '⚪ ACT'}</span>
                     </div>
+                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700; margin-left:10px;">🔄 REPROCESAR</button>
                     <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700; margin-left:10px;">📥 EXPORTAR CONCILIACIÓN</button>
                 </div>
             </div>
@@ -5994,6 +6016,20 @@ const renderRFSection = (container) => {
     };
 
     renderRows('TODOS');
+
+    const btnReprocess = document.getElementById('btn_reprocess_kpi');
+    if (btnReprocess) {
+        btnReprocess.onclick = async () => {
+            btnReprocess.disabled = true;
+            btnReprocess.innerHTML = `⏳...`;
+            const [valActivo, valReserva, origReserva] = await Promise.all([
+                getAreaData('validar_activo'),
+                getAreaData('validar_reserva'),
+                getAreaData('buffer_reserva')
+            ]);
+            await runProcessBufferKPI(container, valActivo, valReserva, origReserva, valActivo && valActivo.length > 0, valReserva && valReserva.length > 0, null);
+        };
+    }
 
     document.querySelectorAll('#filter_buttons_val button').forEach(btn => {
         btn.onclick = (e) => {
