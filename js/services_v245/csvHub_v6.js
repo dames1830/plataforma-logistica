@@ -283,6 +283,111 @@ export const loadBufferReport = async () => {
     return history.length > 0 ? history[0] : null;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BUFFER KPI RESULTS — Guarda y recupera resultados de conciliación por fecha
+// ─────────────────────────────────────────────────────────────────────────────
+const KPI_RESULTS_API     = `${API_BASE}/buffer/kpi/results`;
+const KPI_RESULTS_LS_KEY  = 'logistics_v24_prod_kpiResultsByDate';  // localStorage cache
+
+/**
+ * Guarda el array de resultados del Buffer KPI para una fecha en el servidor.
+ * También persiste en localStorage como caché local.
+ * @param {string} fecha - YYYY-MM-DD
+ * @param {Array}  results - Array de filas del KPI
+ */
+export const saveKPIResults = async (fecha, results) => {
+    // 1. Cache local inmediato
+    try {
+        const raw   = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+        raw[fecha]  = results;
+        // Mantener solo los últimos 30 días en caché local
+        const keys = Object.keys(raw).sort().reverse();
+        if (keys.length > 30) keys.slice(30).forEach(k => delete raw[k]);
+        localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
+    } catch(e) { console.warn('[KPI] Error en caché local:', e); }
+
+    // 2. Enviar al servidor
+    try {
+        const res  = await fetch(KPI_RESULTS_API, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+            body:    JSON.stringify({ fecha, results })
+        });
+        const json = await res.json();
+        if (json.status === 'success') {
+            console.log(`[KPI] ✅ Resultados guardados en servidor. fecha=${fecha} rows=${json.row_count}`);
+            return true;
+        }
+    } catch(e) {
+        console.warn('[KPI] ⚠️ Servidor no disponible. Guardado solo en localStorage.', e);
+    }
+    return false;
+};
+
+/**
+ * Carga los resultados del Buffer KPI para una fecha desde el servidor.
+ * Fallback a localStorage si el servidor no responde.
+ * @param {string|null} fecha - YYYY-MM-DD, o null para el más reciente
+ * @returns {{ fecha, data, row_count, from_server }}
+ */
+export const loadKPIResults = async (fecha = null) => {
+    const url = fecha ? `${KPI_RESULTS_API}?fecha=${fecha}` : KPI_RESULTS_API;
+    try {
+        const res  = await fetch(`${url}&t=${Date.now()}`, {
+            headers: { 'X-Environment': 'production' }
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
+                // Actualizar caché local
+                try {
+                    const raw  = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+                    raw[json.fecha] = json.data;
+                    localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
+                } catch(e) {}
+                return { fecha: json.fecha, data: json.data, row_count: json.row_count, from_server: true };
+            }
+            if (json.status === 'not_found') {
+                return { fecha, data: [], row_count: 0, from_server: true };
+            }
+        }
+    } catch(e) {
+        console.warn('[KPI] ⚠️ Servidor no disponible. Usando caché local.', e);
+    }
+    // Fallback localStorage
+    try {
+        const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+        const key = fecha || Object.keys(raw).sort().reverse()[0];
+        if (key && raw[key]) {
+            return { fecha: key, data: raw[key], row_count: raw[key].length, from_server: false };
+        }
+    } catch(e) {}
+    return { fecha, data: [], row_count: 0, from_server: false };
+};
+
+/**
+ * Devuelve todas las fechas disponibles con resultados de Buffer KPI.
+ * Útil para poblar un selector de fechas.
+ */
+export const fetchKPIDates = async () => {
+    try {
+        const res  = await fetch(`${API_BASE}/buffer/kpi/dates?t=${Date.now()}`, {
+            headers: { 'X-Environment': 'production' }
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success') return json.dates || [];
+        }
+    } catch(e) {
+        console.warn('[KPI] ⚠️ No se pudieron obtener fechas:', e);
+    }
+    // Fallback: fechas del caché local
+    try {
+        const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+        return Object.keys(raw).sort().reverse().map(f => ({ fecha: f, row_count: raw[f].length }));
+    } catch(e) { return []; }
+};
+
 export const fetchAvailableDates = async () => {
     try {
         const response = await fetch(`${API_URL}/dates`, {

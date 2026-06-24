@@ -58,6 +58,7 @@ def init_db():
     cursor.execute('CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL, action TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS shared_data (key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_history (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, paletas_solicitadas INTEGER NOT NULL, paletas_bajadas INTEGER NOT NULL, diferencias INTEGER NOT NULL, fill_rate TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS buffer_kpi_results (fecha TEXT PRIMARY KEY, results_json TEXT NOT NULL, row_count INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     
     # Sembrar Usuarios Base (Recuperados de Captura)
     if cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
@@ -660,5 +661,102 @@ def delete_buffer_history(record_id: int):
             return {"status": "error", "message": f"Registro id={record_id} no encontrado"}
         print(f"[BUFFER_HIST] Registro eliminado id={record_id}")
         return {"status": "success", "id": record_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BUFFER KPI RESULTS — Guarda y recupera resultados de conciliación por fecha
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/api/buffer/kpi/results")
+async def save_kpi_results(request: Request):
+    """
+    Guarda o reemplaza los resultados del Buffer KPI para una fecha específica.
+    Si ya existe un resultado para esa fecha, lo sobreescribe (UPSERT).
+    Body: { "fecha": "YYYY-MM-DD", "results": [...] }
+    """
+    try:
+        body = await request.json()
+        fecha   = body.get("fecha", datetime.now().strftime("%Y-%m-%d"))
+        results = body.get("results", [])
+
+        if not isinstance(results, list):
+            return {"status": "error", "message": "results debe ser un array"}
+
+        results_json = json.dumps(results)
+        row_count    = len(results)
+        now_str      = datetime.now().isoformat()
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO buffer_kpi_results (fecha, results_json, row_count, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(fecha) DO UPDATE SET
+                results_json = excluded.results_json,
+                row_count    = excluded.row_count,
+                updated_at   = excluded.updated_at
+        """, (fecha, results_json, row_count, now_str))
+        conn.commit()
+        conn.close()
+        print(f"[KPI_RESULTS] Guardado fecha={fecha} rows={row_count}")
+        return {"status": "success", "fecha": fecha, "row_count": row_count}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/buffer/kpi/results")
+def get_kpi_results(fecha: Optional[str] = None):
+    """
+    Devuelve los resultados del Buffer KPI para una fecha específica.
+    Si no se pasa fecha, devuelve el más reciente.
+    Query param: ?fecha=YYYY-MM-DD
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        if fecha:
+            cursor.execute("""
+                SELECT fecha, results_json, row_count, updated_at
+                FROM buffer_kpi_results WHERE fecha = ?
+            """, (fecha,))
+        else:
+            cursor.execute("""
+                SELECT fecha, results_json, row_count, updated_at
+                FROM buffer_kpi_results ORDER BY fecha DESC LIMIT 1
+            """)
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            return {"status": "not_found", "data": [], "fecha": fecha}
+        return {
+            "status":     "success",
+            "fecha":      row[0],
+            "data":       json.loads(row[1]),
+            "row_count":  row[2],
+            "updated_at": row[3]
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/buffer/kpi/dates")
+def get_kpi_dates():
+    """Devuelve todas las fechas disponibles con resultados de Buffer KPI."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT fecha, row_count, updated_at
+            FROM buffer_kpi_results
+            ORDER BY fecha DESC
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        return {
+            "status": "success",
+            "dates": [{"fecha": r[0], "row_count": r[1], "updated_at": r[2]} for r in rows]
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}

@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.203';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.204';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.203';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.203';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.203';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.203';
+import * as adminService from '../services_v245/adminService.js?v=26.5.204';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.204';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.204';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.204';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.203';
+const VERSION = '26.5.204';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5803,6 +5803,16 @@ const renderRFSection = (container) => {
         getAreaData('buffer_reserva').then(d => d && d.length > 0)
     ]);
 
+    // ── Intentar cargar del servidor primero (más reciente), luego localStorage ──
+    container.innerHTML = `<div style="text-align:center;padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">Cargando datos desde el servidor...</p></div>`;
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const serverResult = await loadKPIResults(todayISO);
+    if (serverResult && serverResult.data && serverResult.data.length > 0) {
+        await runProcessBufferKPI(container, null, null, null, hasValActivo, hasValReserva, serverResult.data);
+        return;
+    }
+
+    // Fallback: localStorage del último proceso
     const storedKPI = localStorage.getItem('logistics_v24_prod_lastKPIResults');
     if (storedKPI) {
         try {
@@ -6094,6 +6104,15 @@ const renderRFSection = (container) => {
         });
     });
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
+
+        // ✅ Sincronizar resultados completos con el servidor (indexado por fecha)
+        const todayKPI = new Date().toISOString().slice(0, 10);
+        saveKPIResults(todayKPI, results).then(ok => {
+            console.log(ok
+                ? `[KPI] ✅ Resultados del ${todayKPI} sincronizados con el servidor (${results.length} filas).`
+                : `[KPI] ⚠️ Servidor no disponible. Resultados guardados solo en localStorage.`
+            );
+        });
         
         // Auto-save KPI validation history (Fase 2)
         try {
@@ -6154,17 +6173,20 @@ const renderRFSection = (container) => {
                     <!-- Real-time Text Search Filter -->
                     <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:200px; transition:all 0.2s;" />
 
-                    <!-- Date Range Filters -->
+                    <!-- Fecha única → carga del servidor -->
                     <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
-                        <span>📅 DE:</span>
-                        <input type="date" id="kpi_date_from" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
-                        <span>HASTA:</span>
-                        <input type="date" id="kpi_date_to" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
+                        <span>📅 FECHA:</span>
+                        <input type="date" id="kpi_date_server" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
+                        <button id="btn_fetch_date" style="background:rgba(99,102,241,0.2); color:#a5b4fc; border:1px solid rgba(99,102,241,0.4); padding:0.35rem 0.8rem; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer; transition:all 0.2s; white-space:nowrap;" onmouseover="this.style.background='rgba(99,102,241,0.4)'" onmouseout="this.style.background='rgba(99,102,241,0.2)'">
+                            🌐 CARGAR FECHA
+                        </button>
                     </div>
+                    <!-- Badge fuente de datos -->
+                    <span id="kpi_source_badge" style="font-size:0.65rem; padding:0.2rem 0.6rem; border-radius:12px; font-weight:800; background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3);">☁️ SERVIDOR</span>
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">🔄 REPROCESAR</button>
-                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
+                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR</button>
                 </div>
             </div>
 
@@ -6192,28 +6214,22 @@ const renderRFSection = (container) => {
         </div>
     `;
 
-    const tbody = document.getElementById('val_rows_tbody');
-    const filterSelect = document.getElementById('kpi_status_filter');
-    const textSearch = document.getElementById('kpi_text_search');
-    const dateFrom = document.getElementById('kpi_date_from');
-    const dateTo = document.getElementById('kpi_date_to');
+    const tbody         = document.getElementById('val_rows_tbody');
+    const filterSelect  = document.getElementById('kpi_status_filter');
+    const textSearch    = document.getElementById('kpi_text_search');
+    const dateInput     = document.getElementById('kpi_date_server');
+    const btnFetchDate  = document.getElementById('btn_fetch_date');
+    const sourceBadge   = document.getElementById('kpi_source_badge');
 
-    // Helper: parse dd/mm/yyyy → comparable YYYY-MM-DD string
-    const parseRowDate = (fechaStr) => {
-        if (!fechaStr) return '';
-        const parts = fechaStr.split('/');
-        if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-        return '';
-    };
+    // Estado de resultados activos (puede ser actualizado por carga de fecha)
+    let activeResults = results;
 
     const renderRows = () => {
         tbody.innerHTML = '';
         const filterValue = filterSelect.value;
         const searchValue = textSearch.value.trim().toLowerCase();
-        const fromVal = dateFrom.value;   // YYYY-MM-DD
-        const toVal = dateTo.value;       // YYYY-MM-DD
 
-        const filtered = results.filter(r => {
+        const filtered = activeResults.filter(r => {
             const matchesStatus = (filterValue === 'TODOS' || r.generalState === filterValue);
             const matchesSearch = !searchValue ||
                 String(r.lpn || '').toLowerCase().includes(searchValue) ||
@@ -6221,9 +6237,7 @@ const renderRFSection = (container) => {
                 String(r.ubiRes || '').toLowerCase().includes(searchValue) ||
                 String(r.resState || '').toLowerCase().includes(searchValue) ||
                 String(r.statusTag || '').toLowerCase().includes(searchValue);
-            const rowDate = parseRowDate(r.fecha || '');
-            const matchesDate = (!fromVal || rowDate >= fromVal) && (!toVal || rowDate <= toVal);
-            return matchesStatus && matchesSearch && matchesDate;
+            return matchesStatus && matchesSearch;
         });
         
         if (!filtered.length) {
@@ -6235,9 +6249,9 @@ const renderRFSection = (container) => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
             
-            const diffDisplay = hasReserva ? (r.origResQty - r.finalResQty) : 0;
+            const diffDisplay      = hasReserva ? (r.origResQty - r.finalResQty) : 0;
             const plannedQtyDisplay = r.plannedQty;
-            const stockQtyDisplay = r.origResQty;
+            const stockQtyDisplay  = r.origResQty;
 
             tr.innerHTML = `
                 <td style="padding:0.6rem 1rem; color:rgba(255,255,255,0.55); font-size:0.72rem; white-space:nowrap;">${r.fecha || '-'}</td>
@@ -6254,10 +6268,51 @@ const renderRFSection = (container) => {
         });
     };
 
+    // ── Botón "CARGAR FECHA" → busca en el servidor ──────────────────────────
+    btnFetchDate.addEventListener('click', async () => {
+        const fechaBuscada = dateInput.value;
+        if (!fechaBuscada) return;
+        btnFetchDate.disabled = true;
+        btnFetchDate.innerHTML = `⏳ Buscando...`;
+        sourceBadge.style.background = 'rgba(245,158,11,0.15)';
+        sourceBadge.style.color      = '#f59e0b';
+        sourceBadge.style.borderColor = 'rgba(245,158,11,0.3)';
+        sourceBadge.textContent      = '⏳ CARGANDO...';
+
+        const res = await loadKPIResults(fechaBuscada);
+        btnFetchDate.disabled = false;
+        btnFetchDate.innerHTML = `🌐 CARGAR FECHA`;
+
+        if (res && res.data && res.data.length > 0) {
+            activeResults = res.data;
+            // Actualizar badge fuente
+            if (res.from_server) {
+                sourceBadge.style.background  = 'rgba(34,197,94,0.15)';
+                sourceBadge.style.color        = '#22c55e';
+                sourceBadge.style.borderColor  = 'rgba(34,197,94,0.3)';
+                sourceBadge.textContent        = `☁️ SERVIDOR — ${fechaBuscada} (${res.row_count} filas)`;
+            } else {
+                sourceBadge.style.background  = 'rgba(245,158,11,0.15)';
+                sourceBadge.style.color        = '#f59e0b';
+                sourceBadge.style.borderColor  = 'rgba(245,158,11,0.3)';
+                sourceBadge.textContent        = `💾 LOCAL — ${fechaBuscada} (${res.row_count} filas)`;
+            }
+            filterSelect.options[0].text = `MOSTRAR TODO (${activeResults.length})`;
+            renderRows();
+        } else {
+            sourceBadge.style.background  = 'rgba(239,68,68,0.15)';
+            sourceBadge.style.color        = '#ef4444';
+            sourceBadge.style.borderColor  = 'rgba(239,68,68,0.3)';
+            sourceBadge.textContent        = `❌ SIN DATOS — ${fechaBuscada}`;
+            tbody.innerHTML = `<tr><td colspan="9" style="padding:2rem; text-align:center; color:#f59e0b;">
+                No hay resultados guardados para el <strong>${fechaBuscada}</strong>.<br>
+                <span style="font-size:0.75rem; color:var(--text-muted);">Solo se guardan fechas donde se procesó el Buffer KPI.</span>
+            </td></tr>`;
+        }
+    });
+
     filterSelect.addEventListener('change', renderRows);
     textSearch.addEventListener('input', renderRows);
-    dateFrom.addEventListener('change', renderRows);
-    dateTo.addEventListener('change', renderRows);
     renderRows();
 
     const btnReprocess = document.getElementById('btn_reprocess_kpi');
