@@ -403,6 +403,7 @@ const renderBufferKPI = async (container) => {
 };
 
 const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, preCalculatedResults = null) => {
+    const isPlannedMode = true;
     const results = [];
     let completedCount = 0;
     let partialCount = 0;
