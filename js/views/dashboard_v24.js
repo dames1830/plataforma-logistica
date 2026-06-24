@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.197';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.198';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.197';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.197';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.197';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.197';
+import * as adminService from '../services_v245/adminService.js?v=26.5.198';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.198';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.198';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.198';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.197';
+const VERSION = '26.5.198';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5872,7 +5872,8 @@ const renderRFSection = (container) => {
             actStatusClass,
             statusTag,
             generalState,
-            colorDot
+            colorDot,
+            fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
         });
     });
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
@@ -5912,11 +5913,13 @@ const renderRFSection = (container) => {
 
     const totalTasks = results.length;
 
+    const todayStr = new Date().toISOString().slice(0, 10);
+
     container.innerHTML = `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
             <!-- CONTROLES FILTRADO -->
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05); gap:1rem; flex-wrap:wrap;">
-                <div style="display:flex; gap:0.8rem; align-items:center; flex-grow:1; max-width:600px;">
+                <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
                     <!-- Dropdown Select Filter -->
                     <select id="kpi_status_filter" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; outline:none; transition:all 0.2s;">
                         <option value="TODOS">MOSTRAR TODO (${totalTasks})</option>
@@ -5926,18 +5929,19 @@ const renderRFSection = (container) => {
                     </select>
 
                     <!-- Real-time Text Search Filter -->
-                    <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:220px; transition:all 0.2s;" />
+                    <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:200px; transition:all 0.2s;" />
+
+                    <!-- Date Range Filters -->
+                    <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
+                        <span>📅 DE:</span>
+                        <input type="date" id="kpi_date_from" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
+                        <span>HASTA:</span>
+                        <input type="date" id="kpi_date_to" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
+                    </div>
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:700; background:rgba(255,255,255,0.03); padding:0.3rem 0.6rem; border-radius:4px;">
-                        ${isPlannedMode ? '📋 AUDITORÍA PLAN' : '⚡ COMPARACIÓN DIRECTA STOCK'}
-                    </div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:flex; gap:10px; margin-left:10px;">
-                        <span>${hasReserva ? '🟢 RES' : '⚪ RES'}</span>
-                        <span>${hasActivo ? '🟢 ACT' : '⚪ ACT'}</span>
-                    </div>
-                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700; margin-left:10px;">🔄 REPROCESAR</button>
-                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700; margin-left:10px;">📥 EXPORTAR CONCILIACIÓN</button>
+                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">🔄 REPROCESAR</button>
+                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
                 </div>
             </div>
 
@@ -5947,6 +5951,7 @@ const renderRFSection = (container) => {
                     <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:left;">
                         <thead>
                             <tr style="background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.08); color:var(--text-muted);">
+                                <th style="padding:0.8rem 1rem;">FECHA</th>
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
@@ -5967,11 +5972,23 @@ const renderRFSection = (container) => {
     const tbody = document.getElementById('val_rows_tbody');
     const filterSelect = document.getElementById('kpi_status_filter');
     const textSearch = document.getElementById('kpi_text_search');
+    const dateFrom = document.getElementById('kpi_date_from');
+    const dateTo = document.getElementById('kpi_date_to');
+
+    // Helper: parse dd/mm/yyyy → comparable YYYY-MM-DD string
+    const parseRowDate = (fechaStr) => {
+        if (!fechaStr) return '';
+        const parts = fechaStr.split('/');
+        if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        return '';
+    };
 
     const renderRows = () => {
         tbody.innerHTML = '';
         const filterValue = filterSelect.value;
         const searchValue = textSearch.value.trim().toLowerCase();
+        const fromVal = dateFrom.value;   // YYYY-MM-DD
+        const toVal = dateTo.value;       // YYYY-MM-DD
 
         const filtered = results.filter(r => {
             const matchesStatus = (filterValue === 'TODOS' || r.generalState === filterValue);
@@ -5981,11 +5998,13 @@ const renderRFSection = (container) => {
                 String(r.ubiRes || '').toLowerCase().includes(searchValue) ||
                 String(r.resState || '').toLowerCase().includes(searchValue) ||
                 String(r.statusTag || '').toLowerCase().includes(searchValue);
-            return matchesStatus && matchesSearch;
+            const rowDate = parseRowDate(r.fecha || '');
+            const matchesDate = (!fromVal || rowDate >= fromVal) && (!toVal || rowDate <= toVal);
+            return matchesStatus && matchesSearch && matchesDate;
         });
         
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
             return;
         }
 
@@ -5998,6 +6017,7 @@ const renderRFSection = (container) => {
             const stockQtyDisplay = r.origResQty;
 
             tr.innerHTML = `
+                <td style="padding:0.6rem 1rem; color:rgba(255,255,255,0.55); font-size:0.72rem; white-space:nowrap;">${r.fecha || '-'}</td>
                 <td style="padding:0.6rem 1rem; font-weight:700;">${r.lpn || 'S/L'}</td>
                 <td style="padding:0.6rem 1rem;">${r.sku}</td>
                 <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
@@ -6013,6 +6033,8 @@ const renderRFSection = (container) => {
 
     filterSelect.addEventListener('change', renderRows);
     textSearch.addEventListener('input', renderRows);
+    dateFrom.addEventListener('change', renderRows);
+    dateTo.addEventListener('change', renderRows);
     renderRows();
 
     const btnReprocess = document.getElementById('btn_reprocess_kpi');
