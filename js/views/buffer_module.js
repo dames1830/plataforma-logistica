@@ -609,40 +609,57 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         });
     });
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
+        
+        // Auto-save KPI validation history (Fase 2)
+        try {
+            const uniquePlannedLPNs = Array.from(new Set(results.map(r => r.lpn).filter(x => x)));
+            let loweredPalletsCount = 0;
+            uniquePlannedLPNs.forEach(lpn => {
+                const lpnRows = results.filter(r => r.lpn === lpn);
+                const allCompleted = lpnRows.every(r => {
+                    const unitsLowered = Math.max(0, r.origResQty - r.finalResQty);
+                    return unitsLowered >= r.plannedQty;
+                });
+                if (allCompleted) loweredPalletsCount++;
+            });
+            const requestedPalletsCount = uniquePlannedLPNs.length;
+            if (requestedPalletsCount > 0) {
+                const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
+                const kpiHistory = JSON.parse(kpiHistoryRaw);
+                kpiHistory.push({
+                    fecha: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+                    paletasSolicitadas: requestedPalletsCount,
+                    paletasBajadas: loweredPalletsCount,
+                    diferencias: Math.max(0, requestedPalletsCount - loweredPalletsCount),
+                    fillRate: ((loweredPalletsCount / requestedPalletsCount) * 100).toFixed(2) + '%',
+                    created_at: new Date().toISOString()
+                });
+                if (kpiHistory.length > 30) kpiHistory.shift();
+                localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
+                console.log("[PULSE] Auto-saved KPI validation run in history:", loweredPalletsCount, "/", requestedPalletsCount);
+            }
+        } catch(e) {
+            console.warn("[PULSE] Error auto-saving KPI validation run:", e);
+        }
     }
 
     const totalTasks = results.length;
-    const efficiency = totalTasks > 0 ? ((completedCount / totalTasks) * 100).toFixed(1) : 0;
 
     container.innerHTML = `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
-            <!-- TARJETAS KPI -->
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">EFICIENCIA DE CONCILIACIÓN</div>
-                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">${efficiency}%</div>
-                </div>
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #22c55e; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS COMPLETADAS</div>
-                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">${completedCount}</div>
-                </div>
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #fbbf24; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS INCOMPLETAS</div>
-                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">${partialCount}</div>
-                </div>
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS PENDIENTES</div>
-                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">${pendingCount}</div>
-                </div>
-            </div>
-
             <!-- CONTROLES FILTRADO -->
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex; gap:0.5rem;" id="filter_buttons_val">
-                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (${totalTasks})</button>
-                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (${pendingCount})</button>
-                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (${partialCount})</button>
-                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (${completedCount})</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05); gap:1rem; flex-wrap:wrap;">
+                <div style="display:flex; gap:0.8rem; align-items:center; flex-grow:1; max-width:600px;">
+                    <!-- Dropdown Select Filter -->
+                    <select id="kpi_status_filter" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; outline:none; transition:all 0.2s;">
+                        <option value="TODOS">MOSTRAR TODO (${totalTasks})</option>
+                        <option value="PENDIENTE">🔴 PENDIENTES (${pendingCount})</option>
+                        <option value="INCOMPLETO">🟡 INCOMPLETOS (${partialCount})</option>
+                        <option value="COMPLETADO">🟢 COMPLETADOS (${completedCount})</option>
+                    </select>
+
+                    <!-- Real-time Text Search Filter -->
+                    <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:220px; transition:all 0.2s;" />
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:700; background:rgba(255,255,255,0.03); padding:0.3rem 0.6rem; border-radius:4px;">
@@ -681,9 +698,24 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
     `;
 
     const tbody = document.getElementById('val_rows_tbody');
-    const renderRows = (filterValue) => {
+    const filterSelect = document.getElementById('kpi_status_filter');
+    const textSearch = document.getElementById('kpi_text_search');
+
+    const renderRows = () => {
         tbody.innerHTML = '';
-        const filtered = results.filter(r => filterValue === 'TODOS' || r.generalState === filterValue);
+        const filterValue = filterSelect.value;
+        const searchValue = textSearch.value.trim().toLowerCase();
+
+        const filtered = results.filter(r => {
+            const matchesStatus = (filterValue === 'TODOS' || r.generalState === filterValue);
+            const matchesSearch = !searchValue ||
+                String(r.lpn || '').toLowerCase().includes(searchValue) ||
+                String(r.sku || '').toLowerCase().includes(searchValue) ||
+                String(r.ubiRes || '').toLowerCase().includes(searchValue) ||
+                String(r.resState || '').toLowerCase().includes(searchValue) ||
+                String(r.statusTag || '').toLowerCase().includes(searchValue);
+            return matchesStatus && matchesSearch;
+        });
         
         if (!filtered.length) {
             tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
@@ -694,7 +726,6 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
             
-            // Cantidad bajada es la diferencia (inicial - final) de Reserva
             const diffDisplay = hasReserva ? (r.origResQty - r.finalResQty) : 0;
             const plannedQtyDisplay = r.plannedQty;
             const stockQtyDisplay = r.origResQty;
@@ -713,7 +744,9 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         });
     };
 
-    renderRows('TODOS');
+    filterSelect.addEventListener('change', renderRows);
+    textSearch.addEventListener('input', renderRows);
+    renderRows();
 
     const btnReprocess = document.getElementById('btn_reprocess_kpi');
     if (btnReprocess) {
@@ -729,17 +762,7 @@ const runProcessBufferKPI = async (container, validarActivo, validarReserva, ori
         };
     }
 
-    document.querySelectorAll('#filter_buttons_val button').forEach(btn => {
-        btn.onclick = (e) => {
-            document.querySelectorAll('#filter_buttons_val button').forEach(b => {
-                b.className = 'btn';
-                b.style.background = b.dataset.f === 'TODOS' ? '' : 'rgba(255,255,255,0.02)';
-            });
-            e.currentTarget.className = 'btn active';
-            e.currentTarget.style.background = 'var(--primary)';
-            renderRows(e.currentTarget.dataset.f);
-        };
-    });
+
 
     document.getElementById('btn_excel_val').onclick = () => {
         const dataRows = [

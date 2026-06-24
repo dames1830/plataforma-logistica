@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.195';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.196';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.195';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.195';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.195';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.195';
+import * as adminService from '../services_v245/adminService.js?v=26.5.196';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.196';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.196';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.196';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.195';
+const VERSION = '26.5.196';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1378,24 +1378,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res)); localStorage.setItem('lastBufferKPI', JSON.stringify(res));
                             } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer", e); }
                             renderBufferResults(results, res); 
-                            
-                            // NUEVO: Guardar 3 registros (uno por cada fuente) en el historial
-                            setTimeout(async () => {
-                                if (await showPremiumConfirm("GUARDAR EN HISTORIAL", "¿Deseas guardar este análisis desglosado por FUENTE en el Historial?", "info")) {
-                                    const sources = ['PEDIDO', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
-                                    let successCount = 0;
-                                    for (const s of sources) {
-                                        const sourceRows = res.resumenNiveles.filter(n => n.fuente === s);
-                                        if (sourceRows.length > 0) {
-                                            const saved = await saveBufferReport({ resumenNiveles: sourceRows, sourceName: s }, user.username);
-                                            if (saved) successCount++;
-                                        }
-                                    }
-                                    if (successCount > 0) {
-                                        showPremiumAlert("¡Éxito!", `Se guardaron ${successCount} reportes de buffer en el historial de forma segura.`, "success");
-                                    }
-                                }
-                            }, 300);
+
                         } else {
                             showPremiumAlert("Error de Maestros", "No se pudo realizar el análisis porque faltan los archivos maestros.", "error");
                         }
@@ -5221,70 +5204,110 @@ const renderRFSection = (container) => {
     container.innerHTML = `
         <div style="text-align:center; padding:2rem;">
             <div class="spinner"></div>
-            <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Buffer día...</p>
+            <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Historial...</p>
         </div>`;
     
     const history = await fetchBufferHistory();
-    
-    if (!history || history.length === 0) {
+    const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
+    const kpiHistory = JSON.parse(kpiHistoryRaw).sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
+
+    if ((!history || history.length === 0) && kpiHistory.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No se encontraron reportes previos en el historial.</p></div>`;
         return;
     }
 
-    const sorted = [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts));
+    const sorted = history ? [...history].sort((a,b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts)) : [];
 
     container.innerHTML = `
-        <div class="animate-fade-in" style="padding:0.5rem;">
-            <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
-            <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
-                <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
-                    <thead>
-                        <tr style="background:#facc15; color:#000;">
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
-                            <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sorted.map((report, rIdx) => {
-                            const ts = report.created_at || report.ts || Date.now();
-                            const dObj = new Date(ts);
-                            const semana = getWeekNumber(dObj);
-                            const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
-                            const repData = report.data || {};
-                            const niveles = repData.resumenNiveles || [];
-                            
-                            if (niveles.length === 0) {
-                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                    <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
-                                    <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
-                                        <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
-                                    </td>
-                                </tr>`;
-                            }
-
-                            return `
-                                ${niveles.map((n, nIdx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
-                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
-                                        <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
-                                        <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
-                                    </tr>
-                                `).join('')}
-                                <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
+        <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:2rem;">
+            <!-- SECCIÓN: REPORTE DE CONCILIACIÓN DE PALETAS (IMAGEN 2) -->
+            <div>
+                <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Conciliación de Paletas</h3>
+                <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+                    <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; text-align:center;">
+                        <thead>
+                            <tr style="background:#22c55e; color:#000; font-weight:800;">
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fecha</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Solicitadas</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Bajadas</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Diferencias</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fill Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${kpiHistory.length === 0 ? `
+                                <tr>
+                                    <td colspan="5" style="padding:1.5rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">No hay registros de conciliación disponibles.</td>
+                                </tr>
+                            ` : kpiHistory.map(row => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
+                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
+                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#22c55e;">${row.paletasBajadas}</td>
+                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#ef4444;">${row.diferencias}</td>
+                                    <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            <!-- SECCIÓN EXISTENTE: REPORTE DE BUFFER DÍA -->
+            ${sorted.length > 0 ? `
+            <div>
+                <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Buffer día</h3>
+                <div class="glass-panel" style="padding:0; overflow-x:auto; border: 1px solid rgba(255,255,255,0.1);">
+                    <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white;">
+                        <thead>
+                            <tr style="background:#facc15; color:#000;">
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">Semana</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FECHA</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">FUENTE</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">NIVEL/AREA</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">PAL</th>
+                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1); text-align:center;">SKU</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sorted.map((report, rIdx) => {
+                                const ts = report.created_at || report.ts || Date.now();
+                                const dObj = new Date(ts);
+                                const semana = getWeekNumber(dObj);
+                                const dateStr = dObj.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+                                const repData = report.data || {};
+                                const niveles = repData.resumenNiveles || [];
+                                
+                                if (niveles.length === 0) {
+                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                        <td colspan="3" style="padding:1rem; text-align:center; opacity:0.5; border:1px solid rgba(255,255,255,0.05);">Datos no disponibles o formato antiguo</td>
+                                        <td style="padding:1rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">
+                                            <button class="btn-restore" data-idx="${rIdx}" style="background:var(--primary); border:none; color:white; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">👁️</button>
+                                        </td>
+                                    </tr>`;
+                                }
+
+                                return `
+                                    ${niveles.map((n, nIdx) => `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${semana}</td>
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${dateStr}</td>
+                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); color:var(--primary); font-weight:800;">${n.fuente || report.data.sourceName || 'PEDIDO'}</td>
+                                            <td style="padding:0.5rem 0.8rem; border:1px solid rgba(255,255,255,0.05); text-align:left;">${n.nivel}</td>
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.pal || 0)}</td>
+                                            <td style="padding:0.5rem; text-align:center; border:1px solid rgba(255,255,255,0.05);">${(n.sku || 0)}</td>
+                                        </tr>
+                                    `).join('')}
+                                    <tr style="height:4px; background:rgba(255,255,255,0.01);"><td colspan="6"></td></tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            ` : ''}
         </div>
     `;
 
@@ -5928,40 +5951,57 @@ const renderRFSection = (container) => {
         });
     });
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
+        
+        // Auto-save KPI validation history (Fase 2)
+        try {
+            const uniquePlannedLPNs = Array.from(new Set(results.map(r => r.lpn).filter(x => x)));
+            let loweredPalletsCount = 0;
+            uniquePlannedLPNs.forEach(lpn => {
+                const lpnRows = results.filter(r => r.lpn === lpn);
+                const allCompleted = lpnRows.every(r => {
+                    const unitsLowered = Math.max(0, r.origResQty - r.finalResQty);
+                    return unitsLowered >= r.plannedQty;
+                });
+                if (allCompleted) loweredPalletsCount++;
+            });
+            const requestedPalletsCount = uniquePlannedLPNs.length;
+            if (requestedPalletsCount > 0) {
+                const kpiHistoryRaw = localStorage.getItem('logistics_buffer_kpi_history_local') || '[]';
+                const kpiHistory = JSON.parse(kpiHistoryRaw);
+                kpiHistory.push({
+                    fecha: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+                    paletasSolicitadas: requestedPalletsCount,
+                    paletasBajadas: loweredPalletsCount,
+                    diferencias: Math.max(0, requestedPalletsCount - loweredPalletsCount),
+                    fillRate: ((loweredPalletsCount / requestedPalletsCount) * 100).toFixed(2) + '%',
+                    created_at: new Date().toISOString()
+                });
+                if (kpiHistory.length > 30) kpiHistory.shift();
+                localStorage.setItem('logistics_buffer_kpi_history_local', JSON.stringify(kpiHistory));
+                console.log("[PULSE] Auto-saved KPI validation run in history:", loweredPalletsCount, "/", requestedPalletsCount);
+            }
+        } catch(e) {
+            console.warn("[PULSE] Error auto-saving KPI validation run:", e);
+        }
     }
 
     const totalTasks = results.length;
-    const efficiency = totalTasks > 0 ? ((completedCount / totalTasks) * 100).toFixed(1) : 0;
 
     container.innerHTML = `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
-            <!-- TARJETAS KPI -->
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #6366f1; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">EFICIENCIA DE CONCILIACIÓN</div>
-                    <div style="font-size:1.8rem; color:#fff; font-weight:900; margin-top:5px;">${efficiency}%</div>
-                </div>
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #22c55e; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS COMPLETADAS</div>
-                    <div style="font-size:1.8rem; color:#22c55e; font-weight:900; margin-top:5px;">${completedCount}</div>
-                </div>
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #fbbf24; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS INCOMPLETAS</div>
-                    <div style="font-size:1.8rem; color:#fbbf24; font-weight:900; margin-top:5px;">${partialCount}</div>
-                </div>
-                <div class="glass-panel" style="padding:1rem; border-left:4px solid #ef4444; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TAREAS PENDIENTES</div>
-                    <div style="font-size:1.8rem; color:#ef4444; font-weight:900; margin-top:5px;">${pendingCount}</div>
-                </div>
-            </div>
-
             <!-- CONTROLES FILTRADO -->
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex; gap:0.5rem;" id="filter_buttons_val">
-                    <button class="btn active" data-f="TODOS" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:var(--primary);">MOSTRAR TODO (${totalTasks})</button>
-                    <button class="btn" data-f="PENDIENTE" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444;">🔴 PENDIENTES (${pendingCount})</button>
-                    <button class="btn" data-f="INCOMPLETO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b;">🟡 INCOMPLETOS (${partialCount})</button>
-                    <button class="btn" data-f="COMPLETADO" style="padding:0.35rem 0.8rem; font-size:0.75rem; border-radius:6px; font-weight:700; width:auto; background:rgba(34,197,94,0.15); border:1px solid #22c55e; color:#22c55e;">🟢 COMPLETADOS (${completedCount})</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05); gap:1rem; flex-wrap:wrap;">
+                <div style="display:flex; gap:0.8rem; align-items:center; flex-grow:1; max-width:600px;">
+                    <!-- Dropdown Select Filter -->
+                    <select id="kpi_status_filter" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; outline:none; transition:all 0.2s;">
+                        <option value="TODOS">MOSTRAR TODO (${totalTasks})</option>
+                        <option value="PENDIENTE">🔴 PENDIENTES (${pendingCount})</option>
+                        <option value="INCOMPLETO">🟡 INCOMPLETOS (${partialCount})</option>
+                        <option value="COMPLETADO">🟢 COMPLETADOS (${completedCount})</option>
+                    </select>
+
+                    <!-- Real-time Text Search Filter -->
+                    <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:220px; transition:all 0.2s;" />
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:700; background:rgba(255,255,255,0.03); padding:0.3rem 0.6rem; border-radius:4px;">
@@ -6000,9 +6040,24 @@ const renderRFSection = (container) => {
     `;
 
     const tbody = document.getElementById('val_rows_tbody');
-    const renderRows = (filterValue) => {
+    const filterSelect = document.getElementById('kpi_status_filter');
+    const textSearch = document.getElementById('kpi_text_search');
+
+    const renderRows = () => {
         tbody.innerHTML = '';
-        const filtered = results.filter(r => filterValue === 'TODOS' || r.generalState === filterValue);
+        const filterValue = filterSelect.value;
+        const searchValue = textSearch.value.trim().toLowerCase();
+
+        const filtered = results.filter(r => {
+            const matchesStatus = (filterValue === 'TODOS' || r.generalState === filterValue);
+            const matchesSearch = !searchValue ||
+                String(r.lpn || '').toLowerCase().includes(searchValue) ||
+                String(r.sku || '').toLowerCase().includes(searchValue) ||
+                String(r.ubiRes || '').toLowerCase().includes(searchValue) ||
+                String(r.resState || '').toLowerCase().includes(searchValue) ||
+                String(r.statusTag || '').toLowerCase().includes(searchValue);
+            return matchesStatus && matchesSearch;
+        });
         
         if (!filtered.length) {
             tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem; text-align:center; color:var(--text-muted);">No se encontraron registros con este filtro.</td></tr>`;
@@ -6013,7 +6068,6 @@ const renderRFSection = (container) => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
             
-            // Cantidad bajada es la diferencia (inicial - final) de Reserva
             const diffDisplay = hasReserva ? (r.origResQty - r.finalResQty) : 0;
             const plannedQtyDisplay = r.plannedQty;
             const stockQtyDisplay = r.origResQty;
@@ -6032,7 +6086,9 @@ const renderRFSection = (container) => {
         });
     };
 
-    renderRows('TODOS');
+    filterSelect.addEventListener('change', renderRows);
+    textSearch.addEventListener('input', renderRows);
+    renderRows();
 
     const btnReprocess = document.getElementById('btn_reprocess_kpi');
     if (btnReprocess) {
@@ -6047,19 +6103,6 @@ const renderRFSection = (container) => {
             await runProcessBufferKPI(container, valActivo, valReserva, origReserva, valActivo && valActivo.length > 0, valReserva && valReserva.length > 0, null);
         };
     }
-
-    document.querySelectorAll('#filter_buttons_val button').forEach(btn => {
-        btn.onclick = (e) => {
-            document.querySelectorAll('#filter_buttons_val button').forEach(b => {
-                b.className = 'btn';
-                b.style.background = b.dataset.f === 'TODOS' ? '' : 'rgba(255,255,255,0.02)';
-            });
-            e.currentTarget.className = 'btn active';
-            e.currentTarget.style.background = 'var(--primary)';
-            renderRows(e.currentTarget.dataset.f);
-        };
-    });
-
     document.getElementById('btn_excel_val').onclick = () => {
         const dataRows = [
             ["LPN", "SKU", "ORIGEN (RESERVA)", "CANTIDAD INICIAL RESERVA", "CANTIDAD FINAL RESERVA", "CANTIDAD BAJADA", "ESTADO RESERVA", "ESTADO GENERAL"]
@@ -10496,7 +10539,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.195 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.196 | MOBILE PORTAL
                             </div>
                     </div>
 
