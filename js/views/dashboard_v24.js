@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.225';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.226';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.225';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.225';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.225';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.225';
+import * as adminService from '../services_v245/adminService.js?v=26.5.226';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.226';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.226';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.226';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.225';
+const VERSION = '26.5.226';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11891,29 +11891,67 @@ const renderRFSection = (container) => {
     const estadoColor = { 'QUEBRADO':'#ef4444', 'POR QUEBRAR':'#f59e0b', 'OK':'#22c55e' };
     const estadoBadge = (e) => `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;background:${estadoColor[e]}22;color:${estadoColor[e]};border:1px solid ${estadoColor[e]}44;">${e}</span>`;
 
-    let filterEstado = 'TODOS';
-    let filterTexto  = '';
+    // Multi-select: Set vacío = TODOS
+    let activeEstados = new Set(); // vacío significa TODOS
+    let filterTexto   = '';
+
+    const CHIP_DEFS = [
+      { key:'TODOS',       label:'TODOS',       color:'#6366f1', bg:'rgba(99,102,241,0.15)', border:'rgba(99,102,241,0.4)' },
+      { key:'QUEBRADO',    label:'QUEBRADO',    color:'#ef4444', bg:'rgba(239,68,68,0.15)',   border:'rgba(239,68,68,0.4)'  },
+      { key:'POR QUEBRAR', label:'POR QUEBRAR', color:'#f59e0b', bg:'rgba(245,158,11,0.15)',  border:'rgba(245,158,11,0.4)' },
+      { key:'OK',          label:'OK',          color:'#22c55e', bg:'rgba(34,197,94,0.15)',   border:'rgba(34,197,94,0.4)'  },
+    ];
+
+    const syncChips = () => {
+      CHIP_DEFS.forEach(c => {
+        const el = document.getElementById(`repl_chip_${c.key.replace(' ','_')}`);
+        if (!el) return;
+        const active = c.key === 'TODOS' ? activeEstados.size === 0 : activeEstados.has(c.key);
+        el.style.background    = active ? c.bg      : 'transparent';
+        el.style.borderColor   = active ? c.border  : 'rgba(255,255,255,0.1)';
+        el.style.color         = active ? c.color   : 'rgba(255,255,255,0.4)';
+        el.style.fontWeight    = active ? '700'     : '500';
+      });
+    };
+
+    const toggleChip = (key) => {
+      if (key === 'TODOS') {
+        activeEstados.clear();
+      } else {
+        if (activeEstados.has(key)) activeEstados.delete(key);
+        else activeEstados.add(key);
+      }
+      syncChips();
+      renderTable();
+    };
 
     const renderKPIs = () => {
       const { nQuebrado, nPorQuebrar, nOk } = calcKPIs();
       const kEl = document.getElementById('repl_kpis');
       if (!kEl) return;
       kEl.innerHTML = [
-        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴', fv:'QUEBRADO' },
-        { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡', fv:'POR QUEBRAR' },
-        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢', fv:'OK' },
+        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴', ck:'QUEBRADO' },
+        { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡', ck:'POR QUEBRAR' },
+        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢', ck:'OK' },
       ].map(k => `
         <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color}; cursor:pointer;"
-             onclick="document.getElementById('repl_filter').value='${k.fv}'; document.getElementById('repl_filter').dispatchEvent(new Event('change'));">
+             id="repl_kpi_${k.ck.replace(' ','_')}">
           <div style="font-size:1.5rem; margin-bottom:0.3rem;">${k.icon}</div>
           <div style="font-size:1.8rem; font-weight:800; color:${k.color};">${k.val.toLocaleString('es')}</div>
           <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">${k.label}</div>
           <div style="font-size:0.65rem; color:var(--text-muted); opacity:0.6;">${k.sub}</div>
         </div>`).join('');
+      // vincular click de KPI cards a los chips
+      ['QUEBRADO','POR QUEBRAR','OK'].forEach(ck => {
+        const el = document.getElementById(`repl_kpi_${ck.replace(' ','_')}`);
+        if (el) el.onclick = () => toggleChip(ck);
+      });
     };
 
     const renderTable = () => {
-      let filtered = filterEstado === 'TODOS' ? items : items.filter(i => i.estado === filterEstado);
+      let filtered = activeEstados.size === 0
+        ? items
+        : items.filter(i => activeEstados.has(i.estado));
       if (filterTexto) {
         const q = filterTexto.toLowerCase();
         filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
@@ -11946,15 +11984,21 @@ const renderRFSection = (container) => {
 
       <!-- Controles -->
       <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ESTADO:</label>
-          <select id="repl_filter" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem; cursor:pointer;">
-            <option value="TODOS">TODOS</option>
-            <option value="QUEBRADO">QUEBRADO</option>
-            <option value="POR QUEBRAR">POR QUEBRAR</option>
-            <option value="OK">OK</option>
-          </select>
+
+        <!-- Chips de filtro multi-estado -->
+        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+          <label style="font-size:0.72rem; color:var(--text-muted); font-weight:600; margin-right:0.2rem;">ESTADO:</label>
+          ${CHIP_DEFS.map(c => `
+            <button id="repl_chip_${c.key.replace(' ','_')}"
+              style="
+                padding:0.3rem 0.8rem; border-radius:20px; font-size:0.72rem; font-weight:500;
+                cursor:pointer; transition:all 0.15s ease; white-space:nowrap;
+                background:transparent; color:rgba(255,255,255,0.4);
+                border:1px solid rgba(255,255,255,0.1);
+              ">${c.label}</button>
+          `).join('')}
         </div>
+
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">BUSCAR:</label>
           <input id="repl_search" type="text" placeholder="SKU o artículo..."
@@ -11997,11 +12041,12 @@ const renderRFSection = (container) => {
     // ── Poblar KPIs y tabla ──
     renderKPIs();
     renderTable();
+    syncChips();
 
-    // ── Eventos ──
-    document.getElementById('repl_filter').addEventListener('change', e => {
-      filterEstado = e.target.value;
-      renderTable();
+    // ── Eventos chips ──
+    CHIP_DEFS.forEach(c => {
+      const el = document.getElementById(`repl_chip_${c.key.replace(' ','_')}`);
+      if (el) el.addEventListener('click', () => toggleChip(c.key));
     });
     document.getElementById('repl_search').addEventListener('input', e => {
       filterTexto = e.target.value.trim();
@@ -12024,7 +12069,7 @@ const renderRFSection = (container) => {
       }
     });
     document.getElementById('repl_export').addEventListener('click', () => {
-      let filtered = filterEstado === 'TODOS' ? items : items.filter(i => i.estado === filterEstado);
+      let filtered = activeEstados.size === 0 ? items : items.filter(i => activeEstados.has(i.estado));
       if (filterTexto) {
         const q = filterTexto.toLowerCase();
         filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
