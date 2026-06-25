@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.210';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.211';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.210';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.210';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.210';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.210';
+import * as adminService from '../services_v245/adminService.js?v=26.5.211';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.211';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.211';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.211';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.210';
+const VERSION = '26.5.211';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11923,7 +11923,6 @@ const renderRFSection = (container) => {
       const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
       const oldHtml = btn ? btn.innerHTML : '⚡ PROCESAR REPORTE ARTÍCULO';
 
-      // Usar los archivos propios del módulo; fallback a los de Inventario si existen
       const skuActivo  = dataStore.analisis_sku_activo  || dataStore.stockActivo;
       const skuReserva = dataStore.analisis_sku_reserva || dataStore.stockReserva;
 
@@ -11934,20 +11933,89 @@ const renderRFSection = (container) => {
           return;
       }
 
-      // Inyectar temporalmente en dataStore para que calculateBufferPallets los use
-      const _prevActivo  = dataStore.stockActivo;
-      const _prevReserva = dataStore.stockReserva;
-      dataStore.stockActivo  = skuActivo;
-      dataStore.stockReserva = skuReserva;
-
       if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
-      
-      setTimeout(async () => {
+
+      setTimeout(() => {
         try {
-          const res = await calculateBufferPallets();
-          // Restaurar dataStore original
-          dataStore.stockActivo  = _prevActivo;
-          dataStore.stockReserva = _prevReserva;
+          // ── Función propia del módulo — no depende de calculateBufferPallets ──
+          // Combina activo + reserva y agrupa por columnas propias del archivo
+          const allRows = [...(skuActivo || []), ...(skuReserva || [])];
+          if (!allRows.length) throw new Error('Los archivos están vacíos.');
+
+          const stockPorArticulo = new Map();
+          const infoMap = new Map(); // articulo → { temporada, gGender, tipoObsolencia }
+
+          allRows.forEach(row => {
+            const sku  = String(getCol(row, ['PRODUCTO','Articulo','SKU','Codigo','CODIGO']) || '').trim();
+            const qty  = parseFloat(getCol(row, ['CANTIDAD','Cant','Stock','QTY','UNIDADES','Pares']) || 0);
+            const art  = sku.length >= 7 ? sku.substring(0, 7) : sku;
+            if (!art) return;
+
+            stockPorArticulo.set(art, (stockPorArticulo.get(art) || 0) + qty);
+
+            if (!infoMap.has(art)) {
+              infoMap.set(art, {
+                temporada:      String(getCol(row, ['TEMPORADA','Temporada','temporada','SEASON']) || 'S/T').trim(),
+                gGender:        String(getCol(row, ['G.GENDER','G. GENDER','GGENDER','GENDER','Gender','Genero','GENERO','G_GENDER']) || 'S/DATO').trim(),
+                tipoObsolencia: String(getCol(row, ['TIPO OBSOLENCIA','TIPO OBSOLESCENCIA','Obsolencia','OBSOLENCIA','Obsolescencia']) || 'S/DATO').trim(),
+              });
+            }
+          });
+
+          // Acumuladores
+          const aggrAnual = {}, aggrGender = {}, aggrObs = {};
+
+          stockPorArticulo.forEach((qty, art) => {
+            const info = infoMap.get(art) || { temporada: 'S/T', gGender: 'S/DATO', tipoObsolencia: 'S/DATO' };
+
+            // Gender
+            const g = info.gGender || 'S/DATO';
+            aggrGender[g] = (aggrGender[g] || 0) + qty;
+
+            // Obsolescencia
+            const o = info.tipoObsolencia || 'S/DATO';
+            aggrObs[o] = (aggrObs[o] || 0) + qty;
+
+            // Temporada → Año / Q
+            const fullTemp = info.temporada || 'S/T';
+            let año = fullTemp, qKey = 'OTROS';
+            if (fullTemp.includes('-')) {
+              const [p0, p1] = fullTemp.split('-');
+              año = p0;
+              if (['1','2','3','4'].includes(p1)) qKey = 'Q' + p1;
+              else { const m = p1.match(/[1-4]/); qKey = m ? 'Q' + m[0] : 'OTROS'; }
+            } else if (/^\d{4}$/.test(fullTemp)) { año = fullTemp; }
+
+            if (!aggrAnual[año]) aggrAnual[año] = { Q1:0, Q2:0, Q3:0, Q4:0, OTROS:0, Total:0 };
+            if (aggrAnual[año][qKey] !== undefined) aggrAnual[año][qKey] += qty;
+            else aggrAnual[año].OTROS += qty;
+            aggrAnual[año].Total += qty;
+          });
+
+          const sortSpecial = (a, b) => {
+            const bottom = ['S/MAESTRO','S/DATO','(EN BLANCO)','ND','OTROS','S/T',''];
+            const aBot = bottom.includes(String(a.label||'').trim().toUpperCase());
+            const bBot = bottom.includes(String(b.label||'').trim().toUpperCase());
+            if (aBot && !bBot) return 1; if (!aBot && bBot) return -1;
+            return b.qty - a.qty;
+          };
+
+          const reporteGender     = Object.keys(aggrGender).map(l => ({ label: l, qty: Math.round(aggrGender[l]) })).sort(sortSpecial);
+          const reporteObsolencia = Object.keys(aggrObs).map(l => ({ label: l, qty: Math.round(aggrObs[l]) })).sort(sortSpecial);
+          const reporteTemporadasQ = Object.keys(aggrAnual).map(a => ({
+            'Año': a, 'Q1': Math.round(aggrAnual[a].Q1), 'Q2': Math.round(aggrAnual[a].Q2),
+            'Q3': Math.round(aggrAnual[a].Q3), 'Q4': Math.round(aggrAnual[a].Q4),
+            'OTROS': Math.round(aggrAnual[a].OTROS), 'TOTAL': Math.round(aggrAnual[a].Total)
+          })).sort((a, b) => b['Año'].localeCompare(a['Año']));
+
+          const detalleObsGen = [];
+          stockPorArticulo.forEach((qty, art) => {
+            const info = infoMap.get(art) || {};
+            detalleObsGen.push({ 'Articulo': art, 'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/DATO', 'G. GENDER': info.gGender || 'S/DATO', 'CANTIDAD': Math.round(qty) });
+          });
+
+          const res = { reporteTemporadasQ, reporteGender, reporteObsolencia, detalleObsGen, detalleTemporadas: detalleObsGen };
+
 
           if (res) {
                   lastBufferResult = {
