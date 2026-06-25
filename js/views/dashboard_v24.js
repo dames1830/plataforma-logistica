@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.224';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.225';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.224';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.224';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.224';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.224';
+import * as adminService from '../services_v245/adminService.js?v=26.5.225';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.225';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.225';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.225';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.224';
+const VERSION = '26.5.225';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11877,8 +11877,201 @@ const renderRFSection = (container) => {
 
 
   // ── Cache de resultados Replenishment (persiste al cambiar de módulo) ──
-  let _replCache = null; // { items, umbral, timestamp }
+  let _replCache = null; // { items, umbral }
 
+  // ── renderWithItems: construye la UI completa con los items ya procesados ──
+  const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
+
+    const calcKPIs = () => ({
+      nQuebrado:   items.filter(i => i.estado === 'QUEBRADO').length,
+      nPorQuebrar: items.filter(i => i.estado === 'POR QUEBRAR').length,
+      nOk:         items.filter(i => i.estado === 'OK').length,
+    });
+
+    const estadoColor = { 'QUEBRADO':'#ef4444', 'POR QUEBRAR':'#f59e0b', 'OK':'#22c55e' };
+    const estadoBadge = (e) => `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;background:${estadoColor[e]}22;color:${estadoColor[e]};border:1px solid ${estadoColor[e]}44;">${e}</span>`;
+
+    let filterEstado = 'TODOS';
+    let filterTexto  = '';
+
+    const renderKPIs = () => {
+      const { nQuebrado, nPorQuebrar, nOk } = calcKPIs();
+      const kEl = document.getElementById('repl_kpis');
+      if (!kEl) return;
+      kEl.innerHTML = [
+        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴', fv:'QUEBRADO' },
+        { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡', fv:'POR QUEBRAR' },
+        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢', fv:'OK' },
+      ].map(k => `
+        <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color}; cursor:pointer;"
+             onclick="document.getElementById('repl_filter').value='${k.fv}'; document.getElementById('repl_filter').dispatchEvent(new Event('change'));">
+          <div style="font-size:1.5rem; margin-bottom:0.3rem;">${k.icon}</div>
+          <div style="font-size:1.8rem; font-weight:800; color:${k.color};">${k.val.toLocaleString('es')}</div>
+          <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">${k.label}</div>
+          <div style="font-size:0.65rem; color:var(--text-muted); opacity:0.6;">${k.sub}</div>
+        </div>`).join('');
+    };
+
+    const renderTable = () => {
+      let filtered = filterEstado === 'TODOS' ? items : items.filter(i => i.estado === filterEstado);
+      if (filterTexto) {
+        const q = filterTexto.toLowerCase();
+        filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
+      }
+      const tBody = document.getElementById('repl_tbody');
+      if (!tBody) return;
+      tBody.innerHTML = filtered.map((i, idx) => `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s;"
+            onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+            onmouseout="this.style.background='transparent'">
+          <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:0.75rem;">${idx+1}</td>
+          <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:0.82rem;">${i.art7}</td>
+          <td style="padding:0.6rem 1rem; font-family:monospace; font-size:0.82rem; color:#e2e8f0;">${i.sku}</td>
+          <td style="padding:0.6rem 1rem; text-align:center; font-size:0.82rem; font-weight:700; color:#a5b4fc;">${i.talla}</td>
+          <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#fbbf24;">${i.marcas}</td>
+          <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#34d399;">${i.genderRims}</td>
+          <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#f472b6;">${i.temporada}</td>
+          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=umbral?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
+          <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'#22c55e':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
+          <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
+          <td style="padding:0.6rem 1rem; text-align:center; font-size:0.8rem; font-weight:700; color:${i.tipo==='Prepack'?'#f59e0b':i.tipo==='SolidPack'?'#22c55e':'#64748b'}; letter-spacing:0.3px;">${i.tipo}</td>
+        </tr>`).join('');
+      document.getElementById('repl_count').textContent = `${filtered.length} registros`;
+    };
+
+    // ── Render HTML ──
+    container.innerHTML = `
+      <!-- KPIs -->
+      <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;"></div>
+
+      <!-- Controles -->
+      <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ESTADO:</label>
+          <select id="repl_filter" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem; cursor:pointer;">
+            <option value="TODOS">TODOS</option>
+            <option value="QUEBRADO">QUEBRADO</option>
+            <option value="POR QUEBRAR">POR QUEBRAR</option>
+            <option value="OK">OK</option>
+          </select>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">BUSCAR:</label>
+          <input id="repl_search" type="text" placeholder="SKU o artículo..."
+            style="width:160px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.7rem; font-size:0.8rem;">
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">UMBRAL:</label>
+          <input id="repl_umbral_input" type="number" min="0" max="999" value="${umbral}"
+            style="width:65px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.6rem; font-size:0.8rem; text-align:center;">
+          <button id="repl_apply_umbral" style="background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); border-radius:8px; color:#818cf8; padding:0.4rem 0.8rem; font-size:0.75rem; cursor:pointer; font-weight:600;">APLICAR</button>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:0.8rem; align-items:center;">
+          <span id="repl_count" style="font-size:0.75rem; color:var(--text-muted);"></span>
+          <button id="repl_export" class="btn" style="padding:0.5rem 1rem; font-size:0.75rem; font-weight:700;">📥 EXPORTAR</button>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="glass-panel" style="overflow:auto; max-height:60vh; padding:0;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+          <thead style="position:sticky; top:0; background:#0f172a; z-index:2;">
+            <tr style="border-bottom:2px solid rgba(99,102,241,0.3);">
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">#</th>
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ARTÍCULO</th>
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">SKU COMPLETO</th>
+              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#a5b4fc;">TALLA</th>
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#fbbf24;">MARCA</th>
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#34d399;">GENDER RIMS</th>
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f472b6;">TEMPORADA</th>
+              <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
+              <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
+              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ESTADO</th>
+              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f59e0b;">TIPO</th>
+            </tr>
+          </thead>
+          <tbody id="repl_tbody"></tbody>
+        </table>
+      </div>`;
+
+    // ── Poblar KPIs y tabla ──
+    renderKPIs();
+    renderTable();
+
+    // ── Eventos ──
+    document.getElementById('repl_filter').addEventListener('change', e => {
+      filterEstado = e.target.value;
+      renderTable();
+    });
+    document.getElementById('repl_search').addEventListener('input', e => {
+      filterTexto = e.target.value.trim();
+      renderTable();
+    });
+    document.getElementById('repl_apply_umbral').addEventListener('click', () => {
+      const v = parseInt(document.getElementById('repl_umbral_input').value, 10);
+      if (!isNaN(v) && v >= 0) {
+        umbral = v;
+        localStorage.setItem('repl_umbral', v);
+        if (_replCache) _replCache.umbral = v;
+        items.forEach(i => {
+          if (i.qAct === 0)                        { i.estado = 'QUEBRADO';    i.prioridad = 1; }
+          else if (i.qAct <= umbral && i.qRes > 0) { i.estado = 'POR QUEBRAR'; i.prioridad = 2; }
+          else                                      { i.estado = 'OK';          i.prioridad = 3; }
+        });
+        items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
+        renderKPIs();
+        renderTable();
+      }
+    });
+    document.getElementById('repl_export').addEventListener('click', () => {
+      let filtered = filterEstado === 'TODOS' ? items : items.filter(i => i.estado === filterEstado);
+      if (filterTexto) {
+        const q = filterTexto.toLowerCase();
+        filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
+      }
+      const mainData = filtered.map(i => ({
+        'ARTÍCULO':     i.art7,
+        'SKU COMPLETO': i.sku,
+        'TALLA':        i.talla,
+        'MARCA':        i.marcas,
+        'GENDER RIMS':  i.genderRims,
+        'TEMPORADA':    i.temporada,
+        'STOCK ACTIVO': i.qAct,
+        'STOCK RESERVA':i.qRes,
+        'ESTADO':       i.estado,
+        'TIPO':         i.tipo,
+      }));
+      const _extractT = (desc) => {
+        if (!desc) return null;
+        const parts = String(desc).trim().split('-');
+        return parts.length >= 3 ? parts[parts.length - 1].trim() : null;
+      };
+      const tallasMapExp = new Map();
+      (activo || []).forEach(row => {
+        const sku  = String(getCol(row, ['Artículo','Articulo','SKU','CODIGO','PRODUCTO']) || '').trim();
+        const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || '').trim();
+        if (!sku) return;
+        const t = _extractT(desc);
+        if (t && !tallasMapExp.has(sku)) tallasMapExp.set(sku, t);
+      });
+      (reserva || []).forEach(row => {
+        const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+        const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
+        if (!sku) return;
+        const t = _extractT(desc);
+        if (t && !tallasMapExp.has(sku)) tallasMapExp.set(sku, t);
+      });
+      const tallasData = Array.from(tallasMapExp.entries()).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mainData), 'Replenishment');
+      if (tallasData.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallasData), 'Tallas');
+      XLSX.writeFile(wb, `replenishment_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+  }; // fin _replRenderWithItems
+
+  // ════════════════════════════════════════════════════════════════════════
+  // MÓDULO REPLENISHMENT — Reposición de Stock Activo quebrado / por quebrar
+  // ════════════════════════════════════════════════════════════════════════
   const renderReplenishment = (container) => {
     const activo  = dataStore.analisis_sku_activo  || [];
     const reserva = dataStore.analisis_sku_reserva || [];
@@ -11898,7 +12091,7 @@ const renderRFSection = (container) => {
     // ── Restaurar desde cache si ya se procesó ──
     if (_replCache) {
       const { items: cachedItems, umbral: cachedUmbral } = _replCache;
-      renderWithItems(container, cachedItems, cachedUmbral, activo, reserva);
+      _replRenderWithItems(container, cachedItems, cachedUmbral, activo, reserva);
       return;
     }
 
@@ -12051,216 +12244,16 @@ const renderRFSection = (container) => {
 
       // guardar en cache y renderizar
       _replCache = { items, umbral };
-      renderWithItems(container, items, umbral, activo, reserva);
+      _replRenderWithItems(container, items, umbral, activo, reserva);
     };
-
-    // ── renderWithItems: construye la UI con los items ya procesados ──
-    const renderWithItems = (container, items, umbral, activo, reserva) => {
-
-      const calcKPIs = () => ({
-        nQuebrado:   items.filter(i => i.estado === 'QUEBRADO').length,
-        nPorQuebrar: items.filter(i => i.estado === 'POR QUEBRAR').length,
-        nOk:         items.filter(i => i.estado === 'OK').length,
-      });
-
-      const estadoColor = { 'QUEBRADO':'#ef4444', 'POR QUEBRAR':'#f59e0b', 'OK':'#22c55e' };
-      const estadoBadge = (e) => `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;background:${estadoColor[e]}22;color:${estadoColor[e]};border:1px solid ${estadoColor[e]}44;">${e}</span>`;
-
-      let filterEstado = 'TODOS';
-      let filterTexto  = '';
-
-      const renderKPIs = () => {
-        const { nQuebrado, nPorQuebrar, nOk } = calcKPIs();
-        const kEl = document.getElementById('repl_kpis');
-        if (!kEl) return;
-        kEl.innerHTML = [
-          { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴', fv:'QUEBRADO' },
-          { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡', fv:'POR QUEBRAR' },
-          { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢', fv:'OK' },
-        ].map(k => `
-          <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color}; cursor:pointer;"
-               onclick="document.getElementById('repl_filter').value='${k.fv}'; document.getElementById('repl_filter').dispatchEvent(new Event('change'));">
-            <div style="font-size:1.5rem; margin-bottom:0.3rem;">${k.icon}</div>
-            <div style="font-size:1.8rem; font-weight:800; color:${k.color};">${k.val.toLocaleString('es')}</div>
-            <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">${k.label}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); opacity:0.6;">${k.sub}</div>
-          </div>`).join('');
-      };
-
-      const renderTable = () => {
-        let filtered = filterEstado === 'TODOS' ? items : items.filter(i => i.estado === filterEstado);
-        if (filterTexto) {
-          const q = filterTexto.toLowerCase();
-          filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
-        }
-        const tBody = document.getElementById('repl_tbody');
-        if (!tBody) return;
-        tBody.innerHTML = filtered.map((i, idx) => `
-          <tr style="border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s;"
-              onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-              onmouseout="this.style.background='transparent'">
-            <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:0.75rem;">${idx+1}</td>
-            <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:0.82rem;">${i.art7}</td>
-            <td style="padding:0.6rem 1rem; font-family:monospace; font-size:0.82rem; color:#e2e8f0;">${i.sku}</td>
-            <td style="padding:0.6rem 1rem; text-align:center; font-size:0.82rem; font-weight:700; color:#a5b4fc;">${i.talla}</td>
-            <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#e2e8f0;">${i.marcas}</td>
-            <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#94a3b8;">${i.genderRims}</td>
-            <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#94a3b8;">${i.temporada}</td>
-            <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=umbral?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
-            <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'#22c55e':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
-            <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
-            <td style="padding:0.6rem 1rem; text-align:center; font-size:0.8rem; font-weight:700; color:${i.tipo==='Prepack'?'#f59e0b':i.tipo==='SolidPack'?'#22c55e':'#64748b'}; letter-spacing:0.3px;">${i.tipo}</td>
-          </tr>`).join('');
-        document.getElementById('repl_count').textContent = `${filtered.length} registros`;
-      };
-
-      // ── Render HTML ──
-      container.innerHTML = `
-        <!-- KPIs -->
-        <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;"></div>
-
-        <!-- Controles -->
-        <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
-
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ESTADO:</label>
-            <select id="repl_filter" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem; cursor:pointer;">
-              <option value="TODOS">TODOS</option>
-              <option value="QUEBRADO">QUEBRADO</option>
-              <option value="POR QUEBRAR">POR QUEBRAR</option>
-              <option value="OK">OK</option>
-            </select>
-          </div>
-
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">BUSCAR:</label>
-            <input id="repl_search" type="text" placeholder="SKU o artículo..."
-              style="width:160px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.7rem; font-size:0.8rem;">
-          </div>
-
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">UMBRAL:</label>
-            <input id="repl_umbral_input" type="number" min="0" max="999" value="${umbral}"
-              style="width:65px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.6rem; font-size:0.8rem; text-align:center;">
-            <button id="repl_apply_umbral" style="background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); border-radius:8px; color:#818cf8; padding:0.4rem 0.8rem; font-size:0.75rem; cursor:pointer; font-weight:600;">APLICAR</button>
-          </div>
-
-          <div style="margin-left:auto; display:flex; gap:0.8rem; align-items:center;">
-            <span id="repl_count" style="font-size:0.75rem; color:var(--text-muted);"></span>
-            <button id="repl_export" class="btn" style="padding:0.5rem 1rem; font-size:0.75rem; font-weight:700;">📥 EXPORTAR</button>
-          </div>
-        </div>
-
-        <!-- Tabla -->
-        <div class="glass-panel" style="overflow:auto; max-height:60vh; padding:0;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
-            <thead style="position:sticky; top:0; background:#0f172a; z-index:2;">
-              <tr style="border-bottom:2px solid rgba(99,102,241,0.3);">
-                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">#</th>
-                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ARTÍCULO</th>
-                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">SKU COMPLETO</th>
-                <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#a5b4fc;">TALLA</th>
-                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#fbbf24;">MARCA</th>
-                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#34d399;">GENDER RIMS</th>
-                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f472b6;">TEMPORADA</th>
-                <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
-                <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
-                <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ESTADO</th>
-                <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f59e0b;">TIPO</th>
-              </tr>
-            </thead>
-            <tbody id="repl_tbody"></tbody>
-          </table>
-        </div>`;
-
-      // ── Poblar KPIs y tabla ──
-      renderKPIs();
-      renderTable();
-
-      // ── Eventos ──
-      document.getElementById('repl_filter').addEventListener('change', e => {
-        filterEstado = e.target.value;
-        renderTable();
-      });
-
-      document.getElementById('repl_search').addEventListener('input', e => {
-        filterTexto = e.target.value.trim();
-        renderTable();
-      });
-
-      document.getElementById('repl_apply_umbral').addEventListener('click', () => {
-        const v = parseInt(document.getElementById('repl_umbral_input').value, 10);
-        if (!isNaN(v) && v >= 0) {
-          umbral = v;
-          localStorage.setItem('repl_umbral', v);
-          items.forEach(i => {
-            if (i.qAct === 0)                       { i.estado = 'QUEBRADO';    i.prioridad = 1; }
-            else if (i.qAct <= umbral && i.qRes > 0) { i.estado = 'POR QUEBRAR'; i.prioridad = 2; }
-            else                                      { i.estado = 'OK';          i.prioridad = 3; }
-          });
-          items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
-          renderKPIs();
-          renderTable();
-        }
-      });
-
-      document.getElementById('repl_export').addEventListener('click', () => {
-        let filtered = filterEstado === 'TODOS' ? items : items.filter(i => i.estado === filterEstado);
-        if (filterTexto) {
-          const q = filterTexto.toLowerCase();
-          filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
-        }
-
-        // ── Hoja principal: datos de replenishment ──
-        const mainData = filtered.map(i => ({
-          'ARTÍCULO':     i.art7,
-          'SKU COMPLETO': i.sku,
-          'TALLA':        i.talla,
-          'MARCA':        i.marcas,
-          'GENDER RIMS':  i.genderRims,
-          'TEMPORADA':    i.temporada,
-          'STOCK ACTIVO': i.qAct,
-          'STOCK RESERVA':i.qRes,
-          'ESTADO':       i.estado,
-          'TIPO':         i.tipo,
-        }));
-
-        // ── Hoja Tallas: tabla virtual SKU → Talla (último segmento tras guion) ──
-        const _extractT = (desc) => {
-          if (!desc) return null;
-          const parts = String(desc).trim().split('-');
-          return parts.length >= 3 ? parts[parts.length - 1].trim() : null;
-        };
-        const tallasMap = new Map();
-        (activo || []).forEach(row => {
-          const raw  = Array.isArray(row) ? row : Object.values(row);
-          const sku  = String(getCol(row, ['Artículo','Articulo','ArtÃculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
-          const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
-          if (!sku) return;
-          const t = _extractT(desc);
-          if (t && !tallasMap.has(sku)) tallasMap.set(sku, t);
-        });
-        (reserva || []).forEach(row => {
-          const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
-          const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
-          if (!sku) return;
-          const t = _extractT(desc);
-          if (t && !tallasMap.has(sku)) tallasMap.set(sku, t);
-        });
-        const tallasData = Array.from(tallasMap.entries()).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla }));
-
-        // ── Generar XLSX con 2 pestañas ──
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mainData), 'Replenishment');
-        if (tallasData.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallasData), 'Tallas');
-        XLSX.writeFile(wb, `replenishment_${new Date().toISOString().slice(0,10)}.xlsx`);
-      });
-
-    }; // fin runReplenishmentAnalysis
 
     // ── Mostrar landing al abrir ──
     renderLanding();
   };
+
+
+
+
 
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "Consulta profunda de Artículos";
