@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.227';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.228';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.227';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.227';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.227';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.227';
+import * as adminService from '../services_v245/adminService.js?v=26.5.228';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.228';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.228';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.228';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.227';
+const VERSION = '26.5.228';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11876,8 +11876,14 @@ const renderRFSection = (container) => {
   };
 
 
-  // ── Cache de resultados Replenishment (persiste al cambiar de módulo) ──
-  let _replCache = null; // { items, umbral }
+  // ── Cache de resultados Replenishment ──
+  // Mismo patrón que lastBufferResult: se inicializa desde localStorage al cargar
+  let _replCache = (() => {
+    try {
+      const _c = localStorage.getItem(CACHE_KEY + 'replCache');
+      return _c ? JSON.parse(_c) : null;
+    } catch(e) { return null; }
+  })();
 
   // ── renderWithItems: construye la UI completa con los items ya procesados ──
   const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
@@ -12047,6 +12053,9 @@ const renderRFSection = (container) => {
         </div>
         <div style="margin-left:auto; display:flex; gap:0.8rem; align-items:center;">
           <span id="repl_count" style="font-size:0.75rem; color:var(--text-muted);"></span>
+          <button id="repl_reprocesar" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:rgba(255,255,255,0.5); padding:0.5rem 1rem; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.15s;"
+            onmouseover="this.style.background='rgba(255,255,255,0.09)'; this.style.color='#fff';"
+            onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.color='rgba(255,255,255,0.5)';">🔄 REPROCESAR</button>
           <button id="repl_export" class="btn" style="padding:0.5rem 1rem; font-size:0.75rem; font-weight:700;">📥 EXPORTAR</button>
         </div>
       </div>
@@ -12091,6 +12100,14 @@ const renderRFSection = (container) => {
     wireColDropdown('repl_fcol_estado', colFilterEstado, renderTable);
     wireColDropdown('repl_fcol_tipo',   colFilterTipo,   renderTable);
 
+    // botón Reprocesar: limpia cache y vuelve a la landing
+    const reprocessBtn = document.getElementById('repl_reprocesar');
+    if (reprocessBtn) reprocessBtn.addEventListener('click', () => {
+      _replCache = null;
+      try { localStorage.removeItem(CACHE_KEY + 'replCache'); } catch(e) {}
+      renderReplenishment(container);
+    });
+
     document.getElementById('repl_search').addEventListener('input', e => {
       filterTexto = e.target.value.trim();
       renderTable();
@@ -12107,6 +12124,9 @@ const renderRFSection = (container) => {
           else                                      { i.estado = 'OK';          i.prioridad = 3; }
         });
         items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
+        // actualizar cache persistente con nuevos estados
+        _replCache = { items, umbral };
+        try { localStorage.setItem(CACHE_KEY + 'replCache', JSON.stringify(_replCache)); } catch(e) {}
         renderKPIs();
         renderTable();
       }
@@ -12330,8 +12350,13 @@ const renderRFSection = (container) => {
 
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
-      // guardar en cache y renderizar
+      // ── Guardar en cache (memoria + localStorage) ──
       _replCache = { items, umbral };
+      try {
+        localStorage.setItem(CACHE_KEY + 'replCache', JSON.stringify(_replCache));
+      } catch(e) {
+        console.warn('[REPL] localStorage lleno, cache solo en sesión.', e);
+      }
       _replRenderWithItems(container, items, umbral, activo, reserva);
     };
 
