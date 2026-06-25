@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.226';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.227';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.226';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.226';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.226';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.226';
+import * as adminService from '../services_v245/adminService.js?v=26.5.227';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.227';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.227';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.227';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.226';
+const VERSION = '26.5.227';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11891,38 +11891,94 @@ const renderRFSection = (container) => {
     const estadoColor = { 'QUEBRADO':'#ef4444', 'POR QUEBRAR':'#f59e0b', 'OK':'#22c55e' };
     const estadoBadge = (e) => `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;background:${estadoColor[e]}22;color:${estadoColor[e]};border:1px solid ${estadoColor[e]}44;">${e}</span>`;
 
-    // Multi-select: Set vacío = TODOS
-    let activeEstados = new Set(); // vacío significa TODOS
-    let filterTexto   = '';
+    // ── Filtros de columna (multi-select tipo Excel) ──
+    let colFilterEstado = new Set(); // vacío = todos
+    let colFilterTipo   = new Set(); // vacío = todos
+    let filterTexto     = '';
 
-    const CHIP_DEFS = [
-      { key:'TODOS',       label:'TODOS',       color:'#6366f1', bg:'rgba(99,102,241,0.15)', border:'rgba(99,102,241,0.4)' },
-      { key:'QUEBRADO',    label:'QUEBRADO',    color:'#ef4444', bg:'rgba(239,68,68,0.15)',   border:'rgba(239,68,68,0.4)'  },
-      { key:'POR QUEBRAR', label:'POR QUEBRAR', color:'#f59e0b', bg:'rgba(245,158,11,0.15)',  border:'rgba(245,158,11,0.4)' },
-      { key:'OK',          label:'OK',          color:'#22c55e', bg:'rgba(34,197,94,0.15)',   border:'rgba(34,197,94,0.4)'  },
-    ];
+    // Valores posibles derivados de los items
+    const estadoOpts = ['QUEBRADO', 'POR QUEBRAR', 'OK'];
+    const tipoOpts   = [...new Set(items.map(i => i.tipo))].sort();
 
-    const syncChips = () => {
-      CHIP_DEFS.forEach(c => {
-        const el = document.getElementById(`repl_chip_${c.key.replace(' ','_')}`);
-        if (!el) return;
-        const active = c.key === 'TODOS' ? activeEstados.size === 0 : activeEstados.has(c.key);
-        el.style.background    = active ? c.bg      : 'transparent';
-        el.style.borderColor   = active ? c.border  : 'rgba(255,255,255,0.1)';
-        el.style.color         = active ? c.color   : 'rgba(255,255,255,0.4)';
-        el.style.fontWeight    = active ? '700'     : '500';
+    // Crea HTML del dropdown de columna
+    const buildColDropdown = (id, opts, activeSet, colorFn) => `
+      <div id="${id}_wrap" style="position:relative; display:inline-block;">
+        <button id="${id}_btn" style="
+          background:none; border:none; cursor:pointer; padding:0 4px;
+          color:${activeSet.size > 0 ? '#6366f1' : 'rgba(255,255,255,0.35)'};
+          font-size:0.75rem; vertical-align:middle; transition:color 0.15s;
+          " title="Filtrar">▼</button>
+        <div id="${id}_drop" style="
+          display:none; position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+          background:#1e293b; border:1px solid rgba(99,102,241,0.4); border-radius:10px;
+          padding:0.5rem 0; min-width:160px; z-index:999;
+          box-shadow:0 8px 32px rgba(0,0,0,0.5);
+        ">
+          <div style="padding:0.3rem 0.8rem 0.4rem; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:0.3rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.75rem; color:rgba(255,255,255,0.5);">
+              <input type="checkbox" id="${id}_all" style="accent-color:#6366f1;" ${activeSet.size === 0 ? 'checked' : ''}> TODOS
+            </label>
+          </div>
+          ${opts.map(o => `
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.75rem;
+                          color:${colorFn(o)}; padding:0.25rem 0.8rem; transition:background 0.1s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                   onmouseout="this.style.background='transparent'">
+              <input type="checkbox" data-val="${o}" style="accent-color:#6366f1;"
+                     ${activeSet.has(o) ? 'checked' : ''}> ${o}
+            </label>`).join('')}
+          <div style="padding:0.4rem 0.8rem 0; border-top:1px solid rgba(255,255,255,0.08); margin-top:0.3rem; display:flex; gap:0.4rem;">
+            <button data-action="clear" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+              border-radius:6px; color:rgba(255,255,255,0.5); font-size:0.7rem; padding:0.3rem; cursor:pointer;">Limpiar</button>
+            <button data-action="apply" style="flex:1; background:rgba(99,102,241,0.25); border:1px solid rgba(99,102,241,0.4);
+              border-radius:6px; color:#818cf8; font-size:0.7rem; padding:0.3rem; cursor:pointer; font-weight:700;">Aplicar</button>
+          </div>
+        </div>
+      </div>`;
+
+    // Registra eventos de un dropdown de columna
+    const wireColDropdown = (id, activeSet, rerender) => {
+      const btn  = document.getElementById(`${id}_btn`);
+      const drop = document.getElementById(`${id}_drop`);
+      if (!btn || !drop) return;
+
+      // abrir / cerrar
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = drop.style.display === 'block';
+        document.querySelectorAll('[id$="_drop"]').forEach(d => d.style.display = 'none');
+        drop.style.display = isOpen ? 'none' : 'block';
       });
-    };
 
-    const toggleChip = (key) => {
-      if (key === 'TODOS') {
-        activeEstados.clear();
-      } else {
-        if (activeEstados.has(key)) activeEstados.delete(key);
-        else activeEstados.add(key);
-      }
-      syncChips();
-      renderTable();
+      // checkbox TODOS
+      const allChk = document.getElementById(`${id}_all`);
+      if (allChk) allChk.addEventListener('change', () => {
+        drop.querySelectorAll('input[data-val]').forEach(c => c.checked = false);
+      });
+
+      // checkboxes individuales desmarcan TODOS
+      drop.querySelectorAll('input[data-val]').forEach(c => c.addEventListener('change', () => {
+        if (allChk) allChk.checked = false;
+      }));
+
+      // botones Limpiar / Aplicar
+      drop.querySelector('[data-action="clear"]').addEventListener('click', e => {
+        e.stopPropagation();
+        activeSet.clear();
+        drop.querySelectorAll('input[data-val]').forEach(c => c.checked = false);
+        if (allChk) allChk.checked = true;
+        drop.style.display = 'none';
+        btn.style.color = 'rgba(255,255,255,0.35)';
+        rerender();
+      });
+      drop.querySelector('[data-action="apply"]').addEventListener('click', e => {
+        e.stopPropagation();
+        activeSet.clear();
+        drop.querySelectorAll('input[data-val]:checked').forEach(c => activeSet.add(c.dataset.val));
+        drop.style.display = 'none';
+        btn.style.color = activeSet.size > 0 ? '#6366f1' : 'rgba(255,255,255,0.35)';
+        rerender();
+      });
     };
 
     const renderKPIs = () => {
@@ -11930,28 +11986,22 @@ const renderRFSection = (container) => {
       const kEl = document.getElementById('repl_kpis');
       if (!kEl) return;
       kEl.innerHTML = [
-        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴', ck:'QUEBRADO' },
-        { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡', ck:'POR QUEBRAR' },
-        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢', ck:'OK' },
+        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴' },
+        { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡' },
+        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢' },
       ].map(k => `
-        <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color}; cursor:pointer;"
-             id="repl_kpi_${k.ck.replace(' ','_')}">
+        <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color};">
           <div style="font-size:1.5rem; margin-bottom:0.3rem;">${k.icon}</div>
           <div style="font-size:1.8rem; font-weight:800; color:${k.color};">${k.val.toLocaleString('es')}</div>
           <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">${k.label}</div>
           <div style="font-size:0.65rem; color:var(--text-muted); opacity:0.6;">${k.sub}</div>
         </div>`).join('');
-      // vincular click de KPI cards a los chips
-      ['QUEBRADO','POR QUEBRAR','OK'].forEach(ck => {
-        const el = document.getElementById(`repl_kpi_${ck.replace(' ','_')}`);
-        if (el) el.onclick = () => toggleChip(ck);
-      });
     };
 
     const renderTable = () => {
-      let filtered = activeEstados.size === 0
-        ? items
-        : items.filter(i => activeEstados.has(i.estado));
+      let filtered = items;
+      if (colFilterEstado.size > 0) filtered = filtered.filter(i => colFilterEstado.has(i.estado));
+      if (colFilterTipo.size   > 0) filtered = filtered.filter(i => colFilterTipo.has(i.tipo));
       if (filterTexto) {
         const q = filterTexto.toLowerCase();
         filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
@@ -11984,21 +12034,6 @@ const renderRFSection = (container) => {
 
       <!-- Controles -->
       <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
-
-        <!-- Chips de filtro multi-estado -->
-        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-          <label style="font-size:0.72rem; color:var(--text-muted); font-weight:600; margin-right:0.2rem;">ESTADO:</label>
-          ${CHIP_DEFS.map(c => `
-            <button id="repl_chip_${c.key.replace(' ','_')}"
-              style="
-                padding:0.3rem 0.8rem; border-radius:20px; font-size:0.72rem; font-weight:500;
-                cursor:pointer; transition:all 0.15s ease; white-space:nowrap;
-                background:transparent; color:rgba(255,255,255,0.4);
-                border:1px solid rgba(255,255,255,0.1);
-              ">${c.label}</button>
-          `).join('')}
-        </div>
-
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">BUSCAR:</label>
           <input id="repl_search" type="text" placeholder="SKU o artículo..."
@@ -12030,8 +12065,12 @@ const renderRFSection = (container) => {
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f472b6;">TEMPORADA</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
-              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ESTADO</th>
-              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f59e0b;">TIPO</th>
+              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted); position:relative;">
+                ESTADO ${buildColDropdown('repl_fcol_estado', estadoOpts, colFilterEstado, v => estadoColor[v] || '#e2e8f0')}
+              </th>
+              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f59e0b; position:relative;">
+                TIPO ${buildColDropdown('repl_fcol_tipo', tipoOpts, colFilterTipo, v => v==='Prepack'?'#f59e0b':v==='SolidPack'?'#22c55e':'#64748b')}
+              </th>
             </tr>
           </thead>
           <tbody id="repl_tbody"></tbody>
@@ -12041,13 +12080,17 @@ const renderRFSection = (container) => {
     // ── Poblar KPIs y tabla ──
     renderKPIs();
     renderTable();
-    syncChips();
 
-    // ── Eventos chips ──
-    CHIP_DEFS.forEach(c => {
-      const el = document.getElementById(`repl_chip_${c.key.replace(' ','_')}`);
-      if (el) el.addEventListener('click', () => toggleChip(c.key));
-    });
+    // ── Eventos ──
+    // cerrar dropdowns al click fuera
+    document.addEventListener('click', () =>
+      document.querySelectorAll('[id$="_drop"]').forEach(d => d.style.display = 'none')
+    , { once: false });
+
+    // wiring de filtros de columna
+    wireColDropdown('repl_fcol_estado', colFilterEstado, renderTable);
+    wireColDropdown('repl_fcol_tipo',   colFilterTipo,   renderTable);
+
     document.getElementById('repl_search').addEventListener('input', e => {
       filterTexto = e.target.value.trim();
       renderTable();
