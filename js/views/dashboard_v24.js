@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.235';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.236';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.235';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.235';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.235';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.235';
+import * as adminService from '../services_v245/adminService.js?v=26.5.236';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.236';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.236';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.236';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.235';
+const VERSION = '26.5.236';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12323,7 +12323,7 @@ const renderRFSection = (container) => {
       if (!kEl) return;
       kEl.innerHTML = [
         { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴' },
-        { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡' },
+        { label:'POR QUEBRAR', val:nPorQuebrar, sub:'Stock ≤ factor objetivo', color:'#f59e0b', icon:'🟡' },
         { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢' },
       ].map(k => `
         <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color};">
@@ -12374,12 +12374,6 @@ const renderRFSection = (container) => {
           <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">BUSCAR:</label>
           <input id="repl_search" type="text" placeholder="SKU o artículo..."
             style="width:160px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.7rem; font-size:0.8rem;">
-        </div>
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">UMBRAL:</label>
-          <input id="repl_umbral_input" type="number" min="0" max="999" value="${umbral}"
-            style="width:65px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.6rem; font-size:0.8rem; text-align:center;">
-          <button id="repl_apply_umbral" style="background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); border-radius:8px; color:#818cf8; padding:0.4rem 0.8rem; font-size:0.75rem; cursor:pointer; font-weight:600;">APLICAR</button>
         </div>
         <div style="margin-left:auto; display:flex; gap:0.8rem; align-items:center;">
           <button id="repl_reprocesar" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:rgba(255,255,255,0.5); padding:0.4rem 0.9rem; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.15s; white-space:nowrap; line-height:1;"
@@ -12444,57 +12438,7 @@ const renderRFSection = (container) => {
       filterTexto = e.target.value.trim();
       renderTable();
     });
-    document.getElementById('repl_apply_umbral').addEventListener('click', () => {
-      const v = parseInt(document.getElementById('repl_umbral_input').value, 10);
-      if (!isNaN(v) && v >= 0) {
-        umbral = v;
-        localStorage.setItem('repl_umbral', v);
-        if (_replCache) _replCache.umbral = v;
-        
-        // Cargar configuracion de factores
-        _loadConfiguracionAnalisis();
 
-        items.forEach(i => {
-          // Determinar umbral especifico
-          let skuUmbral = umbral;
-          if (_configSKUExcepciones[i.sku] !== undefined) {
-            skuUmbral = _configSKUExcepciones[i.sku];
-          } else {
-            const genKey = String(i.genderRims).trim().toUpperCase();
-            const lookupKey = `${genKey}_${i.talla}`;
-            if (_configTallasGenero[lookupKey] !== undefined) {
-              skuUmbral = _configTallasGenero[lookupKey];
-            }
-          }
-
-          if (skuUmbral === 0) {
-            i.estado = 'OK';
-            i.prioridad = 3;
-          } else if (i.qAct === 0) {
-            i.estado = 'QUEBRADO';
-            i.prioridad = 1;
-          } else if (i.qAct <= skuUmbral && i.qRes > 0) {
-            i.estado = 'POR QUEBRAR';
-            i.prioridad = 2;
-          } else {
-            i.estado = 'OK';
-            i.prioridad = 3;
-          }
-        });
-        items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
-        // actualizar cache persistente con nuevos estados (formato comprimido)
-        _replCache = { items, umbral };
-        try {
-          const compressed = items.map(i => ({
-            s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
-            T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad, f: i.factor
-          }));
-          localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
-        } catch(e) {}
-        renderKPIs();
-        renderTable();
-      }
-    });
     document.getElementById('repl_export').addEventListener('click', () => {
       let filtered = colFilterEstado.size === 0 ? items : items.filter(i => colFilterEstado.has(i.estado));
       if (filterTexto) {
