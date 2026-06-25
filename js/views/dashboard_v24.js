@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.211';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.212';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.211';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.211';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.211';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.211';
+import * as adminService from '../services_v245/adminService.js?v=26.5.212';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.212';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.212';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.212';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.211';
+const VERSION = '26.5.212';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11876,9 +11876,7 @@ const renderRFSection = (container) => {
     await Promise.all([
         getAreaData('analisis_sku_activo'),
         getAreaData('analisis_sku_reserva'),
-        getAreaData('stockActivo'),
-        getAreaData('stockReserva'),
-        getAreaData('articulos')
+        getAreaData('analisis_sku_maestro'),
     ]);
     
     const tabDef = TABS.find(t => t.id === 'analisis_sku');
@@ -11904,8 +11902,9 @@ const renderRFSection = (container) => {
     const skuBuf = document.getElementById('skuContent');
     if (activeAnalisisSub === 'archivo_analisis') {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; skuBuf.appendChild(wrap);
-        renderUploadArea(wrap, 'analisis_sku_activo', dataStore.analisis_sku_activo, '.csv', 'STOCK ACTIVO');
+        renderUploadArea(wrap, 'analisis_sku_activo',  dataStore.analisis_sku_activo,  '.csv',  'STOCK ACTIVO');
         renderUploadArea(wrap, 'analisis_sku_reserva', dataStore.analisis_sku_reserva, '.xlsx', 'STOCK RESERVA');
+        renderUploadArea(wrap, 'analisis_sku_maestro', dataStore.analisis_sku_maestro, '.xlsx', 'MAESTRO ARTÍCULOS');
         return;
     }
 
@@ -11945,6 +11944,29 @@ const renderRFSection = (container) => {
           const stockPorArticulo = new Map();
           const infoMap = new Map(); // articulo → { temporada, gGender, tipoObsolencia }
 
+          // ── 1. Construir infoMap desde el Maestro de Artículos (si está cargado) ──
+          const maestro = dataStore.analisis_sku_maestro || [];
+          if (maestro.length > 0) {
+            maestro.forEach(row => {
+              const raw = Array.isArray(row) ? row : Object.values(row);
+              // Soporta coordenadas fijas (col B=1, C=2, J=9, K=10) y nombres de columna
+              const skuVal = String(
+                  getCol(row, ['PRODUCTO','Articulo','SKU','CODIGO','Codigo']) ||
+                  raw[1] || ''
+              ).trim();
+              const sku7 = skuVal.length >= 7 ? skuVal.substring(0, 7) : skuVal;
+              if (!sku7) return;
+              if (!infoMap.has(sku7)) {
+                infoMap.set(sku7, {
+                  temporada:      String(getCol(row, ['TEMPORADA','Temporada','SEASON']) || raw[9] || 'S/T').trim(),
+                  gGender:        String(getCol(row, ['G.GENDER','G. GENDER','GGENDER','GENDER','Gender']) || raw[2] || 'S/DATO').trim(),
+                  tipoObsolencia: String(getCol(row, ['TIPO OBSOLENCIA','TIPO OBSOLESCENCIA','Obsolencia','OBSOLESCENCIA']) || raw[10] || 'S/DATO').trim(),
+                });
+              }
+            });
+          }
+
+          // ── 2. Sumar stock de activo + reserva ──
           allRows.forEach(row => {
             const sku  = String(getCol(row, ['PRODUCTO','Articulo','SKU','Codigo','CODIGO']) || '').trim();
             const qty  = parseFloat(getCol(row, ['CANTIDAD','Cant','Stock','QTY','UNIDADES','Pares']) || 0);
@@ -11953,14 +11975,16 @@ const renderRFSection = (container) => {
 
             stockPorArticulo.set(art, (stockPorArticulo.get(art) || 0) + qty);
 
-            if (!infoMap.has(art)) {
+            // Solo llenar infoMap desde stock si NO hay maestro cargado
+            if (maestro.length === 0 && !infoMap.has(art)) {
               infoMap.set(art, {
-                temporada:      String(getCol(row, ['TEMPORADA','Temporada','temporada','SEASON']) || 'S/T').trim(),
-                gGender:        String(getCol(row, ['G.GENDER','G. GENDER','GGENDER','GENDER','Gender','Genero','GENERO','G_GENDER']) || 'S/DATO').trim(),
-                tipoObsolencia: String(getCol(row, ['TIPO OBSOLENCIA','TIPO OBSOLESCENCIA','Obsolencia','OBSOLENCIA','Obsolescencia']) || 'S/DATO').trim(),
+                temporada:      String(getCol(row, ['TEMPORADA','Temporada','SEASON']) || 'S/T').trim(),
+                gGender:        String(getCol(row, ['G.GENDER','G. GENDER','GGENDER','GENDER','Gender','Genero','GENERO']) || 'S/DATO').trim(),
+                tipoObsolencia: String(getCol(row, ['TIPO OBSOLENCIA','TIPO OBSOLESCENCIA','Obsolencia','OBSOLESCENCIA']) || 'S/DATO').trim(),
               });
             }
           });
+
 
           // Acumuladores
           const aggrAnual = {}, aggrGender = {}, aggrObs = {};
