@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.230';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.231';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.230';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.230';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.230';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.230';
+import * as adminService from '../services_v245/adminService.js?v=26.5.231';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.231';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.231';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.231';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.230';
+const VERSION = '26.5.231';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -627,6 +627,24 @@ let lastBufferResult = (() => {
 })();
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
+
+// ── Cache de resultados Replenishment (scope de módulo, igual que lastBufferResult) ──
+let _replCache = (() => {
+  try {
+    const _c = localStorage.getItem('logistics_v24_prod_replCache');
+    if (!_c) return null;
+    const parsed = JSON.parse(_c);
+    // descomprimir items si vienen en formato comprimido
+    if (parsed && Array.isArray(parsed.items) && parsed.items.length && parsed.items[0].s !== undefined) {
+      parsed.items = parsed.items.map(i => ({
+        sku: i.s, art7: i.a, talla: i.t, marcas: i.m, genderRims: i.g,
+        temporada: i.T, tipo: i.tp, qAct: i.qA, qRes: i.qR,
+        estado: i.e, prioridad: i.p
+      }));
+    }
+    return parsed;
+  } catch(e) { return null; }
+})();
 
 window.downloadExcelDetail = async () => {
     if (!lastBufferResult) return;
@@ -11876,14 +11894,6 @@ const renderRFSection = (container) => {
   };
 
 
-  // ── Cache de resultados Replenishment ──
-  // Mismo patrón que lastBufferResult: se inicializa desde localStorage al cargar
-  let _replCache = (() => {
-    try {
-      const _c = localStorage.getItem(CACHE_KEY + 'replCache');
-      return _c ? JSON.parse(_c) : null;
-    } catch(e) { return null; }
-  })();
 
   // ── renderWithItems: construye la UI completa con los items ya procesados ──
   const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
@@ -12107,7 +12117,7 @@ const renderRFSection = (container) => {
     const reprocessBtn = document.getElementById('repl_reprocesar');
     if (reprocessBtn) reprocessBtn.addEventListener('click', () => {
       _replCache = null;
-      try { localStorage.removeItem(CACHE_KEY + 'replCache'); } catch(e) {}
+      try { localStorage.removeItem('logistics_v24_prod_replCache'); } catch(e) {}
       renderReplenishment(container);
     });
 
@@ -12127,9 +12137,15 @@ const renderRFSection = (container) => {
           else                                      { i.estado = 'OK';          i.prioridad = 3; }
         });
         items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
-        // actualizar cache persistente con nuevos estados
+        // actualizar cache persistente con nuevos estados (formato comprimido)
         _replCache = { items, umbral };
-        try { localStorage.setItem(CACHE_KEY + 'replCache', JSON.stringify(_replCache)); } catch(e) {}
+        try {
+          const compressed = items.map(i => ({
+            s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
+            T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad
+          }));
+          localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
+        } catch(e) {}
         renderKPIs();
         renderTable();
       }
@@ -12355,10 +12371,19 @@ const renderRFSection = (container) => {
 
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
-      // ── Guardar en cache (memoria + localStorage) ──
+      // ── Guardar en cache (memoria + localStorage con items comprimidos) ──
       _replCache = { items, umbral };
       try {
-        localStorage.setItem(CACHE_KEY + 'replCache', JSON.stringify(_replCache));
+        // Limpiar claves antiguas logistics_ para liberar espacio antes de guardar
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('logistics_') && !k.startsWith('logistics_v24_prod_')) localStorage.removeItem(k);
+        });
+        // Comprimir items: claves de 1-2 chars para reducir tamaño ~70%
+        const compressed = items.map(i => ({
+          s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
+          T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad
+        }));
+        localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
       } catch(e) {
         console.warn('[REPL] localStorage lleno, cache solo en sesión.', e);
       }
