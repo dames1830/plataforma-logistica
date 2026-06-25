@@ -11961,7 +11961,7 @@ const renderRFSection = (container) => {
     
     // Lista estandar de tallas
     const TALLAS_COLS = ['00', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '37.5', '38', '38.5', '39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46', '47', '48'];
-    const GENEROS_ROWS = ['MUJER', 'HOMBRE', 'NIÑO', 'NIÑA', 'UNISEX'];
+    const GENEROS_ROWS = ['WOMAN', 'MAN', 'KIDS', 'UNISEX'];
 
     container.innerHTML = `
       <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
