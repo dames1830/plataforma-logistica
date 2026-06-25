@@ -164,282 +164,214 @@ export const pingServer = () => {
         .catch(() => console.warn('⏳ Backend despertando (cold start Render)...'));
 };
 
-// URL dedicada para Historial de Buffer KPI
-const BUFFER_HISTORY_API = `${API_BASE}/buffer/history`;
+// ── BUFFER HISTORY — usa /api/logistics/buffer_history (endpoint existente) ─────────────
+// El endpoint /api/buffer/history no está desplegado aun. Usamos el endpoint
+// genérico /api/logistics/{area} que YA funciona en producción.
+const BUFFER_HIST_AREA   = 'buffer_history';          // clave en el servidor
 const BUFFER_HIST_LOCAL_KEY = 'logistics_buffer_kpi_history_local';
 
-/**
- * Guarda un registro de conciliación en el servidor Y en localStorage (fallback).
- * @param {Object} record - { fecha, paletasSolicitadas, paletasBajadas, diferencias, fillRate }
- * @returns {number|null} - El id del servidor, o null si falló
- */
-export const saveBufferHistoryRecord = async (record) => {
-    // 1. Siempre guardar localmente primero (offline-first)
+/** Lee el array completo desde el servidor, con fallback a localStorage */
+const _fetchHistFromServer = async () => {
     try {
-        const localRaw = localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]';
-        const local = JSON.parse(localRaw);
-        // Agregar con id temporal negativo para distinguirlo del servidor
-        local.unshift({ ...record, _local: true });
-        if (local.length > 90) local.pop();
-        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(local));
-    } catch(e) { console.warn('[BH] Error guardando localmente:', e); }
+        const res = await fetch(`${API_URL}/${BUFFER_HIST_AREA}?t=${Date.now()}`, {
+            headers: { 'X-Environment': 'production' }
+        });
+        if (res.ok) {
+            const json = await res.json();
+            // El endpoint devuelve { status, data } o el array directamente
+            const arr = Array.isArray(json) ? json
+                      : (Array.isArray(json?.data) ? json.data : null);
+            if (arr) return arr;
+        }
+    } catch(e) { /* offline */ }
+    return null;
+};
 
-    // 2. Intentar enviar al servidor
+/** Guarda el array completo al servidor (POST sobreescribe el slot del área) */
+const _saveHistToServer = async (arr) => {
     try {
-        const res = await fetch(BUFFER_HISTORY_API, {
+        const res = await fetch(`${API_URL}/${BUFFER_HIST_AREA}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
-            body: JSON.stringify(record)
+            body: JSON.stringify(arr)
         });
         const json = await res.json();
-        if (json.status === 'success') {
-            console.log(`[BH] ✅ Sincronizado con servidor. id=${json.id}`);
-            // Actualizar el registro local con el id real del servidor
-            try {
-                const localRaw2 = localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]';
-                const local2 = JSON.parse(localRaw2);
-                if (local2[0]?._local) { local2[0].id = json.id; delete local2[0]._local; }
-                localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(local2));
-            } catch(e) {}
-            return json.id;
+        return json.status === 'success' || json.status === 'ok' || res.ok;
+    } catch(e) {
+        console.warn('[BH] ⚠️ Servidor no disponible.', e);
+        return false;
+    }
+};
+
+/**
+ * Guarda un registro en el servidor Y en localStorage.
+ */
+export const saveBufferHistoryRecord = async (record) => {
+    // Añadir timestamp si no tiene
+    const newRecord = { ...record, id: Date.now(), created_at: new Date().toISOString() };
+
+    // 1. Guardar localmente
+    try {
+        const local = JSON.parse(localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]');
+        local.unshift(newRecord);
+        if (local.length > 90) local.pop();
+        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(local));
+    } catch(e) {}
+
+    // 2. Leer lista del servidor, agregar al inicio, y guardar de vuelta
+    try {
+        const serverList = await _fetchHistFromServer() || [];
+        serverList.unshift(newRecord);
+        if (serverList.length > 90) serverList.pop();
+        const ok = await _saveHistToServer(serverList);
+        if (ok) {
+            localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(serverList));
+            console.log(`[BH] ✅ Historial sincronizado. Total registros: ${serverList.length}`);
+            return newRecord.id;
         }
     } catch(e) {
-        console.warn('[BH] ⚠️ Servidor no disponible. Guardado solo en localStorage.', e);
+        console.warn('[BH] ⚠️ Error sincronizando con servidor:', e);
     }
     return null;
 };
 
 /**
- * Carga el historial completo desde el servidor. Fallback a localStorage si falla.
- * @returns {Array} - Array de registros ordenados del más reciente al más antiguo
+ * Carga el historial completo desde el servidor. Fallback a localStorage.
  */
 export const fetchBufferHistory = async () => {
-    try {
-        const res = await fetch(`${BUFFER_HISTORY_API}?t=${Date.now()}`, {
-            headers: { 'X-Environment': 'production' }
-        });
-        if (res.ok) {
-            const json = await res.json();
-            if (json.status === 'success' && Array.isArray(json.data)) {
-                // Actualizar caché local con datos del servidor
-                localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(json.data));
-                console.log(`[BH] ✅ ${json.data.length} registros cargados del servidor.`);
-                return json.data;
-            }
-        }
-    } catch(e) {
-        console.warn('[BH] ⚠️ Servidor no disponible. Usando localStorage.', e);
+    const serverList = await _fetchHistFromServer();
+    if (serverList !== null) {
+        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(serverList));
+        console.log(`[BH] ✅ ${serverList.length} registros del servidor.`);
+        return serverList;
     }
-    // Fallback: datos locales
     try {
-        const localRaw = localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]';
-        return JSON.parse(localRaw);
+        return JSON.parse(localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]');
     } catch(e) { return []; }
 };
 
 /**
- * Actualiza un registro en el servidor Y en localStorage.
+ * Actualiza un registro (por id) en el servidor.
  */
 export const updateBufferHistoryRecord = async (id, record) => {
     try {
-        const res = await fetch(`${BUFFER_HISTORY_API}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
-            body: JSON.stringify(record)
-        });
-        const json = await res.json();
-        return json.status === 'success';
-    } catch(e) {
-        console.warn('[BH] ⚠️ Error actualizando en servidor:', e);
-        return false;
-    }
+        const serverList = await _fetchHistFromServer() || [];
+        const idx = serverList.findIndex(r => r.id === id);
+        if (idx !== -1) serverList[idx] = { ...serverList[idx], ...record };
+        return await _saveHistToServer(serverList);
+    } catch(e) { return false; }
 };
 
 /**
- * Elimina un registro en el servidor Y en localStorage.
+ * Elimina un registro (por id) del servidor.
  */
 export const deleteBufferHistoryRecord = async (id) => {
     try {
-        const res = await fetch(`${BUFFER_HISTORY_API}/${id}`, {
-            method: 'DELETE',
-            headers: { 'X-Environment': 'production' }
-        });
-        const json = await res.json();
-        return json.status === 'success';
-    } catch(e) {
-        console.warn('[BH] ⚠️ Error eliminando en servidor:', e);
-        return false;
-    }
+        const serverList = await _fetchHistFromServer() || [];
+        const filtered = serverList.filter(r => r.id !== id);
+        const ok = await _saveHistToServer(filtered);
+        if (ok) localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(filtered));
+        return ok;
+    } catch(e) { return false; }
 };
 
-// ── Funciones legacy mantenidas por compatibilidad ────────────────────────
-export const saveBufferReport = async (bufferKPIObj, username = 'system') => {
-    console.warn('[BH] saveBufferReport() es legacy. Usar saveBufferHistoryRecord()');
-    return true;
-};
+export const saveBufferReport = async () => true;  // legacy
+export const loadBufferReport = async () => { const h = await fetchBufferHistory(); return h[0] || null; };
 
-export const loadBufferReport = async () => {
-    const history = await fetchBufferHistory();
-    return history.length > 0 ? history[0] : null;
-};
+// ── KPI RESULTS — usa /api/logistics/kpi_results_v2 (endpoint existente) ────────────
+const KPI_RESULTS_AREA   = 'kpi_results_v2';          // clave en el servidor
+const KPI_RESULTS_LS_KEY = 'logistics_v24_prod_kpiResultsByDate';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BUFFER KPI RESULTS — Guarda y recupera resultados de conciliación por fecha
-// ─────────────────────────────────────────────────────────────────────────────
-const KPI_RESULTS_API     = `${API_BASE}/buffer/kpi/results`;
-const KPI_RESULTS_LS_KEY  = 'logistics_v24_prod_kpiResultsByDate';  // localStorage cache
-
-/**
- * Guarda el array de resultados del Buffer KPI para una fecha en el servidor.
- * También persiste en localStorage como caché local.
- * @param {string} fecha - YYYY-MM-DD
- * @param {Array}  results - Array de filas del KPI
- */
-export const saveKPIResults = async (fecha, results) => {
-    // 1. Cache local inmediato
+/** Lee el objeto {fecha: [...resultados]} del servidor */
+const _fetchKPIStore = async () => {
     try {
-        const raw   = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
-        raw[fecha]  = results;
-        // Mantener solo los últimos 30 días en caché local
-        const keys = Object.keys(raw).sort().reverse();
-        if (keys.length > 30) keys.slice(30).forEach(k => delete raw[k]);
-        localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
-    } catch(e) { console.warn('[KPI] Error en caché local:', e); }
-
-    // 2. Enviar al servidor
-    try {
-        const res  = await fetch(KPI_RESULTS_API, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
-            body:    JSON.stringify({ fecha, results })
-        });
-        const json = await res.json();
-        if (json.status === 'success') {
-            console.log(`[KPI] ✅ Resultados guardados en servidor. fecha=${fecha} rows=${json.row_count}`);
-            return true;
-        }
-    } catch(e) {
-        console.warn('[KPI] ⚠️ Servidor no disponible. Guardado solo en localStorage.', e);
-    }
-    return false;
-};
-
-/**
- * Carga los resultados del Buffer KPI para una fecha desde el servidor.
- * Fallback a localStorage si el servidor no responde.
- * @param {string|null} fecha - YYYY-MM-DD, o null para el más reciente
- * @returns {{ fecha, data, row_count, from_server }}
- */
-export const loadKPIResults = async (fecha = null) => {
-    const url = fecha ? `${KPI_RESULTS_API}?fecha=${fecha}` : KPI_RESULTS_API;
-    try {
-        const res  = await fetch(`${url}&t=${Date.now()}`, {
+        const res = await fetch(`${API_URL}/${KPI_RESULTS_AREA}?t=${Date.now()}`, {
             headers: { 'X-Environment': 'production' }
         });
         if (res.ok) {
             const json = await res.json();
-            if (json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
-                // Actualizar caché local
-                try {
-                    const raw  = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
-                    raw[json.fecha] = json.data;
-                    localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
-                } catch(e) {}
-                return { fecha: json.fecha, data: json.data, row_count: json.row_count, from_server: true };
-            }
-            if (json.status === 'not_found') {
-                return { fecha, data: [], row_count: 0, from_server: true };
-            }
+            const obj = Array.isArray(json) ? null
+                      : (json?.data && typeof json.data === 'object' && !Array.isArray(json.data) ? json.data
+                      : (typeof json === 'object' && !Array.isArray(json) && json !== null ? json : null));
+            if (obj) return obj;
         }
+    } catch(e) { /* offline */ }
+    return null;
+};
+
+const _saveKPIStore = async (obj) => {
+    try {
+        const res = await fetch(`${API_URL}/${KPI_RESULTS_AREA}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+            body: JSON.stringify(obj)
+        });
+        return (await res.json()).status === 'success' || res.ok;
+    } catch(e) { return false; }
+};
+
+export const saveKPIResults = async (fecha, results) => {
+    // 1. Cache local
+    try {
+        const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+        raw[fecha] = results;
+        const keys = Object.keys(raw).sort().reverse();
+        if (keys.length > 30) keys.slice(30).forEach(k => delete raw[k]);
+        localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
+    } catch(e) {}
+    // 2. Servidor
+    try {
+        const store = await _fetchKPIStore() || {};
+        store[fecha] = results;
+        const keys = Object.keys(store).sort().reverse();
+        if (keys.length > 30) keys.slice(30).forEach(k => delete store[k]);
+        const ok = await _saveKPIStore(store);
+        if (ok) console.log(`[KPI] ✅ Guardado en servidor. fecha=${fecha} rows=${results.length}`);
+        return ok;
     } catch(e) {
-        console.warn('[KPI] ⚠️ Servidor no disponible. Usando caché local.', e);
+        console.warn('[KPI] ⚠️ Servidor no disponible:', e);
+        return false;
+    }
+};
+
+export const loadKPIResults = async (fecha = null) => {
+    const store = await _fetchKPIStore();
+    if (store) {
+        const key = fecha || Object.keys(store).sort().reverse()[0];
+        if (key && store[key]) return { fecha: key, data: store[key], row_count: store[key].length, from_server: true };
+        return { fecha, data: [], row_count: 0, from_server: true };
     }
     // Fallback localStorage
     try {
         const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
         const key = fecha || Object.keys(raw).sort().reverse()[0];
-        if (key && raw[key]) {
-            return { fecha: key, data: raw[key], row_count: raw[key].length, from_server: false };
-        }
+        if (key && raw[key]) return { fecha: key, data: raw[key], row_count: raw[key].length, from_server: false };
     } catch(e) {}
     return { fecha, data: [], row_count: 0, from_server: false };
 };
 
-/**
- * Devuelve todas las fechas disponibles con resultados de Buffer KPI.
- * Útil para poblar un selector de fechas.
- */
 export const fetchKPIDates = async () => {
-    try {
-        const res  = await fetch(`${API_BASE}/buffer/kpi/dates?t=${Date.now()}`, {
-            headers: { 'X-Environment': 'production' }
-        });
-        if (res.ok) {
-            const json = await res.json();
-            if (json.status === 'success') return json.dates || [];
-        }
-    } catch(e) {
-        console.warn('[KPI] ⚠️ No se pudieron obtener fechas:', e);
-    }
-    // Fallback: fechas del caché local
+    const store = await _fetchKPIStore();
+    if (store) return Object.keys(store).sort().reverse().map(f => ({ fecha: f, row_count: (store[f] || []).length }));
     try {
         const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
         return Object.keys(raw).sort().reverse().map(f => ({ fecha: f, row_count: raw[f].length }));
     } catch(e) { return []; }
 };
 
-/**
- * Carga y combina resultados del Buffer KPI para un rango de fechas (DE → HASTA).
- * Llama al endpoint /range del servidor. Fallback a localStorage.
- * @param {string} fechaFrom - YYYY-MM-DD
- * @param {string} fechaTo   - YYYY-MM-DD
- * @returns {{ data: Array, row_count: number, dates: string[], from_server: boolean }}
- */
 export const loadKPIResultsRange = async (fechaFrom, fechaTo) => {
-    const params = new URLSearchParams({ t: Date.now() });
-    if (fechaFrom) params.set('fecha_from', fechaFrom);
-    if (fechaTo)   params.set('fecha_to',   fechaTo);
+    // Leer del servidor usando el endpoint gen\u00e9rico que ya funciona
+    const store = await _fetchKPIStore();
+    const source = store || JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
+    const from_server = !!store;
 
-    try {
-        const res  = await fetch(`${API_BASE}/buffer/kpi/results/range?${params}`, {
-            headers: { 'X-Environment': 'production' }
-        });
-        if (res.ok) {
-            const json = await res.json();
-            if (json.status === 'success') {
-                // Actualizar caché local con los resultados recibidos
-                if (json.dates && json.dates.length > 0) {
-                    try {
-                        const raw = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
-                        // Reconstituir por fecha para el caché
-                        json.dates.forEach(f => {
-                            raw[f] = json.data.filter(r => {
-                                const d = (r.fecha || '').split('/').reverse().join('-'); // dd/mm/yyyy → yyyy-mm-dd
-                                return d === f || r.fecha === f;
-                            });
-                        });
-                        localStorage.setItem(KPI_RESULTS_LS_KEY, JSON.stringify(raw));
-                    } catch(e) {}
-                }
-                return { data: json.data || [], row_count: json.row_count || 0, dates: json.dates || [], from_server: true };
-            }
-        }
-    } catch(e) {
-        console.warn('[KPI] ⚠️ Rango desde servidor falló. Usando localStorage.', e);
-    }
-
-    // Fallback: filtrar localStorage por rango
-    try {
-        const raw  = JSON.parse(localStorage.getItem(KPI_RESULTS_LS_KEY) || '{}');
-        const keys = Object.keys(raw).filter(f => {
-            if (fechaFrom && f < fechaFrom) return false;
-            if (fechaTo   && f > fechaTo)   return false;
-            return true;
-        }).sort();
-        const combined = keys.flatMap(f => raw[f] || []);
-        return { data: combined, row_count: combined.length, dates: keys, from_server: false };
-    } catch(e) { return { data: [], row_count: 0, dates: [], from_server: false }; }
+    const matchingDates = Object.keys(source)
+        .filter(f => (!fechaFrom || f >= fechaFrom) && (!fechaTo || f <= fechaTo))
+        .sort();
+    const combined = matchingDates.flatMap(f => source[f] || []);
+    return { data: combined, row_count: combined.length, dates: matchingDates, from_server };
 };
+
 
 export const fetchAvailableDates = async () => {
     try {
