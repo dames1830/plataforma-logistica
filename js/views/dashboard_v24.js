@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.232';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.233';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.232';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.232';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.232';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.232';
+import * as adminService from '../services_v245/adminService.js?v=26.5.233';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.233';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.233';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.233';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.232';
+const VERSION = '26.5.233';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -597,7 +597,8 @@ const TABS = [
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
-    { id: 'replenishment', label: 'Replenishment', icon: '🔄' }
+    { id: 'replenishment', label: 'Replenishment', icon: '🔄' },
+    { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
@@ -11926,6 +11927,291 @@ const renderRFSection = (container) => {
 
 
 
+  // ── CONFIGURACIÓN ANÁLISIS SKU (PERSISTENTE POR GÉNERO Y TALLAS + EXCEPCIONES SKU) ──
+  let _configTallasGenero = null;
+  let _configSKUExcepciones = null;
+
+  const _loadConfiguracionAnalisis = () => {
+    if (_configTallasGenero && _configSKUExcepciones) return;
+    try {
+      const g = localStorage.getItem('logistics_v24_prod_configTallasGenero');
+      _configTallasGenero = g ? JSON.parse(g) : {};
+    } catch(e) {
+      _configTallasGenero = {};
+    }
+    try {
+      const s = localStorage.getItem('logistics_v24_prod_configSKUExcepciones');
+      _configSKUExcepciones = s ? JSON.parse(s) : {};
+    } catch(e) {
+      _configSKUExcepciones = {};
+    }
+  };
+
+  const _saveConfiguracionAnalisis = () => {
+    try {
+      localStorage.setItem('logistics_v24_prod_configTallasGenero', JSON.stringify(_configTallasGenero));
+      localStorage.setItem('logistics_v24_prod_configSKUExcepciones', JSON.stringify(_configSKUExcepciones));
+    } catch(e) {
+      console.error('Error al guardar configuracion de analisis SKU:', e);
+    }
+  };
+
+  const renderConfiguracionAnalisisSKU = (container) => {
+    _loadConfiguracionAnalisis();
+    
+    // Lista estandar de tallas
+    const TALLAS_COLS = ['00', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '37.5', '38', '38.5', '39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46', '47', '48'];
+    const GENEROS_ROWS = ['MUJER', 'HOMBRE', 'NIÑO', 'NIÑA', 'UNISEX'];
+
+    container.innerHTML = `
+      <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+        <h3 style="margin-top:0; color:#fff; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
+          ⚙️ CONFIGURACIÓN DE FACTORES DE REPOSICIÓN POR GÉNERO Y TALLA
+        </h3>
+        <p style="color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem;">
+          Define la cantidad de stock objetivo que debe haber siempre en el almacén <b>ACTIVO</b> para cada combinación de talla y género.
+          Ingresa <b>0</b> o deja en blanco para indicar que la talla <b>no es comercial</b> y no debe reponerse.
+        </p>
+
+        <!-- Acciones Excel -->
+        <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; background:rgba(255,255,255,0.02); padding:1rem; border-radius:8px; border:1px solid var(--border);">
+          <button id="btn_descargar_plantilla" class="btn" style="width:auto; padding:0.5rem 1.2rem; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); font-size:0.75rem; font-weight:700;">
+            📥 DESCARGAR PLANTILLA
+          </button>
+          <div style="display:flex; align-items:center; gap:0.5rem; position:relative;">
+            <button class="btn" style="width:auto; padding:0.5rem 1.2rem; background:#10b981; border:none; font-size:0.75rem; font-weight:700; cursor:pointer;">
+              📤 SUBIR CONFIGURACIÓN (Excel)
+            </button>
+            <input type="file" id="input_upload_config" accept=".xlsx" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" />
+          </div>
+        </div>
+
+        <!-- Matriz de Tallas por Genero -->
+        <div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:2rem;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; background:rgba(15,23,42,0.15);">
+            <thead>
+              <tr style="background:#0f172a; border-bottom:2px solid rgba(99,102,241,0.3);">
+                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); width:120px; text-align:center; border-right:1px solid var(--border);">GÉNERO</th>
+                ${TALLAS_COLS.map(t => `<th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:#a5b4fc; text-align:center; min-width:45px;">${t}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${GENEROS_ROWS.map(g => `
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:0.6rem; font-weight:800; font-size:0.75rem; color:#fff; background:#0f172a55; text-align:center; border-right:1px solid var(--border);">${g}</td>
+                  ${TALLAS_COLS.map(t => {
+                    const key = `${g}_${t}`;
+                    const val = _configTallasGenero[key] !== undefined ? _configTallasGenero[key] : '';
+                    return `
+                      <td style="padding:0.3rem; text-align:center;">
+                        <input type="number" min="0" max="9999" data-g="${g}" data-t="${t}" value="${val}" placeholder="--"
+                          style="width:40px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:4px; color:#fff; text-align:center; font-size:0.75rem; padding:0.25rem 0;" />
+                      </td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Excepciones específicas por SKU -->
+      <div class="glass-panel" style="padding:1.5rem;">
+        <h3 style="margin-top:0; color:#fff; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
+          🎯 EXCEPCIONES Y OBJETIVOS ESPECÍFICOS POR SKU INDIVIDUAL
+        </h3>
+        <p style="color:var(--text-muted); font-size:0.75rem; margin-bottom:1rem;">
+          Si un SKU específico requiere un objetivo personalizado que contradiga la regla por género/talla general (por ejemplo, artículos estrella o en liquidación), agrégalo aquí.
+        </p>
+
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+          <input type="text" id="sku_ex_input" placeholder="Ingresa SKU (ej: 9920768-1-01)..."
+            style="width:250px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem;" />
+          <input type="number" id="sku_ex_qty" placeholder="Objetivo..." min="0"
+            style="width:100px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem; text-align:center;" />
+          <button id="btn_add_sku_ex" class="btn" style="width:auto; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:700;">➕ AGREGAR REGLA</button>
+        </div>
+
+        <div style="max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem; text-align:left; background:rgba(15,23,42,0.15);">
+            <thead>
+              <tr style="background:#0f172a; border-bottom:2px solid rgba(99,102,241,0.3); position:sticky; top:0; z-index:2;">
+                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted);">SKU INDIVIDUAL</th>
+                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-align:center; width:150px;">STOCK OBJETIVO</th>
+                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-align:center; width:100px;">ACCIÓN</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_sku_excepciones"></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    // --- Render tabla de excepciones ---
+    const renderSkuExcepcionesTable = () => {
+      const tbody = document.getElementById('tbody_sku_excepciones');
+      if (!tbody) return;
+      const keys = Object.keys(_configSKUExcepciones).sort();
+      if (keys.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.75rem;">No hay excepciones por SKU cargadas.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = keys.map(k => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.6rem; font-family:monospace; color:#e2e8f0; font-weight:600;">${k}</td>
+          <td style="padding:0.3rem; text-align:center;">
+            <input type="number" min="0" max="9999" data-sku="${k}" value="${_configSKUExcepciones[k]}"
+              style="width:70px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:4px; color:#fff; text-align:center; font-size:0.75rem; padding:0.25rem 0;" />
+          </td>
+          <td style="padding:0.3rem; text-align:center;">
+            <button class="btn btn-delete-ex" data-sku="${k}" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.7rem; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Inputs de edicion de SKU
+      tbody.querySelectorAll('input[data-sku]').forEach(input => {
+        input.addEventListener('change', e => {
+          const sku = e.target.dataset.sku;
+          const val = parseInt(e.target.value, 10);
+          if (!isNaN(val) && val >= 0) {
+            _configSKUExcepciones[sku] = val;
+            _saveConfiguracionAnalisis();
+          }
+        });
+      });
+
+      // Boton eliminar excepciones
+      tbody.querySelectorAll('.btn-delete-ex').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const sku = e.currentTarget.dataset.sku;
+          delete _configSKUExcepciones[sku];
+          _saveConfiguracionAnalisis();
+          renderSkuExcepcionesTable();
+        });
+      });
+    };
+
+    renderSkuExcepcionesTable();
+
+    // --- Inputs inline de la matriz de genero/talla ---
+    container.querySelectorAll('input[data-g]').forEach(input => {
+      input.addEventListener('change', e => {
+        const g = e.target.dataset.g;
+        const t = e.target.dataset.t;
+        const valRaw = e.target.value.trim();
+        const key = `${g}_${t}`;
+        if (valRaw === '') {
+          delete _configTallasGenero[key];
+        } else {
+          const val = parseInt(valRaw, 10);
+          if (!isNaN(val) && val >= 0) {
+            _configTallasGenero[key] = val;
+          }
+        }
+        _saveConfiguracionAnalisis();
+      });
+    });
+
+    // --- Botón de Agregar Excepción SKU ---
+    document.getElementById('btn_add_sku_ex').addEventListener('click', () => {
+      const sku = document.getElementById('sku_ex_input').value.trim();
+      const qtyVal = parseInt(document.getElementById('sku_ex_qty').value, 10);
+      if (!sku) {
+        showPremiumAlert('Error', 'Debes ingresar un SKU válido.', 'error');
+        return;
+      }
+      if (isNaN(qtyVal) || qtyVal < 0) {
+        showPremiumAlert('Error', 'El stock objetivo debe ser un número entero mayor o igual a 0.', 'error');
+        return;
+      }
+      _configSKUExcepciones[sku] = qtyVal;
+      _saveConfiguracionAnalisis();
+      document.getElementById('sku_ex_input').value = '';
+      document.getElementById('sku_ex_qty').value = '';
+      renderSkuExcepcionesTable();
+    });
+
+    // --- Botón de Descargar Plantilla ---
+    document.getElementById('btn_descargar_plantilla').addEventListener('click', () => {
+      const wb = XLSX.utils.book_new();
+
+      // Pestaña 1: Generales por Talla y Género
+      const rowsGenero = [];
+      GENEROS_ROWS.forEach(g => {
+        TALLAS_COLS.forEach(t => {
+          const key = `${g}_${t}`;
+          rowsGenero.push({
+            'GÉNERO': g,
+            'TALLA': t,
+            'STOCK_OBJETIVO_ACTIVO': _configTallasGenero[key] !== undefined ? _configTallasGenero[key] : ''
+          });
+        });
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rowsGenero), 'Objetivos_Por_Talla');
+
+      // Pestaña 2: Excepciones por SKU
+      const rowsSku = Object.keys(_configSKUExcepciones).sort().map(k => ({
+        'SKU': k,
+        'STOCK_OBJETIVO_ACTIVO': _configSKUExcepciones[k]
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rowsSku), 'Objetivos_Por_SKU');
+
+      XLSX.writeFile(wb, `plantilla_configuracion_tallas_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+
+    // --- Subir Excel Configuración ---
+    document.getElementById('input_upload_config').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+
+          // Procesar pestaña 1: Objetivos_Por_Talla
+          const wsTalla = wb.Sheets['Objetivos_Por_Talla'];
+          if (wsTalla) {
+            const arr = XLSX.utils.sheet_to_json(wsTalla);
+            _configTallasGenero = {};
+            arr.forEach(row => {
+              const g = String(row['GÉNERO'] || '').trim().toUpperCase();
+              const t = String(row['TALLA'] || '').trim();
+              const val = parseInt(row['STOCK_OBJETIVO_ACTIVO'], 10);
+              if (g && t && !isNaN(val) && val >= 0) {
+                _configTallasGenero[`${g}_${t}`] = val;
+              }
+            });
+          }
+
+          // Procesar pestaña 2: Objetivos_Por_SKU
+          const wsSku = wb.Sheets['Objetivos_Por_SKU'];
+          if (wsSku) {
+            const arr = XLSX.utils.sheet_to_json(wsSku);
+            _configSKUExcepciones = {};
+            arr.forEach(row => {
+              const sku = String(row['SKU'] || '').trim();
+              const val = parseInt(row['STOCK_OBJETIVO_ACTIVO'], 10);
+              if (sku && !isNaN(val) && val >= 0) {
+                _configSKUExcepciones[sku] = val;
+              }
+            });
+          }
+
+          _saveConfiguracionAnalisis();
+          showPremiumAlert('Carga Exitosa', 'Configuración de factores cargada correctamente.', 'success');
+          renderConfiguracionAnalisisSKU(container);
+        } catch(err) {
+          console.error(err);
+          showPremiumAlert('Error de Formato', 'El archivo no tiene el formato correcto.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
   // ── renderWithItems: construye la UI completa con los items ya procesados ──
   const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
 
@@ -12162,10 +12448,36 @@ const renderRFSection = (container) => {
         umbral = v;
         localStorage.setItem('repl_umbral', v);
         if (_replCache) _replCache.umbral = v;
+        
+        // Cargar configuracion de factores
+        _loadConfiguracionAnalisis();
+
         items.forEach(i => {
-          if (i.qAct === 0)                        { i.estado = 'QUEBRADO';    i.prioridad = 1; }
-          else if (i.qAct <= umbral && i.qRes > 0) { i.estado = 'POR QUEBRAR'; i.prioridad = 2; }
-          else                                      { i.estado = 'OK';          i.prioridad = 3; }
+          // Determinar umbral especifico
+          let skuUmbral = umbral;
+          if (_configSKUExcepciones[i.sku] !== undefined) {
+            skuUmbral = _configSKUExcepciones[i.sku];
+          } else {
+            const genKey = String(i.genderRims).trim().toUpperCase();
+            const lookupKey = `${genKey}_${i.talla}`;
+            if (_configTallasGenero[lookupKey] !== undefined) {
+              skuUmbral = _configTallasGenero[lookupKey];
+            }
+          }
+
+          if (skuUmbral === 0) {
+            i.estado = 'OK';
+            i.prioridad = 3;
+          } else if (i.qAct === 0) {
+            i.estado = 'QUEBRADO';
+            i.prioridad = 1;
+          } else if (i.qAct <= skuUmbral && i.qRes > 0) {
+            i.estado = 'POR QUEBRAR';
+            i.prioridad = 2;
+          } else {
+            i.estado = 'OK';
+            i.prioridad = 3;
+          }
         });
         items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
         // actualizar cache persistente con nuevos estados (formato comprimido)
@@ -12368,6 +12680,9 @@ const renderRFSection = (container) => {
         stockResMap.set(sku, (stockResMap.get(sku) || 0) + qty);
       });
 
+      // --- Cargar configuraciones de factores ---
+      _loadConfiguracionAnalisis();
+
       // ── Clasificar ──
       const items = [];
       stockActMap.forEach((qAct, sku) => {
@@ -12379,10 +12694,34 @@ const renderRFSection = (container) => {
         const genderRims = maestInfo.genderRims || '-';
         const temporada  = maestInfo.temporada  || '-';
         const tipo       = sku.length === 15 ? 'Prepack' : sku.length === 12 ? 'SolidPack' : '-';
+        
+        // Calcular umbral personalizado
+        let skuUmbral = umbral;
+        if (_configSKUExcepciones[sku] !== undefined) {
+          skuUmbral = _configSKUExcepciones[sku];
+        } else {
+          const genKey = String(genderRims).trim().toUpperCase();
+          const lookupKey = `${genKey}_${talla}`;
+          if (_configTallasGenero[lookupKey] !== undefined) {
+            skuUmbral = _configTallasGenero[lookupKey];
+          }
+        }
+
         let estado, prioridad;
-        if (qAct === 0)                       { estado = 'QUEBRADO';    prioridad = 1; }
-        else if (qAct <= umbral && qRes > 0)  { estado = 'POR QUEBRAR'; prioridad = 2; }
-        else                                   { estado = 'OK';          prioridad = 3; }
+        if (skuUmbral === 0) {
+          // Si el factor es 0, no se requiere reposición (siempre OK)
+          estado = 'OK';
+          prioridad = 3;
+        } else if (qAct === 0) {
+          estado = 'QUEBRADO';
+          prioridad = 1;
+        } else if (qAct <= skuUmbral && qRes > 0) {
+          estado = 'POR QUEBRAR';
+          prioridad = 2;
+        } else {
+          estado = 'OK';
+          prioridad = 3;
+        }
         items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad });
       });
 
@@ -12397,7 +12736,25 @@ const renderRFSection = (container) => {
         const genderRims = maestInfo.genderRims || '-';
         const temporada  = maestInfo.temporada  || '-';
         const tipo       = sku.length === 15 ? 'Prepack' : sku.length === 12 ? 'SolidPack' : '-';
-        items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1 });
+
+        // Calcular umbral personalizado
+        let skuUmbral = umbral;
+        if (_configSKUExcepciones[sku] !== undefined) {
+          skuUmbral = _configSKUExcepciones[sku];
+        } else {
+          const genKey = String(genderRims).trim().toUpperCase();
+          const lookupKey = `${genKey}_${talla}`;
+          if (_configTallasGenero[lookupKey] !== undefined) {
+            skuUmbral = _configTallasGenero[lookupKey];
+          }
+        }
+
+        if (skuUmbral === 0) {
+          // Excluir de quiebres si el objetivo es 0
+          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'OK', prioridad: 3 });
+        } else {
+          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1 });
+        }
       });
 
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
@@ -12478,6 +12835,11 @@ const renderRFSection = (container) => {
 
     if (activeAnalisisSub === 'replenishment') {
         renderReplenishment(skuBuf);
+        return;
+    }
+
+    if (activeAnalisisSub === 'configuracion_analisis') {
+        renderConfiguracionAnalisisSKU(skuBuf);
         return;
     }
 
