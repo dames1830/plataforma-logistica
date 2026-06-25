@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.208';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.209';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.208';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.208';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.208';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.208';
+import * as adminService from '../services_v245/adminService.js?v=26.5.209';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.209';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.209';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.209';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.208';
+const VERSION = '26.5.209';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11967,12 +11967,12 @@ const renderRFSection = (container) => {
     };
 
     if (!lastBufferResult) {
-        contentArea.innerHTML = subNavHtml + `
+        skuBuf.innerHTML = `
             <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border: 1px dashed rgba(255,255,255,0.1);">
                 <div style="margin-bottom:2rem;">
-                    <img src="https://img.icons8.com/fluency/96/000000/search-property.png" style="opacity:0.6; filter:grayscale(0.5);"/>
+                    <div style="font-size:4rem; opacity:0.3;">📊</div>
                 </div>
-                <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">ARTICULO POR TEMPORADA</h3>
+                <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">ARTÍCULO POR TEMPORADA</h3>
                 <p style="color:var(--text-muted); max-width:500px; margin:0 auto 2.5rem;">
                     Presiona el botón para consolidar el Stock Activo y Reserva por Artículo y Temporada.
                 </p>
@@ -11992,7 +11992,7 @@ const renderRFSection = (container) => {
     const tO = data.reporteObsolencia || [];
     const tDetalle = data.detalleObsGen || [];
 
-    contentArea.innerHTML = subNavHtml + `
+    skuBuf.innerHTML = `
       <div class="animate-fade-in" style="width:100%; max-width:1450px; margin:0 auto;">
         
         <!-- BOTONES ARRIBA (FUERA DEL MARGEN) -->
