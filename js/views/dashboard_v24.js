@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.218';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.219';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.218';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.218';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.218';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.218';
+import * as adminService from '../services_v245/adminService.js?v=26.5.219';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.219';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.219';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.219';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.218';
+const VERSION = '26.5.219';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11961,9 +11961,9 @@ const renderRFSection = (container) => {
         const qRes = stockResMap.get(sku) || 0;
         const art7 = sku.length >= 7 ? sku.substring(0, 7) : sku;
         let estado, prioridad;
-        if (qAct === 0)          { estado = 'QUEBRADO';    prioridad = 1; }
-        else if (qAct <= umbral) { estado = 'POR QUEBRAR'; prioridad = 2; }
-        else                     { estado = 'OK';          prioridad = 3; }
+        if (qAct === 0)                       { estado = 'QUEBRADO';    prioridad = 1; }
+        else if (qAct <= umbral && qRes > 0)  { estado = 'POR QUEBRAR'; prioridad = 2; }
+        else                                   { estado = 'OK';          prioridad = 3; }
         items.push({ sku, art7, qAct, qRes, estado, prioridad, reponer: qRes > 0 ? qRes : 0 });
       });
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
@@ -12100,9 +12100,9 @@ const renderRFSection = (container) => {
           umbral = v;
           localStorage.setItem('repl_umbral', v);
           items.forEach(i => {
-            if (i.qAct === 0)          { i.estado = 'QUEBRADO';    i.prioridad = 1; }
-            else if (i.qAct <= umbral) { i.estado = 'POR QUEBRAR'; i.prioridad = 2; }
-            else                       { i.estado = 'OK';          i.prioridad = 3; }
+            if (i.qAct === 0)                       { i.estado = 'QUEBRADO';    i.prioridad = 1; }
+            else if (i.qAct <= umbral && i.qRes > 0) { i.estado = 'POR QUEBRAR'; i.prioridad = 2; }
+            else                                      { i.estado = 'OK';          i.prioridad = 3; }
           });
           items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
           renderKPIs();
