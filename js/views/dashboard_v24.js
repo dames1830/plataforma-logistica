@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.229';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.230';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.229';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.229';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.229';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.229';
+import * as adminService from '../services_v245/adminService.js?v=26.5.230';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.230';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.230';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.230';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.229';
+const VERSION = '26.5.230';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12184,25 +12184,27 @@ const renderRFSection = (container) => {
   // MÓDULO REPLENISHMENT — Reposición de Stock Activo quebrado / por quebrar
   // ════════════════════════════════════════════════════════════════════════
   const renderReplenishment = (container) => {
+    // ── Restaurar desde cache PRIMERO (persiste entre refrescos vía localStorage) ──
+    // Nota: se verifica antes que activo/reserva porque esos llegan async desde IndexedDB
+    if (_replCache) {
+      const activo  = dataStore.analisis_sku_activo  || [];
+      const reserva = dataStore.analisis_sku_reserva || [];
+      const { items: cachedItems, umbral: cachedUmbral } = _replCache;
+      _replRenderWithItems(container, cachedItems, cachedUmbral, activo, reserva);
+      return;
+    }
+
     const activo  = dataStore.analisis_sku_activo  || [];
     const reserva = dataStore.analisis_sku_reserva || [];
 
-    // ── Sin datos: pedir archivos ──
+    // ── Sin datos y sin cache: pedir archivos ──
     if (!activo.length && !reserva.length) {
-      _replCache = null; // limpiar cache si no hay datos
       container.innerHTML = `
         <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border:1px dashed rgba(255,255,255,0.1);">
           <div style="font-size:4rem; opacity:0.3; margin-bottom:1.5rem;">🔄</div>
           <h3 style="color:#fff; font-weight:700; margin-bottom:0.8rem;">Sin Datos Cargados</h3>
           <p style="color:var(--text-muted);">Ve a <b>📁 ARCHIVO ANÁLISIS SKU</b> y carga los archivos de Stock Activo y Stock Reserva.</p>
         </div>`;
-      return;
-    }
-
-    // ── Restaurar desde cache si ya se procesó ──
-    if (_replCache) {
-      const { items: cachedItems, umbral: cachedUmbral } = _replCache;
-      _replRenderWithItems(container, cachedItems, cachedUmbral, activo, reserva);
       return;
     }
 
