@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.223';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.224';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.223';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.223';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.223';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.223';
+import * as adminService from '../services_v245/adminService.js?v=26.5.224';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.224';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.224';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.224';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.223';
+const VERSION = '26.5.224';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11876,21 +11876,29 @@ const renderRFSection = (container) => {
   };
 
 
-  // ════════════════════════════════════════════════════════════════════════
-  // MÓDULO REPLENISHMENT — Reposición de Stock Activo quebrado / por quebrar
-  // ════════════════════════════════════════════════════════════════════════
+  // ── Cache de resultados Replenishment (persiste al cambiar de módulo) ──
+  let _replCache = null; // { items, umbral, timestamp }
+
   const renderReplenishment = (container) => {
     const activo  = dataStore.analisis_sku_activo  || [];
     const reserva = dataStore.analisis_sku_reserva || [];
 
     // ── Sin datos: pedir archivos ──
     if (!activo.length && !reserva.length) {
+      _replCache = null; // limpiar cache si no hay datos
       container.innerHTML = `
         <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border:1px dashed rgba(255,255,255,0.1);">
           <div style="font-size:4rem; opacity:0.3; margin-bottom:1.5rem;">🔄</div>
           <h3 style="color:#fff; font-weight:700; margin-bottom:0.8rem;">Sin Datos Cargados</h3>
           <p style="color:var(--text-muted);">Ve a <b>📁 ARCHIVO ANÁLISIS SKU</b> y carga los archivos de Stock Activo y Stock Reserva.</p>
         </div>`;
+      return;
+    }
+
+    // ── Restaurar desde cache si ya se procesó ──
+    if (_replCache) {
+      const { items: cachedItems, umbral: cachedUmbral } = _replCache;
+      renderWithItems(container, cachedItems, cachedUmbral, activo, reserva);
       return;
     }
 
@@ -12041,13 +12049,18 @@ const renderRFSection = (container) => {
 
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
+      // guardar en cache y renderizar
+      _replCache = { items, umbral };
+      renderWithItems(container, items, umbral, activo, reserva);
+    };
 
-      // ── KPIs ──
+    // ── renderWithItems: construye la UI con los items ya procesados ──
+    const renderWithItems = (container, items, umbral, activo, reserva) => {
+
       const calcKPIs = () => ({
         nQuebrado:   items.filter(i => i.estado === 'QUEBRADO').length,
         nPorQuebrar: items.filter(i => i.estado === 'POR QUEBRAR').length,
         nOk:         items.filter(i => i.estado === 'OK').length,
-        sinReserva:  items.filter(i => i.estado !== 'OK' && i.qRes === 0).length,
       });
 
       const estadoColor = { 'QUEBRADO':'#ef4444', 'POR QUEBRAR':'#f59e0b', 'OK':'#22c55e' };
@@ -12057,14 +12070,13 @@ const renderRFSection = (container) => {
       let filterTexto  = '';
 
       const renderKPIs = () => {
-        const { nQuebrado, nPorQuebrar, nOk, sinReserva } = calcKPIs();
+        const { nQuebrado, nPorQuebrar, nOk } = calcKPIs();
         const kEl = document.getElementById('repl_kpis');
         if (!kEl) return;
         kEl.innerHTML = [
           { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴', fv:'QUEBRADO' },
           { label:'POR QUEBRAR', val:nPorQuebrar, sub:`≤ ${umbral} unidades`, color:'#f59e0b', icon:'🟡', fv:'POR QUEBRAR' },
           { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢', fv:'OK' },
-          { label:'SIN RESERVA', val:sinReserva,  sub:'No se puede reponer',  color:'#64748b', icon:'⚠️', fv:'TODOS' },
         ].map(k => `
           <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color}; cursor:pointer;"
                onclick="document.getElementById('repl_filter').value='${k.fv}'; document.getElementById('repl_filter').dispatchEvent(new Event('change'));">
@@ -12105,7 +12117,7 @@ const renderRFSection = (container) => {
       // ── Render HTML ──
       container.innerHTML = `
         <!-- KPIs -->
-        <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem;"></div>
+        <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;"></div>
 
         <!-- Controles -->
         <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
