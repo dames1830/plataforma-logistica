@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.216';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.217';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.216';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.216';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.216';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.216';
+import * as adminService from '../services_v245/adminService.js?v=26.5.217';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.217';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.217';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.217';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.216';
+const VERSION = '26.5.217';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12300,7 +12300,41 @@ const renderRFSection = (container) => {
             detalleObsGen.push({ 'Articulo': art, 'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/DATO', 'G. GENDER': info.gGender || 'S/DATO', 'CANTIDAD': Math.round(qty) });
           });
 
-          const res = { reporteTemporadasQ, reporteGender, reporteObsolencia, detalleObsGen, detalleTemporadas: detalleObsGen };
+          // ── Tabla Virtual de Tallas (lógica propia, no afecta módulo Buffer) ──
+          // Extrae la talla del último segmento después del guion en la descripción del SKU
+          const _extractTallaLocal = (desc) => {
+            if (!desc) return null;
+            const parts = String(desc).trim().split('-');
+            if (parts.length >= 3) return parts[parts.length - 1].trim();
+            return null;
+          };
+
+          const tablaTallasMap = new Map(); // SKU completo → Talla
+
+          // Desde activo: descripción en columna 'Descripcion'/'Descripción' o posición [2]
+          (skuActivo || []).forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku  = String(getCol(row, ['Artículo','Articulo','ArtÃculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
+            const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
+            if (!sku) return;
+            const talla = _extractTallaLocal(desc);
+            if (talla && !tablaTallasMap.has(sku)) tablaTallasMap.set(sku, talla);
+          });
+
+          // Desde reserva: descripción en columna 'DESCRIPCION'
+          (skuReserva || []).forEach(row => {
+            const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+            const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
+            if (!sku) return;
+            const talla = _extractTallaLocal(desc);
+            if (talla && !tablaTallasMap.has(sku)) tablaTallasMap.set(sku, talla);
+          });
+
+          const tablaTallas = Array.from(tablaTallasMap.entries()).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla }));
+          console.log(`[SKU-TALLAS] Tabla virtual generada: ${tablaTallas.length} SKUs con talla.`);
+
+          const res = { reporteTemporadasQ, reporteGender, reporteObsolencia, detalleObsGen, detalleTemporadas: detalleObsGen, tablaTallas };
+
 
 
           if (res) {
@@ -12310,8 +12344,10 @@ const renderRFSection = (container) => {
                       reporteObsolencia: res.reporteObsolencia,
                       detalleObsGen: res.detalleObsGen || [],
                       detalleTemporadas: res.detalleTemporadas || [],
+                      tablaTallas: res.tablaTallas || [],
                       timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
                   };
+
               try {
                   // Limpiar claves antiguas de logistics_ para liberar espacio
                   Object.keys(localStorage).forEach(key => {
@@ -12378,6 +12414,9 @@ const renderRFSection = (container) => {
             </button>
             <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(251,191,36,0.05); border:1px solid #fbbf24; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#fbbf24'" onmouseout="this.style.background='rgba(251,191,36,0.05)'">
                 📊 DETALLE OBS.GEN
+            </button>
+            <button id="btn_export_tallas" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(99,102,241,0.05); border:1px solid #6366f1; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#6366f1'" onmouseout="this.style.background='rgba(99,102,241,0.05)'">
+                👟 EXPORTAR TALLAS
             </button>
         </div>
 
@@ -12473,10 +12512,11 @@ const renderRFSection = (container) => {
         exportBtn.onclick = () => {
             const detail = data.detalleTemporadas || [];
             if (!detail.length) return alert('No hay datos detallados de temporadas para exportar. Pulsa Procesar.');
-            
-            const ws = XLSX.utils.json_to_sheet(detail);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Revision_Temporadas");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detail), "Revision_Temporadas");
+            // Pestaña Tallas
+            const tallas = data.tablaTallas || [];
+            if (tallas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallas), "Tallas");
             XLSX.writeFile(wb, `Reporte_Revision_Temporadas_${new Date().getTime()}.xlsx`);
         };
     }
@@ -12485,13 +12525,27 @@ const renderRFSection = (container) => {
     if (exportObsGenBtn) {
         exportObsGenBtn.onclick = () => {
             if (!tDetalle.length) return alert('No hay datos detallados para exportar.');
-            const ws = XLSX.utils.json_to_sheet(tDetalle);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Detalle_OBS_GEN");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tDetalle), "Detalle_OBS_GEN");
+            // Pestaña Tallas
+            const tallas = data.tablaTallas || [];
+            if (tallas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallas), "Tallas");
             XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
         };
     }
+
+    const exportTallasBtn = document.getElementById('btn_export_tallas');
+    if (exportTallasBtn) {
+        exportTallasBtn.onclick = () => {
+            const tallas = data.tablaTallas || [];
+            if (!tallas.length) return alert('No hay tallas generadas. Pulsa ⚡ RE-PROCESAR TODO primero.');
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallas), "Tallas");
+            XLSX.writeFile(wb, `Tabla_Tallas_SKU_${new Date().getTime()}.xlsx`);
+        };
+    }
   };
+
 
   const processAlmacenajeTasks = async (mode = 'update', manualDate = null) => {
     let progressModal;
