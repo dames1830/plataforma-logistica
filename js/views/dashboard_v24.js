@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.214';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.215';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.214';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.214';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.214';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.214';
+import * as adminService from '../services_v245/adminService.js?v=26.5.215';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.215';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.215';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.215';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.214';
+const VERSION = '26.5.215';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11902,18 +11902,23 @@ const renderRFSection = (container) => {
       console.log('[REPL-DEBUG] Primera fila RESERVA:', JSON.stringify(primeraFila));
     }
 
-    // ── Agregar Stock Activo por SKU completo ──
+    // ── Agregar Stock Activo por SKU completo (solo áreas de piso activo) ──
+    const AREAS_ACTIVO = ['MZN01','MZN02','MZN03','MZN04','BUFFERCD','AND','SEL'];
     const stockActMap  = new Map();
     activo.forEach(row => {
-      const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','Articulo','SKU','CODIGO']) || '').trim();
+      const areaRaw = String(getCol(row, ['Área','Area','AREA','Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (!AREAS_ACTIVO.some(a => areaRaw.includes(a))) return;   // ← solo zonas activas
+      const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','SKU','CODIGO']) || '').trim();
       const qty = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY']) || 0);
       if (!sku || qty <= 0) return;
       stockActMap.set(sku, (stockActMap.get(sku) || 0) + qty);
     });
 
-    // ── Agregar Stock Reserva por SKU completo ──
+    // ── Agregar Stock Reserva por SKU completo (solo NIVEL = ALTO) ──
     const stockResMap  = new Map();
     reserva.forEach(row => {
+      const nivel = String(row['NIVEL'] || '').trim().toUpperCase();
+      if (!nivel.includes('ALTO')) return;                          // ← solo nivel ALTO
       const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
       const qty = parseFloat(getCol(row, ['CANTIDAD','Cantidad actual','Cantidad','Cant.','Cant','Stock','QTY']) || 0);
       if (!sku || qty <= 0) return;
