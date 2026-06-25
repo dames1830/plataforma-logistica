@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.221';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.222';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.221';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.221';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.221';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.221';
+import * as adminService from '../services_v245/adminService.js?v=26.5.222';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.222';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.222';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.222';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.221';
+const VERSION = '26.5.222';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11897,6 +11897,15 @@ const renderRFSection = (container) => {
     // ── Pantalla de espera: el usuario debe dar clic a PROCESAR ──
     const renderLanding = () => {
       container.innerHTML = `
+        <style>
+          @keyframes repl-pulse {
+            0%,100% { box-shadow: 0 4px 24px rgba(99,102,241,0.4); transform: scale(1); }
+            50%      { box-shadow: 0 4px 40px rgba(99,102,241,0.8); transform: scale(1.04); }
+          }
+          @keyframes repl-spin { to { transform: rotate(360deg); } }
+          .repl-processing { animation: repl-pulse 1s ease-in-out infinite !important; pointer-events:none; opacity:0.85; }
+          .repl-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:repl-spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
+        </style>
         <div class="glass-panel animate-fade-in" style="padding:5rem 2rem; text-align:center; border:1px dashed rgba(99,102,241,0.25);">
           <div style="font-size:4rem; margin-bottom:1.5rem;">🔄</div>
           <h3 style="color:#fff; font-weight:700; margin-bottom:0.6rem;">Análisis de Replenishment</h3>
@@ -11913,8 +11922,12 @@ const renderRFSection = (container) => {
           </button>
         </div>`;
 
-      document.getElementById('repl_run_btn').addEventListener('click', () => {
-        runReplenishmentAnalysis();
+      document.getElementById('repl_run_btn').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        btn.classList.add('repl-processing');
+        btn.innerHTML = '<span class="repl-spinner"></span> PROCESANDO...';
+        btn.disabled = true;
+        setTimeout(() => runReplenishmentAnalysis(), 50);
       });
     };
 
@@ -12004,11 +12017,12 @@ const renderRFSection = (container) => {
         const marcas     = maestInfo.marcas     || '-';
         const genderRims = maestInfo.genderRims || '-';
         const temporada  = maestInfo.temporada  || '-';
+        const tipo       = sku.length === 15 ? 'Prepack' : sku.length === 12 ? 'SolidPack' : '-';
         let estado, prioridad;
         if (qAct === 0)                       { estado = 'QUEBRADO';    prioridad = 1; }
         else if (qAct <= umbral && qRes > 0)  { estado = 'POR QUEBRAR'; prioridad = 2; }
         else                                   { estado = 'OK';          prioridad = 3; }
-        items.push({ sku, art7, talla, marcas, genderRims, temporada, qAct, qRes, estado, prioridad, reponer: qRes > 0 ? qRes : 0 });
+        items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad });
       });
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
@@ -12067,7 +12081,7 @@ const renderRFSection = (container) => {
             <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=umbral?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
             <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'#22c55e':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
             <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
-            <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.reponer>0?'#6366f1':'#64748b'};">${i.reponer>0?'+ '+i.reponer.toLocaleString('es'):'-'}</td>
+            <td style="padding:0.6rem 1rem; text-align:center; font-size:0.8rem; font-weight:700; color:${i.tipo==='Prepack'?'#f59e0b':i.tipo==='SolidPack'?'#22c55e':'#64748b'}; letter-spacing:0.3px;">${i.tipo}</td>
           </tr>`).join('');
         document.getElementById('repl_count').textContent = `${filtered.length} registros`;
       };
@@ -12124,7 +12138,7 @@ const renderRFSection = (container) => {
                 <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
                 <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
                 <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ESTADO</th>
-                <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">A REPONER</th>
+                <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f59e0b;">TIPO</th>
               </tr>
             </thead>
             <tbody id="repl_tbody"></tbody>
@@ -12180,7 +12194,7 @@ const renderRFSection = (container) => {
           'STOCK ACTIVO': i.qAct,
           'STOCK RESERVA':i.qRes,
           'ESTADO':       i.estado,
-          'A REPONER':    i.reponer
+          'TIPO':         i.tipo,
         }));
 
         // ── Hoja Tallas: tabla virtual SKU → Talla (último segmento tras guion) ──
