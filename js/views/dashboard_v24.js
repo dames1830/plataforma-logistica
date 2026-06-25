@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.209';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.210';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.209';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.209';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.209';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.209';
+import * as adminService from '../services_v245/adminService.js?v=26.5.210';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.210';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.210';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.210';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.209';
+const VERSION = '26.5.210';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11923,16 +11923,32 @@ const renderRFSection = (container) => {
       const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
       const oldHtml = btn ? btn.innerHTML : '⚡ PROCESAR REPORTE ARTÍCULO';
 
-      if (!dataStore.stockActivo || !dataStore.stockReserva) {
-          alert('⚠️ ATENCIÓN: Primero debes cargar "STOCK ACTIVO" y "STOCK RESERVA" en el módulo correspondiente.');
+      // Usar los archivos propios del módulo; fallback a los de Inventario si existen
+      const skuActivo  = dataStore.analisis_sku_activo  || dataStore.stockActivo;
+      const skuReserva = dataStore.analisis_sku_reserva || dataStore.stockReserva;
+
+      if (!skuActivo || !skuReserva) {
+          showPremiumAlert('Archivos Faltantes',
+              'Primero carga <b>STOCK ACTIVO</b> y <b>STOCK RESERVA</b> en la pestaña <b>📁 ARCHIVO ANÁLISIS SKU</b>.',
+              'warning');
           return;
       }
+
+      // Inyectar temporalmente en dataStore para que calculateBufferPallets los use
+      const _prevActivo  = dataStore.stockActivo;
+      const _prevReserva = dataStore.stockReserva;
+      dataStore.stockActivo  = skuActivo;
+      dataStore.stockReserva = skuReserva;
 
       if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
       
       setTimeout(async () => {
         try {
           const res = await calculateBufferPallets();
+          // Restaurar dataStore original
+          dataStore.stockActivo  = _prevActivo;
+          dataStore.stockReserva = _prevReserva;
+
           if (res) {
                   lastBufferResult = {
                       reporteTemporadasQ: res.reporteTemporadasQ,
@@ -11959,8 +11975,11 @@ const renderRFSection = (container) => {
               if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
           }
         } catch (err) {
+          // Restaurar dataStore en caso de error
+          dataStore.stockActivo  = _prevActivo;
+          dataStore.stockReserva = _prevReserva;
           console.error(err);
-          alert('❌ Error crítico: ' + err.message);
+          showPremiumAlert('Error Crítico', err.message, 'error');
           if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
         }
       }, 100);
