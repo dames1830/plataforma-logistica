@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.213';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.214';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.213';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.213';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.213';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.213';
+import * as adminService from '../services_v245/adminService.js?v=26.5.214';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.214';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.214';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.214';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.213';
+const VERSION = '26.5.214';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11890,21 +11890,33 @@ const renderRFSection = (container) => {
     // ── Leer umbral guardado (default 6 unidades) ──
     let umbral = parseInt(localStorage.getItem('repl_umbral') || '6', 10);
 
+    // ── DIAGNÓSTICO: mostrar columnas reales del archivo ──
+    if (activo.length > 0) {
+      const primeraFila = activo[0];
+      console.log('[REPL-DEBUG] Columnas detectadas en ACTIVO:', Object.keys(primeraFila));
+      console.log('[REPL-DEBUG] Primera fila ACTIVO:', JSON.stringify(primeraFila));
+    }
+    if (reserva.length > 0) {
+      const primeraFila = reserva[0];
+      console.log('[REPL-DEBUG] Columnas detectadas en RESERVA:', Object.keys(primeraFila));
+      console.log('[REPL-DEBUG] Primera fila RESERVA:', JSON.stringify(primeraFila));
+    }
+
     // ── Agregar Stock Activo por SKU completo ──
     const stockActMap  = new Map();
     activo.forEach(row => {
-      const sku = String(getCol(row, ['PRODUCTO','Articulo','SKU','CODIGO','Codigo']) || '').trim();
-      const qty = parseFloat(getCol(row, ['CANTIDAD','Cant','Stock','QTY','UNIDADES','Pares']) || 0);
-      if (!sku) return;
+      const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','Articulo','SKU','CODIGO']) || '').trim();
+      const qty = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY']) || 0);
+      if (!sku || qty <= 0) return;
       stockActMap.set(sku, (stockActMap.get(sku) || 0) + qty);
     });
 
     // ── Agregar Stock Reserva por SKU completo ──
     const stockResMap  = new Map();
     reserva.forEach(row => {
-      const sku = String(getCol(row, ['PRODUCTO','Articulo','SKU','CODIGO','Codigo']) || '').trim();
-      const qty = parseFloat(getCol(row, ['CANTIDAD','Cant','Stock','QTY','UNIDADES','Pares']) || 0);
-      if (!sku) return;
+      const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+      const qty = parseFloat(getCol(row, ['CANTIDAD','Cantidad actual','Cantidad','Cant.','Cant','Stock','QTY']) || 0);
+      if (!sku || qty <= 0) return;
       stockResMap.set(sku, (stockResMap.get(sku) || 0) + qty);
     });
 
@@ -12155,10 +12167,11 @@ const renderRFSection = (container) => {
 
           // ── 2. Sumar stock de activo + reserva ──
           allRows.forEach(row => {
-            const sku  = String(getCol(row, ['PRODUCTO','Articulo','SKU','Codigo','CODIGO']) || '').trim();
-            const qty  = parseFloat(getCol(row, ['CANTIDAD','Cant','Stock','QTY','UNIDADES','Pares']) || 0);
+            // Activo: columnas 'Artículo' + 'Cantidad actual' | Reserva: 'PRODUCTO' + 'CANTIDAD'
+            const sku  = String(getCol(row, ['Artículo','Articulo','Art\u00c3culo','PRODUCTO','SKU','Codigo','CODIGO']) || '').trim();
+            const qty  = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY']) || 0);
             const art  = sku.length >= 7 ? sku.substring(0, 7) : sku;
-            if (!art) return;
+            if (!art || qty <= 0) return;
 
             stockPorArticulo.set(art, (stockPorArticulo.get(art) || 0) + qty);
 
