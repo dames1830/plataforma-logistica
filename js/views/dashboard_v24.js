@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.222';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.223';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.222';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.222';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.222';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.222';
+import * as adminService from '../services_v245/adminService.js?v=26.5.223';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.223';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.223';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.223';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.222';
+const VERSION = '26.5.223';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12024,7 +12024,23 @@ const renderRFSection = (container) => {
         else                                   { estado = 'OK';          prioridad = 3; }
         items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad });
       });
+
+      // ── Segunda pasada: SKUs solo en Reserva (qAct=0, ausentes del activo) ──
+      // Estos son QUEBRADOS reales: no hay nada en piso pero sí hay stock para bajar.
+      stockResMap.forEach((qRes, sku) => {
+        if (stockActMap.has(sku)) return; // ya procesado arriba
+        const art7      = sku.length >= 7 ? sku.substring(0, 7) : sku;
+        const talla     = tallasMap.get(sku) || '-';
+        const maestInfo = maestroMap.get(art7) || {};
+        const marcas     = maestInfo.marcas     || '-';
+        const genderRims = maestInfo.genderRims || '-';
+        const temporada  = maestInfo.temporada  || '-';
+        const tipo       = sku.length === 15 ? 'Prepack' : sku.length === 12 ? 'SolidPack' : '-';
+        items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1 });
+      });
+
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
+
 
       // ── KPIs ──
       const calcKPIs = () => ({
