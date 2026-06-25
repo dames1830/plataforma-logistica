@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.220';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.221';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.220';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.220';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.220';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.220';
+import * as adminService from '../services_v245/adminService.js?v=26.5.221';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.221';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.221';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.221';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.220';
+const VERSION = '26.5.221';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11954,7 +11954,24 @@ const renderRFSection = (container) => {
         console.log('[REPL-DEBUG] Primera fila RESERVA:', JSON.stringify(reserva[0]));
       }
 
-      // ── Stock Activo (solo áreas MZN01-04, BUFFERCD, AND, SEL) ──
+      // ── Mapa Maestro de Artículos: CodArticulo → { marcas, genderRims, temporada } ──
+      const maestroData = dataStore.analisis_sku_maestro || [];
+      const maestroMap  = new Map();
+      maestroData.forEach(row => {
+        const raw  = Array.isArray(row) ? row : Object.values(row);
+        const cod  = String(getCol(row, ['CodArticulo','Cod Articulo','CODARTICULO','Articulo','ARTICULO','CODIGO']) || raw[1] || '').trim();
+        const art7 = cod.length >= 7 ? cod.substring(0, 7) : cod;
+        if (!art7) return;
+        if (!maestroMap.has(art7)) {
+          maestroMap.set(art7, {
+            genderRims: String(getCol(row, ['Gender RIMS','GENDER RIMS','GenderRIMS','GENDER_RIMS']) || raw[3] || '-').trim(),
+            marcas:     String(getCol(row, ['Marcas','MARCAS','Marca','MARCA'])                     || raw[13] || '-').trim(),
+            temporada:  String(getCol(row, ['Temporada','TEMPORADA','Season','SEASON'])              || raw[14] || '-').trim(),
+          });
+        }
+      });
+
+
       const AREAS_ACTIVO = ['MZN01','MZN02','MZN03','MZN04','BUFFERCD','AND','SEL'];
       const stockActMap  = new Map();
       activo.forEach(row => {
@@ -11980,14 +11997,18 @@ const renderRFSection = (container) => {
       // ── Clasificar ──
       const items = [];
       stockActMap.forEach((qAct, sku) => {
-        const qRes  = stockResMap.get(sku) || 0;
-        const art7  = sku.length >= 7 ? sku.substring(0, 7) : sku;
-        const talla = tallasMap.get(sku) || '-';
+        const qRes      = stockResMap.get(sku) || 0;
+        const art7      = sku.length >= 7 ? sku.substring(0, 7) : sku;
+        const talla     = tallasMap.get(sku) || '-';
+        const maestInfo = maestroMap.get(art7) || {};
+        const marcas     = maestInfo.marcas     || '-';
+        const genderRims = maestInfo.genderRims || '-';
+        const temporada  = maestInfo.temporada  || '-';
         let estado, prioridad;
         if (qAct === 0)                       { estado = 'QUEBRADO';    prioridad = 1; }
         else if (qAct <= umbral && qRes > 0)  { estado = 'POR QUEBRAR'; prioridad = 2; }
         else                                   { estado = 'OK';          prioridad = 3; }
-        items.push({ sku, art7, talla, qAct, qRes, estado, prioridad, reponer: qRes > 0 ? qRes : 0 });
+        items.push({ sku, art7, talla, marcas, genderRims, temporada, qAct, qRes, estado, prioridad, reponer: qRes > 0 ? qRes : 0 });
       });
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
@@ -12040,6 +12061,9 @@ const renderRFSection = (container) => {
             <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:0.82rem;">${i.art7}</td>
             <td style="padding:0.6rem 1rem; font-family:monospace; font-size:0.82rem; color:#e2e8f0;">${i.sku}</td>
             <td style="padding:0.6rem 1rem; text-align:center; font-size:0.82rem; font-weight:700; color:#a5b4fc;">${i.talla}</td>
+            <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#e2e8f0;">${i.marcas}</td>
+            <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#94a3b8;">${i.genderRims}</td>
+            <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#94a3b8;">${i.temporada}</td>
             <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=umbral?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
             <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'#22c55e':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
             <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
@@ -12094,6 +12118,9 @@ const renderRFSection = (container) => {
                 <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ARTÍCULO</th>
                 <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">SKU COMPLETO</th>
                 <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#a5b4fc;">TALLA</th>
+                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#fbbf24;">MARCA</th>
+                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#34d399;">GENDER RIMS</th>
+                <th style="padding:0.8rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f472b6;">TEMPORADA</th>
                 <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
                 <th style="padding:0.8rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
                 <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ESTADO</th>
@@ -12147,6 +12174,9 @@ const renderRFSection = (container) => {
           'ARTÍCULO':     i.art7,
           'SKU COMPLETO': i.sku,
           'TALLA':        i.talla,
+          'MARCA':        i.marcas,
+          'GENDER RIMS':  i.genderRims,
+          'TEMPORADA':    i.temporada,
           'STOCK ACTIVO': i.qAct,
           'STOCK RESERVA':i.qRes,
           'ESTADO':       i.estado,
