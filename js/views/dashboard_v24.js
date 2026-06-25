@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.217';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.218';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.217';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.217';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.217';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.217';
+import * as adminService from '../services_v245/adminService.js?v=26.5.218';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.218';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.218';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.218';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.217';
+const VERSION = '26.5.218';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -618,7 +618,13 @@ const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
-let lastBufferResult = null;
+let lastBufferResult = (() => {
+  try {
+    const _CK = `logistics_v24_prod_`;
+    const _c = localStorage.getItem(_CK + 'lastBufferKPI');
+    return _c ? JSON.parse(_c) : null;
+  } catch(e) { return null; }
+})();
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
@@ -12110,15 +12116,48 @@ const renderRFSection = (container) => {
           const q = filterTexto.toLowerCase();
           filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
         }
-        const header = ['SKU COMPLETO','ARTÍCULO','STOCK ACTIVO','STOCK RESERVA','ESTADO','A REPONER'];
-        const rows = filtered.map(i => [i.sku, i.art7, i.qAct, i.qRes, i.estado, i.reponer]);
-        const csv = [header, ...rows].map(r => r.join(';')).join('\n');
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url;
-        a.download = `replenishment_${new Date().toISOString().slice(0,10)}.csv`;
-        a.click(); URL.revokeObjectURL(url);
+
+        // ── Hoja principal: datos de replenishment ──
+        const mainData = filtered.map(i => ({
+          'SKU COMPLETO': i.sku,
+          'ARTÍCULO':     i.art7,
+          'STOCK ACTIVO': i.qAct,
+          'STOCK RESERVA':i.qRes,
+          'ESTADO':       i.estado,
+          'A REPONER':    i.reponer
+        }));
+
+        // ── Hoja Tallas: tabla virtual SKU → Talla (último segmento tras guion) ──
+        const _extractT = (desc) => {
+          if (!desc) return null;
+          const parts = String(desc).trim().split('-');
+          return parts.length >= 3 ? parts[parts.length - 1].trim() : null;
+        };
+        const tallasMap = new Map();
+        (activo || []).forEach(row => {
+          const raw  = Array.isArray(row) ? row : Object.values(row);
+          const sku  = String(getCol(row, ['Artículo','Articulo','ArtÃculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
+          const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
+          if (!sku) return;
+          const t = _extractT(desc);
+          if (t && !tallasMap.has(sku)) tallasMap.set(sku, t);
+        });
+        (reserva || []).forEach(row => {
+          const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+          const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
+          if (!sku) return;
+          const t = _extractT(desc);
+          if (t && !tallasMap.has(sku)) tallasMap.set(sku, t);
+        });
+        const tallasData = Array.from(tallasMap.entries()).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla }));
+
+        // ── Generar XLSX con 2 pestañas ──
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mainData), 'Replenishment');
+        if (tallasData.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallasData), 'Tallas');
+        XLSX.writeFile(wb, `replenishment_${new Date().toISOString().slice(0,10)}.xlsx`);
       });
+
     }; // fin runReplenishmentAnalysis
 
     // ── Mostrar landing al abrir ──
@@ -12193,7 +12232,16 @@ const renderRFSection = (container) => {
           return;
       }
 
-      if (btn) { btn.disabled = true; btn.innerHTML = '⚙️ PROCESANDO...'; }
+      if (btn) {
+        btn.disabled = true;
+        if (!document.getElementById('spin-style')) {
+          const s = document.createElement('style'); s.id = 'spin-style';
+          s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+          document.head.appendChild(s);
+        }
+        btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;"></span>PROCESANDO...</span>`;
+      }
+
 
       setTimeout(() => {
         try {
@@ -12415,9 +12463,6 @@ const renderRFSection = (container) => {
             <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(251,191,36,0.05); border:1px solid #fbbf24; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#fbbf24'" onmouseout="this.style.background='rgba(251,191,36,0.05)'">
                 📊 DETALLE OBS.GEN
             </button>
-            <button id="btn_export_tallas" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(99,102,241,0.05); border:1px solid #6366f1; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#6366f1'" onmouseout="this.style.background='rgba(99,102,241,0.05)'">
-                👟 EXPORTAR TALLAS
-            </button>
         </div>
 
         <div style="display:flex; gap:1.5rem; align-items: stretch;">
@@ -12514,9 +12559,6 @@ const renderRFSection = (container) => {
             if (!detail.length) return alert('No hay datos detallados de temporadas para exportar. Pulsa Procesar.');
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detail), "Revision_Temporadas");
-            // Pestaña Tallas
-            const tallas = data.tablaTallas || [];
-            if (tallas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallas), "Tallas");
             XLSX.writeFile(wb, `Reporte_Revision_Temporadas_${new Date().getTime()}.xlsx`);
         };
     }
@@ -12527,21 +12569,7 @@ const renderRFSection = (container) => {
             if (!tDetalle.length) return alert('No hay datos detallados para exportar.');
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tDetalle), "Detalle_OBS_GEN");
-            // Pestaña Tallas
-            const tallas = data.tablaTallas || [];
-            if (tallas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallas), "Tallas");
             XLSX.writeFile(wb, `Detalle_OBS_GEN_${new Date().getTime()}.xlsx`);
-        };
-    }
-
-    const exportTallasBtn = document.getElementById('btn_export_tallas');
-    if (exportTallasBtn) {
-        exportTallasBtn.onclick = () => {
-            const tallas = data.tablaTallas || [];
-            if (!tallas.length) return alert('No hay tallas generadas. Pulsa ⚡ RE-PROCESAR TODO primero.');
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallas), "Tallas");
-            XLSX.writeFile(wb, `Tabla_Tallas_SKU_${new Date().getTime()}.xlsx`);
         };
     }
   };
