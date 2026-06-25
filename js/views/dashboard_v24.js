@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.234';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.235';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.234';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.234';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.234';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.234';
+import * as adminService from '../services_v245/adminService.js?v=26.5.235';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.235';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.235';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.235';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.234';
+const VERSION = '26.5.235';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -640,7 +640,7 @@ let _replCache = (() => {
       parsed.items = parsed.items.map(i => ({
         sku: i.s, art7: i.a, talla: i.t, marcas: i.m, genderRims: i.g,
         temporada: i.T, tipo: i.tp, qAct: i.qA, qRes: i.qR,
-        estado: i.e, prioridad: i.p
+        estado: i.e, prioridad: i.p, factor: i.f || 0
       }));
     }
     return parsed;
@@ -12355,7 +12355,8 @@ const renderRFSection = (container) => {
           <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#fbbf24;">${i.marcas}</td>
           <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#34d399;">${i.genderRims}</td>
           <td style="padding:0.6rem 1rem; font-size:0.8rem; color:#f472b6;">${i.temporada}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=umbral?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
+          <td style="padding:0.6rem 1rem; text-align:center; font-size:0.82rem; font-weight:700; color:#818cf8; background:rgba(99,102,241,0.05);">${i.factor !== undefined ? i.factor : umbral}</td>
+          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=(i.factor !== undefined ? i.factor : umbral)?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
           <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'#22c55e':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
           <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
           <td style="padding:0.6rem 1rem; text-align:center; font-size:0.8rem; font-weight:700; color:${i.tipo==='Prepack'?'#f59e0b':i.tipo==='SolidPack'?'#22c55e':'#64748b'}; letter-spacing:0.3px;">${i.tipo}</td>
@@ -12400,6 +12401,7 @@ const renderRFSection = (container) => {
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#fbbf24;">MARCA</th>
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#34d399;">GENDER RIMS</th>
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f472b6;">TEMPORADA</th>
+              <th style="padding:0.8rem 1rem; text-align:center;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#818cf8; background:rgba(99,102,241,0.05);">FACTOR</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
               <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted); position:relative;">
@@ -12485,7 +12487,7 @@ const renderRFSection = (container) => {
         try {
           const compressed = items.map(i => ({
             s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
-            T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad
+            T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad, f: i.factor
           }));
           localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
         } catch(e) {}
@@ -12506,6 +12508,7 @@ const renderRFSection = (container) => {
         'MARCA':        i.marcas,
         'GENDER RIMS':  i.genderRims,
         'TEMPORADA':    i.temporada,
+        'FACTOR':       i.factor !== undefined ? i.factor : umbral,
         'STOCK ACTIVO': i.qAct,
         'STOCK RESERVA':i.qRes,
         'ESTADO':       i.estado,
@@ -12722,7 +12725,7 @@ const renderRFSection = (container) => {
           estado = 'OK';
           prioridad = 3;
         }
-        items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad });
+        items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad, factor: skuUmbral });
       });
 
       // ── Segunda pasada: SKUs solo en Reserva (qAct=0, ausentes del activo) ──
@@ -12751,9 +12754,9 @@ const renderRFSection = (container) => {
 
         if (skuUmbral === 0) {
           // Excluir de quiebres si el objetivo es 0
-          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'OK', prioridad: 3 });
+          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'OK', prioridad: 3, factor: skuUmbral });
         } else {
-          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1 });
+          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1, factor: skuUmbral });
         }
       });
 
@@ -12769,7 +12772,7 @@ const renderRFSection = (container) => {
         // Comprimir items: claves de 1-2 chars para reducir tamaño ~70%
         const compressed = items.map(i => ({
           s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
-          T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad
+          T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad, f: i.factor
         }));
         localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
       } catch(e) {
