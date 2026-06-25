@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.228';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.229';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.228';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.228';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.228';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.228';
+import * as adminService from '../services_v245/adminService.js?v=26.5.229';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.229';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.229';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.229';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.228';
+const VERSION = '26.5.229';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -11956,6 +11956,9 @@ const renderRFSection = (container) => {
         drop.style.display = isOpen ? 'none' : 'block';
       });
 
+      // evitar que clics DENTRO del dropdown cierren el panel
+      drop.addEventListener('click', e => e.stopPropagation());
+
       // checkbox TODOS
       const allChk = document.getElementById(`${id}_all`);
       if (allChk) allChk.addEventListener('change', () => {
@@ -12030,7 +12033,6 @@ const renderRFSection = (container) => {
           <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
           <td style="padding:0.6rem 1rem; text-align:center; font-size:0.8rem; font-weight:700; color:${i.tipo==='Prepack'?'#f59e0b':i.tipo==='SolidPack'?'#22c55e':'#64748b'}; letter-spacing:0.3px;">${i.tipo}</td>
         </tr>`).join('');
-      document.getElementById('repl_count').textContent = `${filtered.length} registros`;
     };
 
     // ── Render HTML ──
@@ -12052,11 +12054,10 @@ const renderRFSection = (container) => {
           <button id="repl_apply_umbral" style="background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); border-radius:8px; color:#818cf8; padding:0.4rem 0.8rem; font-size:0.75rem; cursor:pointer; font-weight:600;">APLICAR</button>
         </div>
         <div style="margin-left:auto; display:flex; gap:0.8rem; align-items:center;">
-          <span id="repl_count" style="font-size:0.75rem; color:var(--text-muted);"></span>
-          <button id="repl_reprocesar" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:rgba(255,255,255,0.5); padding:0.5rem 1rem; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.15s;"
+          <button id="repl_reprocesar" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:rgba(255,255,255,0.5); padding:0.4rem 0.9rem; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.15s; white-space:nowrap; line-height:1;"
             onmouseover="this.style.background='rgba(255,255,255,0.09)'; this.style.color='#fff';"
             onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.color='rgba(255,255,255,0.5)';">🔄 REPROCESAR</button>
-          <button id="repl_export" class="btn" style="padding:0.5rem 1rem; font-size:0.75rem; font-weight:700;">📥 EXPORTAR</button>
+          <button id="repl_export" class="btn" style="padding:0.4rem 1rem; font-size:0.75rem; font-weight:700; white-space:nowrap;">📥 EXPORTAR</button>
         </div>
       </div>
 
@@ -12091,10 +12092,12 @@ const renderRFSection = (container) => {
     renderTable();
 
     // ── Eventos ──
-    // cerrar dropdowns al click fuera
-    document.addEventListener('click', () =>
-      document.querySelectorAll('[id$="_drop"]').forEach(d => d.style.display = 'none')
-    , { once: false });
+    // cerrar dropdowns al click fuera (no cierra si el clic es dentro del dropdown)
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('[id$="_drop"]') && !e.target.closest('[id$="_btn"]')) {
+        document.querySelectorAll('[id$="_drop"]').forEach(d => d.style.display = 'none');
+      }
+    });
 
     // wiring de filtros de columna
     wireColDropdown('repl_fcol_estado', colFilterEstado, renderTable);
