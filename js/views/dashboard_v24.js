@@ -12182,7 +12182,7 @@ const renderRFSection = (container) => {
       }
     });
     document.getElementById('repl_export').addEventListener('click', () => {
-      let filtered = activeEstados.size === 0 ? items : items.filter(i => activeEstados.has(i.estado));
+      let filtered = colFilterEstado.size === 0 ? items : items.filter(i => colFilterEstado.has(i.estado));
       if (filterTexto) {
         const q = filterTexto.toLowerCase();
         filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
