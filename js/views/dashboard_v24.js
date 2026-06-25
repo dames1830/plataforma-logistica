@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.231';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.232';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.231';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.231';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.231';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.231';
+import * as adminService from '../services_v245/adminService.js?v=26.5.232';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.232';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.232';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.232';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.231';
+const VERSION = '26.5.232';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1092,7 +1092,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     contentTitle.innerHTML = tabObj.label + dateTag;
     
     if (!silent) {
-        contentArea.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p>Sincronizando...</p></div>`;
+        contentArea.innerHTML = `
+            <div class="glass-panel animate-pulse" style="padding: 3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; min-height: 400px; border: 1px solid rgba(255,255,255,0.05); background: rgba(15, 23, 42, 0.2); border-radius: 16px;">
+                <div style="width: 50px; height: 50px; border: 3px solid rgba(129, 140, 248, 0.1); border-top: 3px solid #818cf8; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <div style="text-align: center;">
+                    <h3 style="margin: 0; color: #fff; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px;">CARGANDO MÓDULO</h3>
+                    <p style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">Sincronizando datos...</p>
+                </div>
+            </div>`;
     }
 
     if (currentTab === 'inicio') await renderHomeTab();
@@ -1324,6 +1331,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         </nav><div id="bufContent"></div>`;
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         activeBufferSub = e.currentTarget.dataset.s; 
+        const buf = document.getElementById('bufContent');
+        if (buf) {
+            buf.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:1rem;">
+                    <div style="width:30px; height:30px; border:2px solid rgba(129, 140, 248, 0.1); border-top:2px solid #818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Cargando...</span>
+                </div>`;
+        }
         renderBufferTab(); 
     }));
     const buf = document.getElementById('bufContent');
@@ -6481,6 +6496,14 @@ const renderRFSection = (container) => {
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         activeInventarioSub = e.currentTarget.dataset.id; 
         localStorage.setItem('activeSub_inventario', activeInventarioSub);
+        const l2Container = document.getElementById('inventarioLevel2Content');
+        if (l2Container) {
+            l2Container.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:1rem;">
+                    <div style="width:30px; height:30px; border:2px solid rgba(129, 140, 248, 0.1); border-top:2px solid #818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Cargando...</span>
+                </div>`;
+        }
         renderInventarioTab(); 
     }));
 
@@ -8905,6 +8928,14 @@ const renderRFSection = (container) => {
         const s = e.currentTarget.dataset.s;
         localStorage.setItem(`activeSub_${tabId}`, s);
         updateMobileDriverClass();
+        const container = document.getElementById('areaContent');
+        if (container) {
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:1rem;">
+                    <div style="width:30px; height:30px; border:2px solid rgba(129, 140, 248, 0.1); border-top:2px solid #818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Cargando...</span>
+                </div>`;
+        }
         renderGenericAreaTab(tabId, subtitle);
     }));
 
@@ -12425,6 +12456,14 @@ const renderRFSection = (container) => {
 
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { 
         activeAnalisisSub = e.currentTarget.dataset.s; 
+        const skuBuf = document.getElementById('skuContent');
+        if (skuBuf) {
+            skuBuf.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:1rem;">
+                    <div style="width:30px; height:30px; border:2px solid rgba(129, 140, 248, 0.1); border-top:2px solid #818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Cargando...</span>
+                </div>`;
+        }
         renderAnalisisSKUTab(); 
     }));
 
