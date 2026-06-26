@@ -899,9 +899,9 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente (Jerarquía: Pedidos > Otras > Replenish)
+    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente (Jerarquía: Replenish > Otras > Pedidos)
     let tempMap = {}; // sku -> { total: 0, bestSrc: null }
-    const hierarchy = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+    const hierarchy = ['REPLENISHMENT', 'OTRAS SOLICITUDES', 'PEDIDOS'];
 
     hierarchy.forEach(src => {
         rawDemand[src].forEach(item => {
