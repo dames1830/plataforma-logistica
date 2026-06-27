@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.241';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.242';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.241';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.241';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.241';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.241';
+import * as adminService from '../services_v245/adminService.js?v=26.5.242';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.242';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.242';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.242';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.241';
+const VERSION = '26.5.242';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6304,10 +6304,10 @@ const renderRFSection = (container) => {
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
-                                <th style="padding:0.8rem 1rem; text-align:center;">QTY STOCK</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY STOCK' : 'QTY ACTIVO FINAL'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">QTY SOLICITADO</th>
                                 <th style="padding:0.8rem 1rem;">ESTADO RESERVA</th>
-                                <th style="padding:0.8rem 1rem; text-align:center;">QTY BAJADO</th>
+                                <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY BAJADO' : 'QTY RECIBIDA'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">ESTADO GENERAL</th>
                             </tr>
                         </thead>
@@ -6352,9 +6352,18 @@ const renderRFSection = (container) => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
 
-            const diffDisplay       = hasReserva ? (r.origResQty - r.finalResQty) : 0;
+            // Si hay reserva, mostramos la resta de la reserva. Si no hay reserva pero sí activo, mostramos la diferencia del activo.
+            const diffDisplay = hasReserva 
+                ? (r.origResQty - r.finalResQty) 
+                : (hasActivo ? Math.max(0, r.actFinalQty - r.origActQty) : 0);
+
             const plannedQtyDisplay = r.plannedQty;
-            const stockQtyDisplay   = r.origResQty;
+            
+            // Si hay reserva, la columna QTY STOCK muestra el stock inicial de reserva. Si no, muestra el stock final del activo auditado.
+            const stockQtyDisplay = hasReserva ? r.origResQty : (hasActivo ? r.actFinalQty : 0);
+            
+            // Texto para el estado de la reserva
+            const resStateDisplay = hasReserva ? r.resState : 'S/D';
 
             tr.innerHTML = `
                 <td style="padding:0.6rem 1rem; color:rgba(255,255,255,0.55); font-size:0.72rem; white-space:nowrap;">${r.fecha || '-'}</td>
@@ -6363,7 +6372,7 @@ const renderRFSection = (container) => {
                 <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${stockQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${plannedQtyDisplay}</td>
-                <td style="padding:0.6rem 1rem; ${r.resStatusClass}; font-weight:700;">${r.resState}</td>
+                <td style="padding:0.6rem 1rem; ${hasReserva ? r.resStatusClass : 'color:var(--text-muted);'}; font-weight:700;">${resStateDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${diffDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${r.statusTag}</td>
             `;
