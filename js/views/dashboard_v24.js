@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.247';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.248';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.247';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.247';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.247';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.247';
+import * as adminService from '../services_v245/adminService.js?v=26.5.248';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.248';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.248';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.248';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.247';
+const VERSION = '26.5.248';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6311,7 +6311,6 @@ const renderRFSection = (container) => {
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
-                                <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY STOCK' : 'QTY ACTIVO FINAL'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">QTY SOLICITADO</th>
                                 <th style="padding:0.8rem 1rem;">ESTADO</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY BAJADO' : 'QTY RECIBIDA'}</th>
@@ -6379,7 +6378,6 @@ const renderRFSection = (container) => {
                 <td style="padding:0.6rem 1rem; font-weight:700;">${r.lpn || 'S/L'}</td>
                 <td style="padding:0.6rem 1rem;">${r.sku}</td>
                 <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
-                <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${stockQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${plannedQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; ${stateStyleClass}; font-weight:700;">${statePercentage}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${diffDisplay}</td>
