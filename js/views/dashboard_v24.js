@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.242';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.243';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.242';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.242';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.242';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.242';
+import * as adminService from '../services_v245/adminService.js?v=26.5.243';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.243';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.243';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.243';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.242';
+const VERSION = '26.5.243';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6099,12 +6099,6 @@ const renderRFSection = (container) => {
         const origResQty = p['QTY RESERVA'] || 0;
         const origActQty = p['QTY ACTIVO'] || 0;
 
-        // Comprobación Reserva (Origen)
-        let finalResQty = 0;
-        let unitsLowered = 0;
-        let resState = "S/D";
-        let resStatusClass = "color:var(--text-muted);";
-
         if (hasReserva) {
             const lpnSkuKey = `${lpn}|${sku}`;
             if (lpn && finalReservaLPNSet.has(lpn)) {
@@ -6115,14 +6109,13 @@ const renderRFSection = (container) => {
             }
 
             unitsLowered = Math.max(0, origResQty - finalResQty);
-            if (unitsLowered >= plannedQty) {
-                resState = "BAJADO (100%)";
+            const pct = Math.min(100, Math.round((unitsLowered / plannedQty) * 100)) || 0;
+            resState = `${pct}%`;
+            if (pct >= 100) {
                 resStatusClass = "color:#22c55e;";
-            } else if (unitsLowered > 0) {
-                resState = `PARCIAL (Bajó ${unitsLowered}/${plannedQty})`;
+            } else if (pct > 0) {
                 resStatusClass = "color:#fbbf24;";
             } else {
-                resState = "NO BAJADO (0%)";
                 resStatusClass = "color:#ef4444;";
             }
         }
@@ -6137,14 +6130,14 @@ const renderRFSection = (container) => {
             actFinalQty = finalActivoSkuTotal[sku] || 0;
             actDiff = actFinalQty - origActQty;
             
-            actState = "SIN REGISTRO";
-            actStatusClass = "color:#ef4444;";
-            if (actDiff >= plannedQty) {
-                actState = "RECIBIDO (100%)";
+            const pct = Math.min(100, Math.round((actDiff / plannedQty) * 100)) || 0;
+            actState = `${pct}%`;
+            if (pct >= 100) {
                 actStatusClass = "color:#22c55e;";
-            } else if (actDiff > 0) {
-                actState = `PARCIAL (+${actDiff})`;
+            } else if (pct > 0) {
                 actStatusClass = "color:#fbbf24;";
+            } else {
+                actStatusClass = "color:#ef4444;";
             }
         }
 
@@ -6306,7 +6299,7 @@ const renderRFSection = (container) => {
                                 <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY STOCK' : 'QTY ACTIVO FINAL'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">QTY SOLICITADO</th>
-                                <th style="padding:0.8rem 1rem;">ESTADO RESERVA</th>
+                                <th style="padding:0.8rem 1rem;">ESTADO</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY BAJADO' : 'QTY RECIBIDA'}</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">ESTADO GENERAL</th>
                             </tr>
@@ -6339,6 +6332,7 @@ const renderRFSection = (container) => {
                 String(r.sku || '').toLowerCase().includes(searchValue) ||
                 String(r.ubiRes || '').toLowerCase().includes(searchValue) ||
                 String(r.resState || '').toLowerCase().includes(searchValue) ||
+                String(r.actState || '').toLowerCase().includes(searchValue) ||
                 String(r.statusTag || '').toLowerCase().includes(searchValue);
             return matchesStatus && matchesSearch;
         });
@@ -6362,8 +6356,9 @@ const renderRFSection = (container) => {
             // Si hay reserva, la columna QTY STOCK muestra el stock inicial de reserva. Si no, muestra el stock final del activo auditado.
             const stockQtyDisplay = hasReserva ? r.origResQty : (hasActivo ? r.actFinalQty : 0);
             
-            // Texto para el estado de la reserva
-            const resStateDisplay = hasReserva ? r.resState : 'S/D';
+            // Si hay reserva, mostramos su porcentaje; si no, el del activo.
+            const statePercentage = hasReserva ? r.resState : (hasActivo ? r.actState : 'S/D');
+            const stateStyleClass = hasReserva ? r.resStatusClass : (hasActivo ? r.actStatusClass : 'color:var(--text-muted);');
 
             tr.innerHTML = `
                 <td style="padding:0.6rem 1rem; color:rgba(255,255,255,0.55); font-size:0.72rem; white-space:nowrap;">${r.fecha || '-'}</td>
@@ -6372,7 +6367,7 @@ const renderRFSection = (container) => {
                 <td style="padding:0.6rem 1rem;">${r.ubiRes}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${stockQtyDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${plannedQtyDisplay}</td>
-                <td style="padding:0.6rem 1rem; ${hasReserva ? r.resStatusClass : 'color:var(--text-muted);'}; font-weight:700;">${resStateDisplay}</td>
+                <td style="padding:0.6rem 1rem; ${stateStyleClass}; font-weight:700;">${statePercentage}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${diffDisplay}</td>
                 <td style="padding:0.6rem 1rem; text-align:center; font-weight:800;">${r.statusTag}</td>
             `;
