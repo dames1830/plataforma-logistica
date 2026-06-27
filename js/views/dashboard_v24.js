@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.246';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.247';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.246';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.246';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.246';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.246';
+import * as adminService from '../services_v245/adminService.js?v=26.5.247';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.247';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.247';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.247';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.246';
+const VERSION = '26.5.247';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6040,7 +6040,10 @@ const renderRFSection = (container) => {
         }
 
         const currentPlanDetalle = plan ? (plan.detalle || plan.detallePallets) : null;
-        const plannedPallets = currentPlanDetalle ? currentPlanDetalle.filter(p => p.ES_ALTO === undefined || p.ES_ALTO || String(p.NIVEL || '').toUpperCase().includes('ALTO') || String(p.NIVEL || '').toUpperCase() === 'A') : [];
+        const plannedPallets = currentPlanDetalle ? currentPlanDetalle.filter(p => {
+            const nivelStr = String(p.NIVEL || '').toUpperCase();
+            return p.ES_ALTO === true || nivelStr.includes('ALTO');
+        }) : [];
 
         if (plannedPallets.length === 0) {
             alert("⚠️ ATENCIÓN: No se detectó ningún análisis de buffer activo. Primero debes procesar el cálculo en la pestaña ANÁLISIS BUFFER.");
@@ -6058,7 +6061,10 @@ const renderRFSection = (container) => {
         const finalReservaSkuUbi = {};
         if (hasReserva) {
             validarReserva.forEach(r => {
-                if (r.ES_ALTO === false) return;
+                const ubiStr = String(r.UBICACION || '').toUpperCase();
+                const nivelStr = String(r.NIVEL || '').toUpperCase();
+                const isAlto = r.ES_ALTO === true || ubiStr.includes('ALTO') || nivelStr.includes('ALTO');
+                if (!isAlto) return;
                 const lpn = String(r.LPN || '').trim().toUpperCase();
                 const sku = String(r.PRODUCTO || '').trim();
                 const ubi = String(r.UBICACION || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
