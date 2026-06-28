@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.248';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.249';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.248';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.248';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.248';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.248';
+import * as adminService from '../services_v245/adminService.js?v=26.5.249';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.249';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.249';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.249';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.248';
+const VERSION = '26.5.249';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12639,10 +12639,10 @@ const renderRFSection = (container) => {
       const AREAS_ACTIVO = ['MZN01','MZN02','MZN03','MZN04','BUFFERCD','AND','SEL'];
       const stockActMap  = new Map();
       activo.forEach(row => {
-        const areaRaw = String(getCol(row, ['Área','Area','AREA','Ãrea']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const areaRaw = String(getCol(row, ['Área','Area','AREA','Ãrea','rea','area']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (!AREAS_ACTIVO.some(a => areaRaw.includes(a))) return;
-        const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','SKU','CODIGO']) || '').trim();
-        const qty = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY']) || 0);
+        const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','SKU','CODIGO','Artculo']) || '').trim();
+        const qty = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY','Cantidad']) || 0);
         if (!sku || qty <= 0) return;
         stockActMap.set(sku, (stockActMap.get(sku) || 0) + qty);
       });
@@ -12652,8 +12652,8 @@ const renderRFSection = (container) => {
       reserva.forEach(row => {
         const nivel = String(row['NIVEL'] || '').trim().toUpperCase();
         if (!nivel.includes('ALTO')) return;
-        const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
-        const qty = parseFloat(getCol(row, ['CANTIDAD','Cantidad actual','Cantidad','Cant.','Cant','Stock','QTY']) || 0);
+        const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO','Artculo']) || '').trim();
+        const qty = parseFloat(getCol(row, ['CANTIDAD','Cantidad actual','Cantidad','Cant.','Cant','Stock','QTY','Cantidad']) || 0);
         if (!sku || qty <= 0) return;
         stockResMap.set(sku, (stockResMap.get(sku) || 0) + qty);
       });
