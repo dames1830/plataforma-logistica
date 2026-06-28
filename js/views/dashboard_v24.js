@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.267';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.268';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.267';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.267';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.267';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.267';
+import * as adminService from '../services_v245/adminService.js?v=26.5.268';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.268';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.268';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.268';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.267';
+const VERSION = '26.5.268';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -619,13 +619,7 @@ const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
 let currentChart = null;
 let lastBufferKPI = null;
 let bufferConfigCached = null;
-let lastBufferResult = (() => {
-  try {
-    const _CK = `logistics_v24_prod_`;
-    const _c = localStorage.getItem(_CK + 'lastBufferKPI');
-    return _c ? JSON.parse(_c) : null;
-  } catch(e) { return null; }
-})();
+let lastBufferResult = null;
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
@@ -1330,22 +1324,38 @@ export const renderDashboard = async (container, user, onLogout) => {
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
     if (!lastBufferKPI) {
-        // Cadena de fallback: localStorage (clave nueva) → localStorage (clave vieja) → sessionStorage
-        const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI')
-                     || localStorage.getItem('lastBufferKPI')
-                     || sessionStorage.getItem('lastBufferKPI_session');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (parsed && parsed.detalleZonas) {
-                    lastBufferKPI = parsed;
-                } else {
+        // 1. Intentar cargar desde IndexedDB primero (sin límite de tamaño de 5MB de localStorage)
+        try {
+            const dbVal = await loadLastBufferKPI();
+            if (dbVal && (dbVal.detalle || dbVal.detalleZonas)) {
+                lastBufferKPI = dbVal;
+                lastBufferResult = dbVal;
+            }
+        } catch(e) {
+            console.warn("[PULSE] Error leyendo caché IndexedDB:", e);
+        }
+
+        // 2. Fallback tradicional si no se cargó de IndexedDB
+        if (!lastBufferKPI) {
+            const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI')
+                         || localStorage.getItem('lastBufferKPI')
+                         || sessionStorage.getItem('lastBufferKPI_session');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed && (parsed.detalle || parsed.detalleZonas)) {
+                        lastBufferKPI = parsed;
+                        lastBufferResult = parsed;
+                    } else {
+                        localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
+                        localStorage.removeItem('lastBufferKPI');
+                        sessionStorage.removeItem('lastBufferKPI_session');
+                    }
+                } catch(e) {
+                    localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
                     localStorage.removeItem('lastBufferKPI');
                     sessionStorage.removeItem('lastBufferKPI_session');
                 }
-            } catch(e) {
-                localStorage.removeItem('lastBufferKPI');
-                sessionStorage.removeItem('lastBufferKPI_session');
             }
         }
     }
@@ -1468,12 +1478,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                         if (res) {
                             lastBufferKPI = res;
                             lastBufferResult = res;
+                            // Guardar en IndexedDB de forma persistente y segura
+                            saveLastBufferKPI(res).catch(err => console.warn("[PULSE] Error saving to IndexedDB:", err));
                             try {
                                 const serialized = JSON.stringify(res);
                                 localStorage.setItem('logistics_v24_prod_lastBufferKPI', serialized);
                                 localStorage.setItem('lastBufferKPI', serialized);
                                 sessionStorage.setItem('lastBufferKPI_session', serialized); // backup extra
-                            } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer", e); }
+                            } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer (localStorage), guardado en IndexedDB únicamente.", e); }
                             renderBufferResults(results, res); 
 
                         } else {
@@ -1494,6 +1506,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 if(await showPremiumConfirm('REINICIAR MEMORIA', '¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.', 'danger')) {
                     Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
                     localStorage.removeItem('lastBufferKPI');
+                    localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
+                    sessionStorage.removeItem('lastBufferKPI_session');
+                    // Limpiar IndexedDB de reporte
+                    saveLastBufferKPI(null).catch(() => {});
                     window.location.reload();
                 }
             };
@@ -1510,6 +1526,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     localStorage.removeItem('lastBufferKPI');
                     localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
                     sessionStorage.removeItem('lastBufferKPI_session');
+                    saveLastBufferKPI(null).catch(() => {});
                     results.innerHTML = '';
                 }
             }, 50);

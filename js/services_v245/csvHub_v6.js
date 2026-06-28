@@ -298,6 +298,13 @@ export const deleteBufferHistoryRecord = async (id) => {
 export const saveBufferReport = async () => true;  // legacy
 export const loadBufferReport = async () => { const h = await fetchBufferHistory(); return h[0] || null; };
 
+export const saveLastBufferKPI = async (data) => {
+    await saveToDB('lastBufferKPI_report', data);
+};
+export const loadLastBufferKPI = async () => {
+    return await loadFromDB('lastBufferKPI_report');
+};
+
 // ── KPI RESULTS — usa /api/logistics/kpi_results_v2 (endpoint existente) ────────────
 const KPI_RESULTS_AREA   = 'kpi_results_v2';          // clave en el servidor
 const KPI_RESULTS_LS_KEY = 'logistics_v24_prod_kpiResultsByDate';
