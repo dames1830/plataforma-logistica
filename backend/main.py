@@ -119,7 +119,10 @@ def prune_old_snapshots():
     except Exception as e:
         print(f"[PULSE] Error al podar snapshots antiguos: {e}")
 
-init_db()
+try:
+    init_db()
+except Exception as startup_db_err:
+    print(f"🚨 CRITICAL STARTUP ERROR INITIALIZING DB: {startup_db_err}")
 
 
 @app.get("/api/health")
