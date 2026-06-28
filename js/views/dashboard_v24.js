@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.258';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.259';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.258';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.258';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.258';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.258';
+import * as adminService from '../services_v245/adminService.js?v=26.5.259';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.259';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.259';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.259';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.258';
+const VERSION = '26.5.259';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5358,7 +5358,10 @@ const renderRFSection = (container) => {
                         <span>HASTA:</span>
                         <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                     </div>
-                    <div style="margin-left:auto;">
+                    <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
+                        <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            🔄
+                        </button>
                         <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                             📥 EXPORTAR
                         </button>
@@ -5565,6 +5568,27 @@ const renderRFSection = (container) => {
             editingIdx = null;
             renderHistTable();
         };
+    };
+
+    // ── Sincronizar ────────────────────────────────────────────────────────────
+    document.getElementById('btn_hist_sync').onclick = async () => {
+        const btnSync = document.getElementById('btn_hist_sync');
+        btnSync.disabled = true;
+        btnSync.style.opacity = '0.5';
+        btnSync.innerHTML = '⏳';
+        
+        try {
+            kpiHistory = await fetchBufferHistory(true);
+            renderHistTable();
+            showPremiumAlert("¡ÉXITO!", "Historial sincronizado con el servidor correctamente.", "success");
+        } catch(err) {
+            console.error('[BH] Error sincronizando:', err);
+            showPremiumAlert("Error", "No se pudo conectar con el servidor.", "error");
+        } finally {
+            btnSync.disabled = false;
+            btnSync.style.opacity = '1';
+            btnSync.innerHTML = '🔄';
+        }
     };
 
     // ── Exportar ──────────────────────────────────────────────────────────────
