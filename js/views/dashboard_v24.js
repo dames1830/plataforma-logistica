@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.261';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.262';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.261';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.261';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.261';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.261';
+import * as adminService from '../services_v245/adminService.js?v=26.5.262';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.262';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.262';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.262';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.261';
+const VERSION = '26.5.262';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1323,7 +1323,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         getAreaData('articulos'),
         getAreaData('tallas'),
         getAreaData('validar_activo'),
-        getAreaData('validar_reserva')
+        getAreaData('validar_reserva'),
+        getAreaData('validar_lpn')
     ]);
     
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
@@ -1397,6 +1398,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
         renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
         renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
+        renderUploadArea(wrap, 'validar_lpn', dataStore.validar_lpn, '.csv', 'VALIDAR LPN');
     } else if (activeBufferSub === 'historial_buffer') {
         renderBufferHistory(buf);
     } else if (activeBufferSub === 'kpi_buffer') {
@@ -6052,9 +6054,10 @@ const renderRFSection = (container) => {
   };
 
   const renderBufferKPI = async (container) => {
-    const [hasValActivo, hasValReserva, hasStockReserva] = await Promise.all([
+    const [hasValActivo, hasValReserva, hasValLPN, hasStockReserva] = await Promise.all([
         getAreaData('validar_activo').then(d => d && d.length > 0),
         getAreaData('validar_reserva').then(d => d && d.length > 0),
+        getAreaData('validar_lpn').then(d => d && d.length > 0),
         getAreaData('buffer_reserva').then(d => d && d.length > 0)
     ]);
 
@@ -6063,7 +6066,7 @@ const renderRFSection = (container) => {
     const todayISO = new Date().toISOString().slice(0, 10);
     const serverResult = await loadKPIResults(todayISO);
     if (serverResult && serverResult.data && serverResult.data.length > 0) {
-        await runProcessBufferKPI(container, null, null, null, hasValActivo, hasValReserva, serverResult.data);
+        await runProcessBufferKPI(container, null, null, null, null, hasValActivo, hasValReserva, hasValLPN, serverResult.data);
         return;
     }
 
@@ -6073,7 +6076,7 @@ const renderRFSection = (container) => {
         try {
             const parsed = JSON.parse(storedKPI);
             if (parsed && parsed.length > 0) {
-                await runProcessBufferKPI(container, null, null, null, hasValActivo, hasValReserva, parsed);
+                await runProcessBufferKPI(container, null, null, null, null, hasValActivo, hasValReserva, hasValLPN, parsed);
                 return;
             }
         } catch(e) {
@@ -6103,6 +6106,10 @@ const renderRFSection = (container) => {
                     <span>VALIDAR ACTIVO (Final):</span>
                     <span style="font-weight:700; color:${hasValActivo ? '#22c55e' : '#ef4444'}">${hasValActivo ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>VALIDAR LPN (Tránsito):</span>
+                    <span style="font-weight:700; color:${hasValLPN ? '#22c55e' : '#ef4444'}">${hasValLPN ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
+                </div>
             </div>
 
             <button id="btn_run_kpi_analysis" class="btn" style="background:var(--primary); width:auto; padding:0.7rem 2.2rem; font-weight:800; font-size:0.85rem; border-radius:8px; box-shadow:0 0 20px rgba(99,102,241,0.3); transition:all 0.2s;">
@@ -6121,9 +6128,10 @@ const renderRFSection = (container) => {
         btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
 
         try {
-            const [validarActivo, validarReserva, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
+            const [validarActivo, validarReserva, validarLPN, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
                 getAreaData('validar_activo'),
                 getAreaData('validar_reserva'),
+                getAreaData('validar_lpn'),
                 getAreaData('buffer_reserva'),
                 getAreaData('buffer_activo'),
                 getAreaData('buffer'),
@@ -6134,15 +6142,16 @@ const renderRFSection = (container) => {
 
             const hasActivo = validarActivo && validarActivo.length > 0;
             const hasReserva = validarReserva && validarReserva.length > 0;
+            const hasLPN = validarLPN && validarLPN.length > 0;
 
-            if (!hasActivo && !hasReserva) {
-                alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA o VALIDAR ACTIVO) en la pestaña Maestros para poder realizar la conciliación.");
+            if (!hasActivo && !hasReserva && !hasLPN) {
+                alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA, VALIDAR ACTIVO o VALIDAR LPN) en la pestaña Maestros para poder realizar la conciliación.");
                 btn.disabled = false;
                 btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
                 return;
             }
 
-            await runProcessBufferKPI(container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, null, fechaElegida);
+            await runProcessBufferKPI(container, validarActivo, validarReserva, validarLPN, originalReserva, hasActivo, hasReserva, hasLPN, null, fechaElegida);
         } catch(error) {
             console.error("Error durante conciliacion buffer kpi:", error);
             alert("❌ Ocurrió un error al procesar la conciliación:\n" + error.message);
@@ -6200,7 +6209,7 @@ const renderRFSection = (container) => {
     overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(null); } };
   });
 
-  const runProcessBufferKPI = async (container, validarActivo, validarReserva, originalReserva, hasActivo, hasReserva, preCalculatedResults = null, fechaProceso = null) => {
+  const runProcessBufferKPI = async (container, validarActivo, validarReserva, validarLPN, originalReserva, hasActivo, hasReserva, hasLPN, preCalculatedResults = null, fechaProceso = null) => {
     const isPlannedMode = true;
     const results = [];
     let completedCount = 0;
@@ -6295,6 +6304,28 @@ const renderRFSection = (container) => {
             });
         }
 
+        // 3. Mapeo de LPNs
+        const finalLpnSkuTotal = {};
+        if (hasLPN) {
+            validarLPN.forEach(r => {
+                const raw = Array.isArray(r) ? r : Object.values(r);
+                // Col K (Ubicación) -> index 10
+                // Col L (Ubicación Anterior) -> index 11
+                // Col D (Código de artículo) -> index 3
+                // Col E (Cantidad Actual) -> index 4
+                const ubi = String(raw[10] || '').trim().toUpperCase();
+                const ubiAnt = String(raw[11] || '').trim();
+                
+                if (ubi === 'MZM-TRANS-00-01' && !ubiAnt) {
+                    const sku = String(raw[3] || '').trim();
+                    const qty = parseFloat(raw[4]) || 0;
+                    if (sku && qty > 0) {
+                        finalLpnSkuTotal[sku] = (finalLpnSkuTotal[sku] || 0) + qty;
+                    }
+                }
+            });
+        }
+
         // --- MODO PLANIFICADO ---
         plannedPallets.forEach(p => {
         const sku = p.SKU;
@@ -6320,8 +6351,15 @@ const renderRFSection = (container) => {
                 const key = `${sku}|${ubiRes}`;
                 finalResQty = finalReservaSkuUbi[key] || 0;
             }
-
             unitsLowered = Math.max(0, origResQty - finalResQty);
+        }
+
+        if (hasLPN) {
+            const lpnTransQty = finalLpnSkuTotal[sku] || 0;
+            unitsLowered = Math.max(unitsLowered, lpnTransQty);
+        }
+
+        if (hasReserva || hasLPN) {
             const pct = Math.min(100, Math.round((unitsLowered / plannedQty) * 100)) || 0;
             resState = `${pct}%`;
             if (pct >= 100) {
@@ -6626,12 +6664,13 @@ const renderRFSection = (container) => {
 
             btnReprocess.disabled = true;
             btnReprocess.innerHTML = `⏳...`;
-            const [valActivo, valReserva, origReserva] = await Promise.all([
+            const [valActivo, valReserva, valLpn, origReserva] = await Promise.all([
                 getAreaData('validar_activo'),
                 getAreaData('validar_reserva'),
+                getAreaData('validar_lpn'),
                 getAreaData('buffer_reserva')
             ]);
-            await runProcessBufferKPI(container, valActivo, valReserva, origReserva, valActivo && valActivo.length > 0, valReserva && valReserva.length > 0, null, fechaElegida);
+            await runProcessBufferKPI(container, valActivo, valReserva, valLpn, origReserva, valActivo && valActivo.length > 0, valReserva && valReserva.length > 0, valLpn && valLpn.length > 0, null, fechaElegida);
         };
     }
     document.getElementById('btn_excel_val').onclick = () => {

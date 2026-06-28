@@ -564,7 +564,7 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     }
 
     // 2. Si es local-only, terminar aquí
-    const isLocalOnly = area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas';
+    const isLocalOnly = area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas';
     if (isLocalOnly) {
         if (area.startsWith('recepcion')) {
             localStorage.removeItem('recepcion_report_processed');
@@ -594,7 +594,7 @@ export const clearAreaData = async (area, username = 'sistema') => {
     localStorage.removeItem('meta_' + area);
     
     // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, procesar 100% de manera local
-    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas') {
+    if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas') {
         try {
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -638,7 +638,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
   }
 
   // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
-  if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas') {
+  if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas') {
       if (area.endsWith('_activo') || area.endsWith('_reserva')) {
           updateTablaTallas();
       }
