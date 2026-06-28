@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.250';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.251';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.250';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.250';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.250';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.250';
+import * as adminService from '../services_v245/adminService.js?v=26.5.251';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.251';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.251';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.251';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.250';
+const VERSION = '26.5.251';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -858,7 +858,30 @@ window.downloadExcelDetail = async () => {
         const sku = d.SKU;
         const art7 = sku.substring(0, 7);
         const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
-        const talla = tallasMap[sku] || '-';
+        
+        // Detección inteligente de tallas con fallback para evitar valores como 100/60
+        let talla = tallasMap[sku] || '-';
+        const numTalla = parseFloat(talla);
+        if (talla === '-' || isNaN(numTalla) || numTalla > 55 || numTalla < 1) {
+            // Intentar extraer la talla del formato del SKU si es posible (ej: 8841807-1-04 -> talla 40)
+            const segments = sku.split('-');
+            if (segments.length >= 3) {
+                const suffix = segments[segments.length - 1].trim();
+                const suffixNum = parseInt(suffix, 10);
+                if (!isNaN(suffixNum)) {
+                    if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
+                        // Estructura de mapeo rápido de tallas típica de zapatos (ej: 04 -> 40, 05 -> 41)
+                        if (suffixNum >= 2 && suffixNum <= 15) {
+                            talla = String(suffixNum + 36);
+                        } else {
+                            talla = String(suffixNum);
+                        }
+                    } else {
+                        talla = String(suffixNum);
+                    }
+                }
+            }
+        }
 
         const dataRow = wsAnalisis.addRow([
             d.UBICACIONES !== lastUbi ? d.UBICACIONES : "",
