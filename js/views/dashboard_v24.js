@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.265';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.266';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.265';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.265';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.265';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.265';
+import * as adminService from '../services_v245/adminService.js?v=26.5.266';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.266';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.266';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.266';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.265';
+const VERSION = '26.5.266';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5371,7 +5371,7 @@ const renderRFSection = (container) => {
                 <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
                 <div style="flex:1; min-width:0; background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
                     <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;">
-                        <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Reporte de Conciliación de Paletas</h3>
+                        <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Reporte de Paletas</h3>
                     </div>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:center;">
