@@ -299,4 +299,11 @@ export const saveRfsChargers = async (data) => {
     return await save('rfs_chargers', data, 'MASTER');
 };
 
+// --- GESTIÓN DE HISTORIAL BUFFER (Mapeado al Sync Engine como Almacenaje) ---
+export const getBufferHistory = () => adminStore.buffer_history || [];
+export const saveBufferHistory = async (data) => {
+    adminStore.buffer_history = data;
+    return await save('buffer_history', data);
+};
+
 

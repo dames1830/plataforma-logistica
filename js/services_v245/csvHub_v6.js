@@ -1,3 +1,5 @@
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.258';
+
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
   tabla_tallas: {} // Mapa de SKU -> Talla
@@ -222,31 +224,19 @@ const _saveHistToServer = async (arr) => {
 };
 
 /**
- * Guarda un registro en el servidor Y en localStorage.
+ * Guarda un registro en el servidor Y en localStorage usando el Motor de Sincronización.
  */
 export const saveBufferHistoryRecord = async (record) => {
-    // Añadir timestamp si no tiene
     const newRecord = { ...record, id: Date.now(), created_at: new Date().toISOString() };
-
-    // 1. Guardar localmente
     try {
-        const local = JSON.parse(localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]');
-        local.unshift(newRecord);
-        if (local.length > 90) local.pop();
-        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(local));
-    } catch(e) {}
-
-    // 2. Leer lista del servidor, agregar al inicio, y guardar de vuelta
-    try {
-        const serverList = await _fetchHistFromServer() || [];
-        serverList.unshift(newRecord);
-        if (serverList.length > 90) serverList.pop();
-        const ok = await _saveHistToServer(serverList);
-        if (ok) {
-            localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(serverList));
-            console.log(`[BH] ✅ Historial sincronizado. Total registros: ${serverList.length}`);
-            return newRecord.id;
-        }
+        const currentList = syncEngine.syncStore.buffer_history || [];
+        const newList = [newRecord, ...currentList];
+        if (newList.length > 90) newList.pop();
+        
+        syncEngine.syncStore.buffer_history = newList;
+        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(newList));
+        const ok = await syncEngine.pushChange('buffer_history', newList);
+        if (ok) return newRecord.id;
     } catch(e) {
         console.warn('[BH] ⚠️ Error sincronizando con servidor:', e);
     }
@@ -254,14 +244,18 @@ export const saveBufferHistoryRecord = async (record) => {
 };
 
 /**
- * Carga el historial completo desde el servidor. Fallback a localStorage.
+ * Carga el historial completo desde el servidor usando el Motor de Sincronización. Fallback a localStorage.
  */
-export const fetchBufferHistory = async () => {
-    const serverList = await _fetchHistFromServer();
-    if (serverList !== null && Array.isArray(serverList)) {
-        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(serverList));
-        console.log(`[BH] ✅ ${serverList.length} registros del servidor.`);
-        return serverList;
+export const fetchBufferHistory = async (force = false) => {
+    try {
+        await syncEngine.pullGlobal(['buffer_history'], force);
+    } catch(e) {
+        console.warn('[BH] ⚠️ Error descargando historial del syncEngine:', e);
+    }
+    const list = syncEngine.syncStore.buffer_history || [];
+    if (Array.isArray(list) && list.length > 0) {
+        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(list));
+        return list;
     }
     try {
         const localData = JSON.parse(localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]');
@@ -270,28 +264,35 @@ export const fetchBufferHistory = async () => {
 };
 
 /**
- * Actualiza un registro (por id) en el servidor.
+ * Actualiza un registro (por id) en el servidor usando el Motor de Sincronización.
  */
 export const updateBufferHistoryRecord = async (id, record) => {
     try {
-        const serverList = await _fetchHistFromServer() || [];
-        const idx = serverList.findIndex(r => r.id === id);
-        if (idx !== -1) serverList[idx] = { ...serverList[idx], ...record };
-        return await _saveHistToServer(serverList);
-    } catch(e) { return false; }
+        const currentList = syncEngine.syncStore.buffer_history || [];
+        const newList = [...currentList];
+        const idx = newList.findIndex(r => r.id === id);
+        if (idx !== -1) {
+            newList[idx] = { ...newList[idx], ...record };
+            syncEngine.syncStore.buffer_history = newList;
+            localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(newList));
+            return await syncEngine.pushChange('buffer_history', newList);
+        }
+    } catch(e) { console.warn('[BH] Error actualizando registro:', e); }
+    return false;
 };
 
 /**
- * Elimina un registro (por id) del servidor.
+ * Elimina un registro (por id) del servidor usando el Motor de Sincronización.
  */
 export const deleteBufferHistoryRecord = async (id) => {
     try {
-        const serverList = await _fetchHistFromServer() || [];
-        const filtered = serverList.filter(r => r.id !== id);
-        const ok = await _saveHistToServer(filtered);
-        if (ok) localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(filtered));
-        return ok;
-    } catch(e) { return false; }
+        const currentList = syncEngine.syncStore.buffer_history || [];
+        const newList = currentList.filter(r => r.id !== id);
+        syncEngine.syncStore.buffer_history = newList;
+        localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(newList));
+        return await syncEngine.pushChange('buffer_history', newList);
+    } catch(e) { console.warn('[BH] Error eliminando registro:', e); }
+    return false;
 };
 
 export const saveBufferReport = async () => true;  // legacy
