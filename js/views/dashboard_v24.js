@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.262';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.263';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.262';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.262';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.262';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.262';
+import * as adminService from '../services_v245/adminService.js?v=26.5.263';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.263';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.263';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.263';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.262';
+const VERSION = '26.5.263';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6267,6 +6267,8 @@ const renderRFSection = (container) => {
         const finalReservaLPNs = {};
         const finalReservaLPNSet = new Set();
         const finalReservaSkuUbi = {};
+        const finalReservaUbiMap = {};
+        const finalReservaSkuUbiMap = {};
         if (hasReserva) {
             validarReserva.forEach(r => {
                 const ubiStr = String(r.UBICACION || '').toUpperCase();
@@ -6281,9 +6283,11 @@ const renderRFSection = (container) => {
                     const lpnSkuKey = `${lpn}|${sku}`;
                     finalReservaLPNs[lpnSkuKey] = (finalReservaLPNs[lpnSkuKey] || 0) + qty;
                     finalReservaLPNSet.add(lpn);
+                    finalReservaUbiMap[lpnSkuKey] = ubiStr.trim();
                 }
                 const key = `${sku}|${ubi}`;
                 finalReservaSkuUbi[key] = (finalReservaSkuUbi[key] || 0) + qty;
+                finalReservaSkuUbiMap[key] = ubiStr.trim();
             });
         }
 
@@ -6345,13 +6349,22 @@ const renderRFSection = (container) => {
 
         if (hasReserva) {
             const lpnSkuKey = `${lpn}|${sku}`;
+            let finalUbi = '';
             if (lpn && finalReservaLPNSet.has(lpn)) {
                 finalResQty = finalReservaLPNs[lpnSkuKey] || 0;
+                finalUbi = finalReservaUbiMap[lpnSkuKey] || '';
             } else {
                 const key = `${sku}|${ubiRes}`;
                 finalResQty = finalReservaSkuUbi[key] || 0;
+                finalUbi = finalReservaSkuUbiMap[key] || '';
             }
-            unitsLowered = Math.max(0, origResQty - finalResQty);
+            
+            const isValResUbi = finalUbi.startsWith('SEL') || finalUbi.startsWith('MZM-TRANS-00-01');
+            if (finalResQty < origResQty && !isValResUbi && finalResQty > 0) {
+                unitsLowered = 0;
+            } else {
+                unitsLowered = Math.max(0, origResQty - finalResQty);
+            }
         }
 
         if (hasLPN) {
