@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.260';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.261';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.260';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.260';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.260';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.260';
+import * as adminService from '../services_v245/adminService.js?v=26.5.261';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.261';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.261';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.261';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.260';
+const VERSION = '26.5.261';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5344,31 +5344,31 @@ const renderRFSection = (container) => {
     const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || new Date().toISOString().slice(0,10);
 
     container.innerHTML = `
-        <div class="animate-fade-in" style="padding:0.5rem; display:flex; gap:1.5rem; width:100%; align-items:start;">
-            <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
-            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2rem;">
-                <div>
-                    <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Conciliación de Paletas</h3>
+        <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:1.5rem; width:100%;">
+            <!-- TOOLBAR: filtros + exportar (100% ANCHO) -->
+            <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06); width:100%;">
+                <!-- Rango de fecha -->
+                <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
+                    <span>📅 DE:</span>
+                    <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                    <span>HASTA:</span>
+                    <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                </div>
+                <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
+                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                        🔄
+                    </button>
+                    <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                        📥 EXPORTAR
+                    </button>
+                </div>
+            </div>
 
-                    <!-- TOOLBAR: filtros + exportar -->
-                    <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
-                        <!-- Rango de fecha -->
-                        <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
-                            <span>📅 DE:</span>
-                            <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
-                            <span>HASTA:</span>
-                            <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
-                        </div>
-                        <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-                            <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                🔄
-                            </button>
-                            <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                📥 EXPORTAR
-                            </button>
-                        </div>
-                    </div>
-
+            <!-- CONTENIDO DE REPORTES EN DOS COLUMNAS -->
+            <div style="display:flex; gap:1.5rem; width:100%; align-items:start;">
+                <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1rem;">
+                    <h3 style="color:var(--primary); margin:0; font-size:1.1rem; font-weight:600;">Reporte de Conciliación de Paletas</h3>
                     <div class="glass-panel" style="padding:0; overflow-x:auto; border:1px solid rgba(255,255,255,0.1);">
                         <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; text-align:center;">
                             <thead>
@@ -5385,11 +5385,29 @@ const renderRFSection = (container) => {
                         </table>
                     </div>
                 </div>
-            </div>
-            
-            <!-- COLUMNA DERECHA: RESERVADA PARA OTRO REPORTE (50%) -->
-            <div id="historial_buffer_right_col" style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2rem;">
-                <!-- El usuario inyectará otro reporte aquí en el futuro -->
+
+                <!-- COLUMNA DERECHA: REPORTE DE BUFFER TEMPORADA (50%) -->
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="color:#f472b6; margin:0; font-size:1.1rem; font-weight:600;">Buffer Temporada</h3>
+                        <button id="btn_temp_export" style="background:#f472b6; color:#000; border:none; padding:0.3rem 0.8rem; border-radius:6px; font-size:0.7rem; font-weight:800; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            📥 EXPORTAR TEMPORADA
+                        </button>
+                    </div>
+                    <div class="glass-panel" style="padding:0; overflow-x:auto; border:1px solid rgba(255,255,255,0.1);">
+                        <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; text-align:center;">
+                            <thead>
+                                <tr style="background:#f472b6; color:#000; font-weight:800;">
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Temporada</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Marca</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">SKU</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Cant. Bajada</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hist_temp_tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -5413,8 +5431,9 @@ const renderRFSection = (container) => {
     // ── Estado edición ────────────────────────────────────────────────────────
     let editingIdx = null;
 
-    const renderHistTable = () => {
+    const renderHistTable = async () => {
         const tbody = document.getElementById('hist_concil_tbody');
+        const tbodyTemp = document.getElementById('hist_temp_tbody');
         if (!tbody) return;
         const fromVal = document.getElementById('hist_date_from').value;
         const toVal   = document.getElementById('hist_date_to').value;
@@ -5434,6 +5453,9 @@ const renderRFSection = (container) => {
                 ? "No hay registros en el historial. Procesa un Buffer KPI para generar el primero."
                 : "No hay registros en ese rango de fechas.";
             tbody.innerHTML = `<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">${emptyMsg}</td></tr>`;
+            if (tbodyTemp) {
+                tbodyTemp.innerHTML = `<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay movimientos.</td></tr>`;
+            }
             return;
         }
 
@@ -5476,6 +5498,72 @@ const renderRFSection = (container) => {
                 </td>
             </tr>`;
         }).join('');
+
+        // Cargar y procesar "Buffer Temporada"
+        if (tbodyTemp) {
+            tbodyTemp.innerHTML = `<tr><td colspan="4" style="padding:1rem; text-align:center; color:var(--text-muted);">Cargando análisis de temporadas...</td></tr>`;
+            try {
+                if (!dataStore.analisis_sku_maestro || dataStore.analisis_sku_maestro.length === 0) {
+                    await getAreaData('analisis_sku_maestro');
+                }
+                const maestroData = dataStore.analisis_sku_maestro || [];
+                const maestroMap = new Map();
+                maestroData.forEach(mRow => {
+                    const raw = Array.isArray(mRow) ? mRow : Object.values(mRow);
+                    const cod = String(getCol(mRow, ['CodArticulo','Cod Articulo','CODARTICULO','Articulo','ARTICULO','CODIGO']) || raw[1] || '').trim();
+                    if (!cod) return;
+                    const art7 = cod.length >= 7 ? cod.substring(0, 7) : cod;
+                    if (!maestroMap.has(art7)) {
+                        maestroMap.set(art7, {
+                            marca: String(getCol(mRow, ['Marcas','MARCAS','Marca','MARCA']) || raw[13] || '-').trim(),
+                            temporada: String(getCol(mRow, ['Temporada','TEMPORADA','Season','SEASON']) || raw[14] || '-').trim()
+                        });
+                    }
+                });
+
+                const kpiDetails = await loadKPIResultsRange(fromVal, toVal);
+                const kpiRows = kpiDetails.data || [];
+
+                const aggr = {};
+                kpiRows.forEach(r => {
+                    const codArt = String(r.sku || '');
+                    const art7 = codArt.length >= 7 ? codArt.substring(0, 7) : codArt;
+                    const maest = maestroMap.get(art7) || { marca: '-', temporada: '-' };
+                    const qty = Math.max(0, (r.origResQty || 0) - (r.finalResQty || 0));
+                    if (qty <= 0) return;
+
+                    const key = `${maest.temporada}|${maest.marca}|${r.sku}`;
+                    if (!aggr[key]) {
+                        aggr[key] = {
+                            temporada: maest.temporada,
+                            marca: maest.marca,
+                            sku: r.sku,
+                            cantidad: 0
+                        };
+                    }
+                    aggr[key].cantidad += qty;
+                });
+
+                const sortedRows = Object.values(aggr).sort((a, b) => b.cantidad - a.cantidad);
+                window._lastBufferTemporadaData = sortedRows;
+
+                if (sortedRows.length === 0) {
+                    tbodyTemp.innerHTML = `<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay paletas bajadas en el rango seleccionado.</td></tr>`;
+                } else {
+                    tbodyTemp.innerHTML = sortedRows.map(r => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <td style="padding:0.6rem 0.8rem; color:#f472b6; font-weight:700;">${r.temporada}</td>
+                            <td style="padding:0.6rem 0.8rem;">${r.marca}</td>
+                            <td style="padding:0.6rem 0.8rem;">${r.sku}</td>
+                            <td style="padding:0.6rem 0.8rem; font-weight:800; color:#22c55e;">${r.cantidad}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch(e) {
+                console.error('[BH] Error agrupando temporadas:', e);
+                tbodyTemp.innerHTML = `<tr><td colspan="4" style="padding:2rem; text-align:center; color:#ef4444;">Error al analizar temporadas.</td></tr>`;
+            }
+        }
     };
 
     // ── Acciones globales ─────────────────────────────────────────────────────
@@ -5612,6 +5700,18 @@ const renderRFSection = (container) => {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Conciliacion Paletas');
         XLSX.writeFile(wb, `Historial_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
+    };
+
+    // ── Exportar Temporadas ───────────────────────────────────────────────────
+    document.getElementById('btn_temp_export').onclick = () => {
+        const data = window._lastBufferTemporadaData || [];
+        if (!data.length) return alert('No hay datos de temporada para exportar.');
+        const formatted = [['Temporada', 'Marca', 'SKU', 'Cantidad Bajada']];
+        data.forEach(r => formatted.push([r.temporada, r.marca, r.sku, r.cantidad]));
+        const ws = XLSX.utils.aoa_to_sheet(formatted);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Buffer Temporada');
+        XLSX.writeFile(wb, `Reporte_Buffer_Temporada_${new Date().toISOString().slice(0,10)}.xlsx`);
     };
 
     // ── Filtros de fecha ──────────────────────────────────────────────────────
