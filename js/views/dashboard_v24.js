@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.255';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.256';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.255';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.255';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.255';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.255';
+import * as adminService from '../services_v245/adminService.js?v=26.5.256';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.256';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.256';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.256';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.255';
+const VERSION = '26.5.256';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,10 +5338,7 @@ const renderRFSection = (container) => {
         console.warn('[BH] Error ordenando historial:', e);
     }
 
-    if (!kpiHistory || kpiHistory.length === 0) {
-        container.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center;"><p style="color:var(--text-muted);">No hay registros en el historial. Procesa un Buffer KPI para generar el primero.</p></div>`;
-        return;
-    }
+
 
     const savedFrom = sessionStorage.getItem('buffer_hist_date_from') || new Date().toISOString().slice(0,10);
     const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || new Date().toISOString().slice(0,10);
@@ -5423,7 +5420,10 @@ const renderRFSection = (container) => {
         });
 
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay registros en ese rango de fechas.</td></tr>`;
+            const emptyMsg = (!kpiHistory || kpiHistory.length === 0)
+                ? "No hay registros en el historial. Procesa un Buffer KPI para generar el primero."
+                : "No hay registros en ese rango de fechas.";
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">${emptyMsg}</td></tr>`;
             return;
         }
 
