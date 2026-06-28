@@ -94,6 +94,8 @@ export const login = async (username, password) => {
 
 export const logout = () => {
   localStorage.removeItem('logistics_session');
+  sessionStorage.removeItem('buffer_hist_date_from');
+  sessionStorage.removeItem('buffer_hist_date_to');
 };
 
 export const getSession = () => {

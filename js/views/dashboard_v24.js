@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.253';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.254';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.253';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.253';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.253';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.253';
+import * as adminService from '../services_v245/adminService.js?v=26.5.254';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.254';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.254';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.254';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.253';
+const VERSION = '26.5.254';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5343,6 +5343,9 @@ const renderRFSection = (container) => {
         return;
     }
 
+    const savedFrom = sessionStorage.getItem('buffer_hist_date_from') || new Date().toISOString().slice(0,10);
+    const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || new Date().toISOString().slice(0,10);
+
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:2rem;">
             <!-- SECCIÓN: REPORTE DE CONCILIACIÓN DE PALETAS -->
@@ -5354,9 +5357,9 @@ const renderRFSection = (container) => {
                     <!-- Rango de fecha -->
                     <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
                         <span>📅 DE:</span>
-                        <input type="date" id="hist_date_from" value="${new Date().toISOString().slice(0,10)}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                        <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                         <span>HASTA:</span>
-                        <input type="date" id="hist_date_to" value="${new Date().toISOString().slice(0,10)}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                        <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                     </div>
                     <div style="margin-left:auto;">
                         <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -5408,6 +5411,10 @@ const renderRFSection = (container) => {
         if (!tbody) return;
         const fromVal = document.getElementById('hist_date_from').value;
         const toVal   = document.getElementById('hist_date_to').value;
+
+        // Persistir rango de fechas seleccionado en sessionStorage
+        sessionStorage.setItem('buffer_hist_date_from', fromVal);
+        sessionStorage.setItem('buffer_hist_date_to', toVal);
 
         const filtered = kpiHistory.map((row, idx) => ({ row, idx })).filter(({ row }) => {
             if (!fromVal && !toVal) return true;
