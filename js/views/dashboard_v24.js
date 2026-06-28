@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.266';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.267';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.266';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.266';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.266';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.266';
+import * as adminService from '../services_v245/adminService.js?v=26.5.267';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.267';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.267';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.267';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.266';
+const VERSION = '26.5.267';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -6214,9 +6214,6 @@ const renderRFSection = (container) => {
     if (preCalculatedResults) {
         preCalculatedResults.forEach(r => {
             results.push(r);
-            if (r.generalState === "COMPLETADO") completedCount++;
-            else if (r.generalState === "INCOMPLETO") partialCount++;
-            else if (r.generalState === "PENDIENTE") pendingCount++;
         });
     } else {
         let plan = lastBufferKPI;
@@ -6406,37 +6403,25 @@ const renderRFSection = (container) => {
             if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
                 generalState = "COMPLETADO";
                 statusTag = "🟢 COMPLETADO";
-                completedCount++;
             } else if (unitsLowered > 0 || actDiff > 0) {
                 generalState = "INCOMPLETO";
                 statusTag = "🟡 INCOMPLETO";
-                partialCount++;
-            } else {
-                pendingCount++;
             }
         } else if (hasReserva) {
             if (unitsLowered >= plannedQty) {
                 generalState = "COMPLETADO";
                 statusTag = "🟢 COMPLETADO";
-                completedCount++;
             } else if (unitsLowered > 0) {
                 generalState = "INCOMPLETO";
                 statusTag = "🟡 INCOMPLETO";
-                partialCount++;
-            } else {
-                pendingCount++;
             }
         } else if (hasActivo) {
             if (actDiff >= plannedQty) {
                 generalState = "COMPLETADO";
                 statusTag = "🟢 COMPLETADO";
-                completedCount++;
             } else if (actDiff > 0) {
                 generalState = "INCOMPLETO";
                 statusTag = "🟡 INCOMPLETO";
-                partialCount++;
-            } else {
-                pendingCount++;
             }
         }
 
@@ -6459,9 +6444,36 @@ const renderRFSection = (container) => {
             fecha: (() => { const d = fechaProceso ? new Date(fechaProceso + 'T12:00:00') : new Date(); return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }); })()
         });
     });
+    }
+
+    // ── CALCULAR CONTADORES BASADOS EN PALETAS (LPNs) ÚNICOS ──────────────────
+    const uniquePlannedLPNs = Array.from(new Set(results.map(r => r.lpn).filter(x => x)));
+    
+    uniquePlannedLPNs.forEach(lpn => {
+        const lpnRows = results.filter(r => r.lpn === lpn);
+        const allCompleted = lpnRows.every(r => r.generalState === "COMPLETADO");
+        const allPending = lpnRows.every(r => r.generalState === "PENDIENTE");
+        if (allCompleted) {
+            completedCount++;
+        } else if (allPending) {
+            pendingCount++;
+        } else {
+            partialCount++;
+        }
+    });
+
+    if (uniquePlannedLPNs.length === 0) {
+        results.forEach(r => {
+            if (r.generalState === "COMPLETADO") completedCount++;
+            else if (r.generalState === "INCOMPLETO") partialCount++;
+            else if (r.generalState === "PENDIENTE") pendingCount++;
+        });
+    }
+
+    // Auto-save KPI validation history (solo cuando calculamos de cero)
+    if (!preCalculatedResults) {
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
 
-        // ✅ Sincronizar resultados completos con el servidor (indexado por fecha)
         const todayKPI = fechaProceso || new Date().toISOString().slice(0, 10);
         saveKPIResults(todayKPI, results).then(ok => {
             console.log(ok
@@ -6469,23 +6481,11 @@ const renderRFSection = (container) => {
                 : `[KPI] ⚠️ Servidor no disponible. Resultados guardados solo en localStorage.`
             );
         });
-        
-        // Auto-save KPI validation history (Fase 2)
+
         try {
-            const uniquePlannedLPNs = Array.from(new Set(results.map(r => r.lpn).filter(x => x)));
-            let loweredPalletsCount = 0;
-            uniquePlannedLPNs.forEach(lpn => {
-                const lpnRows = results.filter(r => r.lpn === lpn);
-                const allCompleted = lpnRows.every(r => {
-                    const unitsLowered = Math.max(0, r.origResQty - r.finalResQty);
-                    return unitsLowered >= r.plannedQty;
-                });
-                if (allCompleted) loweredPalletsCount++;
-            });
             const requestedPalletsCount = uniquePlannedLPNs.length;
-            // Fallback: si no hay LPNs, usar cantidad de resultados
             const effectiveRequested = requestedPalletsCount > 0 ? requestedPalletsCount : results.length;
-            const effectiveLowered  = requestedPalletsCount > 0 ? loweredPalletsCount : results.filter(r => r.generalState === 'COMPLETADO').length;
+            const effectiveLowered  = requestedPalletsCount > 0 ? completedCount : results.filter(r => r.generalState === 'COMPLETADO').length;
             if (effectiveRequested > 0) {
                 const todayISO = fechaProceso || new Date().toISOString().slice(0, 10);
                 const record = {
@@ -6495,7 +6495,6 @@ const renderRFSection = (container) => {
                     diferencias:         Math.max(0, effectiveRequested - effectiveLowered),
                     fillRate:            ((effectiveLowered / effectiveRequested) * 100).toFixed(2) + '%'
                 };
-                // ✅ Guarda en servidor (+ localStorage como fallback automático)
                 saveBufferHistoryRecord(record).then(serverId => {
                     if (serverId) {
                         console.log(`[BH] ✅ Registro sincronizado. Servidor id=${serverId}`);
@@ -6520,7 +6519,7 @@ const renderRFSection = (container) => {
                 <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
                     <!-- Dropdown Select Filter -->
                     <select id="kpi_status_filter" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; outline:none; transition:all 0.2s;">
-                        <option value="TODOS">MOSTRAR TODO (${totalTasks})</option>
+                        <option value="TODOS">MOSTRAR TODO (${uniquePlannedLPNs.length > 0 ? uniquePlannedLPNs.length : results.length})</option>
                         <option value="PENDIENTE">🔴 PENDIENTES (${pendingCount})</option>
                         <option value="INCOMPLETO">🟡 INCOMPLETOS (${partialCount})</option>
                         <option value="COMPLETADO">🟢 COMPLETADOS (${completedCount})</option>
