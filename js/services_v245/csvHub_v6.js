@@ -304,9 +304,9 @@ const KPI_RESULTS_LS_KEY = 'logistics_v24_prod_kpiResultsByDate';
 /** Lee el objeto {fecha: [...resultados]} del servidor */
 const _fetchKPIStore = async () => {
     try {
-        const res = await fetch(`${API_URL}/${KPI_RESULTS_AREA}?t=${Date.now()}`, {
+        const res = await fetchWithTimeout(`${API_URL}/${KPI_RESULTS_AREA}?t=${Date.now()}`, {
             headers: { 'X-Environment': 'production' }
-        });
+        }, 4000);
         if (res.ok) {
             const json = await res.json();
             const obj = Array.isArray(json) ? null
@@ -320,11 +320,11 @@ const _fetchKPIStore = async () => {
 
 const _saveKPIStore = async (obj) => {
     try {
-        const res = await fetch(`${API_URL}/${KPI_RESULTS_AREA}`, {
+        const res = await fetchWithTimeout(`${API_URL}/${KPI_RESULTS_AREA}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
             body: JSON.stringify(obj)
-        });
+        }, 4000);
         return (await res.json()).status === 'success' || res.ok;
     } catch(e) { return false; }
 };
