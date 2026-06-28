@@ -670,11 +670,16 @@ export const getAreaData = async (area, forceRefresh = false) => {
 const extractTalla = (desc) => {
     if (!desc) return null;
     const d = String(desc).trim();
-    // Patrón: -[cualquier cosa]-[TALLA]
-    // Buscamos la última coincidencia del patrón guion-algo-guion
+    
+    // Buscar guion, numero(s), guion y talla (ej: -1-44, -9-44, -10144)
+    const regexPatron = /-([0-9]+)-([A-Z0-9.\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]+)$/i;
+    const match = d.match(regexPatron);
+    if (match) {
+        return match[2].trim();
+    }
+    
     const parts = d.split('-');
     if (parts.length >= 3) {
-        // Tomamos lo que viene después del último guion
         return parts[parts.length - 1].trim();
     }
     return null;
