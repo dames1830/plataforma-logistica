@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.259';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength } from '../services_v245/csvHub_v6.js?v=26.5.260';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.259';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.259';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.259';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.259';
+import * as adminService from '../services_v245/adminService.js?v=26.5.260';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.260';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.260';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.260';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.259';
+const VERSION = '26.5.260';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5344,45 +5344,52 @@ const renderRFSection = (container) => {
     const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || new Date().toISOString().slice(0,10);
 
     container.innerHTML = `
-        <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:2rem;">
-            <!-- SECCIÓN: REPORTE DE CONCILIACIÓN DE PALETAS -->
-            <div>
-                <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Conciliación de Paletas</h3>
+        <div class="animate-fade-in" style="padding:0.5rem; display:flex; gap:1.5rem; width:100%; align-items:start;">
+            <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2rem;">
+                <div>
+                    <h3 style="color:var(--primary); margin:0 0 1rem 0; font-size:1.1rem; font-weight:600;">Reporte de Conciliación de Paletas</h3>
 
-                <!-- TOOLBAR: filtros + exportar -->
-                <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
-                    <!-- Rango de fecha -->
-                    <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
-                        <span>📅 DE:</span>
-                        <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
-                        <span>HASTA:</span>
-                        <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                    <!-- TOOLBAR: filtros + exportar -->
+                    <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                        <!-- Rango de fecha -->
+                        <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
+                            <span>📅 DE:</span>
+                            <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                            <span>HASTA:</span>
+                            <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                        </div>
+                        <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
+                            <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                                🔄
+                            </button>
+                            <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                                📥 EXPORTAR
+                            </button>
+                        </div>
                     </div>
-                    <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-                        <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                            🔄
-                        </button>
-                        <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                            📥 EXPORTAR
-                        </button>
+
+                    <div class="glass-panel" style="padding:0; overflow-x:auto; border:1px solid rgba(255,255,255,0.1);">
+                        <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; text-align:center;">
+                            <thead>
+                                <tr style="background:#22c55e; color:#000; font-weight:800;">
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fecha</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Solicitadas</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Bajadas</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Diferencias</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fill Rate</th>
+                                    <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hist_concil_tbody"></tbody>
+                        </table>
                     </div>
                 </div>
-
-                <div class="glass-panel" style="padding:0; overflow-x:auto; border:1px solid rgba(255,255,255,0.1);">
-                    <table class="history-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; color:white; text-align:center;">
-                        <thead>
-                            <tr style="background:#22c55e; color:#000; font-weight:800;">
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fecha</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Solicitadas</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Paletas Bajadas</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Diferencias</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Fill Rate</th>
-                                <th style="padding:0.8rem; border:1px solid rgba(0,0,0,0.1);">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="hist_concil_tbody"></tbody>
-                    </table>
-                </div>
+            </div>
+            
+            <!-- COLUMNA DERECHA: RESERVADA PARA OTRO REPORTE (50%) -->
+            <div id="historial_buffer_right_col" style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2rem;">
+                <!-- El usuario inyectará otro reporte aquí en el futuro -->
             </div>
         </div>
     `;
