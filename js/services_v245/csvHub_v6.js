@@ -170,12 +170,28 @@ export const pingServer = () => {
 const BUFFER_HIST_AREA   = 'buffer_history';          // clave en el servidor
 const BUFFER_HIST_LOCAL_KEY = 'logistics_buffer_kpi_history_local';
 
+const fetchWithTimeout = async (url, options = {}, timeout = 4000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+};
+
 /** Lee el array completo desde el servidor, con fallback a localStorage */
 const _fetchHistFromServer = async () => {
     try {
-        const res = await fetch(`${API_URL}/${BUFFER_HIST_AREA}?t=${Date.now()}`, {
+        const res = await fetchWithTimeout(`${API_URL}/${BUFFER_HIST_AREA}?t=${Date.now()}`, {
             headers: { 'X-Environment': 'production' }
-        });
+        }, 4000);
         if (res.ok) {
             const json = await res.json();
             // El endpoint devuelve { status, data } o el array directamente
@@ -183,22 +199,24 @@ const _fetchHistFromServer = async () => {
                       : (Array.isArray(json?.data) ? json.data : null);
             if (arr) return arr;
         }
-    } catch(e) { /* offline */ }
+    } catch(e) { 
+        console.warn('[BH] ⚠️ Error leyendo del servidor (offline o timeout):', e);
+    }
     return null;
 };
 
 /** Guarda el array completo al servidor (POST sobreescribe el slot del área) */
 const _saveHistToServer = async (arr) => {
     try {
-        const res = await fetch(`${API_URL}/${BUFFER_HIST_AREA}`, {
+        const res = await fetchWithTimeout(`${API_URL}/${BUFFER_HIST_AREA}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
             body: JSON.stringify(arr)
-        });
+        }, 4000);
         const json = await res.json();
         return json.status === 'success' || json.status === 'ok' || res.ok;
     } catch(e) {
-        console.warn('[BH] ⚠️ Servidor no disponible.', e);
+        console.warn('[BH] ⚠️ Servidor no disponible al guardar.', e);
         return false;
     }
 };
@@ -240,13 +258,14 @@ export const saveBufferHistoryRecord = async (record) => {
  */
 export const fetchBufferHistory = async () => {
     const serverList = await _fetchHistFromServer();
-    if (serverList !== null) {
+    if (serverList !== null && Array.isArray(serverList)) {
         localStorage.setItem(BUFFER_HIST_LOCAL_KEY, JSON.stringify(serverList));
         console.log(`[BH] ✅ ${serverList.length} registros del servidor.`);
         return serverList;
     }
     try {
-        return JSON.parse(localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]');
+        const localData = JSON.parse(localStorage.getItem(BUFFER_HIST_LOCAL_KEY) || '[]');
+        return Array.isArray(localData) ? localData : [];
     } catch(e) { return []; }
 };
 
