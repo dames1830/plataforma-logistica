@@ -1,7 +1,7 @@
 # LOGISTICS BACKEND v26.5.206 - buffer_history + buffer_kpi_results + range endpoint
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GzipMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 import sqlite3
 import json
 import os
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(GzipMiddleware, minimum_size=1000)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 DB_PATH = os.environ.get("DB_PATH", "database.db")
 
