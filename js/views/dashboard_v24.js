@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.270';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.271';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.270';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.270';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.270';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.270';
+import * as adminService from '../services_v245/adminService.js?v=26.5.271';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.271';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.271';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.271';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.270';
+const VERSION = '26.5.271';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5384,22 +5384,22 @@ const renderRFSection = (container) => {
             </div>
 
             <!-- CONTENIDO DE REPORTES EN DOS COLUMNAS -->
-            <div style="display:flex; gap:1.5rem; width:100%; align-items:start;">
+            <div style="display:flex; gap:1rem; width:100%; align-items:start;">
                 <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
                 <div style="flex:1; min-width:0; background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                    <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;">
+                    <div style="padding:0.4rem 0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;">
                         <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Reporte de Paletas</h3>
                     </div>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:center;">
                             <thead style="background:rgba(0,0,0,0.5);">
                                 <tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);">
-                                    <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">Fecha</th>
-                                    <th style="padding:0.6rem 0.8rem; text-align:center;">Paletas Solicitadas</th>
-                                    <th style="padding:0.6rem 0.8rem; text-align:center;">Paletas Bajadas</th>
-                                    <th style="padding:0.6rem 0.8rem; text-align:center;">Diferencias</th>
-                                    <th style="padding:0.6rem 0.8rem; text-align:center;">Fill Rate</th>
-                                    <th style="padding:0.6rem 0.8rem; text-align:center;">Acciones</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">Fecha</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Paletas Solicitadas</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Paletas Bajadas</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Diferencias</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Fill Rate</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="hist_concil_tbody"></tbody>
@@ -5409,7 +5409,7 @@ const renderRFSection = (container) => {
 
                 <!-- COLUMNA DERECHA: REPORTE DE BUFFER TEMPORADA (50%) -->
                 <div style="flex:1; min-width:0; background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                    <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
+                    <div style="padding:0.4rem 0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Buffer Temporada</h3>
                         <button id="btn_temp_export" style="background:#22c55e; color:#000; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-size:0.7rem; font-weight:800; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                             📥 EXPORTAR TEMPORADA
@@ -5419,8 +5419,8 @@ const renderRFSection = (container) => {
                         <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:center;">
                             <thead style="background:rgba(0,0,0,0.5);">
                                 <tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);">
-                                    <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">Temporada</th>
-                                    <th style="padding:0.6rem 0.8rem; text-align:center;">Cant. Bajada</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">Temporada</th>
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Cant. Bajada</th>
                                 </tr>
                             </thead>
                             <tbody id="hist_temp_tbody"></tbody>
@@ -5483,36 +5483,36 @@ const renderRFSection = (container) => {
                 // Fila en modo edición
                 return `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(99,102,241,0.08);">
-                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
-                        <input id="ed_fecha_${idx}" value="${row.fecha || ''}" style="width:90px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.3rem 0.4rem; font-size:0.75rem; text-align:center;" />
+                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
+                        <input id="ed_fecha_${idx}" value="${row.fecha || ''}" style="width:90px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
                     </td>
-                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
-                        <input id="ed_sol_${idx}" value="${row.paletasSolicitadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.3rem 0.4rem; font-size:0.75rem; text-align:center;" />
+                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
+                        <input id="ed_sol_${idx}" value="${row.paletasSolicitadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
                     </td>
-                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
-                        <input id="ed_baj_${idx}" value="${row.paletasBajadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.3rem 0.4rem; font-size:0.75rem; text-align:center;" />
+                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
+                        <input id="ed_baj_${idx}" value="${row.paletasBajadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
                     </td>
-                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05); color:#ef4444; font-weight:700;">${row.diferencias}</td>
-                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:800;">${row.fillRate}</td>
-                    <td style="padding:0.5rem; border:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05); color:#ef4444; font-weight:700;">${row.diferencias}</td>
+                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05); font-weight:800;">${row.fillRate}</td>
+                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
                         <div style="display:flex; gap:0.4rem; justify-content:center;">
-                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#22c55e; border:none; border-radius:5px; padding:0.3rem 0.5rem; cursor:pointer; font-size:0.85rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
-                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:rgba(255,255,255,0.08); border:none; border-radius:5px; padding:0.3rem 0.5rem; cursor:pointer; font-size:0.85rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
+                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#22c55e; border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
+                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:rgba(255,255,255,0.08); border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
                         </div>
                     </td>
                 </tr>`;
             }
             return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
-                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
-                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#22c55e;">${row.paletasBajadas}</td>
-                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#ef4444;">${row.diferencias}</td>
-                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
-                <td style="padding:0.8rem; border:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#22c55e;">${row.paletasBajadas}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#ef4444;">${row.diferencias}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:0.5rem; justify-content:center;">
-                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">✏️</button>
-                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:6px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.28)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">🗑️</button>
+                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">✏️</button>
+                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.28)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">🗑️</button>
                     </div>
                 </td>
             </tr>`;
@@ -5568,8 +5568,8 @@ const renderRFSection = (container) => {
                 } else {
                     tbodyTemp.innerHTML = sortedRows.map(r => `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <td style="padding:0.6rem 0.8rem; color:#fff; font-weight:700;">${r.temporada}</td>
-                            <td style="padding:0.6rem 0.8rem; font-weight:800; color:#22c55e;">${r.cantidad}</td>
+                            <td style="padding:0.35rem 0.5rem; color:#fff; font-weight:700;">${r.temporada}</td>
+                            <td style="padding:0.35rem 0.5rem; font-weight:800; color:#22c55e;">${r.cantidad}</td>
                         </tr>
                     `).join('');
                 }
