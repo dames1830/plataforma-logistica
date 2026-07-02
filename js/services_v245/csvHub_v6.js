@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=26.5.279';
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.280';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -1301,17 +1301,12 @@ export const calculateBufferPallets = (configOverride = null) => {
         return key;
     };
 
-    // 1. Re-calcular totalsByNivel para niveles de reserva con las cantidades con buffer extra
-    Object.values(nivelesMap).forEach(lvl => {
-        if (lvl !== '1. BAJAS') {
-            totalsByNivel[lvl] = 0;
-        }
-    });
+    // 1. Re-calcular totalsByNivel SOLAMENTE para '2. ALTO' con las cantidades con buffer extra
+    totalsByNivel['2. ALTO'] = 0;
     detallePallets.forEach(dp => {
         const lvl = getNivelLabel(dp.NIVEL);
-        if (lvl && lvl !== '1. BAJAS') {
-            if (totalsByNivel[lvl] === undefined) totalsByNivel[lvl] = 0;
-            totalsByNivel[lvl] += dp['QTY BUFFER'] || 0;
+        if (lvl === '2. ALTO') {
+            totalsByNivel['2. ALTO'] += dp['QTY BUFFER'] || 0;
         }
     });
 
@@ -1361,22 +1356,25 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
 
-    // 4. Re-generar detalleZonas para reflejar el buffer extra
+    // 4. Re-generar detalleZonas reemplazando únicamente las filas de '2. ALTO'
     const finalDetalleZonas = [];
     detalleZonas.forEach(dz => {
-        if (dz['NIVEL/AREA'] === '1. BAJAS' || dz['NIVEL/AREA'] === '7. SIN STOCK') {
+        const lvl = getNivelLabel(dz['NIVEL/AREA']);
+        if (lvl !== '2. ALTO') {
             finalDetalleZonas.push(dz);
         }
     });
     detallePallets.forEach(dp => {
         const lvl = getNivelLabel(dp.NIVEL);
-        finalDetalleZonas.push({
-            'NIVEL/AREA': lvl,
-            'UBICACION': dp.UBICACIONES,
-            'ARTÍCULO': dp.Articulo,
-            'SKU': dp.SKU,
-            'ATD RQ': dp['QTY BUFFER']
-        });
+        if (lvl === '2. ALTO') {
+            finalDetalleZonas.push({
+                'NIVEL/AREA': lvl,
+                'UBICACION': dp.UBICACIONES,
+                'ARTÍCULO': dp.Articulo,
+                'SKU': dp.SKU,
+                'ATD RQ': dp['QTY BUFFER']
+            });
+        }
     });
     detalleZonas = finalDetalleZonas;
 
