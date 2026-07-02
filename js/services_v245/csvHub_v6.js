@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=26.5.275';
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.276';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {

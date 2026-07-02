@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.275';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.276';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.275';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.275';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.275';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.275';
+import * as adminService from '../services_v245/adminService.js?v=26.5.276';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.276';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.276';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.276';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.275';
+const VERSION = '26.5.276';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1734,7 +1734,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.275');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.276');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11934,15 +11934,48 @@ const renderRFSection = (container) => {
     // Lista estandar de tallas
     const TALLAS_COLS = ['00', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '37.5', '38', '38.5', '39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46', '47', '48'];
     
-    // Obtener géneros dinámicos del maestro de artículos
+    const getTallaFromSku = (sku) => {
+        const tallasMap = dataStore.tabla_tallas || {};
+        let talla = tallasMap[sku] || '-';
+        if (talla === '-') {
+            const segments = sku.split('-');
+            if (segments.length >= 3) {
+                const suffix = segments[segments.length - 1].trim();
+                const suffixNum = parseInt(suffix, 10);
+                if (!isNaN(suffixNum)) {
+                    if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
+                        talla = (suffixNum >= 2 && suffixNum <= 15) ? String(suffixNum + 36) : String(suffixNum);
+                    } else {
+                        talla = String(suffixNum);
+                    }
+                }
+            }
+        }
+        return talla;
+    };
+
+    // Obtener géneros dinámicos y sus tallas del maestro de artículos
     const maestroData = dataStore.analisis_sku_maestro || [];
     let GENEROS_ROWS = [];
+    const genderTallasMap = new Map();
     if (maestroData.length > 0) {
       const gSet = new Set();
       maestroData.forEach(row => {
         const raw = Array.isArray(row) ? row : Object.values(row);
-        const gVal = String(getCol(row, ['Gender RIMS','GENDER RIMS','GenderRIMS','GENDER_RIMS']) || raw[3] || '').trim();
-        if (gVal && gVal !== '-') gSet.add(gVal.toUpperCase());
+        const cod = String(getCol(row, ['CodArticulo','Cod Articulo','CODARTICULO','Articulo','ARTICULO','CODIGO']) || raw[1] || '').trim();
+        const gVal = String(getCol(row, ['Gender RIMS','GENDER RIMS','GenderRIMS','GENDER_RIMS']) || raw[3] || '').trim().toUpperCase();
+        if (gVal && gVal !== '-') {
+          gSet.add(gVal);
+          if (!genderTallasMap.has(gVal)) {
+            genderTallasMap.set(gVal, new Set());
+          }
+          if (cod) {
+            const tVal = getTallaFromSku(cod);
+            if (tVal && tVal !== '-') {
+              genderTallasMap.get(gVal).add(tVal);
+            }
+          }
+        }
       });
       GENEROS_ROWS = [...gSet].sort();
     }
@@ -11989,6 +12022,11 @@ const renderRFSection = (container) => {
                   ${TALLAS_COLS.map(t => {
                     const key = `${g}_${t}`;
                     const val = _configTallasGenero[key] !== undefined ? _configTallasGenero[key] : '';
+                    const allowedTallas = genderTallasMap.get(g) || new Set();
+                    const isAllowed = allowedTallas.size === 0 || allowedTallas.has(t);
+                    if (!isAllowed && !val) {
+                      return `<td style="padding:0.3rem; text-align:center; color:rgba(255,255,255,0.05); font-size:0.65rem; user-select:none;">--</td>`;
+                    }
                     return `
                       <td style="padding:0.3rem; text-align:center;">
                         <input type="number" min="0" max="9999" data-g="${g}" data-t="${t}" value="${val}" placeholder="--"
@@ -12126,7 +12164,11 @@ const renderRFSection = (container) => {
       // Pestaña 1: Generales por Talla y Género
       const rowsGenero = [];
       GENEROS_ROWS.forEach(g => {
+        const allowedTallas = genderTallasMap.get(g) || new Set();
         TALLAS_COLS.forEach(t => {
+          if (allowedTallas.size > 0 && !allowedTallas.has(t)) {
+            return;
+          }
           const key = `${g}_${t}`;
           rowsGenero.push({
             'GÉNERO': g,
