@@ -10,8 +10,14 @@ export const initializeAdminData = async (force = false) => {
     return await syncEngine.initSync(force);
 };
 
+let saveQueue = Promise.resolve();
 export const save = async (area, data, date = null) => {
-    return await syncEngine.pushChange(area, data, date);
+    const nextSave = () => syncEngine.pushChange(area, data, date);
+    saveQueue = saveQueue.then(nextSave).catch(err => {
+        console.error(`❌ Queue save error on ${area}:`, err);
+        return nextSave(); // Reintentar una vez
+    });
+    return saveQueue;
 };
 
 // --- GETTERS (Ahora usan el syncStore centralizado) ---
