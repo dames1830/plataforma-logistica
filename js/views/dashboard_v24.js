@@ -11959,12 +11959,31 @@ const renderRFSection = (container) => {
     let GENEROS_ROWS = [];
     const genderTallasMap = new Map();
     if (maestroData.length > 0) {
+      // Detectar índices dinámicamente usando la cabecera
+      let codIdx = 1; // default B
+      let genderIdx = 3; // default D
+      const headerRow = maestroData[0];
+      if (headerRow && Array.isArray(headerRow)) {
+          headerRow.forEach((cell, idx) => {
+              const cellStr = String(cell || '').trim().toUpperCase();
+              if (cellStr === 'CODARTICULO' || cellStr === 'COD ARTICULO' || cellStr === 'ARTICULO' || cellStr === 'PRODUCTO' || cellStr === 'SKU' || cellStr === 'CODIGO') {
+                  codIdx = idx;
+              } else if (cellStr === 'GENDER RIMS' || cellStr === 'GENDER' || cellStr === 'GENDERRIMS' || cellStr === 'DEPARTAMENTO' || cellStr === 'GENERO') {
+                  genderIdx = idx;
+              }
+          });
+      }
+
       const gSet = new Set();
-      maestroData.forEach(row => {
+      const startIndex = (headerRow && String(headerRow[0] || '').toUpperCase().includes('COD')) ? 1 : 0;
+
+      for (let i = startIndex; i < maestroData.length; i++) {
+        const row = maestroData[i];
+        if (!row) continue;
         const raw = Array.isArray(row) ? row : Object.values(row);
-        const cod = String(getCol(row, ['CodArticulo','Cod Articulo','CODARTICULO','Articulo','ARTICULO','CODIGO']) || raw[1] || '').trim();
-        const gVal = String(getCol(row, ['Gender RIMS','GENDER RIMS','GenderRIMS','GENDER_RIMS']) || raw[3] || '').trim().toUpperCase();
-        if (gVal && gVal !== '-') {
+        const cod = String(raw[codIdx] || '').trim();
+        const gVal = String(raw[genderIdx] || '').trim().toUpperCase();
+        if (gVal && gVal !== '-' && gVal !== 'GENDER RIMS' && gVal !== 'GENERO' && gVal !== 'DEPARTAMENTO') {
           gSet.add(gVal);
           if (!genderTallasMap.has(gVal)) {
             genderTallasMap.set(gVal, new Set());
@@ -11976,7 +11995,7 @@ const renderRFSection = (container) => {
             }
           }
         }
-      });
+      }
       GENEROS_ROWS = [...gSet].sort();
     }
     if (GENEROS_ROWS.length === 0) {
