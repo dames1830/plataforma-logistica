@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=26.5.278';
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.279';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -1291,6 +1291,16 @@ export const calculateBufferPallets = (configOverride = null) => {
     detallePallets = Array.from(consolidatedMap.values());
 
     // --- RECONSTRUCCIÓN DE REPORTES CON BUFFER EXTRA ---
+    const getNivelLabel = (nivelKey) => {
+        const key = String(nivelKey || '').trim().toUpperCase();
+        if (key === 'ALTO' || key === '2. ALTO') return '2. ALTO';
+        if (key === 'PISO' || key === '3. PISO') return '3. PISO';
+        if (key === 'AEREO' || key === 'AÉREO' || key === '4. AEREO' || key === '4. AÉREO') return '4. AÉREO';
+        if (key === 'LOGICO' || key === 'LÓGICO' || key === '5. LOGICO' || key === '5. LÓGICO') return '5. LÓGICO';
+        if (key === 'MERMA' || key === '6. MERMA') return '6. MERMA';
+        return key;
+    };
+
     // 1. Re-calcular totalsByNivel para niveles de reserva con las cantidades con buffer extra
     Object.values(nivelesMap).forEach(lvl => {
         if (lvl !== '1. BAJAS') {
@@ -1298,7 +1308,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
     detallePallets.forEach(dp => {
-        const lvl = dp.NIVEL;
+        const lvl = getNivelLabel(dp.NIVEL);
         if (lvl && lvl !== '1. BAJAS') {
             if (totalsByNivel[lvl] === undefined) totalsByNivel[lvl] = 0;
             totalsByNivel[lvl] += dp['QTY BUFFER'] || 0;
@@ -1359,8 +1369,9 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
     detallePallets.forEach(dp => {
+        const lvl = getNivelLabel(dp.NIVEL);
         finalDetalleZonas.push({
-            'NIVEL/AREA': dp.NIVEL,
+            'NIVEL/AREA': lvl,
             'UBICACION': dp.UBICACIONES,
             'ARTÍCULO': dp.Articulo,
             'SKU': dp.SKU,
