@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=26.5.277';
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.278';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -1174,7 +1174,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
 
     let runningRQ = globalRQ;
-    const waterfall = Object.keys(nivelesMap).map(k => {
+    let waterfall = Object.keys(nivelesMap).map(k => {
         const val = totalsByNivel[nivelesMap[k]] || 0;
         const currentRQ = runningRQ;
         runningRQ = Math.max(0, runningRQ - val);
@@ -1289,6 +1289,85 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     });
     detallePallets = Array.from(consolidatedMap.values());
+
+    // --- RECONSTRUCCIÓN DE REPORTES CON BUFFER EXTRA ---
+    // 1. Re-calcular totalsByNivel para niveles de reserva con las cantidades con buffer extra
+    Object.values(nivelesMap).forEach(lvl => {
+        if (lvl !== '1. BAJAS') {
+            totalsByNivel[lvl] = 0;
+        }
+    });
+    detallePallets.forEach(dp => {
+        const lvl = dp.NIVEL;
+        if (lvl && lvl !== '1. BAJAS') {
+            if (totalsByNivel[lvl] === undefined) totalsByNivel[lvl] = 0;
+            totalsByNivel[lvl] += dp['QTY BUFFER'] || 0;
+        }
+    });
+
+    // 2. Re-generar waterfall con las nuevas cantidades
+    let runningRQ_recalc = globalRQ;
+    waterfall = Object.keys(nivelesMap).map(k => {
+        const val = totalsByNivel[nivelesMap[k]] || 0;
+        const currentRQ = runningRQ_recalc;
+        runningRQ_recalc = Math.max(0, runningRQ_recalc - val);
+        return {
+            nivel: nivelesMap[k],
+            rq: currentRQ,
+            atd: val,
+            pct: calcPct(val, globalRQ)
+        };
+    });
+
+    // 7. SIN STOCK (se mantiene igual pero con el runningRQ recalculado)
+    waterfall.push({
+        nivel: '7. SIN STOCK',
+        rq: runningRQ_recalc,
+        atd: runningRQ_recalc,
+        pct: calcPct(runningRQ_recalc, globalRQ)
+    });
+
+    waterfall.push({
+        nivel: 'Total',
+        rq: globalRQ,
+        atd: waterfall.filter(w => w.nivel !== 'Total').reduce((acc, w) => acc + w.atd, 0),
+        pct: '100.0%'
+    });
+
+    // 3. Re-generar empaqueAggr para reflejar el buffer extra en la tabla de empaques
+    sources.forEach(s => {
+        empaqueAggr[s] = {
+            'SolidPack': { pal: new Set(), sku: new Set(), units: 0 },
+            'PreePack': { pal: new Set(), sku: new Set(), units: 0 }
+        };
+    });
+    detallePallets.forEach(dp => {
+        const s = dp.FUENTE;
+        const tipo = dp.SKU.trim().length >= 14 ? 'PreePack' : 'SolidPack';
+        if (empaqueAggr[s] && empaqueAggr[s][tipo]) {
+            if (dp.UBICACIONES) empaqueAggr[s][tipo].pal.add(dp.UBICACIONES);
+            empaqueAggr[s][tipo].sku.add(dp.SKU);
+            empaqueAggr[s][tipo].units += (dp['QTY BUFFER'] || 0);
+        }
+    });
+
+    // 4. Re-generar detalleZonas para reflejar el buffer extra
+    const finalDetalleZonas = [];
+    detalleZonas.forEach(dz => {
+        if (dz['NIVEL/AREA'] === '1. BAJAS' || dz['NIVEL/AREA'] === '7. SIN STOCK') {
+            finalDetalleZonas.push(dz);
+        }
+    });
+    detallePallets.forEach(dp => {
+        finalDetalleZonas.push({
+            'NIVEL/AREA': dp.NIVEL,
+            'UBICACION': dp.UBICACIONES,
+            'ARTÍCULO': dp.Articulo,
+            'SKU': dp.SKU,
+            'ATD RQ': dp['QTY BUFFER']
+        });
+    });
+    detalleZonas = finalDetalleZonas;
 
     // [MOD V12.1.8] EXPLOSIÓN DE LPN: Basta que se pida un SKU de un LPN, traemos TODO el LPN.
     const selectedLPNs = new Set();
