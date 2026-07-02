@@ -1223,7 +1223,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'QTY ACTIVO': activeStockMap[sku] || 0,
                                 'QTY RESERVA': qty, 
                                 'QTY BUFFER': Math.round(attributedUnits),
-                                'QTY EXTRA': getExtraBuffer(sku),
+                                'QTY EXTRA': 0,
                                 'NIVEL': String(item['NIVEL'] || '').trim().toUpperCase(),
                                 'ES_ALTO': item['ES_ALTO'] !== false
                             });
@@ -1246,6 +1246,12 @@ export const calculateBufferPallets = (configOverride = null) => {
             consolidatedMap.set(key, { ...d });
         } else {
             consolidatedMap.get(key)['QTY BUFFER'] += d['QTY BUFFER'];
+        }
+    });
+    consolidatedMap.forEach(d => {
+        if (d['QTY BUFFER'] > 0) {
+            const extra = getExtraBuffer(d.SKU);
+            d['QTY BUFFER'] = Math.min(d['QTY RESERVA'], d['QTY BUFFER'] + extra);
         }
     });
     detallePallets = Array.from(consolidatedMap.values());
@@ -1280,7 +1286,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'QTY ACTIVO': activeStockMap[sku] || 0,
                     'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
                     'QTY BUFFER': 0,
-                    'QTY EXTRA': getExtraBuffer(sku),
+                    'QTY EXTRA': 0,
                     'NIVEL': String(f['NIVEL'] || '').trim().toUpperCase(),
                     'ES_ALTO': f['ES_ALTO'] !== false
                 });

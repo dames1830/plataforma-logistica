@@ -787,7 +787,6 @@ window.downloadExcelDetail = async () => {
         oddHeader: "&C Página &P de &N",
         evenHeader: "&C Página &P de &N"
     };
-    // Re-ajuste de anchos para precisión de píxeles reales con fuente 16
     wsAnalisis.columns = [
         { key: 'ubi', width: 32 },
         { key: 'lpn', width: 30 },
@@ -797,18 +796,17 @@ window.downloadExcelDetail = async () => {
         { key: 'gender', width: 25 },
         { key: 'act', width: 18 },
         { key: 'res', width: 18 },
-        { key: 'buf', width: 18 },
-        { key: 'extra', width: 18 }
+        { key: 'buf', width: 18 }
     ];
 
-    wsAnalisis.mergeCells('A1:J1');
+    wsAnalisis.mergeCells('A1:I1');
     const row1A = wsAnalisis.getRow(1);
     row1A.height = 60;
     row1A.getCell(1).value = 'ANÁLISIS BUFFER';
     row1A.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
     row1A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-    wsAnalisis.mergeCells('A2:J2');
+    wsAnalisis.mergeCells('A2:I2');
     const row2A = wsAnalisis.getRow(2);
     row2A.height = 30;
     row2A.getCell(1).value = data.timestamp || new Date().toLocaleString();
@@ -819,7 +817,7 @@ window.downloadExcelDetail = async () => {
     row3A.height = 30;
 
     const row4A = wsAnalisis.getRow(4);
-    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER", "QTY EXTRA"];
+    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
     row4A.height = 21;
     row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
     row4A.eachCell(cell => {
@@ -827,17 +825,17 @@ window.downloadExcelDetail = async () => {
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         cell.alignment = { vertical: 'middle', horizontal: 'left' };
     });
-    [7, 8, 9, 10].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
+    [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
     // maestroMap ya fue construido robustamente al inicio de la función
     const tallasMap = dataStore.tabla_tallas || {};
 
-    let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0, uSumE = 0;
-    let gSumA = 0, gSumR = 0, gSumB = 0, gSumE = 0;
+    let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
+    let gSumA = 0, gSumR = 0, gSumB = 0;
 
     physicalDetalle.forEach((d) => {
         if (lastUbi !== "" && d.UBICACIONES !== lastUbi) {
-            const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB, uSumE]);
+            const totalRow = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
             totalRow.height = 21;
             totalRow.font = { bold: true, size: 16, name: 'Calibri' };
             totalRow.eachCell(cell => {
@@ -845,8 +843,8 @@ window.downloadExcelDetail = async () => {
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
                 cell.alignment = { vertical: 'middle' };
             });
-            [7, 8, 9, 10].forEach(c => totalRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
-            uSumA = 0; uSumR = 0; uSumB = 0; uSumE = 0;
+            [7, 8, 9].forEach(c => totalRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
+            uSumA = 0; uSumR = 0; uSumB = 0;
         }
 
         const sku = d.SKU;
@@ -901,8 +899,7 @@ window.downloadExcelDetail = async () => {
         const dataRow = wsAnalisis.addRow([
             d.UBICACIONES !== lastUbi ? d.UBICACIONES : "",
             d.LPN, sku, talla, maestro.marca, maestro.gender,
-            d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER'],
-            d['QTY EXTRA'] || 0
+            d['QTY ACTIVO'], d['QTY RESERVA'], d['QTY BUFFER']
         ]);
         dataRow.height = 21;
         dataRow.font = { size: 16, name: 'Calibri' };
@@ -912,13 +909,13 @@ window.downloadExcelDetail = async () => {
             if (colNumber >= 7) cell.alignment = { vertical: 'middle', horizontal: 'center' };
         });
 
-        uSumA += (d['QTY ACTIVO'] || 0); uSumR += (d['QTY RESERVA'] || 0); uSumB += (d['QTY BUFFER'] || 0); uSumE += (d['QTY EXTRA'] || 0);
-        gSumA += (d['QTY ACTIVO'] || 0); gSumR += (d['QTY RESERVA'] || 0); gSumB += (d['QTY BUFFER'] || 0); gSumE += (d['QTY EXTRA'] || 0);
+        uSumA += (d['QTY ACTIVO'] || 0); uSumR += (d['QTY RESERVA'] || 0); uSumB += (d['QTY BUFFER'] || 0);
+        gSumA += (d['QTY ACTIVO'] || 0); gSumR += (d['QTY RESERVA'] || 0); gSumB += (d['QTY BUFFER'] || 0);
         lastUbi = d.UBICACIONES;
     });
 
     if (lastUbi !== "") {
-        const lastTotal = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB, uSumE]);
+        const lastTotal = wsAnalisis.addRow([`TOTAL ${lastUbi}`, "", "", "", "", "", uSumA, uSumR, uSumB]);
         lastTotal.height = 21;
         lastTotal.font = { bold: true, size: 16, name: 'Calibri' };
         lastTotal.eachCell(cell => {
@@ -926,10 +923,10 @@ window.downloadExcelDetail = async () => {
             cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             cell.alignment = { vertical: 'middle' };
         });
-        [7, 8, 9, 10].forEach(c => lastTotal.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
+        [7, 8, 9].forEach(c => lastTotal.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
     }
     wsAnalisis.addRow([]);
-    const gtRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB, gSumE]);
+    const gtRow = wsAnalisis.addRow(["TOTAL GENERAL", "", "", "", "", "", gSumA, gSumR, gSumB]);
     gtRow.height = 21;
     gtRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
     gtRow.eachCell(cell => {
@@ -937,7 +934,7 @@ window.downloadExcelDetail = async () => {
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         cell.alignment = { vertical: 'middle' };
     });
-    [7, 8, 9, 10].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
+    [7, 8, 9].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
     // --- OTRAS PESTAÑAS ---
     const addStandardSheet = (name, jsonData, tabColor = null) => {
