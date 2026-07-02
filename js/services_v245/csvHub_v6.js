@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=26.5.274';
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.275';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -955,21 +955,55 @@ export const calculateBufferPallets = (configOverride = null) => {
         }
     }
 
-    // Helper para obtener el buffer extra de un SKU usando articulosMap
+    // Helper para obtener el buffer extra de un SKU usando la configuracion de analisis SKU (Genero y Talla + Excepciones SKU)
     const getExtraBuffer = (sku) => {
         if (!sku) return 0;
         const trimmedSku = sku.trim();
-        // Si el SKU tiene 15 dígitos (o caracteres), no se considera para el buffer extra
         if (trimmedSku.length === 15) {
             return 0;
         }
+        
+        let configTallasGenero = {};
+        let configSKUExcepciones = {};
+        try {
+            const g = localStorage.getItem('logistics_v24_prod_configTallasGenero');
+            if (g) configTallasGenero = JSON.parse(g) || {};
+            const s = localStorage.getItem('logistics_v24_prod_configSKUExcepciones');
+            if (s) configSKUExcepciones = JSON.parse(s) || {};
+        } catch(e) {
+            console.warn("[PULSE] Error al leer configuraciones de Analisis SKU:", e);
+        }
+
+        if (configSKUExcepciones[trimmedSku] !== undefined) {
+            return parseInt(configSKUExcepciones[trimmedSku]) || 0;
+        }
+
         const sku7 = trimmedSku.substring(0, 7);
         const info = articulosMap.get(sku7);
         if (!info) return 0;
-        const m = String(info.marca || 'OTROS').trim().toUpperCase();
+
         const g = String(info.gender || 'OTROS').trim().toUpperCase();
-        const key = `${m}|${g}`;
-        return parseInt(savedQtys[key]) || 0;
+        
+        let talla = '-';
+        const tallasMap = dataStore.tabla_tallas || {};
+        talla = tallasMap[trimmedSku] || '-';
+        if (talla === '-') {
+            const segments = trimmedSku.split('-');
+            if (segments.length >= 3) {
+                const suffix = segments[segments.length - 1].trim();
+                const suffixNum = parseInt(suffix, 10);
+                if (!isNaN(suffixNum)) {
+                    if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
+                        talla = (suffixNum >= 2 && suffixNum <= 15) ? String(suffixNum + 36) : String(suffixNum);
+                    } else {
+                        talla = String(suffixNum);
+                    }
+                }
+            }
+        }
+
+        const key = `${g}_${talla}`;
+        return parseInt(configTallasGenero[key]) || 0;
     };
 
     // Colectar todos los SKUs físicamente presentes en activo o reserva
