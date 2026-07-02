@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.273';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.274';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.273';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.273';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.273';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.273';
+import * as adminService from '../services_v245/adminService.js?v=26.5.274';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.274';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.274';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.274';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.273';
+const VERSION = '26.5.274';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1737,7 +1737,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.273');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.274');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2554,31 +2554,18 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
     
-    // Filtro de SEMANAS para el Ranking de Tardanzas (v11.4.2)
-    const getWeekNumber = (d) => {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    const kpiStart = localStorage.getItem('kpi_analitica_date_from') || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const kpiEnd = localStorage.getItem('kpi_analitica_date_to') || new Date().toISOString().split('T')[0];
+    
+    const formatDateEs = (dStr) => {
+        if (!dStr) return '';
+        const [y, m, d] = dStr.split('-');
+        return `${d}/${m}/${y}`;
     };
-    
-    // [MOD v17.1.7] Obtener todas las semanas disponibles en los datos (orden descendente)
-    const availableWeeks = [...new Set(rawLog.map(e => getWeekNumber(new Date(e.date + 'T12:00:00'))))].sort((a,b) => b-a);
-    
-    const currentWeekNum = getWeekNumber(new Date());
-    // Por defecto, seleccionar la semana actual SI hay datos, sino la última disponible
-    if (!window._selectedWeeks) {
-        if (availableWeeks.includes(currentWeekNum)) {
-            window._selectedWeeks = [currentWeekNum];
-        } else if (availableWeeks.length > 0) {
-            window._selectedWeeks = [availableWeeks[0]];
-        } else {
-            window._selectedWeeks = [currentWeekNum];
-        }
-    }
-    const selectedWeeks = window._selectedWeeks;
+
     const datesMap = {};
     rawLog.forEach(entry => {
+        if (entry.date < kpiStart || entry.date > kpiEnd) return;
         if (!datesMap[entry.date]) datesMap[entry.date] = { sum: 0, count: 0 };
         datesMap[entry.date].sum += parsePct(entry.rendimiento);
         datesMap[entry.date].count++;
@@ -2590,9 +2577,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const globalWorkerMap = {};
     rawLog.forEach(entry => {
-        const entryDate = new Date(entry.date + 'T12:00:00');
-        const wNum = getWeekNumber(entryDate);
-        if (!selectedWeeks.includes(wNum)) return;
+        if (entry.date < kpiStart || entry.date > kpiEnd) return;
 
         const key = (entry.dni || '').toString().trim();
         if (!globalWorkerMap[key]) {
@@ -2632,7 +2617,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         .filter(w => w.faltasJustificadas > 0)
         .sort((a,b) => b.faltasJustificadas - a.faltasJustificadas);
 
-    const globalAvg = Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length);
+    const globalAvg = evolutionData.length ? Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length) : 0;
     const getStatusColor = (val) => {
         if (val >= 90) return '#22c55e';
         if (val >= 80) return '#f59e0b';
@@ -2680,13 +2665,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">📉 ANALÍTICA DE INCIDENCIAS</h4>
                     <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* Análisis consolidado de puntualidad y asistencia</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                     <span style="font-size:0.75rem; color:#fff; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Semanas:</span>
-                     ${availableWeeks.map(wn => `
-                        <button class="week-tag ${selectedWeeks.includes(wn) ? 'active' : ''}" data-wn="${wn}" style="padding:5px 14px; border-radius:14px; font-size:0.75rem; font-weight:900; border:1px solid ${selectedWeeks.includes(wn) ? 'var(--primary)' : 'rgba(255,255,255,0.2)'}; background:${selectedWeeks.includes(wn) ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}; color:${selectedWeeks.includes(wn) ? '#fff' : '#cbd5e1'}; cursor:pointer; transition:all 0.2s ease;">
-                            SEM ${wn}
-                        </button>
-                     `).join('')}
+                <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7); flex-wrap:wrap;">
+                     <span>📅 DE:</span>
+                     <input type="date" id="kpi_analitica_from" value="${kpiStart}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                     <span>HASTA:</span>
+                     <input type="date" id="kpi_analitica_to" value="${kpiEnd}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                 </div>
             </div>
 
@@ -2694,7 +2677,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#fb923c; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">🚫</span> TARDANZAS - SEM ${selectedWeeks.join(', ')}
+                        <span style="font-size:1.1rem;">🚫</span> TARDANZAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
@@ -2723,7 +2706,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA CENTRAL: FALTAS INJUSTIFICADAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#f87171; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
+                        <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
@@ -2752,7 +2735,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA DERECHA: FALTAS JUSTIFICADAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS - SEM ${selectedWeeks.join(', ')}
+                        <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
@@ -2782,20 +2765,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     `;
 
     setTimeout(() => {
-        document.querySelectorAll('.week-tag').forEach(tag => {
-            tag.onclick = () => {
-                const wn = parseInt(tag.dataset.wn);
-                if (window._selectedWeeks.includes(wn)) {
-                    // Evitar deseleccionar todo
-                    if (window._selectedWeeks.length > 1) {
-                        window._selectedWeeks = window._selectedWeeks.filter(w => w !== wn);
-                    }
-                } else {
-                    window._selectedWeeks.push(wn);
-                }
+        const fromInput = document.getElementById('kpi_analitica_from');
+        const toInput = document.getElementById('kpi_analitica_to');
+        if (fromInput) {
+            fromInput.onchange = (e) => {
+                localStorage.setItem('kpi_analitica_date_from', e.target.value);
                 renderKPIGraphsSection(container);
             };
-        });
+        }
+        if (toInput) {
+            toInput.onchange = (e) => {
+                localStorage.setItem('kpi_analitica_date_to', e.target.value);
+                renderKPIGraphsSection(container);
+            };
+        }
 
         const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
         const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
