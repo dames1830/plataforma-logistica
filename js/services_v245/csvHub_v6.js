@@ -1150,8 +1150,9 @@ export const calculateBufferPallets = (configOverride = null) => {
             // Si viene por Pedidos / Otras Solicitudes, SÍ se suma el factor
             factorConfig = getExtraBuffer(sku);
             
-            // Lógica de colchón: El factor de reposición es solo lo que falta en piso
-            let factorFaltante = Math.max(0, factorConfig - enActivo);
+            // Lógica de colchón: proyectar el stock después de atender los pedidos
+            let stockProyectado = Math.max(0, enActivo - totalSolicitado);
+            let factorFaltante = Math.max(0, factorConfig - stockProyectado);
             factorVirtual = Math.min(factorFaltante, stockReservaReal);
             necesidadTotal = totalSolicitado + factorVirtual;
         }
