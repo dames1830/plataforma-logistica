@@ -1658,8 +1658,10 @@ export const calculateBufferPallets = (configOverride = null) => {
             if (segments.length >= 3) talla = segments[segments.length - 1].trim();
         }
 
-        const bajado = (cuotasPicking.stAltos[sku] || 0) + (cuotasPicking.stPisos[sku] || 0) + (cuotasPicking.stAereos[sku] || 0) + (cuotasPicking.stBajas[sku] || 0);
-
+        let bajado = 0;
+        Object.keys(cuotasPicking).forEach(ubi => {
+            if (cuotasPicking[ubi][sku]) bajado += cuotasPicking[ubi][sku];
+        });
         return {
             'Sku': sku,
             'RQ': d.total,
