@@ -1044,6 +1044,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
+    let detalleRQRevisar = [];
     let globalRQ = 0, totalsByNivel = {};
 
     const satisfyDemand = (sku, pending, stockMap, nivelLabel) => {
@@ -1172,6 +1173,28 @@ export const calculateBufferPallets = (configOverride = null) => {
         
         // El globalRQ es la necesidad total (lo que la tienda requiere en total para pedidos y cobertura)
         globalRQ += necesidadTotal;
+
+        let tallaStr = '-';
+        const segments = sku.split('-');
+        if (segments.length >= 3) {
+            const suffix = segments[segments.length - 1].trim();
+            const suffixNum = parseInt(suffix, 10);
+            if (!isNaN(suffixNum)) {
+                if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
+                    tallaStr = (suffixNum >= 2 && suffixNum <= 15) ? String(suffixNum + 36) : String(suffixNum);
+                } else {
+                    tallaStr = String(suffixNum);
+                }
+            }
+        }
+
+        detalleRQRevisar.push({
+            'SKU': sku,
+            'Talla': tallaStr,
+            'Cantidad RQ': totalSolicitado,
+            'Cantidad Factor': factorConfig,
+            'Necesidad Total': necesidadTotal
+        });
 
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         const isConfigEnabled = (val) => {
@@ -1804,6 +1827,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         reporteObsolencia: reporteObsolencia,
         detalleObsGen: detalleObsGen,
         detalleTemporadas: detalleTemporadas,
+        detalleRQRevisar: detalleRQRevisar,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };

@@ -805,5 +805,12 @@ const downloadExcelDetail = () => {
     const ws = XLSX.utils.json_to_sheet(detail);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Detalle SKU");
+
+    const rqRevisarData = lastBufferResult.detalleRQRevisar || [];
+    if (rqRevisarData.length > 0) {
+        const wsRQ = XLSX.utils.json_to_sheet(rqRevisarData);
+        XLSX.utils.book_append_sheet(wb, wsRQ, "RQ revisar");
+    }
+
     XLSX.writeFile(wb, `Reporte_Detalle_SKU_${new Date().getTime()}.xlsx`);
 };
