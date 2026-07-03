@@ -1150,6 +1150,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         // La necesidad total de la tienda es: Pedidos (totalSolicitado) + Stock Objetivo (factorConfig)
         // Lo que debemos bajar de Reserva (cascada) es esa necesidad menos lo que ya tenemos físicamente en Bajas.
         let factorConfig = 0;
+        let factorVirtual = 0;
         let necesidadTotal = 0;
         
         if (demanda[sku].isReplenishmentOnly) {
@@ -1158,7 +1159,18 @@ export const calculateBufferPallets = (configOverride = null) => {
         } else {
             // Si viene por Pedidos / Otras Solicitudes, SÍ se suma el factor
             factorConfig = getExtraBuffer(sku);
-            necesidadTotal = totalSolicitado + factorConfig;
+            
+            // Calculamos stock real total en reserva para limitar el factor virtual
+            let stockReservaReal = 0;
+            if (stAltos[sku]) stAltos[sku].forEach(p => stockReservaReal += p.qty);
+            if (stPisos[sku]) stPisos[sku].forEach(p => stockReservaReal += p.qty);
+            if (stAereos[sku]) stAereos[sku].forEach(p => stockReservaReal += p.qty);
+            
+            let stockDisponibleParaFactor = stockReservaReal - totalSolicitado;
+            if (stockDisponibleParaFactor < 0) stockDisponibleParaFactor = 0;
+            
+            factorVirtual = Math.min(factorConfig, stockDisponibleParaFactor);
+            necesidadTotal = totalSolicitado + factorVirtual;
         }
 
         pending = Math.max(0, necesidadTotal - enActivo);
@@ -1180,7 +1192,8 @@ export const calculateBufferPallets = (configOverride = null) => {
             'SKU': sku,
             'Talla': tallaStr,
             'Cantidad RQ': totalSolicitado,
-            'Cantidad Factor': factorConfig,
+            'Factor Config': factorConfig,
+            'Factor Virtual Aplicado': factorVirtual,
             'Necesidad Total': necesidadTotal
         });
 
