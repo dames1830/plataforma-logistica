@@ -1146,12 +1146,14 @@ export const calculateBufferPallets = (configOverride = null) => {
             });
         }
 
-        // Brecha (pedidos no cubiertos por Bajas) + Factor de Configuración Análisis SKU
-        // Los niveles 2-7 deben cubrir esta suma — nunca puede haber ATD > RQ
-        const brecha = totalSolicitado - atdActivo;
+        // La necesidad total de la tienda es: Pedidos (totalSolicitado) + Stock Objetivo (factorConfig)
+        // Lo que debemos bajar de Reserva (cascada) es esa necesidad menos lo que ya tenemos físicamente en Bajas.
         const factorConfig = getExtraBuffer(sku);
-        pending = brecha + factorConfig;
-        globalRQ += totalSolicitado + factorConfig; // RQ efectivo = pedidos + factor reposición
+        const necesidadTotal = totalSolicitado + factorConfig;
+        pending = Math.max(0, necesidadTotal - enActivo);
+        
+        // El globalRQ es la necesidad total (lo que la tienda requiere en total para pedidos y cobertura)
+        globalRQ += necesidadTotal;
 
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         const isConfigEnabled = (val) => {
