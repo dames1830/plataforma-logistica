@@ -1166,10 +1166,7 @@ export const calculateBufferPallets = (configOverride = null) => {
             if (stPisos[sku]) stPisos[sku].forEach(p => stockReservaReal += p.qty);
             if (stAereos[sku]) stAereos[sku].forEach(p => stockReservaReal += p.qty);
             
-            let stockDisponibleParaFactor = stockReservaReal - totalSolicitado;
-            if (stockDisponibleParaFactor < 0) stockDisponibleParaFactor = 0;
-            
-            factorVirtual = Math.min(factorConfig, stockDisponibleParaFactor);
+            factorVirtual = Math.min(factorConfig, stockReservaReal);
             necesidadTotal = totalSolicitado + factorVirtual;
         }
 
