@@ -935,18 +935,26 @@ export const calculateBufferPallets = (configOverride = null) => {
         });
     }
 
-    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente (Jerarquía: Replenish > Otras > Pedidos)
-    let tempMap = {}; // sku -> { total: 0, bestSrc: null }
-    const hierarchy = ['REPLENISHMENT', 'OTRAS SOLICITUDES', 'PEDIDOS'];
-
-    hierarchy.forEach(src => {
+    // 2. Consolidar: Sumar todo y asignar a la MEJOR fuente. Si hay Pedidos/Otras, se IGNORA Replenishment.
+    let tempMap = {}; // sku -> { total: 0, bestSrc: null, isReplenishmentOnly: false }
+    
+    // Primero procesamos PEDIDOS y OTRAS SOLICITUDES
+    ['PEDIDOS', 'OTRAS SOLICITUDES'].forEach(src => {
         rawDemand[src].forEach(item => {
             if (!tempMap[item.sku]) {
-                tempMap[item.sku] = { total: 0, bestSrc: src };
+                tempMap[item.sku] = { total: 0, bestSrc: src, isReplenishmentOnly: false };
             }
             tempMap[item.sku].total += item.qty;
-            // No cambiamos bestSrc porque el primero que lo puso (según jerarquía) gana
         });
+    });
+
+    // Luego procesamos REPLENISHMENT
+    rawDemand['REPLENISHMENT'].forEach(item => {
+        if (!tempMap[item.sku]) {
+            // Solo entra si NO hubo pedidos u otras solicitudes
+            tempMap[item.sku] = { total: item.qty, bestSrc: 'REPLENISHMENT', isReplenishmentOnly: true };
+        }
+        // Si ya existía (tiene pedidos/otras), lo ignoramos por completo
     });
 
     // [NUEVO] Cargar y parsear configuración de buffer extra por Marca y Género
@@ -1025,12 +1033,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     // El factor de Configuración Análisis SKU se aplica dentro de la cascada como: pending = brecha + factor
     // donde brecha = (RQ pedidos - Bajas). Garantiza que ATD nunca supere el RQ efectivo.
 
-    // 3. Convertir al formato final de 'demanda'
     let demanda = {};
     Object.keys(tempMap).forEach(sku => {
         const item = tempMap[sku];
         demanda[sku] = {
             total: item.total,
+            isReplenishmentOnly: item.isReplenishmentOnly,
             sources: [{ src: item.bestSrc, qty: item.total }]
         };
     });
@@ -1148,8 +1156,18 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         // La necesidad total de la tienda es: Pedidos (totalSolicitado) + Stock Objetivo (factorConfig)
         // Lo que debemos bajar de Reserva (cascada) es esa necesidad menos lo que ya tenemos físicamente en Bajas.
-        const factorConfig = getExtraBuffer(sku);
-        const necesidadTotal = totalSolicitado + factorConfig;
+        let factorConfig = 0;
+        let necesidadTotal = 0;
+        
+        if (demanda[sku].isReplenishmentOnly) {
+            // Si viene SOLO por Replenishment, NO se suma el factor (Factor = 0)
+            necesidadTotal = totalSolicitado;
+        } else {
+            // Si viene por Pedidos / Otras Solicitudes, SÍ se suma el factor
+            factorConfig = getExtraBuffer(sku);
+            necesidadTotal = totalSolicitado + factorConfig;
+        }
+
         pending = Math.max(0, necesidadTotal - enActivo);
         
         // El globalRQ es la necesidad total (lo que la tienda requiere en total para pedidos y cobertura)
