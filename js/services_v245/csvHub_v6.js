@@ -698,8 +698,8 @@ const extractTalla = (desc) => {
     if (!desc) return null;
     const d = String(desc).trim();
     
-    // Buscar guion, numero(s), guion y talla (ej: -1-44, -9-44, -10144)
-    const regexPatron = /-([0-9]+)-([A-Z0-9.\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]+)$/i;
+    // Buscar guion, digito del 1 al 9, guion y talla al final (ej: -1-44, -9-44)
+    const regexPatron = /-([1-9])-([A-Z0-9.\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]+)$/i;
     const match = d.match(regexPatron);
     if (match) {
         return match[2].trim();
@@ -707,7 +707,10 @@ const extractTalla = (desc) => {
     
     const parts = d.split('-');
     if (parts.length >= 3) {
-        return parts[parts.length - 1].trim();
+        const preLast = parts[parts.length - 2].trim();
+        if (preLast.length === 1 && preLast >= '1' && preLast <= '9') {
+            return parts[parts.length - 1].trim();
+        }
     }
     return null;
 };
@@ -720,8 +723,8 @@ export const updateTablaTallas = () => {
         if (area.endsWith('_activo') && dataStore[area]) {
             dataStore[area].forEach(row => {
                 const raw = Array.isArray(row) ? row : Object.values(row);
-                const sku = String(raw[1] || '').trim(); // Columna B
-                const desc = getCol(row, ['Descripcion', 'Descripción', 'Description']) || 
+                const sku = getCol(row, ['Articulo', 'Artículo', 'Sku', 'PRODUCTO', 'SKU', 'CODIGO']) || String(raw[1] || '').trim();
+                const desc = getCol(row, ['Descripcion de articulo', 'Descripción de artículo', 'Descripcin de artculo', 'DescripciÃ³n de artÃculo', 'Descripcion', 'Descripción', 'Description', 'DESCRIPCION']) || 
                              (Array.isArray(row) ? row[2] : Object.values(row)[2]);
                 if (sku && desc) {
                     const talla = extractTalla(desc);
@@ -731,8 +734,9 @@ export const updateTablaTallas = () => {
         }
         if (area.endsWith('_reserva') && dataStore[area]) {
             dataStore[area].forEach(row => {
-                const sku = row.PRODUCTO;
-                const desc = row.DESCRIPCION;
+                const raw = Array.isArray(row) ? row : Object.values(row);
+                const sku = getCol(row, ['PRODUCTO', 'SKU', 'Articulo', 'Artículo', 'Sku', 'CODIGO']) || row.PRODUCTO || String(raw[2] || '').trim();
+                const desc = getCol(row, ['DESCRIPCION', 'Descripcion', 'Descripción', 'Description']) || row.DESCRIPCION || (Array.isArray(row) ? row[7] : Object.values(row)[7]);
                 if (sku && desc) {
                     const talla = extractTalla(desc);
                     if (talla) mapa[sku] = talla;

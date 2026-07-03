@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.280';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.281';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.280';
+const VERSION = '26.5.281';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -828,7 +828,7 @@ window.downloadExcelDetail = async () => {
     [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
     // maestroMap ya fue construido robustamente al inicio de la función
-    const tallasMap = dataStore.tabla_tallas || {};
+    const tallasMap = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
 
     let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
     let gSumA = 0, gSumR = 0, gSumB = 0;
@@ -11935,7 +11935,7 @@ const renderRFSection = (container) => {
     const TALLAS_COLS = ['00', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '37.5', '38', '38.5', '39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46', '47', '48'];
     
     const getTallaFromSku = (sku) => {
-        const tallasMap = dataStore.tabla_tallas || {};
+        const tallasMap = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
         let talla = tallasMap[sku] || '-';
         if (talla === '-') {
             const segments = sku.split('-');
@@ -13592,7 +13592,10 @@ const renderRFSection = (container) => {
             if (!task.items || !Array.isArray(task.items)) return;
 
             task.items.forEach(art => {
-                const getTalla = (sku) => (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || sku.split('-').pop();
+                const getTalla = (sku) => {
+                    const tm = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
+                    return tm[sku] || sku.split('-').pop();
+                };
                 
                 // CDBUFFER Rows (Buffer)
                 const bufferRows = (art.items || []).filter(i => i.ubi && String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
@@ -14586,7 +14589,8 @@ const renderRFSection = (container) => {
                 const artSku = String(di.art.sku7 || '').toLowerCase();
                 const ubi = String(di.item.ubi || '').toLowerCase();
                 const skuFull = String(di.item.skuFull || di.item.sku || '').toLowerCase();
-                const talla = String(di.item.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[di.item.skuFull]) || (di.item.skuFull && di.item.skuFull.split('-').pop()) || '').toLowerCase();
+                const tm = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
+                const talla = String(di.item.talla || tm[di.item.skuFull] || (di.item.skuFull && di.item.skuFull.split('-').pop()) || '').toLowerCase();
                 const taskId = String(di.task.id || '').toLowerCase();
                 const taskCleanId = taskId.includes('_') ? taskId.split('_')[1] : taskId;
                 const creator = String(di.task.creador || '').toLowerCase();
@@ -15819,7 +15823,7 @@ const renderRFSection = (container) => {
                                         ${i.ubi}
                                     </td>
                                     <td style="padding:0.6rem 1rem;">${i.skuFull || i.sku || '---'}</td>
-                                    <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (dataStore.tabla_tallas && dataStore.tabla_tallas[i.skuFull]) || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (() => { const tm = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {}); return tm[i.skuFull]; })() || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${isBuffer ? '#fff' : 'transparent'};">${isBuffer ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${!isBuffer ? '#fbbf24' : 'rgba(255,255,255,0.05)'};">${!isBuffer ? i.qty : '---'}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:${avanceFontWeight}; color:${avanceColor};">${avanceVal}</td>
