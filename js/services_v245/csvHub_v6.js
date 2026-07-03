@@ -1038,6 +1038,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     let detalleZonas = [], stockUsadoMap = new Map(), ubicacionesEnElPiso = new Set(), cuotasPicking = {};
     let detalleRQRevisar = [];
     let globalRQ = 0, totalsByNivel = {};
+    let sinStockPorRevisar = [];
 
     const satisfyDemand = (sku, pending, stockMap, nivelLabel) => {
         if (!stockMap[sku] || pending <= 0) return pending;
@@ -1218,6 +1219,28 @@ export const calculateBufferPallets = (configOverride = null) => {
                 'ARTÍCULO': getArticulo(sku),
                 'SKU': sku,
                 'ATD RQ': pending
+            });
+        }
+        
+        // --- CÁLCULO DEL "FANTASMA" SIN STOCK PARA LA NUEVA PESTAÑA ---
+        let initialPending = Math.max(0, necesidadTotal - enActivo);
+        let atdReserva = initialPending - pending; // Lo que sacó de la cascada
+        let totalAtdS = atdActivo + atdReserva;
+        let uiSinStockForSKU = necesidadTotal - totalAtdS;
+
+        if (uiSinStockForSKU > 0) {
+            sinStockPorRevisar.push({
+                'SKU': sku,
+                'Cantidad RQ': totalSolicitado,
+                'Stock Activo': enActivo,
+                'Stock Reserva': stockReservaReal,
+                'Factor Config': factorConfig,
+                'Factor Virtual Aplicado': factorVirtual,
+                'Necesidad Total': necesidadTotal,
+                'ATD Bajas': atdActivo,
+                'ATD Reserva': atdReserva,
+                'Total ATD': totalAtdS,
+                'Sin Stock (Grafico UI)': uiSinStockForSKU
             });
         }
     });
@@ -1828,6 +1851,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         detalleObsGen: detalleObsGen,
         detalleTemporadas: detalleTemporadas,
         detalleRQRevisar: detalleRQRevisar,
+        sinStockPorRevisar: sinStockPorRevisar,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
