@@ -1002,15 +1002,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (talla === '-') {
             const segments = trimmedSku.split('-');
             if (segments.length >= 3) {
-                const suffix = segments[segments.length - 1].trim();
-                const suffixNum = parseInt(suffix, 10);
-                if (!isNaN(suffixNum)) {
-                    if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
-                        talla = (suffixNum >= 2 && suffixNum <= 15) ? String(suffixNum + 36) : String(suffixNum);
-                    } else {
-                        talla = String(suffixNum);
-                    }
-                }
+                talla = segments[segments.length - 1].trim(); // Solo extrae el sufijo sin reglas matemáticas
             }
         }
 
@@ -1175,16 +1167,12 @@ export const calculateBufferPallets = (configOverride = null) => {
         globalRQ += necesidadTotal;
 
         let tallaStr = '-';
-        const segments = sku.split('-');
-        if (segments.length >= 3) {
-            const suffix = segments[segments.length - 1].trim();
-            const suffixNum = parseInt(suffix, 10);
-            if (!isNaN(suffixNum)) {
-                if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
-                    tallaStr = (suffixNum >= 2 && suffixNum <= 15) ? String(suffixNum + 36) : String(suffixNum);
-                } else {
-                    tallaStr = String(suffixNum);
-                }
+        const tallasMap = dataStore.tabla_tallas || {};
+        tallaStr = tallasMap[sku] || '-';
+        if (tallaStr === '-') {
+            const segments = sku.split('-');
+            if (segments.length >= 3) {
+                tallaStr = segments[segments.length - 1].trim();
             }
         }
 

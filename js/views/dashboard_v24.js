@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.290';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.291';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.290';
+const VERSION = '26.5.291';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -879,23 +879,10 @@ window.downloadExcelDetail = async () => {
             talla = tallasMap[sku] || '-';
             const numMap = parseFloat(talla);
             if (talla === '-' || isNaN(numMap) || numMap > 55 || numMap < 1) {
-                // Fallback final: extraer del SKU solo si el penúltimo segmento es dígito 1-9
+                // Fallback final: extraer del SKU sin reglas matemáticas
                 const segments = sku.split('-');
                 if (segments.length >= 3) {
-                    const preLast = segments[segments.length - 2].trim();
-                    const suffix = segments[segments.length - 1].trim();
-                    const suffixNum = parseInt(suffix, 10);
-                    if (preLast.length === 1 && preLast >= '1' && preLast <= '9' && !isNaN(suffixNum)) {
-                        if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
-                            if (suffixNum >= 2 && suffixNum <= 15) {
-                                talla = String(suffixNum + 36);
-                            } else {
-                                talla = String(suffixNum);
-                            }
-                        } else {
-                            talla = String(suffixNum);
-                        }
-                    }
+                    talla = segments[segments.length - 1].trim();
                 }
             }
         }
