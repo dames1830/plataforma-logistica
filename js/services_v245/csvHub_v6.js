@@ -1129,8 +1129,9 @@ export const calculateBufferPallets = (configOverride = null) => {
     Object.keys(demanda).sort().forEach(sku => {
         let totalSolicitado = demanda[sku].total;
 
-        // 1. Calculamos la Necesidad Total y el Factor
+        // 1. Descontamos lo que ya está en Activo (Zonas Bajas)
         let enActivo = totalActivoPorSKU[sku] || 0;
+        let pending = totalSolicitado;
         
         // Calculamos stock real total en reserva
         let stockReservaReal = 0;
@@ -1138,32 +1139,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (stPisos[sku]) stPisos[sku].forEach(p => stockReservaReal += p.qty);
         if (stAereos[sku]) stAereos[sku].forEach(p => stockReservaReal += p.qty);
         
-        let necesidadTotal = 0;
-        let factorConfig = 0;
-        let factorVirtual = 0;
-        
-        if (demanda[sku].isReplenishmentOnly) {
-            // Si viene SOLO por Replenishment, NO se suma el factor (Factor = 0)
-            necesidadTotal = totalSolicitado;
-        } else {
-            factorConfig = getExtraBuffer(sku);
-            
-            // Nueva lógica acordada: Factor a reponer = max(0, FactorConfig - Activo)
-            let factorFaltante = Math.max(0, factorConfig - enActivo);
-            
-            factorVirtual = Math.min(factorFaltante, stockReservaReal);
-            necesidadTotal = totalSolicitado + factorVirtual;
-        }
-        
-        // El globalRQ es la necesidad total (lo que la tienda requiere en total para pedidos y cobertura)
-        globalRQ += necesidadTotal;
-        
-        let pending = necesidadTotal;
-
-        // En Zonas Bajas, solo podemos tomar stock para cumplir el RQ (Pedidos Reales).
-        // El factor faltante NO se puede cubrir con Bajas, porque es justamente lo que le falta a Bajas.
-        let atdActivo = Math.min(totalSolicitado, enActivo);
-        
+        let atdActivo = Math.min(pending, enActivo);
         if (!totalsByNivel[nivelesMap['Bajas']]) totalsByNivel[nivelesMap['Bajas']] = 0;
         totalsByNivel[nivelesMap['Bajas']] += atdActivo;
         
@@ -1176,8 +1152,28 @@ export const calculateBufferPallets = (configOverride = null) => {
                 'ATD RQ': atdActivo
             });
         }
+
+        // La necesidad total de la tienda es: Pedidos (totalSolicitado) + Stock Objetivo (factorConfig)
+        // Lo que debemos bajar de Reserva (cascada) es esa necesidad menos lo que ya tenemos físicamente en Bajas.
+        let factorConfig = 0;
+        let factorVirtual = 0;
+        let necesidadTotal = 0;
         
-        pending -= atdActivo;
+        if (demanda[sku].isReplenishmentOnly) {
+            // Si viene SOLO por Replenishment, NO se suma el factor (Factor = 0)
+            necesidadTotal = totalSolicitado;
+        } else {
+            // Si viene por Pedidos / Otras Solicitudes, SÍ se suma el factor
+            factorConfig = getExtraBuffer(sku);
+            
+            factorVirtual = Math.min(factorConfig, stockReservaReal);
+            necesidadTotal = totalSolicitado + factorVirtual;
+        }
+
+        pending = Math.max(0, necesidadTotal - enActivo);
+        
+        // El globalRQ es la necesidad total (lo que la tienda requiere en total para pedidos y cobertura)
+        globalRQ += necesidadTotal;
 
         let tallaStr = '-';
         const tallasMap = dataStore.tabla_tallas || {};
