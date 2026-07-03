@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.281';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.282';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.281';
+const VERSION = '26.5.282';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -851,37 +851,41 @@ window.downloadExcelDetail = async () => {
         const art7 = sku.substring(0, 7);
         const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
         
-        // Extracción directa de talla desde la descripción del artículo en base al patrón (ej: -1-44, -9-44)
+        // Extracción directa de talla desde la descripción del artículo (ej: -1-28, -2-37.5)
         let talla = '-';
-        const rawDesc = d.Descrip || d.DESCRIPCION || d.Descripcion || d.description || '';
+        const rawDesc = d.DESCRIPCION || d.Descrip || d.Descripcion || d.description || '';
         
         if (rawDesc) {
-            // Patrón para buscar guion seguido de número(s) y luego la talla al final (ej: -1-44)
-            const regexPatron = /-([0-9]+)-([A-Z0-9.\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]+)$/i;
+            // Patrón estricto: guion + dígito 1-9 + guion + talla al final (ej: -1-28)
+            const regexPatron = /-([1-9])-([A-Z0-9.\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]+)$/i;
             const match = String(rawDesc).trim().match(regexPatron);
             if (match) {
                 talla = match[2].trim();
             } else {
-                // Fallback simple: separar por guiones y tomar el último segmento
+                // Fallback con validación: solo tomar el último segmento si el penúltimo es dígito 1-9
                 const parts = String(rawDesc).trim().split('-');
                 if (parts.length >= 3) {
-                    talla = parts[parts.length - 1].trim();
+                    const preLast = parts[parts.length - 2].trim();
+                    if (preLast.length === 1 && preLast >= '1' && preLast <= '9') {
+                        talla = parts[parts.length - 1].trim();
+                    }
                 }
             }
         }
         
-        // Si no se pudo extraer por descripción o tiene valores inválidos, usar mapeo de base de datos o SKU
+        // Si no se pudo extraer por descripción o tiene valores inválidos, usar mapeo de base de datos
         const numTalla = parseFloat(talla);
         if (talla === '-' || isNaN(numTalla) || numTalla > 55 || numTalla < 1) {
             talla = tallasMap[sku] || '-';
             const numMap = parseFloat(talla);
             if (talla === '-' || isNaN(numMap) || numMap > 55 || numMap < 1) {
-                // Fallback final: extraer del SKU
+                // Fallback final: extraer del SKU solo si el penúltimo segmento es dígito 1-9
                 const segments = sku.split('-');
                 if (segments.length >= 3) {
+                    const preLast = segments[segments.length - 2].trim();
                     const suffix = segments[segments.length - 1].trim();
                     const suffixNum = parseInt(suffix, 10);
-                    if (!isNaN(suffixNum)) {
+                    if (preLast.length === 1 && preLast >= '1' && preLast <= '9' && !isNaN(suffixNum)) {
                         if (suffix.length === 2 && suffixNum >= 1 && suffixNum <= 30) {
                             if (suffixNum >= 2 && suffixNum <= 15) {
                                 talla = String(suffixNum + 36);
