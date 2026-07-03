@@ -1170,8 +1170,8 @@ export const calculateBufferPallets = (configOverride = null) => {
 
         pending = Math.max(0, necesidadTotal - enActivo);
         
-        // El globalRQ es la necesidad total (lo que la tienda requiere en total para pedidos y cobertura)
-        globalRQ += necesidadTotal;
+        // El globalRQ debe mostrar SOLO la demanda pura (los 500 del ejemplo), no la necesidad inflada.
+        globalRQ += totalSolicitado;
 
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         const isConfigEnabled = (val) => {
