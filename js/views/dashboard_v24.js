@@ -940,6 +940,8 @@ window.downloadExcelDetail = async () => {
 
     addStandardSheet('Detalle', data.resumenSKUDetalle);
     addStandardSheet('Sku Bajar', (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0));
+    addStandardSheet('Fantasma SKU', data.resumenSKUDetalle, 'FFFF0000'); // Pestaña roja
+    
     addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
         'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo

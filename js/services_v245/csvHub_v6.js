@@ -1649,12 +1649,27 @@ export const calculateBufferPallets = (configOverride = null) => {
             enReserva = stAltos[sku].reduce((acc, i) => acc + i.qty, 0);
         }
 
+        let factor = getExtraBuffer(sku);
+        if (d.isReplenishmentOnly) factor = 0;
+
+        let talla = (dataStore.tabla_tallas && dataStore.tabla_tallas[sku]) || '-';
+        if (talla === '-') {
+            const segments = sku.split('-');
+            if (segments.length >= 3) talla = segments[segments.length - 1].trim();
+        }
+
+        const bajado = (cuotasPicking.stAltos[sku] || 0) + (cuotasPicking.stPisos[sku] || 0) + (cuotasPicking.stAereos[sku] || 0) + (cuotasPicking.stBajas[sku] || 0);
+
         return {
             'Sku': sku,
             'RQ': d.total,
             'Qty Activo': enActivo,
             'Diferencia': diff,
-            'Qty Reserva': enReserva
+            'Qty Reserva': enReserva,
+            'Talla Usada': talla,
+            'Factor Aplicado': factor,
+            'QTY BUFFER (Bajado)': bajado,
+            'Fuente': d.bestSrc || 'PEDIDO'
         };
     });
 
