@@ -1133,6 +1133,12 @@ export const calculateBufferPallets = (configOverride = null) => {
         let enActivo = totalActivoPorSKU[sku] || 0;
         let pending = totalSolicitado;
         
+        // Calculamos stock real total en reserva
+        let stockReservaReal = 0;
+        if (stAltos[sku]) stAltos[sku].forEach(p => stockReservaReal += p.qty);
+        if (stPisos[sku]) stPisos[sku].forEach(p => stockReservaReal += p.qty);
+        if (stAereos[sku]) stAereos[sku].forEach(p => stockReservaReal += p.qty);
+        
         let atdActivo = Math.min(pending, enActivo);
         if (!totalsByNivel[nivelesMap['Bajas']]) totalsByNivel[nivelesMap['Bajas']] = 0;
         totalsByNivel[nivelesMap['Bajas']] += atdActivo;
@@ -1160,12 +1166,6 @@ export const calculateBufferPallets = (configOverride = null) => {
             // Si viene por Pedidos / Otras Solicitudes, SÍ se suma el factor
             factorConfig = getExtraBuffer(sku);
             
-            // Calculamos stock real total en reserva para limitar el factor virtual
-            let stockReservaReal = 0;
-            if (stAltos[sku]) stAltos[sku].forEach(p => stockReservaReal += p.qty);
-            if (stPisos[sku]) stPisos[sku].forEach(p => stockReservaReal += p.qty);
-            if (stAereos[sku]) stAereos[sku].forEach(p => stockReservaReal += p.qty);
-            
             factorVirtual = Math.min(factorConfig, stockReservaReal);
             necesidadTotal = totalSolicitado + factorVirtual;
         }
@@ -1189,6 +1189,8 @@ export const calculateBufferPallets = (configOverride = null) => {
             'SKU': sku,
             'Talla': tallaStr,
             'Cantidad RQ': totalSolicitado,
+            'Stock Activo': enActivo,
+            'Stock Reserva': stockReservaReal,
             'Factor Config': factorConfig,
             'Factor Virtual Aplicado': factorVirtual,
             'Necesidad Total': necesidadTotal
