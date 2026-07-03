@@ -1022,8 +1022,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (sku) allKnownSkus.add(sku);
     });
 
-    // La cantidad de configuración de buffer ya no se inyecta ni se suma a la demanda consolidada,
-    // permitiendo que el cálculo sea netamente en base al archivo de pedidos.
+    // El factor de Configuración Análisis SKU se aplica dentro de la cascada como: pending = brecha + factor
+    // donde brecha = (RQ pedidos - Bajas). Garantiza que ATD nunca supere el RQ efectivo.
 
     // 3. Convertir al formato final de 'demanda'
     let demanda = {};
@@ -1127,7 +1127,6 @@ export const calculateBufferPallets = (configOverride = null) => {
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
     Object.keys(demanda).sort().forEach(sku => {
         let totalSolicitado = demanda[sku].total;
-        globalRQ += totalSolicitado;
 
         // 1. Descontamos lo que ya está en Activo (Zonas Bajas)
         let enActivo = totalActivoPorSKU[sku] || 0;
@@ -1146,7 +1145,13 @@ export const calculateBufferPallets = (configOverride = null) => {
                 'ATD RQ': atdActivo
             });
         }
-        pending -= atdActivo;
+
+        // Brecha (pedidos no cubiertos por Bajas) + Factor de Configuración Análisis SKU
+        // Los niveles 2-7 deben cubrir esta suma — nunca puede haber ATD > RQ
+        const brecha = totalSolicitado - atdActivo;
+        const factorConfig = getExtraBuffer(sku);
+        pending = brecha + factorConfig;
+        globalRQ += totalSolicitado + factorConfig; // RQ efectivo = pedidos + factor reposición
 
         // 2. Satisfacemos el resto siguiendo las jerarquías permitidas
         const isConfigEnabled = (val) => {
@@ -1287,15 +1292,11 @@ export const calculateBufferPallets = (configOverride = null) => {
             consolidatedMap.get(key)['QTY BUFFER'] += d['QTY BUFFER'];
         }
     });
-    consolidatedMap.forEach(d => {
-        if (d['QTY BUFFER'] > 0) {
-            const extra = getExtraBuffer(d.SKU);
-            d['QTY BUFFER'] = Math.min(d['QTY RESERVA'], d['QTY BUFFER'] + extra);
-        }
-    });
+    // Factor de Configuración Análisis ya incorporado en la cascada (brecha + factor).
+    // QTY BUFFER ya es correcto — no se aplica ningún extra post-cascada.
     detallePallets = Array.from(consolidatedMap.values());
 
-    // --- RECONSTRUCCIÓN DE REPORTES CON BUFFER EXTRA ---
+    // --- RECONSTRUCCIÓN DE REPORTES CON DETALLE DE PALLETS ---
     const getNivelLabel = (nivelKey) => {
         const key = String(nivelKey || '').trim().toUpperCase();
         if (key === 'ALTO' || key === '2. ALTO') return '2. ALTO';
