@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.315';
+const VERSION = '26.5.316';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -16124,17 +16124,44 @@ const renderRFSection = (container) => {
                 </div>
             `;
 
-            contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', () => {
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(auditResults);
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                for(let C = range.s.c; C <= range.e.c; ++C) {
-                    const address = XLSX.utils.encode_col(C) + "1";
-                    if(!ws[address]) continue;
-                    ws[address].s = { font: { bold:true, color:{rgb:"FFFFFF"} }, fill: { fgColor:{rgb:"1E293B"} } };
+            contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', async () => {
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Auditoria');
+                
+                if (auditResults.length > 0) {
+                    const headers = Object.keys(auditResults[0]);
+                    worksheet.addRow(headers);
+                    
+                    const headerRow = worksheet.getRow(1);
+                    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                    headerRow.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+                    });
+
+                    auditResults.forEach(row => {
+                        const r = worksheet.addRow(Object.values(row));
+                        const cuadreStr = row['Cuadre WMS'] || '';
+                        
+                        if (cuadreStr.includes('❌ DESCUADRE')) {
+                            r.eachCell(cell => {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } };
+                            });
+                        } else if (cuadreStr.includes('⚠️ SIN FOTO INICIAL')) {
+                            r.eachCell(cell => {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } };
+                            });
+                        }
+                    });
                 }
-                XLSX.utils.book_append_sheet(wb, ws, "Auditoría WMS");
-                XLSX.writeFile(wb, `Auditoria_WMS_${new Date().getTime()}.xlsx`);
+                
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Auditoria_WMS_${new Date().getTime()}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
 
         } catch (e) {
@@ -16149,12 +16176,12 @@ const renderRFSection = (container) => {
         const targetTasks = almacenajeTasksCache.filter(t => 
             t.fecha >= window.__almacenajeStartDate && 
             t.fecha <= window.__almacenajeEndDate &&
-            t.status === 'Finalizado'
+            ['Finalizado', 'Auditado'].includes(t.status)
         );
 
         if (targetTasks.length === 0) {
-            if (window.showPremiumAlert) window.showPremiumAlert("SIN TAREAS", "No hay tareas FINALIZADAS en este rango de fechas para auditar.", "info");
-            else alert("No hay tareas FINALIZADAS en este rango de fechas para auditar.");
+            if (window.showPremiumAlert) window.showPremiumAlert("SIN TAREAS", "No hay tareas FINALIZADAS o AUDITADAS en este rango de fechas para auditar.", "info");
+            else alert("No hay tareas FINALIZADAS o AUDITADAS en este rango de fechas para auditar.");
             return;
         }
 
