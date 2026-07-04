@@ -16155,14 +16155,15 @@ const renderRFSection = (container) => {
         }
 
         const modal = document.createElement('div');
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.3s;";
+        modal.id = 'wmsAuditModal';
+        modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.3s;";
         modal.innerHTML = `
             <div style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:90%; max-width:800px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
                 <div style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0; font-size:1.2rem; color:#fff; display:flex; align-items:center; gap:10px;">
                         <span style="background:rgba(6,182,212,0.1); padding:8px; border-radius:10px;">🎯</span> Auditoría de Almacenaje vía WMS
                     </h2>
-                    <button onclick="this.closest('[style*=\\'position:fixed\\']').remove()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem;">&times;</button>
+                    <button onclick="document.getElementById('wmsAuditModal').remove()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem;">&times;</button>
                 </div>
                 <div id="auditModalContent" style="padding:1.5rem; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1.5rem;">
                     
