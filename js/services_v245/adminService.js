@@ -183,7 +183,33 @@ export const savePermissions = (role, data) => {
     return save('permissions', adminStore.permissions);
 };
 
-export const saveAlmacenajeTasks = (data) => save('almacenaje_tasks', data);
+let almacenajeDebounceTimer = null;
+let almacenajeDebouncePromise = null;
+let almacenajeDebounceResolve = null;
+
+export const saveAlmacenajeTasks = (data) => {
+    if (!almacenajeDebouncePromise) {
+        almacenajeDebouncePromise = new Promise(resolve => {
+            almacenajeDebounceResolve = resolve;
+        });
+    }
+
+    clearTimeout(almacenajeDebounceTimer);
+    
+    almacenajeDebounceTimer = setTimeout(async () => {
+        try {
+            const result = await save('almacenaje_tasks', data);
+            almacenajeDebounceResolve(result);
+        } catch (e) {
+            almacenajeDebounceResolve(false);
+        } finally {
+            almacenajeDebouncePromise = null;
+            almacenajeDebounceResolve = null;
+        }
+    }, 1500);
+
+    return almacenajeDebouncePromise;
+};
 export const savePerformance = (data) => save('performance', data);
 export const savePerformanceLog = (data) => save('performance_log', data);
 
