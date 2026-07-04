@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.304';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.305';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.304';
+const VERSION = '26.5.305';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12513,19 +12513,23 @@ const renderRFSection = (container) => {
         const q = filterTexto.toLowerCase();
         filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
       }
-      const mainData = filtered.map(i => ({
-        'ARTÍCULO':     i.art7,
-        'SKU COMPLETO': i.sku,
-        'TALLA':        i.talla,
-        'MARCA':        i.marcas,
-        'GENDER RIMS':  i.genderRims,
-        'TEMPORADA':    i.temporada,
-        'FACTOR':       i.factor !== undefined ? i.factor : umbral,
-        'STOCK ACTIVO': i.qAct,
-        'STOCK RESERVA':i.qRes,
-        'ESTADO':       i.estado,
-        'TIPO':         i.tipo,
-      }));
+      const mainData = filtered.map(i => {
+        const factorToUse = i.factor !== undefined ? i.factor : umbral;
+        return {
+          'ARTÍCULO':     i.art7,
+          'SKU COMPLETO': i.sku,
+          'TALLA':        i.talla,
+          'MARCA':        i.marcas,
+          'GENDER RIMS':  i.genderRims,
+          'TEMPORADA':    i.temporada,
+          'FACTOR':       factorToUse,
+          'STOCK ACTIVO': i.qAct,
+          'STOCK RESERVA':i.qRes,
+          'QTY BAJAR':    Math.max(0, Math.min(factorToUse - i.qAct, i.qRes)),
+          'ESTADO':       i.estado,
+          'TIPO':         i.tipo,
+        };
+      });
       const _extractT = (desc) => {
         if (!desc) return null;
         const parts = String(desc).trim().split('-');
