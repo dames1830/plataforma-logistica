@@ -1,4 +1,4 @@
-﻿import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.310';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.310';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -25,20 +25,20 @@ export const showPremiumAlert = (title, message, type = 'error') => {
         
         // Define colors and icon based on type
         let accentColor = '#ef4444'; // Red for error
-        let icon = 'âŒ';
+        let icon = '❌';
         let glowColor = 'rgba(239, 68, 68, 0.3)';
         
         if (type === 'success') {
             accentColor = '#10b981'; // Green
-            icon = 'âœ…';
+            icon = '✅';
             glowColor = 'rgba(16, 185, 129, 0.3)';
         } else if (type === 'warning') {
             accentColor = '#f59e0b'; // Amber
-            icon = 'âš ï¸';
+            icon = '⚠️';
             glowColor = 'rgba(245, 158, 11, 0.3)';
         } else if (type === 'info') {
             accentColor = '#3b82f6'; // Blue
-            icon = 'â„¹ï¸';
+            icon = 'ℹ️';
             glowColor = 'rgba(59, 130, 246, 0.3)';
         }
 
@@ -165,20 +165,20 @@ export const showPremiumConfirm = (title, message, type = 'warning') => {
         backdrop.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
         
         let accentColor = '#f59e0b'; // Amber
-        let icon = 'â“';
+        let icon = '❓';
         let glowColor = 'rgba(245, 158, 11, 0.3)';
         
         if (type === 'danger') {
             accentColor = '#ef4444'; // Red
-            icon = 'ðŸš¨';
+            icon = '🚨';
             glowColor = 'rgba(239, 68, 68, 0.3)';
         } else if (type === 'info') {
             accentColor = '#3b82f6'; // Blue
-            icon = 'â„¹ï¸';
+            icon = 'ℹ️';
             glowColor = 'rgba(59, 130, 246, 0.3)';
         } else if (type === 'success') {
             accentColor = '#10b981'; // Green
-            icon = 'âœ…';
+            icon = '✅';
             glowColor = 'rgba(16, 185, 129, 0.3)';
         }
 
@@ -319,32 +319,32 @@ window.showPremiumConfirm = showPremiumConfirm;
 // --- SOBREESCRITURA GLOBAL DE ALERTA PARA USAR EL MODAL PREMIUM ---
 window.alert = function(message) {
     let type = 'warning';
-    let title = 'ATENCIÃ“N';
+    let title = 'ATENCIÓN';
     let cleanMessage = String(message || '');
 
-    if (cleanMessage.includes('âœ…')) {
+    if (cleanMessage.includes('✅')) {
         type = 'success';
-        title = 'Â¡Ã‰XITO!';
-        cleanMessage = cleanMessage.replace(/âœ…/g, '').trim();
-    } else if (cleanMessage.includes('âŒ') || cleanMessage.includes('ðŸš¨') || cleanMessage.toLowerCase().includes('error')) {
+        title = '¡ÉXITO!';
+        cleanMessage = cleanMessage.replace(/✅/g, '').trim();
+    } else if (cleanMessage.includes('❌') || cleanMessage.includes('🚨') || cleanMessage.toLowerCase().includes('error')) {
         type = 'error';
         title = 'ERROR';
-        cleanMessage = cleanMessage.replace(/[âŒðŸš¨]/g, '').trim();
-    } else if (cleanMessage.includes('âš ï¸') || cleanMessage.includes('ðŸš§') || cleanMessage.includes('ðŸ—ï¸')) {
+        cleanMessage = cleanMessage.replace(/[❌🚨]/g, '').trim();
+    } else if (cleanMessage.includes('⚠️') || cleanMessage.includes('🚧') || cleanMessage.includes('🏗️')) {
         type = 'warning';
         title = 'ADVERTENCIA';
-        cleanMessage = cleanMessage.replace(/[âš ï¸ðŸš§ðŸ—ï¸]/g, '').trim();
-    } else if (cleanMessage.includes('ðŸ“¦') || cleanMessage.includes('ðŸ“¡') || cleanMessage.includes('â˜ï¸') || cleanMessage.includes('ðŸ”’')) {
+        cleanMessage = cleanMessage.replace(/[⚠️🚧🏗️]/g, '').trim();
+    } else if (cleanMessage.includes('📦') || cleanMessage.includes('📡') || cleanMessage.includes('☁️') || cleanMessage.includes('🔒')) {
         type = 'info';
-        title = 'INFORMACIÃ“N';
-        cleanMessage = cleanMessage.replace(/[ðŸ“¦ðŸ“¡â˜ï¸ðŸ”’]/g, '').trim();
+        title = 'INFORMACIÓN';
+        cleanMessage = cleanMessage.replace(/[📦📡☁️🔒]/g, '').trim();
     }
 
     cleanMessage = cleanMessage.replace(/^[:!\s\-]+/, '');
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.323';
+const VERSION = '26.5.324';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -373,7 +373,7 @@ const getLogicalDate = () => {
     const now = new Date();
     const hrs = now.getHours();
     let target = now;
-    // Si son entre las 00:00 y las 06:00 AM, la fecha lÃ³gica es el dÃ­a anterior
+    // Si son entre las 00:00 y las 06:00 AM, la fecha lógica es el día anterior
     if (hrs >= 0 && hrs < 6) {
         target = new Date(now);
         target.setDate(now.getDate() - 1);
@@ -399,7 +399,7 @@ try {
 } catch(e) { almacenajeTasksCache = []; }
 if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
 
-// [MIGRACIÃ“N DE IDENTIFICADORES] Migrar tareas antiguas sin prefijo de fecha a formato Ãºnico
+// [MIGRACIÓN DE IDENTIFICADORES] Migrar tareas antiguas sin prefijo de fecha a formato único
 let migratedInit = false;
 almacenajeTasksCache = almacenajeTasksCache.map(t => {
     if (t && t.status === 'Auditado') { t.status = 'Finalizado'; t.audited = true; }
@@ -414,7 +414,7 @@ const safeSaveAlmacenajeTasksCache = () => {
         localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
     } catch (e) {
         if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-            console.warn("ðŸ§¹ [PULSE] LocalStorage lleno. Auto-purgando tareas antiguas...");
+            console.warn("🧹 [PULSE] LocalStorage lleno. Auto-purgando tareas antiguas...");
             const doceHoras = 12 * 60 * 60 * 1000;
             const now = Date.now();
             almacenajeTasksCache = almacenajeTasksCache.filter(t => {
@@ -427,7 +427,7 @@ const safeSaveAlmacenajeTasksCache = () => {
             try {
                 localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
             } catch (err2) {
-                console.error("âŒ [PULSE] Fallo crÃ­tico de cuota incluso tras purga.");
+                console.error("❌ [PULSE] Fallo crítico de cuota incluso tras purga.");
             }
         }
     }
@@ -437,39 +437,39 @@ if (migratedInit) {
     safeSaveAlmacenajeTasksCache();
 }
 
-// --- PERSISTENCIA AVANZADA (IndexedDB vÃ­a csvHub) ---
+// --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
 const updateSyncIndicator = (status, text) => {
   const el = document.getElementById('sync-indicator');
   const icon = document.getElementById('sync-icon');
   const txt = document.getElementById('sync-text');
   if (!el) return;
   el.className = `sync-${status}`;
-  if (icon) icon.innerText = status === 'online' ? 'âœ…' : (status === 'working' ? 'â³' : 'âŒ');
+  if (icon) icon.innerText = status === 'online' ? '✅' : (status === 'working' ? '⏳' : '❌');
   if (txt) txt.innerText = text;
 };
 
 const saveAlmacenajeTasks = async () => {
-    try {
-        // 1. Persistencia LOCAL inmediata (INSTANTANEA)
-        safeSaveAlmacenajeTasksCache();
-        adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
+  try {
+      updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
+      
+      // 1. Persistencia LOCAL inmediata
+      safeSaveAlmacenajeTasksCache();
+      adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        // 2. Disparar sincronizacion en background (SIN AWAIT)
-        updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
-        adminService.saveAlmacenajeTasks(almacenajeTasksCache).then(success => {
-            if (success) {
-                updateSyncIndicator('online', 'NUBE ACTUALIZADA ?');
-                setTimeout(() => updateSyncIndicator('online', `SISTEMA v$VERSION ONLINE`), 3000);
-            } else {
-                console.warn('?? [SYNC] Error de sincronización. Los datos permanecen seguros en tu PC.');
-                updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
-            }
-        }).catch(e => {
-            console.error('[SYNC] Error crítico:', e);
-            updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
-        });
-    } catch (e) {
-        console.error('[LOCAL SAVE] Error crítico al guardar localmente:', e);
+        // [SIN LÍMITES] Sincronización Completa: Ahora se envía la lista total de tareas sin recortes.
+        console.log(`🚀 [PULSE] Sincronización Total: Enviando ${almacenajeTasksCache.length} tareas a la nube.`);
+        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+        
+        if (success) {
+            updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
+            setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+        } else {
+            console.warn("⚠️ [SYNC] Error de sincronización. Los datos permanecen seguros en tu PC.");
+            updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
+        }
+    } catch (e) { 
+        console.error("[SYNC] Error crítico:", e);
+        updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
     }
 };
 
@@ -479,7 +479,7 @@ const loadAlmacenajeTasks = async () => {
       // Carga desde el puente v24 (que ya hizo el pull)
       const syncedTasks = await adminService.loadAlmacenajeTasks();
       if (Array.isArray(syncedTasks)) {
-          // [SINCRONIZACIÃ“N TOTAL] Ahora permite que la nube limpie los datos locales si se borraron allÃ¡.
+          // [SINCRONIZACIÓN TOTAL] Ahora permite que la nube limpie los datos locales si se borraron allá.
           if (Array.isArray(syncedTasks)) {
               almacenajeTasksCache = syncedTasks.map(newTask => {
                   const cleanTaskId = (id) => id.includes('_') ? id.split('_')[1] : id;
@@ -504,7 +504,7 @@ const loadAlmacenajeTasks = async () => {
               }
               
               if (syncedTasks.length === 0 && almacenajeTasksCache.length > 0) {
-                  console.log("ðŸ§¹ [PULL] SincronizaciÃ³n de borrado total desde la nube.");
+                  console.log("🧹 [PULL] Sincronización de borrado total desde la nube.");
                   almacenajeTasksCache = [];
               }
           }
@@ -517,19 +517,19 @@ const loadAlmacenajeTasks = async () => {
   }
 };
 
-// Radar de sincronizaciÃ³n automÃ¡tica (cada 60s)
+// Radar de sincronización automática (cada 60s)
 setInterval(async () => {
     if (document.visibilityState === 'visible') {
-        console.log("ðŸ“¡ [RADAR v24] Buscando actualizaciones en la nube...");
+        console.log("📡 [RADAR v24] Buscando actualizaciones en la nube...");
         await adminService.initializeAdminData();
-        // Solo refrescar si estamos en la pestaÃ±a de almacenaje y no hay cambios pendientes locales
+        // Solo refrescar si estamos en la pestaña de almacenaje y no hay cambios pendientes locales
         const currentTab = document.querySelector('.nav-item.active')?.dataset.id;
         if (currentTab === 'almacenaje') {
             const synced = adminService.adminStore.almacenaje_tasks;
             if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
-                console.log("âœ¨ [RADAR v24] Datos nuevos detectados. Aplicando FusiÃ³n HÃ­brida.");
+                console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
                 
-                // [INTELIGENCIA HÃBRIDA v25.0.0] Blindaje de Hierro: Solo actualizar si la nube tiene DATOS y son IGUAL O MÃS que el PC
+                // [INTELIGENCIA HÍBRIDA v25.0.0] Blindaje de Hierro: Solo actualizar si la nube tiene DATOS y son IGUAL O MÁS que el PC
                 if (synced && synced.length > 0 && synced.length >= almacenajeTasksCache.length) {
                     almacenajeTasksCache = synced.map(newTask => {
                         const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
@@ -539,7 +539,7 @@ setInterval(async () => {
                         return newTask;
                     });
                 } else {
-                    console.log("ðŸ“¡ [RADAR] Nube sin datos. Manteniendo PC local como fuente de verdad.");
+                    console.log("📡 [RADAR] Nube sin datos. Manteniendo PC local como fuente de verdad.");
                 }
 
                 const areaContent = document.getElementById('areaContent');
@@ -564,79 +564,79 @@ const restoreAdminDataFromLocal = async () => {
                 }
             }
         }
-        alert(`âœ… Â¡Ã‰xito! Se han restaurado ${count} mÃ³dulos de administraciÃ³n desde tu PC.`);
+        alert(`✅ ¡Éxito! Se han restaurado ${count} módulos de administración desde tu PC.`);
         location.reload();
     } catch (e) {
-        alert("âŒ Error al restaurar: " + e.message);
+        alert("❌ Error al restaurar: " + e.message);
         updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
     }
 };
 window.restoreAdminDataFromLocal = restoreAdminDataFromLocal;
 
 const TABS = [
-  { id: 'inicio', label: 'Inicio', icon: 'ðŸ ', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
-  { id: 'inventario', label: 'Inventario', icon: 'ðŸ“‹', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
-    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: 'ðŸ—‚ï¸' },
-    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: 'ðŸ“Š' },
-    { id: 'analisis_inventarios', label: 'AnÃ¡lisis Inventario', icon: 'ðŸ”' },
-    { id: 'modulo_inventarios', label: 'Inventarios', icon: 'ðŸ“¦', subTabs: [
-        { id: 'general', label: 'General', icon: 'ðŸ“' },
-        { id: 'ciclicos', label: 'CÃ­clicos', icon: 'ðŸ”„' },
-        { id: 'reportes', label: 'Reportes', icon: 'ðŸ“Š' }
+  { id: 'inicio', label: 'Inicio', icon: '🏠', roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
+  { id: 'inventario', label: 'Inventario', icon: '📋', roles: ['admin', 'jefe', 'supervisor'], subTabs: [
+    { id: 'archivo_inventario', label: 'Archivo Inventario', icon: '🗂️' },
+    { id: 'kpi_inventarios', label: 'KPI Inventarios', icon: '📊' },
+    { id: 'analisis_inventarios', label: 'Análisis Inventario', icon: '🔍' },
+    { id: 'modulo_inventarios', label: 'Inventarios', icon: '📦', subTabs: [
+        { id: 'general', label: 'General', icon: '📝' },
+        { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
+        { id: 'reportes', label: 'Reportes', icon: '📊' }
     ] }
   ]},
-  { id: 'picking', label: 'Picking', icon: 'ðŸ›’', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_picking', label: 'Archivo Picking', icon: 'ðŸ—‚ï¸' }
+  { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
   ]},
-  { id: 'packing', label: 'Packing', icon: 'ðŸ“¦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_packing', label: 'Archivo Packing', icon: 'ðŸ—‚ï¸' }
+  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
   ]},
-  { id: 'despacho', label: 'Despacho', icon: 'ðŸšš', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: 'ðŸ—‚ï¸' },
-    { id: 'monitoreo_despacho', label: 'Monitoreo de Rutas', icon: 'ðŸ—ºï¸' },
-    { id: 'chofer_despacho', label: 'Portal Chofer', icon: 'ðŸ“±' }
+  { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' },
+    { id: 'monitoreo_despacho', label: 'Monitoreo de Rutas', icon: '🗺️' },
+    { id: 'chofer_despacho', label: 'Portal Chofer', icon: '📱' }
   ]},
-  { id: 'no_retail', label: 'NO RETAIL', icon: 'ðŸ¬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: 'ðŸ—‚ï¸' },
-    { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: 'ðŸšš' },
-      { id: 'tracking_no_retail', label: 'Tracking', icon: 'ðŸ“' },
-      { id: 'kpi_no_retail', label: 'KPI No Retail', icon: 'ðŸ“Š' }
+  { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' },
+    { id: 'despacho_no_retail', label: 'Despacho de NO RETAIL', icon: '🚚' },
+      { id: 'tracking_no_retail', label: 'Tracking', icon: '📍' },
+      { id: 'kpi_no_retail', label: 'KPI No Retail', icon: '📊' }
   ]},
-  { id: 'recepcion', label: 'RecepciÃ³n', icon: 'ðŸ“¥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_recepcion', label: 'Archivo RecepciÃ³n', icon: 'ðŸ—‚ï¸' },
-    { id: 'reportes_recepcion', label: 'Reportes RecepciÃ³n', icon: 'ðŸ“Š' }
+  { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' },
+    { id: 'reportes_recepcion', label: 'Reportes Recepción', icon: '📊' }
   ]},
-  { id: 'almacenaje', label: 'Almacenaje', icon: 'ðŸ­', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: 'ðŸ—‚ï¸' },
-    { id: 'tareas_dia', label: 'Tareas DÃ­a', icon: 'ðŸ“‹' },
-    { id: 'kpi_tareas', label: 'KPI Tareas', icon: 'ðŸ“Š' }
+  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
+    { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
+    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' }
   ]},
-  { id: 'buffer', label: 'Zona Buffer', icon: 'â³', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'maestros', label: 'Archivo Zona Buffer', icon: 'ðŸ—‚ï¸' },
-    { id: 'reportes', label: 'AnÃ¡lisis Buffer', icon: 'ðŸ“‰' },
-    { id: 'historial_buffer', label: 'Historial Buffer', icon: 'ðŸ“…' },
-    { id: 'kpi_buffer', label: 'Buffer KPI', icon: 'ðŸ“Š' },
-    { id: 'config_buffer', label: 'ConfiguraciÃ³n Buffer', icon: 'âš™ï¸' }
+  { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
+    { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
+    { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
+    { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
+    { id: 'config_buffer', label: 'Configuración Buffer', icon: '⚙️' }
   ] },
-  { id: 'analisis_sku', label: 'AnÃ¡lisis SKU', icon: 'ðŸ”', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_analisis', label: 'Archivo AnÃ¡lisis SKU', icon: 'ðŸ—‚ï¸' },
-    { id: 'articulo_temp', label: 'ArtÃ­culo', icon: 'ðŸ‘•' },
-    { id: 'replenishment', label: 'Replenishment', icon: 'ðŸ”„' },
-    { id: 'configuracion_analisis', label: 'ConfiguraciÃ³n AnÃ¡lisis', icon: 'âš™ï¸' }
+  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
+    { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
+    { id: 'replenishment', label: 'Replenishment', icon: '🔄' },
+    { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' }
   ] },
-  { id: 'admin_pers', label: 'AdministraciÃ³n', icon: 'ðŸ‘¥', roles: ['admin', 'jefe'], subTabs: [
-    { id: 'trabajadores', label: 'Trabajadores', icon: 'ðŸ‘·' },
-    { id: 'usuarios', label: 'Usuarios', icon: 'ðŸ‘¥' },
-    { id: 'permisos', label: 'Permisos', icon: 'ðŸ›¡ï¸' },
-    { id: 'asistencia', label: 'Asistencia', icon: 'ðŸ“…' },
-    { id: 'performance', label: 'Performance', icon: 'ðŸ“ˆ', subTabs: [
-        { id: 'historial', label: 'Historial', icon: 'ðŸ“…' },
-        { id: 'graficos', label: 'KPI GrÃ¡ficos', icon: 'ðŸ“Š' },
-        { id: 'reporte', label: 'KPI Reporte', icon: 'ðŸ“‹' }
+  { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
+    { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
+    { id: 'usuarios', label: 'Usuarios', icon: '👥' },
+    { id: 'permisos', label: 'Permisos', icon: '🛡️' },
+    { id: 'asistencia', label: 'Asistencia', icon: '📅' },
+    { id: 'performance', label: 'Performance', icon: '📈', subTabs: [
+        { id: 'historial', label: 'Historial', icon: '📅' },
+        { id: 'graficos', label: 'KPI Gráficos', icon: '📊' },
+        { id: 'reporte', label: 'KPI Reporte', icon: '📋' }
     ]},
-    { id: 'rfs', label: 'RFÂ´s', icon: 'ðŸ”‹' }
+    { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
-  { id: 'config', label: 'ConfiguraciÃ³n', icon: 'âš™ï¸', roles: ['admin'] }
+  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
 ];
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -647,7 +647,7 @@ let lastBufferResult = null;
 let activeAnalisisSub = 'articulo_temp';
 let activeConfigSub = 'parametros';
 
-// â”€â”€ Cache de resultados Replenishment (scope de mÃ³dulo, igual que lastBufferResult) â”€â”€
+// ── Cache de resultados Replenishment (scope de módulo, igual que lastBufferResult) ──
 let _replCache = (() => {
   try {
     const _c = localStorage.getItem('logistics_v24_prod_replCache');
@@ -671,7 +671,7 @@ window.downloadExcelDetail = async () => {
     // 0. Copia profunda para evitar mutaciones de estado en sucesivas descargas
     const data = JSON.parse(JSON.stringify(lastBufferResult));
 
-    // 1. Obtener la configuraciÃ³n del buffer guardada
+    // 1. Obtener la configuración del buffer guardada
     let savedQtys = {};
     try {
         const config = await fetchBufferConfig();
@@ -682,7 +682,7 @@ window.downloadExcelDetail = async () => {
         console.warn("[PULSE] Error fetching/parsing buffer config for excel:", e);
     }
 
-    // 2. Construir maestroMap con detecciÃ³n robusta de columnas
+    // 2. Construir maestroMap con detección robusta de columnas
     const maestroMap = new Map();
     if (dataStore.articulos) {
         let brandIdx = 13;
@@ -723,16 +723,16 @@ window.downloadExcelDetail = async () => {
         }
     }
 
-    // [OPTIMIZACIÃ“N SOLUCIÃ“N 1]
-    // La redistribuciÃ³n manual y ad-hoc que se hacÃ­a aquÃ­ ha sido eliminada por completo.
+    // [OPTIMIZACIÓN SOLUCIÓN 1]
+    // La redistribución manual y ad-hoc que se hacía aquí ha sido eliminada por completo.
     // Ahora las cantidades de buffer extra configuradas se integran directamente en el motor 
-    // de cÃ¡lculo central (calculateBufferPallets), garantizando que las LPNs en reserva se
-    // busquen, seleccionen y descuenten con absoluta precisiÃ³n matemÃ¡tica desde el origen.
+    // de cálculo central (calculateBufferPallets), garantizando que las LPNs en reserva se
+    // busquen, seleccionen y descuenten con absoluta precisión matemática desde el origen.
     // Esto asegura coherencia total entre la interfaz de usuario, las alertas de stock y los reportes descargados.
 
     const workbook = new ExcelJS.Workbook();
 
-    // --- PESTAÃ‘A 1: MONTACARGA (FORMATO PREMIUM) ---
+    // --- PESTAÑA 1: MONTACARGA (FORMATO PREMIUM) ---
     const wsMonta = workbook.addWorksheet('Montacarga', { 
         properties: { tabColor: { argb: 'FFADD8E6' } },
         pageSetup: { printTitlesRow: '1:4', orientation: 'portrait' } 
@@ -755,14 +755,14 @@ window.downloadExcelDetail = async () => {
     row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
     const row4M = wsMonta.getRow(4);
-    row4M.values = ["NÂ° Paletas", "UBICACIÃ“N", "LPN", "QTY RESERVA"];
+    row4M.values = ["N° Paletas", "UBICACIÓN", "LPN", "QTY RESERVA"];
     row4M.font = { bold: true, size: 14, name: 'Calibri' };
     row4M.eachCell((cell, colNumber) => {
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         if (colNumber === 1 || colNumber === 4) cell.alignment = { horizontal: 'center' };
     });
 
-    // Crear un conjunto de LPNs vÃ¡lidos con demanda real (QTY BUFFER > 0)
+    // Crear un conjunto de LPNs válidos con demanda real (QTY BUFFER > 0)
     const lpnsWithDemand = new Set();
     if (Array.isArray(data.detalle)) {
         data.detalle.forEach(d => {
@@ -772,7 +772,7 @@ window.downloadExcelDetail = async () => {
         });
     }
 
-    // Filtrar physicalDetalle para incluir Ãºnicamente LPNs que tienen demanda real asignada
+    // Filtrar physicalDetalle para incluir únicamente LPNs que tienen demanda real asignada
     const physicalDetalle = (data.detalle || [])
         .filter(d => String(d.UBICACIONES || '').startsWith('SEL-') && lpnsWithDemand.has(d.LPN))
         .sort((a, b) => a.UBICACIONES.localeCompare(b.UBICACIONES));
@@ -794,8 +794,8 @@ window.downloadExcelDetail = async () => {
         });
     });
 
-    // --- PESTAÃ‘A 2: ANÃLISIS BUFFER (FORMATO PREMIUM) ---
-    const wsAnalisis = workbook.addWorksheet('AnÃ¡lisis Buffer', {
+    // --- PESTAÑA 2: ANÁLISIS BUFFER (FORMATO PREMIUM) ---
+    const wsAnalisis = workbook.addWorksheet('Análisis Buffer', {
         properties: { tabColor: { argb: 'FF22C55E' } }, // VERDE SOLICITADO
         pageSetup: { 
             printTitlesRow: '1:4',
@@ -806,10 +806,10 @@ window.downloadExcelDetail = async () => {
         }
     });
 
-    // Poner NÂ° pÃ¡gina en el centro de la cabecera
+    // Poner N° página en el centro de la cabecera
     wsAnalisis.headerFooter = {
-        oddHeader: "&C PÃ¡gina &P de &N",
-        evenHeader: "&C PÃ¡gina &P de &N"
+        oddHeader: "&C Página &P de &N",
+        evenHeader: "&C Página &P de &N"
     };
     wsAnalisis.columns = [
         { key: 'ubi', width: 32 },
@@ -826,7 +826,7 @@ window.downloadExcelDetail = async () => {
     wsAnalisis.mergeCells('A1:I1');
     const row1A = wsAnalisis.getRow(1);
     row1A.height = 60;
-    row1A.getCell(1).value = 'ANÃLISIS BUFFER';
+    row1A.getCell(1).value = 'ANÁLISIS BUFFER';
     row1A.getCell(1).font = { size: 48, bold: true, name: 'Calibri' };
     row1A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -841,7 +841,7 @@ window.downloadExcelDetail = async () => {
     row3A.height = 30;
 
     const row4A = wsAnalisis.getRow(4);
-    row4A.values = ["UBICACIÃ“N", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
+    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
     row4A.height = 21;
     row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
     row4A.eachCell(cell => {
@@ -851,7 +851,7 @@ window.downloadExcelDetail = async () => {
     });
     [7, 8, 9].forEach(c => row4A.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
-    // maestroMap ya fue construido robustamente al inicio de la funciÃ³n
+    // maestroMap ya fue construido robustamente al inicio de la función
     const tallasMap = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
 
     let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
@@ -875,18 +875,18 @@ window.downloadExcelDetail = async () => {
         const art7 = sku.substring(0, 7);
         const maestro = maestroMap.get(art7) || { marca: '-', gender: '-' };
         
-        // ExtracciÃ³n directa de talla desde la descripciÃ³n del artÃ­culo (ej: -1-28, -2-37.5)
+        // Extracción directa de talla desde la descripción del artículo (ej: -1-28, -2-37.5)
         let talla = '-';
         const rawDesc = d.DESCRIPCION || d.Descrip || d.Descripcion || d.description || '';
         
         if (rawDesc) {
-            // PatrÃ³n estricto: guion + dÃ­gito 1-9 + guion + talla al final (ej: -1-28)
+            // Patrón estricto: guion + dígito 1-9 + guion + talla al final (ej: -1-28)
             const regexPatron = /-([1-9])-([A-Z0-9.\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]+)$/i;
             const match = String(rawDesc).trim().match(regexPatron);
             if (match) {
                 talla = match[2].trim();
             } else {
-                // Fallback con validaciÃ³n: solo tomar el Ãºltimo segmento si el penÃºltimo es dÃ­gito 1-9
+                // Fallback con validación: solo tomar el último segmento si el penúltimo es dígito 1-9
                 const parts = String(rawDesc).trim().split('-');
                 if (parts.length >= 3) {
                     const preLast = parts[parts.length - 2].trim();
@@ -897,13 +897,13 @@ window.downloadExcelDetail = async () => {
             }
         }
         
-        // Si no se pudo extraer por descripciÃ³n o tiene valores invÃ¡lidos, usar mapeo de base de datos
+        // Si no se pudo extraer por descripción o tiene valores inválidos, usar mapeo de base de datos
         const numTalla = parseFloat(talla);
         if (talla === '-' || isNaN(numTalla) || numTalla > 55 || numTalla < 1) {
             talla = tallasMap[sku] || '-';
             const numMap = parseFloat(talla);
             if (talla === '-' || isNaN(numMap) || numMap > 55 || numMap < 1) {
-                // Fallback final: extraer del SKU sin reglas matemÃ¡ticas
+                // Fallback final: extraer del SKU sin reglas matemáticas
                 const segments = sku.split('-');
                 if (segments.length >= 3) {
                     talla = segments[segments.length - 1].trim();
@@ -951,7 +951,7 @@ window.downloadExcelDetail = async () => {
     });
     [7, 8, 9].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
 
-    // --- OTRAS PESTAÃ‘AS ---
+    // --- OTRAS PESTAÑAS ---
     const addStandardSheet = (name, jsonData, tabColor = null) => {
         if (!jsonData || jsonData.length === 0) return;
         const ws = workbook.addWorksheet(name, { properties: { tabColor: tabColor ? { argb: tabColor } : undefined } });
@@ -964,18 +964,18 @@ window.downloadExcelDetail = async () => {
 
     addStandardSheet('Detalle', data.resumenSKUDetalle);
     addStandardSheet('Sku Bajar', (data.resumenSKUDetalle || []).filter(s => s.Diferencia > 0));
-    addStandardSheet('Fantasma SKU', data.resumenSKUDetalle, 'FFFF0000'); // PestaÃ±a roja
+    addStandardSheet('Fantasma SKU', data.resumenSKUDetalle, 'FFFF0000'); // Pestaña roja
     
     addStandardSheet('LPN Selecionados', physicalDetalle.map(d => ({
         'Ubicacion': d.UBICACIONES, 'LPN': d.LPN, 'Sku': d.SKU, 'Stock Activo': d['QTY ACTIVO'],
         'Stock Reserva': d['QTY RESERVA'], 'Qty Buffer': d['QTY BUFFER'], 'Articulo': d.Articulo
-    }))); // Sin color para evitar confusiÃ³n
+    }))); // Sin color para evitar confusión
 
     addStandardSheet('Tallas', Object.entries(tallasMap).map(([sku, talla]) => ({ 'SKU': sku, 'TALLA': talla })));
     addStandardSheet('Detalle Zonas', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] !== '7. SIN STOCK'));
     addStandardSheet('RQ Revisar', data.detalleRQRevisar);
     addStandardSheet('Sin Stock', (data.detalleZonas || []).filter(d => d['NIVEL/AREA'] === '7. SIN STOCK').map(d => ({
-        'NIVEL/AREA': d['NIVEL/AREA'], 'ARTÃCULO': d['ARTÃCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
+        'NIVEL/AREA': d['NIVEL/AREA'], 'ARTÍCULO': d['ARTÍCULO'], 'SKU': d['SKU'], 'ATD RQ': d['ATD RQ']
     })));
     addStandardSheet('Sin Stock por Revisar', data.sinStockPorRevisar);
 
@@ -990,7 +990,7 @@ window.downloadExcelDetail = async () => {
 };
 
 window.downloadExcelZonas = () => {
-    alert("âš ï¸ Este reporte ahora estÃ¡ integrado en 'EXCEL DETALLE'.");
+    alert("⚠️ Este reporte ahora está integrado en 'EXCEL DETALLE'.");
 };
 
 const formatDateTime = (isoStr) => {
@@ -1015,7 +1015,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   await initPersistentData();
   await adminService.initializeAdminData();
   
-  // [FIX] SincronizaciÃ³n proactiva de Maestros y Tabla Virtual
+  // [FIX] Sincronización proactiva de Maestros y Tabla Virtual
   await Promise.all([
       getAreaData('tabla_tallas'),
       getAreaData('tallas'),
@@ -1024,7 +1024,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   
   await loadAlmacenajeTasks();
   
-  // Heartbeat de SincronizaciÃ³n Global (Desactivado a peticiÃ³n del usuario v17.4.2)
+  // Heartbeat de Sincronización Global (Desactivado a petición del usuario v17.4.2)
   /* 
   setInterval(async () => {
       await adminService.initializeAdminData();
@@ -1041,26 +1041,26 @@ export const renderDashboard = async (container, user, onLogout) => {
   }, 30000);
   */
   
-  // Soporte para Reinicio Forzado vÃ­a URL (?forceReset=1)
+  // Soporte para Reinicio Forzado vía URL (?forceReset=1)
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('forceReset') === '1' && user.role === 'admin') {
-      console.log("ðŸš€ [PULSE] Detectado parÃ¡metro forceReset. Ejecutando limpieza maestro...");
+      console.log("🚀 [PULSE] Detectado parámetro forceReset. Ejecutando limpieza maestro...");
       await adminService.resetProductionData();
-      alert("âœ… Limpieza de datos de prueba completada con Ã©xito vÃ­a URL.");
-      // Limpiar el parÃ¡metro de la URL sin recargar para no entrar en bucle
+      alert("✅ Limpieza de datos de prueba completada con éxito vía URL.");
+      // Limpiar el parámetro de la URL sin recargar para no entrar en bucle
       window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   adminService.initPermissions(TABS);
   container.className = 'dashboard-layout animate-fade-in';
   
-  // [CRÃTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
+  // [CRÍTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
   const rolePermissions = adminService.getPermissions(user.role) || {};
 
   const isDriverRole = user.role === 'transporte' || user.role === 'transportista' || user.role === 'chofer' || 
                        ((user.role !== 'admin' && user.role !== 'jefe') && (rolePermissions['transporte'] === 1 || rolePermissions['Transporte'] === 1));
 
-  // [PROTECCIÃ“N] Evitar crash si no hay pestaÃ±as permitidas
+  // [PROTECCIÓN] Evitar crash si no hay pestañas permitidas
   const allowedTabs = TABS.filter(t => {
       if (user.role === 'admin') return true;
       if (t.id === 'inicio') return true;
@@ -1097,7 +1097,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div class="topbar-brand">
         <div style="display:flex; align-items:center; gap:10px;">
           <h2 style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
-            LOGÃSTICA <span style="color:#818cf8">DEAM1830</span> 
+            LOGÍSTICA <span style="color:#818cf8">DEAM1830</span> 
             <span style="font-size:12px; color:#fbbf24; font-weight:900; margin-left:5px;">v${VERSION}</span>
           </h2>
         </div>
@@ -1133,7 +1133,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}">${t.icon} ${t.label}</a>`).join('');
     document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { 
         currentTab = e.currentTarget.dataset.id; 
-        activeAdminSub = null; // Resetear sub-pestaÃ±a al cambiar de secciÃ³n
+        activeAdminSub = null; // Resetear sub-pestaña al cambiar de sección
         renderNav(); 
         renderTabContent(); 
     }));
@@ -1151,7 +1151,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div class="glass-panel animate-pulse" style="padding: 3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; min-height: 400px; border: 1px solid rgba(255,255,255,0.05); background: rgba(15, 23, 42, 0.2); border-radius: 16px;">
                 <div style="width: 50px; height: 50px; border: 3px solid rgba(129, 140, 248, 0.1); border-top: 3px solid #818cf8; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                 <div style="text-align: center;">
-                    <h3 style="margin: 0; color: #fff; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px;">CARGANDO MÃ“DULO</h3>
+                    <h3 style="margin: 0; color: #fff; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px;">CARGANDO MÓDULO</h3>
                     <p style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">Sincronizando datos...</p>
                 </div>
             </div>`;
@@ -1161,12 +1161,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'buffer') await renderBufferTab();
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
     else if (currentTab === 'inventario') await renderInventarioTab();
-    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'GestiÃ³n de Picking');
-    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'GestiÃ³n de Packing');
-    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'GestiÃ³n de Despacho');
-    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'GestiÃ³n NO RETAIL');
-    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'GestiÃ³n de RecepciÃ³n');
-    else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'GestiÃ³n de Almacenaje');
+    else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
+    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
+    else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
+    else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
+    else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
+    else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -1180,14 +1180,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const now = new Date();
     
-    contentTitle.style.display = 'none'; // Ocultar tÃ­tulo estÃ¡ndar para el Home
+    contentTitle.style.display = 'none'; // Ocultar título estándar para el Home
     contentSubtitle.style.display = 'none';
 
     contentArea.innerHTML = `
         <div class="animate-fade-in" style="margin-bottom:2.5rem;">
             <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:2.5rem; border-radius:20px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); position:relative; overflow:hidden;">
                 <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary); filter:blur(100px); opacity:0.2;"></div>
-                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">Â¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
                 <div style="margin-top:0.8rem; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
                     <p style="margin:0; color:#cbd5e1; font-size:1.1rem; font-weight:500;">Bienvenido al centro de control operativo.</p>
                     <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">
@@ -1199,7 +1199,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="kpi-grid" id="homeKpiGrid"></div>
     `;
 
-    // Reloj dinÃ¡mico
+    // Reloj dinámico
     if (window.homeClockInterval) clearInterval(window.homeClockInterval);
     window.homeClockInterval = setInterval(() => {
         const clockEl = document.getElementById('homeClock');
@@ -1226,7 +1226,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderStockTab = async () => {
-    contentSubtitle.textContent = "Existencias FÃ­sicas";
+    contentSubtitle.textContent = "Existencias Físicas";
     const perms = adminService.getPermissions(user.role) || {};
     
     contentArea.innerHTML = `<div id="stockSub" style="display:flex; flex-direction:column; gap:1.2rem;"></div>`;
@@ -1237,7 +1237,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (user.role === 'admin' || perms['stock_stockReserva'] === 1) renderUploadArea(sub, 'stockReserva', res, '.xlsx');
 
     if (sub.children.length === 0) {
-        sub.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para ver las Ã¡reas de Stock.</div>`;
+        sub.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para ver las áreas de Stock.</div>`;
     }
   };
 
@@ -1255,12 +1255,12 @@ export const renderDashboard = async (container, user, onLogout) => {
       <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${isLoaded ? '#22c55e' : '#64748b'};">
           <div style="display:flex; align-items:center; gap:1.2rem;">
               <div style="width:36px; height:36px; background:${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${isLoaded ? '#22c55e' : 'var(--text-muted)'}; border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)'};">
-                  ${ext === '.csv' ? 'ðŸ“„' : 'ðŸ“Š'}
+                  ${ext === '.csv' ? '📄' : '📊'}
               </div>
               <div style="display:flex; flex-direction:column;">
                   <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
                   <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
-                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACÃO'}</span>
+                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACÍO'}</span>
                       ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
                                     <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString()} regs</span>` : ''}
                   </div>
@@ -1269,18 +1269,18 @@ export const renderDashboard = async (container, user, onLogout) => {
           
           <div style="display:flex; align-items:center; gap:1.5rem;">
               <div style="text-align:right; min-width:180px;">
-                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÃšLTIMA CARGA</div>
+                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA CARGA</div>
                   <div style="font-size:0.75rem; color:${isLoaded ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
               </div>
               
               <div style="display:flex; gap:0.4rem;">
                   <label title="Subir Nuevo Archivo" style="background:${isLoaded ? 'rgba(79, 70, 229, 0.1)' : 'var(--primary)'}; color:${isLoaded ? 'var(--primary)' : '#fff'}; border:1px solid ${isLoaded ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                       <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
-                      ${isLoaded ? 'ðŸ”„' : 'ðŸ“¤'}
+                      ${isLoaded ? '🔄' : '📤'}
                   </label>
                   ${isLoaded ? `
                     <button id="del_${area}" title="Quitar Archivo" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444'">
-                        ðŸ—‘ï¸
+                        🗑️
                     </button>
                   ` : ''}
               </div>
@@ -1311,7 +1311,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const delBtn = document.getElementById(`del_${area}`);
     if(delBtn) delBtn.addEventListener('click', async () => {
-        if(await showPremiumConfirm("QUITAR ARCHIVO", `Â¿EstÃ¡s seguro de que quieres quitar el archivo de ${label}?`, 'danger')) {
+        if(await showPremiumConfirm("QUITAR ARCHIVO", `¿Estás seguro de que quieres quitar el archivo de ${label}?`, 'danger')) {
             delBtn.disabled = true;
             delBtn.innerHTML = '...';
             await clearAreaData(area, user.username);
@@ -1322,9 +1322,9 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   let activeBufferSub = 'reportes';
   const renderBufferTab = async () => {
-    contentSubtitle.textContent = "AnÃ¡lisis de ReposiciÃ³n";
+    contentSubtitle.textContent = "Análisis de Reposición";
     
-    // Cargar asÃ­ncronamente de la base de datos local IndexedDB antes de renderizar
+    // Cargar asíncronamente de la base de datos local IndexedDB antes de renderizar
     await Promise.all([
         getAreaData('buffer_activo'),
         getAreaData('buffer_reserva'),
@@ -1340,7 +1340,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
     if (!lastBufferKPI) {
-        // 1. Intentar cargar desde IndexedDB primero (sin lÃ­mite de tamaÃ±o de 5MB de localStorage)
+        // 1. Intentar cargar desde IndexedDB primero (sin límite de tamaño de 5MB de localStorage)
         try {
             const dbVal = await loadLastBufferKPI();
             if (dbVal && (dbVal.detalle || dbVal.detalleZonas)) {
@@ -1348,10 +1348,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 lastBufferResult = dbVal;
             }
         } catch(e) {
-            console.warn("[PULSE] Error leyendo cachÃ© IndexedDB:", e);
+            console.warn("[PULSE] Error leyendo caché IndexedDB:", e);
         }
 
-        // 2. Fallback tradicional si no se cargÃ³ de IndexedDB
+        // 2. Fallback tradicional si no se cargó de IndexedDB
         if (!lastBufferKPI) {
             const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI')
                          || localStorage.getItem('lastBufferKPI')
@@ -1438,8 +1438,8 @@ export const renderDashboard = async (container, user, onLogout) => {
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
               <div style="display:flex; align-items:center; gap:1rem;">
-                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);">âš¡ PROCESAR ANÃLISIS</button>
-                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';">ðŸ§¹ REINICIAR MEMORIA</button>
+                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);">⚡ PROCESAR ANÁLISIS</button>
+                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';">🧹 REINICIAR MEMORIA</button>
               </div>
               <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
             </div>
@@ -1447,34 +1447,34 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>`;
         const results = document.getElementById('resultsArea');
         
-        console.log("[PULSE] Vinculando botones de acciÃ³n...");
+        console.log("[PULSE] Vinculando botones de acción...");
         
-        // ACTIVAR BOTONES PRIMERO (Prioridad MÃ¡xima)
+        // ACTIVAR BOTONES PRIMERO (Prioridad Máxima)
         const btnCalc = document.getElementById('btn_calc');
         const btnReset = document.getElementById('btn_reset_cache');
 
         if (btnCalc) {
             btnCalc.onclick = async () => {
-                console.log("[PULSE] Click Procesar AnÃ¡lisis");
+                console.log("[PULSE] Click Procesar Análisis");
                 
-                // VALIDACIÃ“N EXPLÃCITA DE ARCHIVOS (Antes de mostrar la barra de progreso)
+                // VALIDACIÓN EXPLÍCITA DE ARCHIVOS (Antes de mostrar la barra de progreso)
                 if (!dataStore.buffer_activo) {
-                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK ACTIVO</b> para poder realizar el anÃ¡lisis.", "error");
+                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK ACTIVO</b> para poder realizar el análisis.", "error");
                     return;
                 }
                 if (!dataStore.buffer_reserva) {
-                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK RESERVA</b> para poder realizar el anÃ¡lisis.", "error");
+                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK RESERVA</b> para poder realizar el análisis.", "error");
                     return;
                 }
                 if (!dataStore.articulos) {
-                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo <b>MAESTRO</b> para poder realizar el anÃ¡lisis.", "error");
+                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo <b>MAESTRO</b> para poder realizar el análisis.", "error");
                     return;
                 }
 
-                btnCalc.disabled = true; btnCalc.innerHTML = 'âš™ï¸ CALCULANDO...';
+                btnCalc.disabled = true; btnCalc.innerHTML = '⚙️ CALCULANDO...';
                 results.innerHTML = `
                 <div style="width: 100%; padding:5rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); border-radius:16px; border:1px solid rgba(255,255,255,0.05); min-height:300px; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);">
-                    <h3 style="font-size:1.4rem; margin:0 0 2.5rem 0; color:#fff; font-weight:800; letter-spacing:2px; text-shadow: 0 0 10px rgba(56,189,248,0.5);">PROCESANDO ANÃLISIS BUFFER</h3>
+                    <h3 style="font-size:1.4rem; margin:0 0 2.5rem 0; color:#fff; font-weight:800; letter-spacing:2px; text-shadow: 0 0 10px rgba(56,189,248,0.5);">PROCESANDO ANÁLISIS BUFFER</h3>
                     <div style="width: 80%; max-width: 900px; height: 34px; background: #0b1120; border-radius: 20px; box-shadow: inset 0 5px 15px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.1), 0 -1px 0 rgba(0,0,0,0.5); padding: 4px; position: relative; overflow: hidden;">
                         <div style="position: absolute; top: 4px; left: 4px; height: 26px; border-radius: 14px; background: linear-gradient(180deg, #38bdf8 0%, #0284c7 50%, #0369a1 100%); box-shadow: inset 0 2px 4px rgba(255,255,255,0.5), inset 0 -3px 6px rgba(0,0,0,0.3), 0 0 25px rgba(56,189,248,0.7); animation: thick-progress 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;">
                             <div style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius:14px; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px); opacity:0.5;"></div>
@@ -1501,17 +1501,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 localStorage.setItem('logistics_v24_prod_lastBufferKPI', serialized);
                                 localStorage.setItem('lastBufferKPI', serialized);
                                 sessionStorage.setItem('lastBufferKPI_session', serialized); // backup extra
-                            } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer (localStorage), guardado en IndexedDB Ãºnicamente.", e); }
+                            } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer (localStorage), guardado en IndexedDB únicamente.", e); }
                             renderBufferResults(results, res); 
 
                         } else {
-                            showPremiumAlert("Error de Maestros", "No se pudo realizar el anÃ¡lisis porque faltan los archivos maestros.", "error");
+                            showPremiumAlert("Error de Maestros", "No se pudo realizar el análisis porque faltan los archivos maestros.", "error");
                         }
                     } catch (err) {
                         console.error("Error en proceso:", err);
-                        showPremiumAlert("Error CrÃ­tico", err.message, "error");
+                        showPremiumAlert("Error Crítico", err.message, "error");
                     } finally {
-                        btnCalc.disabled = false; btnCalc.innerHTML = 'âš¡ PROCESAR ANÃLISIS';
+                        btnCalc.disabled = false; btnCalc.innerHTML = '⚡ PROCESAR ANÁLISIS';
                     }
                 }, 2000);
             };
@@ -1519,7 +1519,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         if (btnReset) {
             btnReset.onclick = async () => {
-                if(await showPremiumConfirm('REINICIAR MEMORIA', 'Â¿REINICIAR TODA LA MEMORIA?\n\nEsto borrarÃ¡ todos los archivos cargados localmente para solucionar bloqueos.', 'danger')) {
+                if(await showPremiumConfirm('REINICIAR MEMORIA', '¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.', 'danger')) {
                     Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
                     localStorage.removeItem('lastBufferKPI');
                     localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
@@ -1533,12 +1533,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         // CARGAR RESULTADOS CACHEADOS AL FINAL
         if (lastBufferKPI) {
-            results.innerHTML = `<div style="text-align:center;padding:1rem;color:rgba(255,255,255,0.4);font-size:0.75rem;">â³ Restaurando Ãºltimo anÃ¡lisis...</div>`;
+            results.innerHTML = `<div style="text-align:center;padding:1rem;color:rgba(255,255,255,0.4);font-size:0.75rem;">⏳ Restaurando último análisis...</div>`;
             setTimeout(() => {
                 try {
                     renderBufferResults(results, lastBufferKPI);
                 } catch (err) {
-                    console.warn("[PULSE] Error cargando cachÃ© de resultados (incompatible), ignorando...", err);
+                    console.warn("[PULSE] Error cargando caché de resultados (incompatible), ignorando...", err);
                     localStorage.removeItem('lastBufferKPI');
                     localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
                     sessionStorage.removeItem('lastBufferKPI_session');
@@ -1603,7 +1603,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const renderBufferResults = (container, data) => {
-    lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportaciÃ³n inmediata
+    lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
     const ts = data.timestamp || new Date().toLocaleString();
     const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = '580px';
@@ -1613,7 +1613,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthLeft};">
             <!-- COLUMNA IZQUIERDA: ZONAS + SKU -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÃLISIS BUFFER ZONAS ${tsHtml}</h3></div>
+                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER ZONAS ${tsHtml}</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">ATD %</th></tr></thead>
                     <tbody style="color:#eee;">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.08); font-weight:900;':''}">
@@ -1626,7 +1626,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
 
             <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
-                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÃLISIS BUFFER SKU ${tsHtml}</h3></div>
+                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU ${tsHtml}</h3></div>
                 <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
                     <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
                     <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente.includes('TOTAL') ? 'background:rgba(255,255,255,0.04); font-weight:700;' : ''}">
@@ -1643,7 +1643,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="padding:0.7rem; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.3); text-align:center;"><h3 style="color:#ef4444; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#eee;">
                     <div style="text-align:center;">
-                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad ArtÃ­culos</div>
+                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
                         <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary?.articulos || 0).toLocaleString()}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
@@ -1660,17 +1660,17 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
             ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6', ts)}
-            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÃLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
+            ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
         </div>
     `;
 
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(34,197,94,0.3);">ðŸ“¥ EXCEL DETALLE</button>
+            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(34,197,94,0.3);">📥 EXCEL DETALLE</button>
         `;
         document.getElementById('btn_exp_buffer').onclick = () => {
-            if(!data.detalle || !data.detalle.length) alert('âš ï¸ ERROR: Datos no disponibles.');
+            if(!data.detalle || !data.detalle.length) alert('⚠️ ERROR: Datos no disponibles.');
             else window.downloadExcelDetail();
         };
     }
@@ -1718,20 +1718,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     const adminTabDef = TABS.find(t => t.id === 'admin_pers');
     const rolePerms = adminService.getPermissions(user.role) || {};
     
-    // Filtrar sub-pestaÃ±as permitidas
+    // Filtrar sub-pestañas permitidas
     const allowedSubTabs = adminTabDef.subTabs.filter(sub => {
         if (user.role === 'admin') return true;
         const key = `admin_pers_${sub.id}`;
         return rolePerms[key] === 1;
     });
 
-    // Si la sub-pestaÃ±a actual no estÃ¡ permitida, ir a la primera disponible
+    // Si la sub-pestaña actual no está permitida, ir a la primera disponible
     if (!allowedSubTabs.find(s => s.id === activeAdminSub)) {
         activeAdminSub = allowedSubTabs[0]?.id || '';
     }
 
     if (!activeAdminSub) {
-        contentArea.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para acceder a las secciones de AdministraciÃ³n.</div>`;
+        contentArea.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No tienes permisos para acceder a las secciones de Administración.</div>`;
         return;
     }
 
@@ -1745,62 +1745,62 @@ export const renderDashboard = async (container, user, onLogout) => {
         </nav><div id="adminContent"></div>`;
     
     window.executeResurrection = async () => {
-        console.log("ðŸš€ [PULSE] Iniciando EjecuciÃ³n Maestra de ResurrecciÃ³n...");
+        console.log("🚀 [PULSE] Iniciando Ejecución Maestra de Resurrección...");
         const btn = document.getElementById('btn_master_resurrection');
         if (!btn) return;
 
         btn.disabled = true;
-        btn.innerHTML = 'â³ PROCESANDO...';
+        btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
             const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.280');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
-            console.log("ðŸ“¡ [1/5] Restaurando Usuarios...");
+            console.log("📡 [1/5] Restaurando Usuarios...");
             const rUsers = await fetch('js/backups_v24/users_data.json');
             const dUsers = extractData(await rUsers.json());
             await saveUsers(dUsers); 
-            console.log("âœ… Usuarios OK.");
+            console.log("✅ Usuarios OK.");
 
-            console.log("ðŸ“¡ [2/5] Restaurando Permisos...");
+            console.log("📡 [2/5] Restaurando Permisos...");
             const rPerms = await fetch('js/backups_v24/permissions_data.json');
             const rawPerms = await rPerms.json();
             const permsMatrix = (rawPerms.data && rawPerms.data.data) ? rawPerms.data.data : (rawPerms.data || rawPerms);
             for (let role in permsMatrix) {
                 await savePermissions(role, permsMatrix[role]);
             }
-            console.log("âœ… Permisos OK.");
+            console.log("✅ Permisos OK.");
 
-            console.log("ðŸ“¡ [3/5] Restaurando Trabajadores...");
+            console.log("📡 [3/5] Restaurando Trabajadores...");
             const rWorkers = await fetch('js/backups_v24/workers_data.json');
             const dWorkers = extractData(await rWorkers.json());
             await save('workers', dWorkers);
-            console.log("âœ… Trabajadores OK.");
+            console.log("✅ Trabajadores OK.");
 
-            console.log("ðŸ“¡ [4/5] Restaurando Asistencia...");
+            console.log("📡 [4/5] Restaurando Asistencia...");
             const rAtt = await fetch('js/backups_v24/attendance_data.json');
             const dAtt = extractData(await rAtt.json());
             await save('attendance', dAtt);
-            console.log("âœ… Asistencia OK.");
+            console.log("✅ Asistencia OK.");
 
-            console.log("ðŸ“¡ [5/5] Restaurando Performance...");
+            console.log("📡 [5/5] Restaurando Performance...");
             const rPerf = await fetch('js/backups_v24/performance_log_data.json');
             const dPerf = extractData(await rPerf.json());
             await savePerformanceLog(dPerf);
-            console.log("âœ… Performance OK.");
+            console.log("✅ Performance OK.");
 
             // ACTIVAR MODO BLINDADO (10 minutos de paz)
             localStorage.setItem('PULSE_OFFLINE_FORCE', 'true');
             setTimeout(() => localStorage.removeItem('PULSE_OFFLINE_FORCE'), 600000);
 
-            alert("ðŸ—ï¸ MODO BLINDADO ACTIVADO v25.1.98 ðŸ—ï¸\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronizaciÃ³n.\n\nYa puedes revisar PERFORMANCE.");
+            alert("🏗️ MODO BLINDADO ACTIVADO v25.1.98 🏗️\n\nLos datos se han bloqueado localmente por 10 min para evitar errores de sincronización.\n\nYa puedes revisar PERFORMANCE.");
             location.reload();
         } catch (e) {
-            console.error("âŒ ERROR CRÃTICO EN RESURRECCIÃ“N:", e);
-            alert("âŒ Fallo en la restauraciÃ³n: " + e.message);
+            console.error("❌ ERROR CRÍTICO EN RESURRECCIÓN:", e);
+            alert("❌ Fallo en la restauración: " + e.message);
             btn.disabled = false;
-            btn.innerHTML = 'ðŸš€ RE-INTENTAR';
+            btn.innerHTML = '🚀 RE-INTENTAR';
         }
     };
     
@@ -1827,7 +1827,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
                     <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
                     <label class="btn" style="width:auto; background:var(--success); font-size:0.75rem; padding:0.4rem 0.8rem;">
-                        ðŸ“¥ IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
+                        📥 IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
                     </label>
                 </div>
                 <div class="glass-panel" style="padding:0; overflow-x:auto;">
@@ -1849,7 +1849,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td style="padding:0.7rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(255,255,255,0.05);">${idx + 1}</td>
                                     <td style="padding:0.7rem; text-align:center;">
                                         <button class="btn-worker-status" data-dni="${w.dni || w.Dni}" title="${w.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1rem;">
-                                            ${w.active === false ? 'âŒ' : 'âœ…'}
+                                            ${w.active === false ? '❌' : '✅'}
                                         </button>
                                     </td>
                                     <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="dni" contenteditable="true" style="padding:0.7rem; font-weight:800; color:#fff; outline:none;">${w.dni || w.Dni || ''}</td>
@@ -1869,7 +1869,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
             <div class="glass-panel" style="background:rgba(79, 70, 229, 0.05); border-color:rgba(79, 70, 229, 0.2);">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">âž• Nuevo Trabajador</h4>
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">➕ Nuevo Trabajador</h4>
                 <form id="form_new_worker" style="display:flex; flex-direction:column; gap:0.8rem;">
                     <div style="display:flex; flex-direction:column; gap:0.3rem;">
                         <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">DNI</label>
@@ -1921,7 +1921,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
     });
 
-    // Eventos para EdiciÃ³n Directa
+    // Eventos para Edición Directa
     document.querySelectorAll('.edit-worker').forEach(cell => {
         cell.onblur = (e) => {
             const dni = e.target.dataset.dni;
@@ -1930,7 +1930,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const updates = {};
             updates[field] = (field === 'dni') ? val : val.toUpperCase();
             adminService.saveWorker({ dni, ...updates });
-            // Si cambiÃ³ el DNI, necesitamos refrescar para que los IDs de las celdas se actualicen
+            // Si cambió el DNI, necesitamos refrescar para que los IDs de las celdas se actualicen
             if (field === 'dni') renderAdminTab();
         };
     });
@@ -1956,7 +1956,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet);
             
-            // Normalizar las llaves a minÃºsculas para consistencia (DNI/Dni/dni -> dni)
+            // Normalizar las llaves a minúsculas para consistencia (DNI/Dni/dni -> dni)
             const normalized = json.map(row => {
                 const newRow = {};
                 for (let key in row) {
@@ -1985,7 +1985,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <th style="padding:0.8rem; text-align:left;">Estado</th>
                                 <th style="padding:0.8rem; text-align:left;">Nombre</th>
                                 <th style="padding:0.8rem; text-align:left;">Usuario</th>
-                                <th style="padding:0.8rem; text-align:left;">ContraseÃ±a</th>
+                                <th style="padding:0.8rem; text-align:left;">Contraseña</th>
                                 <th style="padding:0.8rem; text-align:left;">Rol</th>
                                 <th style="padding:0.8rem; text-align:center;">Acciones</th>
                             </tr>
@@ -1997,22 +1997,22 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.02); opacity: ${u.active === false ? '0.5' : '1'}">
                                     <td style="padding:0.8rem; text-align:center;">
                                         <button class="btn-status" data-user="${u.username}" title="${u.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">
-                                            ${u.active === false ? 'âŒ' : 'âœ…'}
+                                            ${u.active === false ? '❌' : '✅'}
                                         </button>
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
                                     <td style="padding:0.8rem; font-family:monospace;">
                                         <div style="display:flex; align-items:center; gap:10px;">
-                                            <span id="pass_${u.username}" data-p="${u.password}" style="color:#fcd34d;">â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</span>
-                                            <button class="btn-toggle-pass" data-target="pass_${u.username}" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0;">ðŸ‘ï¸</button>
+                                            <span id="pass_${u.username}" data-p="${u.password}" style="color:#fcd34d;">••••••••</span>
+                                            <button class="btn-toggle-pass" data-target="pass_${u.username}" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0;">👁️</button>
                                         </div>
                                     </td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
-                                            <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1rem;">âœï¸</button>
-                                            <button class="btn-del" data-user="${u.username}" title="Eliminar" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1rem;">ðŸ—‘ï¸</button>
+                                            <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1rem;">✏️</button>
+                                            <button class="btn-del" data-user="${u.username}" title="Eliminar" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1rem;">🗑️</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -2027,15 +2027,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <form id="form_user" style="display:flex; flex-direction:column; gap:0.8rem;" autocomplete="off">
                         <div>
                             <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">NOMBRE COMPLETO:</label>
-                            <input type="text" id="u_name" placeholder="Ej: Juan PÃ©rez" autocomplete="off" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                            <input type="text" id="u_name" placeholder="Ej: Juan Pérez" autocomplete="off" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
                         </div>
                         <div>
                             <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">USUARIO (LOGIN):</label>
                             <input type="text" id="u_username" placeholder="Ej: jperez" autocomplete="one-time-code" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
                         </div>
                         <div>
-                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">CONTRASEÃ‘A:</label>
-                            <input type="password" id="u_pass" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="new-password" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
+                            <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">CONTRASEÑA:</label>
+                            <input type="password" id="u_pass" placeholder="••••••••" autocomplete="new-password" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.6rem; border-radius:6px; outline:none;" required>
                         </div>
                         <div>
                             <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; display:block;">ROL ASIGNADO:</label>
@@ -2049,7 +2049,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </select>
                         </div>
                         <button type="submit" id="btn_submit_user" class="btn" style="padding:0.7rem; font-weight:700; margin-top:0.5rem;">GUARDAR USUARIO</button>
-                        <button type="button" id="btn_cancel_edit" style="display:none; background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Cancelar ediciÃ³n</button>
+                        <button type="button" id="btn_cancel_edit" style="display:none; background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Cancelar edición</button>
                     </form>
                 </div>
             </div>
@@ -2067,7 +2067,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     let isEditing = false;
 
-    // LÃ“GICA DE USUARIO AUTOMÃTICO: 1ra Letra Nombre + Todo el Apellido
+    // LÓGICA DE USUARIO AUTOMÁTICO: 1ra Letra Nombre + Todo el Apellido
     uName.addEventListener('input', () => {
         if (!isEditing) {
             const raw = uName.value.trim().toLowerCase()
@@ -2077,25 +2077,25 @@ export const renderDashboard = async (container, user, onLogout) => {
                 const firstInitial = parts[0].charAt(0);
                 // "Todo el apellido" = El resto de palabras juntas
                 const lastNamePart = parts.slice(1).join('');
-                uUser.value = (firstInitial + lastNamePart).replace(/[^a-z0-9]/g, ''); // Solo letras y nÃºmeros
+                uUser.value = (firstInitial + lastNamePart).replace(/[^a-z0-9]/g, ''); // Solo letras y números
             } else {
                 uUser.value = raw.replace(/[^a-z0-9]/g, '');
             }
         }
     });
 
-    // LÃ“GICA DE MOSTRAR/OCULTAR CONTRASEÃ‘A
+    // LÓGICA DE MOSTRAR/OCULTAR CONTRASEÑA
     container.querySelectorAll('.btn-toggle-pass').forEach(btn => {
         btn.onclick = (e) => {
             const targetId = e.currentTarget.dataset.target;
             const span = document.getElementById(targetId);
             const realPass = span.dataset.p;
-            if (span.textContent === 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢') {
+            if (span.textContent === '••••••••') {
                 span.textContent = realPass;
-                e.currentTarget.textContent = 'ðŸ™ˆ';
+                e.currentTarget.textContent = '🙈';
             } else {
-                span.textContent = 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢';
-                e.currentTarget.textContent = 'ðŸ‘ï¸';
+                span.textContent = '••••••••';
+                e.currentTarget.textContent = '👁️';
             }
         };
     });
@@ -2111,14 +2111,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                 role: uRole.value
             };
             
-            // Deshabilitar botÃ³n durante el proceso
+            // Deshabilitar botón durante el proceso
             btnSubmit.disabled = true;
-            btnSubmit.textContent = "â³ GUARDANDO...";
+            btnSubmit.textContent = "⏳ GUARDANDO...";
 
             const success = await adminService.saveUser(newUser);
             
             if (success) {
-                alert(isEditing ? 'ðŸš€ Usuario actualizado con Ã©xito' : 'ðŸš€ Usuario creado con Ã©xito');
+                alert(isEditing ? '🚀 Usuario actualizado con éxito' : '🚀 Usuario creado con éxito');
                 form.reset();
                 if (isEditing) {
                     uUser.readOnly = false;
@@ -2130,12 +2130,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                 }
                 renderAdminTab();
             } else {
-                alert('âš ï¸ El usuario se guardÃ³ localmente pero fallÃ³ la sincronizaciÃ³n con el servidor.');
+                alert('⚠️ El usuario se guardó localmente pero falló la sincronización con el servidor.');
                 renderAdminTab();
             }
         } catch (err) {
             console.error("[PULSE] Error al guardar usuario:", err);
-            alert("âŒ Error crÃ­tico: " + err.message);
+            alert("❌ Error crítico: " + err.message);
         } finally {
             btnSubmit.disabled = false;
             if (!isEditing) btnSubmit.textContent = "GUARDAR USUARIO";
@@ -2174,7 +2174,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = async () => {
-        if (await showPremiumConfirm('ELIMINAR USUARIO', 'Â¿EstÃ¡s seguro de eliminar permanentemente este usuario?', 'danger')) {
+        if (await showPremiumConfirm('ELIMINAR USUARIO', '¿Estás seguro de eliminar permanentemente este usuario?', 'danger')) {
             await adminService.deleteUser(btn.dataset.user);
             renderAdminTab();
         }
@@ -2187,14 +2187,14 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos DinÃ¡mica</h3>
-            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">âœ¨ Haz clic en un mÃ³dulo para expandir sus sub-pestaÃ±as</span>
+            <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Dinámica</h3>
+            <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✨ Haz clic en un módulo para expandir sus sub-pestañas</span>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead>
                     <tr style="background:rgba(255,255,255,0.05);">
-                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÃ“DULO / SECCIÃ“N</th>
+                        <th style="padding:1rem; text-align:left; border-right:1px solid var(--border);">MÓDULO / SECCIÓN</th>
                         ${allRoles.map(r => `<th style="padding:1rem; text-align:center; min-width:80px; border-left:1px solid rgba(255,255,255,0.05);">${r.toUpperCase()}</th>`).join('')}
                     </tr>
                 </thead>
@@ -2207,7 +2207,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         rows.push(`
                         <tr class="main-tab-row" data-tab-id="${t.id}" style="border-bottom:1px solid rgba(255,255,255,0.02); background:rgba(255,255,255,0.02); cursor:${hasSub ? 'pointer' : 'default'};">
                             <td style="padding:0.8rem; font-weight:700; border-right:1px solid var(--border); color:#fff; display:flex; align-items:center; gap:8px;">
-                                ${hasSub ? '<span class="toggle-icon">â–¶</span>' : ''}
+                                ${hasSub ? '<span class="toggle-icon">▶</span>' : ''}
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
@@ -2219,7 +2219,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             }).join('')}
                         </tr>`);
 
-                        // Nivel 2: Filas de sub-pestaÃ±as
+                        // Nivel 2: Filas de sub-pestañas
                         if (hasSub) {
                             t.subTabs.forEach(sub => {
                                 const subKey = `${t.id}_${sub.id}`;
@@ -2227,7 +2227,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 rows.push(`
                                 <tr class="sub-row-${t.id} ${hasSubSub ? 'main-tab-row' : ''}" data-tab-id="${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.01); display:none; background:rgba(255,255,255,0.01); cursor:${hasSubSub ? 'pointer' : 'default'};">
                                     <td style="padding:0.6rem 0.8rem 0.6rem 2.5rem; font-style:italic; color:var(--text-muted); border-right:1px solid var(--border); display:flex; align-items:center; gap:8px;">
-                                        ${hasSubSub ? '<span class="toggle-icon">â–¶</span>' : ''}
+                                        ${hasSubSub ? '<span class="toggle-icon">▶</span>' : ''}
                                         ${sub.icon} ${sub.label}
                                     </td>
                                     ${allRoles.map(r => {
@@ -2239,7 +2239,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     }).join('')}
                                 </tr>`);
 
-                                // Nivel 3: Filas de sub-sub-pestaÃ±as (Performance -> Historial/Graficos/Reporte)
+                                // Nivel 3: Filas de sub-sub-pestañas (Performance -> Historial/Graficos/Reporte)
                                 if (hasSubSub) {
                                     sub.subTabs.forEach(ss => {
                                         const ssKey = `${sub.id}_${ss.id}`;
@@ -2265,12 +2265,12 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
         <div style="margin-top:1rem; padding:1rem; background:rgba(79,70,229,0.05); border-radius:8px; border:1px solid rgba(79,70,229,0.2);">
             <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
-                <b>Tip:</b> Haz clic en los mÃ³dulos con el icono â–¶ para expandir sus secciones. El anidamiento permite un control quirÃºrgico de lo que cada rol puede ver.
+                <b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.
             </p>
         </div>
     `;
 
-    // LÃ³gica de AcordeÃ³n (Universal por data-tab-id)
+    // Lógica de Acordeón (Universal por data-tab-id)
     document.querySelectorAll('.main-tab-row').forEach(row => {
         row.addEventListener('click', (e) => {
             if (e.target.type === 'checkbox') return;
@@ -2280,7 +2280,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const icon = row.querySelector('.toggle-icon');
             const isVisible = subRows[0].style.display !== 'none';
             subRows.forEach(sr => sr.style.display = isVisible ? 'none' : 'table-row');
-            if(icon) icon.textContent = isVisible ? 'â–¶' : 'â–¼';
+            if(icon) icon.textContent = isVisible ? '▶' : '▼';
             row.style.background = isVisible ? 'rgba(255,255,255,0.02)' : 'rgba(79,70,229,0.05)';
         });
     });
@@ -2351,7 +2351,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="background:rgba(255,255,255,0.03); padding:0.8rem 1.2rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05); box-shadow:0 4px 15px rgba(0,0,0,0.2); display:flex; align-items:center; gap:15px;">
                 <div>
                     <h3 style="color:var(--primary); margin:0; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">Asistencia Diaria</h3>
-                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;">ðŸ—“ï¸ ${dateFormatted}</p>
+                    <p style="font-size:0.85rem; color:#fff; margin:4px 0 0 0; font-weight:600; text-transform:capitalize;">🗓️ ${dateFormatted}</p>
                 </div>
                 <input type="date" id="asist_date_picker" value="${forcedDate}" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.4rem; border-radius:6px; font-size:0.8rem; outline:none;">
             </div>
@@ -2366,7 +2366,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th>
                         <th style="padding:0.8rem; text-align:center;">Estado</th>
                         <th style="padding:0.8rem; text-align:center;">Puntualidad</th>
-                        <th style="padding:0.8rem; text-align:center;">JustificaciÃ³n</th>
+                        <th style="padding:0.8rem; text-align:center;">Justificación</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2391,14 +2391,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÃ</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'#06b6d4':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'#f97316':'none'}; color:#fff; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
-                                    <option value="Descanso MÃ©dico" ${rec?.justification==='Descanso MÃ©dico'?'selected':'' } style="background:#1e293b;">DESCANSO MÃ‰DICO</option>
+                                    <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
                                     <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
                                     <option value="Otros" ${rec?.justification==='Otros'?'selected':'' } style="background:#1e293b;">OTROS</option>
                                 </select>
@@ -2410,7 +2410,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>
     `;
 
-    // --- ACCIONES DINÃMICAS (WINDOW SCOPE) ---
+    // --- ACCIONES DINÁMICAS (WINDOW SCOPE) ---
     window.updateAsist = (dni, val) => {
         const node = localState.find(s => String(s.dni) === String(dni));
         if (node) {
@@ -2438,45 +2438,45 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     };
 
-    // --- RENDERIZADO DE BOTONES DE ACCIÃ“N (PARTE SUPERIOR) ---
+    // --- RENDERIZADO DE BOTONES DE ACCIÓN (PARTE SUPERIOR) ---
     const topActions = document.getElementById('attendance_top_actions');
     if (topActions) {
         const btnSync = document.createElement('button');
         btnSync.className = 'btn-secondary';
         btnSync.title = 'Sincronizar con la Nube';
         btnSync.style = 'padding:10px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); cursor:pointer; font-size:1rem; border:1px solid rgba(255,255,255,0.1); color:#fff;';
-        btnSync.innerHTML = 'ðŸ”„ Sincronizar';
+        btnSync.innerHTML = '🔄 Sincronizar';
         btnSync.onclick = async () => {
-            btnSync.innerHTML = 'âŒ›...';
+            btnSync.innerHTML = '⌛...';
             btnSync.disabled = true;
             await adminService.initializeAdminData();
             renderAsistenciaSection(container);
-            alert("â˜ï¸ Nube sincronizada correctamente");
+            alert("☁️ Nube sincronizada correctamente");
         };
 
         const btnClose = document.createElement('button');
         btnClose.className = 'btn-primary';
         btnClose.style = 'background:var(--primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
-        btnClose.innerHTML = 'ðŸ’¾ CERRAR ASISTENCIA';
+        btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
 
         if (existing?.finalized) {
-            btnClose.innerHTML = 'âœ… ASISTENCIA CERRADA';
+            btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
             btnClose.style.background = 'var(--success)';
             btnClose.style.color = '#000';
             btnClose.disabled = true;
             btnClose.style.cursor = 'default';
             
-            // Usamos la sesiÃ³n de auth.js para verificar al usuario
+            // Usamos la sesión de auth.js para verificar al usuario
             const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
             if (session.username === 'dames') {
                 const btnReopen = document.createElement('button');
                 btnReopen.className = 'btn-danger';
-                btnReopen.innerHTML = 'ðŸ”“ REABRIR';
+                btnReopen.innerHTML = '🔓 REABRIR';
                 btnReopen.style = 'padding:0.6rem 1.2rem; border-radius:8px; font-weight:800; cursor:pointer; background:#ef4444; font-size:0.85rem;';
                 btnReopen.onclick = async () => {
-                    if (await showPremiumConfirm("REABRIR FECHA", "Â¿Seguro que deseas REABRIR esta fecha? Se podrÃ¡ editar nuevamente.", "warning")) {
+                    if (await showPremiumConfirm("REABRIR FECHA", "¿Seguro que deseas REABRIR esta fecha? Se podrá editar nuevamente.", "warning")) {
                         btnReopen.disabled = true;
-                        btnReopen.textContent = "âŒ› ABRIENDO...";
+                        btnReopen.textContent = "⌛ ABRIENDO...";
                         await adminService.reopenAttendance(forcedDate);
                         renderAsistenciaSection(container);
                     }
@@ -2485,24 +2485,24 @@ export const renderDashboard = async (container, user, onLogout) => {
             }
         } else {
             btnClose.onclick = async () => {
-                if (await showPremiumConfirm("CERRAR ASISTENCIA", `Â¿Confirmas cerrar la asistencia para el dÃ­a ${forcedDate}?`, "info")) {
+                if (await showPremiumConfirm("CERRAR ASISTENCIA", `¿Confirmas cerrar la asistencia para el día ${forcedDate}?`, "info")) {
                     try {
                         btnClose.disabled = true;
-                        btnClose.textContent = "âŒ› ENVIANDO...";
+                        btnClose.textContent = "⌛ ENVIANDO...";
                         const success = await adminService.saveAttendance(forcedDate, { finalized: true, data: localState });
                         if (success) {
-                            alert("âœ… InformaciÃ³n enviada a la nube");
+                            alert("✅ Información enviada a la nube");
                             renderAsistenciaSection(container);
                         } else {
-                            alert("âŒ Error de envÃ­o - Intente nuevamente");
+                            alert("❌ Error de envío - Intente nuevamente");
                             btnClose.disabled = false;
-                            btnClose.textContent = "ðŸ’¾ CERRAR ASISTENCIA";
+                            btnClose.textContent = "💾 CERRAR ASISTENCIA";
                         }
                     } catch (err) {
                         console.error("Critical Send Error:", err);
-                        alert("âŒ Error fatal en el envÃ­o. Se ha reiniciado el botÃ³n.");
+                        alert("❌ Error fatal en el envío. Se ha reiniciado el botón.");
                         btnClose.disabled = false;
-                        btnClose.textContent = "ðŸ’¾ CERRAR ASISTENCIA";
+                        btnClose.textContent = "💾 CERRAR ASISTENCIA";
                     }
                 }
             };
@@ -2523,7 +2523,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   const calculateRendimiento = (p) => {
       let score = 0;
       if (p.asistencia === 'P') score += 30;
-      if (p.puntualidad === 'SÃ') score += 10;
+      if (p.puntualidad === 'SÍ') score += 10;
       
       const prod = parseFloat(p.produccion) || 0;
       const bpa = parseFloat(p.bpa) || 0;
@@ -2547,7 +2547,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         container.innerHTML = `<div class="glass-panel" style="padding:5rem; text-align:center;">
             <div class="spinner" style="margin:0 auto 1.5rem auto;"></div>
             <h4 style="color:var(--primary); font-weight:800;">Sincronizando Performance...</h4>
-            <p style="color:var(--text-muted); font-size:0.85rem;">Obteniendo Ãºltimos registros de la nube.</p>
+            <p style="color:var(--text-muted); font-size:0.85rem;">Obteniendo últimos registros de la nube.</p>
         </div>`;
         return;
     }
@@ -2555,13 +2555,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
             <h4>Sin datos de Performance</h4>
-            <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o mÃ¡s dÃ­as para generar estadÃ­sticas.</p>
-            <button id="btn_retry_sync_perf" class="btn-secondary" style="margin-top:1.5rem; padding:0.5rem 1rem;">ðŸ”„ Reintentar SincronizaciÃ³n</button>
+            <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o más días para generar estadísticas.</p>
+            <button id="btn_retry_sync_perf" class="btn-secondary" style="margin-top:1.5rem; padding:0.5rem 1rem;">🔄 Reintentar Sincronización</button>
         </div>`;
         const btnRetry = document.getElementById('btn_retry_sync_perf');
         if (btnRetry) btnRetry.onclick = async () => {
             btnRetry.disabled = true;
-            btnRetry.innerHTML = 'âŒ› Sincronizando...';
+            btnRetry.innerHTML = '⌛ Sincronizando...';
             await adminService.initializeAdminData(true);
             renderKPIGraphsSection(container);
         };
@@ -2646,29 +2646,29 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Rendimiento General</h4>
                 <h2 style="margin:0.5rem 0; font-size:2.2rem; color:${getStatusColor(globalAvg)}; font-weight:800;">${globalAvg}%</h2>
                 <span style="font-size:0.7rem; background:${getStatusColor(globalAvg)}22; color:${getStatusColor(globalAvg)}; padding:2px 8px; border-radius:10px; font-weight:700;">
-                    ${globalAvg >= 90 ? 'EXCELENTE' : (globalAvg >= 80 ? 'REGULAR' : 'CRÃTICO')}
+                    ${globalAvg >= 90 ? 'EXCELENTE' : (globalAvg >= 80 ? 'REGULAR' : 'CRÍTICO')}
                 </span>
             </div>
             <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid var(--primary);">
-                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">DÃ­as Registrados</h4>
+                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Días Registrados</h4>
                 <h2 style="margin:0.5rem 0; font-size:2.2rem; color:#fff; font-weight:800;">${sortedDates.length}</h2>
                 <span style="font-size:0.7rem; color:var(--text-muted);">Historial acumulado</span>
             </div>
             <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid #fcd34d;">
                 <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Top Operario</h4>
                 <h2 style="margin:0.5rem 0; font-size:1.1rem; color:#fff; line-height:1.2; font-weight:700;">${workerRanking[0]?.name || '-'}</h2>
-                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">â­ ${workerRanking[0]?.avg || 0}%</span>
+                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">⭐ ${workerRanking[0]?.avg || 0}%</span>
             </div>
         </div>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
             <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">ðŸ“ˆ EvoluciÃ³n de Rendimiento</h4>
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">📈 Evolución de Rendimiento</h4>
                 <div style="height:300px; position:relative; overflow:hidden;">
                     <canvas id="chartEvolution"></canvas>
                 </div>
             </div>
             <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">ðŸ† Top 5 Operarios</h4>
+                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">🏆 Top 5 Operarios</h4>
                 <div style="height:300px; position:relative; overflow:hidden;">
                     <canvas id="chartRanking"></canvas>
                 </div>
@@ -2678,11 +2678,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem;">
                 <div>
-                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">ðŸ“‰ ANALÃTICA DE INCIDENCIAS</h4>
-                    <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* AnÃ¡lisis consolidado de puntualidad y asistencia</span>
+                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">📉 ANALÍTICA DE INCIDENCIAS</h4>
+                    <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* Análisis consolidado de puntualidad y asistencia</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7); flex-wrap:wrap;">
-                     <span>ðŸ“… DE:</span>
+                     <span>📅 DE:</span>
                      <input type="date" id="kpi_analitica_from" value="${kpiStart}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                      <span>HASTA:</span>
                      <input type="date" id="kpi_analitica_to" value="${kpiEnd}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
@@ -2693,15 +2693,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA IZQUIERDA: TARDANZAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#fb923c; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">ðŸš«</span> TARDANZAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
+                        <span style="font-size:1.1rem;">🚫</span> TARDANZAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(251, 146, 60, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">NÂ°</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÃAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
                                     <th style="padding:0.4rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARD.</th>
                                 </tr>
                             </thead>
@@ -2722,15 +2722,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA CENTRAL: FALTAS INJUSTIFICADAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#f87171; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">âš ï¸</span> FALTAS INJUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
+                        <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(248, 113, 113, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">NÂ°</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÃAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
                                     <th style="padding:0.4rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
@@ -2751,15 +2751,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <!-- COLUMNA DERECHA: FALTAS JUSTIFICADAS -->
                 <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
                     <h5 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">âœ…</span> FALTAS JUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
+                        <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
                     </h5>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
                             <thead>
                                 <tr style="border-bottom:2px solid rgba(6, 182, 212, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">NÂ°</th>
+                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
                                     <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÃAS</th>
+                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
                                     <th style="padding:0.4rem; text-align:center; background:rgba(6, 182, 212, 0.1); color:#06b6d4; font-weight:900;">FALTAS</th>
                                 </tr>
                             </thead>
@@ -2816,7 +2816,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (!rawLog || rawLog.length === 0) {
         container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
             <h4>Sin datos para el reporte</h4>
-            <button id="btn_retry_report" class="btn-secondary" style="margin-top:1rem; padding:0.5rem 1rem;">ðŸ”„ Refrescar Datos</button>
+            <button id="btn_retry_report" class="btn-secondary" style="margin-top:1rem; padding:0.5rem 1rem;">🔄 Refrescar Datos</button>
         </div>`;
         const btn = document.getElementById('btn_retry_report');
         if (btn) btn.onclick = async () => {
@@ -2838,7 +2838,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const exportData = data.map(d => ({ 
             'Periodo': `${kpiStart} al ${kpiEnd}`,
             'Operario': d.name, 
-            'DÃ­as Trabajados': d.diasTrabajados, 
+            'Días Trabajados': d.diasTrabajados, 
             'Justificaciones': d.justificaciones, 
             'Faltas': d.faltas, 
             'Tardanzas': d.tardanzas, 
@@ -2871,12 +2871,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             
             if (hasJustification) {
                 w.justificaciones++;
-                // Los dÃ­as con justificaciÃ³n NO se cuentan en el promedio (se divide entre menos dÃ­as)
+                // Los días con justificación NO se cuentan en el promedio (se divide entre menos días)
             } else {
                 w.faltas++; 
                 w.sum += rend; 
                 w.count++; 
-                // Sin justificaciÃ³n: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
+                // Sin justificación: se suma rindi (0%) y aumenta el divisor (penaliza el promedio)
             }
         }
     });
@@ -2887,7 +2887,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div class="glass-panel" style="padding:1.5rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
-                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800;">ðŸ“Š CONSOLIDADO KPI</h4>
+                <h4 style="margin:0; color:var(--primary); font-size:1rem; font-weight:800;">📊 CONSOLIDADO KPI</h4>
                 <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
                     <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px;">
                          <span style="font-size:0.7rem; color:var(--text-muted);">DESDE:</span>
@@ -2895,13 +2895,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                          <span style="font-size:0.7rem; color:var(--text-muted);">HASTA:</span>
                          <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:#fff; font-size:0.75rem; outline:none;">
                     </div>
-                    <input type="text" id="kpi_search" placeholder="ðŸ” Buscar operario..." value="${kpiSearch}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; outline:none; width:200px;">
-                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px;">ðŸ“¥ EXPORTAR</button>
+                    <input type="text" id="kpi_search" placeholder="🔍 Buscar operario..." value="${kpiSearch}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; outline:none; width:200px;">
+                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:0.75rem; padding:0.5rem 1rem; background:#10b981; border-radius:8px;">📥 EXPORTAR</button>
                 </div>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);"><th style="padding:0.8rem; text-align:left;">OPERARIO</th><th style="padding:0.8rem; text-align:center;">DÃAS TRAB.</th><th style="padding:0.8rem; text-align:center;">JUSTIFICACIÃ“N</th><th style="padding:0.8rem; text-align:center;">FALTAS</th><th style="padding:0.8rem; text-align:center;">TARDANZAS</th><th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th></tr></thead>
+                    <thead><tr style="border-bottom:2px solid rgba(255,255,255,0.05); color:var(--text-muted);"><th style="padding:0.8rem; text-align:left;">OPERARIO</th><th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th><th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th><th style="padding:0.8rem; text-align:center;">FALTAS</th><th style="padding:0.8rem; text-align:center;">TARDANZAS</th><th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th></tr></thead>
                     <tbody>${consolidado.map(w => `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);"><td style="padding:0.8rem; color:#fff; font-weight:600;">${w.name}</td><td style="padding:0.8rem; text-align:center; font-weight:700; color:#60a5fa;">${w.diasTrabajados}</td><td style="padding:0.8rem; text-align:center; color:#fcd34d;">${w.justificaciones}</td><td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? '#ef4444' : 'var(--text-muted)'};">${w.faltas}</td><td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? '#f97316' : 'var(--text-muted)'};">${w.tardanzas}</td><td style="padding:0.8rem; text-align:center;"><div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">${w.avg}%</div></td></tr>`).join('')}</tbody>
                 </table>
@@ -2925,7 +2925,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const perfTabDef = TABS.find(t => t.id === 'admin_pers').subTabs.find(s => s.id === 'performance');
     const perms = adminService.getPermissions(user.role) || {};
     
-    // Triple anidamiento: AdministraciÃ³n -> Performance -> (Historial/Graficos/Reporte)
+    // Triple anidamiento: Administración -> Performance -> (Historial/Graficos/Reporte)
     const allowedSubSubs = perfTabDef.subTabs.filter(ss => {
         if (user.role === 'admin') return true;
         return perms[`performance_${ss.id}`] === 1 || perms['performance'] === 1; // Fallback a permiso general
@@ -2945,23 +2945,23 @@ export const renderDashboard = async (container, user, onLogout) => {
               `).join('')}
             </nav>
             <button id="btn_sync_performance_cloud" class="btn-primary" style="font-size:0.75rem; padding:0.5rem 1rem; border-radius:8px; background:var(--primary); color:#fff; font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(79,70,229,0.4); border:none; display:flex; align-items:center; gap:8px;">
-                <span style="font-size:1.1rem;">ðŸ”„</span> SINCRONIZAR CLOUD
+                <span style="font-size:1.1rem;">🔄</span> SINCRONIZAR CLOUD
             </button>
         </div>
         <div id="perfContent"></div>`;
     
-    console.log("ðŸ› ï¸ [PULSE] Renderizando SecciÃ³n Performance con BotÃ³n Sincronizar");
+    console.log("🛠️ [PULSE] Renderizando Sección Performance con Botón Sincronizar");
     
     const btnSync = document.getElementById('btn_sync_performance_cloud');
     if (btnSync) {
         btnSync.onclick = async () => {
-            btnSync.innerHTML = 'âŒ› SINCRONIZANDO...';
+            btnSync.innerHTML = '⌛ SINCRONIZANDO...';
             btnSync.style.opacity = '0.5';
             btnSync.disabled = true;
             await adminService.initializeAdminData(true);
-            btnSync.innerHTML = 'âœ… ACTUALIZADO';
+            btnSync.innerHTML = '✅ ACTUALIZADO';
             setTimeout(() => {
-                btnSync.innerHTML = 'ðŸ”„ SINCRONIZAR CLOUD';
+                btnSync.innerHTML = '🔄 SINCRONIZAR CLOUD';
                 btnSync.style.opacity = '1';
                 btnSync.disabled = false;
             }, 2000);
@@ -2995,7 +2995,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 'Nombre': displayName,
                 'Asistencia': p.asistencia,
                 'Puntualidad': p.puntualidad,
-                'ProducciÃ³n': p.produccion,
+                'Producción': p.produccion,
                 'BPA': p.bpa,
                 'Supervisor': p.supervisor,
                 'Rendimiento %': p.rendimiento
@@ -3018,7 +3018,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h3 style="color:var(--primary); margin:0;">Historial de Performance Diaria</h3>
-            <button onclick="exportPerformanceToExcel()" class="btn" style="width:auto; background:#10b981; padding:0.6rem 1.2rem; font-size:0.8rem; font-weight:800;">ðŸ“Š EXPORTAR A EXCEL</button>
+            <button onclick="exportPerformanceToExcel()" class="btn" style="width:auto; background:#10b981; padding:0.6rem 1.2rem; font-size:0.8rem; font-weight:800;">📊 EXPORTAR A EXCEL</button>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
@@ -3041,7 +3041,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const avgRend = Math.round(entries.reduce((sum, e) => sum + (parseInt(e.rendimiento) || 0), 0) / entries.length);
                         return `
                         <tr class="perf-date-header" data-date="${date}" style="cursor:pointer; background:rgba(79,70,229,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">ðŸ“… ${date} <small style="margin-left:15px; color:rgba(255,255,255,0.3);">(${entries.length} registros)</small></td>
+                            <td colspan="8" style="padding:0.8rem; text-align:left; color:#fff; font-weight:800;">📅 ${date} <small style="margin-left:15px; color:rgba(255,255,255,0.3);">(${entries.length} registros)</small></td>
                             <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;"><span id="avg-${date}">${avgRend}%</span></td>
                         </tr>
                         ${entries.sort((a, b) => {
@@ -3068,8 +3068,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 </select>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
-                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÃ'?'var(--success)':'#ef4444'}; font-weight:700;">
-                                    <option value="SÃ" ${p.puntualidad==='SÃ'?'selected':''}>SÃ</option>
+                                <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÍ'?'var(--success)':'#ef4444'}; font-weight:700;">
+                                    <option value="SÍ" ${p.puntualidad==='SÍ'?'selected':''}>SÍ</option>
                                     <option value="NO" ${p.puntualidad==='NO'?'selected':''}>NO</option>
                                 </select>
                             </td>
@@ -3098,7 +3098,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const { date, dni, f } = e.target.dataset;
             const updatedEntry = await adminService.updatePerformanceLogEntry(date, dni, { [f]: e.target.value });
             
-            // ActualizaciÃ³n local del DOM para evitar pantallazos
+            // Actualización local del DOM para evitar pantallazos
             if (updatedEntry) {
                 const rendCell = document.getElementById(`rend-${dni}-${date}`);
                 if (rendCell) {
@@ -3109,7 +3109,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     e.target.style.color = e.target.value === 'P' ? 'var(--success)' : '#ef4444';
                 }
                 if (f === 'puntualidad') {
-                    e.target.style.color = e.target.value === 'SÃ' ? 'var(--success)' : '#ef4444';
+                    e.target.style.color = e.target.value === 'SÍ' ? 'var(--success)' : '#ef4444';
                 }
                 if (f === 'justification') {
                     e.target.style.color = e.target.value ? '#06b6d4' : 'rgba(255,255,255,0.1)';
@@ -3148,7 +3148,7 @@ const renderRFSection = (container) => {
     rfs.forEach(r => {
       if (r.estado === 'Operativo') {
         expectedRFSerials.push(r.serie);
-        // Buscar la Ãºltima asignaciÃ³n de este equipo para mostrar detalles de quiÃ©n lo usÃ³ por Ãºltima vez
+        // Buscar la última asignación de este equipo para mostrar detalles de quién lo usó por última vez
         const rfAsigs = assignments.filter(a => a.rf_serial === r.serie);
         if (rfAsigs.length > 0) {
           rfAsigs.sort((a, b) => new Date(b.assigned_at) - new Date(a.assigned_at));
@@ -3168,12 +3168,12 @@ const renderRFSection = (container) => {
     // Auto-sanear inconsistencias de RFs de forma bidireccional
     let rfsChanged = false;
     
-    // 1. Limpiar RFs que figuran como asignados pero no tienen asignaciÃ³n activa en la bitÃ¡cora
+    // 1. Limpiar RFs que figuran como asignados pero no tienen asignación activa en la bitácora
     rfs.forEach(r => {
       if (r.asignadoDni) {
         const hasActive = assignments.some(a => a.rf_serial === r.serie && !a.returned_at);
         if (!hasActive) {
-          console.warn(`[PULSE] Auto-saneando RF ${r.serie}: figuraba como asignado pero no tiene asignaciÃ³n activa en bitÃ¡cora.`);
+          console.warn(`[PULSE] Auto-saneando RF ${r.serie}: figuraba como asignado pero no tiene asignación activa en bitácora.`);
           r.asignadoDni = null;
           r.asignadoNombre = null;
           r.asignadoTurno = null;
@@ -3182,12 +3182,12 @@ const renderRFSection = (container) => {
       }
     });
 
-    // 2. Asignar RFs que tienen asignaciÃ³n activa en la bitÃ¡cora pero figuran como disponibles en inventario
+    // 2. Asignar RFs que tienen asignación activa en la bitácora pero figuran como disponibles en inventario
     assignments.forEach(a => {
       if (!a.returned_at) {
         const rf = rfs.find(r => r.serie === a.rf_serial);
         if (rf && !rf.asignadoDni) {
-          console.warn(`[PULSE] Auto-saneando RF ${rf.serie}: tiene asignaciÃ³n activa para ${a.worker_name} pero figuraba como disponible.`);
+          console.warn(`[PULSE] Auto-saneando RF ${rf.serie}: tiene asignación activa para ${a.worker_name} pero figuraba como disponible.`);
           rf.asignadoDni = a.worker_dni;
           rf.asignadoNombre = a.worker_name;
           rf.asignadoTurno = a.turn;
@@ -3203,33 +3203,33 @@ const renderRFSection = (container) => {
     const batteries = adminService.getRfsBatteries() || [];
     const chargers = adminService.getRfsChargers() || [];
 
-    // Calcular mÃ©tricas dinÃ¡micas segÃºn pestaÃ±a
+    // Calcular métricas dinámicas según pestaña
     let metricsHtml = '';
     if (activeRFTab === 'revision') {
       metricsHtml = `
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">ðŸ“‹</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">📋</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Esperados</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalExpected}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">âœ”ï¸</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✔️</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Coincidentes OK</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${uniqueFoundExpected}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #ef4444; background:rgba(239,68,68,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(239,68,68,0.4));">â³</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(239,68,68,0.4));">⏳</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Pendientes</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#ef4444;">${pendingCount}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #3b82f6; background:rgba(59,130,246,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">âŒ</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">❌</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Inesperados</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#3b82f6;">${uniqueUnexpected}</p>
@@ -3246,37 +3246,37 @@ const renderRFSection = (container) => {
         
         metricsHtml = `
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--primary); background:rgba(79,70,229,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(79,70,229,0.4));">ðŸ“¡</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(79,70,229,0.4));">📡</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Equipos RF</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalRFs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">âœ…</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✅</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Disponibles</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${availableRFs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #06b6d4; background:rgba(6,182,212,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">ðŸ‘·</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">👷</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Uso</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#06b6d4;">${assignedRFs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">ðŸ› ï¸</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">🛠️</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Taller</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#f59e0b;">${maintenanceRFs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #10b981; background:rgba(16,185,129,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">ðŸ”‹</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">🔋</span>
             <div>
-              <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Promedio BaterÃ­a</h5>
+              <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Promedio Batería</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#10b981;">${avgBattery}%</p>
             </div>
           </div>
@@ -3290,35 +3290,35 @@ const renderRFSection = (container) => {
         
         metricsHtml = `
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #10b981; background:rgba(16,185,129,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">ðŸ”‹</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">🔋</span>
             <div>
-              <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total BaterÃ­as</h5>
+              <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Baterías</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalBats}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">âœ…</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✅</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Operativas</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${opBats}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">ðŸ› ï¸</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">🛠️</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Taller</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#f59e0b;">${maintBats}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #ef4444; background:rgba(239,68,68,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(239,68,68,0.4));">ðŸš¨</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(239,68,68,0.4));">🚨</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">De Baja</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#ef4444;">${bajaBats}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #3b82f6; background:rgba(59,130,246,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">â¤ï¸</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">❤️</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Promedio Salud</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#3b82f6;">${avgHealth}%</p>
@@ -3334,35 +3334,35 @@ const renderRFSection = (container) => {
         
         metricsHtml = `
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #06b6d4; background:rgba(6,182,212,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">ðŸ”Œ</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">🔌</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Cargadores</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalChgs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">âœ…</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✅</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Cargadores OK</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${opChgs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">ðŸ› ï¸</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">🛠️</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Cargadores Taller</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#f59e0b;">${maintChgs}</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #3b82f6; background:rgba(59,130,246,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">âš¡</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(59,130,246,0.4));">⚡</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Ranuras Totales</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#3b82f6;">${totalSlots} ranuras</p>
             </div>
           </div>
           <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #10b981; background:rgba(16,185,129,0.03);">
-            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">âš¡</span>
+            <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">⚡</span>
             <div>
               <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Ranuras OK</h5>
               <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#10b981;">${totalSlotsOk} / ${totalSlots}</p>
@@ -3379,37 +3379,37 @@ const renderRFSection = (container) => {
       
       metricsHtml = `
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--primary); background:rgba(79,70,229,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(79,70,229,0.4));">ðŸ“¡</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(79,70,229,0.4));">📡</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total Equipos RF</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#fff;">${totalRFs}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid var(--success); background:rgba(34,197,94,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">âœ…</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(34,197,94,0.4));">✅</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Disponibles</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:var(--success);">${availableRFs}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #06b6d4; background:rgba(6,182,212,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">ðŸ‘·</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(6,182,212,0.4));">👷</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Uso</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#06b6d4;">${assignedRFs}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #f59e0b; background:rgba(245,158,11,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">ðŸ› ï¸</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(245,158,11,0.4));">🛠️</span>
           <div>
             <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">En Taller</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#f59e0b;">${maintenanceRFs}</p>
           </div>
         </div>
         <div class="glass-panel" style="padding:1.2rem; display:flex; align-items:center; gap:12px; border-left:4px solid #10b981; background:rgba(16,185,129,0.03);">
-          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">ðŸ”‹</span>
+          <span style="font-size:2rem; filter:drop-shadow(0 0 8px rgba(16,185,129,0.4));">🔋</span>
           <div>
-            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Promedio BaterÃ­a</h5>
+            <h5 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Promedio Batería</h5>
             <p style="margin:4px 0 0 0; font-size:1.6rem; font-weight:900; color:#10b981;">${avgBattery}%</p>
           </div>
         </div>
@@ -3431,7 +3431,7 @@ const renderRFSection = (container) => {
       filteredRfs = filteredRfs.filter(r => r.estado === rfStatusFilter);
     }
 
-    // Filtrar baterÃ­as
+    // Filtrar baterías
     let filteredBatteries = [...batteries];
     if (rfSearchQuery) {
       const q = rfSearchQuery.toLowerCase().trim();
@@ -3472,7 +3472,7 @@ const renderRFSection = (container) => {
       );
     }
 
-    // Listado para pestaÃ±a ASIGNAR RF
+    // Listado para pestaña ASIGNAR RF
     const availableOperativeRfs = rfs.filter(r => r.estado === 'Operativo' && !r.asignadoDni).sort((a, b) => {
       const numA = parseInt(a.numero) || 0;
       const numB = parseInt(b.numero) || 0;
@@ -3514,18 +3514,18 @@ const renderRFSection = (container) => {
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; width:100%;">
         <!-- TAB SELECTOR -->
         <nav style="display:flex; gap:1.2rem;">
-          <a class="perf-sub-item ${activeRFTab==='inventario'?'active':''}" id="rf_tab_inventario">ðŸ“ INVENTARIO</a>
-          <a class="perf-sub-item ${activeRFTab==='asignar'?'active':''}" id="rf_tab_asignar">ðŸ”‘ ASIGNAR RF</a>
-          <a class="perf-sub-item ${activeRFTab==='asignaciones'?'active':''}" id="rf_tab_asignaciones">ðŸ“ BITÃCORA</a>
-          <a class="perf-sub-item ${activeRFTab==='revision'?'active':''}" id="rf_tab_revision">ðŸ” REVISIÃ“N RF</a>
+          <a class="perf-sub-item ${activeRFTab==='inventario'?'active':''}" id="rf_tab_inventario">📁 INVENTARIO</a>
+          <a class="perf-sub-item ${activeRFTab==='asignar'?'active':''}" id="rf_tab_asignar">🔑 ASIGNAR RF</a>
+          <a class="perf-sub-item ${activeRFTab==='asignaciones'?'active':''}" id="rf_tab_asignaciones">📝 BITÁCORA</a>
+          <a class="perf-sub-item ${activeRFTab==='revision'?'active':''}" id="rf_tab_revision">🔍 REVISIÓN RF</a>
         </nav>
 
         <!-- SEARCH AND ADD -->
         ${activeRFTab !== 'revision' ? `
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; padding-bottom:0.3rem;">
           <div style="display:flex; gap:0.4rem; align-items:center;">
-            <input type="text" id="rf_search_input" placeholder="ðŸ” Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
-            <button id="rf_btn_sync" class="btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; cursor:pointer;" title="Sincronizar">ðŸ”„</button>
+            <input type="text" id="rf_search_input" placeholder="🔍 Buscar..." value="${rfSearchQuery}" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); color:#fff; padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; outline:none; width:220px;">
+            <button id="rf_btn_sync" class="btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; cursor:pointer;" title="Sincronizar">🔄</button>
           </div>
           ${activeRFTab === 'inventario' ? `
             <select id="rf_status_filter" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:0.5rem; border-radius:8px; font-size:0.8rem; outline:none; cursor:pointer;">
@@ -3535,17 +3535,17 @@ const renderRFSection = (container) => {
               <option value="De Baja" ${rfStatusFilter==='De Baja'?'selected':''}>DE BAJA</option>
             </select>
             ${activeInventorySubTab === 'rfs' ? `
-              <button id="btn_new_rf" class="btn" style="width:auto; background:var(--primary); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px;">ðŸ“¡ REGISTRAR EQUIPO</button>
+              <button id="btn_new_rf" class="btn" style="width:auto; background:var(--primary); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px;">📡 REGISTRAR EQUIPO</button>
             ` : activeInventorySubTab === 'baterias' ? `
-              <button id="btn_new_battery" class="btn" style="width:auto; background:linear-gradient(135deg, #10b981 0%, #064e3b 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:#fff; cursor:pointer; box-shadow:0 4px 10px rgba(16,185,129,0.3);">ðŸ”‹ REGISTRAR BATERÃA</button>
+              <button id="btn_new_battery" class="btn" style="width:auto; background:linear-gradient(135deg, #10b981 0%, #064e3b 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:#fff; cursor:pointer; box-shadow:0 4px 10px rgba(16,185,129,0.3);">🔋 REGISTRAR BATERÍA</button>
             ` : `
-              <button id="btn_new_charger" class="btn" style="width:auto; background:linear-gradient(135deg, #06b6d4 0%, #083344 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:#fff; cursor:pointer; box-shadow:0 4px 10px rgba(6,182,212,0.3);">ðŸ”Œ REGISTRAR CARGADOR</button>
+              <button id="btn_new_charger" class="btn" style="width:auto; background:linear-gradient(135deg, #06b6d4 0%, #083344 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:#fff; cursor:pointer; box-shadow:0 4px 10px rgba(6,182,212,0.3);">🔌 REGISTRAR CARGADOR</button>
             `}
           ` : ''}
         </div>
         ` : `
         <div style="font-size:0.75rem; color:#818cf8; font-weight:800; background:rgba(129,140,248,0.1); border:1px solid rgba(129,140,248,0.2); padding:5px 12px; border-radius:20px; letter-spacing:0.5px;">
-          ðŸ–¥ï¸ MÃ“DULO DE VERIFICACIÃ“N AUTOMÃTICO
+          🖥️ MÓDULO DE VERIFICACIÓN AUTOMÁTICO
         </div>
         `}
       </div>
@@ -3554,9 +3554,9 @@ const renderRFSection = (container) => {
       ${activeRFTab === 'inventario' ? `
         <!-- SUB-TAB SELECTOR -->
         <div style="display:flex; margin-bottom:1.2rem; width:100%; gap:1.2rem;">
-          <a class="perf-sub-item ${activeInventorySubTab==='rfs'?'active':''}" id="rf_sub_tab_rfs">ðŸ“¡ EQUIPOS RF</a>
-          <a class="perf-sub-item ${activeInventorySubTab==='baterias'?'active':''}" id="rf_sub_tab_baterias">ðŸ”‹ BATERÃAS</a>
-          <a class="perf-sub-item ${activeInventorySubTab==='cargadores'?'active':''}" id="rf_sub_tab_cargadores">ðŸ”Œ CARGADORES</a>
+          <a class="perf-sub-item ${activeInventorySubTab==='rfs'?'active':''}" id="rf_sub_tab_rfs">📡 EQUIPOS RF</a>
+          <a class="perf-sub-item ${activeInventorySubTab==='baterias'?'active':''}" id="rf_sub_tab_baterias">🔋 BATERÍAS</a>
+          <a class="perf-sub-item ${activeInventorySubTab==='cargadores'?'active':''}" id="rf_sub_tab_cargadores">🔌 CARGADORES</a>
         </div>
         
         ${activeInventorySubTab === 'rfs' ? `
@@ -3568,10 +3568,10 @@ const renderRFSection = (container) => {
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
                   <th style="padding:0.8rem; text-align:left;">Serie</th>
                   <th style="padding:0.8rem; text-align:left;">Marca / Modelo</th>
-                  <th style="padding:0.8rem; text-align:left;">NÃºmero</th>
-                  <th style="padding:0.8rem; text-align:left;">BaterÃ­a</th>
-                  <th style="padding:0.8rem; text-align:center;">Estado FÃ­sico</th>
-                  <th style="padding:0.8rem; text-align:left;">ObservaciÃ³n</th>
+                  <th style="padding:0.8rem; text-align:left;">Número</th>
+                  <th style="padding:0.8rem; text-align:left;">Batería</th>
+                  <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
+                  <th style="padding:0.8rem; text-align:left;">Observación</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -3602,7 +3602,7 @@ const renderRFSection = (container) => {
                         <span style="color:var(--text-muted); font-size:0.7rem;">${r.modelo || ''}</span>
                       </td>
                       <td style="padding:0.8rem;">
-                        ${r.numero ? `<span style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); color:#a5b4fc; padding:3px 9px; border-radius:6px; font-family:monospace; font-size:0.8rem; font-weight:700;">${r.numero}</span>` : `<span style="color:rgba(255,255,255,0.2); font-size:0.75rem;">â€”</span>`}
+                        ${r.numero ? `<span style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); color:#a5b4fc; padding:3px 9px; border-radius:6px; font-family:monospace; font-size:0.8rem; font-weight:700;">${r.numero}</span>` : `<span style="color:rgba(255,255,255,0.2); font-size:0.75rem;">—</span>`}
                       </td>
                       <td style="padding:0.8rem;">
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -3619,12 +3619,12 @@ const renderRFSection = (container) => {
                         </span>
                       </td>
                       <td style="padding:0.8rem; font-size:0.75rem; color:var(--text-muted); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.comentarios || ''}">
-                        ${r.comentarios || 'â€”'}
+                        ${r.comentarios || '—'}
                       </td>
                       <td style="padding:0.8rem; text-align:center;">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
-                          <button class="btn-edit-rf" data-rf='${JSON.stringify(r).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">âœï¸</button>
-                          <button class="btn-delete-rf" data-serie="${r.serie}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">ðŸ—‘ï¸</button>
+                          <button class="btn-edit-rf" data-rf='${JSON.stringify(r).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
+                          <button class="btn-delete-rf" data-serie="${r.serie}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
                         </div>
                       </td>
                     </tr>`;
@@ -3633,17 +3633,17 @@ const renderRFSection = (container) => {
             </table>
           </div>
         ` : activeInventorySubTab === 'baterias' ? `
-          <!-- TABLE INVENTARIO BATERÃAS -->
+          <!-- TABLE INVENTARIO BATERÍAS -->
           <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
               <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                 <tr>
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
-                  <th style="padding:0.8rem; text-align:left;">CÃ³digo de BaterÃ­a</th>
+                  <th style="padding:0.8rem; text-align:left;">Código de Batería</th>
                   <th style="padding:0.8rem; text-align:left;">Compatibilidad (Modelo)</th>
-                  <th style="padding:0.8rem; text-align:left;">Salud / Vida Ãštil</th>
-                  <th style="padding:0.8rem; text-align:left;">UbicaciÃ³n / Ranura</th>
-                  <th style="padding:0.8rem; text-align:center;">Estado FÃ­sico</th>
+                  <th style="padding:0.8rem; text-align:left;">Salud / Vida Útil</th>
+                  <th style="padding:0.8rem; text-align:left;">Ubicación / Ranura</th>
+                  <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -3677,7 +3677,7 @@ const renderRFSection = (container) => {
                           </div>
                         </div>
                       </td>
-                      <td style="padding:0.8rem; font-weight:600; color:#cbd5e1;">ðŸ“ ${b.ubicacion || 'Estante Principal'}</td>
+                      <td style="padding:0.8rem; font-weight:600; color:#cbd5e1;">📍 ${b.ubicacion || 'Estante Principal'}</td>
                       <td style="padding:0.8rem; text-align:center;">
                         <span style="background:${stateGlow}; color:${stateColor}; border:1px solid ${stateColor}44; padding:3px 10px; border-radius:20px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
                           ${b.estado || 'Operativo'}
@@ -3685,12 +3685,12 @@ const renderRFSection = (container) => {
                       </td>
                       <td style="padding:0.8rem; text-align:center;">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
-                          <button class="btn-edit-battery" data-battery='${JSON.stringify(b).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">âœï¸</button>
-                          <button class="btn-delete-battery" data-codigo="${b.codigo}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">ðŸ—‘ï¸</button>
+                          <button class="btn-edit-battery" data-battery='${JSON.stringify(b).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
+                          <button class="btn-delete-battery" data-codigo="${b.codigo}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
                         </div>
                       </td>
                     </tr>`;
-                }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se encontraron baterÃ­as registradas.</td></tr>'}
+                }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se encontraron baterías registradas.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -3701,12 +3701,12 @@ const renderRFSection = (container) => {
               <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
                 <tr>
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(255,255,255,0.05);">#</th>
-                  <th style="padding:0.8rem; text-align:left;">CÃ³digo de Cargador</th>
+                  <th style="padding:0.8rem; text-align:left;">Código de Cargador</th>
                   <th style="padding:0.8rem; text-align:left;">Marca / Modelo</th>
                   <th style="padding:0.8rem; text-align:center;">Capacidad (Ranuras)</th>
                   <th style="padding:0.8rem; text-align:center;">Ranuras Operativas</th>
-                  <th style="padding:0.8rem; text-align:left;">UbicaciÃ³n de Carga</th>
-                  <th style="padding:0.8rem; text-align:center;">Estado FÃ­sico</th>
+                  <th style="padding:0.8rem; text-align:left;">Ubicación de Carga</th>
+                  <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -3741,7 +3741,7 @@ const renderRFSection = (container) => {
                           ${slotsOk} / ${slotsTotal} OK
                         </span>
                       </td>
-                      <td style="padding:0.8rem; font-weight:600; color:#cbd5e1;">âš¡ ${c.ubicacion || 'Zona de Carga Principal'}</td>
+                      <td style="padding:0.8rem; font-weight:600; color:#cbd5e1;">⚡ ${c.ubicacion || 'Zona de Carga Principal'}</td>
                       <td style="padding:0.8rem; text-align:center;">
                         <span style="background:${stateGlow}; color:${stateColor}; border:1px solid ${stateColor}44; padding:3px 10px; border-radius:20px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
                           ${c.estado || 'Operativo'}
@@ -3749,8 +3749,8 @@ const renderRFSection = (container) => {
                       </td>
                       <td style="padding:0.8rem; text-align:center;">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
-                          <button class="btn-edit-charger" data-charger='${JSON.stringify(c).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">âœï¸</button>
-                          <button class="btn-delete-charger" data-codigo="${c.codigo}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">ðŸ—‘ï¸</button>
+                          <button class="btn-edit-charger" data-charger='${JSON.stringify(c).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
+                          <button class="btn-delete-charger" data-codigo="${c.codigo}" style="background:none; border:none; cursor:pointer; font-size:0.95rem; filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
                         </div>
                       </td>
                     </tr>`;
@@ -3760,11 +3760,11 @@ const renderRFSection = (container) => {
           </div>
         `}
       ` : activeRFTab === 'asignar' ? `
-        <!-- SUB-MÃ“DULO DE ASIGNACIÃ“N Y CONTROL RÃPIDO -->
+        <!-- SUB-MÓDULO DE ASIGNACIÓN Y CONTROL RÁPIDO -->
         <div style="display:grid; grid-template-columns: 350px 1fr; gap:1.5rem; align-items:start;">
           <!-- COLUMNA IZQUIERDA: REGISTRO ENTREGA -->
           <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08);">
-            <h4 style="margin:0 0 1.2rem 0; color:var(--primary); font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">ðŸ”‘ Entrega de Turno</h4>
+            <h4 style="margin:0 0 1.2rem 0; color:var(--primary); font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🔑 Entrega de Turno</h4>
             <form id="form_fast_assign" style="display:flex; flex-direction:column; gap:0.9rem;">
               <div>
                 <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">1. SELECCIONAR OPERARIO ACTIVO:</label>
@@ -3778,7 +3778,7 @@ const renderRFSection = (container) => {
                 <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">2. SELECCIONAR TERMINAL DISPONIBLE:</label>
                 <select id="rf_fast_device" required style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-family:monospace; font-size:0.8rem;">
                   <option value="" style="background:#0f172a;">-- Seleccionar serie RF --</option>
-                  ${availableOperativeRfs.map(r => `<option value="${r.serie}" style="background:#0f172a;">${r.numero ? `NÂ° ${r.numero} | ` : ''}${r.serie} - ${r.marca} (${r.bateria}% bat)</option>`).join('')}
+                  ${availableOperativeRfs.map(r => `<option value="${r.serie}" style="background:#0f172a;">${r.numero ? `N° ${r.numero} | ` : ''}${r.serie} - ${r.marca} (${r.bateria}% bat)</option>`).join('')}
                 </select>
               </div>
 
@@ -3790,33 +3790,33 @@ const renderRFSection = (container) => {
                 </select>
               </div>
 
-              <!-- CRITERIOS DE VERIFICACIÃ“N -->
+              <!-- CRITERIOS DE VERIFICACIÓN -->
               <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
-                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">ðŸ“ CRITERIOS DE CONTROL (ENTREGA):</span>
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">📝 CRITERIOS DE CONTROL (ENTREGA):</span>
                 
                 <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
-                  <span>ðŸ–¥ï¸ Pantalla en buen estado</span>
+                  <span>🖥️ Pantalla en buen estado</span>
                   <input type="checkbox" id="rf_fast_pantalla" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
                 </label>
                 
                 <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
-                  <span>ðŸ·ï¸ NumeraciÃ³n legible / OK</span>
+                  <span>🏷️ Numeración legible / OK</span>
                   <input type="checkbox" id="rf_fast_numeracion" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
                 </label>
               </div>
 
               <div>
                 <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / COMENTARIOS:</label>
-                <textarea id="rf_fast_notes" rows="2" placeholder="Ej: Sin araÃ±azos, incluye lÃ¡piz..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;"></textarea>
+                <textarea id="rf_fast_notes" rows="2" placeholder="Ej: Sin arañazos, incluye lápiz..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;"></textarea>
               </div>
 
-              <button type="submit" class="btn" style="background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); padding:0.7rem; font-weight:800; font-size:0.75rem; width:100%; border-radius:10px; box-shadow:0 4px 12px rgba(79,70,229,0.3); margin-top:0.3rem;">âš¡ ENTREGAR Y ASIGNAR RF</button>
+              <button type="submit" class="btn" style="background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); padding:0.7rem; font-weight:800; font-size:0.75rem; width:100%; border-radius:10px; box-shadow:0 4px 12px rgba(79,70,229,0.3); margin-top:0.3rem;">⚡ ENTREGAR Y ASIGNAR RF</button>
             </form>
           </div>
 
           <!-- COLUMNA DERECHA: EQUIPOS ACTUALMENTE EN USO -->
           <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08);">
-            <h4 style="margin:0 0 1.2rem 0; color:#06b6d4; font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">ðŸ“¥ Equipos en uso (Retornos de Turno)</h4>
+            <h4 style="margin:0 0 1.2rem 0; color:#06b6d4; font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📥 Equipos en uso (Retornos de Turno)</h4>
             <div style="overflow-x:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                 <thead style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border);">
@@ -3835,7 +3835,7 @@ const renderRFSection = (container) => {
                     const screenStyle = a.pantalla_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
                     const numStyle = a.numeracion_ok !== false ? 'color:#10b981; font-weight:800;' : 'color:#ef4444; font-weight:800; text-decoration:line-through;';
                     const rfInfo = rfs.find(r => r.serie === a.rf_serial);
-                    const rfNumero = rfInfo && rfInfo.numero ? `NÂ° ${rfInfo.numero} | ` : '';
+                    const rfNumero = rfInfo && rfInfo.numero ? `N° ${rfInfo.numero} | ` : '';
 
                     return `
                       <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
@@ -3847,15 +3847,15 @@ const renderRFSection = (container) => {
                         <td style="padding:0.7rem; text-align:center;">
                           <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-weight:800;">${a.turn}</span>
                         </td>
-                        <td style="padding:0.7rem; color:#cbd5e1;">ðŸ•’ ${activeTime}</td>
+                        <td style="padding:0.7rem; color:#cbd5e1;">🕒 ${activeTime}</td>
                          <td style="padding:0.7rem; text-align:center;">
                            <div style="display:flex; flex-direction:column; gap:2px; font-size:0.65rem;">
-                             <span style="${screenStyle}">ðŸ–¥ï¸ ${a.pantalla_ok !== false ? 'PANTALLA OK' : 'PANTALLA MAL'}</span>
-                             <span style="${numStyle}">ðŸ·ï¸ ${a.numeracion_ok !== false ? 'NUMERACIÃ“N OK' : 'NUMERACIÃ“N MAL'}</span>
+                             <span style="${screenStyle}">🖥️ ${a.pantalla_ok !== false ? 'PANTALLA OK' : 'PANTALLA MAL'}</span>
+                             <span style="${numStyle}">🏷️ ${a.numeracion_ok !== false ? 'NUMERACIÓN OK' : 'NUMERACIÓN MAL'}</span>
                            </div>
                          </td>
                          <td style="padding:0.7rem; text-align:center;">
-                           <button class="btn-recibir-asignar" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(234,88,12,0.3); outline:none; transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">ðŸ“¥ RECIBIR RF</button>
+                           <button class="btn-recibir-asignar" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); border:none; color:#fff; font-weight:800; font-size:0.65rem; padding:4px 12px; border-radius:6px; cursor:pointer; box-shadow:0 3px 8px rgba(234,88,12,0.3); outline:none; transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
                          </td>
                       </tr>`;
                   }).join('') : '<tr><td colspan="6" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600;">No hay terminales asignados en uso en este turno.</td></tr>'}
@@ -3865,7 +3865,7 @@ const renderRFSection = (container) => {
           </div>
         </div>
       ` : activeRFTab === 'asignaciones' ? `
-        <!-- TABLE BITÃCORA ASIGNACIONES -->
+        <!-- TABLE BITÁCORA ASIGNACIONES -->
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
             <thead style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
@@ -3874,9 +3874,9 @@ const renderRFSection = (container) => {
                 <th style="padding:0.8rem; text-align:left;">Equipo RF</th>
                 <th style="padding:0.8rem; text-align:left;">Trabajador</th>
                 <th style="padding:0.8rem; text-align:center;">Turno</th>
-                <th style="padding:0.8rem; text-align:left;">AsignaciÃ³n (Entrega)</th>
-                <th style="padding:0.8rem; text-align:left;">DevoluciÃ³n (Retorno)</th>
-                <th style="padding:0.8rem; text-align:left;">BitÃ¡cora de Control y Observaciones</th>
+                <th style="padding:0.8rem; text-align:left;">Asignación (Entrega)</th>
+                <th style="padding:0.8rem; text-align:left;">Devolución (Retorno)</th>
+                <th style="padding:0.8rem; text-align:left;">Bitácora de Control y Observaciones</th>
                 <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
               </tr>
             </thead>
@@ -3907,32 +3907,32 @@ const renderRFSection = (container) => {
                 if (returnedTime) {
                   if (a.retorno_pantalla_ok !== false && a.retorno_numeracion_ok !== false) {
                     returnStatusHtml = `
-                      <div style="margin-bottom:6px;"><span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">âœ… CONFORME</span></div>
+                      <div style="margin-bottom:6px;"><span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">✅ CONFORME</span></div>
                       <div style="color:#10b981; font-weight:700; font-size:0.75rem;">${returnedTime}</div>
                       <div style="font-size:0.65rem; color:rgba(16,185,129,0.7); margin-top:2px;">
-                        ðŸ–¥ï¸ Pantalla: OK | ðŸ·ï¸ Num: OK
+                        🖥️ Pantalla: OK | 🏷️ Num: OK
                       </div>
                     `;
                   } else {
                     returnStatusHtml = `
-                      <div style="margin-bottom:6px;"><span style="background:rgba(239,68,68,0.25); color:#f87171; border:1px solid rgba(239,68,68,0.5); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px; box-shadow:0 0 10px rgba(239,68,68,0.25);">ðŸš¨ DAÃ‘ADO / TALLER</span></div>
+                      <div style="margin-bottom:6px;"><span style="background:rgba(239,68,68,0.25); color:#f87171; border:1px solid rgba(239,68,68,0.5); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px; box-shadow:0 0 10px rgba(239,68,68,0.25);">🚨 DAÑADO / TALLER</span></div>
                       <div style="color:#ef4444; font-weight:800; font-size:0.75rem;">${returnedTime}</div>
                       <div style="font-size:0.65rem; color:#f87171; font-weight:700; margin-top:2px; display:flex; flex-direction:column; gap:2px;">
-                        <span>${a.retorno_pantalla_ok !== false ? 'ðŸ–¥ï¸ Pantalla: OK' : 'ðŸ–¥ï¸ Pantalla: DAÃ‘ADA'}</span>
-                        <span>${a.retorno_numeracion_ok !== false ? 'ðŸ·ï¸ Num: OK' : 'ðŸ·ï¸ Num: BORRADA'}</span>
+                        <span>${a.retorno_pantalla_ok !== false ? '🖥️ Pantalla: OK' : '🖥️ Pantalla: DAÑADA'}</span>
+                        <span>${a.retorno_numeracion_ok !== false ? '🏷️ Num: OK' : '🏷️ Num: BORRADA'}</span>
                       </div>
                     `;
                   }
                 } else {
                   returnStatusHtml = `
                     <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
-                      <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">â³ EN USO</span>
-                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.62rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 2px 6px rgba(234,88,12,0.35); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">ðŸ“¥ RECIBIR RF</button>
+                      <span class="pulse-pendiente-dot" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(245,158,11,0.2); display:inline-block;">⏳ EN USO</span>
+                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border:none; color:#fff; font-size:0.62rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 2px 6px rgba(234,88,12,0.35); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
                     </div>
                   `;
                 }
                 const rfInfo = rfs.find(r => r.serie === a.rf_serial);
-                const rfNumero = rfInfo && rfInfo.numero ? `NÂ° ${rfInfo.numero} | ` : '';
+                const rfNumero = rfInfo && rfInfo.numero ? `N° ${rfInfo.numero} | ` : '';
 
                 return `
                   <tr style="${rowBg} ${rowBorder} opacity:${rowOpacity}; transition: all 0.3s ease;">
@@ -3946,40 +3946,40 @@ const renderRFSection = (container) => {
                       <span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800; color:#cbd5e1;">${a.turn}</span>
                     </td>
                     <td style="padding:0.8rem; color:#cbd5e1; font-weight:500;">
-                      <div style="font-weight:700; color:#fff; margin-bottom:4px;">ðŸ“… ${assignedTime}</div>
+                      <div style="font-weight:700; color:#fff; margin-bottom:4px;">📅 ${assignedTime}</div>
                       <div style="font-size:0.65rem; color:rgba(255,255,255,0.45); display:flex; flex-direction:column; gap:2px;">
-                        <span style="${a.pantalla_ok !== false ? 'color:#10b981;' : 'color:#ef4444; font-weight:800;'}">ðŸ–¥ï¸ Pantalla: ${a.pantalla_ok !== false ? 'OK' : 'DAÃ‘ADA'}</span>
-                        <span style="${a.numeracion_ok !== false ? 'color:#10b981;' : 'color:#ef4444; font-weight:800;'}">ðŸ·ï¸ Num: ${a.numeracion_ok !== false ? 'OK' : 'DAÃ‘ADA'}</span>
+                        <span style="${a.pantalla_ok !== false ? 'color:#10b981;' : 'color:#ef4444; font-weight:800;'}">🖥️ Pantalla: ${a.pantalla_ok !== false ? 'OK' : 'DAÑADA'}</span>
+                        <span style="${a.numeracion_ok !== false ? 'color:#10b981;' : 'color:#ef4444; font-weight:800;'}">🏷️ Num: ${a.numeracion_ok !== false ? 'OK' : 'DAÑADA'}</span>
                       </div>
                     </td>
                     <td style="padding:0.8rem;">
                       ${returnStatusHtml}
                     </td>
                     <td style="padding:0.8rem; color:#cbd5e1; font-size:0.72rem; line-height:1.4; max-width:320px; overflow:visible; word-break:break-word; white-space:normal;">
-                      ${a.notes ? `<div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:5px 8px; border-radius:6px; margin-bottom:4px; color:rgba(255,255,255,0.65);">ðŸ—£ï¸ <b>Entrega:</b> ${a.notes}</div>` : ''}
+                      ${a.notes ? `<div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:5px 8px; border-radius:6px; margin-bottom:4px; color:rgba(255,255,255,0.65);">🗣️ <b>Entrega:</b> ${a.notes}</div>` : ''}
                       ${a.return_notes ? `
                         <div style="background:${isDamaged ? 'rgba(239,68,68,0.05)' : 'rgba(16,185,129,0.05)'}; border:1px solid ${isDamaged ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}; padding:5px 8px; border-radius:6px; color:${isDamaged ? '#f87171; font-weight:700;' : '#34d399;'};">
-                          ðŸ“¥ <b>Retorno:</b> ${a.return_notes}
+                          📥 <b>Retorno:</b> ${a.return_notes}
                         </div>
                       ` : ''}
                     </td>
                     <td style="padding:0.8rem; text-align:center; border-left:1px solid rgba(255,255,255,0.02);">
                       <div style="display:flex; gap:0.5rem; justify-content:center; align-items:center;">
-                        <button class="btn-edit-assignment" data-id="${a.id}" title="Editar registro" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.35); color:#a5b4fc; font-size:0.85rem; padding:5px 9px; border-radius:7px; cursor:pointer; outline:none; transition:all 0.2s; font-weight:700;" onmouseover="this.style.background='rgba(99,102,241,0.3)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(99,102,241,0.15)'; this.style.color='#a5b4fc';">âœï¸</button>
-                        <button class="btn-delete-assignment" data-id="${a.id}" data-serial="${a.rf_serial}" data-pending="${isPending}" title="Eliminar registro" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.85rem; padding:5px 9px; border-radius:7px; cursor:pointer; outline:none; transition:all 0.2s; font-weight:700;" onmouseover="this.style.background='rgba(239,68,68,0.28)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239,68,68,0.12)'; this.style.color='#fca5a5';">ðŸ—‘ï¸</button>
+                        <button class="btn-edit-assignment" data-id="${a.id}" title="Editar registro" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.35); color:#a5b4fc; font-size:0.85rem; padding:5px 9px; border-radius:7px; cursor:pointer; outline:none; transition:all 0.2s; font-weight:700;" onmouseover="this.style.background='rgba(99,102,241,0.3)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(99,102,241,0.15)'; this.style.color='#a5b4fc';">✏️</button>
+                        <button class="btn-delete-assignment" data-id="${a.id}" data-serial="${a.rf_serial}" data-pending="${isPending}" title="Eliminar registro" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.85rem; padding:5px 9px; border-radius:7px; cursor:pointer; outline:none; transition:all 0.2s; font-weight:700;" onmouseover="this.style.background='rgba(239,68,68,0.28)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239,68,68,0.12)'; this.style.color='#fca5a5';">🗑️</button>
                       </div>
                     </td>
                   </tr>`;
-              }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitÃ¡cora.</td></tr>'}
+              }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem;">No se registran asignaciones en la bitácora.</td></tr>'}
             </tbody>
           </table>
         </div>
       ` : `
-        <!-- REVISIÃ“N RF SECTION -->
+        <!-- REVISIÓN RF SECTION -->
         <div style="display:grid; grid-template-columns: 380px 1fr; gap:1.5rem; align-items:start;">
           <!-- COLUMNA IZQUIERDA: CONTROL Y ESCANEO -->
           <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08);">
-            <h4 style="margin:0 0 1.2rem 0; color:var(--primary); font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">ðŸ” Panel de ValidaciÃ³n</h4>
+            <h4 style="margin:0 0 1.2rem 0; color:var(--primary); font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🔍 Panel de Validación</h4>
             
             <div style="display:flex; flex-direction:column; gap:0.9rem;">
               <div>
@@ -4002,18 +4002,18 @@ const renderRFSection = (container) => {
                   <span style="font-size:0.6rem; color:#10b981; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Listo</span>
                 </div>
 
-                <label style="font-size:0.75rem; color:#fff; display:block; margin-bottom:10px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">âš¡ Escanear Terminal RF:</label>
-                <input type="text" id="rf_rev_scanner_input" placeholder="Pistolear CÃ³digo..." autofocus autocomplete="off" style="width:100%; background:rgba(15,23,42,0.9); border:2px solid rgba(99,102,241,0.6); color:#fff; font-size:1.1rem; font-weight:900; letter-spacing:1px; outline:none; padding:0.7rem; border-radius:8px; text-align:center; box-shadow:0 0 10px rgba(99,102,241,0.25); transition:all 0.2s;" onfocus="this.style.borderColor='#818cf8'; this.style.boxShadow='0 0 15px rgba(129,140,248,0.4)';" onblur="this.style.borderColor='rgba(99,102,241,0.6)';">
+                <label style="font-size:0.75rem; color:#fff; display:block; margin-bottom:10px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">⚡ Escanear Terminal RF:</label>
+                <input type="text" id="rf_rev_scanner_input" placeholder="Pistolear Código..." autofocus autocomplete="off" style="width:100%; background:rgba(15,23,42,0.9); border:2px solid rgba(99,102,241,0.6); color:#fff; font-size:1.1rem; font-weight:900; letter-spacing:1px; outline:none; padding:0.7rem; border-radius:8px; text-align:center; box-shadow:0 0 10px rgba(99,102,241,0.25); transition:all 0.2s;" onfocus="this.style.borderColor='#818cf8'; this.style.boxShadow='0 0 15px rgba(129,140,248,0.4)';" onblur="this.style.borderColor='rgba(99,102,241,0.6)';">
                 
                 <span style="font-size:0.6rem; color:var(--text-muted); display:block; margin-top:8px;">Haga clic en la caja si pierde el foco para seguir pistoleando.</span>
               </div>
 
               <!-- BOTONES AUXILIARES -->
               <div style="display:flex; flex-direction:column; gap:8px; margin-top:0.5rem;">
-                <button id="btn_generate_summary" class="btn" style="width:100%; background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); color:#fff; font-size:0.8rem; padding:0.7rem; font-weight:800; border-radius:8px; box-shadow:0 4px 12px rgba(79,70,229,0.35); border:none; cursor:pointer;">ðŸ“Š Generar Resumen</button>
+                <button id="btn_generate_summary" class="btn" style="width:100%; background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); color:#fff; font-size:0.8rem; padding:0.7rem; font-weight:800; border-radius:8px; box-shadow:0 4px 12px rgba(79,70,229,0.35); border:none; cursor:pointer;">📊 Generar Resumen</button>
                 <div style="display:flex; gap:10px;">
-                  <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.background='rgba(239,68,68,0.1)';">ðŸ—‘ï¸ Limpiar Lecturas</button>
-                  <button id="btn_export_revision" class="btn" style="flex:1; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.2)';" onmouseout="this.style.background='rgba(16,185,129,0.1)';">ðŸ“¥ Exportar Reporte</button>
+                  <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.background='rgba(239,68,68,0.1)';">🗑️ Limpiar Lecturas</button>
+                  <button id="btn_export_revision" class="btn" style="flex:1; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0; font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.2)';" onmouseout="this.style.background='rgba(16,185,129,0.1)';">📥 Exportar Reporte</button>
                 </div>
               </div>
 
@@ -4027,11 +4027,11 @@ const renderRFSection = (container) => {
                 
                 return `
                   <div style="background:${bg}; border:${border}; border-radius:10px; padding:0.8rem; margin-top:0.3rem;">
-                    <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px;">Ãšltima RF Escaneada:</span>
+                    <span style="font-size:0.6rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px;">Última RF Escaneada:</span>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                       <span style="font-size:1.1rem; font-weight:900; color:#fff; font-family:monospace;">${last.serial}</span>
                       <span style="background:${isExpected?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'}; color:${color}; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid ${color}44;">
-                        ${isExpected ? 'âœ”ï¸ CONFORME' : 'âŒ NO ESPERADO'}
+                        ${isExpected ? '✔️ CONFORME' : '❌ NO ESPERADO'}
                       </span>
                     </div>
                   </div>
@@ -4040,13 +4040,13 @@ const renderRFSection = (container) => {
             </div>
           </div>
 
-          <!-- COLUMNA DERECHA: COMPARACIÃ“N Y LISTAS -->
+          <!-- COLUMNA DERECHA: COMPARACIÓN Y LISTAS -->
           <div style="display:flex; flex-direction:column; gap:1.5rem; flex:1; width:100%; overflow:hidden;">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-              <!-- EQUIPOS LEÃDOS / HISTORIAL -->
+              <!-- EQUIPOS LEÍDOS / HISTORIAL -->
               <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:420px;">
                 <h4 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
-                  ðŸ“‹ Equipos Escaneados (${scannedRfs.length})
+                  📋 Equipos Escaneados (${scannedRfs.length})
                 </h4>
                 
                 <div style="overflow-y:auto; max-height:350px; flex:1;">
@@ -4055,7 +4055,7 @@ const renderRFSection = (container) => {
                       <tr>
                         <th style="padding:0.6rem; text-align:left;">Equipo RF</th>
                         <th style="padding:0.6rem; text-align:left;">Estado anterior / Operario</th>
-                        <th style="padding:0.6rem; text-align:center; width:90px;">ValidaciÃ³n</th>
+                        <th style="padding:0.6rem; text-align:center; width:90px;">Validación</th>
                         <th style="padding:0.6rem; text-align:center; width:40px;"></th>
                       </tr>
                     </thead>
@@ -4077,13 +4077,13 @@ const renderRFSection = (container) => {
                             </td>
                             <td style="padding:0.7rem; text-align:center;">
                               ${isExpected ? `
-                                <span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">âœ”ï¸ BIEN</span>
+                                <span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">✔️ BIEN</span>
                               ` : `
-                                <span style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">âŒ X</span>
+                                <span style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; display:inline-block; letter-spacing:0.5px;">❌ X</span>
                               `}
                             </td>
                             <td style="padding:0.7rem; text-align:center;">
-                              <button class="btn-delete-scan" data-idx="${sIdx}" style="background:none; border:none; cursor:pointer; font-size:0.8rem; filter:grayscale(0.5); outline:none;">ðŸ—‘ï¸</button>
+                              <button class="btn-delete-scan" data-idx="${sIdx}" style="background:none; border:none; cursor:pointer; font-size:0.8rem; filter:grayscale(0.5); outline:none;">🗑️</button>
                             </td>
                           </tr>
                         `;
@@ -4096,7 +4096,7 @@ const renderRFSection = (container) => {
               <!-- EQUIPOS PENDIENTES / FALTANTES -->
               <div class="glass-panel" style="padding:1.5rem; background:rgba(30, 41, 59, 0.4); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:420px;">
                 <h4 style="margin:0 0 1rem 0; color:#ef4444; font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
-                  â³ Pendientes por Encontrar (${pendingCount})
+                  ⏳ Pendientes por Encontrar (${pendingCount})
                 </h4>
                 
                 <div style="overflow-y:auto; max-height:350px; flex:1;">
@@ -4116,14 +4116,14 @@ const renderRFSection = (container) => {
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                               <td style="padding:0.7rem; font-weight:900; color:#fff; font-family:monospace;">${ser}</td>
                               <td style="padding:0.7rem;">
-                                <div style="font-weight:700; color:#cbd5e1;">${detail ? detail.worker_name : 'â€”'}</div>
+                                <div style="font-weight:700; color:#cbd5e1;">${detail ? detail.worker_name : '—'}</div>
                               </td>
                               <td style="padding:0.7rem; text-align:center; color:var(--text-muted);">
-                                ${detail ? detail.turn : 'â€”'}
+                                ${detail ? detail.turn : '—'}
                               </td>
                             </tr>
                           `;
-                        }).join('') : '<tr><td colspan="3" style="padding:3rem; text-align:center; color:#10b981; font-weight:800; font-size:0.85rem;">ðŸŽ‰ Â¡Todos los equipos esperados han sido validados!</td></tr>'}
+                        }).join('') : '<tr><td colspan="3" style="padding:3rem; text-align:center; color:#10b981; font-weight:800; font-size:0.85rem;">🎉 ¡Todos los equipos esperados han sido validados!</td></tr>'}
                     </tbody>
                   </table>
                 </div>
@@ -4134,7 +4134,7 @@ const renderRFSection = (container) => {
       `}
     `;
 
-    // AÃ‘ADIR LISTENERS DE EVENTOS
+    // AÑADIR LISTENERS DE EVENTOS
     setTimeout(() => {
       // TAB CLICKS
       const tabInv = document.getElementById('rf_tab_inventario');
@@ -4171,7 +4171,7 @@ const renderRFSection = (container) => {
             const val = e.target.value.trim();
             if (val) {
               if (scannedRfs.some(s => s.serial === val)) {
-                alert(`âš ï¸ El equipo ${val} ya fue escaneado en esta sesiÃ³n.`);
+                alert(`⚠️ El equipo ${val} ya fue escaneado en esta sesión.`);
                 e.target.value = '';
                 return;
               }
@@ -4191,7 +4191,7 @@ const renderRFSection = (container) => {
       const btnClearRev = document.getElementById('btn_clear_revision');
       if (btnClearRev) {
         btnClearRev.onclick = () => {
-          if (confirm("Â¿EstÃ¡ seguro de limpiar todas las lecturas de la sesiÃ³n de validaciÃ³n actual?")) {
+          if (confirm("¿Está seguro de limpiar todas las lecturas de la sesión de validación actual?")) {
             scannedRfs = [];
             renderRFSection(container);
           }
@@ -4209,7 +4209,7 @@ const renderRFSection = (container) => {
           modal.innerHTML = `
             <div class="glass-panel" style="width:580px; max-height:85vh; display:flex; flex-direction:column; padding:2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.25); overflow:hidden;">
               <h3 style="margin:0 0 1.2rem 0; color:#fff; font-size:1.15rem; font-weight:800; text-align:center; letter-spacing:0.5px;">
-                ðŸ“Š RESUMEN DE VALIDACIÃ“N RF
+                📊 RESUMEN DE VALIDACIÓN RF
               </h3>
               
               <!-- METRICS GRID -->
@@ -4234,26 +4234,26 @@ const renderRFSection = (container) => {
 
               <!-- DETAILS CONTAINER -->
               <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1.2rem; margin-bottom:1.5rem; padding-right:5px;">
-                <!-- SECCIÃ“N FALTANTES -->
+                <!-- SECCIÓN FALTANTES -->
                 <div>
                   <h4 style="margin:0 0 8px 0; color:#ef4444; font-size:0.78rem; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
-                    â³ FALTANTES POR ENCONTRAR (${missing.length})
+                    ⏳ FALTANTES POR ENCONTRAR (${missing.length})
                   </h4>
                   <div style="background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:8px; font-size:0.72rem; max-height:180px; overflow-y:auto;">
                     ${missing.length ? missing.map(ser => {
                       const detail = expectedRFDetails[ser];
                       return `<div style="padding:6px; border-bottom:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between;">
                         <span style="font-family:monospace; font-weight:800; color:#fff;">${ser}</span>
-                        <span style="color:var(--text-muted); font-size:0.68rem;">Anterior: ${detail ? detail.worker_name : 'â€”'} (${detail ? detail.turn : 'â€”'})</span>
+                        <span style="color:var(--text-muted); font-size:0.68rem;">Anterior: ${detail ? detail.worker_name : '—'} (${detail ? detail.turn : '—'})</span>
                       </div>`;
-                    }).join('') : '<div style="color:var(--success); text-align:center; padding:8px; font-weight:700;">Â¡NingÃºn equipo faltante! Todos fueron validados.</div>'}
+                    }).join('') : '<div style="color:var(--success); text-align:center; padding:8px; font-weight:700;">¡Ningún equipo faltante! Todos fueron validados.</div>'}
                   </div>
                 </div>
 
-                <!-- SECCIÃ“N INESPERADOS -->
+                <!-- SECCIÓN INESPERADOS -->
                 <div>
                   <h4 style="margin:0 0 8px 0; color:#3b82f6; font-size:0.78rem; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
-                    âŒ INESPERADOS / NUEVOS DETECTADOS (${unexpected.length})
+                    ❌ INESPERADOS / NUEVOS DETECTADOS (${unexpected.length})
                   </h4>
                   <div style="background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:8px; font-size:0.72rem; max-height:180px; overflow-y:auto;">
                     ${unexpected.length ? unexpected.map(s => {
@@ -4287,15 +4287,15 @@ const renderRFSection = (container) => {
           const unexpected = scannedRfs.filter(s => !expectedRFSerials.includes(s.serial));
           
           if (!scannedRfs.length && !missing.length) {
-            alert("âš ï¸ No hay lecturas escaneadas ni faltantes para exportar.");
+            alert("⚠️ No hay lecturas escaneadas ni faltantes para exportar.");
             return;
           }
           
-          let reportContent = `REPORTE DE VALIDACIÃ“N Y REVISIÃ“N DE RF\n`;
+          let reportContent = `REPORTE DE VALIDACIÓN Y REVISIÓN DE RF\n`;
           reportContent += `========================================\n`;
           reportContent += `Fecha Referencia: ${revisionDate}\n`;
           reportContent += `Turno Referencia: ${revisionTurn}\n`;
-          reportContent += `Fecha de GeneraciÃ³n: ${new Date().toLocaleString('es-ES')}\n`;
+          reportContent += `Fecha de Generación: ${new Date().toLocaleString('es-ES')}\n`;
           reportContent += `----------------------------------------\n\n`;
           reportContent += `RESUMEN DE EQUIPOS:\n`;
           reportContent += `Esperados: ${totalExpected}\n`;
@@ -4310,11 +4310,11 @@ const renderRFSection = (container) => {
             missing.forEach(ser => {
               const detail = expectedRFDetails[ser];
               const workerName = detail ? detail.worker_name : 'Sin registro';
-              const turnName = detail ? detail.turn : 'â€”';
+              const turnName = detail ? detail.turn : '—';
               reportContent += `- Serial: ${ser} - Anterior: ${workerName} (${turnName})\n`;
             });
           } else {
-            reportContent += `Â¡NingÃºn equipo faltante! Todos fueron encontrados.\n`;
+            reportContent += `¡Ningún equipo faltante! Todos fueron encontrados.\n`;
           }
           
           reportContent += `\nINESPERADOS / NUEVOS DETECTADOS:\n`;
@@ -4391,7 +4391,7 @@ const renderRFSection = (container) => {
           // Validar asignaciones existentes
           const workerActiveRf = rfs.find(r => r.asignadoDni === workerDni);
           if (workerActiveRf) {
-            if (!confirm(`âš ï¸ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. Â¿Deseas asignarle este nuevo equipo adicional?`)) {
+            if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
               return;
             }
           }
@@ -4405,7 +4405,7 @@ const renderRFSection = (container) => {
             listRfs[rfIdx].asignadoTurno = turnVal;
           }
 
-          // Crear AsignaciÃ³n
+          // Crear Asignación
           const listAssignments = [...assignments];
           listAssignments.push({
             id: 'ASIG_' + Date.now(),
@@ -4424,12 +4424,12 @@ const renderRFSection = (container) => {
           await adminService.saveRfs(listRfs);
           await adminService.saveRfAssignments(listAssignments);
 
-          alert(`âœ… AsignaciÃ³n rÃ¡pida exitosa: RF ${rfSerie} entregada a ${worker.nombre}.`);
+          alert(`✅ Asignación rápida exitosa: RF ${rfSerie} entregada a ${worker.nombre}.`);
           renderRFSection(container);
         };
       }
 
-      // BOTÃ“N SINCRONIZAR
+      // BOTÓN SINCRONIZAR
       const btnSyncRf = document.getElementById('rf_btn_sync');
       if (btnSyncRf) btnSyncRf.onclick = () => renderRFSection(container);
 
@@ -4437,7 +4437,7 @@ const renderRFSection = (container) => {
       const btnNewRf = document.getElementById('btn_new_rf');
       if (btnNewRf) btnNewRf.onclick = () => abrirModalRF(container);
 
-      // NUEVA BATERÃA
+      // NUEVA BATERÍA
       const btnNewBattery = document.getElementById('btn_new_battery');
       if (btnNewBattery) btnNewBattery.onclick = () => abrirModalBattery(container);
 
@@ -4456,16 +4456,16 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-delete-rf').forEach(btn => {
         btn.onclick = async (e) => {
           const serie = e.currentTarget.dataset.serie;
-          if (confirm(`Â¿EstÃ¡s seguro de eliminar el terminal RF ${serie} de forma permanente?`)) {
+          if (confirm(`¿Estás seguro de eliminar el terminal RF ${serie} de forma permanente?`)) {
             const list = adminService.getRfs().filter(r => r.serie !== serie);
             await adminService.saveRfs(list);
-            alert("âœ… Equipo eliminado con Ã©xito.");
+            alert("✅ Equipo eliminado con éxito.");
             renderRFSection(container);
           }
         };
       });
 
-      // ACCIONES INDIVIDUALES BATERÃAS
+      // ACCIONES INDIVIDUALES BATERÍAS
       container.querySelectorAll('.btn-edit-battery').forEach(btn => {
         btn.onclick = (e) => {
           const bat = JSON.parse(e.currentTarget.dataset.battery);
@@ -4476,10 +4476,10 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-delete-battery').forEach(btn => {
         btn.onclick = async (e) => {
           const codigo = e.currentTarget.dataset.codigo;
-          if (confirm(`Â¿EstÃ¡s seguro de eliminar la baterÃ­a ${codigo} de forma permanente?`)) {
+          if (confirm(`¿Estás seguro de eliminar la batería ${codigo} de forma permanente?`)) {
             const list = adminService.getRfsBatteries().filter(b => b.codigo !== codigo);
             await adminService.saveRfsBatteries(list);
-            alert("âœ… BaterÃ­a eliminada con Ã©xito.");
+            alert("✅ Batería eliminada con éxito.");
             renderRFSection(container);
           }
         };
@@ -4496,16 +4496,16 @@ const renderRFSection = (container) => {
       container.querySelectorAll('.btn-delete-charger').forEach(btn => {
         btn.onclick = async (e) => {
           const codigo = e.currentTarget.dataset.codigo;
-          if (confirm(`Â¿EstÃ¡s seguro de eliminar el cargador ${codigo} de forma permanente?`)) {
+          if (confirm(`¿Estás seguro de eliminar el cargador ${codigo} de forma permanente?`)) {
             const list = adminService.getRfsChargers().filter(c => c.codigo !== codigo);
             await adminService.saveRfsChargers(list);
-            alert("âœ… Cargador eliminado con Ã©xito.");
+            alert("✅ Cargador eliminado con éxito.");
             renderRFSection(container);
           }
         };
       });
 
-      // BOTÃ“N DE RECIBIR en la tabla ASIGNAR RF
+      // BOTÓN DE RECIBIR en la tabla ASIGNAR RF
       container.querySelectorAll('.btn-recibir-asignar').forEach(btn => {
         btn.onclick = (e) => {
           e.stopPropagation();
@@ -4514,7 +4514,7 @@ const renderRFSection = (container) => {
         };
       });
 
-      // BOTÃ“N DE RECIBIR en BitÃ¡cora (dentro de celda DevoluciÃ³n)
+      // BOTÓN DE RECIBIR en Bitácora (dentro de celda Devolución)
       container.querySelectorAll('.btn-recibir-rf').forEach(btn => {
         btn.onclick = (e) => {
           e.stopPropagation();
@@ -4523,7 +4523,7 @@ const renderRFSection = (container) => {
         };
       });
 
-      // EDITAR ASIGNACIÃ“N EN BITÃCORA
+      // EDITAR ASIGNACIÓN EN BITÁCORA
       container.querySelectorAll('.btn-edit-assignment').forEach(btn => {
         btn.onclick = (e) => {
           const id = e.currentTarget.dataset.id;
@@ -4531,13 +4531,13 @@ const renderRFSection = (container) => {
         };
       });
 
-      // BORRAR ASIGNACIÃ“N EN BITÃCORA
+      // BORRAR ASIGNACIÓN EN BITÁCORA
       container.querySelectorAll('.btn-delete-assignment').forEach(btn => {
         btn.onclick = async (e) => {
           const id = e.currentTarget.dataset.id;
           const serial = e.currentTarget.dataset.serial;
           const isPendingDel = e.currentTarget.dataset.pending === 'true';
-          if (!confirm(`Â¿Eliminar este registro de asignaciÃ³n del equipo ${serial}?\nEsta acciÃ³n no se puede deshacer.`)) return;
+          if (!confirm(`¿Eliminar este registro de asignación del equipo ${serial}?\nEsta acción no se puede deshacer.`)) return;
           let listAsig = adminService.getRfAssignments().filter(a => a.id !== id);
           await adminService.saveRfAssignments(listAsig);
           // Si estaba activa (en uso), liberar el RF
@@ -4551,7 +4551,7 @@ const renderRFSection = (container) => {
               await adminService.saveRfs(listRfs);
             }
           }
-          alert('âœ… Registro eliminado correctamente.');
+          alert('✅ Registro eliminado correctamente.');
           renderRFSection(container);
         };
       });
@@ -4563,7 +4563,7 @@ const renderRFSection = (container) => {
     const allAssignments = adminService.getRfAssignments() || [];
     const allWorkers = adminService.getWorkers() || [];
     const a = allAssignments.find(x => x.id === asigId);
-    if (!a) return alert('No se encontrÃ³ el registro.');
+    if (!a) return alert('No se encontró el registro.');
 
     const toLocalDT = (isoStr) => {
       if (!isoStr) return '';
@@ -4577,7 +4577,7 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:min(600px,96vw); padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(99,102,241,0.25); background:linear-gradient(135deg, rgba(30,41,59,0.97) 0%, rgba(15,23,42,0.99) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.6), 0 0 40px rgba(99,102,241,0.15); position:relative; max-height:90vh; overflow-y:auto;">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit',sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          âœï¸ EDITAR REGISTRO DE ASIGNACIÃ“N
+          ✏️ EDITAR REGISTRO DE ASIGNACIÓN
         </h3>
         <div style="font-size:0.7rem; color:rgba(255,255,255,0.35); text-align:center; margin-bottom:1.5rem; font-family:monospace;">ID: ${a.id}</div>
 
@@ -4585,7 +4585,7 @@ const renderRFSection = (container) => {
 
           <!-- TRABAJADOR -->
           <div>
-            <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ðŸ‘· TRABAJADOR:</label>
+            <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">👷 TRABAJADOR:</label>
             <select id="ea_worker" style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.78rem;">
               ${allWorkers.filter(w => w.active !== false).map(w =>
                 `<option value="${w.dni}|${w.apellidos}, ${w.nombre}" style="background:#0f172a;" ${a.worker_dni === w.dni ? 'selected' : ''}>${w.apellidos}, ${w.nombre} (${w.dni})</option>`
@@ -4595,16 +4595,16 @@ const renderRFSection = (container) => {
 
           <!-- TURNO -->
           <div>
-            <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ðŸ”„ TURNO:</label>
+            <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">🔄 TURNO:</label>
             <select id="ea_turn" style="width:100%; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.78rem;">
               <option value="DIA" style="background:#0f172a;" ${a.turn === 'DIA' ? 'selected' : ''}>DIA</option>
               <option value="NOCHE" style="background:#0f172a;" ${a.turn === 'NOCHE' ? 'selected' : ''}>NOCHE</option>
             </select>
           </div>
 
-          <!-- SEPARADOR: ASIGNACIÃ“N (ENTREGA) -->
+          <!-- SEPARADOR: ASIGNACIÓN (ENTREGA) -->
           <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
-            <p style="margin:0 0 0.8rem 0; font-size:0.72rem; color:#818cf8; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">ðŸ“¦ ASIGNACIÃ“N (ENTREGA):</p>
+            <p style="margin:0 0 0.8rem 0; font-size:0.72rem; color:#818cf8; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📦 ASIGNACIÓN (ENTREGA):</p>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
               <div>
                 <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">FECHA / HORA:</label>
@@ -4612,11 +4612,11 @@ const renderRFSection = (container) => {
               </div>
               <div style="display:flex; flex-direction:column; gap:0.6rem; padding-top:0.3rem;">
                 <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
-                  <span>ðŸ–¥ï¸ Pantalla OK</span>
+                  <span>🖥️ Pantalla OK</span>
                   <input type="checkbox" id="ea_pantalla_ok" ${a.pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
                 </label>
                 <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
-                  <span>ðŸ·ï¸ NumeraciÃ³n OK</span>
+                  <span>🏷️ Numeración OK</span>
                   <input type="checkbox" id="ea_numeracion_ok" ${a.numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
                 </label>
               </div>
@@ -4627,9 +4627,9 @@ const renderRFSection = (container) => {
             </div>
           </div>
 
-          <!-- SEPARADOR: DEVOLUCIÃ“N (RETORNO) -->
+          <!-- SEPARADOR: DEVOLUCIÓN (RETORNO) -->
           <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
-            <p style="margin:0 0 0.8rem 0; font-size:0.72rem; color:#34d399; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">ðŸ“¥ DEVOLUCIÃ“N (RETORNO):</p>
+            <p style="margin:0 0 0.8rem 0; font-size:0.72rem; color:#34d399; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📥 DEVOLUCIÓN (RETORNO):</p>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
               <div>
                 <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">FECHA / HORA:</label>
@@ -4637,17 +4637,17 @@ const renderRFSection = (container) => {
               </div>
               <div style="display:flex; flex-direction:column; gap:0.6rem; padding-top:0.3rem;">
                 <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
-                  <span>ðŸ–¥ï¸ Pantalla OK</span>
+                  <span>🖥️ Pantalla OK</span>
                   <input type="checkbox" id="ea_ret_pantalla_ok" ${a.retorno_pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#10b981;">
                 </label>
                 <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.73rem;">
-                  <span>ðŸ·ï¸ NumeraciÃ³n OK</span>
+                  <span>🏷️ Numeración OK</span>
                   <input type="checkbox" id="ea_ret_numeracion_ok" ${a.retorno_numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:#10b981;">
                 </label>
               </div>
             </div>
             <div>
-              <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES RETORNO (BitÃ¡cora):</label>
+              <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES RETORNO (Bitácora):</label>
               <textarea id="ea_return_notes" rows="2" placeholder="Observaciones al momento del retorno..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;">${a.return_notes || ''}</textarea>
             </div>
           </div>
@@ -4655,7 +4655,7 @@ const renderRFSection = (container) => {
           <!-- BOTONES -->
           <div style="display:flex; gap:10px; margin-top:0.8rem;">
             <button type="button" id="ea_cancel" style="flex:1; padding:0.8rem; border:1px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:0.85rem; font-weight:700; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">CANCELAR</button>
-            <button type="submit" style="flex:2; padding:0.8rem; border:none; border-radius:12px; background:linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color:#fff; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(99,102,241,0.35); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">ðŸ’¾ GUARDAR CAMBIOS</button>
+            <button type="submit" style="flex:2; padding:0.8rem; border:none; border-radius:12px; background:linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color:#fff; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(99,102,241,0.35); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">💾 GUARDAR CAMBIOS</button>
           </div>
         </form>
       </div>
@@ -4702,24 +4702,24 @@ const renderRFSection = (container) => {
       });
       await adminService.saveRfAssignments(updatedList);
 
-      // Sincronizar estado del RF si cambiÃ³ de activo a devuelto o viceversa
+      // Sincronizar estado del RF si cambió de activo a devuelto o viceversa
       const listRfs = adminService.getRfs();
       const rfIdx = listRfs.findIndex(r => r.serie === a.rf_serial);
       if (rfIdx !== -1) {
         if (wasActive && !nowActive) {
-          // Era activo, ahora fue devuelto â†’ liberar RF
+          // Era activo, ahora fue devuelto → liberar RF
           listRfs[rfIdx].asignadoDni = null;
           listRfs[rfIdx].asignadoNombre = null;
           listRfs[rfIdx].asignadoTurno = null;
           await adminService.saveRfs(listRfs);
         } else if (!wasActive && nowActive) {
-          // Era devuelto, ahora vuelve a estar activo â†’ re-asignar RF
+          // Era devuelto, ahora vuelve a estar activo → re-asignar RF
           listRfs[rfIdx].asignadoDni = newDni;
           listRfs[rfIdx].asignadoNombre = newName;
           listRfs[rfIdx].asignadoTurno = newTurn;
           await adminService.saveRfs(listRfs);
         } else if (wasActive && nowActive) {
-          // Sigue activo, actualizar nombre/turno si cambiÃ³
+          // Sigue activo, actualizar nombre/turno si cambió
           listRfs[rfIdx].asignadoDni = newDni;
           listRfs[rfIdx].asignadoNombre = newName;
           listRfs[rfIdx].asignadoTurno = newTurn;
@@ -4727,7 +4727,7 @@ const renderRFSection = (container) => {
         }
       }
 
-      alert('âœ… Registro de asignaciÃ³n actualizado correctamente.');
+      alert('✅ Registro de asignación actualizado correctamente.');
       modal.remove();
       renderRFSection(container);
     };
@@ -4743,7 +4743,7 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          ${isEdit ? 'âœï¸ EDITAR EQUIPO RF' : 'ðŸ“¡ REGISTRAR EQUIPO RF'}
+          ${isEdit ? '✏️ EDITAR EQUIPO RF' : '📡 REGISTRAR EQUIPO RF'}
         </h3>
         
         <form id="form_rf_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
@@ -4764,17 +4764,17 @@ const renderRFSection = (container) => {
           </div>
 
           <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">NÃšMERO:</label>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">NÚMERO:</label>
             <input type="text" id="rf_m_numero" placeholder="Ej: 001, A-12, RF-05..." value="${rf ? (rf.numero || '') : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(99,102,241,0.35); color:#a5b4fc; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:700; font-size:0.85rem;">
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
-              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÃA (%):</label>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÍA (%):</label>
               <input type="number" id="rf_m_bateria" min="0" max="100" required value="${rf ? rf.bateria : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
             </div>
             <div>
-              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÃSICO:</label>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
               <select id="rf_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
                 <option value="Operativo" ${rf && rf.estado==='Operativo'?'selected':''}>OPERATIVO</option>
                 <option value="En Mantenimiento" ${rf && rf.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
@@ -4811,7 +4811,7 @@ const renderRFSection = (container) => {
 
       if (!isEdit) {
         if (rfs.find(r => r.serie === serieVal)) {
-          return alert(`âŒ Error: El equipo con Serie ${serieVal} ya se encuentra registrado.`);
+          return alert(`❌ Error: El equipo con Serie ${serieVal} ya se encuentra registrado.`);
         }
       }
 
@@ -4824,7 +4824,7 @@ const renderRFSection = (container) => {
             const activeAssignment = assignments.find(a => a.rf_serial === serieVal && !a.returned_at);
             if (activeAssignment) {
               activeAssignment.returned_at = new Date().toISOString();
-              activeAssignment.return_notes = `Retorno forzado: El equipo pasÃ³ a estado ${estadoVal}.`;
+              activeAssignment.return_notes = `Retorno forzado: El equipo pasó a estado ${estadoVal}.`;
               await adminService.saveRfAssignments(assignments);
             }
             list[idx].asignadoDni = null;
@@ -4837,7 +4837,7 @@ const renderRFSection = (container) => {
       }
 
       await adminService.saveRfs(list);
-      alert(isEdit ? "âœ… Datos del equipo actualizados." : "âœ… Equipo RF registrado con Ã©xito.");
+      alert(isEdit ? "✅ Datos del equipo actualizados." : "✅ Equipo RF registrado con éxito.");
       modal.remove();
       renderRFSection(container);
     };
@@ -4852,12 +4852,12 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(16,185,129,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          ${isEdit ? 'âœï¸ EDITAR BATERÃA' : 'ðŸ”‹ REGISTRAR BATERÃA'}
+          ${isEdit ? '✏️ EDITAR BATERÍA' : '🔋 REGISTRAR BATERÍA'}
         </h3>
         
         <form id="form_battery_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CÃ“DIGO DE BATERÃA:</label>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CÓDIGO DE BATERÍA:</label>
             <input type="text" id="bat_m_codigo" required value="${bat ? bat.codigo : ''}" ${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
           </div>
 
@@ -4872,7 +4872,7 @@ const renderRFSection = (container) => {
               <input type="number" id="bat_m_salud" min="0" max="100" required value="${bat ? bat.salud : '100'}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
             </div>
             <div>
-              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÃSICO:</label>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
               <select id="bat_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
                 <option value="Operativo" ${bat && bat.estado==='Operativo'?'selected':''}>OPERATIVO</option>
                 <option value="En Mantenimiento" ${bat && bat.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
@@ -4882,13 +4882,13 @@ const renderRFSection = (container) => {
           </div>
 
           <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">UBICACIÃ“N / RANURA DE CARGA:</label>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">UBICACIÓN / RANURA DE CARGA:</label>
             <input type="text" id="bat_m_ubicacion" required placeholder="Ej: Cargador 1, Ranura 3" value="${bat ? bat.ubicacion : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / COMENTARIOS:</label>
-            <textarea id="bat_m_comentarios" rows="3" placeholder="Comentarios sobre el estado de la baterÃ­a..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">${bat ? (bat.comentarios || '') : ''}</textarea>
+            <textarea id="bat_m_comentarios" rows="3" placeholder="Comentarios sobre el estado de la batería..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;">${bat ? (bat.comentarios || '') : ''}</textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -4913,7 +4913,7 @@ const renderRFSection = (container) => {
 
       if (!isEdit) {
         if (batteries.find(b => b.codigo === codigoVal)) {
-          return alert(`âŒ Error: La baterÃ­a con CÃ³digo ${codigoVal} ya se encuentra registrada.`);
+          return alert(`❌ Error: La batería con Código ${codigoVal} ya se encuentra registrada.`);
         }
       }
 
@@ -4928,7 +4928,7 @@ const renderRFSection = (container) => {
       }
 
       await adminService.saveRfsBatteries(list);
-      alert(isEdit ? "âœ… Datos de la baterÃ­a actualizados." : "âœ… BaterÃ­a registrada con Ã©xito.");
+      alert(isEdit ? "✅ Datos de la batería actualizados." : "✅ Batería registrada con éxito.");
       modal.remove();
       renderRFSection(container);
     };
@@ -4943,12 +4943,12 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(6, 182, 212, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(6,182,212,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.2rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          ${isEdit ? 'âœï¸ EDITAR CARGADOR' : 'ðŸ”Œ REGISTRAR CARGADOR'}
+          ${isEdit ? '✏️ EDITAR CARGADOR' : '🔌 REGISTRAR CARGADOR'}
         </h3>
         
         <form id="form_charger_modal" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CÃ“DIGO DE CARGADOR:</label>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">CÓDIGO DE CARGADOR:</label>
             <input type="text" id="chg_m_codigo" required value="${chg ? chg.codigo : ''}" ${isEdit ? 'readonly style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); cursor:not-allowed; width:100%; outline:none; padding:0.6rem; border-radius:8px;"' : 'style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-family:monospace; font-weight:800;"'}>
           </div>
 
@@ -4976,11 +4976,11 @@ const renderRFSection = (container) => {
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div>
-              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">UBICACIÃ“N / MESA:</label>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">UBICACIÓN / MESA:</label>
               <input type="text" id="chg_m_ubicacion" required placeholder="Ej: Mesa de Carga 1" value="${chg ? chg.ubicacion : ''}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:600;">
             </div>
             <div>
-              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÃSICO:</label>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">ESTADO FÍSICO:</label>
               <select id="chg_m_estado" style="background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:700; cursor:pointer;">
                 <option value="Operativo" ${chg && chg.estado==='Operativo'?'selected':''}>OPERATIVO</option>
                 <option value="En Mantenimiento" ${chg && chg.estado==='En Mantenimiento'?'selected':''}>EN MANTENIMIENTO</option>
@@ -5017,12 +5017,12 @@ const renderRFSection = (container) => {
       const comentariosVal = modal.querySelector('#chg_m_comentarios').value.trim();
 
       if (parseInt(ranurasOkVal) > parseInt(capacidadVal)) {
-        return alert("âŒ Error: Las ranuras operativas no pueden exceder la capacidad total.");
+        return alert("❌ Error: Las ranuras operativas no pueden exceder la capacidad total.");
       }
 
       if (!isEdit) {
         if (chargers.find(c => c.codigo === codigoVal)) {
-          return alert(`âŒ Error: El cargador con CÃ³digo ${codigoVal} ya se encuentra registrado.`);
+          return alert(`❌ Error: El cargador con Código ${codigoVal} ya se encuentra registrado.`);
         }
       }
 
@@ -5037,7 +5037,7 @@ const renderRFSection = (container) => {
       }
 
       await adminService.saveRfsChargers(list);
-      alert(isEdit ? "âœ… Datos del cargador actualizados." : "âœ… Cargador registrado con Ã©xito.");
+      alert(isEdit ? "✅ Datos del cargador actualizados." : "✅ Cargador registrado con éxito.");
       modal.remove();
       renderRFSection(container);
     };
@@ -5059,7 +5059,7 @@ const renderRFSection = (container) => {
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          ðŸ‘· ASIGNAR EQUIPO RF
+          👷 ASIGNAR EQUIPO RF
         </h3>
         <p style="margin:-1rem 0 1.5rem 0; text-align:center; color:var(--primary); font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
         
@@ -5081,22 +5081,22 @@ const renderRFSection = (container) => {
           </div>
 
           <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
-            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">ðŸ“ CRITERIOS DE CONTROL (ENTREGA):</span>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">📝 CRITERIOS DE CONTROL (ENTREGA):</span>
             
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
-              <span>ðŸ–¥ï¸ Pantalla en buen estado</span>
+              <span>🖥️ Pantalla en buen estado</span>
               <input type="checkbox" id="rf_a_pantalla" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
             </label>
             
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
-              <span>ðŸ·ï¸ NumeraciÃ³n legible / OK</span>
+              <span>🏷️ Numeración legible / OK</span>
               <input type="checkbox" id="rf_a_numeracion" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
             </label>
           </div>
 
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">OBSERVACIONES / COMENTARIOS:</label>
-            <textarea id="rf_a_notes" rows="2" placeholder="Ej: Sin araÃ±azos, incluye lÃ¡piz..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
+            <textarea id="rf_a_notes" rows="2" placeholder="Ej: Sin arañazos, incluye lápiz..." style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-size:0.8rem; resize:none;"></textarea>
           </div>
 
           <div style="display:flex; gap:10px; margin-top:1rem;">
@@ -5121,13 +5121,13 @@ const renderRFSection = (container) => {
       const worker = activeWorkers.find(w => w.dni === workerDni);
       if (!worker) return;
 
-      // Obtener el estado local mÃ¡s actualizado justo en el momento del submit para evitar sobreescrituras en clics rÃ¡pidos
+      // Obtener el estado local más actualizado justo en el momento del submit para evitar sobreescrituras en clics rápidos
       const currentRfs = adminService.getRfs() || [];
       const currentAssignments = adminService.getRfAssignments() || [];
 
       const workerActiveRf = currentRfs.find(r => r.asignadoDni === workerDni);
       if (workerActiveRf) {
-        if (!confirm(`âš ï¸ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. Â¿Deseas asignarle este nuevo equipo adicional?`)) {
+        if (!confirm(`⚠️ El operario ${worker.nombre} ya tiene asignado el equipo ${workerActiveRf.serie}. ¿Deseas asignarle este nuevo equipo adicional?`)) {
           return;
         }
       }
@@ -5158,7 +5158,7 @@ const renderRFSection = (container) => {
       await adminService.saveRfs(listRfs);
       await adminService.saveRfAssignments(listAssignments);
 
-      alert(`âœ… Equipo RF ${serie} asignado correctamente.`);
+      alert(`✅ Equipo RF ${serie} asignado correctamente.`);
       modal.remove();
       renderRFSection(container);
     };
@@ -5173,40 +5173,40 @@ const renderRFSection = (container) => {
 
     const activeAssignment = assignments.find(a => a.rf_serial === serie && !a.returned_at);
 
-    const pantallaInicialText = activeAssignment && activeAssignment.pantalla_ok !== false ? 'ðŸ–¥ï¸ OK' : 'ðŸ–¥ï¸ FALLO / MAL';
-    const numeracionInicialText = activeAssignment && activeAssignment.numeracion_ok !== false ? 'ðŸ·ï¸ OK' : 'ðŸ·ï¸ FALLO / MAL';
+    const pantallaInicialText = activeAssignment && activeAssignment.pantalla_ok !== false ? '🖥️ OK' : '🖥️ FALLO / MAL';
+    const numeracionInicialText = activeAssignment && activeAssignment.numeracion_ok !== false ? '🏷️ OK' : '🏷️ FALLO / MAL';
 
     const modal = document.createElement('div');
     modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
     modal.innerHTML = `
       <div class="glass-panel" style="width:400px; padding:2.5rem 2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.2);">
         <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; font-weight:800; font-family:'Outfit', sans-serif; text-transform:uppercase; text-align:center; letter-spacing:0.5px;">
-          ðŸ“¥ RECIBIR EQUIPO RF (DEVOLUCIÃ“N)
+          📥 RECIBIR EQUIPO RF (DEVOLUCIÓN)
         </h3>
         <p style="margin:-1rem 0 0.5rem 0; text-align:center; color:#f97316; font-family:monospace; font-weight:800; font-size:0.9rem;">SERIE: ${serie}</p>
         <div style="background:rgba(255,255,255,0.02); padding:0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.05); margin-bottom:1.2rem; font-size:0.7rem; text-align:center; color:var(--text-muted);">
           Operario: <b style="color:#fff;">${rf.asignadoNombre || 'Operario'}</b><br>
           <span style="display:inline-block; margin-top:3px;">
-            CondiciÃ³n inicial: <span style="color:#38bdf8;">${pantallaInicialText}</span> | <span style="color:#38bdf8;">${numeracionInicialText}</span>
+            Condición inicial: <span style="color:#38bdf8;">${pantallaInicialText}</span> | <span style="color:#38bdf8;">${numeracionInicialText}</span>
           </span>
         </div>
         
         <form id="form_rf_receive" style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÃA DE RETORNO (%):</label>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:5px; font-weight:700;">BATERÍA DE RETORNO (%):</label>
             <input type="number" id="rf_r_bateria" min="0" max="100" required value="${rf.bateria}" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); color:#fff; width:100%; outline:none; padding:0.6rem; border-radius:8px; font-weight:800; text-align:center;">
           </div>
 
           <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.6rem;">
-            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">ðŸ“ CRITERIOS DE CONTROL (DEVOLUCIÃ“N):</span>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; display:block;">📝 CRITERIOS DE CONTROL (DEVOLUCIÓN):</span>
             
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
-              <span>ðŸ–¥ï¸ Pantalla devuelta OK / Sin daÃ±os</span>
+              <span>🖥️ Pantalla devuelta OK / Sin daños</span>
               <input type="checkbox" id="rf_r_pantalla" ${!activeAssignment || activeAssignment.pantalla_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
             </label>
             
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#fff; font-size:0.75rem;">
-              <span>ðŸ·ï¸ NumeraciÃ³n devuelta legible / OK</span>
+              <span>🏷️ Numeración devuelta legible / OK</span>
               <input type="checkbox" id="rf_r_numeracion" ${!activeAssignment || activeAssignment.numeracion_ok !== false ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
             </label>
           </div>
@@ -5245,7 +5245,7 @@ const renderRFSection = (container) => {
         listRfs[rfIdx].bateria = batVal;
         listRfs[rfIdx].estado = nuevoEstado;
         if (nuevoEstado === 'En Mantenimiento') {
-          listRfs[rfIdx].comentarios = `Devuelto con daÃ±os. Pantalla: ${pantallaDevuelta?'OK':'DAÃ‘ADA'} | NumeraciÃ³n: ${numeracionDevuelta?'OK':'DAÃ‘ADA'}. Observaciones: ${notesVal}`;
+          listRfs[rfIdx].comentarios = `Devuelto con daños. Pantalla: ${pantallaDevuelta?'OK':'DAÑADA'} | Numeración: ${numeracionDevuelta?'OK':'DAÑADA'}. Observaciones: ${notesVal}`;
         }
       }
 
@@ -5257,9 +5257,9 @@ const renderRFSection = (container) => {
           listAssignments[asigIdx].retorno_pantalla_ok = pantallaDevuelta;
           listAssignments[asigIdx].retorno_numeracion_ok = numeracionDevuelta;
           
-          let alertDetails = `DevoluciÃ³n Conforme con ${batVal}% bat.`;
+          let alertDetails = `Devolución Conforme con ${batVal}% bat.`;
           if (nuevoEstado === 'En Mantenimiento') {
-             alertDetails = `âš ï¸ DEVOLUCIÃ“N REGISTRADA CON DAÃ‘OS. El terminal ha sido enviado automÃ¡ticamente a Taller/Mantenimiento.`;
+             alertDetails = `⚠️ DEVOLUCIÓN REGISTRADA CON DAÑOS. El terminal ha sido enviado automáticamente a Taller/Mantenimiento.`;
           }
           listAssignments[asigIdx].return_notes = `${alertDetails} ${notesVal ? '- ' + notesVal : ''}`;
         }
@@ -5269,8 +5269,8 @@ const renderRFSection = (container) => {
       await adminService.saveRfAssignments(listAssignments);
 
       const successMsg = nuevoEstado === 'En Mantenimiento' 
-        ? `âš ï¸ Equipo RF ${serie} devuelto CON DAÃ‘OS. Se enviÃ³ automÃ¡ticamente al taller.`
-        : `âœ… Equipo RF ${serie} devuelto conforme y disponible.`;
+        ? `⚠️ Equipo RF ${serie} devuelto CON DAÑOS. Se envió automáticamente al taller.`
+        : `✅ Equipo RF ${serie} devuelto conforme y disponible.`;
       
       alert(successMsg);
       modal.remove();
@@ -5280,29 +5280,29 @@ const renderRFSection = (container) => {
 
 
   const renderConfigTab = async () => {
-    contentSubtitle.textContent = "Panel de Control TÃ©cnico";
+    contentSubtitle.textContent = "Panel de Control Técnico";
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-          <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">âš™ï¸ PARÃMETROS</a>
-          <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">ðŸŒ CONEXIÃ“N</a>
-          <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">ðŸ› ï¸ MANTENIMIENTO</a>
+          <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">⚙️ PARÁMETROS</a>
+          <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🌐 CONEXIÓN</a>
+          <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🛠️ MANTENIMIENTO</a>
         </nav><div id="configContent"></div>`;
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeConfigSub = e.target.dataset.s; renderConfigTab(); }));
     
     if (activeConfigSub === 'parametros') {
-        document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">ConfiguraciÃ³n de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
+        document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">Configuración de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
     } else if (activeConfigSub === 'mantenimiento') {
         document.getElementById('configContent').innerHTML = `
             <div class="glass-panel" style="max-width:450px; padding:1.5rem; border: 1px solid rgba(239, 68, 68, 0.2);">
                 <h4 style="color:#f87171; font-size:0.95rem; margin-top:0;">Zona de Peligro</h4>
-                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta acciÃ³n no se puede deshacer.</p>
-                <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;">âš ï¸ REINICIAR ASISTENCIA Y PERFORMANCE</button>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta acción no se puede deshacer.</p>
+                <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;">⚠️ REINICIAR ASISTENCIA Y PERFORMANCE</button>
             </div>
         `;
         document.getElementById('resetDataBtn').onclick = async () => {
-            if (await showPremiumConfirm("ZONA DE PELIGRO - REINICIAR DATOS", "Â¿ESTÃS SEGURO? Se borrarÃ¡ TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarÃ¡n.", "danger")) {
+            if (await showPremiumConfirm("ZONA DE PELIGRO - REINICIAR DATOS", "¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.", "danger")) {
                 await adminService.resetProductionData();
-                alert("âœ… Se han reiniciado los datos. La aplicaciÃ³n se recargarÃ¡.");
+                alert("✅ Se han reiniciado los datos. La aplicación se recargará.");
                 window.location.reload();
             }
         };
@@ -5325,7 +5325,7 @@ const renderRFSection = (container) => {
             <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Historial...</p>
         </div>`;
     
-    // â”€â”€ Cargar desde servidor (con fallback a localStorage) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Cargar desde servidor (con fallback a localStorage) ───────────────────
     let kpiHistory = [];
     let serverOnline = false;
     try {
@@ -5367,24 +5367,24 @@ const renderRFSection = (container) => {
             <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06); width:100%;">
                 <!-- Rango de fecha -->
                 <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
-                    <span>ðŸ“… DE:</span>
+                    <span>📅 DE:</span>
                     <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                     <span>HASTA:</span>
                     <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
                 </div>
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
                     <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                        ðŸ”„
+                        🔄
                     </button>
                     <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                        ðŸ“¥ EXPORTAR
+                        📥 EXPORTAR
                     </button>
                 </div>
             </div>
 
             <!-- CONTENIDO DE REPORTES EN DOS COLUMNAS -->
             <div style="display:flex; gap:1rem; width:100%; align-items:start;">
-                <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÃ“N DE PALETAS (50%) -->
+                <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
                 <div style="flex:1; min-width:0; background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
                     <div style="padding:0.4rem 0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;">
                         <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Reporte de Paletas</h3>
@@ -5411,7 +5411,7 @@ const renderRFSection = (container) => {
                     <div style="padding:0.4rem 0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Buffer Temporada</h3>
                         <button id="btn_temp_export" style="background:#22c55e; color:#000; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-size:0.7rem; font-weight:800; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                            ðŸ“¥ EXPORTAR TEMPORADA
+                            📥 EXPORTAR TEMPORADA
                         </button>
                     </div>
                     <div style="overflow-x:auto;">
@@ -5430,7 +5430,7 @@ const renderRFSection = (container) => {
         </div>
     `;
 
-    // â”€â”€ Helpers de fecha â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Helpers de fecha ──────────────────────────────────────────────────────
     const toISO = (fechaStr) => {
         // Acepta "24 jun", "24/06/2025", "2025-06-24"
         if (!fechaStr) return '';
@@ -5439,14 +5439,14 @@ const renderRFSection = (container) => {
             const [d, m, y] = fechaStr.split('/');
             return `${y}-${m}-${d}`;
         }
-        // "24 jun" â†’ intenta parsear con el aÃ±o actual
+        // "24 jun" → intenta parsear con el año actual
         const currentYear = new Date().getFullYear();
         const parsed = new Date(fechaStr + ' ' + currentYear);
         if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
         return fechaStr;
     };
 
-    // â”€â”€ Estado ediciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Estado edición ────────────────────────────────────────────────────────
     let editingIdx = null;
 
     const renderHistTable = async () => {
@@ -5479,7 +5479,7 @@ const renderRFSection = (container) => {
 
         tbody.innerHTML = filtered.map(({ row, idx }) => {
             if (editingIdx === idx) {
-                // Fila en modo ediciÃ³n
+                // Fila en modo edición
                 return `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(99,102,241,0.08);">
                     <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
@@ -5495,8 +5495,8 @@ const renderRFSection = (container) => {
                     <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05); font-weight:800;">${row.fillRate}</td>
                     <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
                         <div style="display:flex; gap:0.4rem; justify-content:center;">
-                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#22c55e; border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">ðŸ’¾</button>
-                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:rgba(255,255,255,0.08); border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">âœ–</button>
+                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#22c55e; border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
+                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:rgba(255,255,255,0.08); border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
                         </div>
                     </td>
                 </tr>`;
@@ -5510,8 +5510,8 @@ const renderRFSection = (container) => {
                 <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
                 <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:0.5rem; justify-content:center;">
-                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">âœï¸</button>
-                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.28)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">ðŸ—‘ï¸</button>
+                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">✏️</button>
+                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.28)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">🗑️</button>
                     </div>
                 </td>
             </tr>`;
@@ -5519,7 +5519,7 @@ const renderRFSection = (container) => {
 
         // Cargar y procesar "Buffer Temporada"
         if (tbodyTemp) {
-            tbodyTemp.innerHTML = `<tr><td colspan="2" style="padding:1rem; text-align:center; color:var(--text-muted);">Cargando anÃ¡lisis de temporadas...</td></tr>`;
+            tbodyTemp.innerHTML = `<tr><td colspan="2" style="padding:1rem; text-align:center; color:var(--text-muted);">Cargando análisis de temporadas...</td></tr>`;
             try {
                 if (!dataStore.analisis_sku_maestro || dataStore.analisis_sku_maestro.length === 0) {
                     await getAreaData('analisis_sku_maestro');
@@ -5579,7 +5579,7 @@ const renderRFSection = (container) => {
         }
     };
 
-    // â”€â”€ Acciones globales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Acciones globales ─────────────────────────────────────────────────────
     window._histEdit = (idx) => { editingIdx = idx; renderHistTable(); };
     window._histCancelEdit = () => { editingIdx = null; renderHistTable(); };
 
@@ -5605,7 +5605,7 @@ const renderRFSection = (container) => {
         const recordId = kpiHistory[idx]?.id;
         if (recordId) {
             updateBufferHistoryRecord(recordId, updatedRecord).then(ok => {
-                console.log(ok ? `[BH] âœ… Registro ${recordId} actualizado en servidor.` : `[BH] âš ï¸ Error actualizando registro ${recordId}.`);
+                console.log(ok ? `[BH] ✅ Registro ${recordId} actualizado en servidor.` : `[BH] ⚠️ Error actualizando registro ${recordId}.`);
             });
         }
 
@@ -5616,7 +5616,7 @@ const renderRFSection = (container) => {
     };
 
     window._histDelete = (idx) => {
-        // Modal premium de confirmaciÃ³n
+        // Modal premium de confirmación
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);
@@ -5639,9 +5639,9 @@ const renderRFSection = (container) => {
                 text-align:center;
                 animation: slideUpModal 0.2s cubic-bezier(0.4,0,0.2,1);
             ">
-                <div style="font-size:2.5rem; margin-bottom:0.8rem; filter:drop-shadow(0 0 12px rgba(239,68,68,0.5));">ðŸ—‘ï¸</div>
+                <div style="font-size:2.5rem; margin-bottom:0.8rem; filter:drop-shadow(0 0 12px rgba(239,68,68,0.5));">🗑️</div>
                 <h3 style="margin:0 0 0.5rem 0; color:#fff; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">Eliminar Registro</h3>
-                <p style="margin:0 0 1.6rem 0; color:#94a3b8; font-size:0.82rem; line-height:1.55;">Â¿EstÃ¡s seguro de que deseas eliminar este registro del historial? Esta acciÃ³n no se puede deshacer.</p>
+                <p style="margin:0 0 1.6rem 0; color:#94a3b8; font-size:0.82rem; line-height:1.55;">¿Estás seguro de que deseas eliminar este registro del historial? Esta acción no se puede deshacer.</p>
                 <div style="display:flex; gap:0.8rem; justify-content:center;">
                     <button id="modal_hist_cancel" style="
                         flex:1; padding:0.65rem 1rem; border-radius:9px;
@@ -5655,7 +5655,7 @@ const renderRFSection = (container) => {
                         color:#fff; font-size:0.82rem; font-weight:800; cursor:pointer;
                         box-shadow:0 4px 15px rgba(239,68,68,0.35);
                         transition:all 0.2s;
-                    " onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">SÃ­, eliminar</button>
+                    " onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">Sí, eliminar</button>
                 </div>
             </div>
         `;
@@ -5668,7 +5668,7 @@ const renderRFSection = (container) => {
             // Eliminar del servidor si tiene id
             if (recordId) {
                 deleteBufferHistoryRecord(recordId).then(ok => {
-                    console.log(ok ? `[BH] âœ… Registro ${recordId} eliminado del servidor.` : `[BH] âš ï¸ Error eliminando registro ${recordId}.`);
+                    console.log(ok ? `[BH] ✅ Registro ${recordId} eliminado del servidor.` : `[BH] ⚠️ Error eliminando registro ${recordId}.`);
                 });
             }
             kpiHistory.splice(idx, 1);
@@ -5678,28 +5678,28 @@ const renderRFSection = (container) => {
         };
     };
 
-    // â”€â”€ Sincronizar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Sincronizar ────────────────────────────────────────────────────────────
     document.getElementById('btn_hist_sync').onclick = async () => {
         const btnSync = document.getElementById('btn_hist_sync');
         btnSync.disabled = true;
         btnSync.style.opacity = '0.5';
-        btnSync.innerHTML = 'â³';
+        btnSync.innerHTML = '⏳';
         
         try {
             kpiHistory = await fetchBufferHistory(true);
             renderHistTable();
-            showPremiumAlert("Â¡Ã‰XITO!", "Historial sincronizado con el servidor correctamente.", "success");
+            showPremiumAlert("¡ÉXITO!", "Historial sincronizado con el servidor correctamente.", "success");
         } catch(err) {
             console.error('[BH] Error sincronizando:', err);
             showPremiumAlert("Error", "No se pudo conectar con el servidor.", "error");
         } finally {
             btnSync.disabled = false;
             btnSync.style.opacity = '1';
-            btnSync.innerHTML = 'ðŸ”„';
+            btnSync.innerHTML = '🔄';
         }
     };
 
-    // â”€â”€ Exportar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Exportar ──────────────────────────────────────────────────────────────
     document.getElementById('btn_hist_export').onclick = () => {
         const fromVal = document.getElementById('hist_date_from').value;
         const toVal   = document.getElementById('hist_date_to').value;
@@ -5715,7 +5715,7 @@ const renderRFSection = (container) => {
         XLSX.writeFile(wb, `Historial_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
     };
 
-    // â”€â”€ Exportar Temporadas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Exportar Temporadas ───────────────────────────────────────────────────
     document.getElementById('btn_temp_export').onclick = () => {
         const data = window._lastBufferTemporadaData || [];
         if (!data.length) return alert('No hay datos de temporada para exportar.');
@@ -5727,7 +5727,7 @@ const renderRFSection = (container) => {
         XLSX.writeFile(wb, `Reporte_Buffer_Temporada_${new Date().toISOString().slice(0,10)}.xlsx`);
     };
 
-    // â”€â”€ Filtros de fecha â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Filtros de fecha ──────────────────────────────────────────────────────
     document.getElementById('hist_date_from').addEventListener('change', renderHistTable);
     document.getElementById('hist_date_to').addEventListener('change', renderHistTable);
 
@@ -5748,13 +5748,13 @@ const renderRFSection = (container) => {
               font-family: 'Inter', sans-serif;
               text-align: center;
           ">
-              <div style="font-size:3rem; margin-bottom:1.5rem; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">âš™ï¸</div>
-              <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.3rem; font-weight:800; letter-spacing:1px; font-family:'Outfit', sans-serif; text-transform: uppercase;">CONFIGURACIÃ“N DEL BUFFER</h3>
+              <div style="font-size:3rem; margin-bottom:1.5rem; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">⚙️</div>
+              <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.3rem; font-weight:800; letter-spacing:1px; font-family:'Outfit', sans-serif; text-transform: uppercase;">CONFIGURACIÓN DEL BUFFER</h3>
               <p style="color:#94a3b8; font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
-                  Los parÃ¡metros de reposiciÃ³n se administran centralizadamente desde la pestaÃ±a de <b>âš™ï¸ CONFIGURACIÃ“N ANÃLISIS</b> en el mÃ³dulo de <b>AnÃ¡lisis SKU</b>.
+                  Los parámetros de reposición se administran centralizadamente desde la pestaña de <b>⚙️ CONFIGURACIÓN ANÁLISIS</b> en el módulo de <b>Análisis SKU</b>.
               </p>
               <div style="display:inline-block; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); padding:0.75rem 1.5rem; border-radius:10px; color:#a5b4fc; font-size:0.8rem; font-weight:600;">
-                  ðŸ”— ParÃ¡metros compartidos y vinculados con AnÃ¡lisis SKU
+                  🔗 Parámetros compartidos y vinculados con Análisis SKU
               </div>
           </div>
         </div>
@@ -5769,7 +5769,7 @@ const renderRFSection = (container) => {
         getAreaData('buffer_reserva').then(d => d && d.length > 0)
     ]);
 
-    // â”€â”€ Intentar cargar del servidor primero (mÃ¡s reciente), luego localStorage â”€â”€
+    // ── Intentar cargar del servidor primero (más reciente), luego localStorage ──
     container.innerHTML = `<div style="text-align:center;padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">Cargando datos desde el servidor...</p></div>`;
     const todayISO = new Date().toISOString().slice(0, 10);
     const serverResult = await loadKPIResults(todayISO);
@@ -5778,7 +5778,7 @@ const renderRFSection = (container) => {
         return;
     }
 
-    // Fallback: localStorage del Ãºltimo proceso
+    // Fallback: localStorage del último proceso
     const storedKPI = localStorage.getItem('logistics_v24_prod_lastKPIResults');
     if (storedKPI) {
         try {
@@ -5794,46 +5794,46 @@ const renderRFSection = (container) => {
 
     container.innerHTML = `
         <div class="glass-panel animate-fade-in" style="padding:2.5rem; text-align:center; max-width:650px; margin:2rem auto; border-radius:16px; border:1px solid rgba(255,255,255,0.08);">
-            <div style="font-size:3rem; margin-bottom:1rem;">ðŸ“Š</div>
-            <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.5px;">ConciliaciÃ³n y AuditorÃ­a Buffer KPI</h3>
+            <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
+            <h3 style="color:#fff; font-weight:800; margin-bottom:0.8rem; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.5px;">Conciliación y Auditoría Buffer KPI</h3>
             <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-bottom:1.5rem;">
-                Compara las paletas que debÃ­an bajarse contra el estado real del almacÃ©n posterior a los movimientos.
+                Compara las paletas que debían bajarse contra el estado real del almacén posterior a los movimientos.
             </p>
             
             <div style="text-align:left; max-width:400px; margin:0 auto 2rem; background:rgba(255,255,255,0.02); padding:1rem 1.5rem; border-radius:10px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:0.8rem; font-size:0.8rem;">
                 <strong style="color:rgba(255,255,255,0.7); display:block; margin-bottom:0.2rem;">ESTADO DE ARCHIVOS:</strong>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span>STOCK RESERVA (Original):</span>
-                    <span style="font-weight:700; color:${hasStockReserva ? '#22c55e' : '#ef4444'}">${hasStockReserva ? 'ðŸŸ¢ CARGADO' : 'âŒ FALTANTE'}</span>
+                    <span style="font-weight:700; color:${hasStockReserva ? '#22c55e' : '#ef4444'}">${hasStockReserva ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span>VALIDAR RESERVA (Final):</span>
-                    <span style="font-weight:700; color:${hasValReserva ? '#22c55e' : '#ef4444'}">${hasValReserva ? 'ðŸŸ¢ CARGADO' : 'âŒ FALTANTE'}</span>
+                    <span style="font-weight:700; color:${hasValReserva ? '#22c55e' : '#ef4444'}">${hasValReserva ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span>VALIDAR ACTIVO (Final):</span>
-                    <span style="font-weight:700; color:${hasValActivo ? '#22c55e' : '#ef4444'}">${hasValActivo ? 'ðŸŸ¢ CARGADO' : 'âŒ FALTANTE'}</span>
+                    <span style="font-weight:700; color:${hasValActivo ? '#22c55e' : '#ef4444'}">${hasValActivo ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span>VALIDAR LPN (TrÃ¡nsito):</span>
-                    <span style="font-weight:700; color:${hasValLPN ? '#22c55e' : '#ef4444'}">${hasValLPN ? 'ðŸŸ¢ CARGADO' : 'âŒ FALTANTE'}</span>
+                    <span>VALIDAR LPN (Tránsito):</span>
+                    <span style="font-weight:700; color:${hasValLPN ? '#22c55e' : '#ef4444'}">${hasValLPN ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
             </div>
 
             <button id="btn_run_kpi_analysis" class="btn" style="background:var(--primary); width:auto; padding:0.7rem 2.2rem; font-weight:800; font-size:0.85rem; border-radius:8px; box-shadow:0 0 20px rgba(99,102,241,0.3); transition:all 0.2s;">
-                âš¡ EJECUTAR ANÃLISIS DE CONCILIACIÃ“N
+                ⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN
             </button>
         </div>
     `;
 
     document.getElementById('btn_run_kpi_analysis').onclick = async () => {
-        // â”€â”€ Pedir la fecha del proceso al usuario â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Pedir la fecha del proceso al usuario ─────────────────────────
         const fechaElegida = await pickKPIDate();
-        if (!fechaElegida) return; // CancelÃ³ el modal
+        if (!fechaElegida) return; // Canceló el modal
 
         const btn = document.getElementById('btn_run_kpi_analysis');
         btn.disabled = true;
-        btn.innerHTML = `<span>â³ PROCESANDO...</span>`;
+        btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
 
         try {
             const [validarActivo, validarReserva, validarLPN, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
@@ -5853,23 +5853,23 @@ const renderRFSection = (container) => {
             const hasLPN = validarLPN && validarLPN.length > 0;
 
             if (!hasActivo && !hasReserva && !hasLPN) {
-                alert("âš ï¸ ATENCIÃ“N: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA, VALIDAR ACTIVO o VALIDAR LPN) en la pestaÃ±a Maestros para poder realizar la conciliaciÃ³n.");
+                alert("⚠️ ATENCIÓN: Debes cargar al menos uno de los archivos actualizados (VALIDAR RESERVA, VALIDAR ACTIVO o VALIDAR LPN) en la pestaña Maestros para poder realizar la conciliación.");
                 btn.disabled = false;
-                btn.innerHTML = `âš¡ EJECUTAR ANÃLISIS DE CONCILIACIÃ“N`;
+                btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
                 return;
             }
 
             await runProcessBufferKPI(container, validarActivo, validarReserva, validarLPN, originalReserva, hasActivo, hasReserva, hasLPN, null, fechaElegida);
         } catch(error) {
             console.error("Error durante conciliacion buffer kpi:", error);
-            alert("âŒ OcurriÃ³ un error al procesar la conciliaciÃ³n:\n" + error.message);
+            alert("❌ Ocurrió un error al procesar la conciliación:\n" + error.message);
             btn.disabled = false;
-            btn.innerHTML = `âš¡ EJECUTAR ANÃLISIS DE CONCILIACIÃ“N`;
+            btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
         }
     };
   };
 
-  // â”€â”€ Modal de selecciÃ³n de fecha de proceso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Modal de selección de fecha de proceso ──────────────────────────────
   const pickKPIDate = () => new Promise(resolve => {
     const todayISO = new Date().toISOString().slice(0, 10);
     const overlay = document.createElement('div');
@@ -5877,16 +5877,16 @@ const renderRFSection = (container) => {
     overlay.innerHTML = `
       <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:2rem 2.5rem;min-width:340px;max-width:400px;box-shadow:0 25px 80px rgba(0,0,0,0.6);animation:slideUp 0.3s ease;">
         <div style="text-align:center;margin-bottom:1.5rem;">
-          <div style="font-size:2.5rem;margin-bottom:0.6rem;">ðŸ“…</div>
+          <div style="font-size:2.5rem;margin-bottom:0.6rem;">📅</div>
           <h3 style="color:#fff;font-size:1.1rem;font-weight:800;margin:0 0 0.4rem;letter-spacing:0.5px;">FECHA DEL PROCESO</h3>
           <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin:0;line-height:1.5;">
-            Selecciona el dÃ­a al que pertenece este proceso.<br>
-            <span style="color:#a5b4fc;">Ãštil si trabajas turno de amanecida.</span>
+            Selecciona el día al que pertenece este proceso.<br>
+            <span style="color:#a5b4fc;">Útil si trabajas turno de amanecida.</span>
           </p>
         </div>
 
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem;">
-          <label style="color:rgba(255,255,255,0.6);font-size:0.72rem;font-weight:700;letter-spacing:0.5px;display:block;margin-bottom:0.5rem;">ðŸ“† FECHA DE PROCESO</label>
+          <label style="color:rgba(255,255,255,0.6);font-size:0.72rem;font-weight:700;letter-spacing:0.5px;display:block;margin-bottom:0.5rem;">📆 FECHA DE PROCESO</label>
           <input type="date" id="kpi_pick_date" value="${todayISO}"
             style="width:100%;background:transparent;color:#fff;border:none;font-size:1.1rem;font-weight:800;outline:none;cursor:pointer;color-scheme:dark;font-family:inherit;"
           />
@@ -5894,16 +5894,16 @@ const renderRFSection = (container) => {
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;">
           <button id="kpi_pick_yesterday" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);padding:0.5rem;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
-            â† Ayer
+            ← Ayer
           </button>
           <button id="kpi_pick_today" style="background:rgba(99,102,241,0.2);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:0.5rem;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
-            Hoy â†’
+            Hoy →
           </button>
         </div>
 
         <div style="display:flex;gap:0.8rem;">
           <button id="kpi_pick_cancel" style="flex:1;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08);padding:0.7rem;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s;">CANCELAR</button>
-          <button id="kpi_pick_confirm" style="flex:2;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:0.7rem;border-radius:10px;font-size:0.8rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:all 0.2s;">âš¡ PROCESAR ESTA FECHA</button>
+          <button id="kpi_pick_confirm" style="flex:2;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:0.7rem;border-radius:10px;font-size:0.8rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:all 0.2s;">⚡ PROCESAR ESTA FECHA</button>
         </div>
       </div>
     `;
@@ -5948,7 +5948,7 @@ const renderRFSection = (container) => {
                     localStorage.setItem('logistics_v24_prod_lastBufferKPI', JSON.stringify(res));
                 }
             } catch(e) {
-                console.error("Error al calcular plan dinÃ¡mico:", e);
+                console.error("Error al calcular plan dinámico:", e);
             }
         }
 
@@ -5959,11 +5959,11 @@ const renderRFSection = (container) => {
         }) : [];
 
         if (plannedPallets.length === 0) {
-            alert("âš ï¸ ATENCIÃ“N: No se detectÃ³ ningÃºn anÃ¡lisis de buffer activo. Primero debes procesar el cÃ¡lculo en la pestaÃ±a ANÃLISIS BUFFER.");
+            alert("⚠️ ATENCIÓN: No se detectó ningún análisis de buffer activo. Primero debes procesar el cálculo en la pestaña ANÁLISIS BUFFER.");
             const btn = document.getElementById('btn_run_kpi_analysis');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `âš¡ EJECUTAR ANÃLISIS DE CONCILIACIÃ“N`;
+                btn.innerHTML = `⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN`;
             }
             return;
         }
@@ -6015,9 +6015,9 @@ const renderRFSection = (container) => {
         if (hasLPN) {
             validarLPN.forEach(r => {
                 const raw = Array.isArray(r) ? r : Object.values(r);
-                // Col K (UbicaciÃ³n) -> index 10
-                // Col L (UbicaciÃ³n Anterior) -> index 11
-                // Col D (CÃ³digo de artÃ­culo) -> index 3
+                // Col K (Ubicación) -> index 10
+                // Col L (Ubicación Anterior) -> index 11
+                // Col D (Código de artículo) -> index 3
                 // Col E (Cantidad Actual) -> index 4
                 const ubi = String(raw[10] || '').trim().toUpperCase();
                 const ubiAnt = String(raw[11] || '').trim();
@@ -6043,7 +6043,7 @@ const renderRFSection = (container) => {
         const origResQty = p['QTY RESERVA'] || 0;
         const origActQty = p['QTY ACTIVO'] || 0;
 
-        // ComprobaciÃ³n Reserva (Origen)
+        // Comprobación Reserva (Origen)
         let finalResQty = 0;
         let unitsLowered = 0;
         let resState = "S/D";
@@ -6086,7 +6086,7 @@ const renderRFSection = (container) => {
             }
         }
 
-        // ComprobaciÃ³n Activo (Destino)
+        // Comprobación Activo (Destino)
         let actFinalQty = 0;
         let actDiff = 0;
         let actState = "S/D";
@@ -6110,31 +6110,31 @@ const renderRFSection = (container) => {
         // Estado General
         let generalState = "PENDIENTE";
         let colorDot = "#ef4444";
-        let statusTag = "ðŸ”´ PENDIENTE";
+        let statusTag = "🔴 PENDIENTE";
 
         if (hasReserva && hasActivo) {
             if (unitsLowered >= plannedQty && actDiff >= plannedQty) {
                 generalState = "COMPLETADO";
-                statusTag = "ðŸŸ¢ COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
             } else if (unitsLowered > 0 || actDiff > 0) {
                 generalState = "INCOMPLETO";
-                statusTag = "ðŸŸ¡ INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
             }
         } else if (hasReserva) {
             if (unitsLowered >= plannedQty) {
                 generalState = "COMPLETADO";
-                statusTag = "ðŸŸ¢ COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
             } else if (unitsLowered > 0) {
                 generalState = "INCOMPLETO";
-                statusTag = "ðŸŸ¡ INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
             }
         } else if (hasActivo) {
             if (actDiff >= plannedQty) {
                 generalState = "COMPLETADO";
-                statusTag = "ðŸŸ¢ COMPLETADO";
+                statusTag = "🟢 COMPLETADO";
             } else if (actDiff > 0) {
                 generalState = "INCOMPLETO";
-                statusTag = "ðŸŸ¡ INCOMPLETO";
+                statusTag = "🟡 INCOMPLETO";
             }
         }
 
@@ -6159,7 +6159,7 @@ const renderRFSection = (container) => {
     });
     }
 
-    // â”€â”€ CALCULAR CONTADORES BASADOS EN PALETAS (LPNs) ÃšNICOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── CALCULAR CONTADORES BASADOS EN PALETAS (LPNs) ÚNICOS ──────────────────
     const uniquePlannedLPNs = Array.from(new Set(results.map(r => r.lpn).filter(x => x)));
     
     uniquePlannedLPNs.forEach(lpn => {
@@ -6190,15 +6190,15 @@ const renderRFSection = (container) => {
         const todayKPI = fechaProceso || new Date().toISOString().slice(0, 10);
         saveKPIResults(todayKPI, results).then(ok => {
             console.log(ok
-                ? `[KPI] âœ… Resultados del ${todayKPI} sincronizados con el servidor (${results.length} filas).`
-                : `[KPI] âš ï¸ Servidor no disponible. Resultados guardados solo en localStorage.`
+                ? `[KPI] ✅ Resultados del ${todayKPI} sincronizados con el servidor (${results.length} filas).`
+                : `[KPI] ⚠️ Servidor no disponible. Resultados guardados solo en localStorage.`
             );
         });
 
         try {
             const requestedPalletsCount = uniquePlannedLPNs.length;
             const effectiveRequested = requestedPalletsCount > 0 ? requestedPalletsCount : results.length;
-            // Sumar completados e incompletos como bajados (porque fÃ­sicamente la paleta ya fue bajada)
+            // Sumar completados e incompletos como bajados (porque físicamente la paleta ya fue bajada)
             const effectiveLowered  = requestedPalletsCount > 0 
                 ? (completedCount + partialCount) 
                 : results.filter(r => r.generalState === 'COMPLETADO' || r.generalState === 'INCOMPLETO').length;
@@ -6213,9 +6213,9 @@ const renderRFSection = (container) => {
                 };
                 saveBufferHistoryRecord(record).then(serverId => {
                     if (serverId) {
-                        console.log(`[BH] âœ… Registro sincronizado. Servidor id=${serverId}`);
+                        console.log(`[BH] ✅ Registro sincronizado. Servidor id=${serverId}`);
                     } else {
-                        console.warn('[BH] âš ï¸ Guardado solo en localStorage (servidor no disponible).');
+                        console.warn('[BH] ⚠️ Guardado solo en localStorage (servidor no disponible).');
                     }
                 });
             }
@@ -6236,25 +6236,25 @@ const renderRFSection = (container) => {
                     <!-- Dropdown Select Filter -->
                     <select id="kpi_status_filter" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; outline:none; transition:all 0.2s;">
                         <option value="TODOS">MOSTRAR TODO (${uniquePlannedLPNs.length > 0 ? uniquePlannedLPNs.length : results.length})</option>
-                        <option value="PENDIENTE">ðŸ”´ PENDIENTES (${pendingCount})</option>
-                        <option value="INCOMPLETO">ðŸŸ¡ INCOMPLETOS (${partialCount})</option>
-                        <option value="COMPLETADO">ðŸŸ¢ COMPLETADOS (${completedCount})</option>
+                        <option value="PENDIENTE">🔴 PENDIENTES (${pendingCount})</option>
+                        <option value="INCOMPLETO">🟡 INCOMPLETOS (${partialCount})</option>
+                        <option value="COMPLETADO">🟢 COMPLETADOS (${completedCount})</option>
                     </select>
 
                     <!-- Real-time Text Search Filter -->
-                    <input type="text" id="kpi_text_search" placeholder="ðŸ” Buscar LPN, SKU, ubicaciÃ³n..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:200px; transition:all 0.2s;" />
+                    <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; outline:none; width:200px; transition:all 0.2s;" />
 
-                    <!-- Date Range Filters â€” auto-fetch desde servidor al cambiar -->
+                    <!-- Date Range Filters — auto-fetch desde servidor al cambiar -->
                     <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
-                        <span>ðŸ“… DE:</span>
+                        <span>📅 DE:</span>
                         <input type="date" id="kpi_date_from" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
                         <span>HASTA:</span>
                         <input type="date" id="kpi_date_to" value="${todayStr}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; transition:all 0.2s; color-scheme:dark;" />
                     </div>
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">ðŸ”„ REPROCESAR</button>
-                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">ðŸ“¥ EXPORTAR CONCILIACIÃ“N</button>
+                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">🔄 REPROCESAR</button>
+                    <button id="btn_excel_val" class="btn" style="background:#22c55e; width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
                 </div>
             </div>
 
@@ -6267,7 +6267,7 @@ const renderRFSection = (container) => {
                                 <th style="padding:0.8rem 1rem;">FECHA</th>
                                 <th style="padding:0.8rem 1rem;">LPN</th>
                                 <th style="padding:0.8rem 1rem;">SKU</th>
-                                <th style="padding:0.8rem 1rem;">UBICACIÃ“N</th>
+                                <th style="padding:0.8rem 1rem;">UBICACIÓN</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">QTY SOLICITADO</th>
                                 <th style="padding:0.8rem 1rem;">ESTADO</th>
                                 <th style="padding:0.8rem 1rem; text-align:center;">${hasReserva ? 'QTY BAJADO' : 'QTY RECIBIDA'}</th>
@@ -6295,7 +6295,7 @@ const renderRFSection = (container) => {
         const filterValue = filterSelect.value;
         const searchValue = textSearch.value.trim().toLowerCase();
 
-        // Calcular los estados por LPN Ãºnico en base a activeResults
+        // Calcular los estados por LPN único en base a activeResults
         const lpnStatusMap = {};
         const uniqueLPNs = Array.from(new Set(activeResults.map(r => r.lpn).filter(x => x)));
         uniqueLPNs.forEach(lpn => {
@@ -6333,7 +6333,7 @@ const renderRFSection = (container) => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
 
-            // Si hay reserva, mostramos la resta de la reserva. Si no hay reserva pero sÃ­ activo, mostramos la diferencia del activo.
+            // Si hay reserva, mostramos la resta de la reserva. Si no hay reserva pero sí activo, mostramos la diferencia del activo.
             const diffDisplay = hasReserva 
                 ? (r.origResQty - r.finalResQty) 
                 : (hasActivo ? Math.max(0, r.actFinalQty - r.origActQty) : 0);
@@ -6361,7 +6361,7 @@ const renderRFSection = (container) => {
         });
     };
 
-    // â”€â”€ Auto-fetch del servidor al cambiar el rango DE / HASTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Auto-fetch del servidor al cambiar el rango DE / HASTA ─────────────────
     let fetchTimer = null;
     const onDateChange = () => {
         clearTimeout(fetchTimer);
@@ -6370,7 +6370,7 @@ const renderRFSection = (container) => {
             const to   = dateTo.value;
             if (!from && !to) { activeResults = results; renderRows(); return; }
 
-            tbody.innerHTML = `<tr><td colspan="9" style="padding:2rem; text-align:center; color:var(--text-muted);">â³ Buscando datos del servidor...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" style="padding:2rem; text-align:center; color:var(--text-muted);">⏳ Buscando datos del servidor...</td></tr>`;
 
             const res = await loadKPIResultsRange(from, to);
             if (res && res.data && res.data.length > 0) {
@@ -6379,8 +6379,8 @@ const renderRFSection = (container) => {
                 renderRows();
             } else {
                 tbody.innerHTML = `<tr><td colspan="9" style="padding:2rem; text-align:center; color:#f59e0b;">
-                    Sin datos en el rango <strong>${from}</strong> â†’ <strong>${to}</strong>.<br>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Solo se guardan fechas donde se procesÃ³ el Buffer KPI.</span>
+                    Sin datos en el rango <strong>${from}</strong> → <strong>${to}</strong>.<br>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Solo se guardan fechas donde se procesó el Buffer KPI.</span>
                 </td></tr>`;
             }
         }, 400);
@@ -6400,7 +6400,7 @@ const renderRFSection = (container) => {
             if (!fechaElegida) return;
 
             btnReprocess.disabled = true;
-            btnReprocess.innerHTML = `â³...`;
+            btnReprocess.innerHTML = `⏳...`;
             const [valActivo, valReserva, valLpn, origReserva] = await Promise.all([
                 getAreaData('validar_activo'),
                 getAreaData('validar_reserva'),
@@ -6437,14 +6437,14 @@ const renderRFSection = (container) => {
     document.getElementById('logoutBtn').addEventListener('click', onLogout);
   }
   // =============================================
-  // MOTOR DE SINCRONIZACIÃ“N EN TIEMPO REAL (v11.3.6)
+  // MOTOR DE SINCRONIZACIÓN EN TIEMPO REAL (v11.3.6)
   // =============================================
   const startRealTimeSync = () => {
-      // Evitar mÃºltiples intervalos si se re-renderiza el dashboard
+      // Evitar múltiples intervalos si se re-renderiza el dashboard
       if (window._pulseSyncInterval) clearInterval(window._pulseSyncInterval);
       
       window._pulseSyncInterval = setInterval(async () => {
-          // No sincronizar si el usuario estÃ¡ en Asistencia (Evita el "parpadeo" reportado)
+          // No sincronizar si el usuario está en Asistencia (Evita el "parpadeo" reportado)
           if (currentTab === 'admin_pers' && activeAdminSub === 'asistencia') return;
 
           const isIdle = !document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA');
@@ -6452,11 +6452,11 @@ const renderRFSection = (container) => {
           if (document.visibilityState === 'visible' && isIdle) {
               // --- MODO BLINDADO v24.6.0 ---
               if (localStorage.getItem('PULSE_OFFLINE_FORCE')) {
-                  console.log("ðŸ›¡ï¸ [PULSE] Radar en pausa por Modo Blindado.");
+                  console.log("🛡️ [PULSE] Radar en pausa por Modo Blindado.");
                   return;
               }
 
-              console.log("ðŸ”„ [PULSE] SincronizaciÃ³n automÃ¡tica de datos...");
+              console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
               if (currentTab === 'inicio') renderTabContent(true); 
           }
@@ -6513,9 +6513,9 @@ const renderRFSection = (container) => {
        renderUploadArea(wrap, 'inventario', stock, '.csv', 'STOCK GENERAL');
 
     } else if (activeInventarioSub === 'kpi_inventarios') {
-       l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">ðŸ“Š KPI Inventarios en desarrollo.</div>`;
+       l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">📊 KPI Inventarios en desarrollo.</div>`;
     } else if (activeInventarioSub === 'analisis_inventarios') {
-       l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">ðŸ” AnÃ¡lisis Inventario en desarrollo.</div>`;
+       l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">🔍 Análisis Inventario en desarrollo.</div>`;
     } else if (activeInventarioSub === 'modulo_inventarios') {
        renderModuloInventarios(l2Container);
     }
@@ -6523,9 +6523,9 @@ const renderRFSection = (container) => {
 
   const renderModuloInventarios = async (container) => {
     const l3Tabs = [
-        { id: 'general', label: 'General', icon: 'ðŸ“' },
-        { id: 'ciclicos', label: 'CÃ­clicos', icon: 'ðŸ”„' },
-        { id: 'reportes', label: 'Reportes', icon: 'ðŸ“Š' }
+        { id: 'general', label: 'General', icon: '📝' },
+        { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
+        { id: 'reportes', label: 'Reportes', icon: '📊' }
     ];
 
     container.innerHTML = `
@@ -6554,19 +6554,19 @@ const renderRFSection = (container) => {
         getAreaData('articulos')
     ]);
 
-    // Construir mapa de CÃ³digo de Barras a SKU para traducciÃ³n instantÃ¡nea en el escaneo
+    // Construir mapa de Código de Barras a SKU para traducción instantánea en el escaneo
     const barcodeToSkuMap = new Map();
     if (articulos && articulos.length > 0) {
         articulos.forEach(a => {
             const raw = Array.isArray(a) ? a : Object.values(a);
             if (raw.length >= 2) {
-                const mSku = (getCol(a, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product']) || raw[1] || '').toString().trim().toUpperCase();
+                const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || raw[1] || '').toString().trim().toUpperCase();
                 const possibleBarcode = String(raw[0] || '').trim().toUpperCase();
                 if (mSku && possibleBarcode) {
                     barcodeToSkuMap.set(possibleBarcode, mSku);
                 }
                 
-                // Inspeccionar otras celdas por si acaso (ej. si la columna de cÃ³digo de barras estÃ¡ en otra posiciÃ³n)
+                // Inspeccionar otras celdas por si acaso (ej. si la columna de código de barras está en otra posición)
                 raw.forEach(cell => {
                     const cellStr = String(cell || '').trim();
                     if (/^\d{8,15}$/.test(cellStr) && mSku) {
@@ -6575,14 +6575,14 @@ const renderRFSection = (container) => {
                 });
             }
         });
-        console.log(`[PULSE] Mapeo de cÃ³digos de barra cargado. Total cÃ³digos registrados: ${barcodeToSkuMap.size}`);
+        console.log(`[PULSE] Mapeo de códigos de barra cargado. Total códigos registrados: ${barcodeToSkuMap.size}`);
     }
 
     if (activeModuloInvSub === 'general') {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; content.appendChild(wrap);
-        renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÃCULOS');
+        renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         // Agregamos info visual de que se nutre de Archivo Inventario
-        wrap.innerHTML += `<div style="margin-top:1rem; padding:0.8rem; background:rgba(129, 140, 248, 0.05); border-radius:8px; border:1px dashed rgba(129, 140, 248, 0.2); font-size:0.7rem; color:#818cf8; text-align:center;">â„¹ï¸ Este mÃ³dulo utiliza automÃ¡ticamente la Matriz y Stock cargados en 'ARCHIVO INVENTARIO'.</div>`;
+        wrap.innerHTML += `<div style="margin-top:1rem; padding:0.8rem; background:rgba(129, 140, 248, 0.05); border-radius:8px; border:1px dashed rgba(129, 140, 248, 0.2); font-size:0.7rem; color:#818cf8; text-align:center;">ℹ️ Este módulo utiliza automáticamente la Matriz y Stock cargados en 'ARCHIVO INVENTARIO'.</div>`;
     } 
     else if (activeModuloInvSub === 'ciclicos') {
         const session = getSession();
@@ -6600,13 +6600,13 @@ const renderRFSection = (container) => {
                     
                     <div style="background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.3); padding:1.5rem; border-radius:10px; margin-bottom:1.5rem;">
                         <h2 style="color:#38bdf8; margin:0 0 0.5rem 0; font-size:1.8rem; font-weight:900;">${activeLocation}</h2>
-                        <p style="margin:0; font-size:0.8rem; color:#fff;">Pistolee los SKUs fÃ­sicos ahora</p>
+                        <p style="margin:0; font-size:0.8rem; color:#fff;">Pistolee los SKUs físicos ahora</p>
                         <h1 style="color:#fff; font-size:3rem; margin:1rem 0 0 0;" id="scan_counter">${totalScans}</h1>
-                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">ArtÃ­culos leÃ­dos</p>
+                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Artículos leídos</p>
                     </div>
                     
                     <div style="display:flex; flex-direction:column; gap:1rem;">
-                        <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">ðŸ”’ CERRAR UBICACIÃ“N</button>
+                        <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">🔒 CERRAR UBICACIÓN</button>
                     </div>
                     <input type="text" id="sku_scanner_input" style="position:fixed; top:0; left:0; width:0; height:0; opacity:0; border:none; overflow:hidden; pointer-events:none;" autocomplete="off">
                 </div>
@@ -6618,7 +6618,7 @@ const renderRFSection = (container) => {
             };
 
             document.getElementById('btn_close_loc').onclick = async () => {
-                if(await showPremiumConfirm('CERRAR UBICACIÃ“N', 'Â¿Seguro que deseas cerrar esta ubicaciÃ³n? Ya no podrÃ¡s pistolear mÃ¡s SKUs aquÃ­.', 'warning')) {
+                if(await showPremiumConfirm('CERRAR UBICACIÓN', '¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.', 'warning')) {
                     cyclicService.closeLocation(activeLocation);
                     localStorage.removeItem('eru_active_location');
                     renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
@@ -6657,11 +6657,11 @@ const renderRFSection = (container) => {
                         if(code) {
                             playBeep();
                             
-                            // Traducir cÃ³digo de barras a SKU real si existe en el maestro
+                            // Traducir código de barras a SKU real si existe en el maestro
                             let translatedCode = code;
                             if (barcodeToSkuMap && barcodeToSkuMap.has(code.toUpperCase())) {
                                 translatedCode = barcodeToSkuMap.get(code.toUpperCase());
-                                console.log(`[ESCANER] Traduciendo cÃ³digo de barras ${code} a SKU ${translatedCode}`);
+                                console.log(`[ESCANER] Traduciendo código de barras ${code} a SKU ${translatedCode}`);
                             }
                             
                             cyclicService.saveScan(activeLocation, translatedCode);
@@ -6677,14 +6677,14 @@ const renderRFSection = (container) => {
             const currentTasks = cyclicService.getTasks();
             const activeCount = currentTasks.length;
             const statusHtml = activeCount > 0 
-                ? `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">ðŸŸ¢ TAREA ACTIVA EN PISO: ${activeCount} ubicaciones pendientes</div>` 
+                ? `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">🟢 TAREA ACTIVA EN PISO: ${activeCount} ubicaciones pendientes</div>` 
                 : `<div style="margin-top:1rem; padding:0.8rem; background:rgba(255,255,255,0.05); border-radius:8px; color:var(--text-muted); font-size:0.85rem; text-align:center;">No hay tareas activas.</div>`;
 
-            // Construir mapa de Stock de Sistema por ubicaciÃ³n para cÃ¡lculo en vivo del Monitor
+            // Construir mapa de Stock de Sistema por ubicación para cálculo en vivo del Monitor
             const systemStockMap = new Map();
             if (stock && stock.length > 0) {
                 stock.forEach(row => {
-                    const ubi = (getCol(row, ['Ubicacion', 'UbicaciÃ³n', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
+                    const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
                     const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
                     if (ubi) {
                         systemStockMap.set(ubi, (systemStockMap.get(ubi) || 0) + qty);
@@ -6695,22 +6695,22 @@ const renderRFSection = (container) => {
             content.innerHTML = `
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
                     <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
-                        <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">ðŸ“‚ 1. Asignar Tarea CÃ­clica</h3>
+                        <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1rem;">📂 1. Asignar Tarea Cíclica</h3>
                         <div id="ciclico_upload_area"></div>
                         <div id="admin_task_status">${statusHtml}</div>
                     </div>
                     
                     <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(16, 185, 129, 0.2); background:rgba(15, 23, 42, 0.2); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
-                        <h3 style="color:#10b981; margin:0 0 1rem 0; font-size:1rem;">âš¡ 2. Ejecutar Cruce (ERU)</h3>
+                        <h3 style="color:#10b981; margin:0 0 1rem 0; font-size:1rem;">⚡ 2. Ejecutar Cruce (ERU)</h3>
                         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Cruza las lecturas en vivo de los operarios contra los archivos maestros.</p>
-                        <button id="btn_sync_eru" class="btn-premium-pulse" style="width:100%; max-width:300px; padding:12px 20px; font-size:0.85rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(16, 185, 129, 0.3);">ðŸ”„ SINCRONIZAR Y CRUZAR</button>
+                        <button id="btn_sync_eru" class="btn-premium-pulse" style="width:100%; max-width:300px; padding:12px 20px; font-size:0.85rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(16, 185, 129, 0.3);">🔄 SINCRONIZAR Y CRUZAR</button>
                     </div>
                 </div>
                 
                 <div class="glass-panel" style="margin-top:1.5rem; padding:1.5rem; border-radius:15px; border:1px solid rgba(255,255,255,0.05); background:rgba(15, 23, 42, 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <h3 style="color:#fff; margin:0; font-size:1rem;">ðŸ“‹ Monitor de Tareas en Vivo</h3>
-                        <button id="btn_refresh_live_monitor" class="btn-premium-pulse" style="padding:6px 15px; font-size:0.75rem; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; cursor:pointer;">ðŸ”„ Actualizar Estado</button>
+                        <h3 style="color:#fff; margin:0; font-size:1rem;">📋 Monitor de Tareas en Vivo</h3>
+                        <button id="btn_refresh_live_monitor" class="btn-premium-pulse" style="padding:6px 15px; font-size:0.75rem; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; cursor:pointer;">🔄 Actualizar Estado</button>
                     </div>
                     <div id="admin_live_monitor" style="overflow-x:auto;">
                         ${activeCount > 0 ? `
@@ -6718,7 +6718,7 @@ const renderRFSection = (container) => {
                                 <thead>
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#818cf8;">
                                         <th style="padding:10px; text-align:center;">#</th>
-                                        <th style="padding:10px;">UbicaciÃ³n</th>
+                                        <th style="padding:10px;">Ubicación</th>
                                         <th style="padding:10px; text-align:center;">Estado</th>
                                         <th style="padding:10px; text-align:center; color:#eab308;">Qty Sistema</th>
                                         <th style="padding:10px; text-align:center; color:#38bdf8;">Qty Conteo</th>
@@ -6731,8 +6731,8 @@ const renderRFSection = (container) => {
                                     ${currentTasks.map((t, i) => {
                                         const isClosed = cyclicService.isLocationClosed(t.location);
                                         const badge = isClosed 
-                                            ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">CERRADA ðŸ”’</span>'
-                                            : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">EN PROCESO â³</span>';
+                                            ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">CERRADA 🔒</span>'
+                                            : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">EN PROCESO ⏳</span>';
                                         
                                         // 1. Qty Sistema
                                         const qSis = systemStockMap.get(t.location.toUpperCase()) || 0;
@@ -6762,11 +6762,11 @@ const renderRFSection = (container) => {
                                         // 5. Usuario
                                         const lastScanner = locationScans.length > 0 ? (locationScans[locationScans.length - 1].user || 'operario') : '-';
                                         const userDisplay = isClosed 
-                                            ? `<span style="color:#10b981; font-weight:bold;">ðŸ‘¤ ${t.user || lastScanner}</span>`
-                                            : (locationScans.length > 0 ? `<span style="color:#f59e0b;">ðŸ‘¤ ${lastScanner} âœï¸</span>` : '<span style="color:#64748b;">-</span>');
+                                            ? `<span style="color:#10b981; font-weight:bold;">👤 ${t.user || lastScanner}</span>`
+                                            : (locationScans.length > 0 ? `<span style="color:#f59e0b;">👤 ${lastScanner} ✍️</span>` : '<span style="color:#64748b;">-</span>');
                                         
                                         return `
-                                        <tr class="admin-loc-row" data-loc="${t.location}" data-closed="${isClosed}" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" title="Clic para entrar a Modo EscÃ¡ner">
+                                        <tr class="admin-loc-row" data-loc="${t.location}" data-closed="${isClosed}" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" title="Clic para entrar a Modo Escáner">
                                             <td style="padding:10px; text-align:center; color:var(--text-muted);">${i + 1}</td>
                                             <td style="padding:10px; color:#fff; font-weight:bold;">${t.location}</td>
                                             <td style="padding:10px; text-align:center;">${badge}</td>
@@ -6800,20 +6800,20 @@ const renderRFSection = (container) => {
                             let locations = [];
                             if (Array.isArray(data[0])) {
                                 const headerRow = data[0].map(h => String(h).toUpperCase().trim());
-                                const ubiIndex = headerRow.findIndex(h => h === 'UBICACION' || h === 'UBICACIÃ“N');
-                                if (ubiIndex === -1) { alert('âŒ Error: No se encontrÃ³ la columna "UBICACION" en la fila 1.'); return; }
+                                const ubiIndex = headerRow.findIndex(h => h === 'UBICACION' || h === 'UBICACIÓN');
+                                if (ubiIndex === -1) { alert('❌ Error: No se encontró la columna "UBICACION" en la fila 1.'); return; }
                                 for (let i = 1; i < data.length; i++) {
                                     if (data[i] && data[i][ubiIndex]) locations.push(String(data[i][ubiIndex]).trim());
                                 }
                             } else {
-                                locations = data.map(d => String(d.ubicacion || d.Ubicacion || d.UBICACION || d.UBICACIÃ“N || '').trim()).filter(Boolean);
+                                locations = data.map(d => String(d.ubicacion || d.Ubicacion || d.UBICACION || d.UBICACIÓN || '').trim()).filter(Boolean);
                             }
                             const uniqueLocs = [...new Set(locations)];
-                            if (uniqueLocs.length === 0) { alert('âš ï¸ No se encontraron ubicaciones vÃ¡lidas.'); return; }
+                            if (uniqueLocs.length === 0) { alert('⚠️ No se encontraron ubicaciones válidas.'); return; }
                             const tasks = uniqueLocs.map(loc => ({ location: loc, status: 'pending' }));
                             cyclicService.saveTasks(tasks);
-                            document.getElementById('admin_task_status').innerHTML = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">ðŸŸ¢ TAREA ACTIVA EN PISO: ${tasks.length} ubicaciones pendientes</div>`;
-                            alert('âœ… Tarea de ' + tasks.length + ' ubicaciones asignada con Ã©xito.');
+                            document.getElementById('admin_task_status').innerHTML = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; color:#10b981; font-size:0.85rem; font-weight:bold; text-align:center;">🟢 TAREA ACTIVA EN PISO: ${tasks.length} ubicaciones pendientes</div>`;
+                            alert('✅ Tarea de ' + tasks.length + ' ubicaciones asignada con éxito.');
                             renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                         }
                     } catch(err) { alert(err); }
@@ -6824,7 +6824,7 @@ const renderRFSection = (container) => {
             document.querySelectorAll('.admin-loc-row').forEach(el => {
                 el.onclick = () => {
                     if(el.dataset.closed === 'true') {
-                        alert('Esta ubicaciÃ³n ya estÃ¡ cerrada.');
+                        alert('Esta ubicación ya está cerrada.');
                         return;
                     }
                     localStorage.setItem('eru_active_location', el.dataset.loc);
@@ -6852,13 +6852,13 @@ const renderRFSection = (container) => {
                         const t = currentTasks.find(x => x.location.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase() === cleanCode);
                         if(t) {
                             if(cyclicService.isLocationClosed(t.location)) {
-                                alert('UbicaciÃ³n Cerrada.');
+                                alert('Ubicación Cerrada.');
                             } else {
                                 localStorage.setItem('eru_active_location', t.location);
                                 renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                             }
                         } else {
-                            alert('UbicaciÃ³n no encontrada en la tarea actual.');
+                            alert('Ubicación no encontrada en la tarea actual.');
                         }
                     }
                 });
@@ -6881,12 +6881,12 @@ const renderRFSection = (container) => {
                         const scans = cyclicService.getScans();
 
                         if (tasks.length === 0) {
-                            alert("âš ï¸ No hay tareas asignadas en el Monitor en Vivo para cruzar.");
+                            alert("⚠️ No hay tareas asignadas en el Monitor en Vivo para cruzar.");
                             return;
                         }
 
                         if (scans.length === 0) {
-                            alert("âš ï¸ Los operarios no han realizado lecturas fÃ­sicas aÃºn.");
+                            alert("⚠️ Los operarios no han realizado lecturas físicas aún.");
                             return;
                         }
 
@@ -6894,8 +6894,8 @@ const renderRFSection = (container) => {
                         const maestro = await getAreaData('articulos') || [];
                         const maestroMap = new Map();
                         maestro.forEach(a => {
-                            const mSku = (getCol(a, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product']) || '').toString().trim().toUpperCase();
-                            const mDesc = (getCol(a, ['Descripcion', 'DescripciÃ³n', 'Description', 'Desc']) || 'S/D').toString().trim();
+                            const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim().toUpperCase();
+                            const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString().trim();
                             if (mSku) maestroMap.set(mSku, mDesc);
                         });
 
@@ -6905,14 +6905,14 @@ const renderRFSection = (container) => {
                         const descMap = new Map();
 
                         stockActivo.forEach(row => {
-                            const sku = (getCol(row, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim().toUpperCase();
-                            const ubi = (getCol(row, ['Ubicacion', 'UbicaciÃ³n', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
+                            const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim().toUpperCase();
+                            const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
                             const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
                             
-                            // Escaneo inteligente de descripciÃ³n
+                            // Escaneo inteligente de descripción
                             let desc = 'S/D';
                             if (typeof row === 'object' && !Array.isArray(row)) {
-                                desc = getCol(row, ['Descripcion', 'DescripciÃ³n', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
+                                desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
                             } else if (Array.isArray(row)) {
                                 desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
                             }
@@ -6929,7 +6929,7 @@ const renderRFSection = (container) => {
                         scans.forEach(s => {
                             let sku = s.sku.toString().trim().toUpperCase();
                             
-                            // Traducir cÃ³digo de barras a SKU real si existe en el maestro (para lecturas histÃ³ricas)
+                            // Traducir código de barras a SKU real si existe en el maestro (para lecturas históricas)
                             if (barcodeToSkuMap && barcodeToSkuMap.has(sku)) {
                                 sku = barcodeToSkuMap.get(sku);
                             }
@@ -6955,7 +6955,7 @@ const renderRFSection = (container) => {
                             const qFis = fisicoMap.get(key) || 0;
                             const diff = qFis - qSis;
 
-                            // Exactitud de Registro de UbicaciÃ³n (ERU) por lÃ­nea
+                            // Exactitud de Registro de Ubicación (ERU) por línea
                             const acc = qSis === qFis ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, qFis || 1))) * 100;
 
                             totalItems++;
@@ -6974,7 +6974,7 @@ const renderRFSection = (container) => {
                             });
                         });
 
-                        // Ordenar eruResults por ubicaciÃ³n
+                        // Ordenar eruResults por ubicación
                         eruResults.sort((a, b) => a.ubi.localeCompare(b.ubi));
 
                         // 5. Cruzar por SKU (ERI)
@@ -7019,15 +7019,15 @@ const renderRFSection = (container) => {
                         // 6. Guardar en global
                         window._lastERI = { eriResults, finalERI, eruResults, finalERU };
 
-                        // 7. Cambiar de pestaÃ±a y re-renderizar
+                        // 7. Cambiar de pestaña y re-renderizar
                         activeModuloInvSub = 'reportes';
                         renderModuloInventarios(container);
 
-                        alert(`âœ… Â¡Cruce ERU / ERI realizado con Ã©xito!\nERU: ${finalERU}%\nERI: ${finalERI}%`);
+                        alert(`✅ ¡Cruce ERU / ERI realizado con éxito!\nERU: ${finalERU}%\nERI: ${finalERI}%`);
 
                     } catch(err) {
-                        console.error("Error en cruce cÃ­clico ERU:", err);
-                        alert("âŒ Error al procesar el cruce cÃ­clico: " + err);
+                        console.error("Error en cruce cíclico ERU:", err);
+                        alert("❌ Error al procesar el cruce cíclico: " + err);
                     }
                 };
             }
@@ -7042,10 +7042,10 @@ const renderRFSection = (container) => {
                     <div style="padding:0.5rem;">
                         <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:1rem; border-radius:10px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <h2 style="color:#10b981; margin:0; font-size:1.1rem;">ðŸŸ¢ MODO PISTOLEO ACTIVO</h2>
-                                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">Pistolea el cÃ³digo de una ubicaciÃ³n de la lista para empezar.</p>
+                                <h2 style="color:#10b981; margin:0; font-size:1.1rem;">🟢 MODO PISTOLEO ACTIVO</h2>
+                                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">Pistolea el código de una ubicación de la lista para empezar.</p>
                             </div>
-                            <span style="font-size:2rem;">ðŸ”«</span>
+                            <span style="font-size:2rem;">🔫</span>
                         </div>
                         
                         <h3 style="color:#fff; font-size:1rem; margin-bottom:1rem;">Ubicaciones Pendientes</h3>
@@ -7064,7 +7064,7 @@ const renderRFSection = (container) => {
                         const isClosed = cyclicService.isLocationClosed(t.location);
                         const color = isClosed ? '#10b981' : 'var(--text-muted)';
                         const bg = isClosed ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)';
-                        const statusText = isClosed ? 'CERRADA ðŸ”’' : 'PENDIENTE';
+                        const statusText = isClosed ? 'CERRADA 🔒' : 'PENDIENTE';
                         container.innerHTML += `
                             <div class="loc-item" data-loc="${t.location}" data-closed="${isClosed}" style="padding:1rem; background:${bg}; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
                                 <span style="color:#fff; font-weight:bold; font-size:1.1rem;">${t.location}</span>
@@ -7077,7 +7077,7 @@ const renderRFSection = (container) => {
                 document.querySelectorAll('.loc-item').forEach(el => {
                     el.onclick = () => {
                         if(el.dataset.closed === 'true') {
-                            alert('Esta ubicaciÃ³n ya fue contada y estÃ¡ cerrada. Solicite desbloqueo a AdministraciÃ³n.');
+                            alert('Esta ubicación ya fue contada y está cerrada. Solicite desbloqueo a Administración.');
                             return;
                         }
                         localStorage.setItem('eru_active_location', el.dataset.loc);
@@ -7104,19 +7104,19 @@ const renderRFSection = (container) => {
                             const t = tasks.find(x => x.location.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase() === cleanCode);
                             if(t) {
                                 if(cyclicService.isLocationClosed(t.location)) {
-                                    alert('UbicaciÃ³n Cerrada.');
+                                    alert('Ubicación Cerrada.');
                                 } else {
                                     localStorage.setItem('eru_active_location', t.location);
                                     renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                                 }
                             } else {
-                                alert('UbicaciÃ³n no encontrada en la tarea actual.');
+                                alert('Ubicación no encontrada en la tarea actual.');
                             }
                         }
                     });
                 }
             } else {
-                // MODO ESCANEO (UbicaciÃ³n Abierta)
+                // MODO ESCANEO (Ubicación Abierta)
                 const scans = cyclicService.getScansByLocation(activeLocation);
                 const totalScans = scans.reduce((acc, curr) => acc + curr.qty, 0);
 
@@ -7126,13 +7126,13 @@ const renderRFSection = (container) => {
                         
                         <div style="background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.3); padding:1.5rem; border-radius:10px; margin-bottom:1.5rem;">
                             <h2 style="color:#38bdf8; margin:0 0 0.5rem 0; font-size:1.8rem; font-weight:900;">${activeLocation}</h2>
-                            <p style="margin:0; font-size:0.8rem; color:#fff;">Pistolee los SKUs fÃ­sicos ahora</p>
+                            <p style="margin:0; font-size:0.8rem; color:#fff;">Pistolee los SKUs físicos ahora</p>
                             <h1 style="color:#fff; font-size:3rem; margin:1rem 0 0 0;" id="scan_counter">${totalScans}</h1>
-                            <p style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">ArtÃ­culos leÃ­dos</p>
+                            <p style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Artículos leídos</p>
                         </div>
                         
                         <div style="display:flex; flex-direction:column; gap:1rem;">
-                            <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">ðŸ”’ CERRAR UBICACIÃ“N</button>
+                            <button id="btn_close_loc" class="btn-premium-pulse" style="padding:15px; font-size:1rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer;">🔒 CERRAR UBICACIÓN</button>
                         </div>
                         <input type="text" id="sku_scanner_input" style="position:fixed; top:0; left:0; width:0; height:0; opacity:0; border:none; overflow:hidden; pointer-events:none;" autocomplete="off">
                     </div>
@@ -7144,7 +7144,7 @@ const renderRFSection = (container) => {
                 };
 
                 document.getElementById('btn_close_loc').onclick = async () => {
-                    if(await showPremiumConfirm('CERRAR UBICACIÃ“N', 'Â¿Seguro que deseas cerrar esta ubicaciÃ³n? Ya no podrÃ¡s pistolear mÃ¡s SKUs aquÃ­.', 'warning')) {
+                    if(await showPremiumConfirm('CERRAR UBICACIÓN', '¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.', 'warning')) {
                         cyclicService.closeLocation(activeLocation);
                         localStorage.removeItem('eru_active_location');
                         renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
@@ -7184,11 +7184,11 @@ const renderRFSection = (container) => {
                             if(code) {
                                 playBeep();
                                 
-                                // Traducir cÃ³digo de barras a SKU real si existe en el maestro
+                                // Traducir código de barras a SKU real si existe en el maestro
                                 let translatedCode = code;
                                 if (barcodeToSkuMap && barcodeToSkuMap.has(code.toUpperCase())) {
                                     translatedCode = barcodeToSkuMap.get(code.toUpperCase());
-                                    console.log(`[ESCANER] Traduciendo cÃ³digo de barras ${code} a SKU ${translatedCode}`);
+                                    console.log(`[ESCANER] Traduciendo código de barras ${code} a SKU ${translatedCode}`);
                                 }
                                 
                                 cyclicService.saveScan(activeLocation, translatedCode);
@@ -7203,7 +7203,7 @@ const renderRFSection = (container) => {
         }
     }
     else if (activeModuloInvSub === 'reportes') {
-        // LÃ³gica de auto-cruce en background si no se ha hecho aÃºn pero hay tareas
+        // Lógica de auto-cruce en background si no se ha hecho aún pero hay tareas
         const runAutoCruceBackground = async () => {
             if (window._lastERI) return;
             const stockActivo = await getAreaData('inventario') || [];
@@ -7216,8 +7216,8 @@ const renderRFSection = (container) => {
             const maestro = await getAreaData('articulos') || [];
             const maestroMap = new Map();
             maestro.forEach(a => {
-                const mSku = (getCol(a, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product']) || '').toString().trim().toUpperCase();
-                const mDesc = (getCol(a, ['Descripcion', 'DescripciÃ³n', 'Description', 'Desc']) || 'S/D').toString().trim();
+                const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim().toUpperCase();
+                const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString().trim();
                 if (mSku) maestroMap.set(mSku, mDesc);
             });
             
@@ -7226,13 +7226,13 @@ const renderRFSection = (container) => {
             const descMap = new Map();
             
             stockActivo.forEach(row => {
-                const sku = (getCol(row, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim().toUpperCase();
-                const ubi = (getCol(row, ['Ubicacion', 'UbicaciÃ³n', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
+                const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim().toUpperCase();
+                const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim().toUpperCase();
                 const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
                 
                 let desc = 'S/D';
                 if (typeof row === 'object' && !Array.isArray(row)) {
-                    desc = getCol(row, ['Descripcion', 'DescripciÃ³n', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
+                    desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
                 } else if (Array.isArray(row)) {
                     desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
                 }
@@ -7327,7 +7327,7 @@ const renderRFSection = (container) => {
         const tasks = cyclicService.getTasks() || [];
         const closedLocations = cyclicService.getClosedLocations() || [];
         
-        // Calcular KPIs gerenciales rÃ¡pidos
+        // Calcular KPIs gerenciales rápidos
         const totalClosed = closedLocations.length;
         const totalAssigned = tasks.length;
         const uniqueSkusCount = new Set(scans.map(s => s.sku.toUpperCase())).size;
@@ -7340,10 +7340,10 @@ const renderRFSection = (container) => {
             avgERU = window._lastERI.finalERU;
         }
 
-        // LÃ³gica de pestaÃ±as gerenciales
+        // Lógica de pestañas gerenciales
         window._activeGerTab = window._activeGerTab || 'cronologico';
 
-        // Pre-calcular desglose por Semana y DÃ­a
+        // Pre-calcular desglose por Semana y Día
         const getWeekNumber = (d) => {
             const date = new Date(d.getTime());
             date.setHours(0, 0, 0, 0);
@@ -7432,13 +7432,13 @@ const renderRFSection = (container) => {
 
         let htmlWeeks = '';
         if (sortedWeeks.length === 0) {
-            htmlWeeks = `<tr><td colspan="7" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay lecturas registradas para agrupar cronolÃ³gicamente.</td></tr>`;
+            htmlWeeks = `<tr><td colspan="7" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay lecturas registradas para agrupar cronológicamente.</td></tr>`;
         } else {
             sortedWeeks.forEach(w => {
                 htmlWeeks += `
                     <tr style="background:rgba(255,255,255,0.02); font-weight:800; color:#38bdf8;">
                         <td colspan="7" style="padding:10px 15px; font-size:0.85rem; border-left:4px solid #38bdf8;">
-                            ðŸ“… ${w.weekName.toUpperCase()}
+                            📅 ${w.weekName.toUpperCase()}
                         </td>
                     </tr>
                 `;
@@ -7472,7 +7472,7 @@ const renderRFSection = (container) => {
                 <!-- TABLERO GERENCIAL (MANDO Y CONTROL) -->
                 <div class="glass-panel" style="padding:2rem; border-radius:15px; border:1px solid rgba(56, 189, 248, 0.2); background:radial-gradient(circle at top right, rgba(56,189,248,0.03), transparent);">
                     <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.2rem; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:10px;">
-                        ðŸ“ˆ TABLERO Y REPORTE GERENCIAL (MANDO Y CONTROL)
+                        📈 TABLERO Y REPORTE GERENCIAL (MANDO Y CONTROL)
                     </h3>
                     
                     <!-- KPI CARDS -->
@@ -7485,14 +7485,14 @@ const renderRFSection = (container) => {
                             </span>
                         </div>
                         <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #a855f7; background:rgba(255,255,255,0.01);">
-                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">SKUs Ãšnicos</h4>
+                            <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">SKUs Únicos</h4>
                             <h2 style="margin:0.5rem 0; font-size:1.8rem; color:#fff; font-weight:800;">${uniqueSkusCount}</h2>
                             <span style="font-size:0.65rem; color:var(--text-muted);">Sobrantes o asignados</span>
                         </div>
                         <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #10b981; background:rgba(255,255,255,0.01);">
                             <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Qty Total Conteo</h4>
                             <h2 style="margin:0.5rem 0; font-size:1.8rem; color:#10b981; font-weight:800;">${totalFisQty} u.</h2>
-                            <span style="font-size:0.65rem; color:var(--text-muted);">Unidades fÃ­sicas</span>
+                            <span style="font-size:0.65rem; color:var(--text-muted);">Unidades físicas</span>
                         </div>
                         <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #f59e0b; background:rgba(255,255,255,0.01);">
                             <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Qty Total Sistema</h4>
@@ -7505,7 +7505,7 @@ const renderRFSection = (container) => {
                             <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Exactitud ERU</h4>
                             <h2 style="margin:0.5rem 0; font-size:1.8rem; color:${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}; font-weight:800;">${avgERU}%</h2>
                             <span style="font-size:0.65rem; background:${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}22; color:${avgERU >= 90 ? '#10b981' : (avgERU >= 80 ? '#f59e0b' : '#ef4444')}; padding:2px 8px; border-radius:10px; font-weight:700;">
-                                ${avgERU >= 90 ? 'EXCELENTE' : (avgERU >= 80 ? 'REGULAR' : 'CRÃTICO')}
+                                ${avgERU >= 90 ? 'EXCELENTE' : (avgERU >= 80 ? 'REGULAR' : 'CRÍTICO')}
                             </span>
                         </div>
                     </div>
@@ -7513,13 +7513,13 @@ const renderRFSection = (container) => {
                     <!-- INNER NAVIGATION TABS -->
                     <div style="display:flex; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem;">
                         <button class="ger-tab-btn ${window._activeGerTab === 'cronologico' ? 'active' : ''}" data-tab="cronologico" style="background:none; border:none; padding:10px 15px; color:${window._activeGerTab === 'cronologico' ? '#38bdf8' : 'var(--text-muted)'}; border-bottom:2px solid ${window._activeGerTab === 'cronologico' ? '#38bdf8' : 'transparent'}; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s;">
-                            ðŸ“… RESUMEN POR SEMANA Y DÃA
+                            📅 RESUMEN POR SEMANA Y DÍA
                         </button>
                         <button class="ger-tab-btn ${window._activeGerTab === 'ubicacion' ? 'active' : ''}" data-tab="ubicacion" style="background:none; border:none; padding:10px 15px; color:${window._activeGerTab === 'ubicacion' ? '#38bdf8' : 'var(--text-muted)'}; border-bottom:2px solid ${window._activeGerTab === 'ubicacion' ? '#38bdf8' : 'transparent'}; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s;">
-                            ðŸ“ ACUMULADO POR UBICACIÃ“N
+                            📍 ACUMULADO POR UBICACIÓN
                         </button>
                         <button class="ger-tab-btn ${window._activeGerTab === 'sku' ? 'active' : ''}" data-tab="sku" style="background:none; border:none; padding:10px 15px; color:${window._activeGerTab === 'sku' ? '#38bdf8' : 'var(--text-muted)'}; border-bottom:2px solid ${window._activeGerTab === 'sku' ? '#38bdf8' : 'transparent'}; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s;">
-                            ðŸ·ï¸ ACUMULADO POR SKU
+                            🏷️ ACUMULADO POR SKU
                         </button>
                     </div>
 
@@ -7530,8 +7530,8 @@ const renderRFSection = (container) => {
                 <!-- SECTION 1: REPORTE UCA (BOTTOM - FULL WIDTH) -->
                 <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(99, 102, 241, 0.2); background:rgba(15, 23, 42, 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">ðŸ“Š REPORTE UCA (DISPONIBILIDAD)</h3>
-                        <button id="btn_run_uca" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, #4f46e5, #7c3aed); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(79, 70, 229, 0.3);">âš¡ GENERAR UCA</button>
+                        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">📊 REPORTE UCA (DISPONIBILIDAD)</h3>
+                        <button id="btn_run_uca" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, #4f46e5, #7c3aed); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(79, 70, 229, 0.3);">⚡ GENERAR UCA</button>
                     </div>
                     <div id="uca_results_area"></div>
                 </div>
@@ -7539,22 +7539,22 @@ const renderRFSection = (container) => {
                 <!-- SECTION 2: INDICADORES DE EXACTITUD (BOTTOM - SPLIT) -->
                 <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(16, 185, 129, 0.2); background:rgba(15, 23, 42, 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">ðŸŽ¯ INDICADORES DE EXACTITUD (AUDITORÃA)</h3>
+                        <h3 style="color:#fff; margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">🎯 INDICADORES DE EXACTITUD (AUDITORÍA)</h3>
                         <div style="display:flex; gap:10px;">
                             <input type="file" id="up_conteo_unificado" accept=".csv, .xlsx" style="display:none;">
-                            <button onclick="document.getElementById('up_conteo_unificado').click()" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(16, 185, 129, 0.3);">ðŸ“‰ PROCESAR ERI / ERU</button>
+                            <button onclick="document.getElementById('up_conteo_unificado').click()" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(16, 185, 129, 0.3);">📉 PROCESAR ERI / ERU</button>
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
                         <!-- ERU (IZQUIERDA) -->
                         <div id="eru_results_area_unif">
-                            <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed rgba(255,255,255,0.05);">Esperando AuditorÃ­a ERU...</div>
+                            <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed rgba(255,255,255,0.05);">Esperando Auditoría ERU...</div>
                         </div>
 
                         <!-- ERI (DERECHA) -->
                         <div id="eri_results_area_unif">
-                            <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed rgba(255,255,255,0.05);">Esperando AuditorÃ­a ERI...</div>
+                            <div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.75rem; font-style:italic; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed rgba(255,255,255,0.05);">Esperando Auditoría ERI...</div>
                         </div>
                     </div>
                 </div>
@@ -7562,7 +7562,7 @@ const renderRFSection = (container) => {
             </div>
         `;
 
-        // Renderizar pestaÃ±a gerencial activa
+        // Renderizar pestaña gerencial activa
         const gerContent = document.getElementById('ger_tab_content');
         if (window._activeGerTab === 'cronologico') {
             gerContent.innerHTML = `
@@ -7570,9 +7570,9 @@ const renderRFSection = (container) => {
                     <table class="data-table" style="font-size:0.75rem;">
                         <thead>
                             <tr>
-                                <th style="padding:12px 15px;">DÃA / SEMANA</th>
+                                <th style="padding:12px 15px;">DÍA / SEMANA</th>
                                 <th style="text-align:center;">UBICACIONES CONTADAS</th>
-                                <th style="text-align:center;">SKUs ÃšNICOS</th>
+                                <th style="text-align:center;">SKUs ÚNICOS</th>
                                 <th style="text-align:center;">FISICO (QTY)</th>
                                 <th style="text-align:center;">SISTEMA (QTY)</th>
                                 <th style="text-align:center;">DIFERENCIA</th>
@@ -7589,7 +7589,7 @@ const renderRFSection = (container) => {
             const cleanERU = (window._lastERI && window._lastERI.eruResults) ? window._lastERI.eruResults.filter(r => r.ubi && !r.ubi.toString().toUpperCase().includes('UBICAC')) : [];
             let htmlRows = '';
             if (cleanERU.length === 0) {
-                htmlRows = `<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos de ubicaciÃ³n acumulados. Realiza el cruce para cargar.</td></tr>`;
+                htmlRows = `<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos de ubicación acumulados. Realiza el cruce para cargar.</td></tr>`;
             } else {
                 htmlRows = cleanERU.map(r => {
                     const accColor = r.eri >= 90 ? '#10b981' : (r.eri >= 80 ? '#f59e0b' : '#ef4444');
@@ -7598,7 +7598,7 @@ const renderRFSection = (container) => {
                     const operarioName = t ? (t.user || 'S/D') : 'S/D';
                     return `
                         <tr>
-                            <td style="font-weight:700; color:#10b981; padding:10px 15px;">ðŸ“ ${r.ubi}</td>
+                            <td style="font-weight:700; color:#10b981; padding:10px 15px;">📍 ${r.ubi}</td>
                             <td>${r.sku}</td>
                             <td style="text-align:center;">${r.sis}</td>
                             <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
@@ -7617,16 +7617,16 @@ const renderRFSection = (container) => {
             }
             gerContent.innerHTML = `
                 <div style="margin-bottom:1rem; display:flex; justify-content:flex-end;">
-                    <input type="text" id="search_ger_loc" placeholder="ðŸ” Buscar ubicaciÃ³n..." style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.75rem; width:200px;">
+                    <input type="text" id="search_ger_loc" placeholder="🔍 Buscar ubicación..." style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.75rem; width:200px;">
                 </div>
                 <div class="data-table-container" style="border-radius:10px; border:1px solid rgba(255,255,255,0.05); max-height:400px; overflow-y:auto;">
                     <table class="data-table" style="font-size:0.75rem;" id="table_ger_loc">
                         <thead style="position:sticky; top:0; z-index:10; background:#1a1d21;">
                             <tr>
-                                <th style="padding:12px 15px;">UBICACIÃ“N</th>
+                                <th style="padding:12px 15px;">UBICACIÓN</th>
                                 <th>SKU</th>
                                 <th style="text-align:center;">SISTEMA</th>
-                                <th style="text-align:center;">FÃSICO</th>
+                                <th style="text-align:center;">FÍSICO</th>
                                 <th style="text-align:center;">DIF</th>
                                 <th style="text-align:center;">EXACTITUD ERU</th>
                                 <th>OPERARIO</th>
@@ -7659,7 +7659,7 @@ const renderRFSection = (container) => {
                     const accColor = r.eri >= 90 ? '#10b981' : (r.eri >= 80 ? '#f59e0b' : '#ef4444');
                     return `
                         <tr>
-                            <td style="font-weight:700; color:#818cf8; padding:10px 15px;">ðŸ·ï¸ ${r.sku}</td>
+                            <td style="font-weight:700; color:#818cf8; padding:10px 15px;">🏷️ ${r.sku}</td>
                             <td style="font-size:0.7rem; color:var(--text-muted);">${r.ubi}</td>
                             <td style="text-align:center;">${r.sis}</td>
                             <td style="text-align:center; font-weight:700; color:#fff;">${r.fis}</td>
@@ -7677,16 +7677,16 @@ const renderRFSection = (container) => {
             }
             gerContent.innerHTML = `
                 <div style="margin-bottom:1rem; display:flex; justify-content:flex-end;">
-                    <input type="text" id="search_ger_sku" placeholder="ðŸ” Buscar SKU..." style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.75rem; width:200px;">
+                    <input type="text" id="search_ger_sku" placeholder="🔍 Buscar SKU..." style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.75rem; width:200px;">
                 </div>
                 <div class="data-table-container" style="border-radius:10px; border:1px solid rgba(255,255,255,0.05); max-height:400px; overflow-y:auto;">
                     <table class="data-table" style="font-size:0.75rem;" id="table_ger_sku">
                         <thead style="position:sticky; top:0; z-index:10; background:#1a1d21;">
                             <tr>
                                 <th style="padding:12px 15px;">SKU</th>
-                                <th>UBICACIÃ“N</th>
+                                <th>UBICACIÓN</th>
                                 <th style="text-align:center;">SISTEMA</th>
-                                <th style="text-align:center;">FÃSICO</th>
+                                <th style="text-align:center;">FÍSICO</th>
                                 <th style="text-align:center;">DIF</th>
                                 <th style="text-align:center;">EXACTITUD ERI</th>
                             </tr>
@@ -7718,17 +7718,17 @@ const renderRFSection = (container) => {
             };
         });
 
-        // LÃ³gica UCA original
+        // Lógica UCA original
         document.getElementById('btn_run_uca').onclick = () => {
             if (matriz && reserva) {
                 const res = processReporteUCA(matriz, reserva);
                 displayReporteUCA(res);
             } else {
-                alert("âš ï¸ Datos insuficientes en 'ARCHIVO INVENTARIO' para UCA.");
+                alert("⚠️ Datos insuficientes en 'ARCHIVO INVENTARIO' para UCA.");
             }
         };
 
-        // LÃ³gica ERI/ERU original
+        // Lógica ERI/ERU original
         const inputUnif = document.getElementById('up_conteo_unificado');
         if (inputUnif) {
             inputUnif.onchange = async (e) => {
@@ -7762,7 +7762,7 @@ const renderRFSection = (container) => {
             };
         }
 
-        // FunciÃ³n interna para renderizar ERI/ERU uno al lado del otro
+        // Función interna para renderizar ERI/ERU uno al lado del otro
         const renderERI_ERU_Unified = () => {
             if (!window._lastERI) return;
             const eriArea = document.getElementById('eri_results_area_unif');
@@ -7783,7 +7783,7 @@ const renderRFSection = (container) => {
                             <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:1px;">
                                 EXACTITUD <span id="eru_timestamp" style="margin-left:10px; color:rgba(255,255,255,0.3); font-weight:400;"></span>
                             </div>
-                            <div style="font-size:0.9rem; font-weight:900; color:#10b981;">DE REGISTRO DE UBICACIÃ“N (ERU)</div>
+                            <div style="font-size:0.9rem; font-weight:900; color:#10b981;">DE REGISTRO DE UBICACIÓN (ERU)</div>
                         </div>
                     </div>
                     <div class="data-table-container" style="max-height:280px; overflow-y:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
@@ -7843,7 +7843,7 @@ const renderRFSection = (container) => {
     
     if (eriVal) eriVal.innerText = `${data.finalERI}%`;
     if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
-    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th>UBICACIÃ“N</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÃSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
+    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th>UBICACIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
     
     if (eriBody && Array.isArray(data.eriResults)) {
         // Filtrar encabezados residuales
@@ -7876,7 +7876,7 @@ const renderRFSection = (container) => {
 
     if (eruVal) eruVal.innerText = `${data.finalERU}%`;
     if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
-    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÃ“N</th><th>SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÃSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
+    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th>SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
     
     if (eruBody && Array.isArray(data.eruResults)) {
         // Filtrar encabezados residuales
@@ -7897,7 +7897,7 @@ const renderRFSection = (container) => {
   };
 
   const renderERIERULayout = (container) => {
-      // FunciÃ³n obsoleta - Eliminada para evitar duplicados en el dashboard unificado
+      // Función obsoleta - Eliminada para evitar duplicados en el dashboard unificado
       console.log("[PULSE] renderERIERULayout llamado pero desactivado por v18.5.20");
   };
 
@@ -7906,7 +7906,7 @@ const renderRFSection = (container) => {
       if (!dataStore.recepcion_activo || dataStore.recepcion_activo.length === 0 || !dataStore.articulos || dataStore.articulos.length === 0) {
           showPremiumAlert(
               'Faltan Cargar Archivos',
-              'No se puede procesar el reporte porque falta cargar los archivos requeridos en la pestaÃ±a <strong>ARCHIVO RECEPCIÃ“N</strong>.<br><br>Por favor, asegÃºrate de subir: <br>â€¢ <strong>Stock Activo</strong> (CSV)<br>â€¢ <strong>Maestro ArtÃ­culos</strong> (XLSX)',
+              'No se puede procesar el reporte porque falta cargar los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.<br><br>Por favor, asegúrate de subir: <br>• <strong>Stock Activo</strong> (CSV)<br>• <strong>Maestro Artículos</strong> (XLSX)',
               'error'
           );
           return;
@@ -7916,7 +7916,7 @@ const renderRFSection = (container) => {
         <div class="glass-panel" style="padding: 4rem 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 900px; margin: 4rem auto; animation: fadeIn 0.3s ease;">
             <div style="max-width: 700px; margin: 0 auto; text-align: left;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: flex-end;">
-                    <span id="recepcionProgressText" style="font-size: 1rem; color: #a1a1aa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Iniciando anÃ¡lisis...</span>
+                    <span id="recepcionProgressText" style="font-size: 1rem; color: #a1a1aa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Iniciando análisis...</span>
                     <span id="recepcionProgressPct" style="font-size: 1.5rem; color: #22d3ee; font-weight: 900; font-family: monospace;">0%</span>
                 </div>
                 <div class="progress-bar-container" style="background: rgba(255,255,255,0.03); border-radius: 999px; height: 24px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
@@ -7932,11 +7932,11 @@ const renderRFSection = (container) => {
 
       let pct = 0;
       const steps = [
-          { threshold: 10, text: 'Leyendo Stock Activo de RecepciÃ³n...' },
+          { threshold: 10, text: 'Leyendo Stock Activo de Recepción...' },
           { threshold: 40, text: 'Filtrando ubicaciones CDBUFFER-A y CDBUFFER-D...' },
-          { threshold: 70, text: 'Cruzando con Maestro de ArtÃ­culos...' },
+          { threshold: 70, text: 'Cruzando con Maestro de Artículos...' },
           { threshold: 90, text: 'Tabulando marcas y departamentos...' },
-          { threshold: 100, text: 'Â¡Procesamiento completado con Ã©xito!' }
+          { threshold: 100, text: '¡Procesamiento completado con éxito!' }
       ];
 
       const interval = setInterval(() => {
@@ -7959,7 +7959,7 @@ const renderRFSection = (container) => {
                       renderRecepcionReportTab(container);
                   } catch (err) {
                       console.error(err);
-                      showPremiumAlert('Error de AnÃ¡lisis', 'OcurriÃ³ un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
+                      showPremiumAlert('Error de Análisis', 'Ocurrió un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
                   }
               }, 500);
           }
@@ -7972,15 +7972,15 @@ const renderRFSection = (container) => {
     if (!hasDataFiles) {
         container.innerHTML = `
           <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); max-width: 800px; margin: 2rem auto; animation: fadeIn 0.3s ease;">
-              <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">âš ï¸</div>
+              <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">⚠️</div>
               <h3 style="margin-bottom: 1rem; color: #ff6b6b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                  FALTAN ARCHIVOS DE RECEPCIÃ“N
+                  FALTAN ARCHIVOS DE RECEPCIÓN
               </h3>
               <p style="color: var(--text-muted); margin-bottom: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
-                  No se puede generar el reporte porque aÃºn no has cargado los archivos requeridos en la pestaÃ±a <strong>ARCHIVO RECEPCIÃ“N</strong>.
-                  <br><br>Por favor, asegÃºrate de subir:
-                  <br>â€¢ <strong>Stock Activo</strong> (CSV)
-                  <br>â€¢ <strong>Maestro ArtÃ­culos</strong> (XLSX)
+                  No se puede generar el reporte porque aún no has cargado los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.
+                  <br><br>Por favor, asegúrate de subir:
+                  <br>• <strong>Stock Activo</strong> (CSV)
+                  <br>• <strong>Maestro Artículos</strong> (XLSX)
               </p>
           </div>
         `;
@@ -7991,15 +7991,15 @@ const renderRFSection = (container) => {
     if (!isProcessed) {
         container.innerHTML = `
           <div class="glass-panel" style="padding: 4rem 3rem; text-align: center; border-radius: 16px; background: rgba(10, 15, 30, 0.7); border: 2px solid #22d3ee; box-shadow: 0 0 25px rgba(34, 211, 238, 0.15); max-width: 800px; margin: 4rem auto; animation: fadeIn 0.3s ease;">
-              <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">ðŸ“Š</div>
+              <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">📊</div>
               <h3 style="margin-bottom: 1rem; color: #22d3ee; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                  REPORTE DE RECEPCIÃ“N - CDBUFFER
+                  REPORTE DE RECEPCIÓN - CDBUFFER
               </h3>
               <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
-                  Los archivos de stock y maestro se han cargado correctamente. Haz clic en el botÃ³n de abajo para procesar el reporte y generar el anÃ¡lisis de las matrices.
+                  Los archivos de stock y maestro se han cargado correctamente. Haz clic en el botón de abajo para procesar el reporte y generar el análisis de las matrices.
               </p>
               <button id="btn_procesar_recepcion_inicial" class="btn" style="background: linear-gradient(135deg, #4f46e5 0%, #22d3ee 100%); color: #fff; border: none; font-weight: 800; padding: 0.8rem 2.5rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 15px rgba(34,211,238,0.3);">
-                  ðŸ“Š PROCESAR REPORTE
+                  📊 PROCESAR REPORTE
               </button>
           </div>
         `;
@@ -8012,7 +8012,7 @@ const renderRFSection = (container) => {
     container.innerHTML = `
       <div style="max-width: 900px; margin: 1.5rem auto; text-align: right; margin-bottom: 1rem; animation: fadeIn 0.3s ease;">
           <button id="btn_reprocesar_recepcion" class="btn" style="background: rgba(34, 211, 238, 0.1); color: #22d3ee; border: 1px solid #22d3ee; font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;">
-              ðŸ”„ REPROCESAR REPORTE
+              🔄 REPROCESAR REPORTE
           </button>
       </div>
       <div id="recepcionResultsArea"></div>
@@ -8023,7 +8023,7 @@ const renderRFSection = (container) => {
         generateAndRenderRecepcionReport(resultsArea);
     } catch (err) {
         console.error(err);
-        showPremiumAlert('Error de AnÃ¡lisis', 'OcurriÃ³ un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
+        showPremiumAlert('Error de Análisis', 'Ocurrió un error inesperado al procesar la matriz del reporte: ' + err.message, 'error');
         return;
     }
 
@@ -8066,10 +8066,10 @@ const renderRFSection = (container) => {
       };
 
       // ==========================================
-      // REPORTE 1: REPORTE RECEPCIÃ“N - CDBUFFER (Izquierda)
+      // REPORTE 1: REPORTE RECEPCIÓN - CDBUFFER (Izquierda)
       // ==========================================
       const cdbufferRows = activeRows.filter(row => {
-          const location = String(getCol(row, ['UBICACION', 'UbicaciÃ³n', 'UbicaciÃ³n actual']) || '').trim().toUpperCase();
+          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
           return location.startsWith('CDBUFFER-A') || location.startsWith('CDBUFFER-D');
       });
 
@@ -8083,7 +8083,7 @@ const renderRFSection = (container) => {
       const uniqueBrands = new Set(brandOrder);
       let totalSum = 0;
 
-      // Inicializar matriz con 0 para que siempre muestre la estructura vacÃ­a con ceros
+      // Inicializar matriz con 0 para que siempre muestre la estructura vacía con ceros
       brandOrder.forEach(brand => {
           matrix[brand] = {};
           deptOrder.forEach(dept => {
@@ -8092,7 +8092,7 @@ const renderRFSection = (container) => {
       });
 
       cdbufferRows.forEach(row => {
-          const sku = String(getCol(row, ['Articulo', 'ArtÃ­culo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
+          const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
           const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
           if (qty <= 0) return;
 
@@ -8152,7 +8152,7 @@ const renderRFSection = (container) => {
                   <div style="width: 4px; height: 26px; background-color: #22d3ee; border-radius: 2px; box-shadow: 0 0 10px #22d3ee;"></div>
                   <div>
                       <h2 style="font-size: 1.05rem; font-weight: 800; color: #22d3ee; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(34,211,238,0.3);">
-                          REPORTE RECEPCIÃ“N - CDBUFFER
+                          REPORTE RECEPCIÓN - CDBUFFER
                       </h2>
                       <div style="font-size: 0.7rem; font-weight: 600; color: #64748b; margin-top: 1px; letter-spacing: 0.5px;">
                           DATA_SYNC: <span style="color: #94a3b8;">${timeStr}</span>
@@ -8224,16 +8224,16 @@ const renderRFSection = (container) => {
       const secondMatrix = {}; // { area: { dept: { buffer: 0 } } }
       const thirdMatrix = {};  // { area: { brand: { buffer: 0 } } }
 
-      // Llenar buffer a partir de Stock Activo (activeRows) Ãºnicamente
+      // Llenar buffer a partir de Stock Activo (activeRows) únicamente
       activeRows.forEach(row => {
-          const location = String(getCol(row, ['UBICACION', 'UbicaciÃ³n', 'UbicaciÃ³n actual']) || '').trim().toUpperCase();
+          const location = String(getCol(row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim().toUpperCase();
           let area = '';
           if (location.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
           else if (location.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
           else if (location.startsWith('CDBUFFER-D')) area = 'CDBUFFER-D';
           else return;
 
-          const sku = String(getCol(row, ['Articulo', 'ArtÃ­culo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
+          const sku = String(getCol(row, ['Articulo', 'Artículo', 'Sku', 'SKU', 'PRODUCTO']) || '').trim();
           const qty = parseFloat(getCol(row, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD'])) || 0;
           if (qty <= 0) return;
 
@@ -8259,7 +8259,7 @@ const renderRFSection = (container) => {
       if (sortedAreas.length === 0) {
           reporte2HTML = `
               <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); border-radius: 12px; height: 100%;">
-                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">âš ï¸</div>
+                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
                   <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A/B/D</h4>
                   <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
                       No se encontraron ubicaciones de tipo CDBUFFER en Stock Activo ni Stock Reserva para generar el reporte de Almacenaje.
@@ -8438,11 +8438,11 @@ const renderRFSection = (container) => {
       // Renderizar lado a lado de manera elegante y fluida
       targetContainer.innerHTML = `
         <div style="display: flex; flex-direction: row; gap: 1.5rem; justify-content: center; align-items: flex-start; max-width: 1700px; margin: 0 auto; flex-wrap: wrap; padding: 0 1rem; animation: fadeInUp 0.4s ease;">
-            <!-- Reporte Izquierdo: RecepciÃ³n CDBUFFER (MÃ¡s ancho para evitar huecos en la matriz) -->
+            <!-- Reporte Izquierdo: Recepción CDBUFFER (Más ancho para evitar huecos en la matriz) -->
             <div style="flex: 1.6; min-width: 780px; max-width: 1080px;">
                 ${reporte1HTML}
             </div>
-            <!-- Columna Derecha: Reportes de Almacenaje (MÃ¡s compacta para evitar ancho excesivo) -->
+            <!-- Columna Derecha: Reportes de Almacenaje (Más compacta para evitar ancho excesivo) -->
             <div style="flex: 0.7; min-width: 350px; max-width: 440px; display: flex; flex-direction: column; gap: 1.5rem;">
                 <!-- Reporte Derecho Superior: Almacenaje GENDER -->
                 ${reporte2HTML}
@@ -8473,7 +8473,7 @@ const renderRFSection = (container) => {
       const ubiOriginal = m.UBICACION || '-';
       const ubiUpper = ubiOriginal.toUpperCase();
       
-      // FILTRO DEFINITIVO: Si la ubicaciÃ³n es el encabezado, ignorar
+      // FILTRO DEFINITIVO: Si la ubicación es el encabezado, ignorar
       if (ubiUpper.includes('UBICAC') || ubiUpper.includes('MATRIZ')) return;
 
       const key = m.UBI_KEY || ubiUpper.replace(/[^A-Z0-9]/g, '');
@@ -8488,7 +8488,7 @@ const renderRFSection = (container) => {
 
       results.push({
         ubicacion: ubiOriginal,
-        estado: hasStock ? 'OCUPADA' : 'VACÃA',
+        estado: hasStock ? 'OCUPADA' : 'VACÍA',
         lpns: uniqueLPNs.length,
         skus: uniqueSKUs.length,
         qty: totalQty,
@@ -8506,10 +8506,10 @@ const renderRFSection = (container) => {
         const sheet = workbook.addWorksheet('Reporte UCA');
         
         sheet.columns = [
-          { header: 'NÂ°', key: 'num', width: 6 },
-          { header: 'UBICACIÃ“N', key: 'ubicacion', width: 20 },
+          { header: 'N°', key: 'num', width: 6 },
+          { header: 'UBICACIÓN', key: 'ubicacion', width: 20 },
           { header: 'ESTADO EN SISTEMA', key: 'estado', width: 20 },
-          { header: 'LPNs (ÃšNICOS)', key: 'lpns', width: 18 },
+          { header: 'LPNs (ÚNICOS)', key: 'lpns', width: 18 },
           { header: 'DETALLE LPNs', key: 'detalle', width: 50 },
           { header: 'OBSERVACIONES', key: 'obs', width: 20 },
           { header: 'CHECK', key: 'check', width: 10 }
@@ -8523,7 +8523,7 @@ const renderRFSection = (container) => {
                 lpns: r.lpns,
                 detalle: r.detalle,
                 obs: '',
-                check: 'â˜'
+                check: '☐'
             });
         });
 
@@ -8562,14 +8562,14 @@ const renderRFSection = (container) => {
         window.URL.revokeObjectURL(url);
     } catch (err) {
         console.error("Error al exportar Excel:", err);
-        alert("âŒ Error al generar el Excel.");
+        alert("❌ Error al generar el Excel.");
     }
   };
 
   // --- MOTOR DE ANALISIS ERI ---
   const processERIAnalysis = async (conteoData) => {
     try {
-        // [MOD V18.5.5] Buscamos primero en 'inventario' (Llave de la pestaÃ±a Archivo Inventario)
+        // [MOD V18.5.5] Buscamos primero en 'inventario' (Llave de la pestaña Archivo Inventario)
         let stockActivo = await getAreaData('inventario');
         
         // Si no hay en 'inventario', probamos con 'inventario_activo' por si acaso
@@ -8578,32 +8578,32 @@ const renderRFSection = (container) => {
         }
 
         if (!stockActivo || stockActivo.length === 0) {
-            alert("âš ï¸ No hay datos de 'STOCK ACTIVO' cargados. CÃ¡rgalos primero para realizar el cruce.");
+            alert("⚠️ No hay datos de 'STOCK ACTIVO' cargados. Cárgalos primero para realizar el cruce.");
             return;
         }
 
         const maestro = await getAreaData('articulos') || [];
         const maestroMap = new Map();
         maestro.forEach(a => {
-            const mSku = (getCol(a, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product']) || '').toString().trim();
-            const mDesc = (getCol(a, ['Descripcion', 'DescripciÃ³n', 'Description', 'Desc']) || 'S/D').toString();
+            const mSku = (getCol(a, ['SKU', 'Articulo', 'Artículo', 'Product']) || '').toString().trim();
+            const mDesc = (getCol(a, ['Descripcion', 'Descripción', 'Description', 'Desc']) || 'S/D').toString();
             if (mSku) maestroMap.set(mSku, mDesc);
         });
 
-        // [MOD V18.5.7] Mapa de descripciones extraÃ­do directamente del Stock Activo (Col C)
+        // [MOD V18.5.7] Mapa de descripciones extraído directamente del Stock Activo (Col C)
         const descMap = new Map();
 
         // Mapa de Sistema: [SKU + UBI] -> QTY
         const sistemaMap = new Map();
         stockActivo.forEach(row => {
-            const sku = (getCol(row, ['SKU', 'Articulo', 'ArtÃ­culo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim();
-            const ubi = (getCol(row, ['Ubicacion', 'UbicaciÃ³n', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim();
+            const sku = (getCol(row, ['SKU', 'Articulo', 'Artículo', 'Product', 'Producto']) || (Array.isArray(row) ? row[1] : '')).toString().trim();
+            const ubi = (getCol(row, ['Ubicacion', 'Ubicación', 'Location', 'Ubi']) || (Array.isArray(row) ? row[3] : '')).toString().trim();
             const qty = parseFloat(getCol(row, ['Cantidad', 'Qty', 'Stock', 'Cantidad actual']) || (Array.isArray(row) ? row[5] : 0)) || 0;
             
-            // [MOD V18.5.13] Escaneo inteligente de descripciÃ³n
+            // [MOD V18.5.13] Escaneo inteligente de descripción
             let desc = 'S/D';
             if (typeof row === 'object' && !Array.isArray(row)) {
-                desc = getCol(row, ['Descripcion', 'DescripciÃ³n', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
+                desc = getCol(row, ['Descripcion', 'Descripción', 'Description', 'DESCRIPCION', 'Articulo', 'Nombre']) || 'S/D';
             } else if (Array.isArray(row)) {
                 // Si la Col C (2) falla, buscamos en otras columnas probables (E, G, H...)
                 desc = row[2] || row[4] || row[6] || row[7] || 'S/D';
@@ -8629,7 +8629,7 @@ const renderRFSection = (container) => {
             }
         });
 
-        // Cruce de Datos - [MOD V18.5.7] Solo mostramos lo que estÃ¡ en el CONTEO FISICO
+        // Cruce de Datos - [MOD V18.5.7] Solo mostramos lo que está en el CONTEO FISICO
         const countKeys = Array.from(fisicoMap.keys());
         const results = [];
         let totalItems = 0;
@@ -8641,7 +8641,7 @@ const renderRFSection = (container) => {
             const qFis = fisicoMap.get(key) || 0;
             const diff = qFis - qSis;
             
-            // ERI por item: ProporciÃ³n de acierto
+            // ERI por item: Proporción de acierto
             const eri = qSis === qFis ? 100 : (1 - (Math.abs(diff) / Math.max(qSis, qFis || 1))) * 100;
 
             totalItems++;
@@ -8710,18 +8710,18 @@ const renderRFSection = (container) => {
             ...r,
             desc: descMap.get(r.sku.toUpperCase()) || 'N/A'
         })); 
-        // [MOD V18.5.13] ERU Global ahora es el PROMEDIO de acierto para que sea mÃ¡s visual
+        // [MOD V18.5.13] ERU Global ahora es el PROMEDIO de acierto para que sea más visual
         const eruAccSum = eruResults.reduce((acc, r) => acc + parseFloat(r.eri || 0), 0);
         const finalERU = eruResults.length > 0 ? (eruAccSum / eruResults.length).toFixed(1) : 0;
 
         // Guardar para toggles
         window._lastERI = { eriResults, finalERI, eruResults, finalERU };
         
-        // [MOD V18.5.19] Si estamos en el dashboard unificado, usamos la nueva renderizaciÃ³n
+        // [MOD V18.5.19] Si estamos en el dashboard unificado, usamos la nueva renderización
         if (document.getElementById('eri_results_area_unif')) {
-            // Esta funciÃ³n suele estar definida dentro de renderModuloInventarios, 
+            // Esta función suele estar definida dentro de renderModuloInventarios, 
             // pero podemos disparar un evento o simplemente llamar si es accesible.
-            // Para asegurar compatibilidad, buscamos si existe la funciÃ³n de refresco.
+            // Para asegurar compatibilidad, buscamos si existe la función de refresco.
             if (typeof renderERI_ERU_Unified_Global === 'function') {
                 renderERI_ERU_Unified_Global();
             } else {
@@ -8734,7 +8734,7 @@ const renderRFSection = (container) => {
 
     } catch (err) {
         console.error("Error en analisis ERI/ERU:", err);
-        alert("OcurriÃ³ un error al procesar el anÃ¡lisis.");
+        alert("Ocurrió un error al procesar el análisis.");
     }
   };
 
@@ -8758,7 +8758,7 @@ const renderRFSection = (container) => {
     if (!tableBody || !tableHead) return;
 
     if (mode === 'ERI') {
-        tableHead.innerHTML = `<tr><th>SKU</th><th>DESCRIPCIÃ“N</th><th style="text-align:center;">SISTEMA TOTAL</th><th style="text-align:center;">FÃSICO TOTAL</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERI</th></tr>`;
+        tableHead.innerHTML = `<tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA TOTAL</th><th style="text-align:center;">FÍSICO TOTAL</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERI</th></tr>`;
         tableBody.innerHTML = data.eriResults.map(r => `
             <tr>
                 <td style="font-weight:700; color:#818cf8;">${r.sku}</td>
@@ -8770,7 +8770,7 @@ const renderRFSection = (container) => {
             </tr>
         `).join('');
     } else {
-        tableHead.innerHTML = `<tr><th>SKU / UBICACIÃ“N</th><th>DESCRIPCIÃ“N</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÃSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERU</th></tr>`;
+        tableHead.innerHTML = `<tr><th>SKU / UBICACIÓN</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERU</th></tr>`;
         tableBody.innerHTML = data.eruResults.map(r => `
             <tr>
                 <td style="font-weight:700;">${r.sku}<br><span style="font-size:0.6rem; color:#10b981;">${r.ubi}</span></td>
@@ -8789,7 +8789,7 @@ const renderRFSection = (container) => {
     if (!container) return;
 
     const total = results.length;
-    const vacias = results.filter(r => r.estado === 'VACÃA').length;
+    const vacias = results.filter(r => r.estado === 'VACÍA').length;
     const ocupadas = total - vacias;
     const accuracy = total > 0 ? ((vacias / total) * 100).toFixed(2) : 0;
     const discrepancias = results.filter(r => r.lpns > 1);
@@ -8804,7 +8804,7 @@ const renderRFSection = (container) => {
           <div style="font-size:1.5rem; font-weight:700;">${total}</div>
         </div>
         <div class="glass-panel" style="padding:1rem; border-left:4px solid var(--success);">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">VacÃ­as (UCA)</div>
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Vacías (UCA)</div>
           <div style="font-size:1.5rem; font-weight:700; color:var(--success);">${vacias}</div>
         </div>
         <div class="glass-panel" style="padding:1rem; border-left:4px solid #f59e0b;">
@@ -8824,17 +8824,17 @@ const renderRFSection = (container) => {
             <h3 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#fff; display:flex; align-items:center;">
               REPORTE UCA GENERAL ${tsSpan}
             </h3>
-            <button id="btnExportUCA" class="btn" style="width:auto; padding:5px 12px; font-size:0.7rem; background:#059669;">ðŸ“Š EXPORTAR UCA</button>
+            <button id="btnExportUCA" class="btn" style="width:auto; padding:5px 12px; font-size:0.7rem; background:#059669;">📊 EXPORTAR UCA</button>
           </div>
           
           <div class="data-table-container" style="max-height:400px; border-radius:8px;">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="font-size:0.65rem; padding:8px;">UBICACIÃ“N</th>
+                  <th style="font-size:0.65rem; padding:8px;">UBICACIÓN</th>
                   <th style="font-size:0.65rem; padding:8px;">ESTADO</th>
                   <th style="font-size:0.65rem; padding:8px; text-align:center;">LPNS</th>
-                  <th style="font-size:0.65rem; padding:8px; text-align:center;">SKUÂ´S</th>
+                  <th style="font-size:0.65rem; padding:8px; text-align:center;">SKU´S</th>
                   <th style="font-size:0.65rem; padding:8px; text-align:center;">QTY</th>
                 </tr>
               </thead>
@@ -8843,7 +8843,7 @@ const renderRFSection = (container) => {
                   <tr>
                     <td style="font-weight:600; font-size:0.8rem; padding:6px 8px;">${r.ubicacion}</td>
                     <td style="padding:6px 8px;">
-                      <span class="status-badge" style="background:${r.estado === 'VACÃA' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; color:${r.estado === 'VACÃA' ? '#4ade80' : '#fbbf24'}; font-size:0.6rem; padding:2px 6px;">
+                      <span class="status-badge" style="background:${r.estado === 'VACÍA' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; color:${r.estado === 'VACÍA' ? '#4ade80' : '#fbbf24'}; font-size:0.6rem; padding:2px 6px;">
                         ${r.estado}
                       </span>
                     </td>
@@ -8869,9 +8869,9 @@ const renderRFSection = (container) => {
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="color:#f87171; font-size:0.65rem; padding:8px;">UBICACIÃ“N</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px;">UBICACIÓN</th>
                   <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">LPNS</th>
-                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">SKUÂ´S</th>
+                  <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">SKU´S</th>
                   <th style="color:#f87171; font-size:0.65rem; padding:8px; text-align:center;">QTY</th>
                   <th style="color:#f87171; font-size:0.65rem; padding:8px;">DETALLE</th>
                 </tr>
@@ -8894,7 +8894,7 @@ const renderRFSection = (container) => {
       </div>
     `;
 
-    // Vincular exportaciÃ³n
+    // Vincular exportación
     document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
   };
 
@@ -8937,7 +8937,7 @@ const renderRFSection = (container) => {
         const actKey = `${tabId}_activo`;
         const resKey = `${tabId}_reserva`;
 
-        // Cargar asÃ­ncronamente de la base de datos local IndexedDB antes de renderizar
+        // Cargar asíncronamente de la base de datos local IndexedDB antes de renderizar
         const [activoData, reservaData, articulosData, matrizData, pedidosData] = await Promise.all([
             getAreaData(actKey),
             getAreaData(resKey),
@@ -8949,13 +8949,13 @@ const renderRFSection = (container) => {
         renderUploadArea(wrap, actKey, activoData, '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, resKey, reservaData, '.xlsx', 'STOCK RESERVA');
         if (tabId === 'almacenaje' || tabId === 'recepcion') {
-            renderUploadArea(wrap, 'articulos', articulosData, '.xlsx', 'MAESTRO ARTÃCULOS');
+            renderUploadArea(wrap, 'articulos', articulosData, '.xlsx', 'MAESTRO ARTÍCULOS');
         }
         if (tabId === 'inventario') {
             renderUploadArea(wrap, 'matriz_ubicaciones', matrizData, '.xlsx', 'MATRIZ UBICACIONES ALTO');
         }
         if (tabId === 'no_retail') {
-            renderUploadArea(wrap, `${tabId}`, pedidosData, '.xlsx', 'PEDIDOS CATÃLOGO');
+            renderUploadArea(wrap, `${tabId}`, pedidosData, '.xlsx', 'PEDIDOS CATÁLOGO');
         }
     } else if (tabId === 'inventario' && activeSub === 'inventarios_main') {
         const activeSubObj = allowedSubTabs.find(s => s.id === 'inventarios_main');
@@ -8982,12 +8982,12 @@ const renderRFSection = (container) => {
         subSubContent.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);"><h4>Contenido de ${activeSubSub.toUpperCase()} en desarrollo</h4></div>`;
         
     } else if (tabId === 'almacenaje' && (activeSub === 'tareas_dia' || activeSub === 'kpi_tareas')) {
-        // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaÃ±a seleccionada
+        // [MOD v15.8.8] Sincronizar el modo interno de Almacenaje con la sub-pestaña seleccionada
         if (activeSub === 'kpi_tareas') {
             almacenajeTaskMode = 'kpi';
             localStorage.setItem('almacenajeTaskMode', 'kpi');
         } else {
-            // Si viene de tareas_dia, asegurar que no estÃ© en modo KPI
+            // Si viene de tareas_dia, asegurar que no esté en modo KPI
             if (almacenajeTaskMode === 'kpi') {
                 almacenajeTaskMode = 'resumen';
                 localStorage.setItem('almacenajeTaskMode', 'resumen');
@@ -8997,12 +8997,12 @@ const renderRFSection = (container) => {
     } else if (tabId === 'inventario' && activeSub === 'reportes_inventario') {
         container.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center;">
-                <h3 style="margin-bottom:1rem; color:var(--primary); font-weight:800;">ANÃLISIS DE DISCREPANCIAS (UCA)</h3>
+                <h3 style="margin-bottom:1rem; color:var(--primary); font-weight:800;">ANÁLISIS DE DISCREPANCIAS (UCA)</h3>
                 <p style="color:var(--text-muted); margin-bottom:2rem; max-width:600px; margin-left:auto; margin-right:auto;">
                     Cruce inteligente entre <strong>Stock Reserva</strong> y <strong>Matriz de Ubicaciones</strong> para determinar la efectividad del vaciado en ubicaciones de alto nivel.
                 </p>
                 <button id="btn_procesar_uca" class="btn" style="max-width:300px; margin:0 auto; padding:1rem 2rem; border-radius:12px; box-shadow: 0 10px 20px rgba(79,70,229,0.2);">
-                    âš¡ PROCESAR REPORTE UCA
+                    ⚡ PROCESAR REPORTE UCA
                 </button>
                 <div id="ucaResultsArea" style="margin-top:3rem;"></div>
             </div>
@@ -9029,10 +9029,10 @@ const renderRFSection = (container) => {
     }
   };
 
-  // --- INICIO MÃ“DULO TRACKING DESPACHO (v25.1.98) ---
-  const MOCK_DESCARGA_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><line x1="50" y1="50" x2="350" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="50" y1="50" x2="50" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="350" y1="50" x2="350" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><path d="M 200,100 L 260,130 L 260,200 L 200,230 L 140,200 L 140,130 Z" fill="%23f59e0b" opacity="0.95"/><path d="M 200,100 L 200,230" stroke="%2378350f" stroke-width="2"/><path d="M 200,100 L 260,130 M 200,100 L 140,130" stroke="%2378350f" stroke-width="2"/><path d="M 140,130 L 200,160 L 260,130" stroke="%2378350f" stroke-width="2"/><polygon points="170,155 190,165 190,175 170,165" fill="%23fff" opacity="0.9"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">ðŸ“¦ DESCARGA TIENDA OK</text></svg>`;
+  // --- INICIO MÓDULO TRACKING DESPACHO (v25.1.98) ---
+  const MOCK_DESCARGA_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><line x1="50" y1="50" x2="350" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="50" y1="50" x2="50" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="350" y1="50" x2="350" y2="250" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><path d="M 200,100 L 260,130 L 260,200 L 200,230 L 140,200 L 140,130 Z" fill="%23f59e0b" opacity="0.95"/><path d="M 200,100 L 200,230" stroke="%2378350f" stroke-width="2"/><path d="M 200,100 L 260,130 M 200,100 L 140,130" stroke="%2378350f" stroke-width="2"/><path d="M 140,130 L 200,160 L 260,130" stroke="%2378350f" stroke-width="2"/><polygon points="170,155 190,165 190,175 170,165" fill="%23fff" opacity="0.9"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">📦 DESCARGA TIENDA OK</text></svg>`;
 
-  const MOCK_CARGO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><rect x="120" y="40" width="160" height="220" rx="4" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><line x1="140" y1="70" x2="260" y2="70" stroke="%233b82f6" stroke-width="4"/><line x1="140" y1="100" x2="260" y2="100" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="120" x2="240" y2="120" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="140" x2="250" y2="140" stroke="%2394a3b8" stroke-width="2"/><circle cx="230" cy="190" r="22" fill="none" stroke="%23ef4444" stroke-width="3" stroke-dasharray="3,1"/><text x="230" y="194" fill="%23ef4444" font-family="sans-serif" font-size="8" font-weight="900" text-anchor="middle">RECIBIDO</text><path d="M 140,210 Q 155,190 170,210 T 200,210" fill="none" stroke="%231e3a8a" stroke-width="2" stroke-linecap="round"/><line x1="135" y1="215" x2="205" y2="215" stroke="%23475569" stroke-width="1"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">âœï¸ CARGO FIRMADO OK</text></svg>`;
+  const MOCK_CARGO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231e293b"/><rect x="120" y="40" width="160" height="220" rx="4" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><line x1="140" y1="70" x2="260" y2="70" stroke="%233b82f6" stroke-width="4"/><line x1="140" y1="100" x2="260" y2="100" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="120" x2="240" y2="120" stroke="%2394a3b8" stroke-width="2"/><line x1="140" y1="140" x2="250" y2="140" stroke="%2394a3b8" stroke-width="2"/><circle cx="230" cy="190" r="22" fill="none" stroke="%23ef4444" stroke-width="3" stroke-dasharray="3,1"/><text x="230" y="194" fill="%23ef4444" font-family="sans-serif" font-size="8" font-weight="900" text-anchor="middle">RECIBIDO</text><path d="M 140,210 Q 155,190 170,210 T 200,210" fill="none" stroke="%231e3a8a" stroke-width="2" stroke-linecap="round"/><line x1="135" y1="215" x2="205" y2="215" stroke="%23475569" stroke-width="1"/><rect x="110" y="240" width="180" height="35" rx="8" fill="rgba(16,185,129,0.2)" stroke="%2310b981" stroke-width="1"/><text x="200" y="262" fill="%2310b981" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">✍️ CARGO FIRMADO OK</text></svg>`;
 
   const getDispatchRoutes = () => {
     const defaultRoutes = [
@@ -9074,7 +9074,7 @@ const renderRFSection = (container) => {
         id: 'RUTA-02',
         driver: 'Luis Fuentes',
         plate: 'B2U-105',
-        status: 'En TrÃ¡nsito',
+        status: 'En Tránsito',
         progress: 50,
         startTime: '10:15:30',
         endTime: null,
@@ -9129,14 +9129,14 @@ const renderRFSection = (container) => {
 
     const getStatusClass = (status) => {
         if (status === 'Entregada' || status === 'Entregado') return 'status-success';
-        if (status === 'En TrÃ¡nsito') return 'status-warning';
+        if (status === 'En Tránsito') return 'status-warning';
         if (status === 'En Tienda') return 'status-primary';
         if (status === 'Incidencia') return 'status-danger';
         return 'status-muted';
     };
 
     const drawSVGMap = (route) => {
-        const warehouse = { name: "AlmacÃ©n Central (Lince)", x: 150, y: 250 };
+        const warehouse = { name: "Almacén Central (Lince)", x: 150, y: 250 };
         const stopsMap = {
             'S-01': { x: 400, y: 150 }, // SF Jockey Plaza
             'S-02': { x: 280, y: 300 }, // R San Isidro
@@ -9160,7 +9160,7 @@ const renderRFSection = (container) => {
             <text x="30" y="195" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600">AV. JAVIER PRADO</text>
             
             <line x1="250" y1="20" x2="250" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="3" />
-            <text x="255" y="30" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600" transform="rotate(90,255,30)">VÃA EXPRESA</text>
+            <text x="255" y="30" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600" transform="rotate(90,255,30)">VÍA EXPRESA</text>
 
             <line x1="20" y1="140" x2="250" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="3" />
             <text x="30" y="135" fill="rgba(255,255,255,0.2)" font-size="8" font-weight="600">AV. LA MARINA</text>
@@ -9174,7 +9174,7 @@ const renderRFSection = (container) => {
             route.stops.forEach(s => {
                 const stopPt = stopsMap[s.id] || warehouse;
                 routePaths += `
-                    <line x1="${lastX}" y1="${lastY}" x2="${stopPt.x}" y2="${stopPt.y}" stroke="${route.status==='En TrÃ¡nsito'?'#eab308':'#10b981'}" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.8" />
+                    <line x1="${lastX}" y1="${lastY}" x2="${stopPt.x}" y2="${stopPt.y}" stroke="${route.status==='En Tránsito'?'#eab308':'#10b981'}" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.8" />
                 `;
                 lastX = stopPt.x;
                 lastY = stopPt.y;
@@ -9202,18 +9202,18 @@ const renderRFSection = (container) => {
             <g>
                 <circle cx="${warehouse.x}" cy="${warehouse.y}" r="8" fill="#3b82f6" stroke="#fff" stroke-width="2" />
                 <rect x="${warehouse.x - 4}" y="${warehouse.y - 4}" width="8" height="8" fill="#fff" />
-                <text x="${warehouse.x}" y="${warehouse.y + 18}" fill="#94a3b8" font-size="8" font-weight="700" text-anchor="middle">ALMACÃ‰N LINCE</text>
+                <text x="${warehouse.x}" y="${warehouse.y + 18}" fill="#94a3b8" font-size="8" font-weight="700" text-anchor="middle">ALMACÉN LINCE</text>
             </g>
         `;
 
         // Pulse vehicle
         let vehicleMarker = '';
-        if (route.status === 'En TrÃ¡nsito' || route.status === 'En Tienda') {
+        if (route.status === 'En Tránsito' || route.status === 'En Tienda') {
             vehicleMarker = `
                 <g class="truck-marker">
                     <circle cx="${truckPos.x}" cy="${truckPos.y}" r="16" fill="#3b82f6" opacity="0.3" class="pulse-marker" />
                     <circle cx="${truckPos.x}" cy="${truckPos.y}" r="9" fill="#2563eb" stroke="#fff" stroke-width="2" />
-                    <text x="${truckPos.x}" y="${truckPos.y + 4}" font-size="8" text-anchor="middle">ðŸšš</text>
+                    <text x="${truckPos.x}" y="${truckPos.y + 4}" font-size="8" text-anchor="middle">🚚</text>
                 </g>
             `;
         }
@@ -9264,8 +9264,8 @@ const renderRFSection = (container) => {
                                     <span class="badge ${getStatusClass(r.status)}">${r.status.toUpperCase()}</span>
                                 </div>
                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">
-                                    <div>ðŸ‘¨ðŸ»â€âœˆï¸ ${r.driver}</div>
-                                    <div style="text-align:right;">ðŸ•’ Salida: ${r.startTime || '--:--'}</div>
+                                    <div>👨🏻‍✈️ ${r.driver}</div>
+                                    <div style="text-align:right;">🕒 Salida: ${r.startTime || '--:--'}</div>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.8rem;">
                                     <div style="flex-grow:1; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
@@ -9280,7 +9280,7 @@ const renderRFSection = (container) => {
 
                 <!-- Stops for selected route -->
                 <div class="glass-panel" style="padding:1.2rem;">
-                    <h5 style="margin:0 0 1rem 0; font-weight:800;">PROGRAMACIÃ“N DE PARADAS: ${selectedRoute.id}</h5>
+                    <h5 style="margin:0 0 1rem 0; font-weight:800;">PROGRAMACIÓN DE PARADAS: ${selectedRoute.id}</h5>
                     <div style="display:flex; flex-direction:column; gap:0.8rem;">
                         ${selectedRoute.stops.map((s, index) => {
                             const isDelivered = s.status === 'Entregado';
@@ -9313,12 +9313,12 @@ const renderRFSection = (container) => {
                                             <span style="font-weight:700; font-size:0.8rem; color:#fff;">${s.storeName}</span>
                                             <span class="badge ${isDelivered ? 'status-success' : 'status-warning'}" style="font-size:0.6rem;">${s.status.toUpperCase()}</span>
                                         </div>
-                                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">ðŸ“ ${s.address}</div>
-                                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">ðŸ“‘ GuÃ­as: ${s.guides.join(', ')}</div>
+                                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">📍 ${s.address}</div>
+                                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">📑 Guías: ${s.guides.join(', ')}</div>
                                     </div>
                                     ${isDelivered ? `
                                         <button class="btn btn-view-evidence" data-stop-id="${s.id}" style="padding:0.3rem 0.6rem; font-size:0.65rem; border-radius:6px; border:1px solid var(--success); background:none; color:var(--success);">
-                                            ðŸ“„ VER EVIDENCIAS
+                                            📄 VER EVIDENCIAS
                                         </button>
                                     ` : ''}
                                 </div>
@@ -9332,7 +9332,7 @@ const renderRFSection = (container) => {
             <div style="display:flex; flex-direction:column; gap:1rem;">
                 <div class="glass-panel" style="padding:0; overflow:hidden; border-radius:16px; border:1px solid rgba(255,255,255,0.06); height:320px; position:relative;">
                     <div style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); padding:6px 12px; border-radius:8px;">
-                        <span style="font-size:0.7rem; font-weight:800; color:#fff;">ðŸ“ MAPA SATELITAL DE VIAJE (MOCK)</span>
+                        <span style="font-size:0.7rem; font-weight:800; color:#fff;">📍 MAPA SATELITAL DE VIAJE (MOCK)</span>
                     </div>
                     <div id="svgMapContainer" style="width:100%; height:100%;">
                         ${drawSVGMap(selectedRoute)}
@@ -9341,15 +9341,15 @@ const renderRFSection = (container) => {
 
                 <!-- Live Telemetry -->
                 <div class="glass-panel" style="padding:1.2rem; background:linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);">
-                    <h5 style="margin:0 0 1rem 0; font-weight:800; color:#3b82f6;">ðŸ“¡ TELEMETRÃA EN VIVO (SIMULADA)</h5>
+                    <h5 style="margin:0 0 1rem 0; font-weight:800; color:#3b82f6;">📡 TELEMETRÍA EN VIVO (SIMULADA)</h5>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; text-align:center;">
                         <div style="background:rgba(255,255,255,0.02); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
                             <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">VELOCIDAD PROMEDIO</div>
-                            <div style="font-size:1.2rem; font-weight:900; color:#fff; margin-top:4px;">${selectedRoute.status === 'En TrÃ¡nsito' ? '45 km/h' : '0 km/h'}</div>
+                            <div style="font-size:1.2rem; font-weight:900; color:#fff; margin-top:4px;">${selectedRoute.status === 'En Tránsito' ? '45 km/h' : '0 km/h'}</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.02); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
-                            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">PRECISIÃ“N GPS</div>
-                            <div style="font-size:1.2rem; font-weight:900; color:#10b981; margin-top:4px;">Â± 3 metros</div>
+                            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">PRECISIÓN GPS</div>
+                            <div style="font-size:1.2rem; font-weight:900; color:#10b981; margin-top:4px;">± 3 metros</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.02); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
                             <div style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">LATENCIA DE RED</div>
@@ -9357,7 +9357,7 @@ const renderRFSection = (container) => {
                         </div>
                     </div>
                     <div style="font-size:0.65rem; color:var(--text-muted); margin-top:1rem; text-align:center;">
-                        Ãšltimo ping GPS reportado: <strong>hace 18 segundos</strong>.
+                        Último ping GPS reportado: <strong>hace 18 segundos</strong>.
                     </div>
                 </div>
             </div>
@@ -9403,18 +9403,18 @@ const renderRFSection = (container) => {
         <div class="glass-panel" style="width:90%; max-width:800px; padding:2rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.98) 100%); position:relative;">
             <button id="close_evidence_modal" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
             
-            <h4 style="margin:0 0 0.5rem 0; font-weight:900; color:#fff;">ðŸ“„ EVIDENCIA DE ENTREGA DIGITAL (POD)</h4>
+            <h4 style="margin:0 0 0.5rem 0; font-weight:900; color:#fff;">📄 EVIDENCIA DE ENTREGA DIGITAL (POD)</h4>
             <p style="margin:0 0 1.5rem 0; color:var(--text-muted); font-size:0.8rem;">Tienda: <strong>${stop.storeName}</strong> | Hora de entrega: <strong>${stop.deliveredTime || '--:--'}</strong></p>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
                 <div>
-                    <h5 style="margin:0 0 0.8rem 0; font-size:0.85rem; color:#f59e0b; font-weight:700;">ðŸ“¸ EVIDENCIA DE DESCARGA FÃSICA</h5>
+                    <h5 style="margin:0 0 0.8rem 0; font-size:0.85rem; color:#f59e0b; font-weight:700;">📸 EVIDENCIA DE DESCARGA FÍSICA</h5>
                     <div style="aspect-ratio:4/3; border-radius:12px; background:rgba(0,0,0,0.4); overflow:hidden; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:center; align-items:center;">
                         <img src="${stop.photoDescarga}" style="width:100%; height:100%; object-fit:contain;" />
                     </div>
                 </div>
                 <div>
-                    <h5 style="margin:0 0 0.8rem 0; font-size:0.85rem; color:#3b82f6; font-weight:700;">âœï¸ FOTO CARGO G.R. FIRMADO</h5>
+                    <h5 style="margin:0 0 0.8rem 0; font-size:0.85rem; color:#3b82f6; font-weight:700;">✍️ FOTO CARGO G.R. FIRMADO</h5>
                     <div style="aspect-ratio:4/3; border-radius:12px; background:rgba(0,0,0,0.4); overflow:hidden; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:center; align-items:center;">
                         <img src="${stop.photoCargo}" style="width:100%; height:100%; object-fit:contain;" />
                     </div>
@@ -9423,7 +9423,7 @@ const renderRFSection = (container) => {
             
             <div style="margin-top:1.5rem; display:flex; justify-content:flex-end;">
                 <button id="btn_approve_evidence" class="btn" style="max-width:180px; padding:0.6rem 1.2rem; font-size:0.8rem; border-radius:8px;">
-                    âœ… APROBAR ENTREGA
+                    ✅ APROBAR ENTREGA
                 </button>
             </div>
         </div>
@@ -9432,7 +9432,7 @@ const renderRFSection = (container) => {
     document.body.appendChild(backdrop);
     document.getElementById('close_evidence_modal').onclick = () => backdrop.remove();
     document.getElementById('btn_approve_evidence').onclick = () => {
-        alert("âœ… Entrega Auditada y Aprobada Correctamente.");
+        alert("✅ Entrega Auditada y Aprobada Correctamente.");
         backdrop.remove();
     };
     backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
@@ -9460,9 +9460,9 @@ const renderRFSection = (container) => {
         ${showBackToOffice ? `
         <!-- Simulation back to office bar for admin testing -->
         <div style="background: rgba(15,23,42,0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-            <span style="font-size:0.65rem; color:#f59e0b; font-weight:800; letter-spacing:0.5px;">ðŸ“² VISTA CHOFER (SIMULADO)</span>
+            <span style="font-size:0.65rem; color:#f59e0b; font-weight:800; letter-spacing:0.5px;">📲 VISTA CHOFER (SIMULADO)</span>
             <button id="btn_back_to_office" style="background:#4f46e5; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
-                ðŸ¢ VOLVER A OFICINA
+                🏢 VOLVER A OFICINA
             </button>
         </div>
         ` : ''}
@@ -9470,13 +9470,13 @@ const renderRFSection = (container) => {
             ${hideFrame ? '' : `
             <!-- Simulation info -->
             <div style="max-width:380px; width:100%; text-align:center; color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem; line-height:1.4;">
-                <span style="color:#eab308; font-weight:800;">âš¡ SIMULADOR DE TRANSPORTISTA ðŸ“²</span><br>
-                Usa este portal mÃ³vil para actuar como chofer. Los cambios realizados aquÃ­ se verÃ¡n reflejados de inmediato en la pantalla de <strong>Monitoreo de Rutas</strong> de la oficina.
+                <span style="color:#eab308; font-weight:800;">⚡ SIMULADOR DE TRANSPORTISTA 📲</span><br>
+                Usa este portal móvil para actuar como chofer. Los cambios realizados aquí se verán reflejados de inmediato en la pantalla de <strong>Monitoreo de Rutas</strong> de la oficina.
             </div>
 
             <!-- Driver selector -->
             <div style="max-width:380px; width:100%; margin-bottom:1rem; display:flex; gap:0.5rem; align-items:center;">
-                <span style="font-size:0.75rem; color:#fff; font-weight:700; white-space:nowrap;">ðŸ‘¨ðŸ»â€âœˆï¸ ELEGIR CHOFER:</span>
+                <span style="font-size:0.75rem; color:#fff; font-weight:700; white-space:nowrap;">👨🏻‍✈️ ELEGIR CHOFER:</span>
                 <select id="driver_selector" style="flex-grow:1; padding:0.4rem; border-radius:8px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem;">
                     ${routes.map(r => `<option value="${r.id}" ${r.id === selectedDriverId ? 'selected' : ''}>${r.driver} (${r.id})</option>`).join('')}
                 </select>
@@ -9510,8 +9510,8 @@ const renderRFSection = (container) => {
                     <div>12:45</div>
                     <div style="width:40px; height:12px; background:#000; border-radius:6px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); top:8px;"></div>
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <span>ðŸ“¶ 4G</span>
-                        <span>ðŸ”‹ 88%</span>
+                        <span>📶 4G</span>
+                        <span>🔋 88%</span>
                     </div>
                 </div>
                 `}
@@ -9520,14 +9520,14 @@ const renderRFSection = (container) => {
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem; margin-bottom:1rem;">
                     <div>
                         <div style="font-size:0.8rem; font-weight:800; color:#fff;">PULSE CONDUCTOR</div>
-                        <div style="font-size:0.6rem; color:var(--text-muted);">CamiÃ³n: ${activeRoute.plate} | ${activeRoute.id}</div>
+                        <div style="font-size:0.6rem; color:var(--text-muted);">Camión: ${activeRoute.plate} | ${activeRoute.id}</div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
                         <span class="badge ${activeRoute.status === 'Creada' ? 'status-muted' : 'status-warning'}" style="font-size:0.6rem; margin: 0;">
                             ${activeRoute.status.toUpperCase()}
                         </span>
                         <button id="btn_driver_logout" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:0.6rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:2px; padding:2px; margin-top:2px; transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
-                            ðŸšª CERRAR SESIÃ“N
+                            🚪 CERRAR SESIÓN
                         </button>
                     </div>
                 </div>
@@ -9535,17 +9535,17 @@ const renderRFSection = (container) => {
                 <!-- Active Route Actions -->
                 ${activeRoute.status === 'Creada' ? `
                     <div style="text-align:center; padding:1.5rem 0;">
-                        <div style="font-size:3rem; margin-bottom:1rem;">ðŸšš</div>
+                        <div style="font-size:3rem; margin-bottom:1rem;">🚚</div>
                         <h4 style="margin:0 0 0.5rem 0; color:#fff; font-weight:800;">VIAJE NO INICIADO</h4>
-                        <p style="color:var(--text-muted); font-size:0.7rem; margin-bottom:1.5rem;">Presiona el botÃ³n para iniciar la ruta y registrar el despacho del camiÃ³n con GPS.</p>
+                        <p style="color:var(--text-muted); font-size:0.7rem; margin-bottom:1.5rem;">Presiona el botón para iniciar la ruta y registrar el despacho del camión con GPS.</p>
                         <button id="btn_driver_start" class="btn" style="padding:0.8rem; border-radius:12px; font-size:0.8rem; font-weight:bold; width:100%;">
-                            ðŸšš INICIAR VIAJE A TIENDA
+                            🚚 INICIAR VIAJE A TIENDA
                         </button>
                     </div>
                 ` : `
                     <!-- Active Stops list -->
                     <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                        <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">ðŸ“Œ PRÃ“XIMAS PARADAS:</div>
+                        <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">📌 PRÓXIMAS PARADAS:</div>
                         
                         ${activeRoute.stops.map((stop, index) => {
                             const isDelivered = stop.status === 'Entregado';
@@ -9566,31 +9566,31 @@ const renderRFSection = (container) => {
                                             ${stop.status.toUpperCase()}
                                         </span>
                                     </div>
-                                    <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.5rem;">ðŸ“ ${stop.address}</div>
+                                    <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.5rem;">📍 ${stop.address}</div>
 
                                     <!-- Actions for the NEXT pending stop -->
                                     ${isNext ? `
                                         <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.8rem;">
                                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                                                 <button id="btn_upload_descarga" class="btn" style="background:#1e293b; border:1px dashed #f59e0b; color:#fff; font-size:0.65rem; padding:0.5rem 0; border-radius:6px;">
-                                                    ðŸ“· FOTO DESCARGA ${stop.photoDescarga ? 'âœ…' : ''}
+                                                    📷 FOTO DESCARGA ${stop.photoDescarga ? '✅' : ''}
                                                 </button>
                                                 <button id="btn_upload_cargo" class="btn" style="background:#1e293b; border:1px dashed #3b82f6; color:#fff; font-size:0.65rem; padding:0.5rem 0; border-radius:6px;">
-                                                    ðŸ“· FOTO CARGO ${stop.photoCargo ? 'âœ…' : ''}
+                                                    📷 FOTO CARGO ${stop.photoCargo ? '✅' : ''}
                                                 </button>
                                             </div>
 
                                             <div id="evidence_status" style="font-size:0.6rem; text-align:center; color:var(--text-muted);">
-                                                ${(stop.photoDescarga && stop.photoCargo) ? '<span style="color:var(--success); font-weight:800;">Â¡Evidencias cargadas!</span>' : 'Sube las fotos obligatorias para entregar.'}
+                                                ${(stop.photoDescarga && stop.photoCargo) ? '<span style="color:var(--success); font-weight:800;">¡Evidencias cargadas!</span>' : 'Sube las fotos obligatorias para entregar.'}
                                             </div>
 
                                             <button id="btn_deliver_stop" class="btn" style="font-size:0.75rem; padding:0.6rem; border-radius:8px; font-weight:bold; width:100%;" ${(stop.photoDescarga && stop.photoCargo) ? '' : 'disabled'}>
-                                                ðŸ“¦ ENTREGAR PEDIDO Y FIRMAR
+                                                📦 ENTREGAR PEDIDO Y FIRMAR
                                             </button>
 
                                             <!-- GPS Telemetry simulation -->
                                             <button id="btn_simulate_gps" class="btn" style="background:none; border:1px solid rgba(255,255,255,0.1); color:#94a3b8; font-size:0.6rem; padding:0.4rem 0; border-radius:6px; margin-top:0.2rem;">
-                                                ðŸš€ Simular Avance GPS (CamiÃ³n en Ruta)
+                                                🚀 Simular Avance GPS (Camión en Ruta)
                                             </button>
                                         </div>
                                     ` : ''}
@@ -9620,7 +9620,7 @@ const renderRFSection = (container) => {
 
     // Start Voyage button
     document.getElementById('btn_driver_start')?.addEventListener('click', () => {
-        activeRoute.status = 'En TrÃ¡nsito';
+        activeRoute.status = 'En Tránsito';
         activeRoute.startTime = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const allRoutes = getDispatchRoutes();
         const idx = allRoutes.findIndex(r => r.id === activeRoute.id);
@@ -9685,7 +9685,7 @@ const renderRFSection = (container) => {
                 activeRoute = allRoutes[rIdx];
             }
         }
-        alert("ðŸ“¦ Â¡Entrega completada con Ã©xito!");
+        alert("📦 ¡Entrega completada con éxito!");
         refreshDriverUI();
     });
     // Simulate GPS movement (removed - was incomplete from previous version)
@@ -9720,7 +9720,7 @@ const renderRFSection = (container) => {
           dateHasta = mobileDate;
       }
 
-      // Si no pudimos obtener fechas del servidor, intentar fallback local/genÃ©rico
+      // Si no pudimos obtener fechas del servidor, intentar fallback local/genérico
       if (availableDates.length === 0) {
           let latestData = [];
           try {
@@ -9796,7 +9796,7 @@ const renderRFSection = (container) => {
               pedido: String(r[6] || `PED-${10000 + idx}`).trim(),
               clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(),
               agencia: String(r[4] || 'Agencia General').trim().toUpperCase(),
-              address: String(r[5] || 'DirecciÃ³n de Entrega').trim(),
+              address: String(r[5] || 'Dirección de Entrega').trim(),
               status: cachedStatuses[id]?.status || 'PENDIENTE',
               statusDate: cachedStatuses[id]?.date || null,
               liquidated: cachedStatuses[id]?.liquidated || false,
@@ -9807,7 +9807,7 @@ const renderRFSection = (container) => {
       });
   };
 
-  const openImageModal = (src, title = 'VisualizaciÃ³n de Imagen') => {
+  const openImageModal = (src, title = 'Visualización de Imagen') => {
       const backdrop = document.createElement('div');
       backdrop.style.position = 'fixed';
       backdrop.style.top = '0';
@@ -9890,7 +9890,7 @@ const renderRFSection = (container) => {
 
                   <div style="display:flex; flex-direction:column; gap:0.4rem;">
                       <label style="font-size:0.75rem; font-weight:700; color:#94a3b8;">OBSERVACIONES DE TRANSPORTE</label>
-                      <textarea id="edit_observaciones" rows="2" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit; resize:none;" placeholder="Escriba observaciones del transportista aquÃ­...">${c.incidenciaObs || ''}</textarea>
+                      <textarea id="edit_observaciones" rows="2" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.6rem; border-radius:8px; outline:none; font-family:inherit; resize:none;" placeholder="Escriba observaciones del transportista aquí...">${c.incidenciaObs || ''}</textarea>
                   </div>
 
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
@@ -10076,7 +10076,7 @@ const renderRFSection = (container) => {
           clients = clients.filter(c => c.fechaCargaStr && c.fechaCargaStr <= dateHasta);
       }
 
-      // CÃ¡lculos e Indicadores
+      // Cálculos e Indicadores
       const totalOrders = clients.length;
       const atendidos = clients.filter(c => c.status === 'ATENDIDO').length;
       const pendientes = clients.filter(c => c.status === 'PENDIENTE' || !c.status).length;
@@ -10129,7 +10129,7 @@ const renderRFSection = (container) => {
               <!-- Controles de Fecha (Sincronizados) -->
               <div class="glass-panel" style="padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border:1px solid rgba(255,255,255,0.06); border-radius:14px; background:rgba(30,41,59,0.4);">
                   <div style="display:flex; align-items:center; gap:0.5rem;">
-                      <span style="font-size:1.2rem;">ðŸ“Š</span>
+                      <span style="font-size:1.2rem;">📊</span>
                       <div>
                           <h3 style="margin:0; font-family:'Outfit', sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.5px;">DASHBOARD KPI NO RETAIL</h3>
                           <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Indicadores y rendimiento de despachos No Retail</p>
@@ -10148,13 +10148,13 @@ const renderRFSection = (container) => {
                   </div>
               </div>
 
-              <!-- Fila de Tarjetas (Resumen de MÃ©tricas) -->
+              <!-- Fila de Tarjetas (Resumen de Métricas) -->
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
                   <!-- Tarjeta 1: Total Pedidos -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(255,255,255,0.06); background:linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%);">
                       <div style="display:flex; justify-content:space-between; align-items:center;">
                           <span style="font-size:0.7rem; font-weight:800; color:#94a3b8; letter-spacing:0.5px;">TOTAL DESPACHOS</span>
-                          <span style="font-size:1.1rem; background:rgba(79,70,229,0.15); color:#818cf8; padding:4px 8px; border-radius:8px; font-weight:900;">ðŸ“¦</span>
+                          <span style="font-size:1.1rem; background:rgba(79,70,229,0.15); color:#818cf8; padding:4px 8px; border-radius:8px; font-weight:900;">📦</span>
                       </div>
                       <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; text-shadow:0 0 15px rgba(255,255,255,0.1);">${totalOrders}</h2>
                       <p style="margin:0; font-size:0.7rem; color:#64748b;">Pedidos cargados en rango de fechas</p>
@@ -10164,40 +10164,40 @@ const renderRFSection = (container) => {
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(16,185,129,0.2); background:linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(15,23,42,0.85) 100%); box-shadow: 0 4px 20px rgba(16,185,129,0.05);">
                       <div style="display:flex; justify-content:space-between; align-items:center;">
                           <span style="font-size:0.7rem; font-weight:800; color:#a7f3d0; letter-spacing:0.5px;">TASA EFECTIVIDAD</span>
-                          <span style="font-size:1.1rem; background:rgba(16,185,129,0.15); color:#34d399; padding:4px 8px; border-radius:8px; font-weight:900;">ðŸŽ¯</span>
+                          <span style="font-size:1.1rem; background:rgba(16,185,129,0.15); color:#34d399; padding:4px 8px; border-radius:8px; font-weight:900;">🎯</span>
                       </div>
                       <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:#10b981; text-shadow:0 0 15px rgba(16,185,129,0.2);">${rateAtendidos}%</h2>
                       <p style="margin:0; font-size:0.7rem; color:#a7f3d0; font-weight:600;">${atendidos} de ${totalOrders} pedidos completados</p>
                   </div>
 
-                  <!-- Tarjeta 3: Gasto DistribuciÃ³n -->
+                  <!-- Tarjeta 3: Gasto Distribución -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(245,158,11,0.2); background:linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(15,23,42,0.85) 100%); box-shadow: 0 4px 20px rgba(245,158,11,0.05);">
                       <div style="display:flex; justify-content:space-between; align-items:center;">
-                          <span style="font-size:0.7rem; font-weight:800; color:#fde047; letter-spacing:0.5px;">GASTO LOGÃSTICA</span>
-                          <span style="font-size:1.1rem; background:rgba(245,158,11,0.15); color:#fbbf24; padding:4px 8px; border-radius:8px; font-weight:900;">ðŸ’°</span>
+                          <span style="font-size:0.7rem; font-weight:800; color:#fde047; letter-spacing:0.5px;">GASTO LOGÍSTICA</span>
+                          <span style="font-size:1.1rem; background:rgba(245,158,11,0.15); color:#fbbf24; padding:4px 8px; border-radius:8px; font-weight:900;">💰</span>
                       </div>
                       <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:#f59e0b; text-shadow:0 0 15px rgba(245,158,11,0.2);">S/. ${totalGasto.toFixed(2)}</h2>
-                      <p style="margin:0; font-size:0.7rem; color:#fde047; font-weight:600;">InversiÃ³n total en fletes y gastos extra</p>
+                      <p style="margin:0; font-size:0.7rem; color:#fde047; font-weight:600;">Inversión total en fletes y gastos extra</p>
                   </div>
 
                   <!-- Tarjeta 4: Cobro de Flete -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(6,182,212,0.2); background:linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(15,23,42,0.85) 100%); box-shadow: 0 4px 20px rgba(6,182,212,0.05);">
                       <div style="display:flex; justify-content:space-between; align-items:center;">
                           <span style="font-size:0.7rem; font-weight:800; color:#cffafe; letter-spacing:0.5px;">COBRO EN DESTINO</span>
-                          <span style="font-size:1.1rem; background:rgba(6,182,212,0.15); color:#22d3ee; padding:4px 8px; border-radius:8px; font-weight:900;">ðŸ’µ</span>
+                          <span style="font-size:1.1rem; background:rgba(6,182,212,0.15); color:#22d3ee; padding:4px 8px; border-radius:8px; font-weight:900;">💵</span>
                       </div>
                       <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:#06b6d4; text-shadow:0 0 15px rgba(6,182,212,0.2);">${fleteSiRate}%</h2>
                       <p style="margin:0; font-size:0.7rem; color:#cffafe; font-weight:600;">${fleteSi} pedidos marcados con Cobro Flete (SI)</p>
                   </div>
               </div>
 
-              <!-- Reporte Visual y EstadÃ­sticas Detalladas -->
+              <!-- Reporte Visual y Estadísticas Detalladas -->
               <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:1.5rem; min-height:360px; flex-wrap:wrap; @media (max-width:992px) { grid-template-columns: 1fr; }">
                   
                   <!-- Panel Izquierdo: Rendimiento por Agencia -->
                   <div class="glass-panel" style="padding:1.5rem; border-radius:18px; border:1px solid rgba(255,255,255,0.06); background:rgba(15,23,42,0.6); display:flex; flex-direction:column; gap:1rem;">
                       <h4 style="margin:0; font-family:'Outfit',sans-serif; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:0.4rem;">
-                          <span>ðŸ¢</span> RENDIMIENTO DETALLADO POR AGENCIA
+                          <span>🏢</span> RENDIMIENTO DETALLADO POR AGENCIA
                       </h4>
                       <div style="overflow-x:auto; flex:1;">
                           <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
@@ -10239,10 +10239,10 @@ const renderRFSection = (container) => {
                       </div>
                   </div>
 
-                  <!-- Panel Derecho: GrÃ¡fico y DistribuciÃ³n de Estados -->
+                  <!-- Panel Derecho: Gráfico y Distribución de Estados -->
                   <div class="glass-panel" style="padding:1.5rem; border-radius:18px; border:1px solid rgba(255,255,255,0.06); background:rgba(15,23,42,0.6); display:flex; flex-direction:column; gap:1.2rem;">
                       <h4 style="margin:0; font-family:'Outfit',sans-serif; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:0.4rem;">
-                          <span>ðŸ“ˆ</span> DISTRIBUCIÃ“N DE ENTREGA
+                          <span>📈</span> DISTRIBUCIÓN DE ENTREGA
                       </h4>
 
                       <!-- Visualizador en Anillo SVG Premium -->
@@ -10261,7 +10261,7 @@ const renderRFSection = (container) => {
                                   <div style="font-size:0.55rem; color:#94a3b8; font-weight:700; letter-spacing:0.5px; margin-top:2px;">EFECTIVIDAD</div>
                               </div>
                           ` : `
-                              <div style="color:#64748b; font-size:0.8rem; font-style:italic;">Sin datos grÃ¡ficos</div>
+                              <div style="color:#64748b; font-size:0.8rem; font-style:italic;">Sin datos gráficos</div>
                           `}
                       </div>
 
@@ -10385,11 +10385,11 @@ const renderRFSection = (container) => {
           return c;
       });
 
-      // Metadata de subida del archivo NO RETAIL (Pedidos CatÃ¡logo)
+      // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
       const meta = getUploadMeta('no_retail') || {};
       const uploadDateRaw = meta.timestamp || (meta.ts && !isNaN(new Date(meta.ts).getTime()) ? new Date(meta.ts).toLocaleString() : 'Desconocida');
       const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
-      // Si meta.ts es null, undefined o invÃ¡lido, el fallback es la fecha actual (new Date())
+      // Si meta.ts es null, undefined o inválido, el fallback es la fecha actual (new Date())
       let uDate = new Date();
       if (meta.ts) {
           const parsedMetaDate = new Date(meta.ts);
@@ -10426,7 +10426,7 @@ const renderRFSection = (container) => {
           });
       }
 
-      // Filtro de bÃºsqueda de texto (Agencia, Cliente, Pedido)
+      // Filtro de búsqueda de texto (Agencia, Cliente, Pedido)
       const searchQuery = (window._trackingSearchQuery || '').toLowerCase().trim();
       if (searchQuery) {
           clients = clients.filter(c => {
@@ -10478,9 +10478,9 @@ const renderRFSection = (container) => {
                   </button>
               </div>
               
-              <!-- Filtro de BÃºsqueda de Texto en el Medio -->
+              <!-- Filtro de Búsqueda de Texto en el Medio -->
               <div style="flex-grow:1; max-width:420px; margin:0 2rem; position:relative;">
-                  <input type="text" id="tracking_search" value="${window._trackingSearchQuery || ''}" placeholder="ðŸ” Buscar por agencia, cliente o pedido..." style="width:100%; padding:0.55rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; font-size:0.8rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.06)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'">
+                  <input type="text" id="tracking_search" value="${window._trackingSearchQuery || ''}" placeholder="🔍 Buscar por agencia, cliente o pedido..." style="width:100%; padding:0.55rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; font-size:0.8rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.06)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'">
               </div>
               
               <div style="display:flex; gap:0.5rem; align-items:center;">
@@ -10498,7 +10498,7 @@ const renderRFSection = (container) => {
                       </div>
                   </div>
                   <button id="btn_sync_tracking" style="background:transparent; border:none; color:white; padding:0.5rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; height: 38px; width: 38px; font-size:1.2rem; outline:none;" title="Sincronizar de Servidor">
-                      ðŸ”„
+                      🔄
                   </button>
               </div>
           </div>
@@ -10556,13 +10556,13 @@ const renderRFSection = (container) => {
                               </td>
                               <td style="padding:1rem; text-align:center;">
                                   <div style="display:flex; justify-content:center; gap:0.5rem;">
-                                      ${c.fotoCargo ? (c.fotoCargo.startsWith('data:image') ? `<img src="${c.fotoCargo}" class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoCargo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Cargo">` : `<div class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoCargo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; border-radius:4px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:0.95rem; cursor:pointer;" title="Ver Foto Cargo">ðŸ“¸</div>`) : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo">ðŸ“¸</div>'}
-                                      ${c.fotoLocal ? (c.fotoLocal.startsWith('data:image') ? `<img src="${c.fotoLocal}" class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoLocal" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Fachada">` : `<div class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoLocal" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; border-radius:4px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:0.95rem; cursor:pointer;" title="Ver Foto Fachada">ðŸ“¸</div>`) : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada">ðŸ“¸</div>'}
+                                      ${c.fotoCargo ? (c.fotoCargo.startsWith('data:image') ? `<img src="${c.fotoCargo}" class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoCargo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Cargo">` : `<div class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoCargo" data-title="FOTO CARGO G.R. FIRMADO" style="width:36px; height:36px; border-radius:4px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:0.95rem; cursor:pointer;" title="Ver Foto Cargo">📸</div>`) : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Cargo">📸</div>'}
+                                      ${c.fotoLocal ? (c.fotoLocal.startsWith('data:image') ? `<img src="${c.fotoLocal}" class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoLocal" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" title="Ver Foto Fachada">` : `<div class="btn-preview-tracking-photo" data-client="${c.id}" data-type="fotoLocal" data-title="FOTO FACHADA LOCAL" style="width:36px; height:36px; border-radius:4px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:0.95rem; cursor:pointer;" title="Ver Foto Fachada">📸</div>`) : '<div style="width:36px; height:36px; border-radius:4px; border:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.1); font-size:0.6rem;" title="Sin Fachada">📸</div>'}
                                   </div>
                               </td>
                               <td style="padding:1rem; text-align:center;">
                                   <button class="btn-edit-tracking" data-client="${c.id}" style="background:#4f46e5; color:white; border:none; padding:0.35rem 0.7rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
-                                      âš™ï¸ Editar
+                                      ⚙️ Editar
                                   </button>
                               </td>
                           </tr>
@@ -10570,7 +10570,7 @@ const renderRFSection = (container) => {
                   </tbody>
               </table>
               
-              <!-- PaginaciÃ³n -->
+              <!-- Paginación -->
               ${totalPages > 1 ? `
               <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05);">
                   <div style="color:var(--text-muted); font-size:0.8rem;">
@@ -10595,7 +10595,7 @@ const renderRFSection = (container) => {
           renderTrackingNoRetailPortal(container);
       });
 
-      // Restaurar foco y posiciÃ³n del cursor
+      // Restaurar foco y posición del cursor
       if (hasFocus) {
           const newSearchInput = document.getElementById('tracking_search');
           if (newSearchInput) {
@@ -10623,14 +10623,14 @@ const renderRFSection = (container) => {
           btn.style.animation = 'spin 1.2s linear infinite';
           
           try {
-              // 1. Obtener listado de fechas para limpiar cachÃ©s correspondientes
+              // 1. Obtener listado de fechas para limpiar cachés correspondientes
               const resDates = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail/dates?t=' + Date.now());
               if (resDates.ok) {
                   const datesObj = await resDates.json();
                   const dates = datesObj.dates || [];
                   dates.forEach(d => localStorage.removeItem(`nr_data_${d}`));
               }
-              localStorage.removeItem('nr_cache_v1'); // Limpiar cachÃ© de liquidaciones
+              localStorage.removeItem('nr_cache_v1'); // Limpiar caché de liquidaciones
               
               window._noRetailClients = null;
               if (typeof dataStore !== 'undefined') {
@@ -10639,7 +10639,7 @@ const renderRFSection = (container) => {
               
               // 2. Ejecutar recarga forzada
               await renderTrackingNoRetailPortal(container, true);
-              showPremiumAlert('SINCRONIZADO', 'Los datos del servidor y liquidaciones se han actualizado con Ã©xito.', 'success');
+              showPremiumAlert('SINCRONIZADO', 'Los datos del servidor y liquidaciones se han actualizado con éxito.', 'success');
           } catch (err) {
               console.error("Sync error:", err);
               showPremiumAlert('ERROR', 'No se pudo sincronizar con el servidor.', 'error');
@@ -10744,7 +10744,7 @@ const renderRFSection = (container) => {
         document.body.classList.remove('mobile-driver-active');
     }
 
-    // Sincronizar cachÃ© de No Retail desde el servidor en el mÃ³vil antes de pintar
+    // Sincronizar caché de No Retail desde el servidor en el móvil antes de pintar
     try {
         const cacheRes = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/no_retail_cache?t=' + Date.now());
         if (cacheRes.ok) {
@@ -10752,10 +10752,10 @@ const renderRFSection = (container) => {
             let serverCache = serverData.data || {};
             if (Array.isArray(serverCache)) serverCache = {};
             localStorage.setItem('nr_cache_v1', JSON.stringify(serverCache));
-            console.log("ðŸ“¡ [PORTAL MÃ“VIL] CachÃ© de liquidaciones sincronizada desde el servidor.");
+            console.log("📡 [PORTAL MÓVIL] Caché de liquidaciones sincronizada desde el servidor.");
         }
     } catch (e) {
-        console.warn("âš ï¸ [PORTAL MÃ“VIL] Error al sincronizar cachÃ© desde el servidor, usando fallback local:", e);
+        console.warn("⚠️ [PORTAL MÓVIL] Error al sincronizar caché desde el servidor, usando fallback local:", e);
     }
 
     if (!window._noRetailHistorialDate) {
@@ -10793,9 +10793,9 @@ const renderRFSection = (container) => {
             ${showBackToOffice ? `
             <!-- Simulation back to office bar for admin testing -->
             <div style="background: rgba(15,23,42,0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-                <span style="font-size:0.65rem; color:#f59e0b; font-weight:800; letter-spacing:0.5px;">ðŸ“² VISTA PORTAL MÃ“VIL NO RETAIL</span>
+                <span style="font-size:0.65rem; color:#f59e0b; font-weight:800; letter-spacing:0.5px;">📲 VISTA PORTAL MÓVIL NO RETAIL</span>
                 <button id="btn_back_to_office" style="background:#4f46e5; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
-                    ðŸ¢ VOLVER A OFICINA
+                    🏢 VOLVER A OFICINA
                 </button>
             </div>
             ` : ''}
@@ -10804,8 +10804,8 @@ const renderRFSection = (container) => {
                 ${hideFrame ? '' : `
                 <!-- Simulation info -->
                 <div style="max-width:380px; width:100%; text-align:center; color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem; line-height:1.4;">
-                    <span style="color:#eab308; font-weight:800;">âš¡ PORTAL MÃ“VIL NO RETAIL ðŸ“²</span><br>
-                    Usa este portal mÃ³vil para actuar como transportista. Los cambios realizados aquÃ­ se verÃ¡n reflejados de inmediato.
+                    <span style="color:#eab308; font-weight:800;">⚡ PORTAL MÓVIL NO RETAIL 📲</span><br>
+                    Usa este portal móvil para actuar como transportista. Los cambios realizados aquí se verán reflejados de inmediato.
                 </div>
                 `}
 
@@ -10836,20 +10836,20 @@ const renderRFSection = (container) => {
                     <!-- Top Bar of portal -->
                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.2rem 0.5rem 0.6rem; background:#0b1329; border-bottom:1px solid rgba(255,255,255,0.03); margin-bottom:0.5rem;">
                         <div style="display:flex; align-items:center; gap:0.8rem;">
-                            <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">â˜°</span>
+                            <span style="font-size:1.2rem; cursor:pointer; color:var(--primary); font-weight:800;" id="btn_nr_menu">☰</span>
                             <div style="display:flex; flex-direction:column;">
                                 <span style="font-size:1rem; font-weight:900; color:#fff; letter-spacing:0.5px;" id="nr_top_title">
                                     Deam1830
                                 </span>
-                                <span style="font-size:0.6rem; color:rgba(255,255,255,0.45); font-weight:700;">ðŸ‘¤ ${user.name}</span>
+                                <span style="font-size:0.6rem; color:rgba(255,255,255,0.45); font-weight:700;">👤 ${user.name}</span>
                             </div>
                         </div>
                         <div style="display:flex; gap:0.8rem; align-items:center;">
                             <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;">
-                                <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">ðŸ“…</span>
+                                <span style="font-size:1.2rem; cursor:pointer;" id="btn_nr_cal">📅</span>
                                 <input type="date" id="nr_date_filter" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
                             </div>
-                            <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;" id="btn_nr_logout" title="Cerrar SesiÃ³n">
+                            <div style="position:relative; width:24px; height:24px; display:flex; justify-content:center; align-items:center;" id="btn_nr_logout" title="Cerrar Sesión">
                                 <span style="cursor:pointer; color:#ef4444; display:flex; align-items:center; justify-content:center;">
                                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -10892,7 +10892,7 @@ const renderRFSection = (container) => {
                                 justify-content: center;
                                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                             ">
-                                <span style="font-size:1.2rem; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">ðŸ </span>
+                                <span style="font-size:1.2rem; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">🏠</span>
                             </div>
                             <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'inicio' ? '#fff' : '#cbd5e1'};">Inicio</span>
                         </div>
@@ -10908,7 +10908,7 @@ const renderRFSection = (container) => {
                                 justify-content: center;
                                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                             ">
-                                <span style="font-size:1.2rem; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">ðŸ”„</span>
+                                <span style="font-size:1.2rem; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">🔄</span>
                             </div>
                             <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'historial' ? '#fff' : '#cbd5e1'};">Historial</span>
                         </div>
@@ -10924,7 +10924,7 @@ const renderRFSection = (container) => {
                                 justify-content: center;
                                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                             ">
-                                <span style="font-size:1.2rem; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">ðŸšš</span>
+                                <span style="font-size:1.2rem; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">🚚</span>
                             </div>
                             <span style="font-size:0.65rem; font-weight:800; color:${activeTab === 'en_ruta' ? '#fff' : '#cbd5e1'};">En Ruta</span>
                         </div>
@@ -11209,7 +11209,7 @@ const renderRFSection = (container) => {
 
         // Menu icon back to office
                 document.getElementById('btn_nr_menu').addEventListener('click', async () => {
-            if (await showPremiumConfirm('VOLVER AL PANEL', 'Â¿EstÃ¡s seguro de regresar al panel general?', 'info')) {
+            if (await showPremiumConfirm('VOLVER AL PANEL', '¿Estás seguro de regresar al panel general?', 'info')) {
                 document.body.classList.remove('mobile-driver-active');
                 window.location.reload();
             }
@@ -11217,7 +11217,7 @@ const renderRFSection = (container) => {
 
         // Logout
         document.getElementById('btn_nr_logout')?.addEventListener('click', async () => {
-            if (await showPremiumConfirm('CERRAR SESIÃ“N', 'Â¿EstÃ¡s seguro que deseas cerrar sesiÃ³n?', 'warning')) {
+            if (await showPremiumConfirm('CERRAR SESIÓN', '¿Estás seguro que deseas cerrar sesión?', 'warning')) {
                 onLogout();
             }
         });
@@ -11243,7 +11243,7 @@ const renderRFSection = (container) => {
                         <span style="font-size:0.55rem; color:#93c5fd; font-weight:800; letter-spacing:0.5px;">HOY (PEND.)</span>
                         <span style="font-size:1.8rem; font-weight:900; color:#fff; line-height:1; margin: 0.2rem 0;">${pendingAgenciesCount}</span>
                         <span style="font-size:0.55rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Agencias</span>
-                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">ðŸšš</span>
+                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">🚚</span>
                     </div>
 
                     <!-- Liquidados Card -->
@@ -11251,7 +11251,7 @@ const renderRFSection = (container) => {
                         <span style="font-size:0.55rem; color:#a7f3d0; font-weight:800; letter-spacing:0.5px;">LIQUIDADOS</span>
                         <span style="font-size:1.8rem; font-weight:900; color:#fff; line-height:1; margin: 0.2rem 0;">${liquidatedCount}</span>
                         <span style="font-size:0.55rem; color:#d1fae5; font-weight:600; line-height:1.2;">Firmados</span>
-                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">âœï¸</span>
+                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">✍️</span>
                     </div>
 
                     <!-- Acumulado Card -->
@@ -11259,7 +11259,7 @@ const renderRFSection = (container) => {
                         <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px;">TOTAL</span>
                         <span style="font-size:1.8rem; font-weight:900; color:#fff; line-height:1; margin: 0.2rem 0;">${totalCount}</span>
                         <span style="font-size:0.55rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Pedidos</span>
-                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.05; user-select:none;">ðŸ“‹</span>
+                        <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.05; user-select:none;">📋</span>
                     </div>
                 </div>
             `;
@@ -11302,12 +11302,12 @@ const renderRFSection = (container) => {
 
             return `
                 <div style="position:relative; margin-bottom:1.5rem;">
-                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; color:rgba(255,255,255,0.3);">ðŸ”</span>
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem; color:rgba(255,255,255,0.3);">🔍</span>
                     <input type="text" id="nr_search_input" placeholder="Buscar por fecha o agencia" value="${window._noRetailSearchQuery || ''}" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; padding:0.65rem 0.65rem 0.65rem 2.2rem; font-size:0.8rem; outline:none; box-sizing:border-box;">
                 </div>
 
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem;">
-                    HISTORIAL DE ACTIVIDAD ${filterDate ? `(Filtrado: ${filterDate})` : '(Ãšltimos 7 dÃ­as)'}
+                    HISTORIAL DE ACTIVIDAD ${filterDate ? `(Filtrado: ${filterDate})` : '(Últimos 7 días)'}
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;" id="nr_history_accordion_list">
@@ -11318,20 +11318,20 @@ const renderRFSection = (container) => {
                                 <div>
                                     <div style="font-size:0.85rem; font-weight:800; color:#fff;">${day}</div>
                                 </div>
-                                <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">â–¼</span>
+                                <span class="nr-chevron" style="font-size:0.8rem; color:rgba(255,255,255,0.3); transition:transform 0.2s;">▼</span>
                             </div>
                             <div class="nr-accordion-body" style="display:none; padding:0.5rem 1rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">
                                 ${Object.entries(agencies).map(([agency, cList]) => `
                                     <div style="margin-left:0.5rem; margin-bottom:0.6rem; border-left:2px solid rgba(255,255,255,0.05); padding-left:0.6rem;">
                                         <div style="font-size:0.7rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
-                                            <span>ðŸ¢ ${agency}</span>
+                                            <span>🏢 ${agency}</span>
                                             <span style="color:var(--text-muted);">${cList.length} Clientes</span>
                                         </div>
                                         
                                         <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
                                             ${cList.map(c => `
                                                 <div class="nr-history-client-row" data-client="${c.id}" style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor:pointer; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                                                    <span>ðŸ‘¤ ${c.clientName} (${c.pedido})</span>
+                                                    <span>👤 ${c.clientName} (${c.pedido})</span>
                                                     <span style="color:${c.status === 'ATENDIDO' ? '#22c55e' : c.status === 'PENDIENTE' ? '#eab308' : '#ef4444'}; font-weight:700;">
                                                         ${c.status}
                                                     </span>
@@ -11397,7 +11397,7 @@ const renderRFSection = (container) => {
 
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:0.5px; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem;">AGENCIAS EN RUTA (PENDIENTES)</div>
                 <div style="font-size:0.85rem; font-weight:800; color:#eab308; margin-bottom:1rem;">
-                    ðŸ“… FECHA DE CARGA: ${uploadDate}
+                    📅 FECHA DE CARGA: ${uploadDate}
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:1.5rem;">
@@ -11422,7 +11422,7 @@ const renderRFSection = (container) => {
                                     <div class="nr-agency-card-header" data-agency="${expandedKey}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
                                         <div>
                                             <span style="font-size:0.95rem; font-weight:900; color:#fff; display:block;">${agName}</span>
-                                            <span style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">ðŸ“ Clic para desglosar clientes</span>
+                                            <span style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">📍 Clic para desglosar clientes</span>
                                         </div>
                                         <span class="badge status-warning" style="font-size:0.6rem; padding:3px 10px; border-radius:12px;">
                                             ${agPending} Pendientes
@@ -11432,7 +11432,7 @@ const renderRFSection = (container) => {
                                     <!-- Clients list (desglosado) -->
                                     ${isExpanded ? `
                                         <div style="display:flex; flex-direction:column; gap:1rem; margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem;">
-                                            <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">ðŸ‘¤ LISTADO DE CLIENTES A LIQUIDAR:</div>
+                                            <div style="font-size:0.7rem; font-weight:800; color:#eab308; margin-bottom:0.2rem;">👤 LISTADO DE CLIENTES A LIQUIDAR:</div>
                                             
                                             ${agClients.map(c => `
                                                 <div class="${c.liquidated ? 'nr-liquidated-client-card' : ''}" data-client="${c.id}" style="
@@ -11445,7 +11445,7 @@ const renderRFSection = (container) => {
                                                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                                         <div>
                                                             <span style="font-size:0.75rem; font-weight:800; color:#fff; display:block;">${c.clientName}</span>
-                                                            <span style="font-size:0.6rem; color:var(--text-muted);">Pedido: ${c.pedido} | ðŸ“ ${c.address}</span>
+                                                            <span style="font-size:0.6rem; color:var(--text-muted);">Pedido: ${c.pedido} | 📍 ${c.address}</span>
                                                         </div>
                                                         <span class="badge ${c.liquidated ? 'status-success' : 'status-warning'}" style="font-size:0.55rem; padding:1px 6px;">
                                                             ${c.liquidated ? c.status : 'PENDIENTE'}
@@ -11457,7 +11457,7 @@ const renderRFSection = (container) => {
                                                         <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.8rem; border-top:1px dashed rgba(255,255,255,0.05); padding-top:0.8rem;">
                                                             <!-- Cobro Flete (SI/NO) selector -->
                                                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ’° COBRO FLETE:</span>
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">💰 COBRO FLETE:</span>
                                                                 <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
                                                                     <button class="nr-flete-btn" data-client="${c.id}" data-val="SI" style="background:${c.cobroFlete === 'SI' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
                                                                     <button class="nr-flete-btn" data-client="${c.id}" data-val="NO" style="background:${c.cobroFlete === 'NO' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
@@ -11466,19 +11466,19 @@ const renderRFSection = (container) => {
 
                                                             <!-- Campo Gasto -->
                                                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ’¸ GASTO:</span>
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">💸 GASTO:</span>
                                                                 <input type="number" step="0.01" min="0" placeholder="S/ 0.00" class="nr-gasto-input" data-client="${c.id}" value="${c._tempGasto !== undefined ? c._tempGasto : (c.gasto || '')}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:4px 8px; border-radius:6px; outline:none; font-size:0.65rem; font-family:inherit; width:80px; text-align:right;">
                                                             </div>
 
                                                             <!-- Campo Factura -->
                                                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ“„ FACTURA:</span>
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">📄 FACTURA:</span>
                                                                 <input type="text" placeholder="Factura" class="nr-factura-input" data-client="${c.id}" value="${c._tempFactura !== undefined ? c._tempFactura : (c.factura || '')}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:4px 8px; border-radius:6px; outline:none; font-size:0.65rem; font-family:inherit; width:100px; text-align:right;">
                                                             </div>
 
                                                             <!-- Status Buttons selection -->
                                                             <div>
-                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">ðŸ“‹ ESTADO DE ENTREGA:</div>
+                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.3rem;">📋 ESTADO DE ENTREGA:</div>
                                                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
                                                                     <button class="nr-status-select-btn" data-client="${c.id}" data-status="ATENDIDO" style="background:${(c._tempStatus || c.status) === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
                                                                     <button class="nr-status-select-btn" data-client="${c.id}" data-status="NO ATENDIDO" style="background:${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${(c._tempStatus || c.status) === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:5px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
@@ -11488,7 +11488,7 @@ const renderRFSection = (container) => {
 
                                                             <!-- Campo Incidencia -->
                                                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">âš ï¸ Â¿TIENE INCIDENCIA?</span>
+                                                                <span style="font-size:0.65rem; color:#fff; font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
                                                                 <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
                                                                     <button class="nr-incidencia-btn" data-client="${c.id}" data-val="SI" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? '#ef4444' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
                                                                     <button class="nr-incidencia-btn" data-client="${c.id}" data-val="NO" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'NO' ? '#475569' : 'transparent'}; color:#fff; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
@@ -11497,23 +11497,23 @@ const renderRFSection = (container) => {
 
                                                             <!-- Observaciones de transporte -->
                                                             <div style="display:flex; flex-direction:column; gap:0.3rem;">
-                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ“ OBSERVACIONES DE TRANSPORTE:</div>
-                                                                <textarea class="nr-incidencia-obs" data-client="${c.id}" rows="2" placeholder="Describa aquÃ­ observaciones del transporte..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:8px; outline:none; font-size:0.75rem; font-family:inherit; width:100%; box-sizing:border-box; resize:none;">${c._tempIncidenciaObs !== undefined ? c._tempIncidenciaObs : (c.incidenciaObs || '')}</textarea>
+                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700;">📝 OBSERVACIONES DE TRANSPORTE:</div>
+                                                                <textarea class="nr-incidencia-obs" data-client="${c.id}" rows="2" placeholder="Describa aquí observaciones del transporte..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:8px; outline:none; font-size:0.75rem; font-family:inherit; width:100%; box-sizing:border-box; resize:none;">${c._tempIncidenciaObs !== undefined ? c._tempIncidenciaObs : (c.incidenciaObs || '')}</textarea>
                                                             </div>
 
                                                             <!-- Two Photo Slots -->
                                                             <div>
-                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">ðŸ“¸ FOTOS OBLIGATORIAS DE CARGO Y FACHADA:</div>
+                                                                <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📸 FOTOS OBLIGATORIAS DE CARGO Y FACHADA:</div>
                                                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                                                                     <!-- Photo Cargo -->
                                                                     <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
-                                                                        ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">ðŸ“¸ FOTO CARGO</span>`}
+                                                                        ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
                                                                         <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="cargo" style="display:none;">
                                                                     </label>
 
                                                                     <!-- Photo Fachada -->
                                                                     <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
-                                                                        ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">ðŸ“¸ FOTO FACHADA</span>`}
+                                                                        ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
                                                                         <input type="file" accept="image/*" capture="environment" class="nr-photo-input" data-client="${c.id}" data-type="local" style="display:none;">
                                                                     </label>
                                                                 </div>
@@ -11521,16 +11521,16 @@ const renderRFSection = (container) => {
 
                                                             <!-- Save Button -->
                                                             <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:#10b981; border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:#fff; cursor:pointer; transition:background 0.2s;">
-                                                                âœ… LIQUIDAR CLIENTE
+                                                                ✅ LIQUIDAR CLIENTE
                                                             </button>
                                                         </div>
                                                     ` : `
                                                         <!-- Summary of liquidated client -->
                                                         <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; flex-direction:column; gap:0.3rem; font-size:0.65rem; color:var(--text-muted);">
-                                                            <div>ðŸ’° Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
-                                                            ${c.gasto ? `<div>ðŸ’¸ Gasto: <strong style="color:#fff;">S/ ${parseFloat(c.gasto).toFixed(2)}</strong></div>` : ''}
-                                                            <div>âš ï¸ Incidencia: <strong style="color:${c.incidencia === 'SI' ? '#ef4444' : '#fff'};">${c.incidencia || 'NO'}</strong></div>
-                                                            ${c.incidenciaObs ? `<div style="word-break: break-word;">ðŸ“ Obs: <strong style="color:#fff;">${c.incidenciaObs}</strong></div>` : ''}
+                                                            <div>💰 Cobro Flete: <strong style="color:#fff;">${c.cobroFlete}</strong></div>
+                                                            ${c.gasto ? `<div>💸 Gasto: <strong style="color:#fff;">S/ ${parseFloat(c.gasto).toFixed(2)}</strong></div>` : ''}
+                                                            <div>⚠️ Incidencia: <strong style="color:${c.incidencia === 'SI' ? '#ef4444' : '#fff'};">${c.incidencia || 'NO'}</strong></div>
+                                                            ${c.incidenciaObs ? `<div style="word-break: break-word;">📝 Obs: <strong style="color:#fff;">${c.incidenciaObs}</strong></div>` : ''}
                                                             <div style="display:flex; gap:0.4rem; margin-top:0.2rem;">
                                                                 ${c.fotoCargo ? `<img src="${c.fotoCargo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
                                                                 ${c.fotoLocal ? `<img src="${c.fotoLocal}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">` : ''}
@@ -11610,7 +11610,7 @@ const renderRFSection = (container) => {
                     box-sizing: border-box;
                 ">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.6rem;">
-                        <h3 style="margin:0; color:#fff; font-size:1.05rem; font-weight:900;">âœï¸ CORREGIR LIQUIDACIÃ“N</h3>
+                        <h3 style="margin:0; color:#fff; font-size:1.05rem; font-weight:900;">✏️ CORREGIR LIQUIDACIÓN</h3>
                         <span id="btn_modal_close" style="color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; font-weight:bold;">&times;</span>
                     </div>
 
@@ -11621,7 +11621,7 @@ const renderRFSection = (container) => {
 
                     <!-- Cobro Flete -->
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ’° COBRO FLETE:</span>
+                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">💰 COBRO FLETE:</span>
                         <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
                             <button id="modal-flete-si" style="background:${tempCobroFlete === 'SI' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
                             <button id="modal-flete-no" style="background:${tempCobroFlete === 'NO' ? '#024dbd' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
@@ -11630,13 +11630,13 @@ const renderRFSection = (container) => {
 
                     <!-- Gasto -->
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ’¸ GASTO:</span>
+                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">💸 GASTO:</span>
                         <input type="number" step="0.01" min="0" id="modal-gasto-input" placeholder="S/ 0.00" value="${tempGasto}" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:6px; outline:none; font-size:0.7rem; font-family:inherit; width:100px; text-align:right;">
                     </div>
 
                     <!-- Estado -->
                     <div>
-                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">ðŸ“‹ ESTADO DE ENTREGA:</div>
+                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📋 ESTADO DE ENTREGA:</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
                             <button id="modal-status-atendido" style="background:${tempStatus === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.03)'}; color:${tempStatus === 'ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${tempStatus === 'ATENDIDO' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; padding:6px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">ATENDIDO</button>
                             <button id="modal-status-no-atendido" style="background:${tempStatus === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.03)'}; color:${tempStatus === 'NO ATENDIDO' ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${tempStatus === 'NO ATENDIDO' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; padding:6px 0; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO ATENDIDO</button>
@@ -11646,7 +11646,7 @@ const renderRFSection = (container) => {
 
                     <!-- Incidencia -->
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">âš ï¸ Â¿TIENE INCIDENCIA?</span>
+                        <span style="font-size:0.65rem; color:#fff; font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
                         <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:8px; padding:2px; border:1px solid rgba(255,255,255,0.05);">
                             <button id="modal-incidencia-si" style="background:${tempIncidencia === 'SI' ? '#ef4444' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
                             <button id="modal-incidencia-no" style="background:${tempIncidencia === 'NO' ? '#475569' : 'transparent'}; color:#fff; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
@@ -11655,18 +11655,18 @@ const renderRFSection = (container) => {
 
                     <!-- Observaciones -->
                     <div style="display:flex; flex-direction:column; gap:0.3rem;">
-                        <div style="font-size:0.65rem; color:#fff; font-weight:700;">ðŸ“ OBSERVACIONES DE TRANSPORTE:</div>
-                        <textarea id="modal-obs-textarea" rows="2" placeholder="Describa aquÃ­ observaciones..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:8px; outline:none; font-size:0.75rem; font-family:inherit; width:100%; box-sizing:border-box; resize:none;">${tempIncidenciaObs}</textarea>
+                        <div style="font-size:0.65rem; color:#fff; font-weight:700;">📝 OBSERVACIONES DE TRANSPORTE:</div>
+                        <textarea id="modal-obs-textarea" rows="2" placeholder="Describa aquí observaciones..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:8px; outline:none; font-size:0.75rem; font-family:inherit; width:100%; box-sizing:border-box; resize:none;">${tempIncidenciaObs}</textarea>
                     </div>
 
                     <!-- Fotos -->
                     <div>
-                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">ðŸ“¸ FOTOS OBLIGATORIAS:</div>
+                        <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-bottom:0.4rem;">📸 FOTOS OBLIGATORIAS:</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                             <!-- Photo Cargo -->
                             <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; position:relative;">
                                 <div id="modal-cargo-preview" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
-                                    ${tempFotoCargo ? `<img src="${tempFotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">ðŸ“¸ FOTO CARGO</span>`}
+                                    ${tempFotoCargo ? `<img src="${tempFotoCargo}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO CARGO</span>`}
                                 </div>
                                 <input type="file" id="modal-cargo-input" accept="image/*" capture="environment" style="display:none;">
                             </label>
@@ -11674,7 +11674,7 @@ const renderRFSection = (container) => {
                             <!-- Photo Fachada -->
                             <label style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; position:relative;">
                                 <div id="modal-local-preview" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
-                                    ${tempFotoLocal ? `<img src="${tempFotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">ðŸ“¸ FOTO FACHADA</span>`}
+                                    ${tempFotoLocal ? `<img src="${tempFotoLocal}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.6rem; color:rgba(255,255,255,0.4); font-weight:700;">📸 FOTO FACHADA</span>`}
                                 </div>
                                 <input type="file" id="modal-local-input" accept="image/*" capture="environment" style="display:none;">
                             </label>
@@ -11800,7 +11800,7 @@ const renderRFSection = (container) => {
                 tempIncidenciaObs = backdrop.querySelector('#modal-obs-textarea').value;
 
                 if (tempStatus === 'PENDIENTE') {
-                    showPremiumAlert('SELECCIONA UN ESTADO', 'Debes seleccionar un estado (ATENDIDO, NO ATENDIDO o REPROGRAMAR) para guardar la liquidaciÃ³n.', 'warning');
+                    showPremiumAlert('SELECCIONA UN ESTADO', 'Debes seleccionar un estado (ATENDIDO, NO ATENDIDO o REPROGRAMAR) para guardar la liquidación.', 'warning');
                     return;
                 }
                 if (tempStatus === 'ATENDIDO' && !tempFotoCargo) {
@@ -11868,7 +11868,7 @@ const renderRFSection = (container) => {
                 }).catch(err => console.error("Sync edit to server failed:", err));
 
                 closeModal();
-                showPremiumAlert('LIQUIDACIÃ“N ACTUALIZADA', `Se corrigiÃ³ la liquidaciÃ³n del cliente ${c.clientName} con Ã©xito.`, 'success');
+                showPremiumAlert('LIQUIDACIÓN ACTUALIZADA', `Se corrigió la liquidación del cliente ${c.clientName} con éxito.`, 'success');
                 refreshNoRetailUI();
             };
         };
@@ -11918,7 +11918,7 @@ const renderRFSection = (container) => {
 
 
 
-  // â”€â”€ CONFIGURACIÃ“N ANÃLISIS SKU (PERSISTENTE POR GÃ‰NERO Y TALLAS + EXCEPCIONES SKU) â”€â”€
+  // ── CONFIGURACIÓN ANÁLISIS SKU (PERSISTENTE POR GÉNERO Y TALLAS + EXCEPCIONES SKU) ──
   let _configTallasGenero = null;
   let _configSKUExcepciones = null;
 
@@ -11973,7 +11973,7 @@ const renderRFSection = (container) => {
         return talla;
     };
 
-    // 1. Obtener gÃ©neros dinÃ¡micos y construir mapa de artÃ­culos del maestro
+    // 1. Obtener géneros dinámicos y construir mapa de artículos del maestro
     const maestroData = dataStore.analisis_sku_maestro || [];
     const maestroMap = new Map();
     let GENEROS_ROWS = [];
@@ -12037,7 +12037,7 @@ const renderRFSection = (container) => {
     };
 
     activoData.forEach(row => {
-      const sku = String(getCol(row, ['ArtÃ­culo','Articulo','ArtÃƒculo','Sku','PRODUCTO','SKU','CODIGO','Artculo']) || '').trim();
+      const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','SKU','CODIGO','Artculo']) || '').trim();
       processSku(sku);
     });
 
@@ -12049,21 +12049,21 @@ const renderRFSection = (container) => {
     container.innerHTML = `
       <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
         <h3 style="margin-top:0; color:#fff; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
-          âš™ï¸ CONFIGURACIÃ“N DE FACTORES DE REPOSICIÃ“N POR GÃ‰NERO Y TALLA
+          ⚙️ CONFIGURACIÓN DE FACTORES DE REPOSICIÓN POR GÉNERO Y TALLA
         </h3>
         <p style="color:var(--text-muted); font-size:0.75rem; margin-bottom:1.5rem;">
-          Define la cantidad de stock objetivo que debe haber siempre en el almacÃ©n <b>ACTIVO</b> para cada combinaciÃ³n de talla y gÃ©nero.
+          Define la cantidad de stock objetivo que debe haber siempre en el almacén <b>ACTIVO</b> para cada combinación de talla y género.
           Ingresa <b>0</b> o deja en blanco para indicar que la talla <b>no es comercial</b> y no debe reponerse.
         </p>
 
         <!-- Acciones Excel -->
         <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; background:rgba(255,255,255,0.02); padding:1rem; border-radius:8px; border:1px solid var(--border);">
           <button id="btn_descargar_plantilla" class="btn" style="width:auto; padding:0.5rem 1.2rem; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); font-size:0.75rem; font-weight:700;">
-            ðŸ“¥ DESCARGAR PLANTILLA
+            📥 DESCARGAR PLANTILLA
           </button>
           <div style="display:flex; align-items:center; gap:0.5rem; position:relative;">
             <button class="btn" style="width:auto; padding:0.5rem 1.2rem; background:#10b981; border:none; font-size:0.75rem; font-weight:700; cursor:pointer;">
-              ðŸ“¤ SUBIR CONFIGURACIÃ“N (Excel)
+              📤 SUBIR CONFIGURACIÓN (Excel)
             </button>
             <input type="file" id="input_upload_config" accept=".xlsx" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" />
           </div>
@@ -12074,7 +12074,7 @@ const renderRFSection = (container) => {
           <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; background:rgba(15,23,42,0.15);">
             <thead>
               <tr style="background:#0f172a; border-bottom:2px solid rgba(99,102,241,0.3);">
-                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); width:120px; text-align:center; border-right:1px solid var(--border);">GÃ‰NERO</th>
+                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); width:120px; text-align:center; border-right:1px solid var(--border);">GÉNERO</th>
                 ${TALLAS_COLS.map(t => `<th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:#a5b4fc; text-align:center; min-width:45px;">${t}</th>`).join('')}
               </tr>
             </thead>
@@ -12103,13 +12103,13 @@ const renderRFSection = (container) => {
         </div>
       </div>
 
-      <!-- Excepciones especÃ­ficas por SKU -->
+      <!-- Excepciones específicas por SKU -->
       <div class="glass-panel" style="padding:1.5rem;">
         <h3 style="margin-top:0; color:#fff; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
-          ðŸŽ¯ EXCEPCIONES Y OBJETIVOS ESPECÃFICOS POR SKU INDIVIDUAL
+          🎯 EXCEPCIONES Y OBJETIVOS ESPECÍFICOS POR SKU INDIVIDUAL
         </h3>
         <p style="color:var(--text-muted); font-size:0.75rem; margin-bottom:1rem;">
-          Si un SKU especÃ­fico requiere un objetivo personalizado que contradiga la regla por gÃ©nero/talla general (por ejemplo, artÃ­culos estrella o en liquidaciÃ³n), agrÃ©galo aquÃ­.
+          Si un SKU específico requiere un objetivo personalizado que contradiga la regla por género/talla general (por ejemplo, artículos estrella o en liquidación), agrégalo aquí.
         </p>
 
         <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
@@ -12117,7 +12117,7 @@ const renderRFSection = (container) => {
             style="width:250px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem;" />
           <input type="number" id="sku_ex_qty" placeholder="Objetivo..." min="0"
             style="width:100px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.4rem 0.8rem; font-size:0.8rem; text-align:center;" />
-          <button id="btn_add_sku_ex" class="btn" style="width:auto; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:700;">âž• AGREGAR REGLA</button>
+          <button id="btn_add_sku_ex" class="btn" style="width:auto; padding:0.4rem 1.2rem; font-size:0.75rem; font-weight:700;">➕ AGREGAR REGLA</button>
         </div>
 
         <div style="max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px;">
@@ -12126,7 +12126,7 @@ const renderRFSection = (container) => {
               <tr style="background:#0f172a; border-bottom:2px solid rgba(99,102,241,0.3); position:sticky; top:0; z-index:2;">
                 <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted);">SKU INDIVIDUAL</th>
                 <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-align:center; width:150px;">STOCK OBJETIVO</th>
-                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-align:center; width:100px;">ACCIÃ“N</th>
+                <th style="padding:0.7rem; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-align:center; width:100px;">ACCIÓN</th>
               </tr>
             </thead>
             <tbody id="tbody_sku_excepciones"></tbody>
@@ -12201,16 +12201,16 @@ const renderRFSection = (container) => {
       });
     });
 
-    // --- BotÃ³n de Agregar ExcepciÃ³n SKU ---
+    // --- Botón de Agregar Excepción SKU ---
     document.getElementById('btn_add_sku_ex').addEventListener('click', () => {
       const sku = document.getElementById('sku_ex_input').value.trim();
       const qtyVal = parseInt(document.getElementById('sku_ex_qty').value, 10);
       if (!sku) {
-        showPremiumAlert('Error', 'Debes ingresar un SKU vÃ¡lido.', 'error');
+        showPremiumAlert('Error', 'Debes ingresar un SKU válido.', 'error');
         return;
       }
       if (isNaN(qtyVal) || qtyVal < 0) {
-        showPremiumAlert('Error', 'El stock objetivo debe ser un nÃºmero entero mayor o igual a 0.', 'error');
+        showPremiumAlert('Error', 'El stock objetivo debe ser un número entero mayor o igual a 0.', 'error');
         return;
       }
       _configSKUExcepciones[sku] = qtyVal;
@@ -12220,11 +12220,11 @@ const renderRFSection = (container) => {
       renderSkuExcepcionesTable();
     });
 
-    // --- BotÃ³n de Descargar Plantilla ---
+    // --- Botón de Descargar Plantilla ---
     document.getElementById('btn_descargar_plantilla').addEventListener('click', () => {
       const wb = XLSX.utils.book_new();
 
-      // PestaÃ±a 1: Generales por Talla y GÃ©nero
+      // Pestaña 1: Generales por Talla y Género
       const rowsGenero = [];
       GENEROS_ROWS.forEach(g => {
         const allowedTallas = genderTallasMap.get(g) || new Set();
@@ -12234,7 +12234,7 @@ const renderRFSection = (container) => {
           }
           const key = `${g}_${t}`;
           rowsGenero.push({
-            'GÃ‰NERO': g,
+            'GÉNERO': g,
             'TALLA': t,
             'STOCK_OBJETIVO_ACTIVO': _configTallasGenero[key] !== undefined ? _configTallasGenero[key] : ''
           });
@@ -12242,7 +12242,7 @@ const renderRFSection = (container) => {
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rowsGenero), 'Objetivos_Por_Talla');
 
-      // PestaÃ±a 2: Excepciones por SKU
+      // Pestaña 2: Excepciones por SKU
       const rowsSku = Object.keys(_configSKUExcepciones).sort().map(k => ({
         'SKU': k,
         'STOCK_OBJETIVO_ACTIVO': _configSKUExcepciones[k]
@@ -12252,7 +12252,7 @@ const renderRFSection = (container) => {
       XLSX.writeFile(wb, `plantilla_configuracion_tallas_${new Date().toISOString().slice(0,10)}.xlsx`);
     });
 
-    // --- Subir Excel ConfiguraciÃ³n ---
+    // --- Subir Excel Configuración ---
     document.getElementById('input_upload_config').addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
@@ -12263,13 +12263,13 @@ const renderRFSection = (container) => {
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type: 'array' });
 
-          // Procesar pestaÃ±a 1: Objetivos_Por_Talla
+          // Procesar pestaña 1: Objetivos_Por_Talla
           const wsTalla = wb.Sheets['Objetivos_Por_Talla'];
           if (wsTalla) {
             const arr = XLSX.utils.sheet_to_json(wsTalla);
             _configTallasGenero = {};
             arr.forEach(row => {
-              const g = String(row['GÃ‰NERO'] || '').trim().toUpperCase();
+              const g = String(row['GÉNERO'] || '').trim().toUpperCase();
               const t = String(row['TALLA'] || '').trim();
               const val = parseInt(row['STOCK_OBJETIVO_ACTIVO'], 10);
               if (g && t && !isNaN(val) && val >= 0) {
@@ -12278,7 +12278,7 @@ const renderRFSection = (container) => {
             });
           }
 
-          // Procesar pestaÃ±a 2: Objetivos_Por_SKU
+          // Procesar pestaña 2: Objetivos_Por_SKU
           const wsSku = wb.Sheets['Objetivos_Por_SKU'];
           if (wsSku) {
             const arr = XLSX.utils.sheet_to_json(wsSku);
@@ -12293,7 +12293,7 @@ const renderRFSection = (container) => {
           }
 
           _saveConfiguracionAnalisis();
-          showPremiumAlert('Carga Exitosa', 'ConfiguraciÃ³n de factores cargada correctamente.', 'success');
+          showPremiumAlert('Carga Exitosa', 'Configuración de factores cargada correctamente.', 'success');
           renderConfiguracionAnalisisSKU(container);
         } catch(err) {
           console.error(err);
@@ -12304,7 +12304,7 @@ const renderRFSection = (container) => {
     });
   };
 
-  // â”€â”€ renderWithItems: construye la UI completa con los items ya procesados â”€â”€
+  // ── renderWithItems: construye la UI completa con los items ya procesados ──
   const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
 
     const calcKPIs = () => ({
@@ -12316,9 +12316,9 @@ const renderRFSection = (container) => {
     const estadoColor = { 'QUEBRADO':'#ef4444', 'POR QUEBRAR':'#f59e0b', 'OK':'#22c55e' };
     const estadoBadge = (e) => `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;background:${estadoColor[e]}22;color:${estadoColor[e]};border:1px solid ${estadoColor[e]}44;">${e}</span>`;
 
-    // â”€â”€ Filtros de columna (multi-select tipo Excel) â”€â”€
-    let colFilterEstado = new Set(); // vacÃ­o = todos
-    let colFilterTipo   = new Set(); // vacÃ­o = todos
+    // ── Filtros de columna (multi-select tipo Excel) ──
+    let colFilterEstado = new Set(); // vacío = todos
+    let colFilterTipo   = new Set(); // vacío = todos
     let filterTexto     = '';
 
     // Valores posibles derivados de los items
@@ -12332,7 +12332,7 @@ const renderRFSection = (container) => {
           background:none; border:none; cursor:pointer; padding:0 4px;
           color:${activeSet.size > 0 ? '#6366f1' : 'rgba(255,255,255,0.35)'};
           font-size:0.75rem; vertical-align:middle; transition:color 0.15s;
-          " title="Filtrar">â–¼</button>
+          " title="Filtrar">▼</button>
         <div id="${id}_drop" style="
           display:none; position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
           background:#1e293b; border:1px solid rgba(99,102,241,0.4); border-radius:10px;
@@ -12414,9 +12414,9 @@ const renderRFSection = (container) => {
       const kEl = document.getElementById('repl_kpis');
       if (!kEl) return;
       kEl.innerHTML = [
-        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'ðŸ”´' },
-        { label:'POR QUEBRAR', val:nPorQuebrar, sub:'Stock â‰¤ factor objetivo', color:'#f59e0b', icon:'ðŸŸ¡' },
-        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'ðŸŸ¢' },
+        { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴' },
+        { label:'POR QUEBRAR', val:nPorQuebrar, sub:'Stock ≤ factor objetivo', color:'#f59e0b', icon:'🟡' },
+        { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢' },
       ].map(k => `
         <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color};">
           <div style="font-size:1.5rem; margin-bottom:0.3rem;">${k.icon}</div>
@@ -12455,7 +12455,7 @@ const renderRFSection = (container) => {
         </tr>`).join('');
     };
 
-    // â”€â”€ Render HTML â”€â”€
+    // ── Render HTML ──
     container.innerHTML = `
       <!-- KPIs -->
       <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;"></div>
@@ -12464,14 +12464,14 @@ const renderRFSection = (container) => {
       <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">BUSCAR:</label>
-          <input id="repl_search" type="text" placeholder="SKU o artÃ­culo..."
+          <input id="repl_search" type="text" placeholder="SKU o artículo..."
             style="width:160px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:#fff; padding:0.4rem 0.7rem; font-size:0.8rem;">
         </div>
         <div style="margin-left:auto; display:flex; gap:0.8rem; align-items:center;">
           <button id="repl_reprocesar" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:rgba(255,255,255,0.5); padding:0.4rem 0.9rem; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.15s; white-space:nowrap; line-height:1;"
             onmouseover="this.style.background='rgba(255,255,255,0.09)'; this.style.color='#fff';"
-            onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.color='rgba(255,255,255,0.5)';">ðŸ”„ REPROCESAR</button>
-          <button id="repl_export" class="btn" style="padding:0.4rem 1rem; font-size:0.75rem; font-weight:700; white-space:nowrap;">ðŸ“¥ EXPORTAR</button>
+            onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.color='rgba(255,255,255,0.5)';">🔄 REPROCESAR</button>
+          <button id="repl_export" class="btn" style="padding:0.4rem 1rem; font-size:0.75rem; font-weight:700; white-space:nowrap;">📥 EXPORTAR</button>
         </div>
       </div>
 
@@ -12481,7 +12481,7 @@ const renderRFSection = (container) => {
           <thead style="position:sticky; top:0; background:#0f172a; z-index:2;">
             <tr style="border-bottom:2px solid rgba(99,102,241,0.3);">
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">#</th>
-              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ARTÃCULO</th>
+              <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">ARTÍCULO</th>
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">SKU COMPLETO</th>
               <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#a5b4fc;">TALLA</th>
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#fbbf24;">MARCA</th>
@@ -12502,11 +12502,11 @@ const renderRFSection = (container) => {
         </table>
       </div>`;
 
-    // â”€â”€ Poblar KPIs y tabla â”€â”€
+    // ── Poblar KPIs y tabla ──
     renderKPIs();
     renderTable();
 
-    // â”€â”€ Eventos â”€â”€
+    // ── Eventos ──
     // cerrar dropdowns al click fuera (no cierra si el clic es dentro del dropdown)
     document.addEventListener('click', (e) => {
       if (!e.target.closest('[id$="_drop"]') && !e.target.closest('[id$="_btn"]')) {
@@ -12518,7 +12518,7 @@ const renderRFSection = (container) => {
     wireColDropdown('repl_fcol_estado', colFilterEstado, renderTable);
     wireColDropdown('repl_fcol_tipo',   colFilterTipo,   renderTable);
 
-    // botÃ³n Reprocesar: limpia cache y vuelve a la landing
+    // botón Reprocesar: limpia cache y vuelve a la landing
     const reprocessBtn = document.getElementById('repl_reprocesar');
     if (reprocessBtn) reprocessBtn.addEventListener('click', () => {
       _replCache = null;
@@ -12540,7 +12540,7 @@ const renderRFSection = (container) => {
       const mainData = filtered.map(i => {
         const factorToUse = i.factor !== undefined ? i.factor : umbral;
         return {
-          'ARTÃCULO':     i.art7,
+          'ARTÍCULO':     i.art7,
           'SKU COMPLETO': i.sku,
           'TALLA':        i.talla,
           'MARCA':        i.marcas,
@@ -12561,15 +12561,15 @@ const renderRFSection = (container) => {
       };
       const tallasMapExp = new Map();
       (activo || []).forEach(row => {
-        const sku  = String(getCol(row, ['ArtÃ­culo','Articulo','SKU','CODIGO','PRODUCTO']) || '').trim();
-        const desc = String(getCol(row, ['Descripcion','DescripciÃ³n','Description','DESCRIPCION','DESC']) || '').trim();
+        const sku  = String(getCol(row, ['Artículo','Articulo','SKU','CODIGO','PRODUCTO']) || '').trim();
+        const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || '').trim();
         if (!sku) return;
         const t = _extractT(desc);
         if (t && !tallasMapExp.has(sku)) tallasMapExp.set(sku, t);
       });
       (reserva || []).forEach(row => {
-        const sku  = String(getCol(row, ['PRODUCTO','Articulo','ArtÃ­culo','SKU','CODIGO']) || '').trim();
-        const desc = String(getCol(row, ['DESCRIPCION','Descripcion','DescripciÃ³n','Description','DESC']) || '').trim();
+        const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+        const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
         if (!sku) return;
         const t = _extractT(desc);
         if (t && !tallasMapExp.has(sku)) tallasMapExp.set(sku, t);
@@ -12582,11 +12582,11 @@ const renderRFSection = (container) => {
     });
   }; // fin _replRenderWithItems
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // MÃ“DULO REPLENISHMENT â€” ReposiciÃ³n de Stock Activo quebrado / por quebrar
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ════════════════════════════════════════════════════════════════════════
+  // MÓDULO REPLENISHMENT — Reposición de Stock Activo quebrado / por quebrar
+  // ════════════════════════════════════════════════════════════════════════
   const renderReplenishment = (container) => {
-    // â”€â”€ Restaurar desde cache PRIMERO (persiste entre refrescos vÃ­a localStorage) â”€â”€
+    // ── Restaurar desde cache PRIMERO (persiste entre refrescos vía localStorage) ──
     // Nota: se verifica antes que activo/reserva porque esos llegan async desde IndexedDB
     if (_replCache) {
       const activo  = dataStore.analisis_sku_activo  || [];
@@ -12599,18 +12599,18 @@ const renderRFSection = (container) => {
     const activo  = dataStore.analisis_sku_activo  || [];
     const reserva = dataStore.analisis_sku_reserva || [];
 
-    // â”€â”€ Sin datos y sin cache: pedir archivos â”€â”€
+    // ── Sin datos y sin cache: pedir archivos ──
     if (!activo.length && !reserva.length) {
       container.innerHTML = `
         <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border:1px dashed rgba(255,255,255,0.1);">
-          <div style="font-size:4rem; opacity:0.3; margin-bottom:1.5rem;">ðŸ”„</div>
+          <div style="font-size:4rem; opacity:0.3; margin-bottom:1.5rem;">🔄</div>
           <h3 style="color:#fff; font-weight:700; margin-bottom:0.8rem;">Sin Datos Cargados</h3>
-          <p style="color:var(--text-muted);">Ve a <b>ðŸ“ ARCHIVO ANÃLISIS SKU</b> y carga los archivos de Stock Activo y Stock Reserva.</p>
+          <p style="color:var(--text-muted);">Ve a <b>📁 ARCHIVO ANÁLISIS SKU</b> y carga los archivos de Stock Activo y Stock Reserva.</p>
         </div>`;
       return;
     }
 
-    // â”€â”€ Pantalla de espera: el usuario debe dar clic a PROCESAR â”€â”€
+    // ── Pantalla de espera: el usuario debe dar clic a PROCESAR ──
     const renderLanding = () => {
       container.innerHTML = `
         <style>
@@ -12623,10 +12623,10 @@ const renderRFSection = (container) => {
           .repl-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:repl-spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
         </style>
         <div class="glass-panel animate-fade-in" style="padding:5rem 2rem; text-align:center; border:1px dashed rgba(99,102,241,0.25);">
-          <div style="font-size:4rem; margin-bottom:1.5rem;">ðŸ”„</div>
-          <h3 style="color:#fff; font-weight:700; margin-bottom:0.6rem;">AnÃ¡lisis de Replenishment</h3>
+          <div style="font-size:4rem; margin-bottom:1.5rem;">🔄</div>
+          <h3 style="color:#fff; font-weight:700; margin-bottom:0.6rem;">Análisis de Replenishment</h3>
           <p style="color:var(--text-muted); margin-bottom:0.4rem;">Activo: <b style="color:#6366f1;">${activo.length.toLocaleString('es')}</b> registros &nbsp;|&nbsp; Reserva: <b style="color:#6366f1;">${reserva.length.toLocaleString('es')}</b> registros</p>
-          <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:2rem;">Haz clic en PROCESAR para calcular el estado de reposiciÃ³n de todos los SKUs.</p>
+          <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:2rem;">Haz clic en PROCESAR para calcular el estado de reposición de todos los SKUs.</p>
           <button id="repl_run_btn" style="
             background: linear-gradient(135deg,#6366f1,#8b5cf6);
             border: none; border-radius: 12px; color: #fff;
@@ -12634,7 +12634,7 @@ const renderRFSection = (container) => {
             cursor: pointer; letter-spacing: 1px;
             box-shadow: 0 4px 24px rgba(99,102,241,0.4);
             transition: transform 0.15s, box-shadow 0.15s;">
-            âš¡ PROCESAR
+            ⚡ PROCESAR
           </button>
         </div>`;
 
@@ -12647,11 +12647,11 @@ const renderRFSection = (container) => {
       });
     };
 
-    // â”€â”€ AnÃ¡lisis principal (ejecutado solo al hacer clic en PROCESAR) â”€â”€
+    // ── Análisis principal (ejecutado solo al hacer clic en PROCESAR) ──
     const runReplenishmentAnalysis = () => {
       let umbral = parseInt(localStorage.getItem('repl_umbral') || '6', 10);
 
-      // â”€â”€ Tabla virtual de Tallas: SKU â†’ Talla (desde descripciÃ³n de activo y reserva) â”€â”€
+      // ── Tabla virtual de Tallas: SKU → Talla (desde descripción de activo y reserva) ──
       const _extractT = (desc) => {
         if (!desc) return null;
         const parts = String(desc).trim().split('-');
@@ -12660,15 +12660,15 @@ const renderRFSection = (container) => {
       const tallasMap = new Map();
       (activo || []).forEach(row => {
         const raw  = Array.isArray(row) ? row : Object.values(row);
-        const sku  = String(getCol(row, ['ArtÃ­culo','Articulo','ArtÃƒculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
-        const desc = String(getCol(row, ['Descripcion','DescripciÃ³n','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
+        const sku  = String(getCol(row, ['Artículo','Articulo','ArtÃculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
+        const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
         if (!sku) return;
         const t = _extractT(desc);
         if (t && !tallasMap.has(sku)) tallasMap.set(sku, t);
       });
       (reserva || []).forEach(row => {
-        const sku  = String(getCol(row, ['PRODUCTO','Articulo','ArtÃ­culo','SKU','CODIGO']) || '').trim();
-        const desc = String(getCol(row, ['DESCRIPCION','Descripcion','DescripciÃ³n','Description','DESC']) || '').trim();
+        const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+        const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
         if (!sku) return;
         const t = _extractT(desc);
         if (t && !tallasMap.has(sku)) tallasMap.set(sku, t);
@@ -12683,7 +12683,7 @@ const renderRFSection = (container) => {
         console.log('[REPL-DEBUG] Primera fila RESERVA:', JSON.stringify(reserva[0]));
       }
 
-      // â”€â”€ Mapa Maestro de ArtÃ­culos: CodArticulo â†’ { marcas, genderRims, temporada } â”€â”€
+      // ── Mapa Maestro de Artículos: CodArticulo → { marcas, genderRims, temporada } ──
       const maestroData = dataStore.analisis_sku_maestro || [];
       const maestroMap  = new Map();
       maestroData.forEach(row => {
@@ -12704,20 +12704,20 @@ const renderRFSection = (container) => {
       const AREAS_ACTIVO = ['MZN01','MZN02','MZN03','MZN04','BUFFERCD','CDBUFFER','AND','SEL'];
       const stockActMap  = new Map();
       activo.forEach(row => {
-        const areaRaw = String(getCol(row, ['Ãrea','Area','AREA','Ãƒrea','rea','area']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const areaRaw = String(getCol(row, ['Área','Area','AREA','Ãrea','rea','area']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (!AREAS_ACTIVO.some(a => areaRaw.includes(a))) return;
-        const sku = String(getCol(row, ['ArtÃ­culo','Articulo','ArtÃƒculo','Sku','PRODUCTO','SKU','CODIGO','Artculo']) || '').trim();
+        const sku = String(getCol(row, ['Artículo','Articulo','ArtÃculo','Sku','PRODUCTO','SKU','CODIGO','Artculo']) || '').trim();
         const qty = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY','Cantidad']) || 0);
         if (!sku || qty <= 0) return;
         stockActMap.set(sku, (stockActMap.get(sku) || 0) + qty);
       });
 
-      // â”€â”€ Stock Reserva (solo NIVEL = ALTO) â”€â”€
+      // ── Stock Reserva (solo NIVEL = ALTO) ──
       const stockResMap  = new Map();
       reserva.forEach(row => {
         const nivel = String(row['NIVEL'] || '').trim().toUpperCase();
         if (!nivel.includes('ALTO')) return;
-        const sku = String(getCol(row, ['PRODUCTO','Articulo','ArtÃ­culo','SKU','CODIGO','Artculo']) || '').trim();
+        const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO','Artculo']) || '').trim();
         const qty = parseFloat(getCol(row, ['CANTIDAD','Cantidad actual','Cantidad','Cant.','Cant','Stock','QTY','Cantidad']) || 0);
         if (!sku || qty <= 0) return;
         stockResMap.set(sku, (stockResMap.get(sku) || 0) + qty);
@@ -12726,7 +12726,7 @@ const renderRFSection = (container) => {
       // --- Cargar configuraciones de factores ---
       _loadConfiguracionAnalisis(true);
 
-      // â”€â”€ Clasificar â”€â”€
+      // ── Clasificar ──
       const items = [];
       stockActMap.forEach((qAct, sku) => {
         const qRes      = stockResMap.get(sku) || 0;
@@ -12752,7 +12752,7 @@ const renderRFSection = (container) => {
 
         let estado, prioridad;
         if (skuUmbral === 0) {
-          // Si el factor es 0, no se requiere reposiciÃ³n (siempre OK)
+          // Si el factor es 0, no se requiere reposición (siempre OK)
           estado = 'OK';
           prioridad = 3;
         } else if (qAct === 0) {
@@ -12768,8 +12768,8 @@ const renderRFSection = (container) => {
         items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad, factor: skuUmbral });
       });
 
-      // â”€â”€ Segunda pasada: SKUs solo en Reserva (qAct=0, ausentes del activo) â”€â”€
-      // Estos son QUEBRADOS reales: no hay nada en piso pero sÃ­ hay stock para bajar.
+      // ── Segunda pasada: SKUs solo en Reserva (qAct=0, ausentes del activo) ──
+      // Estos son QUEBRADOS reales: no hay nada en piso pero sí hay stock para bajar.
       stockResMap.forEach((qRes, sku) => {
         if (stockActMap.has(sku)) return; // ya procesado arriba
         const art7      = sku.length >= 7 ? sku.substring(0, 7) : sku;
@@ -12802,26 +12802,26 @@ const renderRFSection = (container) => {
 
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
-      // â”€â”€ Guardar en cache (memoria + localStorage con items comprimidos) â”€â”€
+      // ── Guardar en cache (memoria + localStorage con items comprimidos) ──
       _replCache = { items, umbral };
       try {
         // Limpiar claves antiguas logistics_ para liberar espacio antes de guardar
         Object.keys(localStorage).forEach(k => {
           if (k.startsWith('logistics_') && !k.startsWith('logistics_v24_prod_')) localStorage.removeItem(k);
         });
-        // Comprimir items: claves de 1-2 chars para reducir tamaÃ±o ~70%
+        // Comprimir items: claves de 1-2 chars para reducir tamaño ~70%
         const compressed = items.map(i => ({
           s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
           T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad, f: i.factor
         }));
         localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
       } catch(e) {
-        console.warn('[REPL] localStorage lleno, cache solo en sesiÃ³n.', e);
+        console.warn('[REPL] localStorage lleno, cache solo en sesión.', e);
       }
       _replRenderWithItems(container, items, umbral, activo, reserva);
     };
 
-    // â”€â”€ Mostrar landing al abrir â”€â”€
+    // ── Mostrar landing al abrir ──
     renderLanding();
   };
 
@@ -12830,9 +12830,9 @@ const renderRFSection = (container) => {
 
 
   const renderAnalisisSKUTab = async () => {
-    contentSubtitle.textContent = "Consulta profunda de ArtÃ­culos";
+    contentSubtitle.textContent = "Consulta profunda de Artículos";
     
-    // Cargar asÃ­ncronamente los datos requeridos para este mÃ³dulo
+    // Cargar asíncronamente los datos requeridos para este módulo
     await Promise.all([
         getAreaData('analisis_sku_activo'),
         getAreaData('analisis_sku_reserva'),
@@ -12872,7 +12872,7 @@ const renderRFSection = (container) => {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; skuBuf.appendChild(wrap);
         renderUploadArea(wrap, 'analisis_sku_activo',  dataStore.analisis_sku_activo,  '.csv',  'STOCK ACTIVO');
         renderUploadArea(wrap, 'analisis_sku_reserva', dataStore.analisis_sku_reserva, '.xlsx', 'STOCK RESERVA');
-        renderUploadArea(wrap, 'analisis_sku_maestro', dataStore.analisis_sku_maestro, '.xlsx', 'MAESTRO ARTÃCULOS');
+        renderUploadArea(wrap, 'analisis_sku_maestro', dataStore.analisis_sku_maestro, '.xlsx', 'MAESTRO ARTÍCULOS');
         return;
     }
 
@@ -12889,23 +12889,23 @@ const renderRFSection = (container) => {
     if (activeAnalisisSub !== 'articulo_temp') {
         skuBuf.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">ðŸš§</div>
-                <h4>MÃ³dulo en Desarrollo</h4>
-                <p>Esta secciÃ³n estarÃ¡ disponible prÃ³ximamente.</p>
+                <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🚧</div>
+                <h4>Módulo en Desarrollo</h4>
+                <p>Esta sección estará disponible próximamente.</p>
             </div>`;
         return;
     }
 
     const runGlobalAnalysis = async () => {
       const btn = document.getElementById('btn_run_global') || document.getElementById('btn_refresh_global');
-      const oldHtml = btn ? btn.innerHTML : 'âš¡ PROCESAR REPORTE ARTÃCULO';
+      const oldHtml = btn ? btn.innerHTML : '⚡ PROCESAR REPORTE ARTÍCULO';
 
       const skuActivo  = dataStore.analisis_sku_activo  || dataStore.stockActivo;
       const skuReserva = dataStore.analisis_sku_reserva || dataStore.stockReserva;
 
       if (!skuActivo || !skuReserva) {
           showPremiumAlert('Archivos Faltantes',
-              'Primero carga <b>STOCK ACTIVO</b> y <b>STOCK RESERVA</b> en la pestaÃ±a <b>ðŸ“ ARCHIVO ANÃLISIS SKU</b>.',
+              'Primero carga <b>STOCK ACTIVO</b> y <b>STOCK RESERVA</b> en la pestaña <b>📁 ARCHIVO ANÁLISIS SKU</b>.',
               'warning');
           return;
       }
@@ -12923,15 +12923,15 @@ const renderRFSection = (container) => {
 
       setTimeout(() => {
         try {
-          // â”€â”€ FunciÃ³n propia del mÃ³dulo â€” no depende de calculateBufferPallets â”€â”€
+          // ── Función propia del módulo — no depende de calculateBufferPallets ──
           // Combina activo + reserva y agrupa por columnas propias del archivo
           const allRows = [...(skuActivo || []), ...(skuReserva || [])];
-          if (!allRows.length) throw new Error('Los archivos estÃ¡n vacÃ­os.');
+          if (!allRows.length) throw new Error('Los archivos están vacíos.');
 
           const stockPorArticulo = new Map();
-          const infoMap = new Map(); // articulo â†’ { temporada, gGender, tipoObsolencia }
+          const infoMap = new Map(); // articulo → { temporada, gGender, tipoObsolencia }
 
-          // â”€â”€ 1. Construir infoMap desde el Maestro de ArtÃ­culos (si estÃ¡ cargado) â”€â”€
+          // ── 1. Construir infoMap desde el Maestro de Artículos (si está cargado) ──
           const maestro = dataStore.analisis_sku_maestro || [];
           if (maestro.length > 0) {
             maestro.forEach(row => {
@@ -12953,10 +12953,10 @@ const renderRFSection = (container) => {
             });
           }
 
-          // â”€â”€ 2. Sumar stock de activo + reserva â”€â”€
+          // ── 2. Sumar stock de activo + reserva ──
           allRows.forEach(row => {
-            // Activo: columnas 'ArtÃ­culo' + 'Cantidad actual' | Reserva: 'PRODUCTO' + 'CANTIDAD'
-            const sku  = String(getCol(row, ['ArtÃ­culo','Articulo','Art\u00c3culo','PRODUCTO','SKU','Codigo','CODIGO']) || '').trim();
+            // Activo: columnas 'Artículo' + 'Cantidad actual' | Reserva: 'PRODUCTO' + 'CANTIDAD'
+            const sku  = String(getCol(row, ['Artículo','Articulo','Art\u00c3culo','PRODUCTO','SKU','Codigo','CODIGO']) || '').trim();
             const qty  = parseFloat(getCol(row, ['Cantidad actual','Cantidad','Cant.','CANTIDAD','Cant','Stock','QTY']) || 0);
             const art  = sku.length >= 7 ? sku.substring(0, 7) : sku;
             if (!art || qty <= 0) return;
@@ -12988,20 +12988,20 @@ const renderRFSection = (container) => {
             const o = info.tipoObsolencia || 'S/DATO';
             aggrObs[o] = (aggrObs[o] || 0) + qty;
 
-            // Temporada â†’ AÃ±o / Q
+            // Temporada → Año / Q
             const fullTemp = info.temporada || 'S/T';
-            let aÃ±o = fullTemp, qKey = 'OTROS';
+            let año = fullTemp, qKey = 'OTROS';
             if (fullTemp.includes('-')) {
               const [p0, p1] = fullTemp.split('-');
-              aÃ±o = p0;
+              año = p0;
               if (['1','2','3','4'].includes(p1)) qKey = 'Q' + p1;
               else { const m = p1.match(/[1-4]/); qKey = m ? 'Q' + m[0] : 'OTROS'; }
-            } else if (/^\d{4}$/.test(fullTemp)) { aÃ±o = fullTemp; }
+            } else if (/^\d{4}$/.test(fullTemp)) { año = fullTemp; }
 
-            if (!aggrAnual[aÃ±o]) aggrAnual[aÃ±o] = { Q1:0, Q2:0, Q3:0, Q4:0, OTROS:0, Total:0 };
-            if (aggrAnual[aÃ±o][qKey] !== undefined) aggrAnual[aÃ±o][qKey] += qty;
-            else aggrAnual[aÃ±o].OTROS += qty;
-            aggrAnual[aÃ±o].Total += qty;
+            if (!aggrAnual[año]) aggrAnual[año] = { Q1:0, Q2:0, Q3:0, Q4:0, OTROS:0, Total:0 };
+            if (aggrAnual[año][qKey] !== undefined) aggrAnual[año][qKey] += qty;
+            else aggrAnual[año].OTROS += qty;
+            aggrAnual[año].Total += qty;
           });
 
           const sortSpecial = (a, b) => {
@@ -13015,10 +13015,10 @@ const renderRFSection = (container) => {
           const reporteGender     = Object.keys(aggrGender).map(l => ({ label: l, qty: Math.round(aggrGender[l]) })).sort(sortSpecial);
           const reporteObsolencia = Object.keys(aggrObs).map(l => ({ label: l, qty: Math.round(aggrObs[l]) })).sort(sortSpecial);
           const reporteTemporadasQ = Object.keys(aggrAnual).map(a => ({
-            'AÃ±o': a, 'Q1': Math.round(aggrAnual[a].Q1), 'Q2': Math.round(aggrAnual[a].Q2),
+            'Año': a, 'Q1': Math.round(aggrAnual[a].Q1), 'Q2': Math.round(aggrAnual[a].Q2),
             'Q3': Math.round(aggrAnual[a].Q3), 'Q4': Math.round(aggrAnual[a].Q4),
             'OTROS': Math.round(aggrAnual[a].OTROS), 'TOTAL': Math.round(aggrAnual[a].Total)
-          })).sort((a, b) => b['AÃ±o'].localeCompare(a['AÃ±o']));
+          })).sort((a, b) => b['Año'].localeCompare(a['Año']));
 
           const detalleObsGen = [];
           stockPorArticulo.forEach((qty, art) => {
@@ -13026,8 +13026,8 @@ const renderRFSection = (container) => {
             detalleObsGen.push({ 'Articulo': art, 'TIPO OBSOLENCIA': info.tipoObsolencia || 'S/DATO', 'G. GENDER': info.gGender || 'S/DATO', 'CANTIDAD': Math.round(qty) });
           });
 
-          // â”€â”€ Tabla Virtual de Tallas (lÃ³gica propia, no afecta mÃ³dulo Buffer) â”€â”€
-          // Extrae la talla del Ãºltimo segmento despuÃ©s del guion en la descripciÃ³n del SKU
+          // ── Tabla Virtual de Tallas (lógica propia, no afecta módulo Buffer) ──
+          // Extrae la talla del último segmento después del guion en la descripción del SKU
           const _extractTallaLocal = (desc) => {
             if (!desc) return null;
             const d = String(desc).trim();
@@ -13039,22 +13039,22 @@ const renderRFSection = (container) => {
             return null;
           };
 
-          const tablaTallasMap = new Map(); // SKU completo â†’ Talla
+          const tablaTallasMap = new Map(); // SKU completo → Talla
 
-          // Desde activo: descripciÃ³n en columna 'Descripcion'/'DescripciÃ³n' o posiciÃ³n [2]
+          // Desde activo: descripción en columna 'Descripcion'/'Descripción' o posición [2]
           (skuActivo || []).forEach(row => {
             const raw = Array.isArray(row) ? row : Object.values(row);
-            const sku  = String(getCol(row, ['ArtÃ­culo','Articulo','ArtÃƒculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
-            const desc = String(getCol(row, ['Descripcion','DescripciÃ³n','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
+            const sku  = String(getCol(row, ['Artículo','Articulo','ArtÃculo','SKU','CODIGO','PRODUCTO']) || raw[1] || '').trim();
+            const desc = String(getCol(row, ['Descripcion','Descripción','Description','DESCRIPCION','DESC']) || raw[2] || '').trim();
             if (!sku) return;
             const talla = _extractTallaLocal(desc);
             if (talla && !tablaTallasMap.has(sku)) tablaTallasMap.set(sku, talla);
           });
 
-          // Desde reserva: descripciÃ³n en columna 'DESCRIPCION'
+          // Desde reserva: descripción en columna 'DESCRIPCION'
           (skuReserva || []).forEach(row => {
-            const sku  = String(getCol(row, ['PRODUCTO','Articulo','ArtÃ­culo','SKU','CODIGO']) || '').trim();
-            const desc = String(getCol(row, ['DESCRIPCION','Descripcion','DescripciÃ³n','Description','DESC']) || '').trim();
+            const sku  = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+            const desc = String(getCol(row, ['DESCRIPCION','Descripcion','Descripción','Description','DESC']) || '').trim();
             if (!sku) return;
             const talla = _extractTallaLocal(desc);
             if (talla && !tablaTallasMap.has(sku)) tablaTallasMap.set(sku, talla);
@@ -13087,11 +13087,11 @@ const renderRFSection = (container) => {
                   });
                   localStorage.setItem(CACHE_KEY + 'lastBufferKPI', JSON.stringify(lastBufferResult));
               } catch(e) {
-                  console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirÃ¡n en esta sesiÃ³n.", e);
+                  console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirán en esta sesión.", e);
               }
               renderAnalisisSKUTab();
           } else {
-              alert('âš ï¸ ERROR: El anÃ¡lisis no generÃ³ datos.');
+              alert('⚠️ ERROR: El análisis no generó datos.');
               if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
           }
         } catch (err) {
@@ -13099,7 +13099,7 @@ const renderRFSection = (container) => {
           dataStore.stockActivo  = _prevActivo;
           dataStore.stockReserva = _prevReserva;
           console.error(err);
-          showPremiumAlert('Error CrÃ­tico', err.message, 'error');
+          showPremiumAlert('Error Crítico', err.message, 'error');
           if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
         }
       }, 100);
@@ -13109,14 +13109,14 @@ const renderRFSection = (container) => {
         skuBuf.innerHTML = `
             <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border: 1px dashed rgba(255,255,255,0.1);">
                 <div style="margin-bottom:2rem;">
-                    <div style="font-size:4rem; opacity:0.3;">ðŸ“Š</div>
+                    <div style="font-size:4rem; opacity:0.3;">📊</div>
                 </div>
-                <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">ARTÃCULO POR TEMPORADA</h3>
+                <h3 style="color:#fff; font-weight:700; margin-bottom:1rem;">ARTÍCULO POR TEMPORADA</h3>
                 <p style="color:var(--text-muted); max-width:500px; margin:0 auto 2.5rem;">
-                    Presiona el botÃ³n para consolidar el Stock Activo y Reserva por ArtÃ­culo y Temporada.
+                    Presiona el botón para consolidar el Stock Activo y Reserva por Artículo y Temporada.
                 </p>
                 <button id="btn_run_global" class="btn" style="max-width:400px; padding:1.2rem; font-weight:800; font-size:1rem; letter-spacing:1px; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);">
-                    âš¡ PROCESAR REPORTE ARTÃCULO
+                    ⚡ PROCESAR REPORTE ARTÍCULO
                 </button>
             </div>
         `;
@@ -13137,13 +13137,13 @@ const renderRFSection = (container) => {
         <!-- BOTONES ARRIBA (FUERA DEL MARGEN) -->
         <div style="display:flex; gap:1rem; margin-bottom:1.5rem; padding-left:0.5rem;">
             <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(79,70,229,0.05); border:1px solid var(--primary); font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='rgba(79,70,229,0.05)'">
-                ðŸ”„ RE-PROCESAR TODO
+                🔄 RE-PROCESAR TODO
             </button>
             <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(16,185,129,0.05); border:1px solid #10b981; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#10b981'" onmouseout="this.style.background='rgba(16,185,129,0.05)'">
-                ðŸ“¥ EXPORTAR TEMPORADA
+                📥 EXPORTAR TEMPORADA
             </button>
             <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:0.75rem; background:rgba(251,191,36,0.05); border:1px solid #fbbf24; font-weight:800; border-radius:8px; color:#fff; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#fbbf24'" onmouseout="this.style.background='rgba(251,191,36,0.05)'">
-                ðŸ“Š DETALLE OBS.GEN
+                📊 DETALLE OBS.GEN
             </button>
         </div>
 
@@ -13155,7 +13155,7 @@ const renderRFSection = (container) => {
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.8rem;">
                         <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">ARTICULO POR TEMPORADA</h3>
                         <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                            ðŸ“… ${data.timestamp || '00/00/0000, 00:00:00'}
+                            📅 ${data.timestamp || '00/00/0000, 00:00:00'}
                         </span>
                     </div>
 
@@ -13163,7 +13163,7 @@ const renderRFSection = (container) => {
                         <table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
                             <thead>
                                 <tr style="color:var(--primary); font-weight:900; text-transform:uppercase; font-size:0.7rem; border-bottom:2px solid var(--border);">
-                                    <th style="text-align:left; padding:1rem 0.5rem; width:130px;">AÃ‘O/TEMPORADA</th>
+                                    <th style="text-align:left; padding:1rem 0.5rem; width:130px;">AÑO/TEMPORADA</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q1</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q2</th>
                                     <th style="text-align:center; padding:1rem 0.5rem;">Q3</th>
@@ -13174,7 +13174,7 @@ const renderRFSection = (container) => {
                             <tbody>
                                 ${tQ.map(row => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.AÃ±o}</td>
+                                        <td style="padding:0.7rem 0.5rem; font-weight:800; color:#fff;">${row.Año}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
                                         <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q3 === 0 ? '0.15' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
@@ -13203,7 +13203,7 @@ const renderRFSection = (container) => {
                 
                 <!-- REPORTE OBSOLESCENCIA -->
                 <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 15px rgba(16,185,129,0.15); display:flex; flex-direction:column;">
-                    <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;">â³ OBSOLESCENCIA</h4>
+                    <h4 style="color:#10b981; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(16,185,129,0.1); padding-bottom:0.5rem;">⏳ OBSOLESCENCIA</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">TIPO OBSOLENCIA</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
@@ -13215,7 +13215,7 @@ const renderRFSection = (container) => {
 
                 <!-- REPORTE G. GENDER -->
                 <div class="glass-panel" style="flex:1; padding:1.2rem; background:rgba(15,23,42,0.4); border:1px solid rgba(251,191,36,0.5); box-shadow:0 0 15px rgba(251,191,36,0.15); display:flex; flex-direction:column;">
-                    <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;">ðŸ‘¥ G. GENDER</h4>
+                    <h4 style="color:#fbbf24; font-weight:900; margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(251,191,36,0.1); padding-bottom:0.5rem;">👥 G. GENDER</h4>
                     <table style="width:100%; font-size:0.75rem; border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid #333;"><th style="text-align:left; padding:0.5rem;">G. GENDER</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
@@ -13262,8 +13262,8 @@ const renderRFSection = (container) => {
     try {
         const stock = await getAreaData('almacenaje_activo');
         const maestro = dataStore.articulos;
-        if (!stock || !stock.length) { alert("âš ï¸ Primero debes cargar el 'Stock Activo' en la pestaÃ±a Archivo."); return; }
-        if (!maestro || !maestro.length) { alert("âš ï¸ Falta cargar el Maestro de ArtÃ­culos."); return; }
+        if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
+        if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
 
         // --- BARRA DE PROGRESO DE PROCESAMIENTO ---
         progressModal = document.createElement('div');
@@ -13286,10 +13286,10 @@ const renderRFSection = (container) => {
 
         const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
         const filtered = stock.filter(row => {
-            const area = String(row['Ãƒrea'] || row['Area'] || row['Ãrea'] || '').trim().toUpperCase();
-            const ubi = String(row['UbicaciÃ³n actual'] || row['Ubicacion'] || row['UbicaciÃ³n'] || '').trim().toUpperCase();
+            const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
+            const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
             
-            // [REGLA CRÃTICA] Omitir ubicaciones de PreePack (15 dÃ­gitos)
+            // [REGLA CRÍTICA] Omitir ubicaciones de PreePack (15 dígitos)
             if (ubi.startsWith('CDBUFFER-C')) return false;
 
             return allowedAreas.some(a => area.includes(a));
@@ -13311,15 +13311,15 @@ const renderRFSection = (container) => {
 
         const groups = {};
         filtered.forEach(row => {
-            // [COORDENADAS DANIEL v24.9.6] Ignorar nombres, usar Ã­ndices directos: Col B=1, Col C=2
+            // [COORDENADAS DANIEL v24.9.6] Ignorar nombres, usar índices directos: Col B=1, Col C=2
             const raw = Array.isArray(row) ? row : Object.values(row);
             const skuFull = String(raw[1] || '').trim(); // Columna B
             const sku7 = skuFull.substring(0, 7);
-            const area = String(row['Ãƒrea'] || row['Area'] || row['Ãrea'] || '').trim().toUpperCase();
+            const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
             const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
-            const ubi = String(row['UbicaciÃ³n actual'] || row['Ubicacion'] || row['UbicaciÃ³n'] || '').trim();
+            const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
             
-            // [LOGICA DANIEL v24.9.6] Extraer Talla de la Columna C (Ãndice 2)
+            // [LOGICA DANIEL v24.9.6] Extraer Talla de la Columna C (Índice 2)
             const desc = String(raw[2] || '').trim(); // Columna C
             let tallaExtraida = 'S/TALLA';
             const tallaMatch = desc.match(/-[0-9]-(.+)$/);
@@ -13347,8 +13347,8 @@ const renderRFSection = (container) => {
 
         const finalTasks = [];
         
-        // --- [NUEVA LÃ“GICA DE HUECOS] ---
-        // 1. Mapear quÃ© nÃºmeros de "TareaX" ya estÃ¡n ocupados hoy
+        // --- [NUEVA LÓGICA DE HUECOS] ---
+        // 1. Mapear qué números de "TareaX" ya están ocupados hoy
         const usedNumbers = new Set();
         almacenajeTasksCache.forEach(t => {
             if (t.fecha === logicalDate) {
@@ -13358,7 +13358,7 @@ const renderRFSection = (container) => {
             }
         });
 
-        // 2. FunciÃ³n para obtener el siguiente ID libre
+        // 2. Función para obtener el siguiente ID libre
         const getNextFreeId = () => {
             let n = 1;
             while (usedNumbers.has(n)) n++;
@@ -13457,7 +13457,7 @@ const renderRFSection = (container) => {
                     const container = document.getElementById('areaContent') || document.querySelector('.main-content') || document.body;
                     renderAlmacenajeTareas(container);
                     
-                    // Mostrar modal de Ã©xito
+                    // Mostrar modal de éxito
                     const successModal = document.createElement('div');
                     successModal.id = "success_processing_modal";
                     successModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11, 15, 25, 0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);";
@@ -13500,25 +13500,25 @@ const renderRFSection = (container) => {
         if (progressModal && document.body.contains(progressModal)) {
             document.body.removeChild(progressModal);
         }
-        alert("ðŸš¨ Error de CÃ¡lculo: " + e.message);
+        alert("🚨 Error de Cálculo: " + e.message);
     }
   };
 
   const exportAlmacenajeExcel = async () => {
-    console.log("ðŸ“¥ [PULSE] Iniciando exportaciÃ³n a Excel...");
+    console.log("📥 [PULSE] Iniciando exportación a Excel...");
     if (!almacenajeTasksCache.length) { 
-        alert("âš ï¸ No hay tareas en el historial para exportar."); 
+        alert("⚠️ No hay tareas en el historial para exportar."); 
         return; 
     }
     
     try {
         if (typeof ExcelJS === 'undefined') {
-            throw new Error("La librerÃ­a ExcelJS no estÃ¡ cargada. Por favor, recarga la pÃ¡gina (Ctrl+F5).");
+            throw new Error("La librería ExcelJS no está cargada. Por favor, recarga la página (Ctrl+F5).");
         }
         
         updateSyncIndicator('working', 'GENERANDO EXCEL...');
         const workbook = new ExcelJS.Workbook();
-        const ws = workbook.addWorksheet('Tareas DÃ­a', {
+        const ws = workbook.addWorksheet('Tareas Día', {
             properties: { tabColor: { argb: 'FF4F46E5' } },
             pageSetup: { 
                 margins: { left: 0, right: 0, top: 0.5, bottom: 0, header: 0.3, footer: 0 },
@@ -13529,10 +13529,10 @@ const renderRFSection = (container) => {
             }
         });
 
-        // Poner NÂ° pÃ¡gina en el centro de la cabecera
+        // Poner N° página en el centro de la cabecera
         ws.headerFooter = {
-            oddHeader: "&C PÃ¡gina &P de &N",
-            evenHeader: "&C PÃ¡gina &P de &N"
+            oddHeader: "&C Página &P de &N",
+            evenHeader: "&C Página &P de &N"
         };
 
         // 7. Configurar anchos de columna (10 columnas en total: A a J)
@@ -13549,18 +13549,18 @@ const renderRFSection = (container) => {
             { key: 'tareas', width: 15.00 }     // J (Tareas / ID)
         ];
 
-        // 3. Toda la pestaÃ±a en fuente 16
+        // 3. Toda la pestaña en fuente 16
         ws.eachRow((row) => {
             row.font = { size: 16, name: 'Calibri' };
         });
 
-        // 1. Crear 5 filas (implÃ­cito al empezar en la 6 para el header)
+        // 1. Crear 5 filas (implícito al empezar en la 6 para el header)
         ws.getCell('A2').value = 'Nombres';
         ws.getCell('A3').value = 'Hora Inicio';
-        ws.getCell('A4').value = 'Hora TÃ©rmino';
+        ws.getCell('A4').value = 'Hora Término';
         ws.getCell('A5').value = new Date().toLocaleString('es-ES');
 
-        // Altura 30.00 y alineaciÃ³n en el medio para filas 2, 3, 4
+        // Altura 30.00 y alineación en el medio para filas 2, 3, 4
         [2, 3, 4].forEach(rowNum => {
             const row = ws.getRow(rowNum);
             row.height = 30.00;
@@ -13582,7 +13582,7 @@ const renderRFSection = (container) => {
         // 2. Fila 6 Columnas A hasta la J, Fondo Negro, texto blanco en negrita
         const headerRow = ws.getRow(6);
         headerRow.values = [
-            "Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "ColecciÃ³n", 
+            "Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", 
             "Qty Buffer", "Qty Zona", "Tareas"
         ];
         headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
@@ -13633,7 +13633,7 @@ const renderRFSection = (container) => {
                 zonaRows.sort(sortBySku);
 
                 // Fechas formateadas
-                // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacÃ­a, Avance segÃºn estado)
+                // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía, Avance según estado)
                 bufferRows.forEach(i => {
                     const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
                     dataRows.push([
@@ -13641,7 +13641,7 @@ const renderRFSection = (container) => {
                         i.qty, "", task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
-                // Agregar segundo las Zonas (Qty Buffer vacÃ­a, Qty Zona se muestra, Avance es "---")
+                // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra, Avance es "---")
                 zonaRows.forEach(i => {
                     const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
                     dataRows.push([
@@ -13662,7 +13662,7 @@ const renderRFSection = (container) => {
             const row = ws.addRow(rowData);
             row.font = { size: 16, name: 'Calibri' };
             
-            // Centrar columnas numÃ©ricas, de fechas y estado (H a J / 8 a 10)
+            // Centrar columnas numéricas, de fechas y estado (H a J / 8 a 10)
             [8, 9, 10].forEach(colIdx => {
                 row.getCell(colIdx).alignment = { horizontal: 'center', vertical: 'middle' };
             });
@@ -13695,13 +13695,13 @@ const renderRFSection = (container) => {
         a.click();
         window.URL.revokeObjectURL(url);
         
-        updateSyncIndicator('online', 'EXCEL GENERADO âœ…');
-        console.log("âœ… [PULSE] Excel generado con Ã©xito.");
+        updateSyncIndicator('online', 'EXCEL GENERADO ✅');
+        console.log("✅ [PULSE] Excel generado con éxito.");
         setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
 
     } catch (err) {
-        console.error("âŒ [PULSE] Error en exportAlmacenajeExcel:", err);
-        alert("âŒ Error al generar el Excel: " + err.message);
+        console.error("❌ [PULSE] Error en exportAlmacenajeExcel:", err);
+        alert("❌ Error al generar el Excel: " + err.message);
         updateSyncIndicator('offline', 'ERROR EXCEL');
     }
   };
@@ -13717,7 +13717,7 @@ const renderRFSection = (container) => {
             if (window.__chartSelectedWeeks.length > 1) {
                 window.__chartSelectedWeeks.splice(idx, 1);
             } else {
-                window.showPremiumAlert("MÃNIMO DE SELECCIÃ“N", "Debe haber al menos una semana seleccionada.", "warning");
+                window.showPremiumAlert("MÍNIMO DE SELECCIÓN", "Debe haber al menos una semana seleccionada.", "warning");
                 return;
             }
         } else {
@@ -13775,13 +13775,13 @@ const renderRFSection = (container) => {
         let icon = '';
         if (pct === 0) {
             color = '#ef4444'; // Rojo
-            icon = 'â—';
+            icon = '●';
         } else if (avance < buffer) {
-            color = '#fbbf24'; // Ãmbar / Amarillo
-            icon = 'â–²';
+            color = '#fbbf24'; // Ámbar / Amarillo
+            icon = '▲';
         } else {
             color = '#22c55e'; // Verde
-            icon = 'â–²';
+            icon = '▲';
         }
         if (withIcon) {
             return `
@@ -13793,12 +13793,12 @@ const renderRFSection = (container) => {
         }
     };
     
-    // [OPTIMIZACIÃ“N] Pre-calcular mapa de stock para evitar bloqueos en el renderizado
+    // [OPTIMIZACIÓN] Pre-calcular mapa de stock para evitar bloqueos en el renderizado
     const otherZonesStockMap = new Map();
     if (isDetail) {
         const zoneAreas = ['almacenaje_activo', 'stockActivo', 'picking_activo', 'rack_activo'];
         
-        // Helper para encontrar claves reales una sola vez por Ã¡rea
+        // Helper para encontrar claves reales una sola vez por área
         const findActualKey = (row, names) => {
             if (!row) return null;
             const keys = Object.keys(row);
@@ -13816,8 +13816,8 @@ const renderRFSection = (container) => {
             const data = dataStore[areaKey];
             if (data && data.length > 0) {
                 const firstRow = data[0];
-                const skuKey = findActualKey(firstRow, ['Articulo', 'ArtÃ­culo', 'Sku', 'ArtÃƒculo', 'PRODUCTO']);
-                const ubiKey = findActualKey(firstRow, ['UbicaciÃ³n actual', 'Ubicacion', 'UbicaciÃ³n', 'UBICACION']);
+                const skuKey = findActualKey(firstRow, ['Articulo', 'Artículo', 'Sku', 'ArtÃculo', 'PRODUCTO']);
+                const ubiKey = findActualKey(firstRow, ['Ubicación actual', 'Ubicacion', 'Ubicación', 'UBICACION']);
                 const qtyKey = findActualKey(firstRow, ['Cantidad actual', 'Cantidad', 'Cant.', 'CANTIDAD']);
 
                 if (skuKey) {
@@ -13841,27 +13841,27 @@ const renderRFSection = (container) => {
         });
     }
     
-    // SINCRONIZACIÃ“N CRÃTICA: Asegurar que el cache local tenga lo que el radar encontrÃ³
+    // SINCRONIZACIÓN CRÍTICA: Asegurar que el cache local tenga lo que el radar encontró
     if (adminService.adminStore.almacenaje_tasks) {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
     }
     const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache] : [];
     
-    // [ORDENAMIENTO JERÃRQUICO] 1. Fecha Descendente (MÃ¡s reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
+    // [ORDENAMIENTO JERÁRQUICO] 1. Fecha Descendente (Más reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
     tasks.sort((a, b) => {
         if (!a || !b) return 0;
         // Primero comparar fechas
         const dateA = a.fecha || '';
         const dateB = b.fecha || '';
-        if (dateA !== dateB) return dateB.localeCompare(dateA); // MÃ¡s reciente primero
+        if (dateA !== dateB) return dateB.localeCompare(dateA); // Más reciente primero
 
-        // Si la fecha es igual, comparar nÃºmero de tarea
+        // Si la fecha es igual, comparar número de tarea
         const numA = parseInt(String(a.id || '').replace('Tarea', '')) || 0;
         const numB = parseInt(String(b.id || '').replace('Tarea', '')) || 0;
         return numA - numB;
     });
 
-    // LÃ³gica de AgrupaciÃ³n para Historial
+    // Lógica de Agrupación para Historial
     const getWeekNumber = (d) => {
         const date = new Date(d);
         const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -13920,11 +13920,11 @@ const renderRFSection = (container) => {
         };
 
         return `
-        <!-- REPORTE DE PRODUCCIÃ“N POR HORA (ANCHO COMPLETO) -->
+        <!-- REPORTE DE PRODUCCIÓN POR HORA (ANCHO COMPLETO) -->
         <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
             <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                 <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                    REPORTE DE PRODUCCIÃ“N POR HORA
+                    REPORTE DE PRODUCCIÓN POR HORA
                 </h3>
                 <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
                     CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
@@ -13940,7 +13940,7 @@ const renderRFSection = (container) => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producciÃ³n por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
+                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
                             const rowData = hourlyData[dateKey];
                             const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
                             return `
@@ -13964,10 +13964,10 @@ const renderRFSection = (container) => {
                 const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #00E5FF; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
                 const pages = Array.from({length: tp}, (_, i) => i);
                 return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
-                    <button onclick="window.__hourlySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">â† Ant</button>
+                    <button onclick="window.__hourlySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                     ${pages.map(p=>`<button onclick="window.__hourlySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                    <button onclick="window.__hourlySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig â†’</button>
-                    <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">PÃ¡g ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
+                    <button onclick="window.__hourlySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                    <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
                 </div>`;
             })()}
         </div>
@@ -14100,7 +14100,7 @@ const renderRFSection = (container) => {
                     REPORTE DE ALMACENADO POR SEMANA Y MARCA
                 </h3>
                 <div style="font-size:0.68rem; color:rgba(167, 139, 250, 0.6); font-weight:700; letter-spacing:0.5px;">
-                    DISTRIBUCIÃ“N DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES (HAGA CLIC EN UNA SEMANA PARA EXPANDIR POR GÃ‰NERO)
+                    DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES (HAGA CLIC EN UNA SEMANA PARA EXPANDIR POR GÉNERO)
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
@@ -14123,7 +14123,7 @@ const renderRFSection = (container) => {
                                 const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
                                 return `
                                     <tr style="background: rgba(139, 92, 246, 0.04); border-bottom: 1px solid rgba(139,92,246,0.06); font-size:0.74rem;">
-                                        <td style="padding:5px 8px 5px 24px; color:rgba(255,255,255,0.7); font-weight:600; font-style:italic; white-space:nowrap;">â†³ ${gender}</td>
+                                        <td style="padding:5px 8px 5px 24px; color:rgba(255,255,255,0.7); font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
                                             return `<td style="padding:5px 8px; text-align:center; color:rgba(255,255,255,0.65);">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
@@ -14136,7 +14136,7 @@ const renderRFSection = (container) => {
                             return `
                                 <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='#000000'">
                                     <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">
-                                        <span style="color:#8b5cf6; margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">â–¶</span>
+                                        <span style="color:#8b5cf6; margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
                                         ${w}
                                     </td>
                                     ${sortedBrands.map(b => {
@@ -14168,10 +14168,10 @@ const renderRFSection = (container) => {
                 const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #8b5cf6; background:${active?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a78bfa'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
                 const pages = Array.from({length: tp}, (_, i) => i);
                 return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(139,92,246,0.2); margin-top:0.4rem;">
-                    <button onclick="window.__weeklySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">â† Ant</button>
+                    <button onclick="window.__weeklySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                     ${pages.map(p=>`<button onclick="window.__weeklySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                    <button onclick="window.__weeklySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig â†’</button>
-                    <span style="font-size:0.7rem; color:rgba(167,139,250,0.4); margin-left:6px;">PÃ¡g ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
+                    <button onclick="window.__weeklySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                    <span style="font-size:0.7rem; color:rgba(167,139,250,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
                 </div>`;
             })()}
         </div>
@@ -14210,7 +14210,7 @@ const renderRFSection = (container) => {
             
             if (isNaN(startObj.getTime()) || isNaN(endObj.getTime()) || startObj > endObj) return [0, 1, 2, 3, 4, 5];
             
-            // Si el rango es de 7 dÃ­as o mÃ¡s, mostramos la semana completa
+            // Si el rango es de 7 días o más, mostramos la semana completa
             const diffTime = Math.abs(endObj - startObj);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             if (diffDays >= 6) {
@@ -14319,7 +14319,7 @@ const renderRFSection = (container) => {
         setTimeout(() => {
             const ctx = document.getElementById('weeklyDailyChartCanvas');
             if (!ctx) {
-                console.warn("âš ï¸ Canvas element 'weeklyDailyChartCanvas' not found in DOM yet.");
+                console.warn("⚠️ Canvas element 'weeklyDailyChartCanvas' not found in DOM yet.");
                 return;
             }
             
@@ -14332,12 +14332,12 @@ const renderRFSection = (container) => {
             }
             
             if (typeof Chart === 'undefined') {
-                console.error("âŒ Chart.js is not loaded.");
+                console.error("❌ Chart.js is not loaded.");
                 return;
             }
             
             const activeIndices = getActiveDayIndices(startDate, endDate);
-            const allLabels = ['Lunes', 'Martes', 'MiÃ©rcoles', 'Jueves', 'Viernes', 'SÃ¡bado', 'Domingo'];
+            const allLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
             const chartLabels = allLabels.filter((_, idx) => activeIndices.includes(idx));
 
             const datasets = [];
@@ -14427,7 +14427,7 @@ const renderRFSection = (container) => {
                                 yOffset = 8;
                             }
                             
-                            // Sombra negra para mÃ¡xima legibilidad sobre cualquier cuadrÃ­cula o fondo
+                            // Sombra negra para máxima legibilidad sobre cualquier cuadrícula o fondo
                             ctx.shadowColor = '#000000';
                             ctx.shadowBlur = 4;
                             ctx.shadowOffsetX = 0;
@@ -14524,25 +14524,25 @@ const renderRFSection = (container) => {
         }, 100);
 
         return `
-        <!-- GRÃFICO POR SEMANA Y DÃA -->
+        <!-- GRÁFICO POR SEMANA Y DÍA -->
         <div style="background:#000000; border:2px solid #eab308; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(234,179,8,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(234,179,8,0.15); padding-bottom:8px;">
                 <div style="border-left: 4px solid #eab308; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                     <h3 style="color:#fef08a; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                        GRÃFICO DE RENDIMIENTO SEMANA Y DÃA
+                        GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
                     </h3>
                     <div style="font-size:0.68rem; color:rgba(234, 179, 8, 0.6); font-weight:700; letter-spacing:0.5px;">
-                        TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A SÃBADO)
+                        TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A SÁBADO)
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-family:'Inter', sans-serif;">
                     <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:0.85rem; color:#eab308;">ðŸ“…</span>
+                        <span style="font-size:0.85rem; color:#eab308;">📅</span>
                         <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Desde:</span>
                         <input type="date" id="chartStartDateInput" value="${window.__chartStartDate}" onchange="window.setChartDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                     </div>
                     <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:0.85rem; color:#eab308;">ðŸ“…</span>
+                        <span style="font-size:0.85rem; color:#eab308;">📅</span>
                         <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Hasta:</span>
                         <input type="date" id="chartEndDateInput" value="${window.__chartEndDate}" onchange="window.setChartDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                     </div>
@@ -14555,7 +14555,7 @@ const renderRFSection = (container) => {
         `;
     };
 
-    // Pre-calcular listado plano de Ã­tems detallados para paginaciÃ³n de 25 en 25
+    // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
     const detailedItems = [];
     if (isDetail) {
         tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).forEach(t => {
@@ -14603,7 +14603,7 @@ const renderRFSection = (container) => {
             });
         });
 
-        // --- FILTRADO BÃšSQUEDA DETALLE ---
+        // --- FILTRADO BÚSQUEDA DETALLE ---
         if (window.__almacenajeDetailSearchQuery) {
             const query = String(window.__almacenajeDetailSearchQuery).trim().toLowerCase();
             const filteredDetailedItems = detailedItems.filter(di => {
@@ -14635,7 +14635,7 @@ const renderRFSection = (container) => {
         }
     }
 
-    // Inicializar o ajustar variables de paginaciÃ³n
+    // Inicializar o ajustar variables de paginación
     const rangeKey = `${window.__almacenajeStartDate}|${window.__almacenajeEndDate}`;
     if (typeof window.__detailCurrentPage === 'undefined' || window.__detailLastDate !== rangeKey) {
         window.__detailCurrentPage = 1;
@@ -14653,7 +14653,7 @@ const renderRFSection = (container) => {
     const pageItems = isDetail ? targetItems.slice(startIndex, startIndex + 25) : [];
     const pageResumenItems = !isDetail ? targetItems.slice(startIndex, startIndex + 25) : [];
 
-    // Helper global para cambiar pÃ¡gina
+    // Helper global para cambiar página
     window.__setDetailPage = (p) => {
         const maxPage = Math.ceil(targetItems.length / 25) || 1;
         if (p < 1) p = 1;
@@ -14666,22 +14666,22 @@ const renderRFSection = (container) => {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem; gap:1rem; flex-wrap:wrap;">
             ${!isKpi ? `
             <nav style="display:flex; gap:1.5rem; align-items:center;">
-                <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">ðŸ“Š RESUMEN</a>
-                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">ðŸ” DETALLE</a>
+                <a class="sub-sub-nav-item ${!isDetail ?'active':''}" onclick="window.setTaskMode('resumen')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${!isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${!isDetail?'800':'500'}; border-bottom:${!isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">📊 RESUMEN</a>
+                <a class="sub-sub-nav-item ${isDetail?'active':''}" onclick="window.setTaskMode('detalle')" style="padding: 0.4rem 0.2rem; font-size: 0.8rem; cursor:pointer; color:${isDetail?'var(--primary)':'var(--text-muted)'}; font-weight:${isDetail?'800':'500'}; border-bottom:${isDetail?'2px solid var(--primary)':'none'}; text-decoration:none;">🔍 DETALLE</a>
             </nav>
             <div style="display:flex; align-items:center; gap:15px; margin-left:auto; flex-wrap:wrap;">
-                <!-- BOTONES DE ACCIÃ“N PRINCIPALES -->
+                <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
-                    ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">âš™ï¸ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">ðŸ“¥ EXCEL TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">ðŸŽ¯ AUDITAR WMS</button>` : ''}
+                    ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 AUDITAR WMS</button>` : ''}
                 </div>
 
                 ${isDetail ? `
                 <!-- BUSCADOR DETALLE -->
                 <div style="position:relative; display:flex; align-items:center;">
-                    <span style="position:absolute; left:12px; color:rgba(255,255,255,0.4); pointer-events:none; font-size:0.75rem;">ðŸ”</span>
-                    <input type="text" id="almacenaje_detail_search" placeholder="Filtrar por cÃ³digo, ubi, sku, creador..." 
+                    <span style="position:absolute; left:12px; color:rgba(255,255,255,0.4); pointer-events:none; font-size:0.75rem;">🔍</span>
+                    <input type="text" id="almacenaje_detail_search" placeholder="Filtrar por código, ubi, sku, creador..." 
                            value="${window.__almacenajeDetailSearchQuery || ''}"
                            style="background:rgba(255, 255, 255, 0.03); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:5px 12px 5px 32px; color:#fff; font-size:0.75rem; width:220px; outline:none; transition:all 0.3s ease; font-family:'Inter', sans-serif;"
                            onfocus="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.06)';"
@@ -14693,12 +14693,12 @@ const renderRFSection = (container) => {
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:0.85rem; color:var(--primary);">ðŸ“…</span>
+                        <span style="font-size:0.85rem; color:var(--primary);">📅</span>
                         <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
                         <input type="date" id="almacenajeStartDateInput" value="${window.__almacenajeStartDate}" onchange="window.setAlmacenajeDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                     </div>
                     <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:0.85rem; color:var(--primary);">ðŸ“…</span>
+                        <span style="font-size:0.85rem; color:var(--primary);">📅</span>
                         <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
                         <input type="date" id="almacenajeEndDateInput" value="${window.__almacenajeEndDate}" onchange="window.setAlmacenajeDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                     </div>
@@ -14707,36 +14707,36 @@ const renderRFSection = (container) => {
                 <!-- BOTONES CIRCULARES (REFRESCO Y BASURA) -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
-                        ðŸ”„
+                        🔄
                     </button>
                     ${!isDetail ? `
                     <button onclick="window.clearCurrentShiftTasks()" title="Limpiar Tareas Pendientes" style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); color:#ef4444; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'; this.style.borderColor='#ef4444'" onmouseout="this.style.background='rgba(239,68,68,0.05)'; this.style.borderColor='rgba(239,68,68,0.2)'">
-                        ðŸ—‘ï¸
+                        🗑️
                     </button>
                     ` : ''}
                 </div>
             </div>
             ` : `
             <div style="flex:1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                <h4 style="margin:0; color:var(--primary); font-size:0.8rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;">ðŸ“Š Panel de Rendimiento Individual</h4>
+                <h4 style="margin:0; color:var(--primary); font-size:0.8rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;">📊 Panel de Rendimiento Individual</h4>
                 <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                     <!-- RANGO DE FECHAS DE : HASTA PARA KPI -->
                     <div style="display:flex; align-items:center; gap:8px;">
                         <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                            <span style="font-size:0.85rem; color:var(--primary);">ðŸ“…</span>
+                            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
                             <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
                             <input type="date" id="kpiStartDateInput" value="${window.__kpiStartDate}" onchange="window.setKpiDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                         </div>
                         <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                            <span style="font-size:0.85rem; color:var(--primary);">ðŸ“…</span>
+                            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
                             <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
                             <input type="date" id="kpiEndDateInput" value="${window.__kpiEndDate}" onchange="window.setKpiDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
                         </div>
                     </div>
                     <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
-                        ðŸ”„
+                        🔄
                     </button>
-                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">MÃ³dulo de AnalÃ­tica Avanzada</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Módulo de Analítica Avanzada</div>
                 </div>
             </div>
             `}
@@ -14751,7 +14751,7 @@ const renderRFSection = (container) => {
             <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2);">
                 <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
                     <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
-                        ðŸ“Š PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                        📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                     </h3>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
                 </div>
@@ -14839,7 +14839,7 @@ const renderRFSection = (container) => {
 
                                 indRows.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.user.localeCompare(b.user));
 
-                                // --- PAGINACIÃ“N 10 por pÃ¡gina ---
+                                // --- PAGINACIÓN 10 por página ---
                                 const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__kpiLastDate !== rangeKey) { window.__kpiPage = 0; window.__kpiLastDate = rangeKey; }
                                 if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
@@ -14865,7 +14865,7 @@ const renderRFSection = (container) => {
                                         </td>
                                         <td style="padding:0.8rem 1rem; text-align:center;">
                                             <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
-                                                ${r.ok ? 'CUMPLIÃ“' : 'BAJO PROMEDIO'}
+                                                ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
                                             </span>
                                         </td>
                                     </tr>
@@ -14878,7 +14878,7 @@ const renderRFSection = (container) => {
                 <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
                         <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base: 150 Unid/Hr por usuario &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.6);">${window.__kpiTotalRows||0} registros totales</span></div>
-                        <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">ðŸ“¥ EXPORTAR KPI</button>
+                        <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
                     </div>
                     ${(() => {
                         const tp = window.__kpiTotalPages || 1;
@@ -14887,21 +14887,21 @@ const renderRFSection = (container) => {
                         const btnStyle = (active, dis) => `padding:5px 11px; border-radius:8px; border:1px solid ${active?'#6366f1':'rgba(255,255,255,0.1)'}; background:${active?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a5b4fc'}; cursor:${dis?'default':'pointer'}; font-size:0.75rem; font-weight:${active?900:500};`;
                         const pages = Array.from({length: tp}, (_, i) => i);
                         return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05);">
-                            <button onclick="window.__kpiSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">â† Ant</button>
+                            <button onclick="window.__kpiSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                             ${pages.map(p=>`<button onclick="window.__kpiSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                            <button onclick="window.__kpiSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig â†’</button>
-                            <span style="font-size:0.7rem; color:rgba(255,255,255,0.3); margin-left:6px;">PÃ¡g ${cp+1} / ${tp}</span>
+                            <button onclick="window.__kpiSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                            <span style="font-size:0.7rem; color:rgba(255,255,255,0.3); margin-left:6px;">Pág ${cp+1} / ${tp}</span>
                         </div>`;
                     })()}
                 </div>
             </div>
 
-            <!-- REPORTE: ACUMULADO DÃA Ã— USUARIO -->
+            <!-- REPORTE: ACUMULADO DÍA × USUARIO -->
             <div style="background:rgba(10,15,30,0.95); border:2px solid #f59e0b; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(245,158,11,0.15);">
                 <div style="padding:1rem 1.2rem; background:rgba(245,158,11,0.08); border-bottom:1px solid rgba(245,158,11,0.25); display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <h3 style="color:#f59e0b; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">ðŸ“… ACUMULADO POR DÃA Ã— USUARIO</h3>
-                        <div style="font-size:0.68rem; color:rgba(245,158,11,0.55); font-weight:600;">Suma de unidades por operador por jornada â€” incluye todas las tareas del dÃ­a</div>
+                        <h3 style="color:#f59e0b; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📅 ACUMULADO POR DÍA × USUARIO</h3>
+                        <div style="font-size:0.68rem; color:rgba(245,158,11,0.55); font-weight:600;">Suma de unidades por operador por jornada — incluye todas las tareas del día</div>
                     </div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
                 </div>
@@ -14944,7 +14944,7 @@ const renderRFSection = (container) => {
                                 });
                                 const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
-                                // --- PAGINACIÃ“N ACUMULADO ---
+                                // --- PAGINACIÓN ACUMULADO ---
                                 const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__accLastDate !== rangeKey) { window.__accPage=0; window.__accLastDate=rangeKey; }
                                 if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
@@ -14972,7 +14972,7 @@ const renderRFSection = (container) => {
                                             <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${bar}%; height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:6px; box-shadow:0 0 8px rgba(245,158,11,0.4);"></div></div>
                                             <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:3px; text-align:right;">${bar}%</div>
                                         </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${uphOk?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; color:${uphOk?'#22c55e':'#ef4444'}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${uphOk?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}">${uphOk?'âœ… META':'âš ï¸ BAJO'}</span></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${uphOk?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; color:${uphOk?'#22c55e':'#ef4444'}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${uphOk?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}">${uphOk?'✅ META':'⚠️ BAJO'}</span></td>
                                     </tr>`;
                                 }).join('');
                             })()}
@@ -14981,9 +14981,9 @@ const renderRFSection = (container) => {
                 </div>
                 <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(245,158,11,0.15);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.3);">ðŸ’¡ 3 tareas Ã— 100 unid = <b style="color:#f59e0b;">300 acumuladas</b> &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.5);">${window.__accTotalRows||0} registros</span></div>
+                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.3);">💡 3 tareas × 100 unid = <b style="color:#f59e0b;">300 acumuladas</b> &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.5);">${window.__accTotalRows||0} registros</span></div>
                     </div>
-                    ${(()=>{ const tp=window.__accTotalPages||1; const cp=window.__accPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#f59e0b':'rgba(255,255,255,0.1)'};background:${a?'rgba(245,158,11,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#fbbf24'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__accSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">â† Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__accSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__accSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig â†’</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">PÃ¡g ${cp+1}/${tp}</span></div>`; })()}
+                    ${(()=>{ const tp=window.__accTotalPages||1; const cp=window.__accPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#f59e0b':'rgba(255,255,255,0.1)'};background:${a?'rgba(245,158,11,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#fbbf24'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__accSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__accSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__accSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
                 </div>
             </div>
 
@@ -14991,8 +14991,8 @@ const renderRFSection = (container) => {
             <div style="background:rgba(10,15,30,0.95); border:2px solid #8b5cf6; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(139,92,246,0.15);">
                 <div style="padding:1rem 1.2rem; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.25); display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <h3 style="color:#a78bfa; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">âš¡ RANKING DE VELOCIDAD â€” UNID/HORA</h3>
-                        <div style="font-size:0.68rem; color:rgba(167,139,250,0.55); font-weight:600;">Eficiencia promedio por operador Â· Ordenado de mayor a menor velocidad</div>
+                        <h3 style="color:#a78bfa; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">⚡ RANKING DE VELOCIDAD — UNID/HORA</h3>
+                        <div style="font-size:0.68rem; color:rgba(167,139,250,0.55); font-weight:600;">Eficiencia promedio por operador · Ordenado de mayor a menor velocidad</div>
                     </div>
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">BASE: 150 U/Hr = 100%</div>
                 </div>
@@ -15037,7 +15037,7 @@ const renderRFSection = (container) => {
                                 const rows = [...uMap.values()].map(r=>({...r, avgUph:r.mins>0?(r.qty/r.mins*60):0}))
                                     .sort((a,b)=>b.avgUph-a.avgUph);
                                 if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos de velocidad para mostrar.</td></tr>`;
-                                // --- PAGINACIÃ“N RANKING ---
+                                // --- PAGINACIÓN RANKING ---
                                 const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__rkLastDate !== rangeKey) { window.__rkPage=0; window.__rkLastDate = rangeKey; }
                                 if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
@@ -15047,7 +15047,7 @@ const renderRFSection = (container) => {
                                 window.__rkTotalRows = rows.length;
                                 const rkPagedRows = rows.slice(_rpg*10, (_rpg+1)*10);
                                 const maxUph = Math.max(...rows.map(r=>r.avgUph),1);
-                                const medals = ['ðŸ¥‡','ðŸ¥ˆ','ðŸ¥‰'];
+                                const medals = ['🥇','🥈','🥉'];
                                 return rkPagedRows.map((r,i) => {
                                     const globalIdx = _rpg*10+i;
                                     const pct = Math.round(r.avgUph/150*100);
@@ -15073,13 +15073,13 @@ const renderRFSection = (container) => {
                 </div>
                 <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15);">
                     <div style="display:flex; gap:1.5rem; font-size:0.68rem; color:rgba(255,255,255,0.3); margin-bottom:0.5rem; flex-wrap:wrap;">
-                        <span>ðŸŸ¢ ELITE â‰¥ 150 u/h</span>
-                        <span>ðŸŸ£ ALTO â‰¥ 120 u/h</span>
-                        <span>ðŸŸ¡ MEDIO â‰¥ 90 u/h</span>
-                        <span>ðŸ”´ BAJO &lt; 90 u/h</span>
+                        <span>🟢 ELITE ≥ 150 u/h</span>
+                        <span>🟣 ALTO ≥ 120 u/h</span>
+                        <span>🟡 MEDIO ≥ 90 u/h</span>
+                        <span>🔴 BAJO &lt; 90 u/h</span>
                         <span style="margin-left:auto; color:rgba(255,255,255,0.5);">${window.__rkTotalRows||0} operadores</span>
                     </div>
-                    ${(()=>{ const tp=window.__rkTotalPages||1; const cp=window.__rkPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#8b5cf6':'rgba(255,255,255,0.1)'};background:${a?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#a78bfa'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__rkSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">â† Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__rkSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__rkSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig â†’</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">PÃ¡g ${cp+1}/${tp}</span></div>`; })()}
+                    ${(()=>{ const tp=window.__rkTotalPages||1; const cp=window.__rkPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#8b5cf6':'rgba(255,255,255,0.1)'};background:${a?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#a78bfa'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__rkSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__rkSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__rkSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
                 </div>
             </div>
 
@@ -15104,7 +15104,7 @@ const renderRFSection = (container) => {
                             </div>
                         </div>
                         <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
-                            ðŸ”„
+                            🔄
                         </button>
                     </div>
                     
@@ -15164,7 +15164,7 @@ const renderRFSection = (container) => {
                                     let grandAvance = 0;
 
                                     if (areas.length === 0) {
-                                        return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacÃ©n para mostrar en esta selecciÃ³n.</td></tr>`;
+                                        return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
                                     }
 
                                     areas.forEach(area => {
@@ -15250,7 +15250,7 @@ const renderRFSection = (container) => {
                             </div>
                         </div>
                         <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
-                            ðŸ”„
+                            🔄
                         </button>
                     </div>
                     
@@ -15366,7 +15366,7 @@ const renderRFSection = (container) => {
                                     let grandAvance = 0;
 
                                     if (areas.length === 0) {
-                                        return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacÃ©n para mostrar en esta selecciÃ³n.</td></tr>`;
+                                        return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
                                     }
 
                                     areas.forEach(area => {
@@ -15444,7 +15444,7 @@ const renderRFSection = (container) => {
                             RENDIMIENTO DE OPERARIOS
                         </h3>
                         <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                            MEDICIÃ“N DE TAREAS FINALIZADAS
+                            MEDICIÓN DE TAREAS FINALIZADAS
                         </div>
                     </div>
                 </div>
@@ -15455,11 +15455,11 @@ const renderRFSection = (container) => {
                             <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
                                 <th style="padding:6px 4px; text-align:left; width:70px; white-space:nowrap;">FECHA</th>
                                 <th style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;">TURNO</th>
-                                <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">NÂ° OPERARIOS</th>
+                                <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">N° OPERARIOS</th>
                                 <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">QTY TOTAL</th>
                                 <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">QTY TAREAS</th>
                                 <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">PRIMERA TAREA</th>
-                                <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">ÃšLTIMA TAREA</th>
+                                <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">ÚLTIMA TAREA</th>
                                 <th style="padding:6px 8px; text-align:center; width: 110px; white-space:nowrap;">TRANSCURRIDO</th>
                                 <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">QTY/HORA</th>
                                 <th style="padding:6px 8px; text-align:center; width: 110px; white-space:nowrap;">QTY/TAREA</th>
@@ -15511,7 +15511,7 @@ const renderRFSection = (container) => {
                                     return overlap;
                                 };
 
-                                // Procesar tareas y calcular su fecha lÃ³gica antes de agrupar y filtrar
+                                // Procesar tareas y calcular su fecha lógica antes de agrupar y filtrar
                                 const processedTasks = [];
                                 tasks.forEach(t => {
                                     if (t.status !== 'Finalizado') return;
@@ -15522,11 +15522,11 @@ const renderRFSection = (container) => {
                                             const username = String(user).trim().toLowerCase();
                                             const worker = findWorkerByUsername(username);
                                             
-                                            let shift = 'DÃA';
+                                            let shift = 'DÍA';
                                             if (worker) {
                                                 const wTurno = String(worker.turno || worker.Turno || '').trim().toUpperCase();
                                                 if (wTurno === 'NOCHE') shift = 'NOCHE';
-                                                else if (wTurno === 'DIA' || wTurno === 'DÃA') shift = 'DÃA';
+                                                else if (wTurno === 'DIA' || wTurno === 'DÍA') shift = 'DÍA';
                                             }
                                             
                                             const logicalDate = getTaskLogicalDate(t, shift);
@@ -15615,7 +15615,7 @@ const renderRFSection = (container) => {
                                 if (sortedGroupRows.length === 0) {
                                     window.__perfTotalPages = 0;
                                     window.__perfTotalRows = 0;
-                                    return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay datos de desempeÃ±o para mostrar en este periodo.</td></tr>`;
+                                    return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
                                 }
 
                                 if (!window.__perfSetPage) window.__perfSetPage = (p) => { const _sy=window.scrollY; window.__perfPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
@@ -15631,7 +15631,7 @@ const renderRFSection = (container) => {
                                     const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
                                     const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
                                     
-                                    // 1. DuraciÃ³n Transcurrida (TRANSCURRIDO)
+                                    // 1. Duración Transcurrida (TRANSCURRIDO)
                                     let durationStr = '---';
                                     let breakOverlapMs = 0;
                                     let activeHours = 0;
@@ -15651,7 +15651,7 @@ const renderRFSection = (container) => {
 
                                     // 2. QTY/HORA
                                     let qtyPerHourStr = '---';
-                                    if (activeHours > 0.08) { // MÃ­nimo 5 minutos para evitar anomalÃ­as
+                                    if (activeHours > 0.08) { // Mínimo 5 minutos para evitar anomalías
                                         const qtyPerHour = Math.round(row.totalQty / activeHours);
                                         qtyPerHourStr = qtyPerHour.toLocaleString();
                                     }
@@ -15694,10 +15694,10 @@ const renderRFSection = (container) => {
                     const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid ${active?'#00E5FF':'rgba(255,255,255,0.1)'}; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
                     const pages = Array.from({length: tp}, (_, i) => i);
                     return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
-                        <button onclick="window.__perfSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">â† Ant</button>
+                        <button onclick="window.__perfSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                         ${pages.map(p=>`<button onclick="window.__perfSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                        <button onclick="window.__perfSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig â†’</button>
-                        <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">PÃ¡g ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
+                        <button onclick="window.__perfSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
+                        <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
                     </div>`;
                 })()}
             </div>
@@ -15728,7 +15728,7 @@ const renderRFSection = (container) => {
                                     <th style="padding:1rem; text-align:center;">Objetivo</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
                                     <th style="padding:1rem; text-align:center;">Auditado</th>
-                                    <th style="padding:1rem; text-align:center;">AcciÃ³n</th>
+                                    <th style="padding:1rem; text-align:center;">Acción</th>
                                 </tr>
                             ` : `
                                 <tr>
@@ -15740,7 +15740,7 @@ const renderRFSection = (container) => {
                                     <th style="padding:1rem; text-align:center;">Qty Zona</th>
                                     <th style="padding:1rem; text-align:center;">Avance</th>
                                     <th style="padding:1rem; text-align:left;">ID Tareas</th>
-                                    <th style="padding:1rem; text-align:left;">Usuario CreaciÃ³n</th>
+                                    <th style="padding:1rem; text-align:left;">Usuario Creación</th>
                                     <th style="padding:1rem; text-align:center;">F. Procesado</th>
                                     <th style="padding:1rem; text-align:center;">F. Asignado</th>
                                     <th style="padding:1rem; text-align:center;">F. Finalizado</th>
@@ -15783,10 +15783,10 @@ const renderRFSection = (container) => {
                                         const totalAvance = getTaskTotalAvance(t);
                                         const unitsPerHour = (totalAvance / totalMinutes) * 60;
                                         if (unitsPerHour >= 300) {
-                                            objetivo = 'CUMPLIÃ“';
+                                            objetivo = 'CUMPLIÓ';
                                             objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
                                         } else {
-                                            objetivo = 'NO CUMPLIÃ“';
+                                            objetivo = 'NO CUMPLIÓ';
                                             objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
                                         }
                                     }
@@ -15809,15 +15809,15 @@ const renderRFSection = (container) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; font-size:1.2rem;">
-                                        ${t.audited ? 'ðŸ“âœ…' : '-'} 
+                                        ${t.audited ? '📝✅' : '-'} 
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
                                         ${(t.status !== 'Finalizado' || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
-                                            <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">âœï¸</button>
-                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">ðŸ”„</button>
-                                            <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">ðŸ—‘ï¸</button>
+                                            <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
+                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
+                                            <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                         ` : `
-                                            <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">ðŸ”’ Cerrada</span>
+                                            <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">🔒 Cerrada</span>
                                         `}
                                     </td>
                                 </tr>`;
@@ -15874,7 +15874,7 @@ const renderRFSection = (container) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:1rem;">
-                                        ${t.audited ? 'ðŸ“âœ…' : '-'} 
+                                        ${t.audited ? '📝✅' : '-'} 
                                     </td>
                                 </tr>`;
                             }).join('')}
@@ -15888,7 +15888,7 @@ const renderRFSection = (container) => {
                         <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
                     </div>
                     
-                    <!-- PaginaciÃ³n Glassmorphic -->
+                    <!-- Paginación Glassmorphic -->
                     <div style="display:flex; align-items:center; gap:10px;">
                         <button onclick="window.__setDetailPage(${window.__detailCurrentPage - 1})" 
                                 ${window.__detailCurrentPage <= 1 ? 'disabled' : ''} 
@@ -15899,11 +15899,11 @@ const renderRFSection = (container) => {
                                        font-size:0.75rem; font-weight:700; transition:all 0.2s; display:flex; align-items:center; gap:4px;" 
                                 onmouseover="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.3)'; this.style.borderColor='var(--primary)'; }" 
                                 onmouseout="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.15)'; this.style.borderColor='rgba(79, 70, 229, 0.3)'; }">
-                            â—€ Anterior
+                            ◀ Anterior
                         </button>
                         
                         <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; padding:0 8px;">
-                            PÃ¡gina <span style="color:#fff; font-weight:800;">${window.__detailCurrentPage}</span> de <span style="color:#fff; font-weight:800;">${totalPages}</span>
+                            Página <span style="color:#fff; font-weight:800;">${window.__detailCurrentPage}</span> de <span style="color:#fff; font-weight:800;">${totalPages}</span>
                         </span>
                         
                         <button onclick="window.__setDetailPage(${window.__detailCurrentPage + 1})" 
@@ -15915,7 +15915,7 @@ const renderRFSection = (container) => {
                                        font-size:0.75rem; font-weight:700; transition:all 0.2s; display:flex; align-items:center; gap:4px;" 
                                 onmouseover="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.3)'; this.style.borderColor='var(--primary)'; }" 
                                 onmouseout="if(this.disabled !== true) { this.style.background='rgba(79, 70, 229, 0.15)'; this.style.borderColor='rgba(79, 70, 229, 0.3)'; }">
-                            Siguiente â–¶
+                            Siguiente ▶
                         </button>
                     </div>
                 </div>
@@ -15944,14 +15944,14 @@ const renderRFSection = (container) => {
             searchInput.setSelectionRange(len, len);
         }
     };
-    window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "Â¿Deseas procesar el stock actual para generar tareas? Esto se acumularÃ¡ en el historial.", "warning")) processAlmacenajeTasks(); };
+    window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
 
-    // --- LÃ“GICA DE AUDITORÃA WMS ---
+    // --- LÓGICA DE AUDITORÍA WMS ---
     const handleWmsFile = async (file, modal) => {
         const selectedIds = Array.from(modal.querySelectorAll('.chk-audit-task:checked')).map(chk => chk.value);
         if (selectedIds.length === 0) {
-            if(window.showPremiumAlert) window.showPremiumAlert("ATENCIÃ“N", "Debes seleccionar al menos 1 tarea para auditar.", "warning");
+            if(window.showPremiumAlert) window.showPremiumAlert("ATENCIÓN", "Debes seleccionar al menos 1 tarea para auditar.", "warning");
             else alert("Debes seleccionar al menos 1 tarea para auditar.");
             return;
         }
@@ -15960,7 +15960,7 @@ const renderRFSection = (container) => {
         contentDiv.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem;">
                 <div class="spinner" style="width:50px; height:50px; border:4px solid rgba(6,182,212,0.1); border-left-color:#06b6d4; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:2rem;"></div>
-                <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.5rem 0;">Procesando AuditorÃ­a...</h2>
+                <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.5rem 0;">Procesando Auditoría...</h2>
                 <p style="color:#9ca3af; font-size:0.9rem; margin:0; text-align:center;">Cruzando Foto Inicial vs Foto Actual del WMS</p>
             </div>
             <style>@keyframes spin { 100% { transform:rotate(360deg); } }</style>
@@ -15977,7 +15977,7 @@ const renderRFSection = (container) => {
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue;
                         let cleanLine = lines[i];
-                        // Limpiar comas del final que aÃ±ade Excel a veces al CSV
+                        // Limpiar comas del final que añade Excel a veces al CSV
                         if (cleanLine.match(/,+$/)) {
                             cleanLine = cleanLine.replace(/,+$/, '');
                         }
@@ -16011,7 +16011,7 @@ const renderRFSection = (container) => {
 
             wmsData.forEach(row => {
                 const keys = Object.keys(row);
-                // Buscar columnas independientemente de si los acentos estÃ¡n corruptos
+                // Buscar columnas independientemente de si los acentos están corruptos
                 const ubiKey = keys.find(k => k.toLowerCase().includes('ubicaci'));
                 const artKey = keys.find(k => (k.toLowerCase().includes('art') && k.toLowerCase().includes('culo')) || k.toLowerCase() === 'sku');
                 const qtyKey = keys.find(k => k.toLowerCase().includes('cantidad actual')) || keys.find(k => k.toLowerCase().includes('cantidad'));
@@ -16064,14 +16064,14 @@ const renderRFSection = (container) => {
                         let stockInicial = i.qtyInitial !== undefined ? parseFloat(i.qtyInitial) : 'N/A';
                         let stockTotalWms = possibleDestinations.reduce((acc, loc) => acc + loc.qty, 0);
 
-                        let cuadreStr = 'âš ï¸ SIN FOTO INICIAL';
+                        let cuadreStr = '⚠️ SIN FOTO INICIAL';
                         if (stockInicial !== 'N/A') {
                             const expectedTotal = stockInicial + qtyRealMovida;
                             if (expectedTotal === stockTotalWms) {
-                                cuadreStr = 'âœ… CUADRA OK';
+                                cuadreStr = '✅ CUADRA OK';
                             } else {
                                 const diff = stockTotalWms - expectedTotal;
-                                cuadreStr = diff > 0 ? `âŒ DESCUADRE (Sobran ${diff})` : `âŒ DESCUADRE (Faltan ${Math.abs(diff)})`;
+                                cuadreStr = diff > 0 ? `❌ DESCUADRE (Sobran ${diff})` : `❌ DESCUADRE (Faltan ${Math.abs(diff)})`;
                             }
                         }
 
@@ -16084,7 +16084,7 @@ const renderRFSection = (container) => {
                             'Fecha': task.fecha,
                             'Operario 1': task.u1 || '---',
                             'Operario 2': task.u2 || '---',
-                            'ArtÃ­culo': sku,
+                            'Artículo': sku,
                             'Ubi Origen (Buffer)': ubiOrigen,
                             'Stock Inicial': stockInicial !== 'N/A' ? stockInicial : '-',
                             'Qty Esperada': qtyEsperada,
@@ -16099,7 +16099,7 @@ const renderRFSection = (container) => {
                                     ...baseRow,
                                     'Ubi Real Destino (WMS)': dest.ubi,
                                     'Qty en Destino': dest.qty,
-                                    'Estado AuditorÃ­a': statusAudit,
+                                    'Estado Auditoría': statusAudit,
                                     'Cuadre WMS': cuadreStr
                                 });
                             });
@@ -16108,7 +16108,7 @@ const renderRFSection = (container) => {
                                 ...baseRow,
                                 'Ubi Real Destino (WMS)': 'No Encontrado',
                                 'Qty en Destino': 0,
-                                'Estado AuditorÃ­a': statusAudit,
+                                'Estado Auditoría': statusAudit,
                                 'Cuadre WMS': cuadreStr
                             });
                         }
@@ -16133,8 +16133,8 @@ const renderRFSection = (container) => {
                             ${auditResults.map(row => {
                                 const cuadreStr = row['Cuadre WMS'] || '';
                                 let bgStyle = 'border-bottom:1px solid rgba(255,255,255,0.05);';
-                                if (cuadreStr.includes('âŒ DESCUADRE')) bgStyle += ' background:rgba(239,68,68,0.15);';
-                                else if (cuadreStr.includes('âš ï¸ SIN FOTO INICIAL')) bgStyle += ' background:rgba(234,179,8,0.15);';
+                                if (cuadreStr.includes('❌ DESCUADRE')) bgStyle += ' background:rgba(239,68,68,0.15);';
+                                else if (cuadreStr.includes('⚠️ SIN FOTO INICIAL')) bgStyle += ' background:rgba(234,179,8,0.15);';
                                 
                                 return `<tr style="${bgStyle}">
                                     ${Object.values(row).map(v => `<td style="padding:0.5rem; white-space:nowrap;">${v}</td>`).join('')}
@@ -16148,9 +16148,9 @@ const renderRFSection = (container) => {
             contentDiv.innerHTML = `
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; text-align:center; height:100%;">
                     <div style="display:flex; align-items:center; gap:15px; margin-bottom:1rem;">
-                        <div style="width:40px; height:40px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">âœ…</div>
+                        <div style="width:40px; height:40px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">✅</div>
                         <div style="text-align:left;">
-                            <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.2rem 0;">AuditorÃ­a Completada</h2>
+                            <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.2rem 0;">Auditoría Completada</h2>
                             <p style="color:#9ca3af; font-size:0.85rem; margin:0;">${tasksAuditedCount} tareas procesadas.</p>
                         </div>
                     </div>
@@ -16158,7 +16158,7 @@ const renderRFSection = (container) => {
                     ${tableHTML}
                     
                     <button id="btnDownloadAudit" class="btn" style="background:var(--primary); color:#fff; font-weight:800; border:none; padding:12px 24px; font-size:1rem; border-radius:8px; box-shadow:0 10px 20px rgba(79,70,229,0.3); cursor:pointer;">
-                        â¬‡ï¸ DESCARGAR EXCEL
+                        ⬇️ DESCARGAR EXCEL
                     </button>
                 </div>
 
@@ -16181,11 +16181,11 @@ const renderRFSection = (container) => {
                         const r = worksheet.addRow(Object.values(row));
                         const cuadreStr = row['Cuadre WMS'] || '';
                         
-                        if (cuadreStr.includes('âŒ DESCUADRE')) {
+                        if (cuadreStr.includes('❌ DESCUADRE')) {
                             r.eachCell(cell => {
                                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } };
                             });
-                        } else if (cuadreStr.includes('âš ï¸ SIN FOTO INICIAL')) {
+                        } else if (cuadreStr.includes('⚠️ SIN FOTO INICIAL')) {
                             r.eachCell(cell => {
                                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } };
                             });
@@ -16205,8 +16205,8 @@ const renderRFSection = (container) => {
 
         } catch (e) {
             console.error("Error processing WMS file:", e);
-            if (window.showPremiumAlert) window.showPremiumAlert("ERROR AL LEER EXCEL", "OcurriÃ³ un error leyendo el WMS. Verifica el formato.", "error");
-            else alert("OcurriÃ³ un error leyendo el WMS.");
+            if (window.showPremiumAlert) window.showPremiumAlert("ERROR AL LEER EXCEL", "Ocurrió un error leyendo el WMS. Verifica el formato.", "error");
+            else alert("Ocurrió un error leyendo el WMS.");
             modal.remove();
         }
     };
@@ -16231,7 +16231,7 @@ const renderRFSection = (container) => {
             <div id="auditModalWindow" style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:95%; max-width:1200px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; transition:max-width 0.3s;">
                 <div style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0; font-size:1.2rem; color:#fff; display:flex; align-items:center; gap:10px;">
-                        <span style="background:rgba(6,182,212,0.1); padding:8px; border-radius:10px;">ðŸŽ¯</span> AuditorÃ­a de Almacenaje vÃ­a WMS
+                        <span style="background:rgba(6,182,212,0.1); padding:8px; border-radius:10px;">🎯</span> Auditoría de Almacenaje vía WMS
                     </h2>
                     <button onclick="document.getElementById('wmsAuditModal').remove()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem;">&times;</button>
                 </div>
@@ -16268,8 +16268,8 @@ const renderRFSection = (container) => {
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1rem;">
                         <h3 style="margin:0 0 1rem 0; font-size:0.9rem; color:#9ca3af;">2. Sube la "Foto Actual" (Reporte Stock WMS):</h3>
                         <label id="wmsDropZone" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 1rem; border:2px dashed rgba(6,182,212,0.3); border-radius:12px; background:rgba(6,182,212,0.02); cursor:pointer; transition:all 0.2s;">
-                            <span style="font-size:2.5rem; margin-bottom:1rem;">ðŸ“</span>
-                            <span style="color:#fff; font-weight:600; margin-bottom:0.5rem;">Arrastra y suelta aquÃ­ el Excel del WMS</span>
+                            <span style="font-size:2.5rem; margin-bottom:1rem;">📁</span>
+                            <span style="color:#fff; font-weight:600; margin-bottom:0.5rem;">Arrastra y suelta aquí el Excel del WMS</span>
                             <span style="color:#6b7280; font-size:0.75rem;">o haz clic para buscar en tus archivos</span>
                             <input type="file" id="wmsFileInput" accept=".xlsx, .xls, .csv" style="display:none;">
                         </label>
@@ -16299,7 +16299,7 @@ const renderRFSection = (container) => {
             }
         });
     };
-    // --- FIN LÃ“GICA DE AUDITORÃA WMS ---
+    // --- FIN LÓGICA DE AUDITORÍA WMS ---
     window.resetTask = async (id) => {
         const task = almacenajeTasksCache.find(x => x.id === id);
         if (!task) return;
@@ -16313,7 +16313,7 @@ const renderRFSection = (container) => {
         }
 
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
-        if (await showPremiumConfirm("REINICIAR TAREA", `Â¿Reiniciar la tarea ${cleanId}? Se borrarÃ¡n los usuarios y horas asignadas.`, "warning")) {
+        if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             task.u1 = null; task.u2 = null; task.inicio = null; task.termino = null; task.status = 'Creada';
             await saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
@@ -16332,7 +16332,7 @@ const renderRFSection = (container) => {
         }
 
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
-        if (await showPremiumConfirm("ELIMINAR TAREA", `Â¿ESTÃS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acciÃ³n es permanente y se borrarÃ¡ de todos los terminales.`, "danger")) {
+        if (await showPremiumConfirm("ELIMINAR TAREA", `¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`, "danger")) {
             almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
@@ -16363,7 +16363,7 @@ const renderRFSection = (container) => {
             return;
         }
 
-        // Consolidar por SKU (ArtÃ­culo + Talla)
+        // Consolidar por SKU (Artículo + Talla)
         const grouped = {};
         bufferItems.forEach(bi => {
             const sku = bi.item.skuFull;
@@ -16409,13 +16409,13 @@ const renderRFSection = (container) => {
         pModal.innerHTML = `
             <div class="glass-panel" style="width:450px; max-height:85vh; display:flex; flex-direction:column; padding:1.5rem; border:1px solid var(--primary); border-radius:16px; overflow:hidden; background:rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);">
                 <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.1rem; text-align:center;">Ingresar Avance Real: <span style="color:var(--primary);">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</span></h3>
-                <p style="font-size:0.7rem; color:var(--text-muted); margin:0 0 1rem 0; text-align:center;">Modifica las cantidades avanzadas por artÃ­culo y talla.</p>
+                <p style="font-size:0.7rem; color:var(--text-muted); margin:0 0 1rem 0; text-align:center;">Modifica las cantidades avanzadas por artículo y talla.</p>
                 
                 <div style="flex:1; overflow-y:auto; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:8px;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
                         <thead style="background:#1e293b; position:sticky; top:0; z-index:5;">
                             <tr>
-                                <th style="padding:0.6rem; text-align:left; color:#fff;">ArtÃ­culo</th>
+                                <th style="padding:0.6rem; text-align:left; color:#fff;">Artículo</th>
                                 <th style="padding:0.6rem; text-align:center; color:#fff;">Talla</th>
                                 <th style="padding:0.6rem; text-align:center; color:#fff;">Qty Buffer</th>
                                 <th style="padding:0.6rem; text-align:center; color:#fff;">Avance</th>
@@ -16448,7 +16448,7 @@ const renderRFSection = (container) => {
                 const val = parseInt(input.value, 10);
                 const g = consolidatedList[idx];
                 if (isNaN(val) || val < 0) {
-                    showPremiumAlert("AVANCE INVÃLIDO", `El avance para el artÃ­culo ${g.art.sku7} no puede ser vacÃ­o o negativo.`, "warning");
+                    showPremiumAlert("AVANCE INVÁLIDO", `El avance para el artículo ${g.art.sku7} no puede ser vacío o negativo.`, "warning");
                     hasError = true;
                 } else if (val > g.qty) {
                     showPremiumAlert("EXCEDE QTY BUFFER", `El avance (${val}) no puede ser mayor que la cantidad demandada (${g.qty}).`, "warning");
@@ -16490,11 +16490,11 @@ const renderRFSection = (container) => {
     window.assignTask = (id) => {
         const t = almacenajeTasksCache.find(x => x.id === id);
         if (t && t.status === 'Finalizado') {
-            showPremiumAlert("TAREA BLOQUEADA", "Esta tarea ya estÃ¡ finalizada y bloqueada. Para realizar cualquier cambio, utiliza el botÃ³n de ediciÃ³n (âœï¸).", "warning");
+            showPremiumAlert("TAREA BLOQUEADA", "Esta tarea ya está finalizada y bloqueada. Para realizar cualquier cambio, utiliza el botón de edición (✏️).", "warning");
             return;
         }
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
-        // [ORDENAMIENTO A-Z] Ordenar operarios alfabÃ©ticamente
+        // [ORDENAMIENTO A-Z] Ordenar operarios alfabéticamente
         const workers = adminService.getWorkers()
             .filter(w => w.active)
             .sort((a, b) => (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || ''));
@@ -16620,7 +16620,7 @@ const renderRFSection = (container) => {
             };
             modal.querySelector('#optCancel').onclick = () => document.body.removeChild(modal);
         } catch (err) {
-            showPremiumAlert("ERROR CRÃTICO", "Error crÃ­tico al abrir calendario: " + err.message, "error");
+            showPremiumAlert("ERROR CRÍTICO", "Error crítico al abrir calendario: " + err.message, "error");
             console.error(err);
         }
     };
@@ -16640,7 +16640,7 @@ const renderRFSection = (container) => {
         if (isClosed && session.username === 'dames') {
             const proceed = await showPremiumConfirm(
                 "TAREA CERRADA (ACCESO SUPERUSUARIO)",
-                "âš ï¸ Esta tarea estÃ¡ CERRADA.\n\nTienes permisos especiales para forzar la ediciÃ³n de datos.\nÂ¿Deseas continuar?",
+                "⚠️ Esta tarea está CERRADA.\n\nTienes permisos especiales para forzar la edición de datos.\n¿Deseas continuar?",
                 "warning"
             );
             if (!proceed) return;
@@ -16654,7 +16654,7 @@ const renderRFSection = (container) => {
         
         const cleanTaskId = taskId.includes('_') ? taskId.split('_')[1] : taskId;
 
-        // Obtener operarios ordenados alfabÃ©ticamente
+        // Obtener operarios ordenados alfabéticamente
         const workers = adminService.getWorkers()
             .filter(w => w.active)
             .sort((a, b) => (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || ''));
@@ -16669,7 +16669,7 @@ const renderRFSection = (container) => {
 
         modal.innerHTML = `
             <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid var(--primary); border-radius:15px; box-shadow: 0 0 30px rgba(79,70,229,0.3); max-height:90vh; overflow-y:auto; pointer-events:auto !important;">
-                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">âœï¸ Editar Tarea - ${cleanTaskId}</h3>
+                <h3 style="color:#fff; margin-bottom:1.5rem; text-align:center;">✏️ Editar Tarea - ${cleanTaskId}</h3>
                 <div style="display:flex; flex-direction:column; gap:15px;">
                     <div>
                         <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">USUARIO 1 (Obligatorio):</label>
@@ -16690,7 +16690,7 @@ const renderRFSection = (container) => {
                         <input type="time" id="edit_start" value="${toTimeInput(task.inicio)}" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; font-size:1.2rem; font-weight:800; outline:none; color-scheme:dark;">
                     </div>
                     <div>
-                        <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">HORA TÃ‰RMINO:</label>
+                        <label style="color:var(--text-muted); font-size:0.75rem; display:block; margin-bottom:5px;">HORA TÉRMINO:</label>
                         <input type="time" id="edit_end" value="${toTimeInput(task.termino)}" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; font-size:1.2rem; font-weight:800; outline:none; color-scheme:dark;">
                     </div>
                     <div style="margin-top:10px; display:flex; gap:10px;">
@@ -16710,7 +16710,7 @@ const renderRFSection = (container) => {
             
             if (!u1) { showPremiumAlert("EDITAR TAREA", "El Usuario 1 es obligatorio.", "error"); return; }
             if (newEnd && !newStart) {
-                showPremiumAlert("EDITAR TAREA", "Si ingresas la Hora de TÃ©rmino, tambiÃ©n debes ingresar la Hora de Inicio.", "warning");
+                showPremiumAlert("EDITAR TAREA", "Si ingresas la Hora de Término, también debes ingresar la Hora de Inicio.", "warning");
                 return;
             }
 
@@ -16757,7 +16757,7 @@ const renderRFSection = (container) => {
         
         if (await showPremiumConfirm(
             "BORRAR TAREAS CREADAS", 
-            `Â¿Borrar TODAS las tareas con status "CREADA" del rango seleccionado (${startDisplay} al ${endDisplay})?\n\n(No se borrarÃ¡n tareas asignadas o finalizadas, ni tareas fuera de estas fechas)`, 
+            `¿Borrar TODAS las tareas con status "CREADA" del rango seleccionado (${startDisplay} al ${endDisplay})?\n\n(No se borrarán tareas asignadas o finalizadas, ni tareas fuera de estas fechas)`, 
             "danger"
         )) {
             almacenajeTasksCache = almacenajeTasksCache.filter(t => {
@@ -16776,33 +16776,33 @@ const renderRFSection = (container) => {
         renderAlmacenajeTareas(container);
     };
 
-    // --- LÃ³gica del BotÃ³n de Procesar Tareas (NUEVO VÃNCULO) ---
+    // --- Lógica del Botón de Procesar Tareas (NUEVO VÍNCULO) ---
     const btnOpen = document.getElementById('btn_open_shift_new');
     if (btnOpen) {
         btnOpen.onclick = () => {
             if (window.openShiftModal) window.openShiftModal();
-            else alert("âŒ Error: FunciÃ³n no cargada.");
+            else alert("❌ Error: Función no cargada.");
         };
     }
 
-    // --- LÃ³gica del BotÃ³n de Refresco Local ---
+    // --- Lógica del Botón de Refresco Local ---
     const btnRef = document.getElementById('btn_refresh_almacenaje');
     if (btnRef) {
         btnRef.onclick = async () => {
             const oldInner = btnRef.innerHTML;
-            btnRef.innerHTML = 'âŒ›';
+            btnRef.innerHTML = '⌛';
             btnRef.style.pointerEvents = 'none';
             btnRef.style.opacity = '0.5';
             
             try {
-                console.log("ðŸ”„ [PULSE] Sincronizando con la nube (FusiÃ³n HÃ­brida)...");
+                console.log("🔄 [PULSE] Sincronizando con la nube (Fusión Híbrida)...");
                 
                 // 1. Sincronizar con el servidor (PULL GLOBAL)
                 await adminService.initializeAdminData(true);
                 const serverTasks = adminService.adminStore.almacenaje_tasks;
                 
                 if (Array.isArray(serverTasks)) {
-                    // [FUSIÃ“N HÃBRIDA] No permitir que la nube borre detalles locales
+                    // [FUSIÓN HÍBRIDA] No permitir que la nube borre detalles locales
                     almacenajeTasksCache = serverTasks.map(newTask => {
                         const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
                         if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
@@ -16811,24 +16811,24 @@ const renderRFSection = (container) => {
                         return newTask;
                     });
                     safeSaveAlmacenajeTasksCache();
-                    console.log(`âœ… [PULSE] ${serverTasks.length} tareas fusionadas.`);
+                    console.log(`✅ [PULSE] ${serverTasks.length} tareas fusionadas.`);
                 }
                 
                 renderAlmacenajeTareas(container);
                 
-                // Feedback de Ã©xito
-                btnRef.innerHTML = 'âœ…';
+                // Feedback de éxito
+                btnRef.innerHTML = '✅';
                 setTimeout(() => { 
-                    btnRef.innerHTML = 'ðŸ”„';
+                    btnRef.innerHTML = '🔄';
                     btnRef.style.pointerEvents = 'auto';
                     btnRef.style.opacity = '1';
                 }, 1500);
 
             } catch (e) {
-                console.error("âŒ Error en refresco:", e);
-                btnRef.innerHTML = 'âŒ';
+                console.error("❌ Error en refresco:", e);
+                btnRef.innerHTML = '❌';
                 setTimeout(() => { 
-                    btnRef.innerHTML = 'ðŸ”„';
+                    btnRef.innerHTML = '🔄';
                     btnRef.style.pointerEvents = 'auto';
                     btnRef.style.opacity = '1';
                 }, 1500);
@@ -16850,6 +16850,4 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
-
-
 
