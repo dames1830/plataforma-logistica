@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.321';
+const VERSION = '26.5.322';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13282,9 +13282,7 @@ const renderRFSection = (container) => {
         document.body.appendChild(progressModal);
 
         const logicalDate = manualDate || getLogicalDate();
-        almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache.filter(t => 
-            t && (t.fecha !== logicalDate || t.status === 'Asignado' || t.status === 'Finalizado')
-        ) : [];
+        almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : []; // [REVERTIDO: YA NO SE BORRAN LAS TAREAS CREADAS]
 
         const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
         const filtered = stock.filter(row => {
@@ -16852,4 +16850,5 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
 
