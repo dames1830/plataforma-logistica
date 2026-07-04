@@ -743,15 +743,9 @@ export const updateTablaTallas = () => {
                 }
             });
         }
-        // [ESTRICTO] JOIN con la tabla virtual de tallas (Maestro)
-        if (area === 'tallas' && dataStore[area]) {
-            dataStore[area].forEach(row => {
-                const raw = Array.isArray(row) ? row : Object.values(row);
-                const sku = String(raw[0] || '').trim();   // Columna A
-                const tallaReal = String(raw[1] || '').trim(); // Columna B
-                if (sku && tallaReal) mapa[sku] = tallaReal;
-            });
-        }
+        // [ELIMINADO] El archivo 'tallas' (Replenishment) se usaba erróneamente como diccionario de tallas, 
+        // lo que sobreescribía la talla real con la Cantidad (QTY) de la columna B. 
+        // Ya no se procesará aquí para proteger la integridad de las tallas extraídas de las descripciones.
     });
 
     dataStore.tabla_tallas = mapa;
