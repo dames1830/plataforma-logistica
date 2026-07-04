@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.310';
+const VERSION = '26.5.313';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13331,7 +13331,7 @@ const renderRFSection = (container) => {
 
             if (!groups[sku7]) groups[sku7] = { sku7, marca: info.marca, gender: info.gender, genderRims: info.genderRims, coleccion: info.coleccion, items: [], bufferQty: 0, zonaQty: 0 };
             // [FIX v24.9.7] Usar skuFull para que la pantalla lo reconozca
-            const item = { ubi: ubi, qty: qty, area: area, skuFull: skuFull, talla: tallaExtraida }; 
+            const item = { ubi: ubi, qty: qty, area: area, skuFull: skuFull, talla: tallaExtraida, qtyInitial: qty }; 
             groups[sku7].items.push(item);
             const isUbiBuffer = ubi && String(ubi).trim().toUpperCase().startsWith('CDBUFFER');
             if (area.toUpperCase().includes('CDBUFFER') || isUbiBuffer) groups[sku7].bufferQty += qty;
@@ -16013,8 +16013,12 @@ const renderRFSection = (container) => {
                 const key = `${ubi}|${art}`;
                 wmsStockMap[key] = (wmsStockMap[key] || 0) + qty;
                 
+            });
+
+            Object.keys(wmsStockMap).forEach(key => {
+                const [ubi, art] = key.split('|');
                 if (!wmsArticleLocations[art]) wmsArticleLocations[art] = [];
-                wmsArticleLocations[art].push({ ubi, qty });
+                wmsArticleLocations[art].push({ ubi, qty: wmsStockMap[key] });
             });
 
             const auditResults = [];
@@ -16044,28 +16048,57 @@ const renderRFSection = (container) => {
 
                         const possibleDestinations = (wmsArticleLocations[sku] || []).filter(loc => loc.ubi !== ubiOrigen && loc.qty > 0);
                         
-                        let destString = 'No Encontrado';
-                        if (possibleDestinations.length > 0) {
-                            possibleDestinations.sort((a,b) => b.qty - a.qty);
-                            destString = possibleDestinations.map(d => `${d.ubi} (${d.qty})`).join(' | ');
+                        let stockInicial = i.qtyInitial !== undefined ? parseFloat(i.qtyInitial) : 'N/A';
+                        let stockTotalWms = possibleDestinations.reduce((acc, loc) => acc + loc.qty, 0);
+
+                        let cuadreStr = '⚠️ SIN FOTO INICIAL';
+                        if (stockInicial !== 'N/A') {
+                            const expectedTotal = stockInicial + qtyRealMovida;
+                            if (expectedTotal === stockTotalWms) {
+                                cuadreStr = '✅ CUADRA OK';
+                            } else {
+                                const diff = stockTotalWms - expectedTotal;
+                                cuadreStr = diff > 0 ? `❌ DESCUADRE (Sobran ${diff})` : `❌ DESCUADRE (Faltan ${Math.abs(diff)})`;
+                            }
                         }
 
                         let statusAudit = 'CORRECTO';
                         if (qtyRealMovida < qtyEsperada) statusAudit = 'FALTANTE';
-                        if (destString === 'No Encontrado') statusAudit = 'NO ALMACENADO';
+                        if (possibleDestinations.length === 0) statusAudit = 'NO ALMACENADO';
 
-                        auditResults.push({
+                        const baseRow = {
                             'Id Tarea': task.id.includes('_') ? task.id.split('_')[1] : task.id,
                             'Fecha': task.fecha,
                             'Operario 1': task.u1 || '---',
                             'Operario 2': task.u2 || '---',
                             'Artículo': sku,
                             'Ubi Origen (Buffer)': ubiOrigen,
+                            'Stock Inicial': stockInicial !== 'N/A' ? stockInicial : '-',
                             'Qty Esperada': qtyEsperada,
                             'Qty Real (WMS)': qtyRealMovida,
-                            'Ubi Real Destino (WMS)': destString,
-                            'Estado Auditoría': statusAudit
-                        });
+                            'Stock Actual (WMS)': stockTotalWms
+                        };
+
+                        if (possibleDestinations.length > 0) {
+                            possibleDestinations.sort((a,b) => b.qty - a.qty);
+                            possibleDestinations.forEach(dest => {
+                                auditResults.push({
+                                    ...baseRow,
+                                    'Ubi Real Destino (WMS)': dest.ubi,
+                                    'Qty en Destino': dest.qty,
+                                    'Estado Auditoría': statusAudit,
+                                    'Cuadre WMS': cuadreStr
+                                });
+                            });
+                        } else {
+                            auditResults.push({
+                                ...baseRow,
+                                'Ubi Real Destino (WMS)': 'No Encontrado',
+                                'Qty en Destino': 0,
+                                'Estado Auditoría': statusAudit,
+                                'Cuadre WMS': cuadreStr
+                            });
+                        }
                     });
                 });
             });
