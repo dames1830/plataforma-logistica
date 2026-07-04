@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.311';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.310';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.311';
+const VERSION = '26.5.310';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -16042,21 +16042,7 @@ const renderRFSection = (container) => {
                             qtyRealMovida = Math.max(0, qtyEsperada - wmsCurrentBufferQty);
                         }
 
-                        // Agrupar y filtrar posibles destinos reales (ignorando lógicos como DIS-OPE, MERMA)
-                        const groupedDestinations = {};
-                        (wmsArticleLocations[sku] || []).forEach(loc => {
-                            if (loc.ubi !== ubiOrigen && loc.qty > 0) {
-                                // Filtro heurístico anti-basura (puedes añadir más si necesitas)
-                                const invalidKeywords = ['DIS-OPE', 'MERMA', 'CALIDAD', 'DIFERENCIA'];
-                                if (!invalidKeywords.some(k => loc.ubi.includes(k))) {
-                                    groupedDestinations[loc.ubi] = (groupedDestinations[loc.ubi] || 0) + loc.qty;
-                                }
-                            }
-                        });
-
-                        const possibleDestinations = Object.keys(groupedDestinations).map(ubi => ({
-                            ubi, qty: groupedDestinations[ubi]
-                        }));
+                        const possibleDestinations = (wmsArticleLocations[sku] || []).filter(loc => loc.ubi !== ubiOrigen && loc.qty > 0);
                         
                         let destString = 'No Encontrado';
                         if (possibleDestinations.length > 0) {
@@ -16066,10 +16052,7 @@ const renderRFSection = (container) => {
 
                         let statusAudit = 'CORRECTO';
                         if (qtyRealMovida < qtyEsperada) statusAudit = 'FALTANTE';
-                        if (destString === 'No Encontrado' && qtyRealMovida > 0) statusAudit = 'NO ALMACENADO';
-
-                        // Stock Total de este SKU en todo el WMS
-                        const stockTotalWms = (wmsArticleLocations[sku] || []).reduce((sum, d) => sum + d.qty, 0);
+                        if (destString === 'No Encontrado') statusAudit = 'NO ALMACENADO';
 
                         auditResults.push({
                             'Id Tarea': task.id.includes('_') ? task.id.split('_')[1] : task.id,
@@ -16078,10 +16061,8 @@ const renderRFSection = (container) => {
                             'Operario 2': task.u2 || '---',
                             'Artículo': sku,
                             'Ubi Origen (Buffer)': ubiOrigen,
-                            'Stock Inicial (Buffer)': typeof i.qtyBufferInicial !== 'undefined' ? i.qtyBufferInicial : 'N/A',
                             'Qty Esperada': qtyEsperada,
                             'Qty Real (WMS)': qtyRealMovida,
-                            'Stock Total (WMS)': stockTotalWms,
                             'Ubi Real Destino (WMS)': destString,
                             'Estado Auditoría': statusAudit
                         });
