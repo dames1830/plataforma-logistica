@@ -16112,17 +16112,46 @@ const renderRFSection = (container) => {
                 window.renderAlmacenajeTareas(window.__almacenajeContainer);
             }
 
-            contentDiv.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; text-align:center;">
-                    <div style="width:70px; height:70px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; margin-bottom:1.5rem;">✅</div>
-                    <h2 style="color:#fff; font-size:1.5rem; margin:0 0 0.5rem 0;">¡Auditoría Completada Exitosamente!</h2>
-                    <p style="color:#9ca3af; font-size:1rem; margin:0 0 2rem 0;">${tasksAuditedCount} tareas procesadas y conciliadas con el WMS.</p>
-                    
-                    <button id="btnDownloadAudit" class="btn" style="background:var(--primary); color:#fff; font-weight:800; border:none; padding:12px 24px; font-size:1rem; border-radius:8px; box-shadow:0 10px 20px rgba(79,70,229,0.3); cursor:pointer;">
-                        📥 DESCARGAR EXCEL DE AUDITORÍA
-                    </button>
+            let tableHTML = `
+                <div style="width:100%; flex:1; overflow:auto; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:rgba(0,0,0,0.2); max-height:45vh;">
+                    <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.75rem; color:#fff;">
+                        <thead style="background:rgba(255,255,255,0.05); position:sticky; top:0; z-index:10;">
+                            <tr>
+                                ${Object.keys(auditResults[0] || {}).map(k => `<th style="padding:0.6rem; border-bottom:1px solid rgba(255,255,255,0.1); font-weight:800; color:#94a3b8; white-space:nowrap;">${k}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${auditResults.map(row => {
+                                const cuadreStr = row['Cuadre WMS'] || '';
+                                let bgStyle = 'border-bottom:1px solid rgba(255,255,255,0.05);';
+                                if (cuadreStr.includes('❌ DESCUADRE')) bgStyle += ' background:rgba(239,68,68,0.15);';
+                                else if (cuadreStr.includes('⚠️ SIN FOTO INICIAL')) bgStyle += ' background:rgba(234,179,8,0.15);';
+                                
+                                return `<tr style="${bgStyle}">
+                                    ${Object.values(row).map(v => `<td style="padding:0.5rem; white-space:nowrap;">${v}</td>`).join('')}
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
+
+            contentDiv.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; text-align:center; height:100%;">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:1rem;">
+                        <div style="width:40px; height:40px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">✅</div>
+                        <div style="text-align:left;">
+                            <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.2rem 0;">Auditoría Completada</h2>
+                            <p style="color:#9ca3af; font-size:0.85rem; margin:0;">${tasksAuditedCount} tareas procesadas.</p>
+                        </div>
+                    </div>
+                    
+                    ${tableHTML}
+                    
+                    <button id="btnDownloadAudit" class="btn" style="background:var(--primary); color:#fff; font-weight:800; border:none; padding:12px 24px; font-size:1rem; border-radius:8px; box-shadow:0 10px 20px rgba(79,70,229,0.3); cursor:pointer;">
+                        ⬇️ DESCARGAR EXCEL
+                    </button>
+                </div>
 
             contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', async () => {
                 const workbook = new ExcelJS.Workbook();
@@ -16189,7 +16218,7 @@ const renderRFSection = (container) => {
         modal.id = 'wmsAuditModal';
         modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.3s;";
         modal.innerHTML = `
-            <div style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:90%; max-width:800px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
+            <div id="auditModalWindow" style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:95%; max-width:1200px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; transition:max-width 0.3s;">
                 <div style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0; font-size:1.2rem; color:#fff; display:flex; align-items:center; gap:10px;">
                         <span style="background:rgba(6,182,212,0.1); padding:8px; border-radius:10px;">🎯</span> Auditoría de Almacenaje vía WMS

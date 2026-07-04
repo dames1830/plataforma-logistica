@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
   constructor(rootId) {
     this.root = document.getElementById(rootId);
-    this.APP_VERSION = 'v26.5.310';
+    this.APP_VERSION = 'v26.5.317';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
@@ -398,7 +398,7 @@ class App {
                     <div class="premium-progress-fill"></div>
                 </div>
                 <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.6; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: #94a3b8; animation: pulseLoadingText 1.5s infinite alternate;">
-                    Iniciando entorno v${this.APP_VERSION}...
+                    INICIANDO ENTORNO ${this.APP_VERSION}...
                 </p>
             </div>
             <style>
