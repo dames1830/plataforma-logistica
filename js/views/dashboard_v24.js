@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.318';
+const VERSION = '26.5.319';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -16153,7 +16153,7 @@ const renderRFSection = (container) => {
                     </button>
                 </div>
 
-            ;
+            `;
             contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', async () => {
                 const workbook = new ExcelJS.Workbook();
                 const worksheet = workbook.addWorksheet('Auditoria');
