@@ -91,7 +91,7 @@ export async function pullGlobal(requestedAreas = null, force = false) {
                                 const [sku7, marca, gender, coleccion, bQty, zQty, cItems] = artArr;
                                 return {
                                     sku7, marca, gender, coleccion, bufferQty: bQty, zonaQty: zQty,
-                                    items: cItems.map(i => { const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] }; if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; } return itemObj; })
+                                    items: cItems.map(i => { const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] }; if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; } if (i[5] !== undefined && i[5] !== null) { itemObj.qtyInitial = i[5]; } return itemObj; })
                                 };
                             });
                             return { ...t, items: restoredItems, _comp: false };
@@ -142,7 +142,7 @@ export async function pushChange(area, data, date = null) {
         if (area === 'almacenaje_tasks' && Array.isArray(data)) {
             payload = data.map(t => {
                 const compactItems = (t.items || []).map(art => {
-                    const cArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA', i.avance !== undefined ? i.avance : null]);
+                    const cArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA', i.avance !== undefined ? i.avance : null, i.qtyInitial !== undefined ? i.qtyInitial : null]);
                     return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, cArtItems];
                 });
                 return { ...t, items: compactItems, _comp: true };
