@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.306';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.307';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.306';
+const VERSION = '26.5.307';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -14641,16 +14641,21 @@ const renderRFSection = (container) => {
         window.__detailCurrentPage = 1;
         window.__detailLastDate = rangeKey;
     }
-    const totalPages = Math.ceil(detailedItems.length / 25) || 1;
+    
+    const resumenItems = isDetail ? [] : tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+    const targetItems = isDetail ? detailedItems : resumenItems;
+    
+    const totalPages = Math.ceil(targetItems.length / 25) || 1;
     if (window.__detailCurrentPage > totalPages) window.__detailCurrentPage = totalPages;
     if (window.__detailCurrentPage < 1) window.__detailCurrentPage = 1;
 
     const startIndex = (window.__detailCurrentPage - 1) * 25;
-    const pageItems = detailedItems.slice(startIndex, startIndex + 25);
+    const pageItems = isDetail ? targetItems.slice(startIndex, startIndex + 25) : [];
+    const pageResumenItems = !isDetail ? targetItems.slice(startIndex, startIndex + 25) : [];
 
     // Helper global para cambiar página
     window.__setDetailPage = (p) => {
-        const maxPage = Math.ceil(detailedItems.length / 25) || 1;
+        const maxPage = Math.ceil(targetItems.length / 25) || 1;
         if (p < 1) p = 1;
         if (p > maxPage) p = maxPage;
         window.__detailCurrentPage = p;
@@ -15742,8 +15747,8 @@ const renderRFSection = (container) => {
                             `}
                         </thead>
                         <tbody>
-                            ${(isDetail ? detailedItems.length === 0 : tasks.length === 0) ? `<tr><td colspan="${isDetail ? 13 : 12}" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en este periodo.</td></tr>` : ''}
-                            ${!isDetail ? tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).map(t => {
+                            ${targetItems.length === 0 ? `<tr><td colspan="${isDetail ? 13 : 12}" style="padding:3rem; text-align:center; color:var(--text-muted);">No hay registros en este periodo.</td></tr>` : ''}
+                            ${!isDetail ? pageResumenItems.map(t => {
                                 let productividad = '---';
                                 let objetivo = '---';
                                 let objStyle = 'color:var(--text-muted);';
@@ -15866,7 +15871,7 @@ const renderRFSection = (container) => {
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem; align-items:center;">
                         <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
-                        <span style="color:var(--text-muted);">Registros Totales: <b style="color:#fff;">${detailedItems.length}</b></span>
+                        <span style="color:var(--text-muted);">${isDetail ? 'Registros Detalle:' : 'Tareas en Rango:'} <b style="color:#fff;">${targetItems.length}</b></span>
                         <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
                     </div>
                     
