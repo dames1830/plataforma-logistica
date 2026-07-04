@@ -16153,6 +16153,7 @@ const renderRFSection = (container) => {
                     </button>
                 </div>
 
+            ;
             contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', async () => {
                 const workbook = new ExcelJS.Workbook();
                 const worksheet = workbook.addWorksheet('Auditoria');
