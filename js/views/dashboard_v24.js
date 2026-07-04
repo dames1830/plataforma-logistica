@@ -15807,9 +15807,13 @@ const renderRFSection = (container) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
-                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
-                                        <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
+                                        ${(!['Finalizado', 'Auditado'].includes(t.status) || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
+                                            <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
+                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
+                                            <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
+                                        ` : `
+                                            <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">🔒 Cerrada</span>
+                                        `}
                                     </td>
                                 </tr>`;
                             }).join('') : pageItems.map(di => {
@@ -16231,25 +16235,36 @@ const renderRFSection = (container) => {
     };
     // --- FIN LÓGICA DE AUDITORÍA WMS ---
     window.resetTask = async (id) => {
-        if (user.username !== 'dames') {
-            showPremiumAlert("ACCESO DENEGADO", "Solo el usuario 'dames' tiene permisos para reiniciar tareas.", "error");
+        const task = almacenajeTasksCache.find(x => x.id === id);
+        if (!task) return;
+        
+        const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+        const isClosed = ['Finalizado', 'Auditado'].includes(task.status);
+        
+        if (isClosed && session.username !== 'dames') {
+            showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para reiniciar tareas Finalizadas o Auditadas.", "error");
             return;
         }
+
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
-            const t = almacenajeTasksCache.find(x => x.id === id);
-            if (t) {
-                t.u1 = null; t.u2 = null; t.inicio = null; t.termino = null; t.status = 'Creada';
-                await saveAlmacenajeTasks();
-                renderAlmacenajeTareas(container);
-            }
+            task.u1 = null; task.u2 = null; task.inicio = null; task.termino = null; task.status = 'Creada';
+            await saveAlmacenajeTasks();
+            renderAlmacenajeTareas(container);
         }
     };
     window.deleteTask = async (id) => {
-        if (user.username !== 'dames') {
-            showPremiumAlert("ACCESO DENEGADO", "Solo el usuario 'dames' tiene permisos para eliminar tareas.", "error");
+        const task = almacenajeTasksCache.find(x => x.id === id);
+        if (!task) return;
+        
+        const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+        const isClosed = ['Finalizado', 'Auditado'].includes(task.status);
+        
+        if (isClosed && session.username !== 'dames') {
+            showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para eliminar tareas Finalizadas o Auditadas.", "error");
             return;
         }
+
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("ELIMINAR TAREA", `¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`, "danger")) {
             almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
@@ -16548,10 +16563,18 @@ const renderRFSection = (container) => {
         const task = almacenajeTasksCache.find(t => t.id === taskId);
         if (!task) return;
 
-        if (task.status === 'Finalizado') {
+        const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+        const isClosed = ['Finalizado', 'Auditado'].includes(task.status);
+        
+        if (isClosed && session.username !== 'dames') {
+            showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para editar tareas Finalizadas o Auditadas.", "error");
+            return;
+        }
+
+        if (isClosed && session.username === 'dames') {
             const proceed = await showPremiumConfirm(
-                "TAREA FINALIZADA",
-                "⚠️ Estás intentando editar una tarea que ya está FINALIZADA.\n\nRecuerda que una tarea finalizada NO se puede REINICIAR ni BORRAR, solo se permite editar sus datos.\n\n¿Deseas continuar con la edición?",
+                "TAREA CERRADA (ACCESO SUPERUSUARIO)",
+                "⚠️ Esta tarea está CERRADA.\n\nTienes permisos especiales para forzar la edición de datos.\n¿Deseas continuar?",
                 "warning"
             );
             if (!proceed) return;
