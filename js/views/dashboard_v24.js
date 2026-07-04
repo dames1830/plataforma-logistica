@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.307';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.308';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.307';
+const VERSION = '26.5.308';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -14674,6 +14674,7 @@ const renderRFSection = (container) => {
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
                     ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 AUDITAR WMS</button>` : ''}
                 </div>
 
                 ${isDetail ? `
@@ -15933,6 +15934,229 @@ const renderRFSection = (container) => {
     };
     window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
     window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
+
+    // --- LÓGICA DE AUDITORÍA WMS ---
+    const handleWmsFile = async (file, modal) => {
+        const selectedIds = Array.from(modal.querySelectorAll('.chk-audit-task:checked')).map(chk => chk.value);
+        if (selectedIds.length === 0) {
+            if(window.showPremiumAlert) window.showPremiumAlert("ATENCIÓN", "Debes seleccionar al menos 1 tarea para auditar.", "warning");
+            else alert("Debes seleccionar al menos 1 tarea para auditar.");
+            return;
+        }
+
+        const contentDiv = modal.querySelector('#auditModalContent');
+        contentDiv.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem;">
+                <div class="spinner" style="width:50px; height:50px; border:4px solid rgba(6,182,212,0.1); border-left-color:#06b6d4; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:2rem;"></div>
+                <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.5rem 0;">Procesando Auditoría...</h2>
+                <p style="color:#9ca3af; font-size:0.9rem; margin:0; text-align:center;">Cruzando Foto Inicial vs Foto Actual del WMS</p>
+            </div>
+            <style>@keyframes spin { 100% { transform:rotate(360deg); } }</style>
+        `;
+
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const wmsData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+            const wmsStockMap = {}; 
+            const wmsArticleLocations = {}; 
+
+            wmsData.forEach(row => {
+                const ubi = String(row['Ubicación'] || row['UBICACION'] || '').trim().toUpperCase();
+                const art = String(row['Artículo'] || row['ARTICULO'] || row['Articulo'] || row['SKU'] || '').trim();
+                const qty = parseFloat(row['Cantidad Actual'] || row['Cantidad'] || row['CANTIDAD'] || row['Stock'] || 0);
+
+                if (!ubi || !art) return;
+                
+                const key = `${ubi}|${art}`;
+                wmsStockMap[key] = (wmsStockMap[key] || 0) + qty;
+                
+                if (!wmsArticleLocations[art]) wmsArticleLocations[art] = [];
+                wmsArticleLocations[art].push({ ubi, qty });
+            });
+
+            const auditResults = [];
+            let tasksAuditedCount = 0;
+
+            selectedIds.forEach(id => {
+                const task = almacenajeTasksCache.find(t => t.id === id);
+                if (!task) return;
+
+                task.status = 'Auditado';
+                tasksAuditedCount++;
+
+                (task.items || []).forEach(artGrp => {
+                    (artGrp.items || []).forEach(i => {
+                        const ubiOrigen = String(i.ubi || '').trim().toUpperCase();
+                        if (!ubiOrigen.startsWith('CDBUFFER')) return; 
+                        
+                        const sku = String(i.skuFull || '').trim();
+                        const qtyEsperada = parseFloat(i.qty || 0);
+                        
+                        const wmsCurrentBufferQty = wmsStockMap[`${ubiOrigen}|${sku}`] || 0;
+                        
+                        let qtyRealMovida = qtyEsperada;
+                        if (wmsCurrentBufferQty > 0) {
+                            qtyRealMovida = Math.max(0, qtyEsperada - wmsCurrentBufferQty);
+                        }
+
+                        const possibleDestinations = (wmsArticleLocations[sku] || []).filter(loc => loc.ubi !== ubiOrigen && loc.qty > 0);
+                        
+                        let destString = 'No Encontrado';
+                        if (possibleDestinations.length > 0) {
+                            possibleDestinations.sort((a,b) => b.qty - a.qty);
+                            destString = possibleDestinations.map(d => `${d.ubi} (${d.qty})`).join(' | ');
+                        }
+
+                        let statusAudit = 'CORRECTO';
+                        if (qtyRealMovida < qtyEsperada) statusAudit = 'FALTANTE';
+                        if (destString === 'No Encontrado') statusAudit = 'NO ALMACENADO';
+
+                        auditResults.push({
+                            'Id Tarea': task.id.includes('_') ? task.id.split('_')[1] : task.id,
+                            'Fecha': task.fecha,
+                            'Operario 1': task.u1 || '---',
+                            'Operario 2': task.u2 || '---',
+                            'Artículo': sku,
+                            'Ubi Origen (Buffer)': ubiOrigen,
+                            'Qty Esperada': qtyEsperada,
+                            'Qty Real (WMS)': qtyRealMovida,
+                            'Ubi Real Destino (WMS)': destString,
+                            'Estado Auditoría': statusAudit
+                        });
+                    });
+                });
+            });
+
+            saveAlmacenajeTasks();
+            if (window.renderAlmacenajeTareas && window.__almacenajeContainer) {
+                window.renderAlmacenajeTareas(window.__almacenajeContainer);
+            }
+
+            contentDiv.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; text-align:center;">
+                    <div style="width:70px; height:70px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; margin-bottom:1.5rem;">✅</div>
+                    <h2 style="color:#fff; font-size:1.5rem; margin:0 0 0.5rem 0;">¡Auditoría Completada Exitosamente!</h2>
+                    <p style="color:#9ca3af; font-size:1rem; margin:0 0 2rem 0;">${tasksAuditedCount} tareas procesadas y conciliadas con el WMS.</p>
+                    
+                    <button id="btnDownloadAudit" class="btn" style="background:var(--primary); color:#fff; font-weight:800; border:none; padding:12px 24px; font-size:1rem; border-radius:8px; box-shadow:0 10px 20px rgba(79,70,229,0.3); cursor:pointer;">
+                        📥 DESCARGAR EXCEL DE AUDITORÍA
+                    </button>
+                </div>
+            `;
+
+            contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', () => {
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(auditResults);
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for(let C = range.s.c; C <= range.e.c; ++C) {
+                    const address = XLSX.utils.encode_col(C) + "1";
+                    if(!ws[address]) continue;
+                    ws[address].s = { font: { bold:true, color:{rgb:"FFFFFF"} }, fill: { fgColor:{rgb:"1E293B"} } };
+                }
+                XLSX.utils.book_append_sheet(wb, ws, "Auditoría WMS");
+                XLSX.writeFile(wb, `Auditoria_WMS_${new Date().getTime()}.xlsx`);
+            });
+
+        } catch (e) {
+            console.error("Error processing WMS file:", e);
+            if (window.showPremiumAlert) window.showPremiumAlert("ERROR AL LEER EXCEL", "Ocurrió un error leyendo el WMS. Verifica el formato.", "error");
+            else alert("Ocurrió un error leyendo el WMS.");
+            modal.remove();
+        }
+    };
+
+    window.openAuditModal = () => {
+        const targetTasks = almacenajeTasksCache.filter(t => 
+            t.fecha >= window.__almacenajeStartDate && 
+            t.fecha <= window.__almacenajeEndDate &&
+            t.status === 'Finalizado'
+        );
+
+        if (targetTasks.length === 0) {
+            if (window.showPremiumAlert) window.showPremiumAlert("SIN TAREAS", "No hay tareas FINALIZADAS en este rango de fechas para auditar.", "info");
+            else alert("No hay tareas FINALIZADAS en este rango de fechas para auditar.");
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.3s;";
+        modal.innerHTML = `
+            <div style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:90%; max-width:800px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
+                <div style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+                    <h2 style="margin:0; font-size:1.2rem; color:#fff; display:flex; align-items:center; gap:10px;">
+                        <span style="background:rgba(6,182,212,0.1); padding:8px; border-radius:10px;">🎯</span> Auditoría de Almacenaje vía WMS
+                    </h2>
+                    <button onclick="this.closest('[style*=\\'position:fixed\\']').remove()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem;">&times;</button>
+                </div>
+                <div id="auditModalContent" style="padding:1.5rem; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1.5rem;">
+                    
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1rem;">
+                        <h3 style="margin:0 0 1rem 0; font-size:0.9rem; color:#9ca3af;">1. Selecciona las tareas a auditar:</h3>
+                        <div style="max-height:200px; overflow-y:auto; border:1px solid rgba(255,255,255,0.05); border-radius:8px; background:#0f172a;">
+                            <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
+                                <thead style="background:#1e293b; position:sticky; top:0;">
+                                    <tr>
+                                        <th style="padding:0.5rem; text-align:center;"><input type="checkbox" id="chkAllAudit" checked onchange="document.querySelectorAll('.chk-audit-task').forEach(c => c.checked = this.checked)"></th>
+                                        <th style="padding:0.5rem; text-align:left;">ID Tarea</th>
+                                        <th style="padding:0.5rem; text-align:left;">Fecha</th>
+                                        <th style="padding:0.5rem; text-align:left;">Operario</th>
+                                        <th style="padding:0.5rem; text-align:center;">Qty Esperada</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${targetTasks.map(t => `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                                            <td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="chk-audit-task" value="${t.id}" checked></td>
+                                            <td style="padding:0.5rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
+                                            <td style="padding:0.5rem;">${t.fecha}</td>
+                                            <td style="padding:0.5rem;">${t.u1 || '---'}</td>
+                                            <td style="padding:0.5rem; text-align:center; color:#fbbf24; font-weight:700;">${t.qty}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1rem;">
+                        <h3 style="margin:0 0 1rem 0; font-size:0.9rem; color:#9ca3af;">2. Sube la "Foto Actual" (Reporte Stock WMS):</h3>
+                        <label id="wmsDropZone" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 1rem; border:2px dashed rgba(6,182,212,0.3); border-radius:12px; background:rgba(6,182,212,0.02); cursor:pointer; transition:all 0.2s;">
+                            <span style="font-size:2.5rem; margin-bottom:1rem;">📁</span>
+                            <span style="color:#fff; font-weight:600; margin-bottom:0.5rem;">Arrastra y suelta aquí el Excel del WMS</span>
+                            <span style="color:#6b7280; font-size:0.75rem;">o haz clic para buscar en tus archivos</span>
+                            <input type="file" id="wmsFileInput" accept=".xlsx, .xls, .csv" style="display:none;">
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.style.opacity = '1', 10);
+
+        const fileInput = modal.querySelector('#wmsFileInput');
+        const dropZone = modal.querySelector('#wmsDropZone');
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(6,182,212,0.1)'; });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(6,182,212,0.02)'; });
+        dropZone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            dropZone.style.background = 'rgba(6,182,212,0.02)'; 
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleWmsFile(e.dataTransfer.files[0], modal);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleWmsFile(e.target.files[0], modal);
+            }
+        });
+    };
+    // --- FIN LÓGICA DE AUDITORÍA WMS ---
     window.resetTask = async (id) => {
         if (user.username !== 'dames') {
             showPremiumAlert("ACCESO DENEGADO", "Solo el usuario 'dames' tiene permisos para reiniciar tareas.", "error");
