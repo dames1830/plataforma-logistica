@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.320';
+const VERSION = '26.5.321';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -15811,7 +15811,7 @@ const renderRFSection = (container) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; font-size:1.2rem;">
-                                        ${t.audited ? '???' : '-'} 
+                                        ${t.audited ? '📝✅' : '-'} 
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
                                         ${(t.status !== 'Finalizado' || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
@@ -15876,7 +15876,7 @@ const renderRFSection = (container) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:1rem;">
-                                        ${t.audited ? '???' : '-'} 
+                                        ${t.audited ? '📝✅' : '-'} 
                                     </td>
                                 </tr>`;
                             }).join('')}
