@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.308';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.309';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.308';
+const VERSION = '26.5.309';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -15965,9 +15965,9 @@ const renderRFSection = (container) => {
             const wmsArticleLocations = {}; 
 
             wmsData.forEach(row => {
-                const ubi = String(row['Ubicación'] || row['UBICACION'] || '').trim().toUpperCase();
-                const art = String(row['Artículo'] || row['ARTICULO'] || row['Articulo'] || row['SKU'] || '').trim();
-                const qty = parseFloat(row['Cantidad Actual'] || row['Cantidad'] || row['CANTIDAD'] || row['Stock'] || 0);
+                const ubi = String(row['Ubicación'] || row['UBICACION'] || row['UbicaciÃ³n'] || row['Ubicacion'] || '').trim().toUpperCase();
+                const art = String(row['Artículo'] || row['ARTICULO'] || row['Articulo'] || row['SKU'] || row['ArtÃculo'] || '').trim();
+                const qty = parseFloat(row['Cantidad actual'] || row['Cantidad Actual'] || row['Cantidad'] || row['CANTIDAD'] || row['Stock'] || 0);
 
                 if (!ubi || !art) return;
                 
