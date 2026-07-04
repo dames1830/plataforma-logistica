@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.309';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.310';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.309';
+const VERSION = '26.5.310';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -15955,19 +15955,58 @@ const renderRFSection = (container) => {
         `;
 
         try {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data);
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const wmsData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            let wmsData = [];
+            if (file.name.toLowerCase().endsWith('.csv')) {
+                const text = await file.text();
+                const lines = text.split(/\r?\n/);
+                if (lines.length > 0) {
+                    const delim = lines[0].includes(';') ? ';' : ',';
+                    const headers = lines[0].split(delim).map(h => h.replace(/^"|"$/g, '').trim());
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
+                        let cleanLine = lines[i];
+                        // Limpiar comas del final que añade Excel a veces al CSV
+                        if (cleanLine.match(/,+$/)) {
+                            cleanLine = cleanLine.replace(/,+$/, '');
+                        }
+                        // Limpiar comillas que envuelven toda la fila
+                        if (cleanLine.startsWith('"') && cleanLine.endsWith('"')) {
+                            cleanLine = cleanLine.slice(1, -1);
+                        }
+                        const cols = cleanLine.split(delim);
+                        const rowObj = {};
+                        headers.forEach((h, idx) => {
+                            let val = cols[idx] || '';
+                            // Si el valor empieza por ="" y termina en "", limpiarlo (ej: =""5566880103"")
+                            if (val.startsWith('=""') && val.endsWith('""')) {
+                                val = val.slice(3, -2);
+                            }
+                            rowObj[h] = val.replace(/^"|"$/g, '').trim();
+                        });
+                        wmsData.push(rowObj);
+                    }
+                }
+            } else {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                wmsData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            }
 
             const wmsStockMap = {}; 
             const wmsArticleLocations = {}; 
 
             wmsData.forEach(row => {
-                const ubi = String(row['Ubicación'] || row['UBICACION'] || row['UbicaciÃ³n'] || row['Ubicacion'] || '').trim().toUpperCase();
-                const art = String(row['Artículo'] || row['ARTICULO'] || row['Articulo'] || row['SKU'] || row['ArtÃculo'] || '').trim();
-                const qty = parseFloat(row['Cantidad actual'] || row['Cantidad Actual'] || row['Cantidad'] || row['CANTIDAD'] || row['Stock'] || 0);
+                const keys = Object.keys(row);
+                // Buscar columnas independientemente de si los acentos están corruptos
+                const ubiKey = keys.find(k => k.toLowerCase().includes('ubicaci'));
+                const artKey = keys.find(k => (k.toLowerCase().includes('art') && k.toLowerCase().includes('culo')) || k.toLowerCase() === 'sku');
+                const qtyKey = keys.find(k => k.toLowerCase().includes('cantidad actual')) || keys.find(k => k.toLowerCase().includes('cantidad'));
+
+                const ubi = ubiKey ? String(row[ubiKey]).trim().toUpperCase() : '';
+                const art = artKey ? String(row[artKey]).trim() : '';
+                const qty = qtyKey ? parseFloat(row[qtyKey] || 0) : 0;
 
                 if (!ubi || !art) return;
                 
