@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.319';
+const VERSION = '26.5.320';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -402,6 +402,7 @@ if (!Array.isArray(almacenajeTasksCache)) almacenajeTasksCache = [];
 // [MIGRACIÓN DE IDENTIFICADORES] Migrar tareas antiguas sin prefijo de fecha a formato único
 let migratedInit = false;
 almacenajeTasksCache = almacenajeTasksCache.map(t => {
+    if (t && t.status === 'Auditado') { t.status = 'Finalizado'; t.audited = true; }
     if (t && t.id && !t.id.includes('_')) {
         t.id = `${t.fecha}_${t.id}`;
         migratedInit = true;
@@ -491,6 +492,7 @@ const loadAlmacenajeTasks = async () => {
               
               let migratedSynced = false;
               almacenajeTasksCache = almacenajeTasksCache.map(t => {
+    if (t && t.status === 'Auditado') { t.status = 'Finalizado'; t.audited = true; }
                   if (t && t.id && !t.id.includes('_')) {
                       t.id = `${t.fecha}_${t.id}`;
                       migratedSynced = true;
@@ -15727,6 +15729,7 @@ const renderRFSection = (container) => {
                                     <th style="padding:1rem; text-align:center;">Productividad</th>
                                     <th style="padding:1rem; text-align:center;">Objetivo</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
+                                    <th style="padding:1rem; text-align:center;">Auditado</th>
                                     <th style="padding:1rem; text-align:center;">Acción</th>
                                 </tr>
                             ` : `
@@ -15744,6 +15747,7 @@ const renderRFSection = (container) => {
                                     <th style="padding:1rem; text-align:center;">F. Asignado</th>
                                     <th style="padding:1rem; text-align:center;">F. Finalizado</th>
                                     <th style="padding:1rem; text-align:center;">Status</th>
+                                    <th style="padding:1rem; text-align:center;">Auditado</th>
                                 </tr>
                             `}
                         </thead>
@@ -15806,8 +15810,11 @@ const renderRFSection = (container) => {
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
+                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:1.2rem;">
+                                        ${t.audited ? '???' : '-'} 
+                                    </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
-                                        ${(!['Finalizado', 'Auditado'].includes(t.status) || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
+                                        ${(t.status !== 'Finalizado' || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
                                             <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
                                             <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
                                             <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
@@ -15867,6 +15874,9 @@ const renderRFSection = (container) => {
                                         <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
+                                    </td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-size:1rem;">
+                                        ${t.audited ? '???' : '-'} 
                                     </td>
                                 </tr>`;
                             }).join('')}
@@ -16032,7 +16042,8 @@ const renderRFSection = (container) => {
                 const task = almacenajeTasksCache.find(t => t.id === id);
                 if (!task) return;
 
-                task.status = 'Auditado';
+                task.status = 'Finalizado';
+                task.audited = true;
                 tasksAuditedCount++;
 
                 (task.items || []).forEach(artGrp => {
@@ -16206,7 +16217,7 @@ const renderRFSection = (container) => {
         const targetTasks = almacenajeTasksCache.filter(t => 
             t.fecha >= window.__almacenajeStartDate && 
             t.fecha <= window.__almacenajeEndDate &&
-            ['Finalizado', 'Auditado'].includes(t.status)
+            t.status === 'Finalizado'
         );
 
         if (targetTasks.length === 0) {
@@ -16296,7 +16307,7 @@ const renderRFSection = (container) => {
         if (!task) return;
         
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-        const isClosed = ['Finalizado', 'Auditado'].includes(task.status);
+        const isClosed = task.status === 'Finalizado';
         
         if (isClosed && session.username !== 'dames') {
             showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para reiniciar tareas Finalizadas o Auditadas.", "error");
@@ -16315,7 +16326,7 @@ const renderRFSection = (container) => {
         if (!task) return;
         
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-        const isClosed = ['Finalizado', 'Auditado'].includes(task.status);
+        const isClosed = task.status === 'Finalizado';
         
         if (isClosed && session.username !== 'dames') {
             showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para eliminar tareas Finalizadas o Auditadas.", "error");
@@ -16621,7 +16632,7 @@ const renderRFSection = (container) => {
         if (!task) return;
 
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-        const isClosed = ['Finalizado', 'Auditado'].includes(task.status);
+        const isClosed = task.status === 'Finalizado';
         
         if (isClosed && session.username !== 'dames') {
             showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para editar tareas Finalizadas o Auditadas.", "error");
@@ -16841,3 +16852,4 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
