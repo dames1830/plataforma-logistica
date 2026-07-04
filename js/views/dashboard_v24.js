@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.305';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI } from '../services_v245/csvHub_v6.js?v=26.5.306';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.280';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.280';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.305';
+const VERSION = '26.5.306';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -408,10 +408,32 @@ almacenajeTasksCache = almacenajeTasksCache.map(t => {
     }
     return t;
 });
-if (migratedInit) {
+const safeSaveAlmacenajeTasksCache = () => {
     try {
         localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
-    } catch(e){}
+    } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+            console.warn("🧹 [PULSE] LocalStorage lleno. Auto-purgando tareas antiguas...");
+            const doceHoras = 12 * 60 * 60 * 1000;
+            const now = Date.now();
+            almacenajeTasksCache = almacenajeTasksCache.filter(t => {
+                if (t.status === 'Finalizada' && t.termino) {
+                    const ts = new Date(t.termino).getTime();
+                    if (!isNaN(ts) && (now - ts > doceHoras)) return false;
+                }
+                return true;
+            });
+            try {
+                localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+            } catch (err2) {
+                console.error("❌ [PULSE] Fallo crítico de cuota incluso tras purga.");
+            }
+        }
+    }
+};
+
+if (migratedInit) {
+    safeSaveAlmacenajeTasksCache();
 }
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
@@ -430,7 +452,7 @@ const saveAlmacenajeTasks = async () => {
       updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
       
       // 1. Persistencia LOCAL inmediata
-      localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+      safeSaveAlmacenajeTasksCache();
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
         // [SIN LÍMITES] Sincronización Completa: Ahora se envía la lista total de tareas sin recortes.
@@ -484,7 +506,7 @@ const loadAlmacenajeTasks = async () => {
                   almacenajeTasksCache = [];
               }
           }
-          localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+          safeSaveAlmacenajeTasksCache();
       }
       updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
   } catch (e) { 
@@ -16397,7 +16419,7 @@ const renderRFSection = (container) => {
                         }
                         return newTask;
                     });
-                    localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
+                    safeSaveAlmacenajeTasksCache();
                     console.log(`✅ [PULSE] ${serverTasks.length} tareas fusionadas.`);
                 }
                 
