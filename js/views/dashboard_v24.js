@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.331';
+const VERSION = '26.5.332';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -456,11 +456,13 @@ const saveAlmacenajeTasks = async () => {
       safeSaveAlmacenajeTasksCache();
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        // [SIN LÍMITES] Sincronización Completa: Ahora se envía la lista total de tareas sin recortes.
         console.log(`🚀 [PULSE] Sincronización Total: Enviando ${almacenajeTasksCache.length} tareas a la nube.`);
         const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
         
         if (success) {
+            // [OFFLINE-FIRST] Clear dirty flags if sync was successful
+            almacenajeTasksCache.forEach(t => delete t._dirty);
+            safeSaveAlmacenajeTasksCache();
             updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
             setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
         } else {
@@ -484,8 +486,13 @@ const loadAlmacenajeTasks = async () => {
               almacenajeTasksCache = syncedTasks.map(newTask => {
                   const cleanTaskId = (id) => id.includes('_') ? id.split('_')[1] : id;
                   const localTask = almacenajeTasksCache.find(lt => lt.fecha === newTask.fecha && cleanTaskId(lt.id) === cleanTaskId(newTask.id));
-                  if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
-                      return { ...newTask, items: localTask.items }; // Preservar detalle local
+                  if (localTask) {
+                      if (localTask._dirty) {
+                          return localTask; // OFFLINE-FIRST: Proteger cambios no guardados
+                      }
+                      if ((!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                          return { ...newTask, items: localTask.items }; // Preservar detalle local
+                      }
                   }
                   return newTask;
               });
@@ -16315,6 +16322,7 @@ const renderRFSection = (container) => {
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             task.u1 = null; task.u2 = null; task.inicio = null; task.termino = null; task.status = 'Creada';
+            task._dirty = true;
             await saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
         }
@@ -16354,6 +16362,7 @@ const renderRFSection = (container) => {
             // Si no hay items CDBUFFER, finalizar directamente
             t.status = 'Finalizado';
             t.termino = new Date().toISOString();
+            t._dirty = true;
             saveAlmacenajeTasks().catch(e => console.error("Save error:", e));
             if (assignModal && assignModal.parentNode) {
                 document.body.removeChild(assignModal);
@@ -16474,6 +16483,7 @@ const renderRFSection = (container) => {
             // Finalizar tarea
             t.status = 'Finalizado';
             t.termino = new Date().toISOString();
+            t._dirty = true;
             
             saveAlmacenajeTasks().then(() => {
                 document.body.removeChild(pModal);
@@ -16546,6 +16556,7 @@ const renderRFSection = (container) => {
             t.u2 = document.getElementById('m_u2').value;
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
+            t._dirty = true;
             saveAlmacenajeTasks(); 
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
@@ -16740,6 +16751,7 @@ const renderRFSection = (container) => {
                 task.status = 'Creada';
             }
 
+            task._dirty = true;
             saveAlmacenajeTasks().catch(e => console.error("Save error:", e));
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
@@ -16800,11 +16812,16 @@ const renderRFSection = (container) => {
                 const serverTasks = adminService.adminStore.almacenaje_tasks;
                 
                 if (Array.isArray(serverTasks)) {
-                    // [FUSIÓN HÍBRIDA] No permitir que la nube borre detalles locales
+                    // [FUSIÓN HÍBRIDA] No permitir que la nube borre detalles locales ni tareas editadas offline
                     almacenajeTasksCache = serverTasks.map(newTask => {
                         const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
-                        if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
-                            return { ...newTask, items: localTask.items };
+                        if (localTask) {
+                            if (localTask._dirty) {
+                                return localTask; // OFFLINE-FIRST: Proteger cambios no guardados
+                            }
+                            if ((!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                                return { ...newTask, items: localTask.items };
+                            }
                         }
                         return newTask;
                     });

@@ -16,16 +16,20 @@ export const save = async (area, data, date = null) => {
     saveQueue = saveQueue.then(async () => {
         try {
             await syncEngine.pushChange(area, data, date);
+            return true;
         } catch (err) {
             console.error(`Primer intento fallido en ${area}:`, err);
             try {
                 await syncEngine.pushChange(area, data, date);
+                return true;
             } catch (err2) {
                 console.error(`Segundo intento fallido en ${area}. Se descarta para no trabar la cola.`, err2);
+                return false;
             }
         }
     }).catch(err => {
         console.error(`Error crítico en la cola de ${area}:`, err);
+        return false;
     });
     return saveQueue;
 };
