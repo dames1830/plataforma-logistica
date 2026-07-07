@@ -363,6 +363,53 @@ async def restore_performance(request: Request):
         return {"status": "success", "message": f"{count} días de historial restaurados"}
     except Exception as e: return {"status": "error", "message": str(e)}
 
+@app.patch("/api/logistics/{area}")
+async def patch_area_data(area: str, request: Request, date: Optional[str] = None):
+    try:
+        partial_data = await request.json()
+        
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history']
+        target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
+        
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        
+        cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, target_date))
+        row = cursor.fetchone()
+        
+        existing_data = []
+        if row:
+            try:
+                existing_data = json.loads(row[0])
+            except:
+                pass
+                
+        if not isinstance(existing_data, list):
+            existing_data = []
+            
+        if 'id' in partial_data:
+            task_id = partial_data['id']
+            found = False
+            for i, item in enumerate(existing_data):
+                if isinstance(item, dict) and item.get('id') == task_id:
+                    existing_data[i] = partial_data
+                    found = True
+                    break
+            if not found:
+                existing_data.append(partial_data)
+        else:
+            existing_data.append(partial_data)
+            
+        json_string = json.dumps(existing_data)
+        cursor.execute("""
+            INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
+        """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit(); conn.close()
+        
+        return {"status": "success", "area": area, "date": target_date, "message": "Parcialmente actualizado"}
+    except Exception as e: return {"status": "error", "message": str(e)}
+
 @app.get("/api/buffer/config")
 def get_buffer_config():
     try:

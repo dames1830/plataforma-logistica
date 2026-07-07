@@ -89,8 +89,23 @@ export async function pullGlobal(requestedAreas = null, force = false) {
         return syncStore;
     }
     console.log(`📥 [PULSE] Sincronización: Descargando ${requestedAreas ? requestedAreas.join(', ') : 'Todo'}...`);
-    const allAreas = ['almacenaje_tasks', 'almacenaje_tasks_history', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'buffer_history'];
-    const areas = requestedAreas || allAreas;
+    
+    const criticalAreas = ['almacenaje_tasks', 'attendance', 'users', 'permissions', 'config'];
+    const heavyAreas = ['almacenaje_tasks_history', 'workers', 'performance', 'performance_log', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'buffer_history'];
+    const allAreas = [...criticalAreas, ...heavyAreas];
+    
+    let areas = requestedAreas || allAreas;
+    
+    // [LAZY LOADING] Si es la primera vez y pidieron todo, solo descargar críticos para que la página cargue en 2 segundos
+    if (!isFirstPullDone && !requestedAreas) {
+        console.log("⚡ [LAZY LOAD] Descargando solo módulos críticos para arranque rápido...");
+        areas = criticalAreas;
+        // Lanzar la descarga pesada en segundo plano 3 segundos después
+        setTimeout(() => {
+            console.log("🐢 [LAZY LOAD] Iniciando descarga diferida de módulos pesados en background...");
+            pullGlobal(heavyAreas, true).catch(e => console.error("Error en lazy load pesado:", e));
+        }, 3000);
+    }
 
     const results = await Promise.all(areas.map(async (area) => {
         try {
@@ -170,8 +185,11 @@ export async function pushChange(area, data, date = null) {
         if (window._pulseSyncState.lastPushTimes) {
             window._pulseSyncState.lastPushTimes[area] = Date.now();
         }
+        
+        const method = (!Array.isArray(payload) && typeof payload === 'object') ? 'PATCH' : 'POST';
+        
         const res = await fetch(url, {
-            method: 'POST',
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });

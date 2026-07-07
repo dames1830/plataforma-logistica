@@ -448,7 +448,7 @@ const updateSyncIndicator = (status, text) => {
   if (txt) txt.innerText = text;
 };
 
-const saveAlmacenajeTasks = async () => {
+const saveAlmacenajeTasks = async (partialTask = null) => {
   try {
       updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
       
@@ -456,12 +456,17 @@ const saveAlmacenajeTasks = async () => {
       safeSaveAlmacenajeTasksCache();
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        console.log(`🚀 [PULSE] Sincronización Total: Enviando ${almacenajeTasksCache.length} tareas a la nube.`);
-        const success = await adminService.saveAlmacenajeTasks(almacenajeTasksCache);
+        const dataToSave = partialTask ? partialTask : almacenajeTasksCache;
+        console.log(`🚀 [PULSE] Sincronización: Enviando ${partialTask ? '1 tarea (PATCH)' : almacenajeTasksCache.length + ' tareas (POST)'} a la nube.`);
+        
+        const success = await adminService.saveAlmacenajeTasks(dataToSave);
         
         if (success) {
-            // [OFFLINE-FIRST] Clear dirty flags if sync was successful
-            almacenajeTasksCache.forEach(t => delete t._dirty);
+            if (partialTask) {
+                delete partialTask._dirty;
+            } else {
+                almacenajeTasksCache.forEach(t => delete t._dirty);
+            }
             safeSaveAlmacenajeTasksCache();
             updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
             setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
@@ -16323,7 +16328,7 @@ const renderRFSection = (container) => {
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             task.u1 = null; task.u2 = null; task.inicio = null; task.termino = null; task.status = 'Creada';
             task._dirty = true;
-            await saveAlmacenajeTasks();
+            await saveAlmacenajeTasks(task);
             renderAlmacenajeTareas(container);
         }
     };
@@ -16363,7 +16368,7 @@ const renderRFSection = (container) => {
             t.status = 'Finalizado';
             t.termino = new Date().toISOString();
             t._dirty = true;
-            saveAlmacenajeTasks().catch(e => console.error("Save error:", e));
+            saveAlmacenajeTasks(t).catch(e => console.error("Save error:", e));
             if (assignModal && assignModal.parentNode) {
                 document.body.removeChild(assignModal);
             }
@@ -16485,7 +16490,7 @@ const renderRFSection = (container) => {
             t.termino = new Date().toISOString();
             t._dirty = true;
             
-            saveAlmacenajeTasks().then(() => {
+            saveAlmacenajeTasks(t).then(() => {
                 document.body.removeChild(pModal);
                 if (assignModal && assignModal.parentNode) {
                     document.body.removeChild(assignModal);
@@ -16557,7 +16562,7 @@ const renderRFSection = (container) => {
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
             t._dirty = true;
-            saveAlmacenajeTasks(); 
+            saveAlmacenajeTasks(t); 
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
@@ -16752,7 +16757,7 @@ const renderRFSection = (container) => {
             }
 
             task._dirty = true;
-            saveAlmacenajeTasks().catch(e => console.error("Save error:", e));
+            saveAlmacenajeTasks(task).catch(e => console.error("Save error:", e));
             document.body.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
