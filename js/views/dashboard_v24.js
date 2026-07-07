@@ -16354,12 +16354,11 @@ const renderRFSection = (container) => {
             // Si no hay items CDBUFFER, finalizar directamente
             t.status = 'Finalizado';
             t.termino = new Date().toISOString();
-            saveAlmacenajeTasks().then(() => {
-                if (assignModal && assignModal.parentNode) {
-                    document.body.removeChild(assignModal);
-                }
-                renderAlmacenajeTareas(container);
-            });
+            saveAlmacenajeTasks().catch(e => console.error("Save error:", e));
+            if (assignModal && assignModal.parentNode) {
+                document.body.removeChild(assignModal);
+            }
+            renderAlmacenajeTareas(container);
             return;
         }
 
@@ -16741,10 +16740,9 @@ const renderRFSection = (container) => {
                 task.status = 'Creada';
             }
 
-            saveAlmacenajeTasks().then(() => {
-                document.body.removeChild(modal);
-                renderAlmacenajeTareas(container);
-            });
+            saveAlmacenajeTasks().catch(e => console.error("Save error:", e));
+            document.body.removeChild(modal);
+            renderAlmacenajeTareas(container);
         };
         modal.querySelector('#close_edit').onclick = () => document.body.removeChild(modal);
     };
