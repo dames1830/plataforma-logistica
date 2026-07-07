@@ -8,8 +8,6 @@ export const adminStore = syncEngine.syncStore;
 
 export const initializeAdminData = async (force = false) => {
     const res = await syncEngine.initSync(force);
-    // Silent auto-archive of tasks older than 3 days
-    archiveOldAlmacenajeTasks().catch(err => console.error("Archive error:", err));
     return res;
 };
 
