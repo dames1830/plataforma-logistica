@@ -58,24 +58,34 @@ setInterval(() => {
     }
 }, 100);
 
-export async function initSync() {
-    console.log("🚀 [PULSE] Inicializando Motor v25.1.44...");
-    try {
-        await pullGlobal();
-    } catch (e) {
-        console.warn("⚠️ [PULSE] Error en carga inicial, pero activando motor:", e);
-    }
-    window._pulseSyncState.isFirstPullDone = true;
-    isFirstPullDone = true;
-    console.log("✅ [PULSE] Primera sincronización completada.");
-    setInterval(pullGlobal, 30000);
-    return syncStore;
+let initPromise = null;
+export async function initSync(force = false) {
+    if (isFirstPullDone && !force) return syncStore;
+    if (initPromise && !force) return initPromise;
+    
+    initPromise = (async () => {
+        console.log("🚀 [PULSE] Inicializando Motor v25.1.44...");
+        try {
+            await pullGlobal(null, force);
+        } catch (e) {
+            console.warn("⚠️ [PULSE] Error en carga inicial, pero activando motor:", e);
+        }
+        window._pulseSyncState.isFirstPullDone = true;
+        isFirstPullDone = true;
+        console.log("✅ [PULSE] Primera sincronización completada.");
+        if (!window._pulseSyncIntervalSet) {
+            setInterval(pullGlobal, 30000);
+            window._pulseSyncIntervalSet = true;
+        }
+        return syncStore;
+    })();
+    return initPromise;
 }
 export let pendingPushes = 0;
 
 export async function pullGlobal(requestedAreas = null, force = false) {
     if (pendingPushes > 0 && !force) {
-        console.log("?? [PULSE] Sincronización omitida por empuje pendiente.");
+        console.log("🚫 [PULSE] Sincronización omitida por empuje pendiente.");
         return syncStore;
     }
     console.log(`📥 [PULSE] Sincronización: Descargando ${requestedAreas ? requestedAreas.join(', ') : 'Todo'}...`);
