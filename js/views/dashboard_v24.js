@@ -6468,6 +6468,14 @@ const renderRFSection = (container) => {
                   return;
               }
 
+              if (window.navigator.onLine) {
+                  const hasDirty = almacenajeTasksCache.some(t => t._dirty);
+                  if (hasDirty) {
+                      console.log("📡 [OFFLINE RECOVERY] Tareas pendientes detectadas tras retorno de red. Subiendo a la nube...");
+                      await saveAlmacenajeTasks(); 
+                  }
+              }
+
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
               if (currentTab === 'inicio') renderTabContent(true); 
