@@ -71,8 +71,13 @@ export async function initSync() {
     setInterval(pullGlobal, 30000);
     return syncStore;
 }
+export let pendingPushes = 0;
 
 export async function pullGlobal(requestedAreas = null, force = false) {
+    if (pendingPushes > 0 && !force) {
+        console.log("?? [PULSE] Sincronización omitida por empuje pendiente.");
+        return syncStore;
+    }
     console.log(`📥 [PULSE] Sincronización: Descargando ${requestedAreas ? requestedAreas.join(', ') : 'Todo'}...`);
     const allAreas = ['almacenaje_tasks', 'almacenaje_tasks_history', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'buffer_history'];
     const areas = requestedAreas || allAreas;
@@ -138,6 +143,7 @@ export async function pullGlobal(requestedAreas = null, force = false) {
 
 export async function pushChange(area, data, date = null) {
     if (!data) return;
+    pendingPushes++;
     try {
         let payload = data;
         if ((area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') && Array.isArray(data)) {
@@ -166,5 +172,7 @@ export async function pushChange(area, data, date = null) {
     } catch (err) {
         console.error(`❌ Push error ${area}:`, err);
         throw err;
+    } finally {
+        pendingPushes--;
     }
 }
