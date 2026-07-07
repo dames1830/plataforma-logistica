@@ -61,17 +61,12 @@ export const login = async (username, password) => {
           }
       }
   } catch (err) {
-      console.warn("[ULTRA] Servidor no disponible, se usará caché local de respaldo:", err);
+      console.warn("[ULTRA] Error de conexión al servidor durante el login:", err);
   }
 
-  // 3. Si falló la red, cargar de localStorage como fail-safe
+  // Si falló la red, rechazar el login inmediatamente (Plan B Eliminado)
   if (!isCloudSuccess) {
-      try {
-          const localRaw = localStorage.getItem('logistics_admin_v11_users');
-          dynamicUsers = localRaw ? JSON.parse(localRaw) : [];
-      } catch(e) {
-          dynamicUsers = [];
-      }
+      return { success: false, message: 'Error de conexión. Se requiere internet para iniciar sesión.' };
   }
 
   // 4. VALIDACIÓN DE CREDENCIALES
@@ -82,7 +77,7 @@ export const login = async (username, password) => {
           return { success: false, message: 'Usuario inactivo o desactivado' };
       }
       if (String(u.password) === String(password)) {
-          console.log(`[ULTRA] Acceso concedido para ${targetUsername} (${isCloudSuccess ? 'NUBE' : 'CÓDIGO LOCAL'}).`);
+          console.log(`[ULTRA] Acceso concedido para ${targetUsername} (NUBE).`);
           const sessionData = { id: Date.now(), username: u.username, role: u.role, name: u.name };
           localStorage.setItem('logistics_session', JSON.stringify(sessionData));
           return { success: true, user: sessionData };
