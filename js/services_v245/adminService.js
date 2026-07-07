@@ -13,10 +13,19 @@ export const initializeAdminData = async (force = false) => {
 
 let saveQueue = Promise.resolve();
 export const save = async (area, data, date = null) => {
-    const nextSave = () => syncEngine.pushChange(area, data, date);
-    saveQueue = saveQueue.then(nextSave).catch(err => {
-        console.error(`❌ Queue save error on ${area}:`, err);
-        return nextSave(); // Reintentar una vez
+    saveQueue = saveQueue.then(async () => {
+        try {
+            await syncEngine.pushChange(area, data, date);
+        } catch (err) {
+            console.error(`Primer intento fallido en ${area}:`, err);
+            try {
+                await syncEngine.pushChange(area, data, date);
+            } catch (err2) {
+                console.error(`Segundo intento fallido en ${area}. Se descarta para no trabar la cola.`, err2);
+            }
+        }
+    }).catch(err => {
+        console.error(`Error crítico en la cola de ${area}:`, err);
     });
     return saveQueue;
 };
