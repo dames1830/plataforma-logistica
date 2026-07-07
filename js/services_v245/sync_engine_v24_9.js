@@ -26,6 +26,7 @@ if (!window._pulseSyncState) {
         lastPushTimes: {},
         syncStore: {
             almacenaje_tasks: [],
+            almacenaje_tasks_history: [],
             attendance: {},
             permissions: {},
             workers: [], 
@@ -73,7 +74,7 @@ export async function initSync() {
 
 export async function pullGlobal(requestedAreas = null, force = false) {
     console.log(`📥 [PULSE] Sincronización: Descargando ${requestedAreas ? requestedAreas.join(', ') : 'Todo'}...`);
-    const allAreas = ['almacenaje_tasks', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'buffer_history'];
+    const allAreas = ['almacenaje_tasks', 'almacenaje_tasks_history', 'attendance', 'permissions', 'workers', 'users', 'performance', 'performance_log', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'buffer_history'];
     const areas = requestedAreas || allAreas;
 
     const results = await Promise.all(areas.map(async (area) => {
@@ -84,7 +85,7 @@ export async function pullGlobal(requestedAreas = null, force = false) {
                 if (result.status === 'error') throw new Error(result.message);
                 let data = result.data !== undefined ? result.data : result;
 
-                if (area === 'almacenaje_tasks' && Array.isArray(data)) {
+                if ((area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') && Array.isArray(data)) {
                     data = data.map(t => {
                         if (t._comp && Array.isArray(t.items)) {
                             const restoredItems = t.items.map(artArr => {
@@ -139,7 +140,7 @@ export async function pushChange(area, data, date = null) {
     if (!data) return;
     try {
         let payload = data;
-        if (area === 'almacenaje_tasks' && Array.isArray(data)) {
+        if ((area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') && Array.isArray(data)) {
             payload = data.map(t => {
                 const compactItems = (t.items || []).map(art => {
                     const cArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA', i.avance !== undefined ? i.avance : null, i.qtyInitial !== undefined ? i.qtyInitial : null]);

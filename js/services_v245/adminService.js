@@ -7,7 +7,10 @@ import * as syncEngine from './sync_engine_v24_9.js?v=26.5.281';
 export const adminStore = syncEngine.syncStore;
 
 export const initializeAdminData = async (force = false) => {
-    return await syncEngine.initSync(force);
+    const res = await syncEngine.initSync(force);
+    // Silent auto-archive of tasks older than 3 days
+    archiveOldAlmacenajeTasks().catch(err => console.error("Archive error:", err));
+    return res;
 };
 
 let saveQueue = Promise.resolve();
@@ -33,7 +36,54 @@ export const getPermissions = (role) => adminStore.permissions[role] || {};
 export const getAttendance = (dateStr) => adminStore.attendance[dateStr];
 export const getPerformance = () => adminStore.performance;
 export const getPerformanceLog = () => adminStore.performance_log;
-export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks;
+export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks || [];
+
+export const getAlmacenajeTasksHistory = () => adminStore.almacenaje_tasks_history || [];
+
+export const saveAlmacenajeTasksHistory = async (data) => {
+    adminStore.almacenaje_tasks_history = data;
+    return await save('almacenaje_tasks_history', data);
+};
+
+export const archiveOldAlmacenajeTasks = async () => {
+    const tasks = getAlmacenajeTasks();
+    if (!tasks || tasks.length === 0) return false;
+
+    const now = new Date();
+    const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+    
+    let needsArchiving = false;
+    const activeTasks = [];
+    const tasksToArchive = [];
+
+    tasks.forEach(t => {
+        // Only archive completed tasks older than 3 days
+        if (t.status === 'Finalizado' && t.termino) {
+            const termDate = new Date(t.termino);
+            if (!isNaN(termDate) && (now - termDate) > THREE_DAYS_MS) {
+                tasksToArchive.push(t);
+                needsArchiving = true;
+                return;
+            }
+        }
+        activeTasks.push(t);
+    });
+
+    if (needsArchiving) {
+        console.log(`[PULSE] Auto-archiving ${tasksToArchive.length} old tasks...`);
+        // Save history first
+        const currentHistory = getAlmacenajeTasksHistory();
+        const mergedHistory = [...currentHistory, ...tasksToArchive];
+        await saveAlmacenajeTasksHistory(mergedHistory);
+        
+        // Then update active tasks
+        adminStore.almacenaje_tasks = activeTasks;
+        await saveAlmacenajeTasks(activeTasks);
+        console.log(`[PULSE] Auto-archive complete. Active tasks left: ${activeTasks.length}`);
+        return true;
+    }
+    return false;
+};
 
 // --- FUNCIONES DE NEGOCIO ---
 export const saveWorkers = (data) => save('workers', data);
