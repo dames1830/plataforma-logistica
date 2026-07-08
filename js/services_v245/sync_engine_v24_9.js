@@ -186,7 +186,9 @@ export async function pushChange(area, data, date = null) {
             window._pulseSyncState.lastPushTimes[area] = Date.now();
         }
         
-        const method = (!Array.isArray(payload) && typeof payload === 'object') ? 'PATCH' : 'POST';
+        // [FIX]: Solo usar PATCH para actualizaciones parciales que contengan un 'id' (ej. tareas individuales).
+        // Objetos maestros completos como 'attendance' o 'config' deben enviarse por POST.
+        const method = (!Array.isArray(payload) && typeof payload === 'object' && payload.hasOwnProperty('id')) ? 'PATCH' : 'POST';
         
         const res = await fetch(url, {
             method: method,
