@@ -485,6 +485,12 @@ const loadAlmacenajeTasks = async () => {
       updateSyncIndicator('working', 'SINCRONIZANDO CON LA NUBE...');
       // Carga desde el puente v24 (que ya hizo el pull)
       const syncedTasks = await adminService.loadAlmacenajeTasks();
+        if (typeof adminService.loadAlmacenajeTasksHistory === 'function') {
+            await adminService.loadAlmacenajeTasksHistory();
+        }
+        if (typeof adminService.loadAlmacenajeTasksHistory === 'function') {
+            await adminService.loadAlmacenajeTasksHistory();
+        }
       if (Array.isArray(syncedTasks)) {
           // [SINCRONIZACIÓN TOTAL] Ahora permite que la nube limpie los datos locales si se borraron allá.
           if (Array.isArray(syncedTasks)) {
@@ -13012,9 +13018,14 @@ const renderRFSection = (container) => {
     }
 
     if (activeAnalisisSub === 'configuracion_analisis') {
-        renderConfiguracionAnalisisSKU(skuBuf);
-        return;
-    }
+          renderConfiguracionAnalisisSKU(skuBuf);
+          return;
+      }
+
+      if (activeAnalisisSub === 'analisis_reserva') {
+          renderAnalisisReserva(skuBuf);
+          return;
+      }
 
     if (activeAnalisisSub !== 'articulo_temp') {
         skuBuf.innerHTML = `
@@ -13975,7 +13986,8 @@ const renderRFSection = (container) => {
     if (adminService.adminStore.almacenaje_tasks) {
         almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
     }
-    const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache] : [];
+    const historicalTasks = typeof adminService.getAlmacenajeTasksHistory === 'function' ? adminService.getAlmacenajeTasksHistory() : [];
+      const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache, ...historicalTasks] : [...historicalTasks];
     
     // [ORDENAMIENTO JERÁRQUICO] 1. Fecha Descendente (Más reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
     tasks.sort((a, b) => {
@@ -16980,4 +16992,8 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
+
+
+
 

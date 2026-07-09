@@ -323,6 +323,11 @@ export const loadAlmacenajeTasks = async (force = false) => {
     return adminStore.almacenaje_tasks;
 };
 
+export const loadAlmacenajeTasksHistory = async (force = false) => {
+    await syncEngine.pullGlobal(['almacenaje_tasks_history'], force);
+    return adminStore.almacenaje_tasks_history || [];
+};
+
 // --- PROTOCOLO DE LIMPIEZA TOTAL (v24.4.9) ---
 export const resetProductionData = async () => {
     console.warn("⚠️ [PULSE] Iniciando purga total de datos en la nube...");
