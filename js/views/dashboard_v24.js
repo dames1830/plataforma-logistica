@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.336';
+const VERSION = '26.5.337';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -15832,12 +15832,12 @@ const renderRFSection = (container) => {
                                         ${t.audited ? '📝✅' : '-'} 
                                     </td>
                                     <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
+                                        <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
+                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
                                         ${(t.status !== 'Finalizado' || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
-                                            <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
-                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
                                             <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
                                         ` : `
-                                            <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">🔒 Cerrada</span>
+                                            <button disabled title="Eliminar Tarea (Solo Admin)" style="background:none; border:none; cursor:not-allowed; font-size:1.1rem; color:#ef4444; opacity:0.3;">🗑️</button>
                                         `}
                                     </td>
                                 </tr>`;
