@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.338';
+const VERSION = '26.5.339';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -634,6 +634,7 @@ const TABS = [
     { id: 'archivo_analisis', label: 'Archivo Análisis SKU', icon: '🗂️' },
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
     { id: 'replenishment', label: 'Replenishment', icon: '🔄' },
+    { id: 'analisis_reserva', label: 'Análisis Reserva', icon: '📦' },
     { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
