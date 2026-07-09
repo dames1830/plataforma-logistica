@@ -16327,10 +16327,7 @@ const renderRFSection = (container) => {
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
         
-        if (isClosed && session.username !== 'dames') {
-            showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para reiniciar tareas Finalizadas o Auditadas.", "error");
-            return;
-        }
+
 
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
@@ -16655,15 +16652,10 @@ const renderRFSection = (container) => {
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
         
-        if (isClosed && session.username !== 'dames') {
-            showPremiumAlert("ACCESO DENEGADO", "Solo el superusuario 'dames' tiene permisos para editar tareas Finalizadas o Auditadas.", "error");
-            return;
-        }
-
-        if (isClosed && session.username === 'dames') {
+        if (isClosed) {
             const proceed = await showPremiumConfirm(
-                "TAREA CERRADA (ACCESO SUPERUSUARIO)",
-                "⚠️ Esta tarea está CERRADA.\n\nTienes permisos especiales para forzar la edición de datos.\n¿Deseas continuar?",
+                "TAREA FINALIZADA",
+                "⚠️ Esta tarea está CERRADA.\n\nVas a forzar la edición de datos de una tarea finalizada.\n¿Deseas continuar?",
                 "warning"
             );
             if (!proceed) return;
