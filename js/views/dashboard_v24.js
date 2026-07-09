@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.340';
+const VERSION = '26.5.341';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12849,6 +12849,115 @@ const renderRFSection = (container) => {
 
 
 
+
+  const renderAnalisisReserva = (container) => {
+      const rawReserva = dataStore.analisis_sku_reserva;
+      if (!rawReserva || rawReserva.length === 0) {
+          container.innerHTML = `
+              <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                  <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">📁</div>
+                  <h4>Datos Incompletos</h4>
+                  <p>Por favor carga el archivo <b>STOCK RESERVA</b> en la pestaña <b>ARCHIVO ANÁLISIS SKU</b>.</p>
+              </div>`;
+          return;
+      }
+
+      const skuGroups = {};
+      let processedCount = 0;
+
+      for (let i = 2; i < rawReserva.length; i++) {
+          const row = rawReserva[i];
+          if (!row || row.length < 11) continue;
+          
+          const nivel = String(row[1] || '').toUpperCase();
+          if (!nivel.includes('ALTO') && !nivel.includes('AL')) continue;
+
+          const ubicacion = String(row[4] || '').trim();
+          const lpn = String(row[5] || '').trim();
+          const sku = String(row[8] || '').trim();
+          const cantidad = parseFloat(row[10]) || 0;
+
+          if (!sku || cantidad <= 0) continue;
+
+          const paletaKey = lpn ? `LPN: ${lpn} (${ubicacion})` : `UBI: ${ubicacion}`;
+
+          if (!skuGroups[sku]) {
+              skuGroups[sku] = {
+                  totalQty: 0,
+                  paletas: {}
+              };
+          }
+
+          skuGroups[sku].totalQty += cantidad;
+          if (!skuGroups[sku].paletas[paletaKey]) {
+              skuGroups[sku].paletas[paletaKey] = 0;
+          }
+          skuGroups[sku].paletas[paletaKey] += cantidad;
+          processedCount++;
+      }
+
+      const skusArray = Object.keys(skuGroups).map(sku => {
+          const data = skuGroups[sku];
+          const numPaletas = Object.keys(data.paletas).length;
+          const distribucionArr = Object.entries(data.paletas).map(([paleta, qty]) => `${paleta}: ${qty} unid`);
+          return {
+              sku,
+              totalQty: data.totalQty,
+              numPaletas,
+              distribucion: distribucionArr.join(' | ')
+          };
+      });
+
+      skusArray.sort((a, b) => b.numPaletas - a.numPaletas);
+
+      container.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h3 style="color:#818cf8; font-weight:800; margin:0;">ANÁLISIS DE FRAGMENTACIÓN DE RESERVA</h3>
+              <button id="btn_export_reserva" class="btn-primary" style="display:flex; align-items:center; gap:0.5rem; background:#10b981;">
+                  <span>📊</span> Exportar a Excel
+              </button>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+              Analizando ${processedCount} registros en niveles altos. Se muestran los SKUs presentes en múltiples paletas (fragmentados).
+          </div>
+          <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255,255,255,0.05); border-radius:10px; overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+                  <thead>
+                      <tr style="background:rgba(255,255,255,0.05); color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.1);">
+                          <th style="padding:10px; width:150px;">PRODUCTO (SKU)</th>
+                          <th style="padding:10px; width:100px; text-align:center;">TOTAL UNID</th>
+                          <th style="padding:10px; width:120px; text-align:center;">CANT. PALETAS</th>
+                          <th style="padding:10px;">DETALLE DE DISTRIBUCIÓN</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${skusArray.map(item => `
+                          <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                              <td style="padding:10px; font-weight:700; color:#fff;">${item.sku}</td>
+                              <td style="padding:10px; text-align:center; color:#10b981; font-weight:800;">${item.totalQty.toLocaleString()}</td>
+                              <td style="padding:10px; text-align:center; color:${item.numPaletas > 2 ? '#ef4444' : item.numPaletas > 1 ? '#fbbf24' : '#fff'}; font-weight:800;">${item.numPaletas}</td>
+                              <td style="padding:10px; color:var(--text-muted); font-size:0.75rem;">${item.distribucion}</td>
+                          </tr>
+                      `).join('')}
+                      ${skusArray.length === 0 ? '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">No se encontraron SKUs en niveles altos con cantidades válidas.</td></tr>' : ''}
+                  </tbody>
+              </table>
+          </div>
+      `;
+
+      document.getElementById('btn_export_reserva').onclick = () => {
+          const wsData = [
+              ['PRODUCTO (SKU)', 'TOTAL UNIDADES', 'CANTIDAD PALETAS', 'DETALLE DE DISTRIBUCIÓN']
+          ];
+          skusArray.forEach(item => {
+              wsData.push([item.sku, item.totalQty, item.numPaletas, item.distribucion]);
+          });
+          const ws = XLSX.utils.aoa_to_sheet(wsData);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Analisis_Reserva");
+          XLSX.writeFile(wb, "Analisis_Fragmentacion_Reserva.xlsx");
+      };
+  };
 
   const renderAnalisisSKUTab = async () => {
     contentSubtitle.textContent = "Consulta profunda de Artículos";
