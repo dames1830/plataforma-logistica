@@ -263,6 +263,43 @@ export const fetchBufferHistory = async (force = false) => {
     } catch(e) { return []; }
 };
 
+// --- RESERVA HISTORY ---
+const RESERVA_HIST_LOCAL_KEY = 'logistics_reserva_history_v1';
+
+export const saveReservaHistoryRecord = async (record) => {
+    const newRecord = { ...record, id: Date.now(), created_at: new Date().toISOString() };
+    try {
+        const currentList = syncEngine.syncStore.reserva_history || [];
+        const newList = [newRecord, ...currentList];
+        if (newList.length > 90) newList.pop();
+        
+        syncEngine.syncStore.reserva_history = newList;
+        localStorage.setItem(RESERVA_HIST_LOCAL_KEY, JSON.stringify(newList));
+        const ok = await syncEngine.pushChange('reserva_history', newList);
+        if (ok) return newRecord.id;
+    } catch(e) {
+        console.warn('[RH] ⚠️ Error sincronizando con servidor:', e);
+    }
+    return null;
+};
+
+export const fetchReservaHistory = async (force = false) => {
+    try {
+        await syncEngine.pullGlobal(['reserva_history'], force);
+    } catch(e) {
+        console.warn('[RH] ⚠️ Error descargando historial del syncEngine:', e);
+    }
+    const list = syncEngine.syncStore.reserva_history || [];
+    if (Array.isArray(list) && list.length > 0) {
+        localStorage.setItem(RESERVA_HIST_LOCAL_KEY, JSON.stringify(list));
+        return list;
+    }
+    try {
+        const localData = JSON.parse(localStorage.getItem(RESERVA_HIST_LOCAL_KEY) || '[]');
+        return Array.isArray(localData) ? localData : [];
+    } catch(e) { return []; }
+};
+
 /**
  * Actualiza un registro (por id) en el servidor usando el Motor de Sincronización.
  */
@@ -576,6 +613,50 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
         if (area.startsWith('recepcion')) {
             localStorage.removeItem('recepcion_report_processed');
         }
+
+        // --- RESERVA HISTORY HOOK ---
+        if (area === 'analisis_sku_reserva') {
+            const raw = dataStore.analisis_sku_reserva;
+            if (raw && raw.length > 0) {
+                const skuGroups = {};
+                const ubiGroups = {};
+                for (let i = 0; i < raw.length; i++) {
+                    const row = raw[i];
+                    if (!row || (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL'))) continue;
+                    const ubi = String(row.UBICACION || '').trim();
+                    const lpn = String(row.LPN || '').trim();
+                    const sku = String(row.PRODUCTO || '').trim();
+                    const cant = parseFloat(row.CANTIDAD) || 0;
+                    if (!sku || !ubi || cant <= 0) continue;
+                    
+                    const paletaKey = lpn ? `LPN: ${lpn} (${ubi})` : `UBI: ${ubi}`;
+                    if (!skuGroups[sku]) skuGroups[sku] = new Set();
+                    skuGroups[sku].add(paletaKey);
+                    
+                    const skuKey = lpn ? `LPN: ${lpn} (${sku})` : `SKU: ${sku}`;
+                    if (!ubiGroups[ubi]) ubiGroups[ubi] = new Set();
+                    ubiGroups[ubi].add(skuKey);
+                }
+                
+                let skusFragmentados = 0;
+                for (const s of Object.keys(skuGroups)) {
+                    if (skuGroups[s].size > 1) skusFragmentados++;
+                }
+                
+                let ubisMixtas = 0;
+                for (const u of Object.keys(ubiGroups)) {
+                    if (ubiGroups[u].size > 1) ubisMixtas++;
+                }
+                
+                saveReservaHistoryRecord({
+                    total_skus: Object.keys(skuGroups).length,
+                    skus_fragmentados: skusFragmentados,
+                    total_ubicaciones: Object.keys(ubiGroups).length,
+                    ubicaciones_mixtas: ubisMixtas
+                });
+            }
+        }
+
         return;
     }
 
