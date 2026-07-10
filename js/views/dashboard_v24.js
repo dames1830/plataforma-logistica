@@ -13187,47 +13187,40 @@ const renderRFSection = (container) => {
 
             // Calculate current KPIs for top cards
             const totalSkus = reservaState.skusArray.length;
-            const fragmentadosCount = reservaState.skusArray.filter(s => s.numPaletas > 1).length;
-            const pctFragmentados = totalSkus > 0 ? ((fragmentadosCount / totalSkus) * 100).toFixed(1) : 0;
+            const skusMas5Paletas = reservaState.skusArray.filter(s => s.numPaletas > 5).length;
+            const pctSkusMas5 = totalSkus > 0 ? ((skusMas5Paletas / totalSkus) * 100).toFixed(1) : 0;
 
             const totalUbis = ubicacionState.ubisArray.length;
-            const mixtasCount = ubicacionState.ubisArray.filter(u => u.numSkus > 1).length;
-            const pctMixtas = totalUbis > 0 ? ((mixtasCount / totalUbis) * 100).toFixed(1) : 0;
+            const ubisMenos50 = ubicacionState.ubisArray.filter(u => u.totalQty < 50).length;
+            const pctUbisMenos50 = totalUbis > 0 ? ((ubisMenos50 / totalUbis) * 100).toFixed(1) : 0;
 
             viewContainer.innerHTML = `
                 <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
-                    <div class="glass-panel" style="flex:1; min-width:250px; padding:20px; border-left:4px solid #ec4899; box-shadow:0 0 15px rgba(236,72,153,0.1);">
-                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; letter-spacing:1px; margin-bottom:5px;">SKUS FRAGMENTADOS</div>
-                        <div style="font-size:2rem; font-weight:900; color:#ec4899; text-shadow:0 0 10px rgba(236,72,153,0.3);">${fragmentadosCount} <span style="font-size:1rem; color:var(--text-muted);">de ${totalSkus}</span></div>
+                    <div class="glass-panel" style="flex:1; min-width:250px; padding:20px; border-left:4px solid #fbbf24; box-shadow:0 0 15px rgba(251,191,36,0.1);">
+                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; letter-spacing:1px; margin-bottom:5px;">SKUS CON > 5 PALETAS</div>
+                        <div style="font-size:2rem; font-weight:900; color:#fbbf24; text-shadow:0 0 10px rgba(251,191,36,0.3);">${skusMas5Paletas} <span style="font-size:1rem; color:var(--text-muted);">de ${totalSkus}</span></div>
                         <div style="font-size:0.85rem; color:#fff; margin-top:5px; display:flex; align-items:center; gap:5px;">
                             <div style="width:100%; background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden;">
-                                <div style="width:${pctFragmentados}%; background:#ec4899; height:100%; box-shadow:0 0 5px #ec4899;"></div>
+                                <div style="width:${pctSkusMas5}%; background:#fbbf24; height:100%; box-shadow:0 0 5px #fbbf24;"></div>
                             </div>
-                            <span>${pctFragmentados}%</span>
+                            <span>${pctSkusMas5}%</span>
                         </div>
                     </div>
 
-                    <div class="glass-panel" style="flex:1; min-width:250px; padding:20px; border-left:4px solid #f43f5e; box-shadow:0 0 15px rgba(244,63,94,0.1);">
-                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; letter-spacing:1px; margin-bottom:5px;">UBICACIONES MIXTAS</div>
-                        <div style="font-size:2rem; font-weight:900; color:#f43f5e; text-shadow:0 0 10px rgba(244,63,94,0.3);">${mixtasCount} <span style="font-size:1rem; color:var(--text-muted);">de ${totalUbis}</span></div>
+                    <div class="glass-panel" style="flex:1; min-width:250px; padding:20px; border-left:4px solid #60a5fa; box-shadow:0 0 15px rgba(96,165,250,0.1);">
+                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; letter-spacing:1px; margin-bottom:5px;">UBICACIONES CON < 50 UNID</div>
+                        <div style="font-size:2rem; font-weight:900; color:#60a5fa; text-shadow:0 0 10px rgba(96,165,250,0.3);">${ubisMenos50} <span style="font-size:1rem; color:var(--text-muted);">de ${totalUbis}</span></div>
                         <div style="font-size:0.85rem; color:#fff; margin-top:5px; display:flex; align-items:center; gap:5px;">
                             <div style="width:100%; background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden;">
-                                <div style="width:${pctMixtas}%; background:#f43f5e; height:100%; box-shadow:0 0 5px #f43f5e;"></div>
+                                <div style="width:${pctUbisMenos50}%; background:#60a5fa; height:100%; box-shadow:0 0 5px #60a5fa;"></div>
                             </div>
-                            <span>${pctMixtas}%</span>
-                        </div>
-                    </div>
-
-                    <div class="glass-panel" style="flex:1; min-width:250px; padding:20px; border-left:4px solid #10b981; box-shadow:0 0 15px rgba(16,185,129,0.1);">
-                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; letter-spacing:1px; margin-bottom:5px;">TOTAL PALETAS ALTAS</div>
-                        <div style="font-size:2rem; font-weight:900; color:#10b981; text-shadow:0 0 10px rgba(16,185,129,0.3);">${processedCount}</div>
-                        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:5px;">
-                            Paletas analizadas en la matriz
+                            <span>${pctUbisMenos50}%</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="glass-panel" style="margin-bottom:20px; padding:20px; position:relative; min-height:300px; border:1px solid rgba(236,72,153,0.2); box-shadow:inset 0 0 20px rgba(236,72,153,0.05);">
+
                     <h3 style="color:#fff; margin-top:0; font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:10px;">
                         <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ec4899; box-shadow:0 0 10px #ec4899;"></span>
                         EVOLUCIÓN HISTÓRICA POR DÍA
@@ -17404,6 +17397,7 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
 
 
 
