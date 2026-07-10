@@ -13245,7 +13245,7 @@ const renderRFSection = (container) => {
                             ${renderBar(skuDist['9_12'], totalSkus, '#ef4444')}
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px;">
-                            <div style="font-size:0.85rem; color:#fff;">SKU con mayor a 13 paletas</div>
+                            <div style="font-size:0.85rem; color:#fff;">SKU > 13 Paletas</div>
                             ${renderBar(skuDist['13_plus'], totalSkus, '#b91c1c')}
                         </div>
                     </div>
@@ -13270,7 +13270,7 @@ const renderRFSection = (container) => {
                             ${renderBar(ubiDist['6_10'], totalUbis, '#f97316')}
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px;">
-                            <div style="font-size:0.85rem; color:#fff;">Ubicación con mayor a 11 SKUs</div>
+                            <div style="font-size:0.85rem; color:#fff;">Ubicación > 11 SKUs</div>
                             ${renderBar(ubiDist['11_plus'], totalUbis, '#ef4444')}
                         </div>
                     </div>
