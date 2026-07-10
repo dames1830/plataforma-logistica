@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.341';
+const VERSION = '26.5.343';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12871,17 +12871,16 @@ const renderRFSection = (container) => {
       const skuGroups = {};
       let processedCount = 0;
 
-      for (let i = 2; i < rawReserva.length; i++) {
+      for (let i = 0; i < rawReserva.length; i++) {
           const row = rawReserva[i];
-          if (!row || row.length < 11) continue;
+          if (!row) continue;
           
-          const nivel = String(row[1] || '').toUpperCase();
-          if (!nivel.includes('ALTO') && !nivel.includes('AL')) continue;
+          if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) continue;
 
-          const ubicacion = String(row[4] || '').trim();
-          const lpn = String(row[5] || '').trim();
-          const sku = String(row[8] || '').trim();
-          const cantidad = parseFloat(row[10]) || 0;
+          const ubicacion = String(row.UBICACION || '').trim();
+          const lpn = String(row.LPN || '').trim();
+          const sku = String(row.PRODUCTO || '').trim();
+          const cantidad = parseFloat(row.CANTIDAD) || 0;
 
           if (!sku || cantidad <= 0) continue;
 
@@ -16992,6 +16991,7 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
 
 
 
