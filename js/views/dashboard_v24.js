@@ -13222,9 +13222,9 @@ const renderRFSection = (container) => {
             viewContainer.innerHTML = `
                 <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
                     <!-- TARJETA 1: DISTRIBUCIÓN DE SKUS -->
-                    <div class="glass-panel" style="flex:1; min-width:300px; padding:20px; border-top:4px solid #fbbf24; box-shadow:0 0 15px rgba(251,191,36,0.05);">
+                    <div class="glass-panel" style="flex:0 0 calc(33.333% - 14px); padding:20px; border-top:4px solid #fbbf24; box-shadow:0 0 15px rgba(251,191,36,0.05);">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div style="font-size:0.9rem; color:var(--text-muted); font-weight:800; letter-spacing:1px;">DISTRIBUCIÓN DE SKUS POR PALETAS</div>
+                            <div style="font-size:0.9rem; color:var(--text-muted); font-weight:800; letter-spacing:1px;">SKUS POR PALETAS</div>
                             <div style="font-size:0.8rem; color:rgba(255,255,255,0.3);">Total: ${totalSkus}</div>
                         </div>
                         
@@ -13251,9 +13251,9 @@ const renderRFSection = (container) => {
                     </div>
 
                     <!-- TARJETA 2: DISTRIBUCIÓN DE UBICACIONES -->
-                    <div class="glass-panel" style="flex:1; min-width:300px; padding:20px; border-top:4px solid #60a5fa; box-shadow:0 0 15px rgba(96,165,250,0.05);">
+                    <div class="glass-panel" style="flex:0 0 calc(33.333% - 14px); padding:20px; border-top:4px solid #60a5fa; box-shadow:0 0 15px rgba(96,165,250,0.05);">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div style="font-size:0.9rem; color:var(--text-muted); font-weight:800; letter-spacing:1px;">DISTRIBUCIÓN DE UBICACIONES POR SKUS</div>
+                            <div style="font-size:0.9rem; color:var(--text-muted); font-weight:800; letter-spacing:1px;">UBICACIONES POR SKUS</div>
                             <div style="font-size:0.8rem; color:rgba(255,255,255,0.3);">Total: ${totalUbis}</div>
                         </div>
                         
