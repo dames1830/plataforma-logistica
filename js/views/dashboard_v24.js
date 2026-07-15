@@ -12915,10 +12915,11 @@ const renderRFSection = (container) => {
           
           const sku7 = skuFull.substring(0, 7);
           
-          const match = ubi.match(/SEL[- ]?(\d+).*?(\d+)(?:\D*)$/);
+          // Fix Regex: Extract the first two numbers (e.g. 06 and 15 from SEL 06-15-01 or SEL 06-A-15)
+          const match = ubi.match(/SEL[- ]?(\d+)\D+(\d+)/);
           if (match) {
               const col = parseInt(match[1], 10);
-              const rackRow = parseInt(match[2], 10);
+              const rackRow = parseInt(match[2], 10); // this is the cuerpo
               
               if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
                   if (!layoutData[col]) layoutData[col] = {};
@@ -12928,9 +12929,13 @@ const renderRFSection = (container) => {
                   cell.totalQty += cant;
                   
                   let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
-                  let temporadaClean = 'OTRA';
-                  if (temporadaRaw.includes('ACTUAL')) temporadaClean = 'ACTUAL';
-                  else if (temporadaRaw.includes('ANTERIOR') || temporadaRaw.includes('PASADA')) temporadaClean = 'ANTERIOR';
+                  
+                  // New Season Logic
+                  let temporadaClean = 'ANTERIOR'; 
+                  const actuales = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+                  if (actuales.some(act => temporadaRaw.includes(act))) {
+                      temporadaClean = 'ACTUAL';
+                  }
                   
                   if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
                   cell.seasons[temporadaClean] += cant;
@@ -12951,7 +12956,7 @@ const renderRFSection = (container) => {
               const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
               
               let bgColor = 'rgba(255,255,255,0.02)';
-              let tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Nivel ${r}</b><br/>Vacío`;
+              let tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>Vacío`;
               
               if (cellData) {
                   const seasons = Object.keys(cellData.seasons);
@@ -12959,13 +12964,11 @@ const renderRFSection = (container) => {
                       bgColor = 'linear-gradient(135deg, #fbbf24 0%, #ec4899 100%)'; 
                   } else if (seasons[0] === 'ACTUAL') {
                       bgColor = '#3b82f6'; 
-                  } else if (seasons[0] === 'ANTERIOR') {
-                      bgColor = '#ef4444'; 
                   } else {
-                      bgColor = '#10b981'; // OTRA
+                      bgColor = '#ef4444'; // ANTERIOR (everything else)
                   }
                   
-                  tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Nivel ${r}</b><br/>
+                  tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>
                                  Total Unid: ${cellData.totalQty}<br/>
                                  SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
                   cellData.skus.slice(0,5).forEach(s => {
@@ -17637,6 +17640,7 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
 
 
 
