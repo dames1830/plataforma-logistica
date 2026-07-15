@@ -12896,17 +12896,19 @@ const renderRFSection = (container) => {
       articulosRaw.forEach(row => {
           const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX0']).trim();
           const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX2']).trim();
-          if (sku && temp) skuTemporada[sku] = temp.toUpperCase();
+          if (sku) skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
       });
 
       const layoutData = {};
       
       activoRaw.forEach(row => {
           const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
-          const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
+          const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
           const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
           
-          if (!ubi || !ubi.startsWith('SEL') || cant <= 0) return;
+          if (!ubi || !ubi.startsWith('SEL') || cant <= 0 || !skuFull) return;
+          
+          const sku7 = skuFull.substring(0, 7);
           
           const match = ubi.match(/SEL[- ]?(\d+).*?(\d+)(?:\D*)$/);
           if (match) {
@@ -12920,7 +12922,7 @@ const renderRFSection = (container) => {
                   const cell = layoutData[col][rackRow];
                   cell.totalQty += cant;
                   
-                  let temporadaRaw = skuTemporada[sku] || 'DESCONOCIDA';
+                  let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
                   let temporadaClean = 'OTRA';
                   if (temporadaRaw.includes('ACTUAL')) temporadaClean = 'ACTUAL';
                   else if (temporadaRaw.includes('ANTERIOR') || temporadaRaw.includes('PASADA')) temporadaClean = 'ANTERIOR';
@@ -12928,13 +12930,14 @@ const renderRFSection = (container) => {
                   if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
                   cell.seasons[temporadaClean] += cant;
                   
-                  const existingSku = cell.skus.find(s => s.sku === sku);
+                  const existingSku = cell.skus.find(s => s.sku === skuFull);
                   if (existingSku) existingSku.cant += cant;
-                  else cell.skus.push({ sku, cant, temporada: temporadaRaw });
+                  else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
               }
           }
       });
-let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
+
+      let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
       
       for (let c = 1; c <= 14; c++) {
           gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
@@ -12954,23 +12957,24 @@ let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10p
                   } else if (seasons[0] === 'ANTERIOR') {
                       bgColor = '#ef4444'; 
                   } else {
-                      bgColor = '#10b981'; 
+                      bgColor = '#10b981'; // OTRA
                   }
                   
                   tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Nivel ${r}</b><br/>
                                  Total Unid: ${cellData.totalQty}<br/>
-                                 SKUs: ${cellData.skus.length}<br/><hr style="border-color:rgba(255,255,255,0.1); margin:4px 0;"/>`;
+                                 SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
                   cellData.skus.slice(0,5).forEach(s => {
-                      tooltipHTML += `<span style="font-size:0.75rem; color:#ccc;">${s.sku} (${s.cant}) - ${s.temporada}</span><br/>`;
+                      tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada}</span><br/>`;
                   });
-                  if(cellData.skus.length > 5) tooltipHTML += `<span style="font-size:0.75rem; color:#ccc;">...y ${cellData.skus.length-5} más</span>`;
+                  if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>...y ${cellData.skus.length-5} más</span>`;
               }
               
               gridHtml += `
                   <div class="layout-cell" 
                        style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
-                       onmouseover="window.showTooltip(event, '${tooltipHTML.replace(/'/g, "\\\'")}')"
-                       onmouseout="window.hideTooltip()">
+                       onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
+                       onmouseout="window.hideTooltip()"
+                       data-tooltip="${tooltipHTML.replace(/"/g, '&quot;')}">
                   </div>
               `;
           }
@@ -13001,7 +13005,6 @@ let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10p
               </div>
           </div>
       `;
-
       // Global tooltip functions if they don't exist
       if (!window.showTooltip) {
           const tt = document.createElement('div');
@@ -17629,6 +17632,7 @@ let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10p
   renderTabContent();
   startRealTimeSync();
 };
+
 
 
 
