@@ -12861,7 +12861,7 @@ const renderRFSection = (container) => {
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
 
     // --- LAYOUT ACTIVO ---
-  const renderLayoutActivo = (container) => {
+    const renderLayoutActivo = (container) => {
       const activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
       const articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
@@ -12875,35 +12875,36 @@ const renderRFSection = (container) => {
           return;
       }
 
-      // Helper function to extract correct column from row
       const getColSafe = (row, possibleNames) => {
           if (!row) return '';
+          for (const key of Object.keys(row)) {
+              const upperKey = key.toUpperCase().trim();
+              if (possibleNames.some(name => upperKey.includes(name.toUpperCase()))) return String(row[key]);
+          }
+          const raw = Array.isArray(row) ? row : Object.values(row);
           for (const name of possibleNames) {
-              if (row[name] !== undefined) return String(row[name]);
-              const upperName = name.toUpperCase();
-              for(const key of Object.keys(row)) {
-                  if(key.toUpperCase() === upperName) return String(row[key]);
-              }
+              if (name === 'IDX0') return String(raw[0] || '');
+              if (name === 'IDX1') return String(raw[1] || '');
+              if (name === 'IDX2') return String(raw[2] || '');
+              if (name === 'IDX3') return String(raw[3] || '');
+              if (name === 'IDX5') return String(raw[5] || '');
           }
           return '';
       };
 
-      // Map articulos: SKU -> Temporada
       const skuTemporada = {};
       articulosRaw.forEach(row => {
-          const raw = Array.isArray(row) ? row : Object.values(row);
-          const sku = (getColSafe(row, ['Articulo', 'Artículo', 'Sku', 'PRODUCTO', 'SKU', 'CODIGO']) || String(raw[0] || '')).trim();
-          const temp = (getColSafe(row, ['Temporada', 'TEMPORADA']) || String(raw[2] || '')).trim();
+          const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX0']).trim();
+          const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX2']).trim();
           if (sku && temp) skuTemporada[sku] = temp.toUpperCase();
       });
 
-      // Analyze active stock locations
-      const layoutData = {}; // map of { col: { row: { totalQty, skus: [], seasons: {} } } }
+      const layoutData = {};
       
       activoRaw.forEach(row => {
-          const ubi = getColSafe(row, ['UBICACION', 'Ubicacion', 'Ubicación']).trim().toUpperCase();
-          const sku = getColSafe(row, ['PRODUCTO', 'Articulo', 'Artículo', 'Sku', 'SKU']).trim();
-          const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'Cantidad'])) || 0;
+          const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
+          const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
+          const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
           
           if (!ubi || !ubi.startsWith('SEL') || cant <= 0) return;
           
@@ -12912,7 +12913,6 @@ const renderRFSection = (container) => {
               const col = parseInt(match[1], 10);
               const rackRow = parseInt(match[2], 10);
               
-              // Ensure we only map col 1-14 and row 1-22
               if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
                   if (!layoutData[col]) layoutData[col] = {};
                   if (!layoutData[col][rackRow]) layoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
@@ -12920,7 +12920,6 @@ const renderRFSection = (container) => {
                   const cell = layoutData[col][rackRow];
                   cell.totalQty += cant;
                   
-                  // Clean up season string for matching
                   let temporadaRaw = skuTemporada[sku] || 'DESCONOCIDA';
                   let temporadaClean = 'OTRA';
                   if (temporadaRaw.includes('ACTUAL')) temporadaClean = 'ACTUAL';
@@ -12935,8 +12934,7 @@ const renderRFSection = (container) => {
               }
           }
       });
-
-      let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
+let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
       
       for (let c = 1; c <= 14; c++) {
           gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
@@ -17631,6 +17629,9 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
+
+
 
 
 
