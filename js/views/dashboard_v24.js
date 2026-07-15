@@ -641,6 +641,7 @@ const TABS = [
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
     { id: 'replenishment', label: 'Replenishment', icon: '🔄' },
     { id: 'analisis_reserva', label: 'Análisis Reserva', icon: '📦' },
+      { id: 'layout_activo', label: 'Layout Activo', icon: '???' },
     { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
@@ -13660,6 +13661,11 @@ const renderRFSection = (container) => {
           return;
       }
 
+        if (activeAnalisisSub === 'layout_activo') {
+            renderLayoutActivo(skuBuf);
+            return;
+        }
+
     if (activeAnalisisSub !== 'articulo_temp') {
         skuBuf.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
@@ -17625,6 +17631,8 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
+
 
 
 
