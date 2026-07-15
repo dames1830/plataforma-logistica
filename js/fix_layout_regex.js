@@ -129,7 +129,7 @@
       gridHtml += `</div>`;
 
       container.innerHTML = `
-          <div class="glass-panel" style="padding:20px; position:relative;">
+          <div class="glass-panel" style="padding:20px; position:relative; width: 66%;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                   <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                       <span style="font-size:1.5rem;">🗺️</span> LAYOUT DINÁMICO DE STOCK ACTIVO
@@ -150,3 +150,4 @@
               </div>
           </div>
       `;
+
