@@ -25,15 +25,20 @@
               if (name === 'IDX2') return String(raw[2] || '');
               if (name === 'IDX3') return String(raw[3] || '');
               if (name === 'IDX5') return String(raw[5] || '');
+              if (name === 'IDX14') return String(raw[14] || '');
           }
           return '';
       };
 
       const skuTemporada = {};
       articulosRaw.forEach(row => {
-          const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX0']).trim();
-          const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX2']).trim();
-          if (sku) skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+          const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
+          const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
+          if (sku) {
+              const sku7 = sku.substring(0, 7);
+              skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+              skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+          }
       });
 
       const layoutData = {};
