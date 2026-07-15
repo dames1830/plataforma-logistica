@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.360';
+const VERSION = '26.5.361';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12995,7 +12995,7 @@ const renderRFSection = (container) => {
           <div class="glass-panel" style="padding:20px; position:relative; width: 66%;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                   <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                      <span style="font-size:1.5rem;">🗺️</span> LAYOUT DINÁMICO DE STOCK ACTIVO
+                      <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
                   </h3>
                   <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800;">
                       <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
@@ -17640,6 +17640,9 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
+
+
 
 
 

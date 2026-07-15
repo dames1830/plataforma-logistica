@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v26.5.359';
+      this.APP_VERSION = 'v26.5.361';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
@@ -450,3 +450,4 @@ class App {
 
 // Inicialización
 new App('app');
+
