@@ -12935,16 +12935,16 @@ const renderRFSection = (container) => {
           }
       });
 
-      let gridHtml = \`<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">\`;
+      let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
       
       for (let c = 1; c <= 14; c++) {
-          gridHtml += \`<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">\`;
+          gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
           
           for (let r = 22; r >= 1; r--) {
               const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
               
               let bgColor = 'rgba(255,255,255,0.02)';
-              let tooltipHTML = \`<b>SEL \${String(c).padStart(2,'0')} - Nivel \${r}</b><br/>Vacío\`;
+              let tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Nivel ${r}</b><br/>Vacío`;
               
               if (cellData) {
                   const seasons = Object.keys(cellData.seasons);
@@ -12958,29 +12958,29 @@ const renderRFSection = (container) => {
                       bgColor = '#10b981'; 
                   }
                   
-                  tooltipHTML = \`<b>SEL \${String(c).padStart(2,'0')} - Nivel \${r}</b><br/>
-                                 Total Unid: \${cellData.totalQty}<br/>
-                                 SKUs: \${cellData.skus.length}<br/><hr style="border-color:rgba(255,255,255,0.1); margin:4px 0;"/>\`;
+                  tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Nivel ${r}</b><br/>
+                                 Total Unid: ${cellData.totalQty}<br/>
+                                 SKUs: ${cellData.skus.length}<br/><hr style="border-color:rgba(255,255,255,0.1); margin:4px 0;"/>`;
                   cellData.skus.slice(0,5).forEach(s => {
-                      tooltipHTML += \`<span style="font-size:0.75rem; color:#ccc;">\${s.sku} (\${s.cant}) - \${s.temporada}</span><br/>\`;
+                      tooltipHTML += `<span style="font-size:0.75rem; color:#ccc;">${s.sku} (${s.cant}) - ${s.temporada}</span><br/>`;
                   });
-                  if(cellData.skus.length > 5) tooltipHTML += \`<span style="font-size:0.75rem; color:#ccc;">...y \${cellData.skus.length-5} más</span>\`;
+                  if(cellData.skus.length > 5) tooltipHTML += `<span style="font-size:0.75rem; color:#ccc;">...y ${cellData.skus.length-5} más</span>`;
               }
               
-              gridHtml += \`
+              gridHtml += `
                   <div class="layout-cell" 
-                       style="height:15px; border:1px solid rgba(255,255,255,0.1); background:\${bgColor}; cursor:pointer; position:relative;"
-                       onmouseover="window.showTooltip(event, '\${tooltipHTML.replace(/'/g, "\\\\'")}')"
+                       style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
+                       onmouseover="window.showTooltip(event, '${tooltipHTML.replace(/'/g, "\\\'")}')"
                        onmouseout="window.hideTooltip()">
                   </div>
-              \`;
+              `;
           }
-          gridHtml += \`<div style="text-align:center; font-size:0.65rem; color:var(--text-muted); font-weight:800; margin-top:5px; border:1px solid rgba(255,255,255,0.2); padding:2px;">SEL \${String(c).padStart(2,'0')}</div>\`;
-          gridHtml += \`</div>\`;
+          gridHtml += `<div style="text-align:center; font-size:0.65rem; color:var(--text-muted); font-weight:800; margin-top:5px; border:1px solid rgba(255,255,255,0.2); padding:2px;">SEL ${String(c).padStart(2,'0')}</div>`;
+          gridHtml += `</div>`;
       }
-      gridHtml += \`</div>\`;
+      gridHtml += `</div>`;
 
-      container.innerHTML = \`
+      container.innerHTML = `
           <div class="glass-panel" style="padding:20px; position:relative;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                   <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
@@ -12996,12 +12996,12 @@ const renderRFSection = (container) => {
               
               <div style="display:flex; gap:10px;">
                   <div style="display:flex; flex-direction:column; justify-content:space-between; padding-bottom:25px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right;">
-                      \${Array.from({length:22}, (_,i) => 22-i).map(n => \`<div style="height:15px; display:flex; align-items:center;">\${n}</div>\`).join('')}
+                      ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center;">${n}</div>`).join('')}
                   </div>
-                  \${gridHtml}
+                  ${gridHtml}
               </div>
           </div>
-      \`;
+      `;
 
       // Global tooltip functions if they don't exist
       if (!window.showTooltip) {
@@ -17625,6 +17625,7 @@ const renderRFSection = (container) => {
   renderTabContent();
   startRealTimeSync();
 };
+
 
 
 
