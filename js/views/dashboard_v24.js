@@ -12863,7 +12863,7 @@ const renderRFSection = (container) => {
     // --- LAYOUT ACTIVO ---
   const renderLayoutActivo = (container) => {
       const activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
-      const articulosRaw = dataStore.articulos || [];
+      const articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
       if (!activoRaw.length || !articulosRaw.length) {
           container.innerHTML = `
