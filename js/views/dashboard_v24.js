@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.379';
+const VERSION = '26.5.380';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13073,6 +13073,9 @@ const renderRFSection = (container) => {
           const calcPerc = (s) => s.units > 0 ? (((s.units - s.bad_placed) / s.units) * 100).toFixed(1) : '0.0';
           const actualPerc = calcPerc(stats['ACTUAL']);
           const anteriorPerc = calcPerc(stats['ANTERIOR']);
+
+          const now = new Date();
+          const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
           
           const statsActualPadresSize = Array.isArray(stats['ACTUAL'].padres) ? stats['ACTUAL'].padres.length : (stats['ACTUAL'].padres ? stats['ACTUAL'].padres.size : 0);
           const statsAnteriorPadresSize = Array.isArray(stats['ANTERIOR'].padres) ? stats['ANTERIOR'].padres.length : (stats['ANTERIOR'].padres ? stats['ANTERIOR'].padres.size : 0);
@@ -13093,10 +13096,15 @@ const renderRFSection = (container) => {
 
           targetContainer.innerHTML = `
               <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
-                  <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden;">
+                  <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                          <h3 style="color:#fff; margin:0; font-size:1.2rem;">🗺️ LAYOUT SEL - BATA</h3>
+                          <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
+                              <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
+                          </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
+                              <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
+                                  🕒 ${timestampStr}
+                              </div>
                               ${btnCompartir}
                               ${btnSincronizar}
                           </div>
@@ -13119,8 +13127,12 @@ const renderRFSection = (container) => {
 
                   <div style="flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px;">
                       
-                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px;">
+                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
+                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
+                                  <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
+                              </div>
                               <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
                                   <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
                                   <span style="font-weight:800; color:#fff;">${uniquePadresSize.toLocaleString()}</span>
@@ -13129,21 +13141,20 @@ const renderRFSection = (container) => {
                                   <span style="color:var(--text-muted);">Total Unidades</span>
                                   <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
                               </div>
-                          </div>
-
-                          <div style="display:flex; gap:10px; text-align:center;">
-                              <div style="flex:1; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px;">
-                                  <div style="font-size:1.5rem; font-weight:800; color:#fff;">${emptyCellsCount}</div>
-                                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">CELDAS VACÍAS</div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                                  <span style="color:var(--text-muted);">Ubicaciones Vacías</span>
+                                  <span style="font-weight:800; color:#fff;">${emptyCellsCount.toLocaleString()}</span>
                               </div>
-                              <div style="flex:1; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px;">
-                                  <div style="font-size:1.5rem; font-weight:800; color:#fff;">${densidad}</div>
-                                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">UNID / CELDA</div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                                  <span style="color:var(--text-muted);">Densidad (Unid/Ubi)</span>
+                                  <span style="font-weight:800; color:#fff;">${densidad}</span>
                               </div>
                           </div>
                           
-                          <div style="display:flex; flex-direction:column; gap:10px;">
-                              <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; border-radius:4px;">
+                          <div>
+                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
+                              
+                              <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
                                       <span>T. Actual</span>
                                       <span>${actualPerc}%</span>
@@ -13183,7 +13194,7 @@ const renderRFSection = (container) => {
                           </div>
                       </div>
 
-                      <div class="glass-panel" style="padding:20px;">
+                      <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px; font-size:0.95rem; text-align:center;">DISTRIBUCIÓN DE DESVIACIÓN</h4>
                           <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
                               
