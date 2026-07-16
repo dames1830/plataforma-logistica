@@ -12860,400 +12860,421 @@ const renderRFSection = (container) => {
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
 
-    // --- LAYOUT ACTIVO ---
+// --- LAYOUT ACTIVO ---
     const renderLayoutActivo = async (container) => {
-      let isGlobal = false;
       let activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
-      // Sincronización Global
-      if (!activoRaw.length || !articulosRaw.length) {
-          container.innerHTML = `<div style="padding:3rem; text-align:center; color:#fff;">Cargando Layout Global... 🔄</div>`;
-          try {
-              const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-              const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
-              if (res.ok) {
-                  const payload = await res.json();
-                  if (payload && payload.data) {
-                      if (payload.data.type === 'processed') {
-                          buildLayoutHTML(payload.data.layoutData, payload.data.stats, payload.data.totalUnits, payload.data.uniquePadresSize, payload.data.timestampStr, true, container);
-                          return;
-                      } else if (payload.data.activoRaw && payload.data.articulosRaw) {
-                          activoRaw = payload.data.activoRaw;
-                          articulosRaw = payload.data.articulosRaw;
-                          isGlobal = true;
-                          dataStore.analisis_sku_activo = activoRaw;
-                          dataStore.analisis_sku_maestro = articulosRaw;
+      // Estructura Base con Toggle
+      container.innerHTML = `
+          <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+              <button id="btn-view-global" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px 20px; border-radius:8px; font-weight:800; cursor:pointer; transition:all 0.3s; box-shadow:0 0 10px rgba(59,130,246,0.3);">
+                  🌍 LAYOUT GLOBAL (Servidor)
+              </button>
+              <button id="btn-view-local" style="background:rgba(255, 255, 255, 0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); padding:8px 20px; border-radius:8px; font-weight:800; cursor:pointer; transition:all 0.3s;">
+                  💻 LAYOUT LOCAL (Tu Excel)
+              </button>
+          </div>
+          <div id="layout-content-area" style="width:100%; min-height:400px;">
+              <div style="padding:3rem; text-align:center; color:#fff;">Cargando Layout Global... 🔄</div>
+          </div>
+      `;
+
+      const contentArea = container.querySelector('#layout-content-area');
+      const btnGlobal = container.querySelector('#btn-view-global');
+      const btnLocal = container.querySelector('#btn-view-local');
+
+      let globalPayload = null;
+      let localLayoutData = {};
+      let localStats = { 'ACTUAL': { units:0, padres:[], bad_placed:0 }, 'ANTERIOR': { units:0, padres:[], bad_placed:0 } };
+      let localTotalUnits = 0;
+      let localUniquePadres = new Set();
+      let localHasData = false;
+
+      // 1. Fetch Global Data
+      try {
+          const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+          const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
+          if (res.ok) {
+              const payload = await res.json();
+              if (payload && payload.data && payload.data.type === 'processed') {
+                  globalPayload = payload.data;
+              }
+          }
+      } catch(e) { console.error("Error fetching global layout", e); }
+
+      // 2. Process Local Data if available
+      if (activoRaw.length && articulosRaw.length) {
+          localHasData = true;
+          let skuTemporada = {};
+          let padreStock = {};
+          
+          articulosRaw.forEach(row => {
+              const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
+              const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'TEMP']).trim().toUpperCase();
+              if (sku) skuTemporada[sku] = temp || 'DESCONOCIDA';
+          });
+          
+          activoRaw.forEach(row => {
+              const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
+              const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
+              if (sku && cant > 0) {
+                  const sku7 = sku.substring(0, 7);
+                  padreStock[sku7] = (padreStock[sku7] || 0) + cant;
+              }
+          });
+          
+          activoRaw.forEach(row => {
+              const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
+              const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
+              const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
+              
+              if (!ubi || !ubi.startsWith('SEL') || cant <= 0 || !skuFull) return;
+              
+              const sku7 = skuFull.substring(0, 7);
+              const totalStockForPadre = padreStock[sku7] || 0;
+              const isSaldo = totalStockForPadre < 20;
+
+              const match = ubi.match(/SEL[- ]?(\d+)\\D+(\d+)/);
+              if (match) {
+                  const col = parseInt(match[1], 10);
+                  const rackRow = parseInt(match[2], 10);
+                  
+                  if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
+                      if (col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
+
+                      if (!localLayoutData[col]) localLayoutData[col] = {};
+                      if (!localLayoutData[col][rackRow]) localLayoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
+                      
+                      const cell = localLayoutData[col][rackRow];
+                      cell.totalQty += cant;
+                      
+                      let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
+                      let temporadaClean = 'ANTERIOR'; 
+                      const actuales = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+                      if (actuales.some(act => temporadaRaw.includes(act))) {
+                          temporadaClean = 'ACTUAL';
+                      }
+                      
+                      if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
+                      cell.seasons[temporadaClean] += cant;
+                      
+                      const existingSku = cell.skus.find(s => s.sku === skuFull);
+                      if (existingSku) existingSku.cant += cant;
+                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
+
+                      localUniquePadres.add(sku7);
+                      localTotalUnits += cant;
+                      localStats[temporadaClean].units += cant;
+                      if (!localStats[temporadaClean].padres.includes(sku7)) localStats[temporadaClean].padres.push(sku7);
+
+                      let isValid = false;
+                      if (temporadaClean === 'ACTUAL') {
+                          if (col >= 6 && col <= 13) isValid = true;
+                          else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                      } else if (temporadaClean === 'ANTERIOR') {
+                          if (col >= 3 && col <= 5) isValid = true;
+                          else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                      }
+
+                      if (!isValid) {
+                          localStats[temporadaClean].bad_placed += cant;
                       }
                   }
               }
-          } catch(e) { console.error("Error fetching layout", e); }
+          });
       }
 
-      if (!activoRaw.length || !articulosRaw.length) {
-          container.innerHTML = `
-              <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                  <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🗺️</div>
-                  <h4>Faltan Datos Base</h4>
-                  <p>Para ver el Layout, por favor carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> (para las temporadas).</p>
-              </div>`;
-          return;
-      }
-
-      const getColSafe = (row, possibleNames) => {
-          if (!row) return '';
-          for (const key of Object.keys(row)) {
-              const upperKey = key.toUpperCase().trim();
-              if (possibleNames.some(name => upperKey.includes(name.toUpperCase()))) return String(row[key]);
-          }
-          const raw = Array.isArray(row) ? row : Object.values(row);
-          for (const name of possibleNames) {
-              if (name === 'IDX0') return String(raw[0] || '');
-              if (name === 'IDX1') return String(raw[1] || '');
-              if (name === 'IDX2') return String(raw[2] || '');
-              if (name === 'IDX3') return String(raw[3] || '');
-              if (name === 'IDX5') return String(raw[5] || '');
-              if (name === 'IDX14') return String(raw[14] || '');
-          }
-          return '';
-      };
-
-      const skuTemporada = {};
-      articulosRaw.forEach(row => {
-          const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
-          const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
-          if (sku) {
-              const sku7 = sku.substring(0, 7);
-              skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
-              skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
-          }
-      });
-
-      const padreStock = {};
-      activoRaw.forEach(row => {
-          const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
-          const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
-          const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
-          if (!ubi || cant <= 0 || !skuFull) return;
-          const sku7 = skuFull.substring(0, 7);
-          padreStock[sku7] = (padreStock[sku7] || 0) + cant;
-      });
-
-      const layoutData = {};
-      let totalUnits = 0;
-      let uniquePadres = new Set();
-      let stats = {
-          'ACTUAL': { units: 0, bad_placed: 0, padres: [] },
-          'ANTERIOR': { units: 0, bad_placed: 0, padres: [] }
-      };
-
-      activoRaw.forEach(row => {
-          const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
-          const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
-          const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
+      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, timestampStr, isGlobal, targetContainer) => {
+          let occupiedCells = 0;
+          let missingCellsCount = 0;
+          let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
-          if (!ubi || !ubi.startsWith('SEL') || cant <= 0 || !skuFull) return;
-          
-          const sku7 = skuFull.substring(0, 7);
-          const totalStockForPadre = padreStock[sku7] || 0;
-          const isSaldo = totalStockForPadre < 20;
-
-          const match = ubi.match(/SEL[- ]?(\d+)\D+(\d+)/);
-          if (match) {
-              const col = parseInt(match[1], 10);
-              const rackRow = parseInt(match[2], 10);
-              
-              if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
-                  if (col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
-
-                  if (!layoutData[col]) layoutData[col] = {};
-                  if (!layoutData[col][rackRow]) layoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
-                  
-                  const cell = layoutData[col][rackRow];
-                  cell.totalQty += cant;
-                  
-                  let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
-                  
-                  let temporadaClean = 'ANTERIOR'; 
-                  const actuales = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
-                  if (actuales.some(act => temporadaRaw.includes(act))) {
-                      temporadaClean = 'ACTUAL';
-                  }
-                  
-                  if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
-                  cell.seasons[temporadaClean] += cant;
-                  
-                  const existingSku = cell.skus.find(s => s.sku === skuFull);
-                  if (existingSku) existingSku.cant += cant;
-                  else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
-
-                  uniquePadres.add(sku7);
-                  totalUnits += cant;
-                  stats[temporadaClean].units += cant;
-                  if (!stats[temporadaClean].padres.includes(sku7)) stats[temporadaClean].padres.push(sku7);
-
-                  let isValid = false;
-                  if (temporadaClean === 'ACTUAL') {
-                      if (col >= 6 && col <= 13) isValid = true;
-                      else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
-                  } else if (temporadaClean === 'ANTERIOR') {
-                      if (col >= 3 && col <= 5) isValid = true;
-                      else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+          for (let c = 1; c <= 14; c++) {
+              gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
+              for (let r = 22; r >= 1; r--) {
+                  let cellExists = true;
+                  if (c >= 2 && c <= 13 && (r === 22 || r === 11)) {
+                      cellExists = false;
+                      missingCellsCount++;
                   }
 
-                  if (!isValid) {
-                      stats[temporadaClean].bad_placed += cant;
+                  if (!cellExists) {
+                      gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
+                      continue;
                   }
+
+                  const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
+                  let bgColor = 'rgba(255,255,255,0.02)';
+                  let tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>Vacío`;
+                  
+                  if (cellData) {
+                      occupiedCells++;
+                      const seasons = Object.keys(cellData.seasons);
+                      if (seasons.length > 1) {
+                          bgColor = 'linear-gradient(135deg, #fbbf24 0%, #ec4899 100%)'; 
+                      } else if (seasons[0] === 'ACTUAL') {
+                          bgColor = '#3b82f6'; 
+                      } else {
+                          bgColor = '#ef4444'; 
+                      }
+                      
+                      tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>
+                                     Total Unid: ${cellData.totalQty}<br/>
+                                     SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
+                      cellData.skus.slice(0,5).forEach(s => {
+                          tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada}</span><br/>`;
+                      });
+                      if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>...y ${cellData.skus.length-5} más</span>`;
+                  }
+                  
+                  gridHtml += `
+                      <div class="layout-cell" 
+                           style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
+                           onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
+                           onmouseout="window.hideTooltip()"
+                           data-tooltip="${tooltipHTML.replace(/"/g, '&quot;')}">
+                      </div>
+                  `;
               }
+              gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">SEL ${String(c).padStart(2,'0')}</div>`;
+              gridHtml += `</div>`;
           }
-      });
-
-      const now = new Date();
-      const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-
-      buildLayoutHTML(layoutData, stats, totalUnits, uniquePadres.size, timestampStr, isGlobal, container);
-    };
-
-    const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, timestampStr, isGlobal, container) => {
-      let occupiedCells = 0;
-      let missingCellsCount = 0;
-      let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
-      
-      for (let c = 1; c <= 14; c++) {
-          gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
-          
-          for (let r = 22; r >= 1; r--) {
-              let cellExists = true;
-              if (c >= 2 && c <= 13 && (r === 22 || r === 11)) {
-                  cellExists = false;
-                  missingCellsCount++;
-              }
-
-              if (!cellExists) {
-                  gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
-                  continue;
-              }
-
-              const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
-              
-              let bgColor = 'rgba(255,255,255,0.02)';
-              let tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>Vacío`;
-              
-              if (cellData) {
-                  occupiedCells++;
-                  const seasons = Object.keys(cellData.seasons);
-                  if (seasons.length > 1) {
-                      bgColor = 'linear-gradient(135deg, #fbbf24 0%, #ec4899 100%)'; 
-                  } else if (seasons[0] === 'ACTUAL') {
-                      bgColor = '#3b82f6'; 
-                  } else {
-                      bgColor = '#ef4444'; 
-                  }
-                  
-                  tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>
-                                 Total Unid: ${cellData.totalQty}<br/>
-                                 SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
-                  cellData.skus.slice(0,5).forEach(s => {
-                      tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada}</span><br/>`;
-                  });
-                  if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>...y ${cellData.skus.length-5} más</span>`;
-              }
-              
-              gridHtml += `
-                  <div class="layout-cell" 
-                       style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
-                       onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
-                       onmouseout="window.hideTooltip()"
-                       data-tooltip="${tooltipHTML.replace(/"/g, '&quot;')}">
-                  </div>
-              `;
-          }
-          gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">SEL ${String(c).padStart(2,'0')}</div>`;
           gridHtml += `</div>`;
-      }
-      gridHtml += `</div>`;
 
-      const ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
-      const emptyCells = ACTUAL_TOTAL_CELLS - occupiedCells;
-      const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
+          const ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
+          const emptyCells = ACTUAL_TOTAL_CELLS - occupiedCells;
+          const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
 
-      const calcPerc = (s) => s.units > 0 ? (((s.units - s.bad_placed) / s.units) * 100).toFixed(1) : '0.0';
-      const actualPerc = calcPerc(stats['ACTUAL']);
-      const anteriorPerc = calcPerc(stats['ANTERIOR']);
-      
-      const goodActual = stats['ACTUAL'].units - stats['ACTUAL'].bad_placed;
-      const goodAnterior = stats['ANTERIOR'].units - stats['ANTERIOR'].bad_placed;
+          const calcPerc = (s) => s.units > 0 ? (((s.units - s.bad_placed) / s.units) * 100).toFixed(1) : '0.0';
+          const actualPerc = calcPerc(stats['ACTUAL']);
+          const anteriorPerc = calcPerc(stats['ANTERIOR']);
+          
+          const goodActual = stats['ACTUAL'].units - stats['ACTUAL'].bad_placed;
+          const goodAnterior = stats['ANTERIOR'].units - stats['ANTERIOR'].bad_placed;
 
-      window.compartirLayoutPayload = {
-          type: 'processed',
-          layoutData,
-          stats,
-          totalUnits,
-          uniquePadresSize,
-          timestampStr
-      };
+          window.compartirLayoutPayload = {
+              type: 'processed',
+              layoutData,
+              stats,
+              totalUnits,
+              uniquePadresSize,
+              timestampStr
+          };
 
-      const btnCompartir = !isGlobal ? `
-          <button onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
-              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-              COMPARTIR LAYOUT
-          </button>
-      ` : '';
+          const btnCompartir = !isGlobal ? `
+              <button onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                  COMPARTIR LAYOUT
+              </button>
+          ` : '';
 
-      container.innerHTML = `
-          <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
-              <!-- MAPA LAYOUT -->
-              <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                      <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                          <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
-                          ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
-                      </h3>
-                      <div style="display:flex; align-items:center; gap:10px;">
-                          ${btnCompartir}
-                          <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
-                              🕒 ${timestampStr}
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
-                  </div>
-                  
-                  <div style="display:flex; gap:10px;">
-                      <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
-                          ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
-                      </div>
-                      ${gridHtml}
-                  </div>
-              </div>
-
-              <!-- PANEL ESTADISTICAS Y GRAFICOS (COLUMNA DERECHA) -->
-              <div style="flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px;">
-                  
-                  <!-- ESTADISTICAS -->
-                  <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
-                      <div>
-                          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
-                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                              <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
-                              <span style="font-weight:800; color:#fff;">${uniquePadresSize.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                              <span style="color:var(--text-muted);">Total Unidades</span>
-                              <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                              <span style="color:var(--text-muted);">Ubicaciones Vacías</span>
-                              <span style="font-weight:800; color:#fff;">${emptyCells.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                              <span style="color:var(--text-muted);">Densidad (Unid/Ubi)</span>
-                              <span style="font-weight:800; color:#fff;">${densidad}</span>
-                          </div>
-                      </div>
-
-                      <div>
-                          <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
-                          
-                          <!-- T ACTUAL -->
-                          <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
-                              <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
-                                  <span>T. Actual</span>
-                                  <span>${actualPerc}%</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                                  <span>Artículos (Padre)</span>
-                                  <span style="color:#fff;">${(stats['ACTUAL'].padres.length || stats['ACTUAL'].padres.size || 0).toLocaleString()}</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                                  <span>Unidades</span>
-                                  <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                                  <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                  <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
+          targetContainer.innerHTML = `
+              <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
+                  <!-- MAPA LAYOUT -->
+                  <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid ${isGlobal ? 'rgba(16, 185, 129, 0.4)' : 'rgba(59, 130, 246, 0.4)'}; box-shadow:0 0 20px ${isGlobal ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)'};">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                          <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
+                              <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
+                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(16, 185, 129, 0.2); color:#10b981; border:1px solid rgba(16, 185, 129, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL (SERVIDOR)</span>' : '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">LOCAL (TU EXCEL)</span>'}
+                          </h3>
+                          <div style="display:flex; align-items:center; gap:10px;">
+                              ${btnCompartir}
+                              <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
+                                  🕒 ${timestampStr}
                               </div>
                           </div>
-
-                          <!-- T ANTERIOR -->
-                          <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; border-radius:4px;">
-                              <div style="display:flex; justify-content:space-between; font-weight:800; color:#ef4444; margin-bottom:8px; font-size:0.95rem;">
-                                  <span>T. Anterior</span>
-                                  <span>${anteriorPerc}%</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                                  <span>Artículos (Padre)</span>
-                                  <span style="color:#fff;">${(stats['ANTERIOR'].padres.length || stats['ANTERIOR'].padres.size || 0).toLocaleString()}</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                                  <span>Unidades</span>
-                                  <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                                  <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                  <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-
-                  <!-- GRAFICOS -->
-                  <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
-                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px; font-size:0.95rem; text-align:center;">DISTRIBUCIÓN DE DESVIACIÓN</h4>
-                      <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
-                          
-                          <!-- Donut T. Actual -->
-                          <div style="display:flex; flex-direction:column; align-items:center;">
-                              <div style="position:relative; width:120px; height:120px;">
-                                  <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
-                                      <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                      <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                      <path stroke="#3b82f6" fill="none" stroke-width="4" stroke-dasharray="${actualPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                  </svg>
-                                  <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                      <span style="font-size:1.2rem; font-weight:800; color:#fff;">${actualPerc}%</span>
-                                      <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
-                                  </div>
-                              </div>
-                              <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#3b82f6;">T. ACTUAL</div>
-                          </div>
-
-                          <!-- Donut T. Anterior -->
-                          <div style="display:flex; flex-direction:column; align-items:center;">
-                              <div style="position:relative; width:120px; height:120px;">
-                                  <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
-                                      <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                      <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                      <path stroke="#10b981" fill="none" stroke-width="4" stroke-dasharray="${anteriorPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                  </svg>
-                                  <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                      <span style="font-size:1.2rem; font-weight:800; color:#fff;">${anteriorPerc}%</span>
-                                      <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
-                                  </div>
-                              </div>
-                              <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
-                          </div>
-
                       </div>
                       
-                      <!-- Legend -->
-                      <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:0.7rem; font-weight:800; color:var(--text-muted);">
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div> Desviación</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> Correcto (Actual)</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> Correcto (Anterior)</div>
+                      <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
+                      </div>
+                      
+                      <div style="display:flex; gap:10px;">
+                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
+                              ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
+                          </div>
+                          ${gridHtml}
+                      </div>
+                  </div>
+
+                  <!-- PANEL ESTADISTICAS Y GRAFICOS -->
+                  <div style="flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px;">
+                      
+                      <!-- ESTADISTICAS -->
+                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                          <div>
+                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                                  <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
+                                  <span style="font-weight:800; color:#fff;">${uniquePadresSize.toLocaleString()}</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                                  <span style="color:var(--text-muted);">Total Unidades</span>
+                                  <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
+                              </div>
+                          </div>
+
+                          <div style="display:flex; gap:10px; text-align:center;">
+                              <div style="flex:1; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.3); border-radius:8px; padding:10px;">
+                                  <div style="font-size:1.5rem; font-weight:800; color:#10b981;">${emptyCells}</div>
+                                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">CELDAS VACÍAS</div>
+                              </div>
+                              <div style="flex:1; background:rgba(236, 72, 153, 0.1); border:1px solid rgba(236, 72, 153, 0.3); border-radius:8px; padding:10px;">
+                                  <div style="font-size:1.5rem; font-weight:800; color:#ec4899;">${densidad}</div>
+                                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:800;">UNID / CELDA</div>
+                              </div>
+                          </div>
+                          
+                          <div>
+                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
+                              </div>
+                              
+                              <div style="margin-bottom:15px;">
+                                  <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                                      <span style="font-weight:800; color:#3b82f6;">T. Actual (Otoño-Inv)</span>
+                                      <span style="font-weight:800; color:#fff;">${stats['ACTUAL'].units.toLocaleString()} unid</span>
+                                  </div>
+                                  <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; display:flex;">
+                                      <div style="width:${actualPerc}%; background:#3b82f6;"></div>
+                                      <div style="width:${100 - actualPerc}%; background:#ef4444;"></div>
+                                  </div>
+                                  <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:var(--text-muted);">
+                                      <span style="color:#3b82f6;">${goodActual.toLocaleString()} correctas</span>
+                                      <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades que NO están en SEL 6-13 o son saldo')" onmouseout="window.hideTooltip()">Desviación ℹ️</span>
+                                      <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
+                                  </div>
+                              </div>
+                              
+                              <div>
+                                  <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                                      <span style="font-weight:800; color:#10b981;">T. Anterior (Prim-Ver)</span>
+                                      <span style="font-weight:800; color:#fff;">${stats['ANTERIOR'].units.toLocaleString()} unid</span>
+                                  </div>
+                                  <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; display:flex;">
+                                      <div style="width:${anteriorPerc}%; background:#10b981;"></div>
+                                      <div style="width:${100 - anteriorPerc}%; background:#ef4444;"></div>
+                                  </div>
+                                  <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:var(--text-muted);">
+                                      <span style="color:#10b981;">${goodAnterior.toLocaleString()} correctas</span>
+                                      <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
+                                      <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
 
+                      <!-- GRAFICOS -->
+                      <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                          <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
+                              
+                              <!-- Donut T. Actual -->
+                              <div style="display:flex; flex-direction:column; align-items:center;">
+                                  <div style="position:relative; width:120px; height:120px;">
+                                      <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+                                          <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="#3b82f6" fill="none" stroke-width="4" stroke-dasharray="${actualPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      </svg>
+                                      <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                          <span style="font-size:1.2rem; font-weight:800; color:#fff;">${actualPerc}%</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                      </div>
+                                  </div>
+                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#3b82f6;">T. ACTUAL</div>
+                              </div>
+
+                              <!-- Donut T. Anterior -->
+                              <div style="display:flex; flex-direction:column; align-items:center;">
+                                  <div style="position:relative; width:120px; height:120px;">
+                                      <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+                                          <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="#10b981" fill="none" stroke-width="4" stroke-dasharray="${anteriorPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      </svg>
+                                      <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                          <span style="font-size:1.2rem; font-weight:800; color:#fff;">${anteriorPerc}%</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                      </div>
+                                  </div>
+                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
+                              </div>
+
+                          </div>
+                          
+                          <!-- Legend -->
+                          <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:0.7rem; font-weight:800; color:var(--text-muted);">
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div> Desviación</div>
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> Correcto (Actual)</div>
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> Correcto (Anterior)</div>
+                          </div>
+                      </div>
                   </div>
               </div>
-          </div>
-      `;
+          `;
+      };
+
+      const renderGlobal = () => {
+          btnGlobal.style.background = 'rgba(16, 185, 129, 0.2)';
+          btnGlobal.style.borderColor = '#10b981';
+          btnGlobal.style.boxShadow = '0 0 10px rgba(16,185,129,0.3)';
+          
+          btnLocal.style.background = 'rgba(255, 255, 255, 0.05)';
+          btnLocal.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          btnLocal.style.boxShadow = 'none';
+          
+          if (globalPayload) {
+              buildLayoutHTML(globalPayload.layoutData, globalPayload.stats, globalPayload.totalUnits, globalPayload.uniquePadresSize, globalPayload.timestampStr, true, contentArea);
+          } else {
+              contentArea.innerHTML = `
+                  <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">☁️</div>
+                      <h4>No hay Layout en el Servidor</h4>
+                      <p>Sube y procesa un archivo Excel primero, luego envíalo al servidor.</p>
+                  </div>`;
+          }
+      };
+
+      const renderLocal = () => {
+          btnLocal.style.background = 'rgba(59, 130, 246, 0.2)';
+          btnLocal.style.borderColor = '#3b82f6';
+          btnLocal.style.boxShadow = '0 0 10px rgba(59,130,246,0.3)';
+          
+          btnGlobal.style.background = 'rgba(255, 255, 255, 0.05)';
+          btnGlobal.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          btnGlobal.style.boxShadow = 'none';
+
+          if (localHasData) {
+              const now = new Date();
+              const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+              buildLayoutHTML(localLayoutData, localStats, localTotalUnits, localUniquePadres.size, timestampStr, false, contentArea);
+          } else {
+              contentArea.innerHTML = `
+                  <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">📂</div>
+                      <h4>No hay Datos Locales</h4>
+                      <p>Para ver tu propio Layout, carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> en la pestaña Archivo.</p>
+                  </div>`;
+          }
+      };
+
+      btnGlobal.onclick = renderGlobal;
+      btnLocal.onclick = renderLocal;
+
+      // Por defecto siempre renderizar global si hay
+      if (globalPayload) {
+          renderGlobal();
+      } else if (localHasData) {
+          renderLocal();
+      } else {
+          renderGlobal(); // will show empty state
+      }
     };
 
     window.subirLayoutGlobal = (btn) => {
