@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.371';
+const VERSION = '26.5.372';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13317,7 +13317,6 @@ const renderRFSection = (container) => {
               }
           });
       }
-  };
 
 
   const renderAnalisisReserva = async (container) => {
