@@ -12861,9 +12861,41 @@ const renderRFSection = (container) => {
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
 
     // --- LAYOUT ACTIVO ---
-    const renderLayoutActivo = (container) => {
-      const activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
-      const articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
+    const renderLayoutActivo = async (container) => {
+      let isGlobal = false;
+      let activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
+      let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
+
+      // Sincronización Global
+      if (!activoRaw.length || !articulosRaw.length) {
+          container.innerHTML = `<div style="padding:3rem; text-align:center; color:#fff;">Cargando Layout Global... 🔄</div>`;
+          try {
+              const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+              const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
+              if (res.ok) {
+                  const payload = await res.json();
+                  if (payload && payload.data && payload.data.activoRaw && payload.data.articulosRaw) {
+                      activoRaw = payload.data.activoRaw;
+                      articulosRaw = payload.data.articulosRaw;
+                      isGlobal = true;
+                      dataStore.analisis_sku_activo = activoRaw;
+                      dataStore.analisis_sku_maestro = articulosRaw;
+                  }
+              }
+          } catch(e) { console.error("Error fetching layout", e); }
+      } else {
+          if (!window._layoutSynced) {
+              window._layoutSynced = true;
+              try {
+                  const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+                  fetch(`${base}/api/logistics/layout_activo`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ activoRaw, articulosRaw })
+                  }).catch(e => console.error(e));
+              } catch(e) { }
+          }
+      }
 
       if (!activoRaw.length || !articulosRaw.length) {
           container.innerHTML = `
@@ -12906,6 +12938,13 @@ const renderRFSection = (container) => {
 
       const layoutData = {};
       
+      let totalUnits = 0;
+      let uniquePadres = new Set();
+      let stats = {
+          'ACTUAL': { units: 0, bad_placed: 0 },
+          'ANTERIOR': { units: 0, bad_placed: 0 }
+      };
+
       activoRaw.forEach(row => {
           const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
           const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
@@ -12943,6 +12982,22 @@ const renderRFSection = (container) => {
                   const existingSku = cell.skus.find(s => s.sku === skuFull);
                   if (existingSku) existingSku.cant += cant;
                   else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
+
+                  // --- NEW STATS LOGIC ---
+                  uniquePadres.add(sku7);
+                  totalUnits += cant;
+                  stats[temporadaClean].units += cant;
+
+                  let isValid = false;
+                  if (temporadaClean === 'ACTUAL') {
+                      if ((col >= 6 && col <= 13) || [1, 2, 14].includes(col)) isValid = true;
+                  } else if (temporadaClean === 'ANTERIOR') {
+                      if ((col >= 3 && col <= 5) || [1, 2, 14].includes(col)) isValid = true;
+                  }
+
+                  if (!isValid) {
+                      stats[temporadaClean].bad_placed += cant;
+                  }
               }
           }
       });
@@ -12991,25 +13046,92 @@ const renderRFSection = (container) => {
       }
       gridHtml += `</div>`;
 
+      const now = new Date();
+      const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+
+      // Calculate percentages
+      const calcPerc = (s) => s.units > 0 ? (((s.units - s.bad_placed) / s.units) * 100).toFixed(1) : '0.0';
+      const actualPerc = calcPerc(stats['ACTUAL']);
+      const anteriorPerc = calcPerc(stats['ANTERIOR']);
+
       container.innerHTML = `
-          <div class="glass-panel" style="padding:20px; position:relative; width: 66%;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                  <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                      <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
-                  </h3>
-                  <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800;">
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
+          <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
+              <!-- MAPA LAYOUT -->
+              <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                      <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
+                          <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
+                          ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
+                      </h3>
+                      <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800;">
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
+                      </div>
+                  </div>
+                  
+                  <div style="display:flex; gap:10px;">
+                      <div style="display:flex; flex-direction:column; justify-content:space-between; padding-bottom:25px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right;">
+                          ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center;">${n}</div>`).join('')}
+                      </div>
+                      ${gridHtml}
                   </div>
               </div>
-              
-              <div style="display:flex; gap:10px;">
-                  <div style="display:flex; flex-direction:column; justify-content:space-between; padding-bottom:25px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right;">
-                      ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center;">${n}</div>`).join('')}
+
+              <!-- PANEL ESTADISTICAS -->
+              <div class="glass-panel" style="padding:20px; flex:1; min-width:300px; display:flex; flex-direction:column; gap:20px;">
+                  <div style="text-align:right; font-size:0.85rem; color:var(--text-muted); font-weight:700;">
+                      ${timestampStr}
                   </div>
-                  ${gridHtml}
+                  
+                  <div>
+                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">📊 RESUMEN GLOBAL</h4>
+                      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                          <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
+                          <span style="font-weight:800; color:#fff;">${uniquePadres.size.toLocaleString()}</span>
+                      </div>
+                      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                          <span style="color:var(--text-muted);">Total Unidades</span>
+                          <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
+                      </div>
+                  </div>
+
+                  <div>
+                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
+                      
+                      <!-- T ACTUAL -->
+                      <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:10px; border-radius:4px;">
+                          <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:5px; font-size:0.9rem;">
+                              <span>T. Actual</span>
+                              <span>${actualPerc}%</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                              <span>Unidades</span>
+                              <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+                              <span>Desviación</span>
+                              <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
+                          </div>
+                      </div>
+
+                      <!-- T ANTERIOR -->
+                      <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; border-radius:4px;">
+                          <div style="display:flex; justify-content:space-between; font-weight:800; color:#ef4444; margin-bottom:5px; font-size:0.9rem;">
+                              <span>T. Anterior</span>
+                              <span>${anteriorPerc}%</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                              <span>Unidades</span>
+                              <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+                              <span>Desviación</span>
+                              <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
+                          </div>
+                      </div>
+                  </div>
               </div>
           </div>
       `;
