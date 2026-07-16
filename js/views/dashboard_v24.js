@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.381';
+const VERSION = '26.5.382';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13010,7 +13010,7 @@ const renderRFSection = (container) => {
           };
       }
 
-      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer) => {
+      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer, isGlobal = false) => {
           window.__buildLayoutHTML = buildLayoutHTML;
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
@@ -13098,6 +13098,7 @@ const renderRFSection = (container) => {
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
+                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
                               <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
@@ -13278,14 +13279,12 @@ const renderRFSection = (container) => {
           }
       };
 
-      let payloadToRender = globalPayload;
-      if (!globalPayload || globalPayload.totalUnits === 0) {
-          payloadToRender = localPayload || globalPayload;
-      }
+      let payloadToRender = localPayload || globalPayload;
+      let isGlobal = !localPayload && globalPayload;
       
       if (payloadToRender) {
           window.compartirLayoutPayload = localPayload;
-          buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, container);
+          buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, container, isGlobal);
       }
     };
 
@@ -13339,7 +13338,7 @@ const renderRFSection = (container) => {
                     const d = payload.data;
                     const container = btn.closest('.glass-panel').parentElement.parentElement;
                     if (container) {
-                        window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container);
+                        window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container, true);
                     }
                     btn.innerHTML = '✅';
                     btn.style.background = 'rgba(16, 185, 129, 0.3)';
