@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.378';
+const VERSION = '26.5.379';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13011,6 +13011,7 @@ const renderRFSection = (container) => {
       }
 
       const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer) => {
+          window.__buildLayoutHTML = buildLayoutHTML;
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
@@ -13083,12 +13084,22 @@ const renderRFSection = (container) => {
               </button>
           ` : '';
 
+          const btnSincronizar = `
+              <button onclick="window.syncLayoutActivo(this)" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
+                  <svg id="sync-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
+                  SINCRONIZAR
+              </button>
+          `;
+
           targetContainer.innerHTML = `
               <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
                   <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden;">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem;">🗺️ LAYOUT SEL - BATA</h3>
-                          ${btnCompartir}
+                          <div style="display:flex; gap:8px; align-items:center;">
+                              ${btnCompartir}
+                              ${btnSincronizar}
+                          </div>
                       </div>
                       
                       <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
@@ -13304,6 +13315,63 @@ const renderRFSection = (container) => {
             }
         });
     };
+
+    window.syncLayoutActivo = async (btn) => {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg> Sincronizando...`;
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        try {
+            const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+            const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
+            if (res.ok) {
+                const payload = await res.json();
+                if (payload && payload.data && payload.data.type === 'processed' && payload.data.totalUnits > 0) {
+                    const d = payload.data;
+                    const container = btn.closest('.glass-panel').parentElement.parentElement;
+                    if (container) {
+                        window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container);
+                    }
+                    btn.innerHTML = '✅ Actualizado';
+                    btn.style.background = 'rgba(16, 185, 129, 0.3)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }, 1500);
+                    return;
+                } else {
+                    btn.innerHTML = 'ℹ️ Sin datos en servidor';
+                    btn.style.background = 'rgba(251, 191, 36, 0.2)';
+                    btn.style.borderColor = '#fbbf24';
+                }
+            } else {
+                btn.innerHTML = '❌ Error de conexión';
+                btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                btn.style.borderColor = '#ef4444';
+            }
+        } catch(e) {
+            btn.innerHTML = '❌ Sin conexión';
+            btn.style.background = 'rgba(239, 68, 68, 0.2)';
+            btn.style.borderColor = '#ef4444';
+        }
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.borderColor = '#10b981';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }, 2500);
+    };
+
+    // CSS for spin animation
+    if (!document.getElementById('sync-spin-style')) {
+        const style = document.createElement('style');
+        style.id = 'sync-spin-style';
+        style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+    }
 
 
 
