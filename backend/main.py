@@ -1,4 +1,4 @@
-# LOGISTICS BACKEND v26.5.207 - buffer_history + buffer_kpi_results + range endpoint + layout global
+# LOGISTICS BACKEND v26.5.208 - buffer_history + buffer_kpi_results + range endpoint + layout global
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
