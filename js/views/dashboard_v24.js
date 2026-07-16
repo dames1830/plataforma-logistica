@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.382';
+const VERSION = '26.5.383';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13079,6 +13079,11 @@ const renderRFSection = (container) => {
           
           const statsActualPadresSize = Array.isArray(stats['ACTUAL'].padres) ? stats['ACTUAL'].padres.length : (stats['ACTUAL'].padres ? stats['ACTUAL'].padres.size : 0);
           const statsAnteriorPadresSize = Array.isArray(stats['ANTERIOR'].padres) ? stats['ANTERIOR'].padres.length : (stats['ANTERIOR'].padres ? stats['ANTERIOR'].padres.size : 0);
+          
+          const percArtActual = uniquePadresSize > 0 ? Math.round((statsActualPadresSize / uniquePadresSize) * 100) : 0;
+          const percArtAnterior = uniquePadresSize > 0 ? Math.round((statsAnteriorPadresSize / uniquePadresSize) * 100) : 0;
+          const percUnidActual = totalUnits > 0 ? Math.round((stats['ACTUAL'].units / totalUnits) * 100) : 0;
+          const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
           const btnCompartir = (localPayload != null) ? `
               <button title="Compartir Layout" onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
@@ -13132,13 +13137,30 @@ const renderRFSection = (container) => {
                                   <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
                                   <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                               </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.85rem;">
                                   <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
                                   <span style="font-weight:800; color:#fff;">${uniquePadresSize.toLocaleString()}</span>
                               </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.75rem; padding-left:10px;">
+                                  <span style="color:var(--text-muted);">↳ T. Actual</span>
+                                  <span style="color:#3b82f6; font-weight:800;">${percArtActual}%</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.75rem; padding-left:10px;">
+                                  <span style="color:var(--text-muted);">↳ T. Anterior</span>
+                                  <span style="color:#ef4444; font-weight:800;">${percArtAnterior}%</span>
+                              </div>
+                              
+                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.85rem;">
                                   <span style="color:var(--text-muted);">Total Unidades</span>
                                   <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.75rem; padding-left:10px;">
+                                  <span style="color:var(--text-muted);">↳ T. Actual</span>
+                                  <span style="color:#3b82f6; font-weight:800;">${percUnidActual}%</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.75rem; padding-left:10px;">
+                                  <span style="color:var(--text-muted);">↳ T. Anterior</span>
+                                  <span style="color:#ef4444; font-weight:800;">${percUnidAnterior}%</span>
                               </div>
                               <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
                                   <span style="color:var(--text-muted);">Ubicaciones Vacías</span>
