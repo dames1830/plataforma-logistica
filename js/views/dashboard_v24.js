@@ -13093,8 +13093,8 @@ const renderRFSection = (container) => {
                   </div>
                   
                   <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior (SEL 3-5)</div>
-                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual (SEL 6-13)</div>
+                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
+                      <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
                       <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
                       <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
                   </div>
@@ -13110,7 +13110,10 @@ const renderRFSection = (container) => {
               <!-- PANEL ESTADISTICAS -->
               <div class="glass-panel" style="padding:20px; flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                   <div>
-                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">📊 RESUMEN GLOBAL</h4>
+                      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+                          <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
+                          <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
+                      </div>
                       <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
                           <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
                           <span style="font-weight:800; color:#fff;">${uniquePadres.size.toLocaleString()}</span>
@@ -13130,7 +13133,7 @@ const renderRFSection = (container) => {
                   </div>
 
                   <div>
-                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
+                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO Y DESVIACIÓN</h4>
                       
                       <!-- T ACTUAL -->
                       <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
@@ -13139,10 +13142,17 @@ const renderRFSection = (container) => {
                               <span>${actualPerc}%</span>
                           </div>
                           
-                          <!-- Progress Bar T. Actual -->
-                          <div style="width:100%; height:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:8px; overflow:hidden; display:flex;">
-                              <div style="width:${actualPerc}%; background:#3b82f6; height:100%;"></div>
-                              <div style="width:${100 - parseFloat(actualPerc)}%; background:#ef4444; height:100%;"></div>
+                          <!-- Gráfico de Desviación T. Actual -->
+                          <div style="margin-bottom:12px; border:1px solid rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+                              <div style="font-size:0.65rem; text-align:center; background:rgba(0,0,0,0.5); padding:2px 0; color:#aaa; font-weight:800; letter-spacing:1px;">GRÁFICO DE DESVIACIÓN</div>
+                              <div style="width:100%; height:20px; background:rgba(0,0,0,0.3); display:flex; position:relative;">
+                                  <div style="width:${actualPerc}%; background:#3b82f6; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
+                                      ${actualPerc > 10 ? 'CORRECTO' : ''}
+                                  </div>
+                                  <div style="width:${100 - parseFloat(actualPerc)}%; background:#ef4444; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
+                                      ${(100 - parseFloat(actualPerc)) > 10 ? 'DESVIADO' : ''}
+                                  </div>
+                              </div>
                           </div>
 
                           <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
@@ -13154,7 +13164,7 @@ const renderRFSection = (container) => {
                               <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
                           </div>
                           <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                              <span>Desviación (>20u)</span>
+                              <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
                               <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
                           </div>
                       </div>
@@ -13166,10 +13176,17 @@ const renderRFSection = (container) => {
                               <span>${anteriorPerc}%</span>
                           </div>
                           
-                          <!-- Progress Bar T. Anterior -->
-                          <div style="width:100%; height:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:8px; overflow:hidden; display:flex;">
-                              <div style="width:${anteriorPerc}%; background:#10b981; height:100%;"></div>
-                              <div style="width:${100 - parseFloat(anteriorPerc)}%; background:#ef4444; height:100%;"></div>
+                          <!-- Gráfico de Desviación T. Anterior -->
+                          <div style="margin-bottom:12px; border:1px solid rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+                              <div style="font-size:0.65rem; text-align:center; background:rgba(0,0,0,0.5); padding:2px 0; color:#aaa; font-weight:800; letter-spacing:1px;">GRÁFICO DE DESVIACIÓN</div>
+                              <div style="width:100%; height:20px; background:rgba(0,0,0,0.3); display:flex; position:relative;">
+                                  <div style="width:${anteriorPerc}%; background:#10b981; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
+                                      ${anteriorPerc > 10 ? 'CORRECTO' : ''}
+                                  </div>
+                                  <div style="width:${100 - parseFloat(anteriorPerc)}%; background:#ef4444; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
+                                      ${(100 - parseFloat(anteriorPerc)) > 10 ? 'DESVIADO' : ''}
+                                  </div>
+                              </div>
                           </div>
 
                           <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
@@ -13181,7 +13198,7 @@ const renderRFSection = (container) => {
                               <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
                           </div>
                           <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                              <span>Desviación (>20u)</span>
+                              <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
                               <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
                           </div>
                       </div>
