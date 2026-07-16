@@ -10890,7 +10890,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.367 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.410 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13176,6 +13176,12 @@ const renderRFSection = (container) => {
           const calcPerc = (s) => s.units > 0 ? (((s.units - s.bad_placed) / s.units) * 100).toFixed(1) : '0.0';
           const actualPerc = calcPerc(stats['ACTUAL']);
           const anteriorPerc = calcPerc(stats['ANTERIOR']);
+          
+          const statsGeneral = {
+              units: stats['ACTUAL'].units + stats['ANTERIOR'].units,
+              bad_placed: stats['ACTUAL'].bad_placed + stats['ANTERIOR'].bad_placed
+          };
+          const generalPerc = calcPerc(statsGeneral);
 
           const now = new Date();
           const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
@@ -13315,11 +13321,30 @@ const renderRFSection = (container) => {
                                       <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
                                   </div>
                               </div>
+
+                              <div style="background:rgba(139,92,246,0.1); border-left:3px solid #8b5cf6; padding:10px; border-radius:4px; margin-top:15px;">
+                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:#8b5cf6; margin-bottom:8px; font-size:0.95rem;">
+                                      <span>TOTAL GENERAL</span>
+                                      <span>${generalPerc}%</span>
+                                  </div>
+                                  <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                                      <span>Artículos (Padre)</span>
+                                      <span style="color:#fff;">${uniquePadresSize.toLocaleString()}</span>
+                                  </div>
+                                  <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                                      <span>Unidades</span>
+                                      <span style="color:#fff;">${statsGeneral.units.toLocaleString()}</span>
+                                  </div>
+                                  <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+                                      <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Desviación general total')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
+                                      <span style="color:#ef4444;">${statsGeneral.bad_placed.toLocaleString()} mal ubicadas</span>
+                                  </div>
+                              </div>
                           </div>
                       </div>
 
                       <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
-                          <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px; font-size:0.95rem; text-align:center;">DISTRIBUCIÓN DE DESVIACIÓN</h4>
+                          <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px; font-size:0.95rem; text-align:center;">REPORTE AVANCE</h4>
                           <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
                               
                               <div style="display:flex; flex-direction:column; align-items:center;">
@@ -13352,12 +13377,28 @@ const renderRFSection = (container) => {
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
                               </div>
 
+                              <div style="display:flex; flex-direction:column; align-items:center;">
+                                  <div style="position:relative; width:120px; height:120px;">
+                                      <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+                                          <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="#8b5cf6" fill="none" stroke-width="4" stroke-dasharray="${generalPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      </svg>
+                                      <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                          <span style="font-size:1.2rem; font-weight:800; color:#fff;">${generalPerc}%</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                      </div>
+                                  </div>
+                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#8b5cf6;">GENERAL</div>
+                              </div>
+
                           </div>
                           
                           <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:0.7rem; font-weight:800; color:var(--text-muted);">
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div> Desviación</div>
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> Correcto (Actual)</div>
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> Correcto (Anterior)</div>
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#8b5cf6;"></div> Correcto (General)</div>
                           </div>
 
                       </div>
