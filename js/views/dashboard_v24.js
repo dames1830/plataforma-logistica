@@ -13404,7 +13404,7 @@ const renderRFSection = (container) => {
           }
       };
 
-      targetContainer = container;
+      let targetContainer = container;
       targetContainer.innerHTML = '';
       
       const activoWrap = document.createElement('div');
