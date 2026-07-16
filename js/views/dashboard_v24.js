@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.361';
+const VERSION = '26.5.368';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13082,7 +13082,7 @@ const renderRFSection = (container) => {
 
       // TOTAL_CELLS is 308 (14x22). We subtract missingCellsCount (24 = 12 cols * 2 cells)
       const ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
-            emptyCells = TOTAL_CELLS - occupiedCells;
+      emptyCells = ACTUAL_TOTAL_CELLS - occupiedCells;
       const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
 
       const now = new Date();
