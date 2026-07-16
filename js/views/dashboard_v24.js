@@ -10890,7 +10890,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.410 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.420 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13242,42 +13242,54 @@ const renderRFSection = (container) => {
                       
                       <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
-                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
                                   <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
                                   <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                               </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.85rem;">
-                                  <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
-                                  <span style="font-weight:800; color:#fff;">${uniquePadresSize.toLocaleString()}</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.75rem; padding-left:10px;">
-                                  <span style="color:var(--text-muted);">↳ T. Actual</span>
-                                  <span style="color:#3b82f6; font-weight:800;">${percArtActual}%</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.75rem; padding-left:10px;">
-                                  <span style="color:var(--text-muted);">↳ T. Anterior</span>
-                                  <span style="color:#ef4444; font-weight:800;">${percArtAnterior}%</span>
+                              
+                              <div style="margin-bottom:15px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                      <span style="color:var(--text-muted); font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Artículos (Padres)</span>
+                                      <span style="font-weight:900; color:#fff; font-size:1.1rem;">${uniquePadresSize.toLocaleString()}</span>
+                                  </div>
+                                  
+                                  <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
+                                      <div style="width:${percArtActual}%; background:#3b82f6; height:100%; transition:width 1s ease;"></div>
+                                      <div style="width:${percArtAnterior}%; background:#ef4444; height:100%; transition:width 1s ease;"></div>
+                                  </div>
+                                  
+                                  <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800;">
+                                      <span style="color:#3b82f6; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div> Actual ${percArtActual}%</span>
+                                      <span style="color:#ef4444; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div> Anterior ${percArtAnterior}%</span>
+                                  </div>
                               </div>
                               
-                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.85rem;">
-                                  <span style="color:var(--text-muted);">Total Unidades</span>
-                                  <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
+                              <div style="margin-bottom:15px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                      <span style="color:var(--text-muted); font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Unidades Totales</span>
+                                      <span style="font-weight:900; color:#fff; font-size:1.1rem;">${totalUnits.toLocaleString()}</span>
+                                  </div>
+                                  
+                                  <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
+                                      <div style="width:${percUnidActual}%; background:#3b82f6; height:100%; transition:width 1s ease;"></div>
+                                      <div style="width:${percUnidAnterior}%; background:#ef4444; height:100%; transition:width 1s ease;"></div>
+                                  </div>
+                                  
+                                  <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800;">
+                                      <span style="color:#3b82f6; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div> Actual ${percUnidActual}%</span>
+                                      <span style="color:#ef4444; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div> Anterior ${percUnidAnterior}%</span>
+                                  </div>
                               </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.75rem; padding-left:10px;">
-                                  <span style="color:var(--text-muted);">↳ T. Actual</span>
-                                  <span style="color:#3b82f6; font-weight:800;">${percUnidActual}%</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.75rem; padding-left:10px;">
-                                  <span style="color:var(--text-muted);">↳ T. Anterior</span>
-                                  <span style="color:#ef4444; font-weight:800;">${percUnidAnterior}%</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                                  <span style="color:var(--text-muted);">Ubicaciones Vacías</span>
-                                  <span style="font-weight:800; color:#fff;">${emptyCellsCount.toLocaleString()}</span>
-                              </div>
-                              <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                                  <span style="color:var(--text-muted);">Densidad (Unid/Ubi)</span>
-                                  <span style="font-weight:800; color:#fff;">${densidad}</span>
+                              
+                              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                                  <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">Ubicaciones Vacías</span>
+                                      <span style="font-weight:900; color:#fff; font-size:1.2rem;">${emptyCellsCount.toLocaleString()}</span>
+                                  </div>
+                                  <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">Densidad (Unid/Ubi)</span>
+                                      <span style="font-weight:900; color:#fff; font-size:1.2rem;">${densidad}</span>
+                                  </div>
                               </div>
                           </div>
                           
@@ -13344,7 +13356,10 @@ const renderRFSection = (container) => {
                       </div>
 
                       <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
-                          <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px; font-size:0.95rem; text-align:center;">REPORTE AVANCE</h4>
+                          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
+                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE SEL - BATA</h4>
+                              <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
+                          </div>
                           <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
                               
                               <div style="display:flex; flex-direction:column; align-items:center;">
@@ -13356,7 +13371,7 @@ const renderRFSection = (container) => {
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                           <span style="font-size:1.2rem; font-weight:800; color:#fff;">${actualPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#3b82f6;">T. ACTUAL</div>
@@ -13371,7 +13386,7 @@ const renderRFSection = (container) => {
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                           <span style="font-size:1.2rem; font-weight:800; color:#fff;">${anteriorPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
@@ -13386,7 +13401,7 @@ const renderRFSection = (container) => {
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                           <span style="font-size:1.2rem; font-weight:800; color:#fff;">${generalPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#8b5cf6;">GENERAL</div>
@@ -13396,9 +13411,9 @@ const renderRFSection = (container) => {
                           
                           <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:0.7rem; font-weight:800; color:var(--text-muted);">
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div> Desviación</div>
-                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> Correcto (Actual)</div>
-                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> Correcto (Anterior)</div>
-                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#8b5cf6;"></div> Correcto (General)</div>
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> T. Actual</div>
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> T. Anterior</div>
+                              <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#8b5cf6;"></div> General</div>
                           </div>
 
                       </div>
