@@ -14112,6 +14112,24 @@ const renderRFSection = (container) => {
               } catch(e) {
                   console.warn("[PULSE] LocalStorage lleno. Los datos solo persistirán en esta sesión.", e);
               }
+              
+              // --- UPLOAD TO GLOBAL SERVER ---
+              try {
+                  const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+                  console.log("[PULSE] Subiendo layout_activo al servidor global...");
+                  fetch(`${base}/api/logistics/layout_activo`, {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({
+                          activoRaw: dataStore.analisis_sku_activo || dataStore.stockActivo || [],
+                          articulosRaw: dataStore.analisis_sku_maestro || dataStore.articulos || []
+                      })
+                  }).then(r => console.log("[PULSE] layout_activo subido exitosamente."))
+                    .catch(e => console.warn('Error saving layout_activo globally', e));
+              } catch(e) {
+                  console.warn('Error intentando subir layout_activo', e);
+              }
+              
               renderAnalisisSKUTab();
           } else {
               alert('⚠️ ERROR: El análisis no generó datos.');
