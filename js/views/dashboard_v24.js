@@ -13419,6 +13419,8 @@ const renderRFSection = (container) => {
           buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, activoWrap, isGlobal, false, localPayload != null);
       }
 
+      // DESACTIVADO TEMPORALMENTE A PETICIÓN DEL USUARIO
+      /*
       if (reservaPayload || globalPayloadReserva) {
           const reservaWrap = document.createElement('div');
           reservaWrap.id = 'layout-reserva-wrap';
@@ -13431,6 +13433,7 @@ const renderRFSection = (container) => {
           window.compartirLayoutReservaPayload = reservaPayload;
           buildLayoutHTML(resPayloadToRender.layoutData, resPayloadToRender.stats, resPayloadToRender.totalUnits, resPayloadToRender.uniquePadresSize, reservaWrap, isGlobalRes, true, reservaPayload != null);
       }
+      */
     };
 
     window.subirLayoutGlobal = (btn) => {
