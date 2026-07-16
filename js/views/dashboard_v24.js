@@ -10890,7 +10890,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.331 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.366 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13107,104 +13107,127 @@ const renderRFSection = (container) => {
                   </div>
               </div>
 
-              <!-- PANEL ESTADISTICAS -->
-              <div class="glass-panel" style="padding:20px; flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
-                  <div>
-                      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
-                          <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
-                          <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
+              <!-- PANEL ESTADISTICAS Y GRAFICOS (COLUMNA DERECHA) -->
+              <div style="flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px;">
+                  
+                  <!-- ESTADISTICAS -->
+                  <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div>
+                          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
+                              <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                              <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
+                              <span style="font-weight:800; color:#fff;">${uniquePadres.size.toLocaleString()}</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                              <span style="color:var(--text-muted);">Total Unidades</span>
+                              <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                              <span style="color:var(--text-muted);">Ubicaciones Vacías</span>
+                              <span style="font-weight:800; color:#fff;">${emptyCells.toLocaleString()}</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
+                              <span style="color:var(--text-muted);">Densidad (Unid/Ubi)</span>
+                              <span style="font-weight:800; color:#fff;">${densidad}</span>
+                          </div>
                       </div>
-                      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                          <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
-                          <span style="font-weight:800; color:#fff;">${uniquePadres.size.toLocaleString()}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                          <span style="color:var(--text-muted);">Total Unidades</span>
-                          <span style="font-weight:800; color:#fff;">${totalUnits.toLocaleString()}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                          <span style="color:var(--text-muted);">Ubicaciones Vacías</span>
-                          <span style="font-weight:800; color:#fff;">${emptyCells.toLocaleString()}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
-                          <span style="color:var(--text-muted);">Densidad (Unid/Ubi)</span>
-                          <span style="font-weight:800; color:#fff;">${densidad}</span>
+
+                      <div>
+                          <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
+                          
+                          <!-- T ACTUAL -->
+                          <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
+                              <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
+                                  <span>T. Actual</span>
+                                  <span>${actualPerc}%</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                                  <span>Artículos (Padre)</span>
+                                  <span style="color:#fff;">${stats['ACTUAL'].padres.size.toLocaleString()}</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                                  <span>Unidades</span>
+                                  <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+                                  <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
+                                  <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
+                              </div>
+                          </div>
+
+                          <!-- T ANTERIOR -->
+                          <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; border-radius:4px;">
+                              <div style="display:flex; justify-content:space-between; font-weight:800; color:#ef4444; margin-bottom:8px; font-size:0.95rem;">
+                                  <span>T. Anterior</span>
+                                  <span>${anteriorPerc}%</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                                  <span>Artículos (Padre)</span>
+                                  <span style="color:#fff;">${stats['ANTERIOR'].padres.size.toLocaleString()}</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
+                                  <span>Unidades</span>
+                                  <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+                                  <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
+                                  <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
+                              </div>
+                          </div>
                       </div>
                   </div>
 
-                  <div>
-                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO Y DESVIACIÓN</h4>
+                  <!-- GRAFICOS -->
+                  <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px; font-size:0.95rem; text-align:center;">DISTRIBUCIÓN DE DESVIACIÓN</h4>
+                      <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
+                          
+                          <!-- Donut T. Actual -->
+                          <div style="display:flex; flex-direction:column; align-items:center;">
+                              <div style="position:relative; width:120px; height:120px;">
+                                  <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+                                      <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      <path stroke="#3b82f6" fill="none" stroke-width="4" stroke-dasharray="${actualPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                  </svg>
+                                  <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                      <span style="font-size:1.2rem; font-weight:800; color:#fff;">${actualPerc}%</span>
+                                      <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                  </div>
+                              </div>
+                              <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#3b82f6;">T. ACTUAL</div>
+                          </div>
+
+                          <!-- Donut T. Anterior -->
+                          <div style="display:flex; flex-direction:column; align-items:center;">
+                              <div style="position:relative; width:120px; height:120px;">
+                                  <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+                                      <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                      <path stroke="#10b981" fill="none" stroke-width="4" stroke-dasharray="${anteriorPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                  </svg>
+                                  <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                      <span style="font-size:1.2rem; font-weight:800; color:#fff;">${anteriorPerc}%</span>
+                                      <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800;">CORRECTO</span>
+                                  </div>
+                              </div>
+                              <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
+                          </div>
+
+                      </div>
                       
-                      <!-- T ACTUAL -->
-                      <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
-                          <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
-                              <span>T. Actual</span>
-                              <span>${actualPerc}%</span>
-                          </div>
-                          
-                          <!-- Gráfico de Desviación T. Actual -->
-                          <div style="margin-bottom:12px; border:1px solid rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
-                              <div style="font-size:0.65rem; text-align:center; background:rgba(0,0,0,0.5); padding:2px 0; color:#aaa; font-weight:800; letter-spacing:1px;">GRÁFICO DE DESVIACIÓN</div>
-                              <div style="width:100%; height:20px; background:rgba(0,0,0,0.3); display:flex; position:relative;">
-                                  <div style="width:${actualPerc}%; background:#3b82f6; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
-                                      ${actualPerc > 10 ? 'CORRECTO' : ''}
-                                  </div>
-                                  <div style="width:${100 - parseFloat(actualPerc)}%; background:#ef4444; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
-                                      ${(100 - parseFloat(actualPerc)) > 10 ? 'DESVIADO' : ''}
-                                  </div>
-                              </div>
-                          </div>
-
-                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                              <span>Artículos (Padre)</span>
-                              <span style="color:#fff;">${stats['ACTUAL'].padres.size.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                              <span>Unidades</span>
-                              <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                              <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                              <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
-                          </div>
+                      <!-- Legend -->
+                      <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:0.7rem; font-weight:800; color:var(--text-muted);">
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div> Desviación</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> Correcto (Actual)</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> Correcto (Anterior)</div>
                       </div>
 
-                      <!-- T ANTERIOR -->
-                      <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; border-radius:4px;">
-                          <div style="display:flex; justify-content:space-between; font-weight:800; color:#ef4444; margin-bottom:8px; font-size:0.95rem;">
-                              <span>T. Anterior</span>
-                              <span>${anteriorPerc}%</span>
-                          </div>
-                          
-                          <!-- Gráfico de Desviación T. Anterior -->
-                          <div style="margin-bottom:12px; border:1px solid rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
-                              <div style="font-size:0.65rem; text-align:center; background:rgba(0,0,0,0.5); padding:2px 0; color:#aaa; font-weight:800; letter-spacing:1px;">GRÁFICO DE DESVIACIÓN</div>
-                              <div style="width:100%; height:20px; background:rgba(0,0,0,0.3); display:flex; position:relative;">
-                                  <div style="width:${anteriorPerc}%; background:#10b981; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
-                                      ${anteriorPerc > 10 ? 'CORRECTO' : ''}
-                                  </div>
-                                  <div style="width:${100 - parseFloat(anteriorPerc)}%; background:#ef4444; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden;">
-                                      ${(100 - parseFloat(anteriorPerc)) > 10 ? 'DESVIADO' : ''}
-                                  </div>
-                              </div>
-                          </div>
-
-                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                              <span>Artículos (Padre)</span>
-                              <span style="color:#fff;">${stats['ANTERIOR'].padres.size.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
-                              <span>Unidades</span>
-                              <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                              <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                              <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
-                          </div>
-                      </div>
                   </div>
-              </div>
-          </div>
+              </div>          </div>
       `;
       // Global tooltip functions if they don't exist
       if (!window.showTooltip) {
