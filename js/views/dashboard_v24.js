@@ -12904,7 +12904,10 @@ const renderRFSection = (container) => {
               if (name === 'IDX1') return String(raw[1] || '');
               if (name === 'IDX2') return String(raw[2] || '');
               if (name === 'IDX3') return String(raw[3] || '');
+              if (name === 'IDX4') return String(raw[4] || '');
               if (name === 'IDX5') return String(raw[5] || '');
+              if (name === 'IDX7') return String(raw[7] || '');
+              if (name === 'IDX10') return String(raw[10] || '');
               if (name === 'IDX14') return String(raw[14] || '');
           }
           return '';
@@ -13010,7 +13013,107 @@ const renderRFSection = (container) => {
           };
       }
 
-      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer, isGlobal = false) => {
+      let reservaPayload = null;
+      let reservaRaw = dataStore.analisis_sku_reserva || dataStore.stockReserva || [];
+      let globalPayloadReserva = null;
+      try {
+          const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+          const res = await fetch(`${base}/api/logistics/layout_reserva?t=${Date.now()}`);
+          if (res.ok) {
+              const payload = await res.json();
+              if (payload && payload.data && payload.data.type === 'processed') {
+                  globalPayloadReserva = payload.data;
+              }
+          }
+      } catch(e) {}
+
+      if (reservaRaw.length > 2 && articulosRaw.length) {
+          let localLayoutDataRes = {};
+          let localStatsRes = { 'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() }, 'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
+          let localTotalUnitsRes = 0;
+          let localUniquePadresRes = new Set();
+          
+          const skuTemporada = {};
+          articulosRaw.forEach(row => {
+              const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
+              const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
+              if (sku) {
+                  const sku7 = sku.substring(0, 7);
+                  skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+                  skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+              }
+          });
+
+          const usableReserva = reservaRaw.slice(2);
+          
+          usableReserva.forEach(row => {
+              const nivel = getColSafe(row, ['NIVEL', 'IDX1']).trim().toUpperCase();
+              const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX4']).trim().toUpperCase();
+              const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX7']).trim();
+              const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX10'])) || 0;
+              
+              if (nivel !== 'ALTO') return;
+              if (!ubi || !ubi.startsWith('SEL') || cant <= 0 || !skuFull) return;
+              
+              const sku7 = skuFull.substring(0, 7);
+              const match = ubi.match(/SEL[- ]?(\d+)\D+(\d+)/);
+              if (match) {
+                  const col = parseInt(match[1], 10);
+                  const rackRow = parseInt(match[2], 10);
+                  
+                  if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
+                      if (!localLayoutDataRes[col]) localLayoutDataRes[col] = {};
+                      if (!localLayoutDataRes[col][rackRow]) localLayoutDataRes[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
+                      
+                      const cell = localLayoutDataRes[col][rackRow];
+                      cell.totalQty += cant;
+                      
+                      let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
+                      let temporadaClean = 'ANTERIOR'; 
+                      const actuales = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+                      if (actuales.some(act => temporadaRaw.includes(act))) {
+                          temporadaClean = 'ACTUAL';
+                      }
+                      
+                      if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
+                      cell.seasons[temporadaClean] += cant;
+                      
+                      const existingSku = cell.skus.find(s => s.sku === skuFull);
+                      if (existingSku) existingSku.cant += cant;
+                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
+
+                      localUniquePadresRes.add(sku7);
+                      localTotalUnitsRes += cant;
+                      localStatsRes[temporadaClean].units += cant;
+                      localStatsRes[temporadaClean].padres.add(sku7);
+
+                      let isValid = false;
+                      if (temporadaClean === 'ACTUAL') {
+                          if (col >= 6 && col <= 13) isValid = true;
+                      } else if (temporadaClean === 'ANTERIOR') {
+                          if (col >= 3 && col <= 5) isValid = true;
+                      }
+
+                      if (!isValid) {
+                          localStatsRes[temporadaClean].bad_placed += cant;
+                      }
+                  }
+              }
+          });
+          
+          localStatsRes['ACTUAL'].padres = Array.from(localStatsRes['ACTUAL'].padres);
+          localStatsRes['ANTERIOR'].padres = Array.from(localStatsRes['ANTERIOR'].padres);
+
+          reservaPayload = {
+              type: 'processed',
+              layoutData: localLayoutDataRes,
+              stats: localStatsRes,
+              totalUnits: localTotalUnitsRes,
+              uniquePadresSize: localUniquePadresRes.size
+          };
+      }
+
+      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer, isGlobal = false, isReserva = false, hasLocalPayload = false) => {
           window.__buildLayoutHTML = buildLayoutHTML;
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
@@ -13019,7 +13122,7 @@ const renderRFSection = (container) => {
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
               for (let r = 22; r >= 1; r--) {
                   let cellExists = true;
-                  if (c >= 2 && c <= 13 && (r === 22 || r === 11)) {
+                  if (!isReserva && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
                       cellExists = false;
                   }
 
@@ -13066,7 +13169,7 @@ const renderRFSection = (container) => {
           }
           gridHtml += `</div>`;
 
-          const ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
+          const ACTUAL_TOTAL_CELLS = isReserva ? (14 * 22) : (14 * 22 - (12 * 2));
           const emptyCellsCount = ACTUAL_TOTAL_CELLS - occupiedCells;
           const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
 
@@ -13085,14 +13188,14 @@ const renderRFSection = (container) => {
           const percUnidActual = totalUnits > 0 ? Math.round((stats['ACTUAL'].units / totalUnits) * 100) : 0;
           const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
-          const btnCompartir = (localPayload != null) ? `
-              <button title="Compartir Layout" onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+          const btnCompartir = (hasLocalPayload) ? `
+              <button title="Compartir Layout" onclick="${isReserva ? 'window.subirLayoutReservaGlobal(this)' : 'window.subirLayoutGlobal(this)'}" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
                   <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
               </button>
           ` : '';
 
           const btnSincronizar = `
-              <button title="Sincronizar Datos" onclick="window.syncLayoutActivo(this)" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+              <button title="Sincronizar Datos" onclick="${isReserva ? 'window.syncLayoutReserva(this)' : 'window.syncLayoutActivo(this)'}" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
                   <svg id="sync-icon-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
               </button>
           `;
@@ -13102,7 +13205,7 @@ const renderRFSection = (container) => {
                   <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                              <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
+                              <span style="font-size:1.5rem;">🗺️</span> ${isReserva ? 'LAYOUT RESERVA - BATA' : 'LAYOUT SEL - BATA'}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
@@ -13301,12 +13404,32 @@ const renderRFSection = (container) => {
           }
       };
 
+      targetContainer = container;
+      targetContainer.innerHTML = '';
+      
+      const activoWrap = document.createElement('div');
+      activoWrap.id = 'layout-activo-wrap';
+      targetContainer.appendChild(activoWrap);
+      
       let payloadToRender = localPayload || globalPayload;
       let isGlobal = !localPayload && globalPayload;
       
       if (payloadToRender) {
           window.compartirLayoutPayload = localPayload;
-          buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, container, isGlobal);
+          buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, activoWrap, isGlobal, false, localPayload != null);
+      }
+
+      if (reservaPayload || globalPayloadReserva) {
+          const reservaWrap = document.createElement('div');
+          reservaWrap.id = 'layout-reserva-wrap';
+          reservaWrap.style.marginTop = '40px';
+          targetContainer.appendChild(reservaWrap);
+          
+          let resPayloadToRender = reservaPayload || globalPayloadReserva;
+          let isGlobalRes = !reservaPayload && globalPayloadReserva;
+          
+          window.compartirLayoutReservaPayload = reservaPayload;
+          buildLayoutHTML(resPayloadToRender.layoutData, resPayloadToRender.stats, resPayloadToRender.totalUnits, resPayloadToRender.uniquePadresSize, reservaWrap, isGlobalRes, true, reservaPayload != null);
       }
     };
 
@@ -13361,6 +13484,91 @@ const renderRFSection = (container) => {
                     const container = btn.closest('.glass-panel').parentElement.parentElement;
                     if (container) {
                         window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container, true);
+                    }
+                    btn.innerHTML = '✅';
+                    btn.style.background = 'rgba(16, 185, 129, 0.3)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }, 1500);
+                    return;
+                } else {
+                    btn.innerHTML = 'ℹ️';
+                    btn.style.background = 'rgba(251, 191, 36, 0.2)';
+                    btn.style.borderColor = '#fbbf24';
+                }
+            } else {
+                btn.innerHTML = '❌';
+                btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                btn.style.borderColor = '#ef4444';
+            }
+        } catch(e) {
+            btn.innerHTML = '❌';
+            btn.style.background = 'rgba(239, 68, 68, 0.2)';
+            btn.style.borderColor = '#ef4444';
+        }
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.borderColor = '#10b981';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }, 2500);
+    };
+
+    window.subirLayoutReservaGlobal = (btn) => {
+        if (!window.compartirLayoutReservaPayload) return;
+        btn.innerHTML = '⏳';
+        btn.disabled = true;
+        const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+        fetch(`${base}/api/logistics/layout_reserva`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(window.compartirLayoutReservaPayload)
+        }).then(r => {
+            if(r.ok) {
+                btn.innerHTML = '✔️';
+                btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                btn.style.borderColor = '#10b981';
+                setTimeout(() => { 
+                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
+                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
+                    btn.style.borderColor = '#3b82f6';
+                    btn.disabled = false;
+                    const c = document.getElementById('layout-activo-container');
+                    if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
+                }, 1500);
+            } else {
+                btn.innerHTML = '❌';
+                btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                btn.style.borderColor = '#ef4444';
+                setTimeout(() => { 
+                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
+                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
+                    btn.style.borderColor = '#3b82f6';
+                    btn.disabled = false; 
+                }, 3000);
+            }
+        });
+    };
+
+    window.syncLayoutReserva = async (btn) => {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>`;
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        try {
+            const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+            const res = await fetch(`${base}/api/logistics/layout_reserva?t=${Date.now()}`);
+            if (res.ok) {
+                const payload = await res.json();
+                if (payload && payload.data && payload.data.type === 'processed' && payload.data.totalUnits > 0) {
+                    const d = payload.data;
+                    const container = btn.closest('.glass-panel').parentElement.parentElement;
+                    if (container) {
+                        window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container, true, true, false);
                     }
                     btn.innerHTML = '✅';
                     btn.style.background = 'rgba(16, 185, 129, 0.3)';

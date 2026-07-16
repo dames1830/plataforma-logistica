@@ -88,7 +88,7 @@ def prune_old_snapshots():
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
         areas = [r[0] for r in cursor.fetchall()]
@@ -155,7 +155,7 @@ def get_area_data(area: str, date: Optional[str] = None):
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
         
         # ÁREAS SINGLETON (Siempre un solo registro maestro)
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         if area == 'users':
             # Auto-saneamiento/sincronización en el GET si la tabla 'users' no coincide con el snapshot guardado
@@ -248,7 +248,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         json_string = json.dumps(payload_data)
         
         # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
@@ -368,7 +368,7 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
     try:
         partial_data = await request.json()
         
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
         conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
@@ -531,7 +531,7 @@ def force_db_cleanup():
         except Exception as se: print(f"Copy shared_data err: {se}")
             
         # Copy snapshots (pruned)
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo']
+        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         src_cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
         areas = [row[0] for row in src_cursor.fetchall()]
