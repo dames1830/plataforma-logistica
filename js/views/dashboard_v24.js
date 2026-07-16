@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.380';
+const VERSION = '26.5.381';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -13081,16 +13081,14 @@ const renderRFSection = (container) => {
           const statsAnteriorPadresSize = Array.isArray(stats['ANTERIOR'].padres) ? stats['ANTERIOR'].padres.length : (stats['ANTERIOR'].padres ? stats['ANTERIOR'].padres.size : 0);
 
           const btnCompartir = (localPayload != null) ? `
-              <button onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                  COMPARTIR LAYOUT
+              <button title="Compartir Layout" onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
               </button>
           ` : '';
 
           const btnSincronizar = `
-              <button onclick="window.syncLayoutActivo(this)" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
-                  <svg id="sync-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
-                  SINCRONIZAR
+              <button title="Sincronizar Datos" onclick="window.syncLayoutActivo(this)" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+                  <svg id="sync-icon-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
               </button>
           `;
 
@@ -13293,7 +13291,7 @@ const renderRFSection = (container) => {
 
     window.subirLayoutGlobal = (btn) => {
         if (!window.compartirLayoutPayload) return;
-        btn.innerHTML = 'Subiendo...';
+        btn.innerHTML = '⏳';
         btn.disabled = true;
         const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
         fetch(`${base}/api/logistics/layout_activo`, {
@@ -13302,11 +13300,11 @@ const renderRFSection = (container) => {
             body: JSON.stringify(window.compartirLayoutPayload)
         }).then(r => {
             if(r.ok) {
-                btn.innerHTML = '✔️ COMPARTIDO';
+                btn.innerHTML = '✔️';
                 btn.style.background = 'rgba(16, 185, 129, 0.2)';
                 btn.style.borderColor = '#10b981';
                 setTimeout(() => { 
-                    btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
+                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
                     btn.style.background = 'rgba(59, 130, 246, 0.2)';
                     btn.style.borderColor = '#3b82f6';
                     btn.disabled = false;
@@ -13314,11 +13312,11 @@ const renderRFSection = (container) => {
                     if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
                 }, 1500);
             } else {
-                btn.innerHTML = '❌ ERROR';
+                btn.innerHTML = '❌';
                 btn.style.background = 'rgba(239, 68, 68, 0.2)';
                 btn.style.borderColor = '#ef4444';
                 setTimeout(() => { 
-                    btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
+                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
                     btn.style.background = 'rgba(59, 130, 246, 0.2)';
                     btn.style.borderColor = '#3b82f6';
                     btn.disabled = false; 
@@ -13329,7 +13327,7 @@ const renderRFSection = (container) => {
 
     window.syncLayoutActivo = async (btn) => {
         const originalHTML = btn.innerHTML;
-        btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg> Sincronizando...`;
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>`;
         btn.disabled = true;
         btn.style.opacity = '0.7';
         try {
@@ -13343,7 +13341,7 @@ const renderRFSection = (container) => {
                     if (container) {
                         window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container);
                     }
-                    btn.innerHTML = '✅ Actualizado';
+                    btn.innerHTML = '✅';
                     btn.style.background = 'rgba(16, 185, 129, 0.3)';
                     setTimeout(() => {
                         btn.innerHTML = originalHTML;
@@ -13353,17 +13351,17 @@ const renderRFSection = (container) => {
                     }, 1500);
                     return;
                 } else {
-                    btn.innerHTML = 'ℹ️ Sin datos en servidor';
+                    btn.innerHTML = 'ℹ️';
                     btn.style.background = 'rgba(251, 191, 36, 0.2)';
                     btn.style.borderColor = '#fbbf24';
                 }
             } else {
-                btn.innerHTML = '❌ Error de conexión';
+                btn.innerHTML = '❌';
                 btn.style.background = 'rgba(239, 68, 68, 0.2)';
                 btn.style.borderColor = '#ef4444';
             }
         } catch(e) {
-            btn.innerHTML = '❌ Sin conexión';
+            btn.innerHTML = '❌';
             btn.style.background = 'rgba(239, 68, 68, 0.2)';
             btn.style.borderColor = '#ef4444';
         }
