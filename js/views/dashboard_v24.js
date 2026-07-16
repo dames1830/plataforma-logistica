@@ -12862,6 +12862,7 @@ const renderRFSection = (container) => {
 
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
+    // --- LAYOUT ACTIVO ---
     const renderLayoutActivo = async (container) => {
       let activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
@@ -12933,7 +12934,7 @@ const renderRFSection = (container) => {
           });
           
           activoRaw.forEach(row => {
-              const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
+              const ubi = getColSafe(row, ['UBICACION', 'UBICACIÓN', 'UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
               const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
               
@@ -13251,31 +13252,34 @@ const renderRFSection = (container) => {
             body: JSON.stringify(window.compartirLayoutPayload)
         }).then(r => {
             if(r.ok) {
-                btn.innerHTML = '✅ COMPARTIDO';
+                btn.innerHTML = '✔️ COMPARTIDO';
                 btn.style.background = 'rgba(16, 185, 129, 0.2)';
                 btn.style.borderColor = '#10b981';
                 setTimeout(() => { 
                     btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
                     btn.style.background = 'rgba(59, 130, 246, 0.2)';
                     btn.style.borderColor = '#3b82f6';
+                    btn.disabled = false;
+                    // Auto-refresh layout to show the new global state
+                    const container = document.getElementById('layout-activo-container');
+                    if (container && typeof renderLayoutActivo === 'function') {
+                        renderLayoutActivo(container);
+                    }
+                }, 1500);
+            } else {
+                btn.innerHTML = '❌ ERROR';
+                btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                btn.style.borderColor = '#ef4444';
+                setTimeout(() => { 
+                    btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
+                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
+                    btn.style.borderColor = '#3b82f6';
                     btn.disabled = false; 
                 }, 3000);
-            } else {
-                throw new Error("No OK");
             }
-        }).catch(e => {
-            console.error(e);
-            btn.innerHTML = '❌ ERROR';
-            btn.style.background = 'rgba(239, 68, 68, 0.2)';
-            btn.style.borderColor = '#ef4444';
-            setTimeout(() => { 
-                btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
-                btn.style.background = 'rgba(59, 130, 246, 0.2)';
-                btn.style.borderColor = '#3b82f6';
-                btn.disabled = false; 
-            }, 3000);
         });
     };
+
 
 
       // Global tooltip functions if they don't exist
