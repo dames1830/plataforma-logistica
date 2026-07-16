@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.369';
+const VERSION = '26.5.371';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12874,27 +12874,20 @@ const renderRFSection = (container) => {
               const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
               if (res.ok) {
                   const payload = await res.json();
-                  if (payload && payload.data && payload.data.activoRaw && payload.data.articulosRaw) {
-                      activoRaw = payload.data.activoRaw;
-                      articulosRaw = payload.data.articulosRaw;
-                      isGlobal = true;
-                      dataStore.analisis_sku_activo = activoRaw;
-                      dataStore.analisis_sku_maestro = articulosRaw;
+                  if (payload && payload.data) {
+                      if (payload.data.type === 'processed') {
+                          buildLayoutHTML(payload.data.layoutData, payload.data.stats, payload.data.totalUnits, payload.data.uniquePadresSize, payload.data.timestampStr, true, container);
+                          return;
+                      } else if (payload.data.activoRaw && payload.data.articulosRaw) {
+                          activoRaw = payload.data.activoRaw;
+                          articulosRaw = payload.data.articulosRaw;
+                          isGlobal = true;
+                          dataStore.analisis_sku_activo = activoRaw;
+                          dataStore.analisis_sku_maestro = articulosRaw;
+                      }
                   }
               }
           } catch(e) { console.error("Error fetching layout", e); }
-      } else {
-          if (!window._layoutSynced) {
-              window._layoutSynced = true;
-              try {
-                  const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-                  fetch(`${base}/api/logistics/layout_activo`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ activoRaw, articulosRaw })
-                  }).catch(e => console.error(e));
-              } catch(e) { }
-          }
       }
 
       if (!activoRaw.length || !articulosRaw.length) {
@@ -12936,7 +12929,6 @@ const renderRFSection = (container) => {
           }
       });
 
-      // --- 1. Precalculate Total Stock per Padre ---
       const padreStock = {};
       activoRaw.forEach(row => {
           const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
@@ -12951,12 +12943,9 @@ const renderRFSection = (container) => {
       let totalUnits = 0;
       let uniquePadres = new Set();
       let stats = {
-          'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() },
-          'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() }
+          'ACTUAL': { units: 0, bad_placed: 0, padres: [] },
+          'ANTERIOR': { units: 0, bad_placed: 0, padres: [] }
       };
-
-      let emptyCells = 0;
-      let missingCellsCount = 0;
 
       activoRaw.forEach(row => {
           const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
@@ -12975,7 +12964,6 @@ const renderRFSection = (container) => {
               const rackRow = parseInt(match[2], 10);
               
               if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
-                  // Skip non-existent locations
                   if (col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
 
                   if (!layoutData[col]) layoutData[col] = {};
@@ -12999,11 +12987,10 @@ const renderRFSection = (container) => {
                   if (existingSku) existingSku.cant += cant;
                   else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
 
-                  // --- NEW STATS LOGIC ---
                   uniquePadres.add(sku7);
                   totalUnits += cant;
                   stats[temporadaClean].units += cant;
-                  stats[temporadaClean].padres.add(sku7);
+                  if (!stats[temporadaClean].padres.includes(sku7)) stats[temporadaClean].padres.push(sku7);
 
                   let isValid = false;
                   if (temporadaClean === 'ACTUAL') {
@@ -13021,7 +13008,15 @@ const renderRFSection = (container) => {
           }
       });
 
+      const now = new Date();
+      const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+
+      buildLayoutHTML(layoutData, stats, totalUnits, uniquePadres.size, timestampStr, isGlobal, container);
+    };
+
+    const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, timestampStr, isGlobal, container) => {
       let occupiedCells = 0;
+      let missingCellsCount = 0;
       let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
       
       for (let c = 1; c <= 14; c++) {
@@ -13031,8 +13026,6 @@ const renderRFSection = (container) => {
               let cellExists = true;
               if (c >= 2 && c <= 13 && (r === 22 || r === 11)) {
                   cellExists = false;
-                  // Only count once per column, but since it's the inner loop, missingCellsCount is accurate if we do it here?
-                  // Wait, actually we can just hardcode missing count or just increment it.
                   missingCellsCount++;
               }
 
@@ -13080,21 +13073,32 @@ const renderRFSection = (container) => {
       }
       gridHtml += `</div>`;
 
-      // TOTAL_CELLS is 308 (14x22). We subtract missingCellsCount (24 = 12 cols * 2 cells)
       const ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
-      emptyCells = ACTUAL_TOTAL_CELLS - occupiedCells;
+      const emptyCells = ACTUAL_TOTAL_CELLS - occupiedCells;
       const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
 
-      const now = new Date();
-      const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-
-      // Calculate percentages
       const calcPerc = (s) => s.units > 0 ? (((s.units - s.bad_placed) / s.units) * 100).toFixed(1) : '0.0';
       const actualPerc = calcPerc(stats['ACTUAL']);
       const anteriorPerc = calcPerc(stats['ANTERIOR']);
       
       const goodActual = stats['ACTUAL'].units - stats['ACTUAL'].bad_placed;
       const goodAnterior = stats['ANTERIOR'].units - stats['ANTERIOR'].bad_placed;
+
+      window.compartirLayoutPayload = {
+          type: 'processed',
+          layoutData,
+          stats,
+          totalUnits,
+          uniquePadresSize,
+          timestampStr
+      };
+
+      const btnCompartir = !isGlobal ? `
+          <button onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              COMPARTIR LAYOUT
+          </button>
+      ` : '';
 
       container.innerHTML = `
           <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
@@ -13105,8 +13109,11 @@ const renderRFSection = (container) => {
                           <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
                           ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                       </h3>
-                      <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
-                          🕒 ${timestampStr}
+                      <div style="display:flex; align-items:center; gap:10px;">
+                          ${btnCompartir}
+                          <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
+                              🕒 ${timestampStr}
+                          </div>
                       </div>
                   </div>
                   
@@ -13133,11 +13140,10 @@ const renderRFSection = (container) => {
                       <div>
                           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
                               <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
-                              <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                           </div>
                           <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
                               <span style="color:var(--text-muted);">Total Artículos (Padre)</span>
-                              <span style="font-weight:800; color:#fff;">${uniquePadres.size.toLocaleString()}</span>
+                              <span style="font-weight:800; color:#fff;">${uniquePadresSize.toLocaleString()}</span>
                           </div>
                           <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.85rem;">
                               <span style="color:var(--text-muted);">Total Unidades</span>
@@ -13164,7 +13170,7 @@ const renderRFSection = (container) => {
                               </div>
                               <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                   <span>Artículos (Padre)</span>
-                                  <span style="color:#fff;">${stats['ACTUAL'].padres.size.toLocaleString()}</span>
+                                  <span style="color:#fff;">${(stats['ACTUAL'].padres.length || stats['ACTUAL'].padres.size || 0).toLocaleString()}</span>
                               </div>
                               <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                   <span>Unidades</span>
@@ -13184,7 +13190,7 @@ const renderRFSection = (container) => {
                               </div>
                               <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                   <span>Artículos (Padre)</span>
-                                  <span style="color:#fff;">${stats['ANTERIOR'].padres.size.toLocaleString()}</span>
+                                  <span style="color:#fff;">${(stats['ANTERIOR'].padres.length || stats['ANTERIOR'].padres.size || 0).toLocaleString()}</span>
                               </div>
                               <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                   <span>Unidades</span>
@@ -13245,8 +13251,49 @@ const renderRFSection = (container) => {
                       </div>
 
                   </div>
-              </div>          </div>
+              </div>
+          </div>
       `;
+    };
+
+    window.subirLayoutGlobal = (btn) => {
+        if (!window.compartirLayoutPayload) return;
+        btn.innerHTML = 'Subiendo...';
+        btn.disabled = true;
+        const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+        fetch(`${base}/api/logistics/layout_activo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(window.compartirLayoutPayload)
+        }).then(r => {
+            if(r.ok) {
+                btn.innerHTML = '✅ COMPARTIDO';
+                btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                btn.style.borderColor = '#10b981';
+                setTimeout(() => { 
+                    btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
+                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
+                    btn.style.borderColor = '#3b82f6';
+                    btn.disabled = false; 
+                }, 3000);
+            } else {
+                throw new Error("No OK");
+            }
+        }).catch(e => {
+            console.error(e);
+            btn.innerHTML = '❌ ERROR';
+            btn.style.background = 'rgba(239, 68, 68, 0.2)';
+            btn.style.borderColor = '#ef4444';
+            setTimeout(() => { 
+                btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> COMPARTIR LAYOUT`; 
+                btn.style.background = 'rgba(59, 130, 246, 0.2)';
+                btn.style.borderColor = '#3b82f6';
+                btn.disabled = false; 
+            }, 3000);
+        });
+    };
+
+
       // Global tooltip functions if they don't exist
       if (!window.showTooltip) {
           const tt = document.createElement('div');
