@@ -10890,7 +10890,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.366 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.367 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12955,8 +12955,8 @@ const renderRFSection = (container) => {
           'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() }
       };
 
-      const TOTAL_CELLS = 14 * 22; // 308
       let emptyCells = 0;
+      let missingCellsCount = 0;
 
       activoRaw.forEach(row => {
           const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
@@ -12975,6 +12975,9 @@ const renderRFSection = (container) => {
               const rackRow = parseInt(match[2], 10);
               
               if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
+                  // Skip non-existent locations
+                  if (col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
+
                   if (!layoutData[col]) layoutData[col] = {};
                   if (!layoutData[col][rackRow]) layoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
                   
@@ -13025,6 +13028,19 @@ const renderRFSection = (container) => {
           gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
           
           for (let r = 22; r >= 1; r--) {
+              let cellExists = true;
+              if (c >= 2 && c <= 13 && (r === 22 || r === 11)) {
+                  cellExists = false;
+                  // Only count once per column, but since it's the inner loop, missingCellsCount is accurate if we do it here?
+                  // Wait, actually we can just hardcode missing count or just increment it.
+                  missingCellsCount++;
+              }
+
+              if (!cellExists) {
+                  gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
+                  continue;
+              }
+
               const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
               
               let bgColor = 'rgba(255,255,255,0.02)';
@@ -13059,12 +13075,14 @@ const renderRFSection = (container) => {
                   </div>
               `;
           }
-          gridHtml += `<div style="text-align:center; font-size:0.65rem; color:var(--text-muted); font-weight:800; margin-top:5px; border:1px solid rgba(255,255,255,0.2); padding:2px;">SEL ${String(c).padStart(2,'0')}</div>`;
+          gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">SEL ${String(c).padStart(2,'0')}</div>`;
           gridHtml += `</div>`;
       }
       gridHtml += `</div>`;
 
-      emptyCells = TOTAL_CELLS - occupiedCells;
+      // TOTAL_CELLS is 308 (14x22). We subtract missingCellsCount (24 = 12 cols * 2 cells)
+      const ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
+            emptyCells = TOTAL_CELLS - occupiedCells;
       const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
 
       const now = new Date();
@@ -13100,8 +13118,8 @@ const renderRFSection = (container) => {
                   </div>
                   
                   <div style="display:flex; gap:10px;">
-                      <div style="display:flex; flex-direction:column; justify-content:space-between; padding-bottom:25px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right;">
-                          ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center;">${n}</div>`).join('')}
+                      <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
+                          ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
                       </div>
                       ${gridHtml}
                   </div>
