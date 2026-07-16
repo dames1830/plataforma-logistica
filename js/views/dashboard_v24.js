@@ -12860,52 +12860,60 @@ const renderRFSection = (container) => {
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
 
-// --- LAYOUT ACTIVO ---
+    // --- LAYOUT ACTIVO ---
+    // --- LAYOUT ACTIVO ---
     const renderLayoutActivo = async (container) => {
       let activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
-      // Estructura Base con Toggle
-      container.innerHTML = `
-          <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-              <button id="btn-view-global" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px 20px; border-radius:8px; font-weight:800; cursor:pointer; transition:all 0.3s; box-shadow:0 0 10px rgba(59,130,246,0.3);">
-                  🌍 LAYOUT GLOBAL (Servidor)
-              </button>
-              <button id="btn-view-local" style="background:rgba(255, 255, 255, 0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); padding:8px 20px; border-radius:8px; font-weight:800; cursor:pointer; transition:all 0.3s;">
-                  💻 LAYOUT LOCAL (Tu Excel)
-              </button>
-          </div>
-          <div id="layout-content-area" style="width:100%; min-height:400px;">
-              <div style="padding:3rem; text-align:center; color:#fff;">Cargando Layout Global... 🔄</div>
-          </div>
-      `;
-
-      const contentArea = container.querySelector('#layout-content-area');
-      const btnGlobal = container.querySelector('#btn-view-global');
-      const btnLocal = container.querySelector('#btn-view-local');
-
+      // 1. Siempre descargar del servidor
       let globalPayload = null;
-      let localLayoutData = {};
-      let localStats = { 'ACTUAL': { units:0, padres:[], bad_placed:0 }, 'ANTERIOR': { units:0, padres:[], bad_placed:0 } };
-      let localTotalUnits = 0;
-      let localUniquePadres = new Set();
-      let localHasData = false;
-
-      // 1. Fetch Global Data
+      container.innerHTML = `<div style="padding:3rem; text-align:center; color:#fff;">Cargando Layout Global... 🔄</div>`;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
           const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
           if (res.ok) {
               const payload = await res.json();
-              if (payload && payload.data && payload.data.type === 'processed') {
-                  globalPayload = payload.data;
+              if (payload && payload.data) {
+                  if (payload.data.type === 'processed') {
+                      globalPayload = payload.data;
+                  } else if (payload.data.activoRaw && payload.data.articulosRaw) {
+                      activoRaw = payload.data.activoRaw;
+                      articulosRaw = payload.data.articulosRaw;
+                      dataStore.analisis_sku_activo = activoRaw;
+                      dataStore.analisis_sku_maestro = articulosRaw;
+                  }
               }
           }
-      } catch(e) { console.error("Error fetching global layout", e); }
+      } catch(e) { console.error("Error fetching layout", e); }
 
-      // 2. Process Local Data if available
+      if (!activoRaw.length || !articulosRaw.length) {
+          if (!globalPayload) {
+              container.innerHTML = `
+                  <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🗺️</div>
+                      <h4>Faltan Datos Base</h4>
+                      <p>Para ver el Layout, por favor carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> (para las temporadas).</p>
+                  </div>`;
+              return;
+          }
+      }
+
+      const getColSafe = (row, possibleNames) => {
+          if (!row) return '';
+          for (const key of Object.keys(row)) {
+              if (possibleNames.includes(key.toUpperCase().trim())) return row[key];
+          }
+          return '';
+      };
+
+      let localLayoutData = {};
+      let localStats = { 'ACTUAL': { units: 0, padres: [], bad_placed: 0 }, 'ANTERIOR': { units: 0, padres: [], bad_placed: 0 } };
+      let localTotalUnits = 0;
+      let localUniquePadres = new Set();
+      let localPayload = null;
+
       if (activoRaw.length && articulosRaw.length) {
-          localHasData = true;
           let skuTemporada = {};
           let padreStock = {};
           
@@ -12935,7 +12943,7 @@ const renderRFSection = (container) => {
               const totalStockForPadre = padreStock[sku7] || 0;
               const isSaldo = totalStockForPadre < 20;
 
-              const match = ubi.match(/SEL[- ]?(\d+)\\D+(\d+)/);
+              const match = ubi.match(/SEL[- ]?(\d+)\D+(\d+)/);
               if (match) {
                   const col = parseInt(match[1], 10);
                   const rackRow = parseInt(match[2], 10);
@@ -12983,9 +12991,21 @@ const renderRFSection = (container) => {
                   }
               }
           });
+          
+          const now = new Date();
+          const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+          
+          localPayload = {
+              type: 'processed',
+              layoutData: localLayoutData,
+              stats: localStats,
+              totalUnits: localTotalUnits,
+              uniquePadresSize: localUniquePadres.size,
+              timestampStr: timestampStr
+          };
       }
 
-      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, timestampStr, isGlobal, targetContainer) => {
+      const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, timestampStr, targetContainer) => {
           let occupiedCells = 0;
           let missingCellsCount = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
@@ -13053,16 +13073,7 @@ const renderRFSection = (container) => {
           const goodActual = stats['ACTUAL'].units - stats['ACTUAL'].bad_placed;
           const goodAnterior = stats['ANTERIOR'].units - stats['ANTERIOR'].bad_placed;
 
-          window.compartirLayoutPayload = {
-              type: 'processed',
-              layoutData,
-              stats,
-              totalUnits,
-              uniquePadresSize,
-              timestampStr
-          };
-
-          const btnCompartir = !isGlobal ? `
+          const btnCompartir = (localPayload != null) ? `
               <button onclick="window.subirLayoutGlobal(this)" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
                   <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                   COMPARTIR LAYOUT
@@ -13072,11 +13083,11 @@ const renderRFSection = (container) => {
           targetContainer.innerHTML = `
               <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
                   <!-- MAPA LAYOUT -->
-                  <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid ${isGlobal ? 'rgba(16, 185, 129, 0.4)' : 'rgba(59, 130, 246, 0.4)'}; box-shadow:0 0 20px ${isGlobal ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)'};">
+                  <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid rgba(16, 185, 129, 0.4); box-shadow:0 0 20px rgba(16, 185, 129, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> LAYOUT SEL - BATA
-                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(16, 185, 129, 0.2); color:#10b981; border:1px solid rgba(16, 185, 129, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL (SERVIDOR)</span>' : '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">LOCAL (TU EXCEL)</span>'}
+                              <span style="font-size:0.65rem; background:rgba(16, 185, 129, 0.2); color:#10b981; border:1px solid rgba(16, 185, 129, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>
                           </h3>
                           <div style="display:flex; align-items:center; gap:10px;">
                               ${btnCompartir}
@@ -13220,60 +13231,12 @@ const renderRFSection = (container) => {
           `;
       };
 
-      const renderGlobal = () => {
-          btnGlobal.style.background = 'rgba(16, 185, 129, 0.2)';
-          btnGlobal.style.borderColor = '#10b981';
-          btnGlobal.style.boxShadow = '0 0 10px rgba(16,185,129,0.3)';
-          
-          btnLocal.style.background = 'rgba(255, 255, 255, 0.05)';
-          btnLocal.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-          btnLocal.style.boxShadow = 'none';
-          
-          if (globalPayload) {
-              buildLayoutHTML(globalPayload.layoutData, globalPayload.stats, globalPayload.totalUnits, globalPayload.uniquePadresSize, globalPayload.timestampStr, true, contentArea);
-          } else {
-              contentArea.innerHTML = `
-                  <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">☁️</div>
-                      <h4>No hay Layout en el Servidor</h4>
-                      <p>Sube y procesa un archivo Excel primero, luego envíalo al servidor.</p>
-                  </div>`;
-          }
-      };
-
-      const renderLocal = () => {
-          btnLocal.style.background = 'rgba(59, 130, 246, 0.2)';
-          btnLocal.style.borderColor = '#3b82f6';
-          btnLocal.style.boxShadow = '0 0 10px rgba(59,130,246,0.3)';
-          
-          btnGlobal.style.background = 'rgba(255, 255, 255, 0.05)';
-          btnGlobal.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-          btnGlobal.style.boxShadow = 'none';
-
-          if (localHasData) {
-              const now = new Date();
-              const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-              buildLayoutHTML(localLayoutData, localStats, localTotalUnits, localUniquePadres.size, timestampStr, false, contentArea);
-          } else {
-              contentArea.innerHTML = `
-                  <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">📂</div>
-                      <h4>No hay Datos Locales</h4>
-                      <p>Para ver tu propio Layout, carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> en la pestaña Archivo.</p>
-                  </div>`;
-          }
-      };
-
-      btnGlobal.onclick = renderGlobal;
-      btnLocal.onclick = renderLocal;
-
-      // Por defecto siempre renderizar global si hay
       if (globalPayload) {
-          renderGlobal();
-      } else if (localHasData) {
-          renderLocal();
-      } else {
-          renderGlobal(); // will show empty state
+          window.compartirLayoutPayload = localPayload || globalPayload;
+          buildLayoutHTML(globalPayload.layoutData, globalPayload.stats, globalPayload.totalUnits, globalPayload.uniquePadresSize, globalPayload.timestampStr, container);
+      } else if (localPayload) {
+          window.compartirLayoutPayload = localPayload;
+          buildLayoutHTML(localPayload.layoutData, localPayload.stats, localPayload.totalUnits, localPayload.uniquePadresSize, localPayload.timestampStr, container);
       }
     };
 
