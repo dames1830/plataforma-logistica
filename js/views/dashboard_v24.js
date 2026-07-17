@@ -12983,6 +12983,7 @@ const renderRFSection = (container) => {
                       if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
                       cell.seasons[temporadaClean] += cant;
                       
+                      const existingSku = cell.skus.find(s => s.sku === skuFull);
                       if (existingSku) existingSku.cant += cant;
                       else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
 
