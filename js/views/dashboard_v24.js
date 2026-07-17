@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.383';
+const VERSION = '26.5.421';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -12859,6 +12859,7 @@ const renderRFSection = (container) => {
 
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
+  let currentLayoutZona = 'SEL';
 
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
@@ -12946,19 +12947,20 @@ const renderRFSection = (container) => {
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
               const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
               
-              if (!ubi || !ubi.startsWith('SEL') || cant <= 0 || !skuFull) return;
+              if (!ubi || !ubi.startsWith(currentLayoutZona) || cant <= 0 || !skuFull) return;
               
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
               const isSaldo = totalStockForPadre < 20;
 
-              const match = ubi.match(/SEL[- ]?(\d+)\D+(\d+)/);
+              const regex = new RegExp(currentLayoutZona + "[- ]?(\\d+)\\D+(\\d+)");
+              const match = ubi.match(regex);
               if (match) {
                   const col = parseInt(match[1], 10);
                   const rackRow = parseInt(match[2], 10);
                   
                   if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
-                      if (col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
+                      if (currentLayoutZona === 'SEL' && col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
 
                       if (!localLayoutData[col]) localLayoutData[col] = {};
                       if (!localLayoutData[col][rackRow]) localLayoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
@@ -12986,12 +12988,16 @@ const renderRFSection = (container) => {
                       localStats[temporadaClean].padres.add(sku7);
 
                       let isValid = false;
-                      if (temporadaClean === 'ACTUAL') {
-                          if (col >= 6 && col <= 13) isValid = true;
-                          else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
-                      } else if (temporadaClean === 'ANTERIOR') {
-                          if (col >= 3 && col <= 5) isValid = true;
-                          else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                      if (currentLayoutZona !== 'SEL') {
+                          isValid = true;
+                      } else {
+                          if (temporadaClean === 'ACTUAL') {
+                              if (col >= 6 && col <= 13) isValid = true;
+                              else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                          } else if (temporadaClean === 'ANTERIOR') {
+                              if (col >= 3 && col <= 5) isValid = true;
+                              else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                          }
                       }
 
                       if (!isValid) {
@@ -13114,6 +13120,8 @@ const renderRFSection = (container) => {
       }
 
       const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer, isGlobal = false, isReserva = false, hasLocalPayload = false) => {
+          const zonaLabel = isReserva ? 'SEL' : currentLayoutZona;
+          
           window.__buildLayoutHTML = buildLayoutHTML;
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
@@ -13122,7 +13130,7 @@ const renderRFSection = (container) => {
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
               for (let r = 22; r >= 1; r--) {
                   let cellExists = true;
-                  if (!isReserva && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
+                  if (!isReserva && currentLayoutZona === 'SEL' && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
                       cellExists = false;
                   }
 
@@ -13133,7 +13141,7 @@ const renderRFSection = (container) => {
 
                   const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
                   let bgColor = 'rgba(255,255,255,0.02)';
-                  let tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>Vacío`;
+                  let tooltipHTML = `<b>${zonaLabel} ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>Vacío`;
                   
                   if (cellData) {
                       occupiedCells++;
@@ -13146,7 +13154,7 @@ const renderRFSection = (container) => {
                           bgColor = '#ef4444'; 
                       }
                       
-                      tooltipHTML = `<b>SEL ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>
+                      tooltipHTML = `<b>${zonaLabel} ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>
                                      Total Unid: ${cellData.totalQty}<br/>
                                      SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
                       cellData.skus.slice(0,5).forEach(s => {
@@ -13164,7 +13172,7 @@ const renderRFSection = (container) => {
                       </div>
                   `;
               }
-              gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">SEL ${String(c).padStart(2,'0')}</div>`;
+              gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">${zonaLabel} ${String(c).padStart(2,'0')}</div>`;
               gridHtml += `</div>`;
           }
           gridHtml += `</div>`;
@@ -13211,7 +13219,14 @@ const renderRFSection = (container) => {
                   <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                              <span style="font-size:1.5rem;">🗺️</span> ${isReserva ? 'LAYOUT RESERVA - BATA' : 'LAYOUT SEL - BATA'}
+                              <span style="font-size:1.5rem;">🗺️</span> 
+                              ${isReserva ? 'LAYOUT RESERVA - BATA' : 
+                                `<select id="zonaFilterSelect" style="background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 2px 10px; font-size: 1rem; font-weight: 800; outline: none; cursor: pointer;">
+                                    <option value="SEL" ${currentLayoutZona === 'SEL' ? 'selected' : ''}>LAYOUT SELECTIVO</option>
+                                    <option value="MZN01" ${currentLayoutZona === 'MZN01' ? 'selected' : ''}>LAYOUT MZN01</option>
+                                    <option value="MZN02" ${currentLayoutZona === 'MZN02' ? 'selected' : ''}>LAYOUT MZN02</option>
+                                    <option value="MZN03" ${currentLayoutZona === 'MZN03' ? 'selected' : ''}>LAYOUT MZN03</option>
+                                </select>`}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
@@ -13473,6 +13488,16 @@ const renderRFSection = (container) => {
       if (payloadToRender) {
           window.compartirLayoutPayload = localPayload;
           buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, activoWrap, isGlobal, false, localPayload != null);
+          
+          setTimeout(() => {
+              const select = document.getElementById('zonaFilterSelect');
+              if (select) {
+                  select.addEventListener('change', (e) => {
+                      currentLayoutZona = e.target.value;
+                      renderLayoutActivo(container);
+                  });
+              }
+          }, 100);
       }
 
       // DESACTIVADO TEMPORALMENTE A PETICIÓN DEL USUARIO
