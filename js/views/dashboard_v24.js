@@ -13220,13 +13220,7 @@ const renderRFSection = (container) => {
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
-                              ${isReserva ? 'LAYOUT RESERVA - BATA' : 
-                                `<select id="zonaFilterSelect" style="background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 2px 10px; font-size: 1rem; font-weight: 800; outline: none; cursor: pointer;">
-                                    <option value="SEL" ${currentLayoutZona === 'SEL' ? 'selected' : ''}>LAYOUT SELECTIVO</option>
-                                    <option value="MZN01" ${currentLayoutZona === 'MZN01' ? 'selected' : ''}>LAYOUT MZN01</option>
-                                    <option value="MZN02" ${currentLayoutZona === 'MZN02' ? 'selected' : ''}>LAYOUT MZN02</option>
-                                    <option value="MZN03" ${currentLayoutZona === 'MZN03' ? 'selected' : ''}>LAYOUT MZN03</option>
-                                </select>`}
+                              ${isReserva ? 'LAYOUT RESERVA - BATA' : 'LAYOUT SEL - BATA'}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
@@ -13258,7 +13252,7 @@ const renderRFSection = (container) => {
                       <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
                               <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
-                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL</h4>
+                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL SELECTIVO</h4>
                                   <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                               </div>
                               
@@ -13309,7 +13303,7 @@ const renderRFSection = (container) => {
                           </div>
                           
                           <div>
-                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA</h4>
+                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA SELECTIVO</h4>
                               
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
@@ -13478,26 +13472,68 @@ const renderRFSection = (container) => {
       let targetContainer = container;
       targetContainer.innerHTML = '';
       
+      const filterWrap = document.createElement('div');
+      filterWrap.style.marginBottom = '20px';
+      filterWrap.style.display = 'flex';
+      filterWrap.style.alignItems = 'center';
+      filterWrap.style.gap = '15px';
+      filterWrap.style.padding = '15px';
+      filterWrap.style.background = 'rgba(15, 23, 42, 0.5)';
+      filterWrap.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+      filterWrap.style.borderRadius = '12px';
+      
+      filterWrap.innerHTML = `
+          <h3 style="color:#fff; margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.3rem;">🎯</span> ZONA DE VISUALIZACIÓN:
+          </h3>
+          <select id="zonaFilterSelect" style="
+              background: rgba(15, 23, 42, 0.9);
+              color: #fff;
+              border: 1px solid rgba(255, 255, 255, 0.3);
+              border-radius: 8px;
+              padding: 6px 15px;
+              font-size: 1rem;
+              font-weight: 800;
+              outline: none;
+              cursor: pointer;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+          ">
+              <option value="SEL" ${currentLayoutZona === 'SEL' ? 'selected' : ''}>LAYOUT SELECTIVO</option>
+              <option value="MZN01" ${currentLayoutZona === 'MZN01' ? 'selected' : ''}>LAYOUT MZN01</option>
+              <option value="MZN02" ${currentLayoutZona === 'MZN02' ? 'selected' : ''}>LAYOUT MZN02</option>
+              <option value="MZN03" ${currentLayoutZona === 'MZN03' ? 'selected' : ''}>LAYOUT MZN03</option>
+          </select>
+      `;
+      targetContainer.appendChild(filterWrap);
+      
       const activoWrap = document.createElement('div');
       activoWrap.id = 'layout-activo-wrap';
       targetContainer.appendChild(activoWrap);
       
+      setTimeout(() => {
+          const select = document.getElementById('zonaFilterSelect');
+          if (select) {
+              select.addEventListener('change', (e) => {
+                  currentLayoutZona = e.target.value;
+                  renderLayoutActivo(container);
+              });
+          }
+      }, 100);
+
       let payloadToRender = localPayload || globalPayload;
       let isGlobal = !localPayload && globalPayload;
       
-      if (payloadToRender) {
+      if (currentLayoutZona !== 'SEL') {
+          activoWrap.innerHTML = `
+              <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
+                  <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
+                  <h4 style="color:#fff; font-size:1.5rem; margin-bottom:10px;">Zona en Construcción</h4>
+                  <p style="font-size:1rem;">El mapa de calor y los reportes para la zona <b>${currentLayoutZona}</b> aún no están configurados.</p>
+              </div>
+          `;
+      } else if (payloadToRender) {
           window.compartirLayoutPayload = localPayload;
           buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, activoWrap, isGlobal, false, localPayload != null);
-          
-          setTimeout(() => {
-              const select = document.getElementById('zonaFilterSelect');
-              if (select) {
-                  select.addEventListener('change', (e) => {
-                      currentLayoutZona = e.target.value;
-                      renderLayoutActivo(container);
-                  });
-              }
-          }, 100);
       }
 
       // DESACTIVADO TEMPORALMENTE A PETICIÓN DEL USUARIO
