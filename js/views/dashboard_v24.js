@@ -12998,7 +12998,7 @@ const renderRFSection = (container) => {
 
                       let isValid = false;
                       const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
-                      const isSchool = genderRaw === '05 SCHOOL';
+                      const isSchool = genderRaw.includes('SCHOOL');
 
                       if (currentLayoutZona === 'SEL') {
                           if (col === 14) {
