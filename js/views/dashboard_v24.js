@@ -12926,7 +12926,7 @@ const renderRFSection = (container) => {
           articulosRaw.forEach(row => {
               const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
               const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
-              const gender = getColSafe(row, ['GENDER', 'RIMS', 'GENDER RIMS', 'IDX3']).trim();
+              const gender = getColSafe(row, ['GENDER RIMS', 'RIMS', 'IDX3']).trim();
               if (sku) {
                   const sku7 = sku.substring(0, 7);
                   skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
