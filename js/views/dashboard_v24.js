@@ -13119,7 +13119,12 @@ const renderRFSection = (container) => {
                       localStatsRes[temporadaClean].padres.add(sku7);
 
                       let isValid = false;
-                      if (temporadaClean === 'ACTUAL') {
+                      const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
+                      const isSchool = genderRaw.includes('SCHOOL');
+
+                      if (col === 14) {
+                          if (isSchool) isValid = true;
+                      } else if (temporadaClean === 'ACTUAL') {
                           if (col >= 6 && col <= 13) isValid = true;
                       } else if (temporadaClean === 'ANTERIOR') {
                           if (col >= 3 && col <= 5) isValid = true;
