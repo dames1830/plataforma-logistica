@@ -12951,7 +12951,7 @@ const renderRFSection = (container) => {
               
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
-              const isSaldo = totalStockForPadre < 20;
+              const isSaldo = currentLayoutZona === 'MZN01' ? totalStockForPadre < 80 : totalStockForPadre < 20;
 
               const regex = new RegExp(currentLayoutZona + "[- ]?(\\d+)\\D+(\\d+)");
               const match = ubi.match(regex);
@@ -12988,9 +12988,7 @@ const renderRFSection = (container) => {
                       localStats[temporadaClean].padres.add(sku7);
 
                       let isValid = false;
-                      if (currentLayoutZona !== 'SEL') {
-                          isValid = true;
-                      } else {
+                      if (currentLayoutZona === 'SEL') {
                           if (temporadaClean === 'ACTUAL') {
                               if (col >= 6 && col <= 13) isValid = true;
                               else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
@@ -12998,6 +12996,18 @@ const renderRFSection = (container) => {
                               if (col >= 3 && col <= 5) isValid = true;
                               else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
                           }
+                      } else if (currentLayoutZona === 'MZN01') {
+                          if (temporadaClean === 'ACTUAL') {
+                              if (col >= 4 && col <= 11) isValid = true;
+                              else if (col >= 12 && col <= 21) isValid = true;
+                              else if (col === 24) isValid = true;
+                              else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
+                          } else if (temporadaClean === 'ANTERIOR') {
+                              if (col >= 1 && col <= 3) isValid = true;
+                              else if (col >= 22 && col <= 23) isValid = true;
+                          }
+                      } else {
+                          isValid = true;
                       }
 
                       if (!isValid) {
@@ -13126,12 +13136,19 @@ const renderRFSection = (container) => {
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
-          for (let c = 1; c <= 14; c++) {
+          const totalCols = currentLayoutZona === 'MZN01' ? 24 : 14;
+          const maxRows = currentLayoutZona === 'MZN01' ? 20 : 22;
+          for (let c = 1; c <= totalCols; c++) {
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
-              for (let r = 22; r >= 1; r--) {
+              for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
                   if (!isReserva && currentLayoutZona === 'SEL' && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
                       cellExists = false;
+                  }
+                  if (!isReserva && currentLayoutZona === 'MZN01') {
+                      if (c >= 1 && c <= 11 && r > 17) cellExists = false;
+                      if ((c === 2 || c === 3) && r <= 3) cellExists = false;
+                      if ((c === 22 || c === 23) && r <= 3) cellExists = false;
                   }
 
                   if (!cellExists) {
@@ -13177,7 +13194,22 @@ const renderRFSection = (container) => {
           }
           gridHtml += `</div>`;
 
-          const ACTUAL_TOTAL_CELLS = isReserva ? (14 * 22) : (14 * 22 - (12 * 2));
+          let ACTUAL_TOTAL_CELLS = 14 * 22;
+          if (!isReserva && currentLayoutZona === 'SEL') {
+              ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
+          } else if (!isReserva && currentLayoutZona === 'MZN01') {
+              let count = 0;
+              for (let c = 1; c <= 24; c++) {
+                  for (let r = 1; r <= 20; r++) {
+                      let exists = true;
+                      if (c >= 1 && c <= 11 && r > 17) exists = false;
+                      if ((c === 2 || c === 3) && r <= 3) exists = false;
+                      if ((c === 22 || c === 23) && r <= 3) exists = false;
+                      if (exists) count++;
+                  }
+              }
+              ACTUAL_TOTAL_CELLS = count;
+          }
           const emptyCellsCount = ACTUAL_TOTAL_CELLS - occupiedCells;
           const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
 
@@ -13241,7 +13273,7 @@ const renderRFSection = (container) => {
                       
                       <div style="display:flex; gap:10px;">
                           <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
-                              ${Array.from({length:22}, (_,i) => 22-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
+                              ${Array.from({length:maxRows}, (_,i) => maxRows-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
                           </div>
                           ${gridHtml}
                       </div>
@@ -13252,7 +13284,7 @@ const renderRFSection = (container) => {
                       <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
                               <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
-                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL SELECTIVO</h4>
+                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL ${zonaLabel}</h4>
                                   <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                               </div>
                               
@@ -13303,7 +13335,7 @@ const renderRFSection = (container) => {
                           </div>
                           
                           <div>
-                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA SELECTIVO</h4>
+                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
                               
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
@@ -13366,7 +13398,7 @@ const renderRFSection = (container) => {
 
                       <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
-                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE SEL - BATA</h4>
+                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - BATA</h4>
                               <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                           </div>
                           <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
@@ -13523,7 +13555,7 @@ const renderRFSection = (container) => {
       let payloadToRender = localPayload || globalPayload;
       let isGlobal = !localPayload && globalPayload;
       
-      if (currentLayoutZona !== 'SEL') {
+      if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01') {
           activoWrap.innerHTML = `
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
                   <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
