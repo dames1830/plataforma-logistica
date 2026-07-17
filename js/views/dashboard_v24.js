@@ -12922,13 +12922,17 @@ const renderRFSection = (container) => {
 
       if (activoRaw.length && articulosRaw.length) {
           const skuTemporada = {};
+          const skuGender = {};
           articulosRaw.forEach(row => {
               const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
               const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
+              const gender = getColSafe(row, ['GENDER', 'RIMS', 'GENDER RIMS', 'IDX3']).trim();
               if (sku) {
                   const sku7 = sku.substring(0, 7);
                   skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
                   skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+                  skuGender[sku7] = gender ? gender.toUpperCase() : '';
+                  skuGender[sku] = gender ? gender.toUpperCase() : '';
               }
           });
 
@@ -12993,13 +12997,18 @@ const renderRFSection = (container) => {
                       localStats[temporadaClean].padres.add(sku7);
 
                       let isValid = false;
+                      const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
+                      const isSchool = genderRaw === '05 SCHOOL';
+
                       if (currentLayoutZona === 'SEL') {
-                          if (temporadaClean === 'ACTUAL') {
+                          if (col === 14) {
+                              if (isSchool) isValid = true;
+                          } else if (temporadaClean === 'ACTUAL') {
                               if (col >= 6 && col <= 13) isValid = true;
-                              else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           } else if (temporadaClean === 'ANTERIOR') {
                               if (col >= 3 && col <= 5) isValid = true;
-                              else if (isSaldo && [1, 2, 14].includes(col)) isValid = true;
+                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
                       } else if (currentLayoutZona === 'MZN01') {
                           if (temporadaClean === 'ACTUAL') {
