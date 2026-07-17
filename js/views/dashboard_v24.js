@@ -12947,13 +12947,18 @@ const renderRFSection = (container) => {
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
               const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
               
-              if (!ubi || !ubi.startsWith(currentLayoutZona) || cant <= 0 || !skuFull) return;
+              const isMzn01 = currentLayoutZona === 'MZN01' && (ubi.startsWith('MZN01') || ubi.startsWith('MZ01'));
+              if (!ubi || cant <= 0 || !skuFull) return;
+              if (currentLayoutZona !== 'MZN01' && !ubi.startsWith(currentLayoutZona)) return;
+              if (currentLayoutZona === 'MZN01' && !isMzn01) return;
               
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
               const isSaldo = currentLayoutZona === 'MZN01' ? totalStockForPadre < 80 : totalStockForPadre < 20;
 
-              const regex = new RegExp(currentLayoutZona + "[- ]?(\\d+)\\D+(\\d+)");
+              let prefixRegexStr = currentLayoutZona;
+              if (currentLayoutZona === 'MZN01') prefixRegexStr = "(?:MZN01|MZ01)";
+              const regex = new RegExp(prefixRegexStr + "[- ]?(\\d+)\\D+(\\d+)");
               const match = ubi.match(regex);
               if (match) {
                   const col = parseInt(match[1], 10);
@@ -12978,9 +12983,8 @@ const renderRFSection = (container) => {
                       if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
                       cell.seasons[temporadaClean] += cant;
                       
-                      const existingSku = cell.skus.find(s => s.sku === skuFull);
                       if (existingSku) existingSku.cant += cant;
-                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
+                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
 
                       localUniquePadres.add(sku7);
                       localTotalUnits += cant;
@@ -13138,7 +13142,13 @@ const renderRFSection = (container) => {
           
           const totalCols = currentLayoutZona === 'MZN01' ? 24 : 14;
           const maxRows = currentLayoutZona === 'MZN01' ? 20 : 22;
-          for (let c = 1; c <= totalCols; c++) {
+          let colsArray = [];
+          if (currentLayoutZona === 'MZN01') {
+              for (let i = 24; i >= 1; i--) colsArray.push(i);
+          } else {
+              for (let i = 1; i <= totalCols; i++) colsArray.push(i);
+          }
+          for (let c of colsArray) {
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
               for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
@@ -13252,7 +13262,7 @@ const renderRFSection = (container) => {
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
-                              ${isReserva ? 'LAYOUT RESERVA - BATA' : 'LAYOUT SEL - BATA'}
+                              ${isReserva ? 'LAYOUT RESERVA - BATA' : 'LAYOUT ' + zonaLabel + ' - BATA'}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
