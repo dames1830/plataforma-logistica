@@ -12926,13 +12926,23 @@ const renderRFSection = (container) => {
           articulosRaw.forEach(row => {
               const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
               const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
-              const gender = getColSafe(row, ['GENDER RIMS', 'RIMS', 'IDX3']).trim();
+              
+              let isSchoolFlag = false;
+              for (const key in row) {
+                  if (String(row[key]).toUpperCase().includes('SCHOOL')) {
+                      isSchoolFlag = true;
+                      break;
+                  }
+              }
+              
               if (sku) {
                   const sku7 = sku.substring(0, 7);
                   skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
                   skuTemporada[sku] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
-                  skuGender[sku7] = gender ? gender.toUpperCase() : '';
-                  skuGender[sku] = gender ? gender.toUpperCase() : '';
+                  if (isSchoolFlag) {
+                      skuGender[sku7] = '05 SCHOOL';
+                      skuGender[sku] = '05 SCHOOL';
+                  }
               }
           });
 
@@ -13195,9 +13205,7 @@ const renderRFSection = (container) => {
                                      Total Unid: ${cellData.totalQty}<br/>
                                      SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
                       cellData.skus.slice(0,5).forEach(s => {
-                          const s7 = s.sku.substring(0, 7);
-                          const g = window.DEBUG_SKU_GENDER ? (window.DEBUG_SKU_GENDER[s.sku] || window.DEBUG_SKU_GENDER[s7] || 'VACÍO') : 'N/A';
-                          tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada} [${g}]</span><br/>`;
+                          tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada}</span><br/>`;
                       });
                       if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>...y ${cellData.skus.length-5} más</span>`;
                   }
