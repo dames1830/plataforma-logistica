@@ -12745,7 +12745,7 @@ const renderRFSection = (container) => {
       reserva.forEach(row => {
         const nivel = String(row['NIVEL'] || '').trim().toUpperCase();
         if (!nivel.includes('ALTO')) return;
-        const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO','Artculo']) || '').trim();
+        const sku = String(getCol(row, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
         const qty = parseFloat(getCol(row, ['CANTIDAD','Cantidad actual','Cantidad','Cant.','Cant','Stock','QTY','Cantidad']) || 0);
         if (!sku || qty <= 0) return;
         stockResMap.set(sku, (stockResMap.get(sku) || 0) + qty);
@@ -12918,11 +12918,12 @@ const renderRFSection = (container) => {
       let localStats = { 'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() }, 'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
       let localTotalUnits = 0;
       let localUniquePadres = new Set();
-      let localPayload = null;
+      
+      let skuTemporada = {};
+      let skuGender = {};
+      let padreStock = {};
 
       if (activoRaw.length && articulosRaw.length) {
-          const skuTemporada = {};
-          const skuGender = {};
           articulosRaw.forEach(row => {
               const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
               const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
@@ -12936,7 +12937,6 @@ const renderRFSection = (container) => {
               }
           });
 
-          const padreStock = {};
           activoRaw.forEach(row => {
               const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
