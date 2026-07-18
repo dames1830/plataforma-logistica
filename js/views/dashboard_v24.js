@@ -18037,18 +18037,20 @@ const renderRFSection = (container) => {
             t.termino = new Date().toISOString();
             t._dirty = true;
             
-            saveAlmacenajeTasks(t).then(() => {
-                document.body.removeChild(pModal);
-                if (assignModal && assignModal.parentNode) {
-                    document.body.removeChild(assignModal);
-                }
-                renderAlmacenajeTareas(container);
-                showPremiumAlert("TAREA FINALIZADA", `La tarea ${t.id} ha sido finalizada con los avances indicados.`, "success");
-            });
+            saveAlmacenajeTasks(t);
+            document.body.removeChild(pModal);
+            if (assignModal && assignModal.parentNode) {
+                document.body.removeChild(assignModal);
+            }
+            renderAlmacenajeTareas(container);
+            showPremiumAlert("TAREA FINALIZADA", `La tarea ${t.id} ha sido finalizada con los avances indicados.`, "success");
         };
     };
 
     window.assignTask = (id) => {
+        const existingModal = document.getElementById('assign_task_modal');
+        if (existingModal) document.body.removeChild(existingModal);
+
         const t = almacenajeTasksCache.find(x => x.id === id);
         if (t && t.status === 'Finalizado') {
             showPremiumAlert("TAREA BLOQUEADA", "Esta tarea ya está finalizada y bloqueada. Para realizar cualquier cambio, utiliza el botón de edición (✏️).", "warning");
@@ -18068,6 +18070,7 @@ const renderRFSection = (container) => {
         const options = workers.map(w => `<option value="${formatUser(w)}" ${formatUser(w) === 'dames' ? 'selected' : ''}>${formatUser(w)} (${w.nombre})</option>`).join('');
 
         const modal = document.createElement('div');
+        modal.id = 'assign_task_modal';
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
         modal.innerHTML = `
             <div class="glass-panel" style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
