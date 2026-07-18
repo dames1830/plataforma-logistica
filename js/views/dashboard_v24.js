@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.310';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.376';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.281';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.281';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.281';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.281';
+import * as adminService from '../services_v245/adminService.js?v=26.5.376';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.376';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.376';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.376';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -456,8 +456,9 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
       safeSaveAlmacenajeTasksCache();
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
 
-        const dataToSave = partialTask ? partialTask : almacenajeTasksCache;
-        console.log(`🚀 [PULSE] Sincronización: Enviando ${partialTask ? '1 tarea (PATCH)' : almacenajeTasksCache.length + ' tareas (POST)'} a la nube.`);
+        // BUGFIX: Always send the full array to ensure backend compaction and data integrity
+        const dataToSave = almacenajeTasksCache;
+        console.log(`📡 [PULSE] Sincronización: Enviando ${almacenajeTasksCache.length} tareas (COMPLETO) a la nube.`);
         
         const success = await adminService.saveAlmacenajeTasks(dataToSave);
         
@@ -1773,7 +1774,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.280');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.376');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12866,7 +12867,12 @@ const renderRFSection = (container) => {
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
     const renderLayoutActivo = async (container) => {
-      let activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
+      let activoRaw = [];
+      if (typeof activeAnalisisSub !== 'undefined' && (activeAnalisisSub === 'archivo_analisis' || activeAnalisisSub === 'layout_activo')) {
+          activoRaw = dataStore.analisis_sku_activo || dataStore.buffer_activo || [];
+      } else {
+          activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
+      }
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
       let globalPayload = null;
@@ -12961,13 +12967,28 @@ const renderRFSection = (container) => {
               const totalStockForPadre = padreStock[sku7] || 0;
               const isSaldo = currentLayoutZona === 'MZN01' ? totalStockForPadre < 80 : totalStockForPadre < 20;
 
-              let prefixRegexStr = currentLayoutZona;
-              if (currentLayoutZona === 'MZN01') prefixRegexStr = "(?:MZN01|MZ01)";
-              const regex = new RegExp(prefixRegexStr + "[- ]?(\\d+)\\D+(\\d+)");
-              const match = ubi.match(regex);
-              if (match) {
-                  const col = parseInt(match[1], 10);
-                  const rackRow = parseInt(match[2], 10);
+              let col = 0;
+              let rackRow = 0;
+              
+              if (currentLayoutZona === 'SEL' || currentLayoutZona === 'MZN01') {
+                  let ubiClean = ubi;
+                  if (currentLayoutZona === 'MZN01') ubiClean = ubiClean.replace(/MZN01|MZ01/g, '');
+                  else if (currentLayoutZona === 'SEL') ubiClean = ubiClean.replace(/SEL/g, '');
+                  
+                  const numMatches = ubiClean.match(/\d+/g);
+                  if (numMatches) {
+                      const allNums = numMatches.join('');
+                      if (allNums.length >= 4) {
+                          col = parseInt(allNums.substring(0, 2), 10);
+                          rackRow = parseInt(allNums.substring(2, 4), 10);
+                      } else if (numMatches.length >= 2) {
+                          col = parseInt(numMatches[0], 10);
+                          rackRow = parseInt(numMatches[1], 10);
+                      }
+                  }
+              }
+              
+              if (col !== 0 && rackRow !== 0) {
                   
                   if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
                       if (currentLayoutZona === 'SEL' && col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
@@ -13005,10 +13026,10 @@ const renderRFSection = (container) => {
                           if (col === 14) {
                               if (isSchool) isValid = true;
                           } else if (temporadaClean === 'ACTUAL') {
-                              if (col >= 6 && col <= 13) isValid = true;
+                              if (col >= 5 && col <= 13) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           } else if (temporadaClean === 'ANTERIOR') {
-                              if (col >= 3 && col <= 5) isValid = true;
+                              if (col >= 3 && col <= 4) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
                       } else if (currentLayoutZona === 'MZN01') {
@@ -13125,9 +13146,9 @@ const renderRFSection = (container) => {
                       if (col === 14) {
                           if (isSchool) isValid = true;
                       } else if (temporadaClean === 'ACTUAL') {
-                          if (col >= 6 && col <= 13) isValid = true;
+                          if (col >= 5 && col <= 13) isValid = true;
                       } else if (temporadaClean === 'ANTERIOR') {
-                          if (col >= 3 && col <= 5) isValid = true;
+                          if (col >= 3 && col <= 4) isValid = true;
                       }
 
                       if (!isValid) {
