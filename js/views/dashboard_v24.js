@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.434';
+const VERSION = '26.5.435';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10891,7 +10891,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.434 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.435 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12990,7 +12990,8 @@ const renderRFSection = (container) => {
               
               if (col !== 0 && rackRow !== 0) {
                   
-                  if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
+                  let maxCols = currentLayoutZona === 'MZN01' ? 24 : 14;
+                  if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= 22) {
                       if (currentLayoutZona === 'SEL' && col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
 
                       if (!localLayoutData[col]) localLayoutData[col] = {};
@@ -13113,7 +13114,8 @@ const renderRFSection = (container) => {
                   const col = parseInt(match[1], 10);
                   const rackRow = parseInt(match[2], 10);
                   
-                  if (col >= 1 && col <= 14 && rackRow >= 1 && rackRow <= 22) {
+                  let maxColsRes = currentLayoutZona === 'MZN01' ? 24 : 14;
+                  if (col >= 1 && col <= maxColsRes && rackRow >= 1 && rackRow <= 22) {
                       if (!localLayoutDataRes[col]) localLayoutDataRes[col] = {};
                       if (!localLayoutDataRes[col][rackRow]) localLayoutDataRes[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
                       
