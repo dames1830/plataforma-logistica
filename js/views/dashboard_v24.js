@@ -12931,16 +12931,9 @@ const renderRFSection = (container) => {
             const skuTemporada = {};
             const skuGender = {};
             
-            let idxSku = 1, idxTemp = 14, idxGender = 3;
-            if (articulosRaw.length > 0 && Array.isArray(articulosRaw[0])) {
-                const headers = articulosRaw[0].map(h => String(h).toUpperCase().trim());
-                const foundSku = headers.findIndex(h => h.includes('ARTICULO') || h.includes('ARTÍCULO') || h.includes('SKU') || h.includes('PRODUCTO'));
-                if (foundSku >= 0) idxSku = foundSku;
-                const foundTemp = headers.findIndex(h => h.includes('TEMPORADA') || h === 'SEASON');
-                if (foundTemp >= 0) idxTemp = foundTemp;
-                const foundGender = headers.findIndex(h => h.includes('GENDER RIMS') || h === 'RIMS');
-                if (foundGender >= 0) idxGender = foundGender;
-            }
+            const idxSku = 1; // Columna B
+            const idxGender = 3; // Columna D
+            const idxTemp = 14; // Columna O
 
             articulosRaw.forEach((row, i) => {
                 if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
@@ -13112,14 +13105,8 @@ const renderRFSection = (container) => {
           let localUniquePadresRes = new Set();
           
           const skuTemporada = {};
-            let idxSku = 1, idxTemp = 14;
-            if (articulosRaw.length > 0 && Array.isArray(articulosRaw[0])) {
-                const headers = articulosRaw[0].map(h => String(h).toUpperCase().trim());
-                const foundSku = headers.findIndex(h => h.includes('ARTICULO') || h.includes('ARTÍCULO') || h.includes('SKU') || h.includes('PRODUCTO'));
-                if (foundSku >= 0) idxSku = foundSku;
-                const foundTemp = headers.findIndex(h => h.includes('TEMPORADA') || h === 'SEASON');
-                if (foundTemp >= 0) idxTemp = foundTemp;
-            }
+            const idxSku = 1; // Columna B
+            const idxTemp = 14; // Columna O
 
             articulosRaw.forEach((row, i) => {
                 if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
