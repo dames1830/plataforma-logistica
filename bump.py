@@ -13,4 +13,4 @@ for root, _, files in os.walk('.'):
     if '.git' in root: continue
     for file in files:
         if file.endswith('.html') or file.endswith('.js'):
-            bump_file(os.path.join(root, file), '26.5.442', '26.5.443')
+            bump_file(os.path.join(root, file), '26.5.443', '26.5.445')
