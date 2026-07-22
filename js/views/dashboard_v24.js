@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.442';
+const VERSION = '26.5.443';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5554,7 +5554,7 @@ const renderRFSection = (container) => {
                     const art7 = cod.length >= 7 ? cod.substring(0, 7) : cod;
                     if (!maestroMap.has(art7)) {
                         maestroMap.set(art7, {
-                            temporada: String(getCol(mRow, ['Temporada','TEMPORADA','Season','SEASON']) || raw[14] || '-').trim()
+                            temporada: String(getCol(mRow, ['Temporada','TEMPORADA','Season','SEASON']) || raw[13] || raw[14] || '-').trim()
                         });
                     }
                 });
@@ -10891,7 +10891,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.442 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.443 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12724,7 +12724,7 @@ const renderRFSection = (container) => {
           maestroMap.set(art7, {
             genderRims: String(getCol(row, ['Gender RIMS','GENDER RIMS','GenderRIMS','GENDER_RIMS']) || raw[3] || '-').trim(),
             marcas:     String(getCol(row, ['Marcas','MARCAS','Marca','MARCA'])                     || raw[13] || '-').trim(),
-            temporada:  String(getCol(row, ['Temporada','TEMPORADA','Season','SEASON'])              || raw[14] || '-').trim(),
+            temporada:  String(getCol(row, ['Temporada','TEMPORADA','Season','SEASON'])              || raw[13] || raw[14] || '-').trim(),
           });
         }
       });
@@ -12915,6 +12915,7 @@ const renderRFSection = (container) => {
               if (name === 'IDX5') return String(raw[5] || '');
               if (name === 'IDX7') return String(raw[7] || '');
               if (name === 'IDX10') return String(raw[10] || '');
+              if (name === 'IDX13') return String(raw[13] || '');
               if (name === 'IDX14') return String(raw[14] || '');
           }
           return '';
@@ -12931,7 +12932,7 @@ const renderRFSection = (container) => {
           const skuGender = {};
           articulosRaw.forEach(row => {
               const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
-              const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
+              const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX13', 'IDX14', 'IDX2']).trim();
               const gender = getColSafe(row, ['GENDER RIMS', 'RIMS', 'IDX3']).trim();
               if (sku) {
                   const sku7 = sku.substring(0, 7);
@@ -13089,7 +13090,7 @@ const renderRFSection = (container) => {
           const skuTemporada = {};
           articulosRaw.forEach(row => {
               const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
-              const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
+              const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX13', 'IDX14', 'IDX2']).trim();
               if (sku) {
                   const sku7 = sku.substring(0, 7);
                   skuTemporada[sku7] = temp ? temp.toUpperCase() : 'DESCONOCIDA';
