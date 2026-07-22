@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.436';
+const VERSION = '26.5.440';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10891,7 +10891,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.436 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.440 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13207,6 +13207,7 @@ const renderRFSection = (container) => {
                   const cellData = layoutData[c] && layoutData[c][r] ? layoutData[c][r] : null;
                   let bgColor = 'rgba(255,255,255,0.02)';
                   let tooltipHTML = `<b>${zonaLabel} ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>Vacío`;
+                  let fullTooltipHTML = tooltipHTML;
                   
                   if (cellData) {
                       occupiedCells++;
@@ -13222,10 +13223,13 @@ const renderRFSection = (container) => {
                       tooltipHTML = `<b>${zonaLabel} ${String(c).padStart(2,'0')} - Cuerpo ${r}</b><br/>
                                      Total Unid: ${cellData.totalQty}<br/>
                                      SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
-                      cellData.skus.slice(0,5).forEach(s => {
+                      fullTooltipHTML = tooltipHTML;
+                      cellData.skus.forEach((s, idx) => {
                           const s7 = s.sku.substring(0, 7);
                           const g = window.DEBUG_SKU_GENDER ? (window.DEBUG_SKU_GENDER[s.sku] || window.DEBUG_SKU_GENDER[s7] || 'VACÍO') : 'N/A';
-                          tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada} [${g}]</span><br/>`;
+                          const itemHTML = `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada} [${g}]</span><br/>`;
+                          if (idx < 5) tooltipHTML += itemHTML;
+                          fullTooltipHTML += itemHTML;
                       });
                       if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>...y ${cellData.skus.length-5} más</span>`;
                   }
@@ -13301,7 +13305,7 @@ const renderRFSection = (container) => {
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
-                              ${isReserva ? 'LAYOUT RESERVA - BATA' : 'LAYOUT ' + zonaLabel + ' - BATA'}
+                              ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center;">
@@ -13447,7 +13451,7 @@ const renderRFSection = (container) => {
 
                       <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
-                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - BATA</h4>
+                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - ${brandTitle}</h4>
                               <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                           </div>
                           <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
@@ -13531,6 +13535,23 @@ const renderRFSection = (container) => {
                   tt.style.backdropFilter = 'blur(4px)';
                   document.body.appendChild(tt);
               }
+
+window.showCellModal = function(htmlContent) {
+    const modalHtml = `
+        <div id="custom-cell-modal-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:99999; display:flex; justify-content:center; align-items:center;">
+            <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:20px; min-width:300px; max-width:90vw; max-height:80vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.5); position:relative;">
+                <button onclick="document.getElementById('custom-cell-modal-overlay').remove()" style="position:absolute; top:10px; right:10px; background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
+                <div style="color:#e2e8f0; font-family:sans-serif; line-height:1.5; margin-top:10px;">
+                    ${htmlContent}
+                </div>
+            </div>
+        </div>
+    `;
+    const oldModal = document.getElementById('custom-cell-modal-overlay');
+    if (oldModal) oldModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+};
+
               window.showTooltip = (e, html) => {
                   if(!html) return;
                   tt.innerHTML = html;
