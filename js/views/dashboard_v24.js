@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.445';
+const VERSION = '26.5.446';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10891,7 +10891,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.445 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.446 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12922,6 +12922,8 @@ const renderRFSection = (container) => {
       };
 
       let localLayoutData = {};
+        window.globalLayoutData = window.globalLayoutData || {};
+        window.globalArticulosRaw = articulosRaw;
       let localStats = { 'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() }, 'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
       let localTotalUnits = 0;
       let localUniquePadres = new Set();
@@ -12947,6 +12949,14 @@ const renderRFSection = (container) => {
                     sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
                     temp = getColSafe(row, ['TEMPORADA', 'SEASON']).trim();
                     gender = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
+                }
+
+                if (String(sku).trim().includes('6646806')) {
+                    console.log("[TRACKER 6646806] Fila completa:", row);
+                    console.log("[TRACKER 6646806] SKU extraído:", sku);
+                    console.log("[TRACKER 6646806] Temp extraído:", temp);
+                    console.log("[TRACKER 6646806] Es Array:", Array.isArray(row));
+                    console.log("[TRACKER 6646806] idxTemp:", idxTemp, "Valor idxTemp:", Array.isArray(row) ? row[idxTemp] : null);
                 }
 
                 if (sku) {
@@ -13270,7 +13280,7 @@ const renderRFSection = (container) => {
                            style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
                            onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
                            onmouseout="window.hideTooltip()"
-                           onclick="window.showCellModal(this.getAttribute('data-full-tooltip'))"
+                           onclick="window.showCellModal(zonaLabel, c, r, isReserva)"
                            data-tooltip="${tooltipHTML.replace(/"/g, '&quot;')}"
                            data-full-tooltip="${fullTooltipHTML.replace(/"/g, '&quot;')}">
                       </div>
@@ -13281,7 +13291,8 @@ const renderRFSection = (container) => {
           }
           gridHtml += `</div>`;
 
-          let ACTUAL_TOTAL_CELLS = 14 * 22;
+          window.globalLayoutData[currentLayoutZona] = localLayoutData;
+            let ACTUAL_TOTAL_CELLS = 14 * 22;
           if (!isReserva && currentLayoutZona === 'SEL') {
               ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
           } else if (!isReserva && currentLayoutZona === 'MZN01') {
