@@ -1,4 +1,4 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.422';
+﻿import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.422';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.422';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.422';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.447';
+const VERSION = '26.5.448';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10896,7 +10896,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.447 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.448 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12850,7 +12850,7 @@ const renderRFSection = (container) => {
         }));
         localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
       } catch(e) {
-        console.warn('[REPL] localStorage lleno, cache solo en sesión.', e);
+        console.warn('[REPL] localStorage lleno, cache solo en sesión', e);
       }
       _replRenderWithItems(container, items, umbral, activo, reserva);
     };
@@ -12944,16 +12944,16 @@ const renderRFSection = (container) => {
 
             articulosRaw.forEach((row, i) => {
                 if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
-                
-                let sku = '', temp = '', gender = '';
                 if (Array.isArray(row)) {
                     sku = String(row[idxSku] || '').trim();
-                    temp = String(row[idxTemp] || '').trim();
+                    temp = String(row[idxTemp] || row[13] || '').trim();
                     gender = String(row[idxGender] || '').trim();
                 } else {
-                    sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
-                    temp = getColSafe(row, ['TEMPORADA', 'SEASON']).trim();
+                    const rawValues = Object.values(row);
+                    sku = getColSafe(row, ['ARTICULO', 'ARTCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
+                    temp = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(rawValues[14] || rawValues[13] || '').trim();
                     gender = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
+                }
                 }
 
                 if (String(sku).trim().includes('6646806')) {
@@ -13285,7 +13285,7 @@ const renderRFSection = (container) => {
                            style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
                            onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
                            onmouseout="window.hideTooltip()"
-                           onclick="window.showCellModal(zonaLabel, c, r, isReserva)"
+                           onclick="window.showCellModal(this.getAttribute('data-full-tooltip'))"
                            data-tooltip="${tooltipHTML.replace(/"/g, '&quot;')}"
                            data-full-tooltip="${fullTooltipHTML.replace(/"/g, '&quot;')}">
                       </div>
