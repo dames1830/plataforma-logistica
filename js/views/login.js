@@ -61,7 +61,7 @@ export const renderLogin = (container, onLoginSuccess) => {
       
       </form>
       <div style="text-align: center; margin-top: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 0.05em;">
-        SYSTEM BUILD: v26.5.451 | SECURE SYNC
+        SYSTEM BUILD: v26.5.452 | SECURE SYNC
       </div>
     </div>
   `;
