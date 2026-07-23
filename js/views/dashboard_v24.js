@@ -1,4 +1,4 @@
-﻿import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.422';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.422';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
 import * as adminService from '../services_v245/adminService.js?v=26.5.422';
 import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.422';
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.453';
+const VERSION = '26.5.454';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10896,7 +10896,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.453 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.454 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13356,9 +13356,11 @@ const renderRFSection = (container) => {
           `;
 
           const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : 'BATA';
+          const isMZN = currentLayoutZona.startsWith('MZN');
+          
           targetContainer.innerHTML = `
-              <div style="display:flex; width:100%; gap:20px; align-items:flex-start;">
-                  <div class="glass-panel" style="padding:20px; position:relative; flex:2; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
+              <div style="display:flex; width:100%; gap:20px; flex-direction:${isMZN ? 'column' : 'row'}; align-items:flex-start;">
+                  <div class="glass-panel" style="padding:20px; position:relative; ${isMZN ? 'width:100%' : 'flex:2'}; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
@@ -13389,9 +13391,9 @@ const renderRFSection = (container) => {
                       </div>
                   </div>
 
-                  <div style="flex:1; min-width:320px; display:flex; flex-direction:column; gap:20px;">
+                  <div style="${isMZN ? 'width:100%' : 'flex:1'}; min-width:${isMZN ? '0' : '320px'}; display:flex; flex-direction:${isMZN ? 'row' : 'column'}; gap:20px;">
                       
-                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="${isMZN ? 'flex:1;' : ''} padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
                               <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
                                   <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL ${zonaLabel}</h4>
@@ -13443,7 +13445,9 @@ const renderRFSection = (container) => {
                                   </div>
                               </div>
                           </div>
-                          
+                      </div>
+                      
+                      <div class="glass-panel" style="${isMZN ? 'flex:1;' : ''} padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
                               <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
                               
@@ -13506,7 +13510,7 @@ const renderRFSection = (container) => {
                           </div>
                       </div>
 
-                      <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="${isMZN ? 'flex:1;' : ''} padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
                               <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - ${brandTitle}</h4>
                               <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
