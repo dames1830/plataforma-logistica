@@ -552,8 +552,13 @@ setInterval(async () => {
                 if (synced && synced.length > 0 && synced.length >= almacenajeTasksCache.length) {
                     almacenajeTasksCache = synced.map(newTask => {
                         const localTask = almacenajeTasksCache.find(lt => lt.id === newTask.id);
-                        if (localTask && (!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
-                            return { ...newTask, items: localTask.items };
+                        if (localTask) {
+                            if (localTask._dirty) {
+                                return localTask; // OFFLINE-FIRST: Proteger cambios no guardados
+                            }
+                            if ((!newTask.items || newTask.items.length === 0) && localTask.items && localTask.items.length > 0) {
+                                return { ...newTask, items: localTask.items };
+                            }
                         }
                         return newTask;
                     });
@@ -5554,7 +5559,7 @@ const renderRFSection = (container) => {
                     const art7 = cod.length >= 7 ? cod.substring(0, 7) : cod;
                     if (!maestroMap.has(art7)) {
                         maestroMap.set(art7, {
-                            temporada: String(getCol(mRow, ['Temporada','TEMPORADA','Season','SEASON']) || raw[13] || raw[14] || '-').trim()
+                            temporada: String(getCol(mRow, ['Temporada','TEMPORADA','Season','SEASON']) || raw[14] || raw[13] || '-').trim()
                         });
                     }
                 });
@@ -12724,7 +12729,7 @@ const renderRFSection = (container) => {
           maestroMap.set(art7, {
             genderRims: String(getCol(row, ['Gender RIMS','GENDER RIMS','GenderRIMS','GENDER_RIMS']) || raw[3] || '-').trim(),
             marcas:     String(getCol(row, ['Marcas','MARCAS','Marca','MARCA'])                     || raw[13] || '-').trim(),
-            temporada:  String(getCol(row, ['Temporada','TEMPORADA','Season','SEASON'])              || raw[13] || raw[14] || '-').trim(),
+            temporada:  String(getCol(row, ['Temporada','TEMPORADA','Season','SEASON'])              || raw[14] || raw[13] || '-').trim(),
           });
         }
       });
@@ -13175,7 +13180,7 @@ const renderRFSection = (container) => {
                       
                       const existingSku = cell.skus.find(s => s.sku === skuFull);
                       if (existingSku) existingSku.cant += cant;
-                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaRaw });
+                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
 
                       localUniquePadresRes.add(sku7);
                       localTotalUnitsRes += cant;
