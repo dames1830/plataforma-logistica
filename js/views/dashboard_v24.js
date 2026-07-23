@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.456';
+const VERSION = '26.5.457';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10896,7 +10896,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.456 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.457 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12992,20 +12992,23 @@ const renderRFSection = (container) => {
               const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
               
               const isMzn01 = currentLayoutZona === 'MZN01' && (ubi.startsWith('MZN01') || ubi.startsWith('MZ01'));
+              const isMzn02 = currentLayoutZona === 'MZN02' && (ubi.startsWith('MZN02') || ubi.startsWith('MZ02'));
               if (!ubi || cant <= 0 || !skuFull) return;
-              if (currentLayoutZona !== 'MZN01' && !ubi.startsWith(currentLayoutZona)) return;
+              if (currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02' && !ubi.startsWith(currentLayoutZona)) return;
               if (currentLayoutZona === 'MZN01' && !isMzn01) return;
+              if (currentLayoutZona === 'MZN02' && !isMzn02) return;
               
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
-              const isSaldo = currentLayoutZona === 'MZN01' ? totalStockForPadre < 80 : totalStockForPadre < 20;
+              const isSaldo = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? totalStockForPadre < 80 : totalStockForPadre < 20;
 
               let col = 0;
               let rackRow = 0;
               
-              if (currentLayoutZona === 'SEL' || currentLayoutZona === 'MZN01') {
+              if (currentLayoutZona === 'SEL' || currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
                   let ubiClean = ubi;
                   if (currentLayoutZona === 'MZN01') ubiClean = ubiClean.replace(/MZN01|MZ01/g, '');
+                  else if (currentLayoutZona === 'MZN02') ubiClean = ubiClean.replace(/MZN02|MZ02/g, '');
                   else if (currentLayoutZona === 'SEL') ubiClean = ubiClean.replace(/SEL/g, '');
                   
                   const numMatches = ubiClean.match(/\d+/g);
@@ -13023,7 +13026,7 @@ const renderRFSection = (container) => {
               
               if (col !== 0 && rackRow !== 0) {
                   
-                  let maxCols = currentLayoutZona === 'MZN01' ? 24 : 14;
+                  let maxCols = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
                   if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= 22) {
                       if (currentLayoutZona === 'SEL' && col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
 
@@ -13067,16 +13070,26 @@ const renderRFSection = (container) => {
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
                       } else if (currentLayoutZona === 'MZN01') {
-                          if (temporadaClean === 'ACTUAL') {
-                              if (col >= 4 && col <= 11) isValid = true;
-                              else if (col >= 12 && col <= 21) isValid = true;
-                              else if (col === 24) isValid = true;
-                              else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
-                          } else if (temporadaClean === 'ANTERIOR') {
-                              if (col >= 1 && col <= 3) isValid = true;
-                              else if (col >= 22 && col <= 23) isValid = true;
-                          }
-                      } else {
+                            if (temporadaClean === 'ACTUAL') {
+                                if (col >= 4 && col <= 11) isValid = true;
+                                else if (col >= 12 && col <= 21) isValid = true;
+                                else if (col === 24) isValid = true;
+                                else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
+                            } else if (temporadaClean === 'ANTERIOR') {
+                                if (col >= 1 && col <= 3) isValid = true;
+                                else if (col >= 22 && col <= 23) isValid = true;
+                            }
+                        } else if (currentLayoutZona === 'MZN02') {
+                            if (temporadaClean === 'ACTUAL') {
+                                if (col >= 8 && col <= 24) isValid = true;
+                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
+                            } else if (temporadaClean === 'ANTERIOR') {
+                                if (col >= 4 && col <= 7) isValid = true;
+                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
+                            } else if (isSaldo) {
+                                if (col >= 1 && col <= 3) isValid = true;
+                            }
+                        } else {
                           isValid = true;
                       }
 
@@ -13160,7 +13173,7 @@ const renderRFSection = (container) => {
                   const col = parseInt(match[1], 10);
                   const rackRow = parseInt(match[2], 10);
                   
-                  let maxColsRes = currentLayoutZona === 'MZN01' ? 24 : 14;
+                  let maxColsRes = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
                   if (col >= 1 && col <= maxColsRes && rackRow >= 1 && rackRow <= 22) {
                       if (!localLayoutDataRes[col]) localLayoutDataRes[col] = {};
                       if (!localLayoutDataRes[col][rackRow]) localLayoutDataRes[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
@@ -13225,10 +13238,10 @@ const renderRFSection = (container) => {
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
-          const totalCols = currentLayoutZona === 'MZN01' ? 24 : 14;
-          const maxRows = currentLayoutZona === 'MZN01' ? 20 : 22;
+          const totalCols = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
+          const maxRows = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 20 : 22;
           let colsArray = [];
-          if (currentLayoutZona === 'MZN01') {
+          if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
               for (let i = 24; i >= 1; i--) colsArray.push(i);
           } else {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
@@ -13355,7 +13368,7 @@ const renderRFSection = (container) => {
               </button>
           `;
 
-          const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : 'BATA';
+          const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : (currentLayoutZona === 'MZN02' ? 'NORTH STAR' : 'BATA');
           const isMZN = currentLayoutZona.startsWith('MZN');
           
           targetContainer.innerHTML = `
@@ -13690,7 +13703,7 @@ window.showCellModal = function(htmlContent) {
       let payloadToRender = localPayload || globalPayload;
       let isGlobal = !localPayload && globalPayload;
       
-      if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01') {
+      if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
           activoWrap.innerHTML = `
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
                   <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
