@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.448';
+const VERSION = '26.5.449';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10896,7 +10896,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.448 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.449 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -12944,6 +12944,7 @@ const renderRFSection = (container) => {
 
             articulosRaw.forEach((row, i) => {
                 if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
+                let sku = '', temp = '', gender = '';
                 if (Array.isArray(row)) {
                     sku = String(row[idxSku] || '').trim();
                     temp = String(row[idxTemp] || row[13] || '').trim();
@@ -12953,7 +12954,6 @@ const renderRFSection = (container) => {
                     sku = getColSafe(row, ['ARTICULO', 'ARTCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
                     temp = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(rawValues[14] || rawValues[13] || '').trim();
                     gender = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
-                }
                 }
 
                 if (String(sku).trim().includes('6646806')) {
