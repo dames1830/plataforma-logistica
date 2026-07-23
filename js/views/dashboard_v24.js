@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.455';
+const VERSION = '26.5.456';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10896,7 +10896,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.455 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.456 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13391,9 +13391,9 @@ const renderRFSection = (container) => {
                       </div>
                   </div>
 
-                  <div style="${isMZN ? 'width:100%' : 'flex:1'}; min-width:${isMZN ? '0' : '320px'}; display:flex; flex-direction:${isMZN ? 'row' : 'column'}; gap:20px;">
+                  <div style="${isMZN ? 'width:100%; display:grid; grid-template-columns: repeat(3, 1fr);' : 'flex:1; min-width:320px; display:flex; flex-direction:column;'} gap:20px;">
                       
-                      <div class="glass-panel" style="${isMZN ? 'flex:1;' : ''} padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
                               <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
                                   <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL ${zonaLabel}</h4>
@@ -13514,7 +13514,7 @@ const renderRFSection = (container) => {
                           </div>
                       </div>
 
-                      <div class="glass-panel" style="${isMZN ? 'flex:1;' : ''} padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
                               <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - ${brandTitle}</h4>
                               <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
