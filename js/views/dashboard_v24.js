@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.449';
+const VERSION = '26.5.450';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -10896,7 +10896,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.449 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.450 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13241,8 +13241,8 @@ const renderRFSection = (container) => {
                       cellExists = false;
                   }
                   if (!isReserva && currentLayoutZona === 'MZN01') {
-                      if ((c === 2 || c === 3) && r <= 3) cellExists = false;
-                      if ((c === 22 || c === 23) && r <= 3) cellExists = false;
+                      if ((c === 2 || c === 3) && r >= 18) cellExists = false;
+                      if ((c === 22 || c === 23) && r >= 18) cellExists = false;
                   }
 
                   if (!cellExists) {
@@ -13305,8 +13305,8 @@ const renderRFSection = (container) => {
               for (let c = 1; c <= 24; c++) {
                   for (let r = 1; r <= 20; r++) {
                       let exists = true;
-                      if ((c === 2 || c === 3) && r <= 3) exists = false;
-                      if ((c === 22 || c === 23) && r <= 3) exists = false;
+                      if ((c === 2 || c === 3) && r >= 18) exists = false;
+                      if ((c === 22 || c === 23) && r >= 18) exists = false;
                       if (exists) count++;
                   }
               }
