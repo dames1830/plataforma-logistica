@@ -6537,14 +6537,16 @@ const renderRFSection = (container) => {
     
     if (activeInventarioSub === 'archivo_inventario') {
        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '1rem'; l2Container.appendChild(wrap);
-       const [matriz, reserva, stock] = await Promise.all([
+       const [matriz, reserva, stock, articulos] = await Promise.all([
            getAreaData('matriz_ubicaciones'),
            getAreaData('stockReserva'),
-           getAreaData('inventario')
+           getAreaData('inventario'),
+           getAreaData('articulos')
        ]);
        renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES (Col A)');
        renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA (Col E, Col I)');
-       renderUploadArea(wrap, 'inventario', stock, '.csv', 'STOCK GENERAL');
+       renderUploadArea(wrap, 'inventario', stock, '.csv', 'STOCK ACTIVO');
+       renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
 
     } else if (activeInventarioSub === 'kpi_inventarios') {
        l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">📊 KPI Inventarios en desarrollo.</div>`;
@@ -6614,9 +6616,8 @@ const renderRFSection = (container) => {
 
     if (activeModuloInvSub === 'general') {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; content.appendChild(wrap);
-        renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
         // Agregamos info visual de que se nutre de Archivo Inventario
-        wrap.innerHTML += `<div style="margin-top:1rem; padding:0.8rem; background:rgba(129, 140, 248, 0.05); border-radius:8px; border:1px dashed rgba(129, 140, 248, 0.2); font-size:0.7rem; color:#818cf8; text-align:center;">ℹ️ Este módulo utiliza automáticamente la Matriz y Stock cargados en 'ARCHIVO INVENTARIO'.</div>`;
+        wrap.innerHTML += `<div style="margin-top:1rem; padding:0.8rem; background:rgba(129, 140, 248, 0.05); border-radius:8px; border:1px dashed rgba(129, 140, 248, 0.2); font-size:0.7rem; color:#818cf8; text-align:center;">ℹ️ Este módulo utiliza automáticamente la Matriz, Stock y Artículos cargados en 'ARCHIVO INVENTARIO'.</div>`;
     } 
     else if (activeModuloInvSub === 'ciclicos') {
         const session = getSession();
@@ -10896,7 +10897,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.457 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.458 | MOBILE PORTAL
                             </div>
                     </div>
 
