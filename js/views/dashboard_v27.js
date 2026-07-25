@@ -16767,8 +16767,8 @@ window.showCellModal = function(htmlContent) {
                 </div>
             </div>
 
-            <!-- FILA INFERIOR DE REPORTES (3 COLUMNAS) -->
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.5rem; align-items:start;">
+            <!-- FILA INFERIOR DE REPORTES (2 COLUMNAS) -->
+            <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; align-items:start;">
                 
                 <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
                 <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
@@ -17118,7 +17118,9 @@ window.showCellModal = function(htmlContent) {
                     </div>
                 </div>
 
-                <!-- REPORTE RENDIMIENTO DE OPERARIOS (ANCHO COMPLETO -> TERCERA COLUMNA) -->
+            </div>
+
+            <!-- REPORTE RENDIMIENTO DE OPERARIOS (ANCHO COMPLETO) -->
                 <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
@@ -17382,7 +17384,6 @@ window.showCellModal = function(htmlContent) {
                         <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
                     </div>`;
                 })()}
-            </div>
             </div>
             
             ${renderHourlyProductionReport(tasks)}
