@@ -10897,7 +10897,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.459 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.462 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13374,8 +13374,8 @@ const renderRFSection = (container) => {
           const isMZN = currentLayoutZona.startsWith('MZN');
           
           targetContainer.innerHTML = `
-              <div style="display:flex; width:100%; gap:20px; flex-direction:column; align-items:flex-start;">
-                  <div class="glass-panel" style="padding:20px; position:relative; width:100%; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
+                <div style="display:flex; width:100%; gap:20px; flex-direction:${isMZN ? 'column' : 'row'}; align-items:flex-start;">
+                    <div class="glass-panel" style="padding:20px; position:relative; ${isMZN ? 'width:100%;' : 'flex: 0 0 70%; max-width: 70%;'} min-width:0; overflow-x:auto; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
@@ -13406,7 +13406,7 @@ const renderRFSection = (container) => {
                       </div>
                   </div>
 
-                  <div style="${isMZN ? 'width:100%; display:grid; grid-template-columns: repeat(3, 1fr);' : 'flex:1; min-width:320px; display:flex; flex-direction:column;'} gap:20px;">
+                  <div style="${isMZN ? 'width:100%; display:grid; grid-template-columns: repeat(3, 1fr);' : 'flex: 0 0 calc(30% - 20px); max-width: calc(30% - 20px); display:flex; flex-direction:column;'} gap:20px;">
                       
                       <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div>
