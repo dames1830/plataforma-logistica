@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v26.5.459';
+      this.APP_VERSION = 'v26.5.460';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
@@ -426,7 +426,7 @@ class App {
     
     try {
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v24.js?v=${this.APP_VERSION}`);
+            const { renderDashboard } = await import(`./views/dashboard_v25.js?v=${this.APP_VERSION}`);
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;

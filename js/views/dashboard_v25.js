@@ -13254,10 +13254,10 @@ const renderRFSection = (container) => {
                   if (!isReserva && currentLayoutZona === 'SEL' && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
                       cellExists = false;
                   }
-                  if (!isReserva && currentLayoutZona === 'MZN01') {
-                      if ((c === 2 || c === 3) && r <= 3) cellExists = false;
-                      if ((c === 22 || c === 23) && r <= 3) cellExists = false;
-                  }
+                  if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
+                        if ((c === 2 || c === 3) && r <= 3) cellExists = false;
+                        if ((c === 22 || c === 23) && r <= 3) cellExists = false;
+                    }
 
                   if (!cellExists) {
                       gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
@@ -13265,11 +13265,11 @@ const renderRFSection = (container) => {
                   }
 
                   let logicalR = r;
-                  if (!isReserva && currentLayoutZona === 'MZN01') {
-                      if (c === 2 || c === 3 || c === 22 || c === 23) {
-                          logicalR = r - 3;
-                      }
-                  }
+                  if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
+                        if (c === 2 || c === 3 || c === 22 || c === 23) {
+                            logicalR = r - 3;
+                        }
+                    }
 
                   const cellData = layoutData[c] && layoutData[c][logicalR] ? layoutData[c][logicalR] : null;
                   let bgColor = 'rgba(255,255,255,0.02)';
@@ -13321,8 +13321,8 @@ const renderRFSection = (container) => {
             let ACTUAL_TOTAL_CELLS = 14 * 22;
           if (!isReserva && currentLayoutZona === 'SEL') {
               ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
-          } else if (!isReserva && currentLayoutZona === 'MZN01') {
-              let count = 0;
+          } else if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
+                let count = 0;
               for (let c = 1; c <= 24; c++) {
                   for (let r = 1; r <= 20; r++) {
                       let exists = true;
@@ -13373,8 +13373,8 @@ const renderRFSection = (container) => {
           const isMZN = currentLayoutZona.startsWith('MZN');
           
           targetContainer.innerHTML = `
-              <div style="display:flex; width:100%; gap:20px; flex-direction:${isMZN ? 'column' : 'row'}; align-items:flex-start;">
-                  <div class="glass-panel" style="padding:20px; position:relative; ${isMZN ? 'width:100%' : 'flex:2'}; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
+              <div style="display:flex; width:100%; gap:20px; flex-direction:column; align-items:flex-start;">
+                  <div class="glass-panel" style="padding:20px; position:relative; width:100%; min-width:0; overflow:hidden; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
@@ -16766,8 +16766,8 @@ window.showCellModal = function(htmlContent) {
                 </div>
             </div>
 
-            <!-- FILA INFERIOR DE REPORTES (50% / 50%) -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+            <!-- FILA INFERIOR DE REPORTES (3 COLUMNAS) -->
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.5rem; align-items:start;">
                 
                 <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
                 <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
@@ -17117,10 +17117,8 @@ window.showCellModal = function(htmlContent) {
                     </div>
                 </div>
 
-            </div>
-
-            <!-- REPORTE RENDIMIENTO DE OPERARIOS (ANCHO COMPLETO) -->
-            <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+                <!-- REPORTE RENDIMIENTO DE OPERARIOS (ANCHO COMPLETO -> TERCERA COLUMNA) -->
+                <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                         <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
@@ -17383,6 +17381,7 @@ window.showCellModal = function(htmlContent) {
                         <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
                     </div>`;
                 })()}
+            </div>
             </div>
             
             ${renderHourlyProductionReport(tasks)}
