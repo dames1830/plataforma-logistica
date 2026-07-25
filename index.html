@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+window.addEventListener('error', function(e) {
+    document.body.innerHTML += '<div style="position:fixed;top:0;left:0;z-index:9999;background:red;color:white;padding:20px;font-size:20px;">' + e.message + ' at ' + e.filename + ':' + e.lineno + '</div>';
+});
+window.addEventListener('unhandledrejection', function(e) {
+    document.body.innerHTML += '<div style="position:fixed;top:50px;left:0;z-index:9999;background:orange;color:white;padding:20px;font-size:20px;">' + e.reason + '</div>';
+});
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logística Deam1830</title>
@@ -94,7 +102,7 @@
   <div id="sync-indicator" class="sync-online">
     <span id="sync-icon" style="font-size: 1.1rem; user-select: none;">…</span>
     <div class="sync-tooltip">
-      <div id="sync-text" style="font-weight: 800; font-size: 0.75rem; color: #fff; white-space: nowrap;">SISTEMA v26.5.460 ONLINE</div>
+      <div id="sync-text" style="font-weight: 800; font-size: 0.75rem; color: #fff; white-space: nowrap;">SISTEMA v26.5.461 ONLINE</div>
       <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap;">System is currently up to date and syncing.</div>
     </div>
   </div>

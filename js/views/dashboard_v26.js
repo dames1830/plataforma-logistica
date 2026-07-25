@@ -13134,6 +13134,7 @@ const renderRFSection = (container) => {
           let localUniquePadresRes = new Set();
           
           const skuTemporada = {};
+          const skuGender = window.DEBUG_SKU_GENDER || {};
             const idxSku = 1; // Columna B
             const idxTemp = 14; // Columna O
 
