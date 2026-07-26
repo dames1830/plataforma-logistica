@@ -542,7 +542,7 @@ setInterval(async () => {
         console.log("📡 [RADAR v24] Buscando actualizaciones en la nube...");
         await adminService.initializeAdminData();
         // Solo refrescar si estamos en la pestaña de almacenaje y no hay cambios pendientes locales
-        const currentTab = document.querySelector('.nav-item.active')?.dataset.id;
+        const currentTab = ((document.querySelector('.nav-item.active') || {}).dataset || {}).id;
         if (currentTab === 'almacenaje') {
             const synced = adminService.adminStore.almacenaje_tasks;
             if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
@@ -1101,7 +1101,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       container.innerHTML = `<div style="color:white; padding:2rem; text-align:center;"><h2>No tienes permisos asignados.</h2><p>Contacta con Daniel Ames.</p><button onclick="location.reload()" class="btn">Reintentar</button></div>`;
       return;
   }
-  let currentTab = allowedTabs[0]?.id;
+  let currentTab = (allowedTabs[0] ? allowedTabs[0].id : undefined);
 
   const updateMobileDriverClass = () => {
     const isMobile = window.innerWidth <= 768;
@@ -1411,7 +1411,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     if (!allowedSubTabs.find(s => s.id === activeBufferSub)) {
-        activeBufferSub = allowedSubTabs[0]?.id || '';
+        activeBufferSub = (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined) || '';
     }
 
     if (!activeBufferSub) {
@@ -1670,15 +1670,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#eee;">
                     <div style="text-align:center;">
                         <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary?.articulos || 0).toLocaleString()}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${((data.sinStockSummary ? data.sinStockSummary.articulos : undefined) || 0).toLocaleString()}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
                         <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary?.skus || 0).toLocaleString()}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${((data.sinStockSummary ? data.sinStockSummary.skus : undefined) || 0).toLocaleString()}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
                         <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#ef4444;">${(data.sinStockSummary?.qty || 0).toLocaleString()}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#ef4444;">${((data.sinStockSummary ? data.sinStockSummary.qty : undefined) || 0).toLocaleString()}</div>
                     </div>
                 </div>
             </div>
@@ -1753,7 +1753,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // Si la sub-pestaña actual no está permitida, ir a la primera disponible
     if (!allowedSubTabs.find(s => s.id === activeAdminSub)) {
-        activeAdminSub = allowedSubTabs[0]?.id || '';
+        activeAdminSub = (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined) || '';
     }
 
     if (!activeAdminSub) {
@@ -2237,7 +2237,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
-                                const dbVal = adminService.getPermissions(r)?.[t.id];
+                                const dbVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[t.id] : undefined);
                                 let hasAccess = r === 'admin' ? true : (dbVal !== undefined ? (dbVal === 1 || dbVal === true) : t.roles.includes(r));
                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
                                 const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
@@ -2257,7 +2257,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         ${sub.icon} ${sub.label}
                                     </td>
                                     ${allRoles.map(r => {
-                                        const dbSubVal = adminService.getPermissions(r)?.[subKey];
+                                        const dbSubVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[subKey] : undefined);
                                         let hasSubAccess = r === 'admin' ? true : (dbSubVal !== undefined ? (dbSubVal === 1 || dbSubVal === true) : t.roles.includes(r));
                                         if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey)) hasSubAccess = true;
                                         const isFixedSub = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey));
@@ -2273,7 +2273,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         <tr class="sub-row-${subKey}" style="border-bottom:1px solid rgba(255,255,255,0.005); display:none; background:rgba(0,0,0,0.2);">
                                             <td style="padding:0.5rem 0.8rem 0.5rem 4.5rem; font-size:0.7rem; color:var(--primary); border-right:1px solid var(--border);">${ss.icon} ${ss.label}</td>
                                             ${allRoles.map(r => {
-                                                const dbSSVal = adminService.getPermissions(r)?.[ssKey];
+                                                const dbSSVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[ssKey] : undefined);
                                                 let hasSSAccess = r === 'admin' ? true : (dbSSVal !== undefined ? (dbSSVal === 1 || dbSSVal === true) : t.roles.includes(r));
                                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey)) hasSSAccess = true;
                                                 const isFixedSS = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey));
@@ -2402,7 +2402,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
                         const displayName = `${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}`;
-                        const isFinalized = existing?.finalized || false;
+                        const isFinalized = (existing ? existing.finalized : undefined) || false;
                         
                         return `
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
@@ -2424,9 +2424,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center;">
                                 <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.7rem; outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
-                                    <option value="Descanso Médico" ${rec?.justification==='Descanso Médico'?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
-                                    <option value="Vacaciones" ${rec?.justification==='Vacaciones'?'selected':'' } style="background:#1e293b;">VACACIONES</option>
-                                    <option value="Otros" ${rec?.justification==='Otros'?'selected':'' } style="background:#1e293b;">OTROS</option>
+                                    <option value="Descanso Médico" ${(rec && rec.justification==='Descanso Médico')?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
+                                    <option value="Vacaciones" ${(rec && rec.justification==='Vacaciones')?'selected':'' } style="background:#1e293b;">VACACIONES</option>
+                                    <option value="Otros" ${(rec && rec.justification==='Otros')?'selected':'' } style="background:#1e293b;">OTROS</option>
                                 </select>
                             </td>
                         </tr>`;
@@ -2485,7 +2485,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btnClose.style = 'background:var(--primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
         btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
 
-        if (existing?.finalized) {
+        if ((existing ? existing.finalized : undefined)) {
             btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
             btnClose.style.background = 'var(--success)';
             btnClose.style.color = '#000';
@@ -2682,8 +2682,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
             <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid #fcd34d;">
                 <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Top Operario</h4>
-                <h2 style="margin:0.5rem 0; font-size:1.1rem; color:#fff; line-height:1.2; font-weight:700;">${workerRanking[0]?.name || '-'}</h2>
-                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">⭐ ${workerRanking[0]?.avg || 0}%</span>
+                <h2 style="margin:0.5rem 0; font-size:1.1rem; color:#fff; line-height:1.2; font-weight:700;">${(workerRanking[0] ? workerRanking[0].name : undefined) || '-'}</h2>
+                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">⭐ ${(workerRanking[0] ? workerRanking[0].avg : undefined) || 0}%</span>
             </div>
         </div>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
@@ -2822,8 +2822,8 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
         }
 
-        const ctxEvo = document.getElementById('chartEvolution')?.getContext('2d');
-        const ctxRank = document.getElementById('chartRanking')?.getContext('2d');
+        const ctxEvo = (document.getElementById('chartEvolution') ? document.getElementById('chartEvolution').getContext('2d') : null);
+        const ctxRank = (document.getElementById('chartRanking') ? document.getElementById('chartRanking').getContext('2d') : null);
         if (!ctxEvo || !ctxRank) return;
         if (window.evoChart instanceof Chart) window.evoChart.destroy();
         if (window.rankChart instanceof Chart) window.rankChart.destroy();
@@ -2958,7 +2958,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
 
     if (!allowedSubSubs.find(s => s.id === activePerfSub)) {
-        activePerfSub = allowedSubSubs[0]?.id || '';
+        activePerfSub = (allowedSubSubs[0] ? allowedSubSubs[0].id : undefined) || '';
     }
 
     container.innerHTML = `
@@ -3146,7 +3146,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 let sumRend = 0;
                 let count = 0;
                 dateRows.forEach(row => {
-                    const rendText = row.querySelector(`[id^="rend-"]`)?.textContent;
+                    const rendText = (row.querySelector(`[id^="rend-"]`) ? row.querySelector(`[id^="rend-"]`).textContent : undefined);
                     if (rendText) {
                         sumRend += parseInt(rendText) || 0;
                         count++;
@@ -5856,7 +5856,7 @@ const renderRFSection = (container) => {
         kpiHistory[idx] = { ...kpiHistory[idx], ...updatedRecord };
 
         // Sincronizar con servidor si tiene id
-        const recordId = kpiHistory[idx]?.id;
+        const recordId = (kpiHistory[idx] ? kpiHistory[idx].id : undefined);
         if (recordId) {
             updateBufferHistoryRecord(recordId, updatedRecord).then(ok => {
                 console.log(ok ? `[BH] ✅ Registro ${recordId} actualizado en servidor.` : `[BH] ⚠️ Error actualizando registro ${recordId}.`);
@@ -5918,7 +5918,7 @@ const renderRFSection = (container) => {
         document.getElementById('modal_hist_cancel').onclick = () => overlay.remove();
         document.getElementById('modal_hist_confirm').onclick = async () => {
             overlay.remove();
-            const recordId = kpiHistory[idx]?.id;
+            const recordId = (kpiHistory[idx] ? kpiHistory[idx].id : undefined);
             // Eliminar del servidor si tiene id
             if (recordId) {
                 deleteBufferHistoryRecord(recordId).then(ok => {
@@ -9158,7 +9158,7 @@ const renderRFSection = (container) => {
     `;
 
     // Vincular exportación
-    document.getElementById('btnExportUCA')?.addEventListener('click', () => exportUCAtoExcel(results));
+    if (document.getElementById('btnExportUCA')) document.getElementById('btnExportUCA').addEventListener('click', () => exportUCAtoExcel(results));
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
@@ -9167,8 +9167,8 @@ const renderRFSection = (container) => {
     const perms = adminService.getPermissions(user.role) || {};
     const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || sub.id === 'reportes_recepcion' || perms[`${tabId}_${sub.id}`] === 1);
 
-    let activeSub = localStorage.getItem(`activeSub_${tabId}`) || allowedSubTabs[0]?.id;
-    if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = allowedSubTabs[0]?.id;
+    let activeSub = localStorage.getItem(`activeSub_${tabId}`) || (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined);
+    if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined);
 
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border);">
@@ -9387,7 +9387,7 @@ const renderRFSection = (container) => {
 
   const renderDespachoMonitoreo = (container) => {
     const routes = getDispatchRoutes();
-    let selectedRouteId = localStorage.getItem('selected_dispatch_route') || routes[0]?.id;
+    let selectedRouteId = localStorage.getItem('selected_dispatch_route') || (routes[0] ? routes[0].id : undefined);
     let selectedRoute = routes.find(r => r.id === selectedRouteId) || routes[0];
 
     const getStatusClass = (status) => {
@@ -9703,7 +9703,7 @@ const renderRFSection = (container) => {
 
   function renderDespachoChoferPortal(container) {
     const routes = getDispatchRoutes();
-    let selectedDriverId = localStorage.getItem('selected_dispatch_driver') || routes[0]?.id;
+    let selectedDriverId = localStorage.getItem('selected_dispatch_driver') || (routes[0] ? routes[0].id : undefined);
     let activeRoute = routes.find(r => r.id === selectedDriverId) || routes[0];
 
     let currentPhotoDescarga = null;
@@ -9867,7 +9867,7 @@ const renderRFSection = (container) => {
     `;
 
     // Return to office simulator button
-    document.getElementById('btn_back_to_office')?.addEventListener('click', () => {
+    if (document.getElementById('btn_back_to_office')) document.getElementById('btn_back_to_office').addEventListener('click', () => {
         const targetSub = currentTab === 'no_retail' ? 'archivo_no_retail' : 'archivo_despacho';
         localStorage.setItem(`activeSub_${currentTab}`, targetSub);
         updateMobileDriverClass();
@@ -9875,14 +9875,14 @@ const renderRFSection = (container) => {
     });
 
     // Listen to driver selector
-    document.getElementById('driver_selector')?.addEventListener('change', (e) => {
+    if (document.getElementById('driver_selector')) document.getElementById('driver_selector').addEventListener('change', (e) => {
         const did = e.target.value;
         localStorage.setItem('selected_dispatch_driver', did);
         refreshDriverUI();
     });
 
     // Start Voyage button
-    document.getElementById('btn_driver_start')?.addEventListener('click', () => {
+    if (document.getElementById('btn_driver_start')) document.getElementById('btn_driver_start').addEventListener('click', () => {
         activeRoute.status = 'En Tránsito';
         activeRoute.startTime = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const allRoutes = getDispatchRoutes();
@@ -9895,7 +9895,7 @@ const renderRFSection = (container) => {
     });
 
     // Upload Mock Descarga
-    document.getElementById('btn_upload_descarga')?.addEventListener('click', () => {
+    if (document.getElementById('btn_upload_descarga')) document.getElementById('btn_upload_descarga').addEventListener('click', () => {
         const allRoutes = getDispatchRoutes();
         const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
         if (rIdx !== -1) {
@@ -9910,7 +9910,7 @@ const renderRFSection = (container) => {
     });
 
     // Upload Mock Cargo
-    document.getElementById('btn_upload_cargo')?.addEventListener('click', () => {
+    if (document.getElementById('btn_upload_cargo')) document.getElementById('btn_upload_cargo').addEventListener('click', () => {
         const allRoutes = getDispatchRoutes();
         const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
         if (rIdx !== -1) {
@@ -9925,7 +9925,7 @@ const renderRFSection = (container) => {
     });
 
     // Deliver stop button
-    document.getElementById('btn_deliver_stop')?.addEventListener('click', () => {
+    if (document.getElementById('btn_deliver_stop')) document.getElementById('btn_deliver_stop').addEventListener('click', () => {
         const allRoutes = getDispatchRoutes();
         const rIdx = allRoutes.findIndex(r => r.id === activeRoute.id);
         if (rIdx !== -1) {
@@ -10060,12 +10060,12 @@ const renderRFSection = (container) => {
               clientName: String(r[3] || `Cliente #${idx + 1}`).trim().toUpperCase(),
               agencia: String(r[4] || 'Agencia General').trim().toUpperCase(),
               address: String(r[5] || 'Dirección de Entrega').trim(),
-              status: cachedStatuses[id]?.status || 'PENDIENTE',
-              statusDate: cachedStatuses[id]?.date || null,
-              liquidated: cachedStatuses[id]?.liquidated || false,
-              cobroFlete: cachedStatuses[id]?.cobroFlete || 'NO',
-              fotoCargo: cachedStatuses[id]?.fotoCargo || null,
-              fotoLocal: cachedStatuses[id]?.fotoLocal || null
+              status: (cachedStatuses[id] ? cachedStatuses[id].status : undefined) || 'PENDIENTE',
+              statusDate: (cachedStatuses[id] ? cachedStatuses[id].date : undefined) || null,
+              liquidated: (cachedStatuses[id] ? cachedStatuses[id].liquidated : undefined) || false,
+              cobroFlete: (cachedStatuses[id] ? cachedStatuses[id].cobroFlete : undefined) || 'NO',
+              fotoCargo: (cachedStatuses[id] ? cachedStatuses[id].fotoCargo : undefined) || null,
+              fotoLocal: (cachedStatuses[id] ? cachedStatuses[id].fotoLocal : undefined) || null
           };
       });
   };
@@ -10576,11 +10576,11 @@ const renderRFSection = (container) => {
       `;
 
       // Handlers de cambio de fecha para KPIs (Sincronizan filtros de tracking)
-      document.getElementById('kpi_nr_desde')?.addEventListener('change', (e) => {
+      if (document.getElementById('kpi_nr_desde')) document.getElementById('kpi_nr_desde').addEventListener('change', (e) => {
           window._trackingFilterDesde = e.target.value;
           renderKpiNoRetailPortal(container);
       });
-      document.getElementById('kpi_nr_hasta')?.addEventListener('change', (e) => {
+      if (document.getElementById('kpi_nr_hasta')) document.getElementById('kpi_nr_hasta').addEventListener('change', (e) => {
           window._trackingFilterHasta = e.target.value;
           renderKpiNoRetailPortal(container);
       });
@@ -10852,7 +10852,7 @@ const renderRFSection = (container) => {
         </div>
       `;
 
-      document.getElementById('tracking_search')?.addEventListener('input', (e) => {
+      if (document.getElementById('tracking_search')) document.getElementById('tracking_search').addEventListener('input', (e) => {
           window._trackingSearchQuery = e.target.value;
           window._trackingPage = 0; // Reset page on filter
           renderTrackingNoRetailPortal(container);
@@ -10867,18 +10867,18 @@ const renderRFSection = (container) => {
           }
       }
 
-      document.getElementById('tracking_desde')?.addEventListener('change', (e) => {
+      if (document.getElementById('tracking_desde')) document.getElementById('tracking_desde').addEventListener('change', (e) => {
           window._trackingFilterDesde = e.target.value;
           window._trackingPage = 0; // Reset page on filter
           renderTrackingNoRetailPortal(container);
       });
-      document.getElementById('tracking_hasta')?.addEventListener('change', (e) => {
+      if (document.getElementById('tracking_hasta')) document.getElementById('tracking_hasta').addEventListener('change', (e) => {
           window._trackingFilterHasta = e.target.value;
           window._trackingPage = 0; // Reset page on filter
           renderTrackingNoRetailPortal(container);
       });
       
-      document.getElementById('btn_sync_tracking')?.addEventListener('click', async (e) => {
+      if (document.getElementById('btn_sync_tracking')) document.getElementById('btn_sync_tracking').addEventListener('click', async (e) => {
           const btn = e.currentTarget;
           if (btn.disabled) return;
           btn.disabled = true;
@@ -10981,13 +10981,13 @@ const renderRFSection = (container) => {
           });
       });
       
-      document.getElementById('btn_track_prev')?.addEventListener('click', () => {
+      if (document.getElementById('btn_track_prev')) document.getElementById('btn_track_prev').addEventListener('click', () => {
           if (currentPage > 0) {
               window._trackingPage = currentPage - 1;
               renderTrackingNoRetailPortal(container);
           }
       });
-      document.getElementById('btn_track_next')?.addEventListener('click', () => {
+      if (document.getElementById('btn_track_next')) document.getElementById('btn_track_next').addEventListener('click', () => {
           if (currentPage < totalPages - 1) {
               window._trackingPage = currentPage + 1;
               renderTrackingNoRetailPortal(container);
@@ -11464,7 +11464,7 @@ const renderRFSection = (container) => {
         });
 
         // Back to Office simulator button
-        document.getElementById('btn_back_to_office')?.addEventListener('click', () => {
+        if (document.getElementById('btn_back_to_office')) document.getElementById('btn_back_to_office').addEventListener('click', () => {
             localStorage.setItem(`activeSub_no_retail`, 'archivo_no_retail');
             updateMobileDriverClass();
             renderTabContent();
@@ -11479,7 +11479,7 @@ const renderRFSection = (container) => {
         });
 
         // Logout
-        document.getElementById('btn_nr_logout')?.addEventListener('click', async () => {
+        if (document.getElementById('btn_nr_logout')) document.getElementById('btn_nr_logout').addEventListener('click', async () => {
             if (await showPremiumConfirm('CERRAR SESIÓN', '¿Estás seguro que deseas cerrar sesión?', 'warning')) {
                 onLogout();
             }
@@ -14726,7 +14726,7 @@ window.showCellModal = function(htmlContent) {
     const perms = adminService.getPermissions(user.role) || {};
     const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || perms[`analisis_sku_${sub.id}`] === 1);
 
-    if (!allowedSubTabs.find(s => s.id === activeAnalisisSub)) activeAnalisisSub = allowedSubTabs[0]?.id;
+    if (!allowedSubTabs.find(s => s.id === activeAnalisisSub)) activeAnalisisSub = (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined);
 
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
