@@ -373,7 +373,7 @@ function renderMarcasReport() {
   const tasks = getFilteredTasks();
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
-  area.innerHTML = `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem;"><div style="grid-column: 1;"><div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+  area.innerHTML = `<div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                             <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
@@ -523,70 +523,196 @@ function renderMarcasReport() {
                             </tbody>
                         </table>
                     </div>
-                </div></div></div>`;
-}
-                                    areas.forEach(area => {
-                                        const brands = Object.keys(brandGroups[area]).sort((a, b) => a.localeCompare(b));
-                                        let areaBuffer = 0, areaDia = 0, areaNoche = 0;
-
-                                        brands.forEach(brand => {
-                                            const data = brandGroups[area][brand];
-                                            const total = data.dia + data.noche;
-                                            const pendiente = data.buffer - total;
-                                            areaBuffer += data.buffer; areaDia += data.dia; areaNoche += data.noche;
-                                            grandBuffer += data.buffer; grandDia += data.dia; grandNoche += data.noche;
-
-                                            brandTableRows += `
-                                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                                    <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#facc15; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${total.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem; white-space:nowrap;">${(() => { const _p = data.buffer > 0 ? Math.round((total/data.buffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (total < data.buffer ? '#fbbf24' : '#22c55e'); const _ic = _p === 0 ? '●' : '▲'; return `<span style="color:${_col}; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${_ic}</span><span>${_p}%</span></span>`; })()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
-                                                </tr>
-                                            `;
-                                        });
-
-                                        const areaTotal = areaDia + areaNoche;
-                                        const areaPendiente = areaBuffer - areaTotal;
-                                        brandTableRows += `
-                                            <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(15, 23, 42, 0.5) 100%); border-top: 1.5px solid rgba(0, 229, 255, 0.6); border-bottom: 1.5px solid rgba(0, 229, 255, 0.6); font-weight: 900;">
-                                                <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid #00E5FF;">Total ${area}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBuffer.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#facc15; font-size:0.82rem; font-weight:800;">${areaDia.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#818cf8; font-size:0.82rem; font-weight:800;">${areaNoche.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaTotal.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800; white-space:nowrap;">${(() => { const _p = areaBuffer > 0 ? Math.round((areaTotal/areaBuffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (areaTotal < areaBuffer ? '#fbbf24' : '#22c55e'); return `<span style="color:${_col}; font-weight:800; font-size:0.82rem;">${_p}%</span>`; })()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
-                                            </tr>
-                                        `;
-                                    });
-
-                                    const grandTotal = grandDia + grandNoche;
-                                    const grandPendiente = grandBuffer - grandTotal;
-                                    brandTableRows += `
-                                        <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #00E5FF; border-bottom: 2px solid #00E5FF; font-weight: 900;">
-                                            <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#facc15; font-size:0.85rem; font-weight:900;">${grandDia.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#818cf8; font-size:0.85rem; font-weight:900;">${grandNoche.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandTotal.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900; white-space:nowrap;">${(() => { const _p = grandBuffer > 0 ? Math.round((grandTotal/grandBuffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (grandTotal < grandBuffer ? '#fbbf24' : '#22c55e'); return `<span style="color:${_col}; font-weight:900; font-size:0.85rem;">${_p}%</span>`; })()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);">${grandPendiente.toLocaleString()}</td>
-                                        </tr>
-                                    `;
-
-                                    return brandTableRows;
-                                })()}
-                            </tbody>
-                        </table>
-                    </div>
                 </div>`;
 }
 
+function renderRendimientoOperarios() {
+  const area = document.getElementById('contentArea');
+  const tasks = getFilteredTasks();
+  const filteredTasks = tasks.filter(t => t.fecha >= filterStart && t.fecha <= filterEnd);
+  const weeklyDailyTasks = tasks;
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  area.innerHTML = `<div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                        <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                            RENDIMIENTO DE OPERARIOS
+                        </h3>
+                        <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                            MEDICIÓN DE TAREAS FINALIZADAS
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="overflow-x:auto; margin-top:0.4rem;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                        <thead>
+                            <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                                <th style="padding:6px 4px; text-align:left; width:70px; white-space:nowrap;">FECHA</th>
+                                <th style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;">TURNO</th>
+                                <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">N° OPERARIOS</th>
+                                <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">QTY TOTAL</th>
+                                <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">QTY TAREAS</th>
+                                <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">PRIMERA TAREA</th>
+                                <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">ÚLTIMA TAREA</th>
+                                <th style="padding:6px 8px; text-align:center; width: 110px; white-space:nowrap;">TRANSCURRIDO</th>
+                                <th style="padding:6px 8px; text-align:center; width: 100px; white-space:nowrap;">QTY/HORA</th>
+                                <th style="padding:6px 8px; text-align:center; width: 110px; white-space:nowrap;">QTY/TAREA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const shiftStats = {};
+                                const workers = adminService.getWorkers() || [];
+
+                                const findWorkerByUsername = (username) => {
+                                    if (!username || username === '---') return null;
+                                    const cleanUsername = String(username).trim().toLowerCase();
+                                    return workers.find(w => {
+                                        const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+                                        const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+                                        const formatStr = nom ? `${nom[0]}${ape}` : '';
+                                        return formatStr === cleanUsername;
+                                    });
+                                };
+
+                                const getTaskLogicalDate = (task, shiftVal) => {
+                                    return task.fecha || '---';
+                                };
+
+                                const getBreakOverlapMs = (start, end) => {
+                                    if (!start || !end || start >= end) return 0;
+                                    let overlap = 0;
+                                    let current = new Date(start.getTime());
+                                    current.setHours(0, 0, 0, 0);
+                                    
+                                    const endLimit = new Date(end.getTime());
+                                    endLimit.setHours(23, 59, 59, 999);
+                                    
+                                    while (current <= endLimit) {
+                                        const bStart = new Date(current.getTime());
+                                        bStart.setHours(23, 0, 0, 0); // 11:00 PM
+                                        const bEnd = new Date(current.getTime());
+                                        bEnd.setHours(23, 50, 0, 0); // 11:50 PM
+                                        
+                                        const oStart = start > bStart ? start : bStart;
+                                        const oEnd = end < bEnd ? end : bEnd;
+                                        
+                                        if (oStart < oEnd) {
+                                            overlap += (oEnd - oStart);
+                                        }
+                                        current.setDate(current.getDate() + 1);
+                                    }
+                                    return overlap;
+                                };
+
+                                // Procesar tareas y calcular su fecha lógica antes de agrupar y filtrar
+                                const processedTasks = [];
+                                tasks.forEach(t => {
+                                    if (t.status !== 'Finalizado') return;
+
+                                    const uList = [t.u1, t.u2].filter(u => u && u !== '---');
+                                    if (uList.length > 0) {
+                                        uList.forEach((user, idx) => {
+                                            const username = String(user).trim().toLowerCase();
+                                            const worker = findWorkerByUsername(username);
+                                            
+                                            let shift = 'DÍA';
+                                            if (worker) {
+                                                const wTurno = String(worker.turno || worker.Turno || '').trim().toUpperCase();
+                                                if (wTurno === 'NOCHE') shift = 'NOCHE';
+                                                else if (wTurno === 'DIA' || wTurno === 'DÍA') shift = 'DÍA';
+                                            }
+                                            
+                                            const logicalDate = getTaskLogicalDate(t, shift);
+                                            
+                                            // [DECOUPLED] RENDIMIENTO DE OPERARIOS ya no es afectado por filtros de fecha del historial
+                                            // if (selectedTaskDate && logicalDate !== selectedTaskDate) return;
+
+                                            processedTasks.push({
+                                                task: t,
+                                                username,
+                                                shift,
+                                                logicalDate,
+                                                qtyForUser: (uList.length === 2) 
+                                                    ? (idx === 0 ? Math.ceil(getTaskTotalAvance(t) / 2) : Math.floor(getTaskTotalAvance(t) / 2)) 
+                                                    : getTaskTotalAvance(t)
+                                            });
+                                        });
+                                    }
+                                });
+
+                                processedTasks.forEach(pt => {
+                                    const groupKey = `${pt.logicalDate}_${pt.shift}`;
+                                    if (!shiftStats[groupKey]) {
+                                        shiftStats[groupKey] = {
+                                            fecha: pt.logicalDate,
+                                            turno: pt.shift,
+                                            operators: new Set(),
+                                            tasks: new Set(),
+                                            totalQty: 0,
+                                            taskCount: 0,
+                                            firstStart: null,
+                                            lastEnd: null
+                                        };
+                                    }
+                                    
+                                    shiftStats[groupKey].operators.add(pt.username);
+                                    shiftStats[groupKey].totalQty += pt.qtyForUser;
+                                    
+                                    const taskId = pt.task.id || pt.task.Id || JSON.stringify(pt.task);
+                                    if (!shiftStats[groupKey].tasks.has(taskId)) {
+                                        shiftStats[groupKey].tasks.add(taskId);
+                                        shiftStats[groupKey].taskCount += 1;
+                                    }
+                                    
+                                    if (pt.task.inicio) {
+                                        let sTime = new Date(pt.task.inicio);
+                                        if (pt.shift === 'NOCHE') {
+                                            const hrs = sTime.getHours();
+                                            if (hrs >= 0 && hrs < 7) {
+                                                const sYear = sTime.getFullYear();
+                                                const sMonth = String(sTime.getMonth() + 1).padStart(2, '0');
+                                                const sDay = String(sTime.getDate()).padStart(2, '0');
+                                                const sDateStr = `${sYear}-${sMonth}-${sDay}`;
+                                                if (sDateStr === pt.logicalDate) {
+                                                    sTime.setDate(sTime.getDate() + 1);
+                                                }
+                                            }
+                                        }
+                                        if (!shiftStats[groupKey].firstStart || sTime < shiftStats[groupKey].firstStart) {
+                                            shiftStats[groupKey].firstStart = sTime;
+                                        }
+                                    }
+                                    if (pt.task.termino) {
+                                        let eTime = new Date(pt.task.termino);
+                                        if (pt.shift === 'NOCHE') {
+                                            const hrs = eTime.getHours();
+                                            if (hrs >= 0 && hrs < 7) {
+                                                const eYear = eTime.getFullYear();
+                                                const eMonth = String(eTime.getMonth() + 1).padStart(2, '0');
+                                                const eDay = String(eTime.getDate()).padStart(2, '0');
+                                                const eDateStr = `${eYear}-${eMonth}-${eDay}`;
+                                                if (eDateStr === pt.logicalDate) {
+                                                    eTime.setDate(eTime.getDate() + 1);
+                                                }
+                                            }
+                                        }
+                                        if (!shiftStats[groupKey].lastEnd || eTime > shiftStats[groupKey].lastEnd) {
+                                            shiftStats[groupKey].lastEnd = eTime;
+                                        }
+                                    }
+                                });
+
+                                const sortedGroupRows = Object.values(shiftStats)
+                                    .sort((a, b) => b.fecha.localeCompare(a.fecha) || a.turno.localeCompare(b.turno));
+
+                                if (sortedGroupRows.length === 0) {
+                                    window.__perfTotalPages = 0;
+                                    window.__perfTotalRows = 0;
+                                    return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
+                                }
 
                                 if (!window.__perfSetPage) window.__perfSetPage = (p) => { const _sy=window.scrollY; window.__perfPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _perfPage = window.__perfPage || 0;
@@ -675,140 +801,58 @@ function renderMarcasReport() {
 
 function renderProduccionHora() {
   const area = document.getElementById('contentArea');
-  const tasksList = getFilteredTasks();
-  
+  const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
   if (tasksList.length === 0) {
-    area.innerHTML = `<div class="report-card" style="text-align:center; padding:3rem; color:var(--text-muted);">No hay datos en este periodo.</div>`;
+    area.innerHTML = `<div class="report-card"><div class="report-title">📊 PRODUCCIÓN POR HORA</div><div class="empty-msg">Sin datos.</div></div>`;
     return;
   }
-  
-  const targetHours = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
-        const hourlyData = {};
-        
-        tasksList.forEach(t => {
-            if (t.status !== 'Finalizado') return;
-            if (!t.termino) return;
-            
-            const dateObj = new Date(t.termino);
-            const hr = dateObj.getHours();
-            if (!targetHours.includes(hr)) return;
-            
-            const dateKey = t.fecha || '---';
-            if (dateKey === '---') return;
-            
-            if (!hourlyData[dateKey]) {
-                hourlyData[dateKey] = {};
-                targetHours.forEach(h => hourlyData[dateKey][h] = 0);
-            }
-            
-            hourlyData[dateKey][hr] += getTaskTotalAvance(t);
-        });
-
-        const activeDates = Object.keys(hourlyData).filter(dateKey => {
-            const total = targetHours.reduce((sum, hr) => sum + hourlyData[dateKey][hr], 0);
-            return total > 0;
-        });
-
-        activeDates.sort((a, b) => b.localeCompare(a));
-
-        if (!window.__hourlySetPage) window.__hourlySetPage = (p) => { const _sy=window.scrollY; window.__hourlyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
-        const _hourlyPage = window.__hourlyPage || 0;
-        const _hourlyTotalPages = Math.ceil(activeDates.length / 25);
-        window.__hourlyTotalPages = _hourlyTotalPages;
-        window.__hourlyTotalRows = activeDates.length;
-        const activeHourlyPage = _hourlyPage >= _hourlyTotalPages ? 0 : _hourlyPage;
-        window.__hourlyPage = activeHourlyPage;
-        const pagedActiveDates = activeDates.slice(activeHourlyPage * 25, (activeHourlyPage + 1) * 25);
-
-        const formatLogicalDate = (dateStr) => {
-            if (!dateStr || dateStr === '---') return '---';
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const day = parseInt(parts[2], 10);
-            const monthIdx = parseInt(parts[1], 10) - 1;
-            return `${day}-${months[monthIdx] || parts[1]}`;
-        };
-
-        return `
-        <!-- REPORTE DE PRODUCCIÓN POR HORA (ANCHO COMPLETO) -->
-        <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                    REPORTE DE PRODUCCIÓN POR HORA
-                </h3>
-                <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                    CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
-                </div>
-            </div>
-            <div style="overflow-x:auto; margin-top:0.4rem;">
-                <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
-                    <thead>
-                        <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
-                            <th style="padding:6px 8px; text-align:left; width:80px;">FECHA</th>
-                            ${targetHours.map(hr => `<th style="padding:6px 4px; text-align:center;">${hr.toString().padStart(2, '0')}:00</th>`).join('')}
-                            <th style="padding:6px 8px; text-align:center; width:90px;">TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
-                            const rowData = hourlyData[dateKey];
-                            const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
-                            return `
-                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${formatLogicalDate(dateKey)}</td>
-                                    ${targetHours.map(hr => {
-                                        const qty = rowData[hr];
-                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
-                                    }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-weight:900; background:rgba(0, 229, 255, 0.05);">${rowTotal.toLocaleString()}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-            ${(() => {
-                const tp = window.__hourlyTotalPages || 1;
-                const cp = window.__hourlyPage || 0;
-                if (tp <= 1) return '';
-                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #00E5FF; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
-                const pages = Array.from({length: tp}, (_, i) => i);
-                area.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
-                    <button onclick="window.__hourlySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
-                    ${pages.map(p=>`<button onclick="window.__hourlySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                    <button onclick="window.__hourlySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                    <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
-                </div>`;
-            })()}
-        </div>
-        `;
+  console.error("hourly not found");
 }
+
 function renderAlmacenadoSemana() {
   const area = document.getElementById('contentArea');
   const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
-  
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
   if (tasksList.length === 0) {
-    area.innerHTML = `<div class="report-card" style="text-align:center; padding:3rem; color:var(--text-muted);">No hay datos en este periodo.</div>`;
+    area.innerHTML = `<div class="report-card"><div class="report-title">📊 ALMACENADO POR SEMANA</div><div class="empty-msg">Sin datos.</div></div>`;
     return;
   }
   
-  const weeklyBrandData = {};
-        const weeklyBrandGenderData = {};
-        const allBrandsSet = new Set();
-        const allGendersPerWeek = {};
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
+        return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
+    };
 
-        // Build a dynamic map of sku7 to live Column C (G. Gender) from the current maestro dataStore.articulos
-        const liveGenderMap = new Map();
-        const activeMaestro = dataStore.articulos || [];
-        activeMaestro.forEach(row => {
-            const raw = Array.isArray(row) ? row : Object.values(row);
-            const sku7 = String(raw[1] || '').trim().substring(0, 7);
-            if (sku7 && !liveGenderMap.has(sku7)) {
-                // Column C (index 2) is G. Gender
-                liveGenderMap.set(sku7, String(raw[2] || '').trim().toUpperCase());
-            }
-        });
+  console.error("weekly not found");
+}
+
+function renderGraficoRendimiento() {
+  const area = document.getElementById('contentArea');
+  const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
+  window.__chartStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__chartEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  
+  if (tasksList.length === 0) {
+    area.innerHTML = `<div class="report-card"><div class="report-title">📊 GRÁFICO DE RENDIMIENTO</div><div class="empty-msg">Sin datos.</div></div>`;
+    return;
+  }
+  
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
+        return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
+    };
+
+  
+        const chartWeeksData = {};
 
         const getWeekStr = (dateStr) => {
             if (!dateStr || dateStr === '---') return '---';
@@ -816,205 +860,98 @@ function renderAlmacenadoSemana() {
             if (parts.length !== 3) return '---';
             const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
             const weekNo = getWeekNumber(dateObj);
-            return `Semana ${weekNo} (${parts[0]})`;
+            area.innerHTML = `Semana ${weekNo} (${parts[0]})`;
         };
 
-        tasksList.forEach(t => {
-            if (t.status !== 'Finalizado') return;
-            const weekStr = getWeekStr(t.fecha);
-            if (weekStr === '---') return;
-            
-            let brand = String(t.marca || 'S/M').trim();
-            if (brand === 'Bubblegummers Licenses') brand = 'BG. Licenses';
-            if (brand === 'Bubblegummers') brand = 'BG';
-            
-            allBrandsSet.add(brand);
-            
-            if (!weeklyBrandData[weekStr]) {
-                weeklyBrandData[weekStr] = {};
-            }
-            if (!weeklyBrandData[weekStr][brand]) {
-                weeklyBrandData[weekStr][brand] = 0;
-            }
-            weeklyBrandData[weekStr][brand] += getTaskTotalAvance(t);
+        const getDayIndex = (dateStr) => {
+            if (!dateStr) return -1;
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return -1;
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            const day = d.getDay();
+            return day === 0 ? 6 : day - 1;
+        };
 
-            // Group by gender for drilldown
-            if (!weeklyBrandGenderData[weekStr]) {
-                weeklyBrandGenderData[weekStr] = {};
-                allGendersPerWeek[weekStr] = new Set();
+        const getActiveDayIndices = (startStr, endStr) => {
+            if (!startStr || !endStr) return [0, 1, 2, 3, 4, 5];
+            const startParts = startStr.split('-');
+            const endParts = endStr.split('-');
+            if (startParts.length !== 3 || endParts.length !== 3) return [0, 1, 2, 3, 4, 5];
+            
+            const startObj = new Date(parseInt(startParts[0], 10), parseInt(startParts[1], 10) - 1, parseInt(startParts[2], 10));
+            const endObj = new Date(parseInt(endParts[0], 10), parseInt(endParts[1], 10) - 1, parseInt(endParts[2], 10));
+            
+            if (isNaN(startObj.getTime()) || isNaN(endObj.getTime()) || startObj > endObj) return [0, 1, 2, 3, 4, 5];
+            
+            // Si el rango es de 7 días o más, mostramos la semana completa
+            const diffTime = Math.abs(endObj - startObj);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 6) {
+                return [0, 1, 2, 3, 4, 5];
             }
+            
+            const active = new Set();
+            let current = new Date(startObj.getTime());
+            while (current <= endObj) {
+                const day = current.getDay();
+                const idx = day === 0 ? 6 : day - 1;
+                if (idx !== 6) active.add(idx);
+                current.setDate(current.getDate() + 1);
+            }
+            return Array.from(active).sort((a, b) => a - b);
+        };
+
+        const getTaskMetrics = (t) => {
+            let qtyBuffer = 0;
+            let avance = 0;
             (t.items || []).forEach(art => {
-                const liveGender = liveGenderMap.get(art.sku7);
-                const gender = (liveGender && liveGender !== '') ? liveGender : (String(art.gender || 'S/G').trim().toUpperCase() || 'S/G');
-                allGendersPerWeek[weekStr].add(gender);
-                if (!weeklyBrandGenderData[weekStr][gender]) {
-                    weeklyBrandGenderData[weekStr][gender] = {};
-                }
-                if (!weeklyBrandGenderData[weekStr][gender][brand]) {
-                    weeklyBrandGenderData[weekStr][gender][brand] = 0;
-                }
-                let artQty = 0;
-                (art.items || []).forEach(i => {
+                const bufferItems = art.items || [];
+                const cdbufferItems = bufferItems.filter(i => {
                     const ubi = String(i.ubi || '').toUpperCase();
-                    if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
-                        artQty += (i.avance !== undefined && i.avance !== null) ? parseFloat(i.avance) : (parseFloat(i.qty) || 0);
+                    return ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C');
+                });
+
+                cdbufferItems.forEach(i => {
+                    const qty = parseFloat(i.qty) || 0;
+                    qtyBuffer += qty;
+                    if (t.status === 'Finalizado') {
+                        avance += (i.avance !== undefined && i.avance !== null) ? parseFloat(i.avance) : qty;
                     }
                 });
-                if (artQty === 0) {
-                    const hasAvanceInfo = (t.items || []).some(a => (a.items || []).some(item => item.avance !== undefined && item.avance !== null));
-                    if (!hasAvanceInfo) {
-                        artQty = parseFloat(art.bufferQty) || 0;
-                    }
-                }
-                weeklyBrandGenderData[weekStr][gender][brand] += artQty;
             });
+            return { qtyBuffer, avance };
+        };
+
+        // dynamic default dates
+        let minDate = '';
+        let maxDate = '';
+        tasksList.forEach(t => {
+            if (t.status === 'Finalizado' && t.fecha) {
+                if (!minDate || t.fecha < minDate) minDate = t.fecha;
+                if (!maxDate || t.fecha > maxDate) maxDate = t.fecha;
+            }
         });
 
-        const predefinedBrands = ['Bata', 'North Star', 'Adidas', 'Puma'];
-        const otherBrands = Array.from(allBrandsSet)
-            .filter(b => !predefinedBrands.includes(b))
-            .sort((a, b) => a.localeCompare(b));
-        
-        const sortedBrands = [
-            ...predefinedBrands.filter(b => allBrandsSet.has(b)),
-            ...otherBrands
-        ];
-
-        const sortedWeeks = Object.keys(weeklyBrandData).sort((a, b) => {
-            const getVal = (s) => {
-                const m = s.match(/Semana (\d+) \((\d+)\)/);
-                if (!m) return 0;
-                return parseInt(m[2]) * 100 + parseInt(m[1]);
+        if (!window.__chartStartDate || !window.__chartEndDate) {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(today.getTime());
+            monday.setDate(diff);
+            monday.setHours(0,0,0,0);
+            const sunday = new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000);
+            
+            const toYYYYMMDD = (d) => {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
             };
-            return getVal(a) - getVal(b);
-        });
+            
+            window.__chartStartDate = toYYYYMMDD(monday);
+            window.__chartEndDate = toYYYYMMDD(sunday);
+        }
 
-        if (!window.__weeklySetPage) window.__weeklySetPage = (p) => { const _sy=window.scrollY; window.__weeklyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
-        const _weeklyPage = window.__weeklyPage || 0;
-        const _weeklyTotalPages = Math.ceil(sortedWeeks.length / 25);
-        window.__weeklyTotalPages = _weeklyTotalPages;
-        window.__weeklyTotalRows = sortedWeeks.length;
-        const activeWeeklyPage = _weeklyPage >= _weeklyTotalPages ? 0 : _weeklyPage;
-        window.__weeklyPage = activeWeeklyPage;
-        const pagedSortedWeeks = sortedWeeks.slice(activeWeeklyPage * 25, (activeWeeklyPage + 1) * 25);
-
-        const colTotals = {};
-        sortedBrands.forEach(b => colTotals[b] = 0);
-        let grandTotal = 0;
-
-        sortedWeeks.forEach(w => {
-            sortedBrands.forEach(b => {
-                const qty = weeklyBrandData[w][b] || 0;
-                colTotals[b] += qty;
-                grandTotal += qty;
-            });
-        });
-
-        return `
-        <!-- REPORTE DE ALMACENADO POR SEMANA (ANCHO COMPLETO) -->
-        <div style="background:#000000; border:2px solid #8b5cf6; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(139,92,246,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid #8b5cf6; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                <h3 style="color:#a78bfa; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                    REPORTE DE ALMACENADO POR SEMANA Y MARCA
-                </h3>
-                <div style="font-size:0.68rem; color:rgba(167, 139, 250, 0.6); font-weight:700; letter-spacing:0.5px;">
-                    DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES (HAGA CLIC EN UNA SEMANA PARA EXPANDIR POR GÉNERO)
-                </div>
-            </div>
-            <div style="overflow-x:auto; margin-top:0.4rem;">
-                <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
-                    <thead>
-                        <tr style="color:#a78bfa; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #8b5cf6;">
-                            <th style="padding:6px 8px; text-align:left; width:120px;">SEMANA</th>
-                            ${sortedBrands.map(b => `<th style="padding:6px 8px; text-align:center;">${b}</th>`).join('')}
-                            <th style="padding:6px 8px; text-align:center; width:100px;">TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${pagedSortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:rgba(167, 139, 250, 0.4); font-weight:700;">No hay datos semanales registrados.</td></tr>` : pagedSortedWeeks.map(w => {
-                            const rowData = weeklyBrandData[w];
-                            const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
-                            const isExpanded = window.__expandedStorageReportWeeks && window.__expandedStorageReportWeeks.includes(w);
-                            
-                            const genderRowsHtml = isExpanded ? Array.from(allGendersPerWeek[w] || []).sort().map(gender => {
-                                const genderData = weeklyBrandGenderData[w][gender] || {};
-                                const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
-                                return `
-                                    <tr style="background: rgba(139, 92, 246, 0.04); border-bottom: 1px solid rgba(139,92,246,0.06); font-size:0.74rem;">
-                                        <td style="padding:5px 8px 5px 24px; color:rgba(255,255,255,0.7); font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
-                                        ${sortedBrands.map(b => {
-                                            const qty = genderData[b] || 0;
-                                            return `<td style="padding:5px 8px; text-align:center; color:rgba(255,255,255,0.65);">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
-                                        }).join('')}
-                                        <td style="padding:5px 8px; text-align:center; color:#a78bfa; font-weight:700; background:rgba(139,92,246,0.04);">${genderRowTotal.toLocaleString()}</td>
-                                    </tr>
-                                `;
-                            }).join('') : '';
-
-                            return `
-                                <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='#000000'">
-                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">
-                                        <span style="color:#8b5cf6; margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
-                                        ${w}
-                                    </td>
-                                    ${sortedBrands.map(b => {
-                                        const qty = rowData[b] || 0;
-                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
-                                    }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.05);">${rowTotal.toLocaleString()}</td>
-                                </tr>
-                                ${genderRowsHtml}
-                            `;
-                        }).join('')}
-                        ${sortedWeeks.length > 0 ? `
-                            <tr style="background: linear-gradient(90deg, rgba(139,92,246,0.2) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #8b5cf6; font-weight:900;">
-                                <td style="padding:8px 8px; color:#ffffff; font-weight:900;">TOTAL GENERAL</td>
-                                ${sortedBrands.map(b => {
-                                    const qty = colTotals[b];
-                                    return `<td style="padding:8px 8px; text-align:center; color:#a78bfa; font-weight:900;">${qty.toLocaleString()}</td>`;
-                                }).join('')}
-                                <td style="padding:8px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.1); text-shadow:0 0 8px rgba(167,139,250,0.5);">${grandTotal.toLocaleString()}</td>
-                            </tr>
-                        ` : ''}
-                    </tbody>
-                </table>
-            </div>
-            ${(() => {
-                const tp = window.__weeklyTotalPages || 1;
-                const cp = window.__weeklyPage || 0;
-                if (tp <= 1) return '';
-                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #8b5cf6; background:${active?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a78bfa'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
-                const pages = Array.from({length: tp}, (_, i) => i);
-                area.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(139,92,246,0.2); margin-top:0.4rem;">
-                    <button onclick="window.__weeklySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
-                    ${pages.map(p=>`<button onclick="window.__weeklySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                    <button onclick="window.__weeklySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                    <span style="font-size:0.7rem; color:rgba(167,139,250,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
-                </div>`;
-            })()}
-        </div>
-        `;
-}
-function renderGraficoRendimiento() {
-  const area = document.getElementById('contentArea');
-  const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
-  
-  if (tasksList.length === 0) {
-    area.innerHTML = `<div class="report-card" style="text-align:center; padding:3rem; color:var(--text-muted);">No hay datos en este periodo.</div>`;
-    return;
-  }
-  
-    const getWeekNumber = (d) => {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-        return weekNo;
-    };
-
-  
-  
-}
         const startDate = window.__chartStartDate || '';
         const endDate = window.__chartEndDate || '';
 
@@ -1304,9 +1241,26 @@ async function renderBufferModule() {
   }
 }
 
+
 async function renderHistorialBuffer() {
   const container = document.getElementById('contentArea');
-  container.innerHTML = `
+  container.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div></div>`;
+
+  let kpiHistory = [];
+  try {
+    const raw = localStorage.getItem('logistics_buffer_history_v2');
+    if (raw) kpiHistory = JSON.parse(raw);
+  } catch(e) {}
+
+  const toISO = (dStr) => {
+      if(!dStr) return '';
+      if(dStr.includes('T')) return dStr.split('T')[0];
+      const parts = dStr.split('/');
+      if(parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      return dStr;
+  };
+
+    container.innerHTML = `
         <div style="text-align:center; padding:2rem;">
             <div class="spinner"></div>
             <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Sincronizando Reporte de Historial...</p>
@@ -1719,27 +1673,82 @@ async function renderHistorialBuffer() {
     document.getElementById('hist_date_to').addEventListener('change', renderHistTable);
 
     renderHistTable();
+
 }
 
+
+
+// INJECTED FROM DASHBOARD
+  const createMatrixHTML = (matrix, title, timestamp = '') => {
+    const hasData = matrix && matrix.rows && matrix.rows.length > 0;
+    
+    const brandAlias = (name) => {
+        if (name === 'Bubblegummers Licenses') return 'BG. Licenses';
+        if (name === 'Bubblegummers') return 'BG';
+        if (name === 'Bata Industrials') return 'Industrials';
+        return name;
+    };
+    const genderAlias = (name) => {
+        if (name === '11 NON COMMERCIAL COMPLEMENTS') return '11 COMPLEMENTS';
+        return name;
+    };
+
+    return `
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem; min-height: 150px;">
+            <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
+                <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">
+                    ${title} ${timestamp ? `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>` : ''}
+                </h3>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                    <thead style="background:rgba(0,0,0,0.5);">
+                        <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
+                            <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
+                            ${hasData ? matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('') : '<th style="padding:0.6rem 0.3rem; text-align:center;">ESTADO</th>'}
+                            <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody style="color:#eee;">
+                        ${hasData ? matrix.rows.map(r => `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
+                                <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${brandAlias(r.marca)}</td>
+                                ${matrix.columns.map(c => {
+                                    const val = r.breakdown[c] || 0;
+                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#fff' : 'rgba(255,255,255,0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
+                                }).join('')}
+                                <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(236,72,153,0.05); color:#22c55e; font-weight:900; border-left:1px solid rgba(255,255,255,0.05);">${r.total.toLocaleString()}</td>
+                            </tr>
+                        `).join('') : `
+                            <tr>
+                                <td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos para procesar en este reporte.</td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+  };
+
+
+let lastBufferResult = null;
 async function renderAnalisisBuffer() {
   const container = document.getElementById('contentArea');
-  
   container.innerHTML = `<div style="text-align:center; padding:3rem;"><div class="spinner"></div></div>`;
-  let data;
+  
+  let data = null;
   try {
-    data = await loadBufferReport();
-  } catch(e) {
-    console.error(e);
-    container.innerHTML = `<div style="padding:2rem; color:#ef4444;">Error cargando Buffer Report: ${e.message}</div>`;
-    return;
-  }
-  
+    const raw = localStorage.getItem('lastBufferKPI');
+    if (raw) data = JSON.parse(raw);
+  } catch(e) { console.warn(e); }
+
   if (!data) {
-    container.innerHTML = `<div style="padding:2rem; color:var(--text-muted);">No hay datos de an&aacute;lisis disponibles.</div>`;
-    return;
+     container.innerHTML = `<div style="padding:2rem; color:#ef4444; text-align:center;">Error al cargar datos del buffer o no hay datos recientes.</div>`;
+     return;
   }
-  
-  lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
+
+    lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
     const ts = data.timestamp || new Date().toLocaleString();
     const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = '580px';
@@ -1810,6 +1819,53 @@ async function renderAnalisisBuffer() {
             else window.downloadExcelDetail();
         };
     }
+
+}
+
+
+// ============================================================
+// MÓDULO ANÁLISIS SKU
+// ============================================================
+async function renderSkuModule() {
+  const area = document.getElementById('contentArea');
+  let reserva = [];
+  try { reserva = await fetchReservaHistory(); } catch(e) { console.warn(e); }
+
+  const filtered = reserva.filter(r => {
+    const d = (r.fecha || '').substring(0, 10);
+    return (!filterStart || d >= filterStart) && (!filterEnd || d <= filterEnd);
+  }).slice(0, 200);
+
+  if (filtered.length === 0) {
+    area.innerHTML = `
+      <div class="report-card">
+        <div class="report-title">🔍 ANÁLISIS SKU</div>
+        <div class="empty-msg">Sin datos de Análisis SKU en el rango seleccionado.</div>
+      </div>`;
+    return;
+  }
+
+  const headers = Object.keys(filtered[0]);
+  const rows = filtered.map(r => `
+    <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
+      ${headers.map(h => `<td style="padding:5px 8px;color:#fff;font-size:0.75rem;">${r[h] ?? ''}</td>`).join('')}
+    </tr>`).join('');
+
+  area.innerHTML = `
+    <div class="report-card">
+      <div class="report-title">🔍 ANÁLISIS SKU</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.8rem;">
+        Mostrando ${filtered.length} registros
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="rpt">
+          <thead><tr>
+            ${headers.map(h => `<th style="text-align:left;padding:6px 8px;">${h}</th>`).join('')}
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 // ============================================================
