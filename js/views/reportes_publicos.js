@@ -3,16 +3,16 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.473
+ * v26.5.474
  */
 
 import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.473';
+} from '../services_v245/csvHub_v6.js?v=26.5.474';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.473';
+import * as adminService from '../services_v245/adminService.js?v=26.5.474';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -138,7 +138,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.473</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.474</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
