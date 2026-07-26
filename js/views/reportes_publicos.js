@@ -10,9 +10,9 @@ import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.477';
+} from '../services_v245/csvHub_v6.js?v=26.5.483';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.477';
+import * as adminService from '../services_v245/adminService.js?v=26.5.483';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
