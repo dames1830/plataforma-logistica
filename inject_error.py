@@ -1,20 +1,21 @@
-# -*- coding: utf-8 -*-
-with open("index.html", "r", encoding="utf-8") as f:
-    text = f.read()
+with open('reportes.html', 'r', encoding='utf-8') as f:
+    html = f.read()
 
-injection = """<script>
-window.addEventListener('error', function(e) {
-    document.body.innerHTML += '<div style="position:fixed;top:0;left:0;z-index:9999;background:red;color:white;padding:20px;font-size:20px;">' + e.message + ' at ' + e.filename + ':' + e.lineno + '</div>';
+script = """
+<script>
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+  alert('ERROR: ' + msg + '\\nLine: ' + lineNo + '\\nCol: ' + columnNo);
+  document.body.innerHTML += '<div style="position:fixed;top:0;left:0;background:red;color:white;z-index:9999;padding:20px;font-size:20px;width:100%;">ERROR: ' + msg + ' <br> Line: ' + lineNo + '</div>';
+  return false;
+};
+window.addEventListener('unhandledrejection', function(event) {
+  alert('PROMISE ERROR: ' + event.reason);
+  document.body.innerHTML += '<div style="position:fixed;top:100px;left:0;background:orange;color:white;z-index:9999;padding:20px;font-size:20px;width:100%;">PROMISE ERROR: ' + event.reason + '</div>';
 });
-window.addEventListener('unhandledrejection', function(e) {
-    document.body.innerHTML += '<div style="position:fixed;top:50px;left:0;z-index:9999;background:orange;color:white;padding:20px;font-size:20px;">' + e.reason + '</div>';
-});
-</script>"""
+</script>
+"""
 
-if "<head>" in text and "window.addEventListener('error'" not in text:
-    text = text.replace("<head>", "<head>\n" + injection)
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(text)
-    print("Injected global error handler.")
-else:
-    print("Already injected or <head> not found.")
+if '<script>\nwindow.onerror' not in html:
+    html = html.replace('<head>', '<head>\n' + script)
+    with open('reportes.html', 'w', encoding='utf-8') as f:
+        f.write(html)
