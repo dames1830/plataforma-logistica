@@ -1,0 +1,16 @@
+function renderGraficoRendimiento() {
+  const area = document.getElementById('contentArea');
+  const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
+
+  if (tasksList.length === 0) {
+    area.innerHTML = `<div class="report-card"><div class="report-title">📊 GRÁFICO DE RENDIMIENTO</div><div class="empty-msg">Sin datos.</div></div>`;
+    return;
+  }
+
+  const getWeekNumber = (d) => {
+      const date = new Date(d);
+      const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
+      return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
+  };
