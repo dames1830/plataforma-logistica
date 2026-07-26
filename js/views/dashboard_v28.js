@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.466';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.467';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.466';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.466';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.466';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.466';
+import * as adminService from '../services_v245/adminService.js?v=26.5.467';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.467';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.467';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.467';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.466';
+const VERSION = '26.5.467';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1779,7 +1779,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.466');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.467');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -10897,7 +10897,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.466 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.467 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16881,7 +16881,7 @@ window.showCellModal = function(htmlContent) {
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#facc15; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${total.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">${getPctHtml(total, data.buffer, true)}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem; white-space:nowrap;">${(() => { const _p = data.buffer > 0 ? Math.round((total/data.buffer)*100) : 0; const _ic = _p === 0 ? '●' : '▲'; return `<span style="color:#fff; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${_ic}</span><span>${_p}%</span></span>`; })()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
                                                 </tr>
                                             `;
@@ -16896,7 +16896,7 @@ window.showCellModal = function(htmlContent) {
                                                 <td style="padding:7px 8px; text-align:center; color:#facc15; font-size:0.82rem; font-weight:800;">${areaDia.toLocaleString()}</td>
                                                 <td style="padding:7px 8px; text-align:center; color:#818cf8; font-size:0.82rem; font-weight:800;">${areaNoche.toLocaleString()}</td>
                                                 <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaTotal.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800;">${getPctHtml(areaTotal, areaBuffer, false)}</td>
+                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800; white-space:nowrap;">${(() => { const _p = areaBuffer > 0 ? Math.round((areaTotal/areaBuffer)*100) : 0; return `<span style="color:#fff; font-weight:800; font-size:0.82rem;">${_p}%</span>`; })()}</td>
                                                 <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
                                             </tr>
                                         `;
@@ -16911,7 +16911,7 @@ window.showCellModal = function(htmlContent) {
                                             <td style="padding:9px 8px; text-align:center; color:#facc15; font-size:0.85rem; font-weight:900;">${grandDia.toLocaleString()}</td>
                                             <td style="padding:9px 8px; text-align:center; color:#818cf8; font-size:0.85rem; font-weight:900;">${grandNoche.toLocaleString()}</td>
                                             <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandTotal.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900;">${getPctHtml(grandTotal, grandBuffer, false)}</td>
+                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900; white-space:nowrap;">${(() => { const _p = grandBuffer > 0 ? Math.round((grandTotal/grandBuffer)*100) : 0; return `<span style="color:#fff; font-weight:900; font-size:0.85rem;">${_p}%</span>`; })()}</td>
                                             <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);">${grandPendiente.toLocaleString()}</td>
                                         </tr>
                                     `;
