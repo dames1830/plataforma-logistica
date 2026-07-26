@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.465';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.466';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.465';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.465';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.465';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.465';
+import * as adminService from '../services_v245/adminService.js?v=26.5.466';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.466';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.466';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.466';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.465';
+const VERSION = '26.5.466';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1779,7 +1779,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.465');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.466');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -10897,7 +10897,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.465 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.466 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16796,46 +16796,58 @@ window.showCellModal = function(htmlContent) {
                         <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
                                 <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
-                                    <th style="padding:6px 8px; text-align:left; width: 120px;">AREA</th>
+                                    <th style="padding:6px 8px; text-align:left; width: 110px;">AREA</th>
                                     <th style="padding:6px 8px; text-align:left;">MARCAS</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 90px;">BUFFER</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 90px;">AVANCE</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 90px;">%</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 100px;">PENDIENTE</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 70px;">BUFFER</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 60px; color:#facc15;">DÍA</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 60px; color:#818cf8;">NOCHE</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 60px;">TOTAL</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 55px;">%</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 75px;">PENDIENTE</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${(() => {
+                                    // Build worker shift lookup once
+                                    const marcasWorkers = adminService.getWorkers() || [];
+                                    const getWorkerShift = (username) => {
+                                        if (!username || username === '---' || username === '') return null;
+                                        const clean = String(username).trim().toLowerCase();
+                                        const w = marcasWorkers.find(w => {
+                                            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+                                            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+                                            return nom ? (`${nom[0]}${ape}` === clean) : false;
+                                        });
+                                        if (!w) return null;
+                                        return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DIA';
+                                    };
+
                                     const brandGroups = {};
                                     const filteredTasks = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
 
                                     filteredTasks.forEach(t => {
+                                        const shift1 = getWorkerShift(t.u1);
+                                        const shift2 = t.u2 ? getWorkerShift(t.u2) : null;
+                                        const taskShift = shift1 || shift2 || 'DIA';
+
                                         (t.items || []).forEach(art => {
                                             const brand = String(art.marca || 'S/M').trim();
                                             const bufferItems = art.items || [];
-                                            
                                             bufferItems.forEach(i => {
                                                 const ubi = String(i.ubi || '').toUpperCase().trim();
                                                 if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
                                                     let area = 'CDBUFFER-A';
                                                     if (ubi.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
                                                     else if (ubi.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
-                                                    else {
-                                                        const parts = ubi.split('-');
-                                                        area = parts.length > 1 ? `${parts[0]}-${parts[1]}` : parts[0];
-                                                    }
-                                                    
+                                                    else { const parts = ubi.split('-'); area = parts.length > 1 ? `${parts[0]}-${parts[1]}` : parts[0]; }
                                                     const qty = parseFloat(i.qty) || 0;
-                                                    
                                                     if (!brandGroups[area]) brandGroups[area] = {};
-                                                    if (!brandGroups[area][brand]) {
-                                                        brandGroups[area][brand] = { buffer: 0, avance: 0 };
-                                                    }
-                                                    
+                                                    if (!brandGroups[area][brand]) brandGroups[area][brand] = { buffer: 0, dia: 0, noche: 0 };
                                                     brandGroups[area][brand].buffer += qty;
                                                     if (t.status === 'Finalizado') {
                                                         const avanceVal = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
-                                                        brandGroups[area][brand].avance += avanceVal;
+                                                        if (taskShift === 'NOCHE') brandGroups[area][brand].noche += avanceVal;
+                                                        else brandGroups[area][brand].dia += avanceVal;
                                                     }
                                                 }
                                             });
@@ -16844,67 +16856,62 @@ window.showCellModal = function(htmlContent) {
 
                                     const areas = Object.keys(brandGroups).sort((a, b) => b.localeCompare(a));
                                     let brandTableRows = '';
-                                    let grandBuffer = 0;
-                                    let grandAvance = 0;
+                                    let grandBuffer = 0, grandDia = 0, grandNoche = 0;
 
                                     if (areas.length === 0) {
-                                        return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
+                                        return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
                                     }
 
                                     areas.forEach(area => {
                                         const brands = Object.keys(brandGroups[area]).sort((a, b) => a.localeCompare(b));
-                                        let areaBufferSum = 0;
-                                        let areaAvanceSum = 0;
+                                        let areaBuffer = 0, areaDia = 0, areaNoche = 0;
 
                                         brands.forEach(brand => {
                                             const data = brandGroups[area][brand];
-                                            const pct = data.buffer > 0 ? Math.round((data.avance / data.buffer) * 100) : 0;
-                                            const pendiente = data.buffer - data.avance;
-                                            
-                                            areaBufferSum += data.buffer;
-                                            areaAvanceSum += data.avance;
-                                            grandBuffer += data.buffer;
-                                            grandAvance += data.avance;
+                                            const total = data.dia + data.noche;
+                                            const pendiente = data.buffer - total;
+                                            areaBuffer += data.buffer; areaDia += data.dia; areaNoche += data.noche;
+                                            grandBuffer += data.buffer; grandDia += data.dia; grandNoche += data.noche;
 
                                             brandTableRows += `
                                                 <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                                    <td style="padding:5px 6px; color:#a1a1aa; font-size: 0.78rem; font-weight:600;">${area}</td>
+                                                    <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
                                                     <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">
-                                                        ${getPctHtml(data.avance, data.buffer, true)}
-                                                    </td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF;  font-size:0.8rem;">${pendiente.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#facc15; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${total.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">${getPctHtml(total, data.buffer, true)}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
                                                 </tr>
                                             `;
                                         });
 
-                                        const areaPendiente = areaBufferSum - areaAvanceSum;
-
+                                        const areaTotal = areaDia + areaNoche;
+                                        const areaPendiente = areaBuffer - areaTotal;
                                         brandTableRows += `
                                             <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(15, 23, 42, 0.5) 100%); border-top: 1.5px solid rgba(0, 229, 255, 0.6); border-bottom: 1.5px solid rgba(0, 229, 255, 0.6); font-weight: 900;">
                                                 <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid #00E5FF;">Total ${area}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBufferSum.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaAvanceSum.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800;">
-                                                    ${getPctHtml(areaAvanceSum, areaBufferSum, false)}
-                                                </td>
+                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBuffer.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#facc15; font-size:0.82rem; font-weight:800;">${areaDia.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#818cf8; font-size:0.82rem; font-weight:800;">${areaNoche.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaTotal.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800;">${getPctHtml(areaTotal, areaBuffer, false)}</td>
                                                 <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     });
 
-                                    const grandPendiente = grandBuffer - grandAvance;
-                                    
+                                    const grandTotal = grandDia + grandNoche;
+                                    const grandPendiente = grandBuffer - grandTotal;
                                     brandTableRows += `
                                         <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #00E5FF; border-bottom: 2px solid #00E5FF; font-weight: 900;">
                                             <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
                                             <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandAvance.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900;">
-                                                ${getPctHtml(grandAvance, grandBuffer, false)}
-                                            </td>
+                                            <td style="padding:9px 8px; text-align:center; color:#facc15; font-size:0.85rem; font-weight:900;">${grandDia.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#818cf8; font-size:0.85rem; font-weight:900;">${grandNoche.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandTotal.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900;">${getPctHtml(grandTotal, grandBuffer, false)}</td>
                                             <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);">${grandPendiente.toLocaleString()}</td>
                                         </tr>
                                     `;
@@ -18228,9 +18235,36 @@ window.showCellModal = function(htmlContent) {
 
         document.getElementById('m_save').onclick = () => {
             const u1 = document.getElementById('m_u1').value;
+            const u2 = document.getElementById('m_u2').value;
             if (!u1) { showPremiumAlert("ASIGNAR TAREA", "Usuario 1 es obligatorio.", "error"); return; }
+
+            // Validate: U1 and U2 cannot be from different shifts
+            if (u1 && u2 && u2 !== '') {
+                const allWorkers = adminService.getWorkers() || [];
+                const getShiftForUser = (username) => {
+                    const clean = String(username).trim().toLowerCase();
+                    const w = allWorkers.find(w => {
+                        const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+                        const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+                        return nom ? (`${nom[0]}${ape}` === clean) : false;
+                    });
+                    if (!w) return null;
+                    return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'D\u00cdA';
+                };
+                const shift1 = getShiftForUser(u1);
+                const shift2 = getShiftForUser(u2);
+                if (shift1 && shift2 && shift1 !== shift2) {
+                    showPremiumAlert(
+                        "\u26a0\ufe0f CONFLICTO DE TURNO",
+                        "No se puede asignar esta tarea: Usuario 1 es de turno " + shift1 + " y Usuario 2 es de turno " + shift2 + ". Ambos operarios deben pertenecer al mismo turno.",
+                        "error"
+                    );
+                    return;
+                }
+            }
+
             t.u1 = u1;
-            t.u2 = document.getElementById('m_u2').value;
+            t.u2 = u2;
             t.status = 'Asignado';
             if (!t.inicio) t.inicio = new Date().toISOString();
             t._dirty = true;
