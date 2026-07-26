@@ -2,30 +2,20 @@
  * PORTAL DE REPORTES PÚBLICOS — DEAM1830
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
- * v26.5.469
+ * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
+ * v26.5.470
  */
 
 import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.469';
+} from '../services_v245/csvHub_v6.js?v=26.5.470';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.469';
+import * as adminService from '../services_v245/adminService.js?v=26.5.470';
 
-// ============================================================
-// CONFIGURACIÓN DE TOKENS Y GRUPOS
-// Para revocar: cambia el valor del token. El link viejo muere.
-// ============================================================
-const TOKENS = {
-  'GERENCIAL-Deam2026':    { grupo: 'GERENCIAL',    nivel: 'full' },
-  'ANALISTAS-Deam2026':    { grupo: 'ANALISTAS',    nivel: 'full' },
-  'SUPERVISORES-Deam2026': { grupo: 'SUPERVISORES', nivel: 'full' },
-  'PROVEEDORES-Deam2026':  { grupo: 'PROVEEDORES',  nivel: 'basic' },
-};
-
-// Módulos por nivel de acceso
-const MODULOS_FULL = [
+// Catálogo Maestro de Módulos
+const ALL_MODULES = [
   { id: 'inventario',  label: 'Inventario',   icon: '📦' },
   { id: 'picking',     label: 'Picking',       icon: '🧺' },
   { id: 'packing',     label: 'Packing',       icon: '📦' },
@@ -45,10 +35,6 @@ const MODULOS_FULL = [
   ]},
   { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍' },
 ];
-
-const MODULOS_BASIC = MODULOS_FULL.filter(m =>
-  ['inventario','picking','packing','despacho','no_retail','recepcion'].includes(m.id)
-);
 
 // ============================================================
 // ESTADO GLOBAL
@@ -70,32 +56,59 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('token') || '';
 
-  if (!TOKENS[token]) {
-    renderAccessDenied(app);
-    return;
-  }
-
-  groupInfo = TOKENS[token];
-  modulos   = groupInfo.nivel === 'full' ? MODULOS_FULL : MODULOS_BASIC;
-
-  // 2. Inicializar datos del backend (igual que el dashboard)
+  // Cargar datos persistentes
   try {
     await initPersistentData();
   } catch(e) {
     console.warn('[Reportes] initPersistentData falló, continuando...', e);
   }
 
-  // 3. Establecer fechas de filtro por defecto (hoy)
+  // 2. Cargar configuración dinámica desde Backend / LocalStorage
+  const configList = adminService.getPublicReportsConfig() || [];
+  groupInfo = configList.find(g => g.token === token);
+
+  if (!groupInfo) {
+    renderAccessDenied(app);
+    return;
+  }
+
+  // 3. Filtrar módulos según los permisos dinámicos del grupo
+  const allowedModIds = new Set(groupInfo.modulos || []);
+  const allowedAlmIds = new Set(groupInfo.reportesAlmacenaje || []);
+  const allowedBufIds = new Set(groupInfo.reportesBuffer || []);
+
+  modulos = ALL_MODULES.filter(m => allowedModIds.has(m.id)).map(m => {
+    const clone = { ...m };
+    if (clone.id === 'almacenaje' && clone.subTabs) {
+      clone.subTabs = clone.subTabs.filter(s => allowedAlmIds.has(s.id));
+    }
+    if (clone.id === 'buffer' && clone.subTabs) {
+      clone.subTabs = clone.subTabs.filter(s => allowedBufIds.has(s.id));
+    }
+    return clone;
+  }).filter(m => {
+    if ((m.id === 'almacenaje' || m.id === 'buffer') && (!m.subTabs || m.subTabs.length === 0)) {
+      return false;
+    }
+    return true;
+  });
+
+  if (modulos.length === 0) {
+    renderAccessDenied(app, "Este enlace no tiene módulos autorizados asignados.");
+    return;
+  }
+
+  // 4. Establecer fechas de filtro por defecto (semana actual)
   const today = new Date().toISOString().split('T')[0];
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
   filterStart = weekAgo;
   filterEnd   = today;
 
-  // 4. Tab inicial
+  // 5. Tab inicial
   currentTab    = modulos[0].id;
   currentSubTab = modulos[0].subTabs ? modulos[0].subTabs[0].id : null;
 
-  // 5. Renderizar shell
+  // 6. Renderizar shell
   renderShell(app);
   renderContent();
 }
@@ -103,13 +116,13 @@ async function init() {
 // ============================================================
 // PANTALLA DE ACCESO DENEGADO
 // ============================================================
-function renderAccessDenied(app) {
+function renderAccessDenied(app, customMsg = null) {
   document.title = 'Acceso Restringido | DEAM1830';
   app.innerHTML = `
     <div class="access-denied">
       <div class="icon">🔒</div>
       <h1>ACCESO RESTRINGIDO</h1>
-      <p>Este enlace no es válido o ha sido revocado. Contacta al administrador para obtener un enlace actualizado.</p>
+      <p>${customMsg || 'Este enlace no es válido o ha sido revocado. Contacta al administrador para obtener un enlace actualizado.'}</p>
       <div class="contact">📧 Contactar al administrador del sistema</div>
     </div>`;
 }
@@ -118,19 +131,19 @@ function renderAccessDenied(app) {
 // SHELL PRINCIPAL (Topbar + Tabs + Filtros + Content)
 // ============================================================
 function renderShell(app) {
-  document.title = `Reportes ${groupInfo.grupo} | LOGÍSTICA DEAM1830`;
+  document.title = `Reportes ${groupInfo.nombre} | LOGÍSTICA DEAM1830`;
 
   app.innerHTML = `
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.469</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.470</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
       <div class="topbar-right">
-        <span class="group-badge">${groupInfo.grupo}</span>
+        <span class="group-badge">${groupInfo.nombre}</span>
       </div>
     </div>
 
@@ -243,7 +256,7 @@ async function renderContent() {
       case 'buffer':      await renderBufferModule();     break;
       case 'analisis_sku':await renderSkuModule();        break;
       default:
-        area.innerHTML = `<div class="empty-msg">Módulo en desarrollo.</div>`;
+        area.innerHTML = `<div class="empty-msg">Módulo no disponible.</div>`;
     }
   } catch(e) {
     area.innerHTML = `<div class="empty-msg">⚠️ Error al cargar los datos: ${e.message}</div>`;
@@ -267,7 +280,6 @@ async function renderAreaModule(areaKey, title) {
     return;
   }
 
-  // Filtrar filas por rango de fechas si el data tiene fecha
   const headers = data.headers || [];
   const dateCol = headers.findIndex(h =>
     /fecha/i.test(String(h)) || /date/i.test(String(h))
@@ -281,7 +293,6 @@ async function renderAreaModule(areaKey, title) {
     });
   }
 
-  // Paginación simple
   const PAGE = 100;
   const total = rows.length;
   const displayed = rows.slice(0, PAGE);
@@ -334,10 +345,8 @@ async function renderAlmacenajeModule() {
 }
 
 function getAlmacenajeTasks() {
-  // Leer tareas del adminStore (mismo origen que el dashboard)
   const fromStore = adminService.adminStore?.almacenaje_tasks;
   if (Array.isArray(fromStore) && fromStore.length > 0) return fromStore;
-  // Fallback a localStorage
   try {
     const raw = localStorage.getItem('logistics_sync_v24_almacenaje_tasks');
     return raw ? JSON.parse(raw) : [];
@@ -359,7 +368,6 @@ function getPctHtml(avance, buffer) {
     <span>${ic}</span><span>${p}%</span></span>`;
 }
 
-// ─── Reporte Almacenaje - Marcas (DÍA / NOCHE / TOTAL) ────────────────────
 function renderMarcasReport() {
   const area    = document.getElementById('contentArea');
   const tasks   = getFilteredTasks();
@@ -473,7 +481,6 @@ function renderMarcasReport() {
     </div>`;
 }
 
-// ─── Rendimiento de Operarios ──────────────────────────────────────────────
 function renderRendimientoOps() {
   const area    = document.getElementById('contentArea');
   const tasks   = getFilteredTasks().filter(t => t.status === 'Finalizado');
@@ -544,7 +551,6 @@ function renderRendimientoOps() {
     </div>`;
 }
 
-// ─── Producción por Hora ───────────────────────────────────────────────────
 function renderProduccionHora() {
   const area  = document.getElementById('contentArea');
   const tasks = getFilteredTasks().filter(t => t.status === 'Finalizado' && t.inicio && t.termino);
@@ -587,7 +593,6 @@ function renderProduccionHora() {
     </div>`;
 }
 
-// ─── Almacenado por Semana y Marca ─────────────────────────────────────────
 function renderAlmacenadoSemana() {
   const area  = document.getElementById('contentArea');
   const tasks = getFilteredTasks().filter(t => t.status === 'Finalizado');
@@ -640,7 +645,6 @@ function renderAlmacenadoSemana() {
     </div>`;
 }
 
-// ─── Gráfico de Rendimiento Semana y Día ───────────────────────────────────
 function renderGraficoRendimiento() {
   const area  = document.getElementById('contentArea');
   const tasks = getFilteredTasks().filter(t => t.status === 'Finalizado');

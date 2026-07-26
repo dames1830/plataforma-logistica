@@ -404,5 +404,59 @@ export const saveBufferHistory = async (data) => {
     adminStore.buffer_history = data;
     return await save('buffer_history', data);
 };
+// --- GESTIÓN DINÁMICA DE REPORTES PÚBLICOS & PERMISOS ---
+export const getPublicReportsConfig = () => {
+    if (!adminStore.public_reports_config) {
+        try {
+            const local = localStorage.getItem('deam_public_reports_config');
+            if (local) adminStore.public_reports_config = JSON.parse(local);
+        } catch(e) {}
+    }
+    if (!adminStore.public_reports_config || !Array.isArray(adminStore.public_reports_config)) {
+        // Estructura por defecto inicial
+        adminStore.public_reports_config = [
+            {
+                id: 'grp_gerencial',
+                nombre: 'GERENCIAL',
+                token: 'GERENCIAL-Deam2026',
+                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion', 'almacenaje', 'buffer', 'analisis_sku'],
+                reportesAlmacenaje: ['reporte_marcas', 'rendimiento_ops', 'produccion_hora', 'almacenado_semana', 'grafico_rendimiento'],
+                reportesBuffer: ['historial_buffer', 'analisis_buffer']
+            },
+            {
+                id: 'grp_analistas',
+                nombre: 'ANALISTAS',
+                token: 'ANALISTAS-Deam2026',
+                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion', 'almacenaje', 'buffer', 'analisis_sku'],
+                reportesAlmacenaje: ['reporte_marcas', 'rendimiento_ops', 'produccion_hora', 'almacenado_semana', 'grafico_rendimiento'],
+                reportesBuffer: ['historial_buffer', 'analisis_buffer']
+            },
+            {
+                id: 'grp_supervisores',
+                nombre: 'SUPERVISORES',
+                token: 'SUPERVISORES-Deam2026',
+                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion', 'almacenaje', 'buffer', 'analisis_sku'],
+                reportesAlmacenaje: ['reporte_marcas', 'rendimiento_ops', 'produccion_hora', 'almacenado_semana', 'grafico_rendimiento'],
+                reportesBuffer: ['historial_buffer', 'analisis_buffer']
+            },
+            {
+                id: 'grp_proveedores',
+                nombre: 'PROVEEDORES',
+                token: 'PROVEEDORES-Deam2026',
+                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion'],
+                reportesAlmacenaje: [],
+                reportesBuffer: []
+            }
+        ];
+    }
+    return adminStore.public_reports_config;
+};
 
+export const savePublicReportsConfig = async (data) => {
+    adminStore.public_reports_config = data;
+    try {
+        localStorage.setItem('deam_public_reports_config', JSON.stringify(data));
+    } catch(e) {}
+    return await save('public_reports_config', data, 'MASTER');
+};
 
