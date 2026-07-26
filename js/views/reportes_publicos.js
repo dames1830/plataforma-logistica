@@ -3,16 +3,16 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.478
+ * v26.5.477
  */
 
 import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.478';
+} from '../services_v245/csvHub_v6.js?v=26.5.477';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.478';
+import * as adminService from '../services_v245/adminService.js?v=26.5.477';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -138,7 +138,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.478</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.477</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -6858,7 +6858,7 @@ async function renderHistorialBuffer() {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.478 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.479 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -9873,50 +9873,13 @@ window.showCellModal = function(htmlContent) {
         style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
         document.head.appendChild(style);
 }
-  const filtered = history.filter(r => {
-    const d = (r.fecha || r.date || '').substring(0, 10);
-    return (!filterStart || d >= filterStart) && (!filterEnd || d <= filterEnd);
-  });
-
-  const rows = filtered.length === 0
-    ? `<tr><td colspan="6" class="empty-msg">Sin registros de historial buffer en el rango.</td></tr>`
-    : filtered.map(r => `
-      <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-        <td style="padding:6px 8px;color:#a1a1aa;">${r.fecha || r.date || '—'}</td>
-        <td style="padding:6px 8px;color:#fff;font-weight:700;">${r.area || r.zona || '—'}</td>
-        <td style="padding:6px 8px;text-align:center;color:#fff;">${(r.stock || r.stockInicial || 0).toLocaleString()}</td>
-        <td style="padding:6px 8px;text-align:center;color:#facc15;">${(r.ingresado || r.entradas || 0).toLocaleString()}</td>
-        <td style="padding:6px 8px;text-align:center;color:#818cf8;">${(r.salidas || r.egresado || 0).toLocaleString()}</td>
-        <td style="padding:6px 8px;text-align:center;color:#00E5FF;font-weight:800;">${(r.stockFinal || r.saldo || 0).toLocaleString()}</td>
-      </tr>`).join('');
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">📋 HISTORIAL BUFFER</div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead><tr>
-            <th style="text-align:left;width:110px;">FECHA</th>
-            <th style="text-align:left;">ÁREA / ZONA</th>
-            <th style="text-align:center;width:90px;">STOCK INICIAL</th>
-            <th style="text-align:center;width:90px;">INGRESADO</th>
-            <th style="text-align:center;width:90px;">SALIDAS</th>
-            <th style="text-align:center;width:100px;">STOCK FINAL</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
 
 async function renderAnalisisBuffer() {
   const container = document.getElementById('contentArea');
   
-  // Need to get data!
   container.innerHTML = `<div style="text-align:center; padding:3rem;"><div class="spinner"></div></div>`;
   let data;
   try {
-    // Use the loadBufferReport from csvHub
     data = await loadBufferReport();
   } catch(e) {
     console.error(e);
@@ -10079,7 +10042,7 @@ async function renderAnalisisBuffer() {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.478');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.479');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -19425,7 +19388,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.478 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.479 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22439,92 +22402,6 @@ window.showCellModal = function(htmlContent) {
         style.id = 'sync-spin-style';
         style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
         document.head.appendChild(style);
-}
-  if (!report || !report.areas || report.areas.length === 0) {
-    area.innerHTML = `
-      <div class="report-card">
-        <div class="report-title">🔍 ANÁLISIS BUFFER</div>
-        <div class="empty-msg">No hay análisis de buffer disponible para el rango seleccionado.</div>
-      </div>`;
-    return;
-  }
-
-  const rows = report.areas.map(a => {
-    const pct  = a.capacidad > 0 ? Math.round((a.ocupado / a.capacidad) * 100) : 0;
-    const col  = pct > 90 ? '#ef4444' : pct > 70 ? '#fbbf24' : '#22c55e';
-    return `
-      <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-        <td style="padding:6px 8px;color:#fff;font-weight:700;">${a.nombre || a.area || '—'}</td>
-        <td style="padding:6px 8px;text-align:center;color:#fff;">${(a.capacidad || 0).toLocaleString()}</td>
-        <td style="padding:6px 8px;text-align:center;color:#facc15;">${(a.ocupado || 0).toLocaleString()}</td>
-        <td style="padding:6px 8px;text-align:center;color:#818cf8;">${((a.capacidad||0) - (a.ocupado||0)).toLocaleString()}</td>
-        <td style="padding:6px 8px;text-align:center;">
-          <span style="color:${col};font-weight:800;font-size:0.78rem;">${pct}%</span>
-        </td>
-      </tr>`;
-  }).join('');
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">🔍 ANÁLISIS BUFFER</div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead><tr>
-            <th style="text-align:left;">ÁREA</th>
-            <th style="text-align:center;width:100px;">CAPACIDAD</th>
-            <th style="text-align:center;width:90px;">OCUPADO</th>
-            <th style="text-align:center;width:90px;">DISPONIBLE</th>
-            <th style="text-align:center;width:80px;">OCUPACIÓN</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
-
-// ============================================================
-// MÓDULO ANÁLISIS SKU
-// ============================================================
-async function renderSkuModule() {
-  const area = document.getElementById('contentArea');
-  let reserva = [];
-  try { reserva = await fetchReservaHistory(); } catch(e) { console.warn(e); }
-
-  const filtered = reserva.filter(r => {
-    const d = (r.fecha || '').substring(0, 10);
-    return (!filterStart || d >= filterStart) && (!filterEnd || d <= filterEnd);
-  }).slice(0, 200);
-
-  if (filtered.length === 0) {
-    area.innerHTML = `
-      <div class="report-card">
-        <div class="report-title">🔍 ANÁLISIS SKU</div>
-        <div class="empty-msg">Sin datos de Análisis SKU en el rango seleccionado.</div>
-      </div>`;
-    return;
-  }
-
-  const headers = Object.keys(filtered[0]);
-  const rows = filtered.map(r => `
-    <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-      ${headers.map(h => `<td style="padding:5px 8px;color:#fff;font-size:0.75rem;">${r[h] ?? ''}</td>`).join('')}
-    </tr>`).join('');
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">🔍 ANÁLISIS SKU</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.8rem;">
-        Mostrando ${filtered.length} registros
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead><tr>
-            ${headers.map(h => `<th style="text-align:left;padding:6px 8px;">${h}</th>`).join('')}
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
 }
 
 // ============================================================

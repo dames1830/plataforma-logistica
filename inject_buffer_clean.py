@@ -15,7 +15,9 @@ with open('js/views/reportes_publicos.js', 'r', encoding='utf-8') as f:
 history_code = f"""async function renderHistorialBuffer() {{
   const container = document.getElementById('contentArea');
   {history_body}
-}}"""
+}}
+
+"""
 
 results_code = f"""async function renderAnalisisBuffer() {{
   const container = document.getElementById('contentArea');
@@ -36,18 +38,18 @@ results_code = f"""async function renderAnalisisBuffer() {{
   }}
   
   {results_body}
-}}"""
+}}
 
-# In the clean version, the functions look like this:
-old_hist = re.search(r'async function renderHistorialBuffer\(\) \{.*?\n\}', rp, re.DOTALL)
-if old_hist:
-    rp = rp.replace(old_hist.group(0), history_code)
+"""
 
-old_anal = re.search(r'async function renderAnalisisBuffer\(\) \{.*?\n\}', rp, re.DOTALL)
-if old_anal:
-    rp = rp.replace(old_anal.group(0), results_code)
+start_idx = rp.find('async function renderHistorialBuffer() {')
+end_idx = rp.find('// START', start_idx)
+end_idx = rp.rfind('// ============================================================', start_idx, end_idx)
 
-with open('js/views/reportes_publicos.js', 'w', encoding='utf-8') as f:
-    f.write(rp)
-
-print("Buffer correctly injected!")
+if start_idx != -1 and end_idx != -1:
+    rp = rp[:start_idx] + history_code + results_code + rp[end_idx:]
+    with open('js/views/reportes_publicos.js', 'w', encoding='utf-8') as f:
+        f.write(rp)
+    print("Buffer correctly injected using absolute boundaries!")
+else:
+    print("Failed to find boundaries.")
