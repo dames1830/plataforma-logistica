@@ -12,10 +12,11 @@ weekly = m_weekly.group(1) if m_weekly else 'console.error("weekly not found");'
 m_chart = re.search(r'const renderWeeklyDailyChartSection = \(tasksList\) => \{(.*?)\s*};\s*\n\s*// Pre-calcular', dash, re.DOTALL)
 chart = m_chart.group(1) if m_chart else 'console.error("chart not found");'
 
-m_marcas = re.search(r'<!-- REPORTE ALMACENAJE - MARCAS \(IZQUIERDA\) -->(.*?)<!-- REPORTE TAREAS POR HORA', dash, re.DOTALL)
+# Use exact boundaries
+m_marcas = re.search(r'<!-- REPORTE ALMACENAJE - MARCAS \(IZQUIERDA\) -->(.*?)<!-- REPORTE ALMACENAJE - GENDER RIMS \(DERECHA\) -->', dash, re.DOTALL)
 marcas = m_marcas.group(1).strip() if m_marcas else 'console.error("marcas not found");'
 
-m_operarios = re.search(r'<!-- REPORTE RENDIMIENTO DE OPERARIOS \(ANCHO COMPLETO\) -->(.*?)<!-- FIN RENDIMIENTO DE OPERARIOS -->', dash, re.DOTALL)
+m_operarios = re.search(r'<!-- REPORTE RENDIMIENTO DE OPERARIOS \(ANCHO COMPLETO\) -->(.*?)\$\{renderHourlyProductionReport', dash, re.DOTALL)
 operarios = m_operarios.group(1).strip() if m_operarios else 'console.error("operarios not found");'
 
 with open('extracted_blocks.py', 'w', encoding='utf-8') as f:
