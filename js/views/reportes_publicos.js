@@ -3,16 +3,16 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.475
+ * v26.5.476
  */
 
 import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.475';
+} from '../services_v245/csvHub_v6.js?v=26.5.476';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.475';
+import * as adminService from '../services_v245/adminService.js?v=26.5.476';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -138,7 +138,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.475</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.476</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -369,309 +369,85 @@ function getPctHtml(avance, buffer) {
 }
 
 function renderMarcasReport() {
-  const area    = document.getElementById('contentArea');
-  const tasks   = getFilteredTasks();
-  const workers = adminService.getWorkers() || [];
-
-  const getShift = (username) => {
-    if (!username || username === '---') return null;
-    const clean = String(username).trim().toLowerCase();
-    const w = workers.find(w => {
-      const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
-      const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
-      return nom ? `${nom[0]}${ape}` === clean : false;
-    });
-    if (!w) return null;
-    return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DIA';
-  };
-
-  const groups = {};
-  tasks.forEach(t => {
-    const shift = getShift(t.u1) || getShift(t.u2) || 'DIA';
-    (t.items || []).forEach(art => {
-      const brand = String(art.marca || 'S/M').trim();
-      (art.items || []).forEach(i => {
-        const ubi = String(i.ubi || '').toUpperCase().trim();
-        if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
-          let ar = 'CDBUFFER-A';
-          if (ubi.startsWith('CDBUFFER-B')) ar = 'CDBUFFER-B';
-          const qty = parseFloat(i.qty) || 0;
-          if (!groups[ar]) groups[ar] = {};
-          if (!groups[ar][brand]) groups[ar][brand] = { buffer: 0, dia: 0, noche: 0 };
-          groups[ar][brand].buffer += qty;
-          if (t.status === 'Finalizado') {
-            const av = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
-            if (shift === 'NOCHE') groups[ar][brand].noche += av;
-            else                   groups[ar][brand].dia   += av;
-          }
-        }
-      });
-    });
-  });
-
-  const areas = Object.keys(groups).sort((a,b) => b.localeCompare(a));
-  let rows = ''; let gBuf = 0, gDia = 0, gNoche = 0;
-
-  if (areas.length === 0) {
-    rows = `<tr><td colspan="8" class="empty-msg">Sin datos para el rango seleccionado.</td></tr>`;
-  } else {
-    areas.forEach(ar => {
-      const brands = Object.keys(groups[ar]).sort((a,b) => a.localeCompare(b));
-      let aBuf = 0, aDia = 0, aNoche = 0;
-      brands.forEach(brand => {
-        const d = groups[ar][brand];
-        const tot = d.dia + d.noche;
-        const pend = d.buffer - tot;
-        aBuf += d.buffer; aDia += d.dia; aNoche += d.noche;
-        gBuf += d.buffer; gDia += d.dia; gNoche += d.noche;
-        rows += `<tr style="border-bottom:1px solid rgba(0,229,255,0.08); background:#000;">
-          <td style="padding:5px 6px;color:#a1a1aa;font-size:0.78rem;">${ar}</td>
-          <td style="padding:5px 6px;"><b style="color:#fff;font-weight:800;">${brand}</b></td>
-          <td style="padding:5px 6px;text-align:center;color:#fff;">${d.buffer.toLocaleString()}</td>
-          <td style="padding:5px 6px;text-align:center;color:#facc15;font-weight:700;">${d.dia.toLocaleString()}</td>
-          <td style="padding:5px 6px;text-align:center;color:#818cf8;font-weight:700;">${d.noche.toLocaleString()}</td>
-          <td style="padding:5px 6px;text-align:center;color:#fff;font-weight:700;">${tot.toLocaleString()}</td>
-          <td style="padding:5px 6px;text-align:center;">${getPctHtml(tot, d.buffer)}</td>
-          <td style="padding:5px 6px;text-align:center;color:#00E5FF;font-weight:800;">${pend.toLocaleString()}</td>
-        </tr>`;
-      });
-      const aTotal = aDia + aNoche;
-      rows += `<tr style="background:linear-gradient(90deg,rgba(0,229,255,0.12),rgba(15,23,42,0.5));border-top:1.5px solid rgba(0,229,255,0.6);border-bottom:1.5px solid rgba(0,229,255,0.6);">
-        <td colspan="2" style="padding:7px 8px;color:#00E5FF;font-weight:900;font-size:0.82rem;border-left:4px solid #00E5FF;text-transform:uppercase;">Total ${ar}</td>
-        <td style="padding:7px 8px;text-align:center;color:#fff;font-weight:800;">${aBuf.toLocaleString()}</td>
-        <td style="padding:7px 8px;text-align:center;color:#facc15;font-weight:800;">${aDia.toLocaleString()}</td>
-        <td style="padding:7px 8px;text-align:center;color:#818cf8;font-weight:800;">${aNoche.toLocaleString()}</td>
-        <td style="padding:7px 8px;text-align:center;color:#fff;font-weight:800;">${aTotal.toLocaleString()}</td>
-        <td style="padding:7px 8px;text-align:center;">${getPctHtml(aTotal, aBuf)}</td>
-        <td style="padding:7px 8px;text-align:center;color:#00E5FF;font-weight:900;">${(aBuf - aTotal).toLocaleString()}</td>
-      </tr>`;
-    });
-    const gTotal = gDia + gNoche;
-    rows += `<tr style="background:linear-gradient(90deg,rgba(0,229,255,0.25),rgba(15,23,42,0.8));border-top:2px solid #00E5FF;border-bottom:2px solid #00E5FF;">
-      <td colspan="2" style="padding:9px 8px;color:#fff;font-weight:900;font-size:0.85rem;border-left:6px solid #00E5FF;text-transform:uppercase;letter-spacing:1px;">TOTAL GENERAL CDBUFFER</td>
-      <td style="padding:9px 8px;text-align:center;color:#00E5FF;font-weight:900;">${gBuf.toLocaleString()}</td>
-      <td style="padding:9px 8px;text-align:center;color:#facc15;font-weight:900;">${gDia.toLocaleString()}</td>
-      <td style="padding:9px 8px;text-align:center;color:#818cf8;font-weight:900;">${gNoche.toLocaleString()}</td>
-      <td style="padding:9px 8px;text-align:center;color:#00E5FF;font-weight:900;">${gTotal.toLocaleString()}</td>
-      <td style="padding:9px 8px;text-align:center;">${getPctHtml(gTotal, gBuf)}</td>
-      <td style="padding:9px 8px;text-align:center;color:#00E5FF;font-weight:900;text-shadow:0 0 10px rgba(0,229,255,0.5);">${(gBuf - gTotal).toLocaleString()}</td>
-    </tr>`;
-  }
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">📊 REPORTE ALMACENAJE — MARCAS</div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead>
-            <tr>
-              <th style="text-align:left;width:110px;">AREA</th>
-              <th style="text-align:left;width:130px;">MARCAS</th>
-              <th style="text-align:center;width:85px;">BUFFER</th>
-              <th style="text-align:center;width:75px;color:#facc15;">DÍA</th>
-              <th style="text-align:center;width:75px;color:#818cf8;">NOCHE</th>
-              <th style="text-align:center;width:75px;">TOTAL</th>
-              <th style="text-align:center;width:70px;">%</th>
-              <th style="text-align:center;width:90px;">PENDIENTE</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
+  const area = document.getElementById('contentArea');
+  const tasks = getFilteredTasks();
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  area.innerHTML = `console.error("marcas not found");`;
 }
 
-function renderRendimientoOps() {
-  const area    = document.getElementById('contentArea');
-  const tasks   = getFilteredTasks().filter(t => t.status === 'Finalizado');
-  const workers = adminService.getWorkers() || [];
-
-  const getShift = (username) => {
-    if (!username || username === '---') return 'DIA';
-    const clean = String(username).trim().toLowerCase();
-    const w = workers.find(w => {
-      const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
-      const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
-      return nom ? `${nom[0]}${ape}` === clean : false;
-    });
-    return w && String(w.turno || w.Turno || '').toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DIA';
-  };
-
-  const opStats = {};
-  tasks.forEach(t => {
-    [t.u1, t.u2].filter(Boolean).forEach(u => {
-      if (u === '---' || !u) return;
-      if (!opStats[u]) opStats[u] = { tareas: 0, pares: 0, turno: getShift(u) };
-      opStats[u].tareas++;
-      (t.items || []).forEach(art => {
-        (art.items || []).forEach(i => {
-          opStats[u].pares += parseFloat(i.avance || i.qty || 0);
-        });
-      });
-    });
-  });
-
-  const sorted = Object.entries(opStats).sort((a,b) => b[1].pares - a[1].pares);
-
-  const rows = sorted.length === 0
-    ? `<tr><td colspan="4" class="empty-msg">Sin datos de operarios en el rango seleccionado.</td></tr>`
-    : sorted.map(([name, s], idx) => `
-      <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-        <td style="padding:6px 8px;color:#a1a1aa;font-weight:700;">#${idx+1}</td>
-        <td style="padding:6px 8px;"><b style="color:#fff;">${name}</b></td>
-        <td style="padding:6px 8px;text-align:center;">
-          <span style="background:${s.turno==='NOCHE'?'rgba(129,140,248,0.15)':'rgba(251,191,36,0.15)'};
-            border:1px solid ${s.turno==='NOCHE'?'#818cf8':'#fbbf24'};
-            color:${s.turno==='NOCHE'?'#818cf8':'#fbbf24'};
-            padding:2px 8px; border-radius:20px; font-size:0.68rem; font-weight:800;">
-            ${s.turno}
-          </span>
-        </td>
-        <td style="padding:6px 8px;text-align:center;color:#fff;font-weight:700;">${s.tareas}</td>
-        <td style="padding:6px 8px;text-align:center;color:#00E5FF;font-weight:800;">${Math.round(s.pares).toLocaleString()}</td>
-      </tr>`).join('');
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">👷 RENDIMIENTO DE OPERARIOS</div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead>
-            <tr>
-              <th style="text-align:left;width:50px;">#</th>
-              <th style="text-align:left;">OPERARIO</th>
-              <th style="text-align:center;width:100px;">TURNO</th>
-              <th style="text-align:center;width:90px;">TAREAS</th>
-              <th style="text-align:center;width:100px;">PARES</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
+function renderRendimientoOperarios() {
+  const area = document.getElementById('contentArea');
+  const tasks = getFilteredTasks();
+  const filteredTasks = tasks.filter(t => t.fecha >= filterStart && t.fecha <= filterEnd);
+  const weeklyDailyTasks = tasks;
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  area.innerHTML = `console.error("operarios not found");`;
 }
 
 function renderProduccionHora() {
-  const area  = document.getElementById('contentArea');
-  const tasks = getFilteredTasks().filter(t => t.status === 'Finalizado' && t.inicio && t.termino);
-
-  const hourMap = {};
-  tasks.forEach(t => {
-    const startH = new Date(t.inicio).getHours();
-    if (!hourMap[startH]) hourMap[startH] = { tareas: 0, pares: 0 };
-    hourMap[startH].tareas++;
-    (t.items || []).forEach(art =>
-      (art.items || []).forEach(i => {
-        hourMap[startH].pares += parseFloat(i.avance || i.qty || 0);
-      })
-    );
-  });
-
-  const hours = Array.from({length:24}, (_,h) => h);
-  const rows = hours.filter(h => hourMap[h]).map(h => {
-    const d = hourMap[h];
-    return `<tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-      <td style="padding:6px 8px;color:#a1a1aa;font-weight:700;">${String(h).padStart(2,'0')}:00 — ${String(h+1).padStart(2,'0')}:00</td>
-      <td style="padding:6px 8px;text-align:center;color:#fff;">${d.tareas}</td>
-      <td style="padding:6px 8px;text-align:center;color:#00E5FF;font-weight:800;">${Math.round(d.pares).toLocaleString()}</td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="3" class="empty-msg">Sin datos de producción por hora.</td></tr>`;
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">⏱️ REPORTE DE PRODUCCIÓN POR HORA</div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead><tr>
-            <th style="text-align:left;">HORA</th>
-            <th style="text-align:center;width:100px;">TAREAS</th>
-            <th style="text-align:center;width:110px;">PARES</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
+  const area = document.getElementById('contentArea');
+  const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  if (tasksList.length === 0) {
+    area.innerHTML = `<div class="report-card"><div class="report-title">📊 PRODUCCIÓN POR HORA</div><div class="empty-msg">Sin datos.</div></div>`;
+    return;
+  }
+  console.error("hourly not found");
 }
 
 function renderAlmacenadoSemana() {
-  const area  = document.getElementById('contentArea');
-  const tasks = getFilteredTasks().filter(t => t.status === 'Finalizado');
+  const area = document.getElementById('contentArea');
+  const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
+  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  if (tasksList.length === 0) {
+    area.innerHTML = `<div class="report-card"><div class="report-title">📊 ALMACENADO POR SEMANA</div><div class="empty-msg">Sin datos.</div></div>`;
+    return;
+  }
+  
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
+        return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
+    };
 
-  const getWeek = (dateStr) => {
-    const d = new Date(dateStr + 'T12:00:00');
-    const start = new Date(d.getFullYear(), 0, 1);
-    return `Sem ${Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7)} — ${d.getFullYear()}`;
-  };
-
-  const groups = {};
-  tasks.forEach(t => {
-    const week = getWeek(t.fecha || new Date().toISOString().split('T')[0]);
-    (t.items || []).forEach(art => {
-      const brand = String(art.marca || 'S/M').trim();
-      const key   = `${week}|||${brand}`;
-      if (!groups[key]) groups[key] = { week, brand, pares: 0 };
-      (art.items || []).forEach(i => {
-        groups[key].pares += parseFloat(i.avance || i.qty || 0);
-      });
-    });
-  });
-
-  const sorted = Object.values(groups).sort((a,b) =>
-    a.week.localeCompare(b.week) || a.brand.localeCompare(b.brand)
-  );
-
-  const rows = sorted.length === 0
-    ? `<tr><td colspan="3" class="empty-msg">Sin datos en el rango seleccionado.</td></tr>`
-    : sorted.map(d => `
-      <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-        <td style="padding:6px 8px;color:#a1a1aa;font-weight:700;">${d.week}</td>
-        <td style="padding:6px 8px;"><b style="color:#fff;">${d.brand}</b></td>
-        <td style="padding:6px 8px;text-align:center;color:#00E5FF;font-weight:800;">${Math.round(d.pares).toLocaleString()}</td>
-      </tr>`).join('');
-
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">📅 ALMACENADO POR SEMANA Y MARCA</div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead><tr>
-            <th style="text-align:left;width:160px;">SEMANA</th>
-            <th style="text-align:left;">MARCA</th>
-            <th style="text-align:center;width:110px;">PARES</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
+  console.error("weekly not found");
 }
 
 function renderGraficoRendimiento() {
   const area = document.getElementById('contentArea');
   const tasksList = getFilteredTasks().filter(t => t.status === 'Finalizado');
-
+  window.__chartStartDate = filterStart || new Date().toISOString().split('T')[0];
+  window.__chartEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  
   if (tasksList.length === 0) {
     area.innerHTML = `<div class="report-card"><div class="report-title">📊 GRÁFICO DE RENDIMIENTO</div><div class="empty-msg">Sin datos.</div></div>`;
     return;
   }
+  
+    const getWeekNumber = (d) => {
+        const date = new Date(d);
+        const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
+        return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
+    };
 
-  const getWeekNumber = (d) => {
-      const date = new Date(d);
-      const dUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      dUTC.setUTCDate(dUTC.getUTCDate() + 4 - (dUTC.getUTCDay() || 7));
-      const yearStart = new Date(Date.UTC(dUTC.getUTCFullYear(), 0, 1));
-      return Math.ceil((((dUTC - yearStart) / 86400000) + 1) / 7);
-  };
-
-
+  
         const chartWeeksData = {};
 
         const getWeekStr = (dateStr) => {
-            if (!dateStr || dateStr === '---') area.innerHTML = '---';
+            if (!dateStr || dateStr === '---') return '---';
             const parts = dateStr.split('-');
             if (parts.length !== 3) return '---';
             const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
             const weekNo = getWeekNumber(dateObj);
-            return `Semana ${weekNo} (${parts[0]})`;
+            area.innerHTML = `Semana ${weekNo} (${parts[0]})`;
         };
 
         const getDayIndex = (dateStr) => {
@@ -1038,6 +814,8 @@ function renderGraficoRendimiento() {
         </div>
         `;
 }
+
+
 
 // ============================================================
 // MÓDULO ZONA BUFFER
