@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.485
+ * v26.5.487
  */
 
 import {
@@ -138,7 +138,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.485</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.487</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -1563,7 +1563,7 @@ async function renderHistorialBuffer() {
         </div>`;
     
     // ── Cargar desde servidor (con fallback a localStorage) ───────────────────
-    let kpiHistory = [];
+    kpiHistory = [];
     let serverOnline = false;
     try {
         kpiHistory = await fetchBufferHistory();
