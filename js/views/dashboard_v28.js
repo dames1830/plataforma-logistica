@@ -18567,7 +18567,7 @@ window.showCellModal = function(htmlContent) {
                 if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
                 window.processAlmacenajeTasks('update', selectedDate);
             };
-            modal.querySelector('#optCancel').onclick = () => if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+            modal.querySelector('#optCancel').onclick = () => { if (modal && modal.parentNode) modal.parentNode.removeChild(modal); };
         } catch (err) {
             showPremiumAlert("ERROR CRÍTICO", "Error crítico al abrir calendario: " + err.message, "error");
             console.error(err);
@@ -18690,7 +18690,7 @@ window.showCellModal = function(htmlContent) {
             if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
-        modal.querySelector('#close_edit').onclick = () => if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+        modal.querySelector('#close_edit').onclick = () => { if (modal && modal.parentNode) modal.parentNode.removeChild(modal); };
     };
 
     window.processAlmacenajeTasks = processAlmacenajeTasks;
