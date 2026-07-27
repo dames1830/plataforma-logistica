@@ -1,4 +1,4 @@
-﻿const row = {
+const row = {
     'CodCanal': 5,
     'CodArticulo ': 6646806,
     'G. Gender': 'Footwear',
@@ -38,7 +38,7 @@ const getColSafe = (row, possibleNames) => {
     return '';
 }
 
-const sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
+const sku = getColSafe(row, ['ARTICULO', 'ART�CULO', 'PRODUCTO', 'SKU', 'CODIGO', 'IDX1', 'IDX0']).trim();
 const temp = getColSafe(row, ['TEMPORADA', 'SEASON', 'IDX14', 'IDX2']).trim();
 const sku7 = sku.substring(0, 7);
 let skuTemporada = {};

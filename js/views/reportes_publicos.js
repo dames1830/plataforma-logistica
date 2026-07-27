@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.488
+ * v26.5.490
  */
 
 import {
@@ -138,7 +138,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.488</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.490</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -353,6 +353,25 @@ function getAlmacenajeTasks() {
   } catch(e) { return []; }
 }
 
+const getTaskTotalAvance = (t) => {
+    if (!t) return 0;
+    let sum = 0;
+    (t.items || []).forEach(art => {
+        (art.items || []).forEach(i => {
+            const ubi = String(i.ubi || '').toUpperCase().trim();
+            const isBuffer = ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C');
+            if (isBuffer) {
+                if (i.avance !== undefined && i.avance !== null) {
+                    sum += parseFloat(i.avance) || 0;
+                } else if (t.status === 'Finalizado') {
+                    sum += parseFloat(i.qty) || 0;
+                }
+            }
+        });
+    });
+    return sum;
+};
+
 function getFilteredTasks() {
   return getAlmacenajeTasks().filter(t =>
     (!filterStart || t.fecha >= filterStart) &&
@@ -373,7 +392,7 @@ function renderMarcasReport() {
   const tasks = getFilteredTasks();
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
-  area.innerHTML = `<div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+  area.innerHTML = `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; align-items:start;"><div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                             <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
@@ -523,7 +542,7 @@ function renderMarcasReport() {
                             </tbody>
                         </table>
                     </div>
-                </div>`;
+                </div></div>`;
 }
 
 function renderRendimientoOperarios() {
@@ -714,7 +733,7 @@ function renderRendimientoOperarios() {
                                     return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
                                 }
 
-                                if (!window.__perfSetPage) window.__perfSetPage = (p) => { const _sy=window.scrollY; window.__perfPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+                                if (!window.__perfSetPage) window.__perfSetPage = (p) => { const _sy=window.scrollY; window.__perfPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); else renderAlmacenajeModule(); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _perfPage = window.__perfPage || 0;
                                 const _perfTotalPages = Math.ceil(sortedGroupRows.length / 25);
                                 window.__perfTotalPages = _perfTotalPages;
@@ -831,7 +850,7 @@ const renderHourlyProductionReport = (tasksList) => {
 
         activeDates.sort((a, b) => b.localeCompare(a));
 
-        if (!window.__hourlySetPage) window.__hourlySetPage = (p) => { const _sy=window.scrollY; window.__hourlyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+        if (!window.__hourlySetPage) window.__hourlySetPage = (p) => { const _sy=window.scrollY; window.__hourlyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); else renderAlmacenajeModule(); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
         const _hourlyPage = window.__hourlyPage || 0;
         const _hourlyTotalPages = Math.ceil(activeDates.length / 25);
         window.__hourlyTotalPages = _hourlyTotalPages;
@@ -1002,7 +1021,7 @@ const renderWeeklyStorageReport = (tasksList) => {
             return getVal(a) - getVal(b);
         });
 
-        if (!window.__weeklySetPage) window.__weeklySetPage = (p) => { const _sy=window.scrollY; window.__weeklyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+        if (!window.__weeklySetPage) window.__weeklySetPage = (p) => { const _sy=window.scrollY; window.__weeklyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); else renderAlmacenajeModule(); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
         const _weeklyPage = window.__weeklyPage || 0;
         const _weeklyTotalPages = Math.ceil(sortedWeeks.length / 25);
         window.__weeklyTotalPages = _weeklyTotalPages;

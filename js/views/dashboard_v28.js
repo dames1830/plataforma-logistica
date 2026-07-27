@@ -5344,6 +5344,22 @@ const renderRFSection = (container) => {
             { id: 'analisis_buffer', label: 'Análisis Buffer' }
         ];
 
+        const availableSubInventario = [
+            { id: 'archivo_inventario', label: 'Archivo Inventario' },
+            { id: 'kpi_inventarios', label: 'KPI Inventarios' },
+            { id: 'analisis_inventarios', label: 'Análisis Inventarios' },
+            { id: 'modulo_inventarios', label: 'Módulo Inventarios' }
+        ];
+
+        const availableSubAnalisis = [
+            { id: 'archivo_analisis', label: 'Archivo Análisis' },
+            { id: 'replenishment', label: 'Replenishment' },
+            { id: 'configuracion_analisis', label: 'Configuración Análisis' },
+            { id: 'analisis_reserva', label: 'Análisis Reserva' },
+            { id: 'layout_activo', label: 'Layout Activo' },
+            { id: 'articulo_temp', label: 'Artículo Temp' }
+        ];
+
         const generateSecureToken = () => {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let result = 'tok_sec_';
@@ -5420,6 +5436,8 @@ const renderRFSection = (container) => {
             const modulosChecked = new Set(g.modulos || []);
             const almChecked = new Set(g.reportesAlmacenaje || []);
             const bufChecked = new Set(g.reportesBuffer || []);
+            const invChecked = new Set(g.reportesInventario || []);
+            const anaChecked = new Set(g.reportesAnalisis || []);
 
             modal.innerHTML = `
                 <div class="glass-panel" style="width:90%; max-width:650px; max-height:85vh; overflow-y:auto; padding:1.8rem; border:1px solid #00E5FF; box-shadow:0 0 30px rgba(0,229,255,0.2);">
@@ -5453,6 +5471,24 @@ const renderRFSection = (container) => {
                         `).join('')}
                     </div>
 
+                    <h4 style="color:#fff; font-size:0.85rem; border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">SUB-REPORTES DE INVENTARIO</h4>
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1rem;">
+                        ${availableSubInventario.map(s => `
+                            <label style="font-size:0.8rem; color:#cbd5e1; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" class="chk-inv" value="${s.id}" ${invChecked.has(s.id)?'checked':''}> ${s.label}
+                            </label>
+                        `).join('')}
+                    </div>
+
+                    <h4 style="color:#fff; font-size:0.85rem; border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">SUB-REPORTES DE ANÁLISIS SKU</h4>
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1.5rem;">
+                        ${availableSubAnalisis.map(s => `
+                            <label style="font-size:0.8rem; color:#cbd5e1; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" class="chk-ana" value="${s.id}" ${anaChecked.has(s.id)?'checked':''}> ${s.label}
+                            </label>
+                        `).join('')}
+                    </div>
+
                     <div style="display:flex; gap:10px; justify-content:flex-end;">
                         <button id="btnCloseModal" class="btn" style="background:none; border:1px solid var(--border); color:var(--text-muted); padding:0.6rem 1.2rem;">Cancelar</button>
                         <button id="btnSavePerms" class="btn" style="background:#00E5FF; color:#000; font-weight:900; padding:0.6rem 1.4rem;">💾 GUARDAR PERMISOS</button>
@@ -5466,10 +5502,14 @@ const renderRFSection = (container) => {
                 const newModulos = Array.from(modal.querySelectorAll('.chk-mod:checked')).map(c => c.value);
                 const newAlm = Array.from(modal.querySelectorAll('.chk-alm:checked')).map(c => c.value);
                 const newBuf = Array.from(modal.querySelectorAll('.chk-buf:checked')).map(c => c.value);
+                const newInv = Array.from(modal.querySelectorAll('.chk-inv:checked')).map(c => c.value);
+                const newAna = Array.from(modal.querySelectorAll('.chk-ana:checked')).map(c => c.value);
 
                 g.modulos = newModulos;
                 g.reportesAlmacenaje = newAlm;
                 g.reportesBuffer = newBuf;
+                g.reportesInventario = newInv;
+                g.reportesAnalisis = newAna;
 
                 await adminService.savePublicReportsConfig(configData);
                 if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
@@ -11125,7 +11165,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.486 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.490 | MOBILE PORTAL
                             </div>
                     </div>
 
