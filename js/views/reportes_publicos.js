@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.492
+ * v26.5.493
  */
 
 import {
@@ -13,27 +13,40 @@ import {
 } from '../services_v245/csvHub_v6.js?v=26.5.492';
 
 import * as adminService from '../services_v245/adminService.js?v=26.5.492';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.492';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
-  { id: 'inventario',  label: 'Inventario',   icon: '📦' },
-  { id: 'picking',     label: 'Picking',       icon: '🧺' },
+  { id: 'inventario',  label: 'Inventario',   icon: '📦', subTabs: [
+    { id: 'archivo_inventario', label: '📄 Archivo Inventario' },
+    { id: 'kpi_inventarios', label: '📊 KPI Inventarios' },
+    { id: 'analisis_inventarios', label: '🔍 Análisis Inventarios' },
+    { id: 'modulo_inventarios', label: '📦 Módulo Inventarios' }
+  ]},
+  { id: 'picking',     label: 'Picking',       icon: '🛒' },
   { id: 'packing',     label: 'Packing',       icon: '📦' },
   { id: 'despacho',    label: 'Despacho',      icon: '🚚' },
   { id: 'no_retail',   label: 'NO RETAIL',     icon: '🚫' },
   { id: 'recepcion',   label: 'Recepción',     icon: '📥' },
-  { id: 'almacenaje',  label: 'Almacenaje',    icon: '🗄️', subTabs: [
-    { id: 'reporte_marcas',    label: '📊 Reporte Marcas' },
+  { id: 'almacenaje',  label: 'Almacenaje',    icon: '🏗️', subTabs: [
+    { id: 'reporte_marcas',    label: '🏷️ Reporte Marcas' },
     { id: 'rendimiento_ops',   label: '👷 Rendimiento Operarios' },
     { id: 'produccion_hora',   label: '⏱️ Producción por Hora' },
     { id: 'almacenado_semana', label: '📅 Almacenado por Semana' },
     { id: 'grafico_rendimiento',label: '📈 Gráfico Rendimiento' },
   ]},
-  { id: 'buffer',      label: 'Zona Buffer',   icon: '📊', subTabs: [
-    { id: 'historial_buffer', label: '📋 Historial Buffer' },
+  { id: 'buffer',      label: 'Zona Buffer',   icon: '🔄', subTabs: [
+    { id: 'historial_buffer', label: '📑 Historial Buffer' },
     { id: 'analisis_buffer',  label: '🔍 Análisis Buffer' },
   ]},
-  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍' },
+  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', subTabs: [
+    { id: 'archivo_analisis', label: '📄 Archivo Análisis' },
+    { id: 'replenishment', label: '🔄 Replenishment' },
+    { id: 'configuracion_analisis', label: '⚙️ Configuración Análisis' },
+    { id: 'analisis_reserva', label: '🔍 Análisis Reserva' },
+    { id: 'layout_activo', label: '🗺️ Layout Activo' },
+    { id: 'articulo_temp', label: '👕 Artículo Temp' }
+  ]},
 ];
 
 // ============================================================
@@ -76,6 +89,8 @@ async function init() {
   const allowedModIds = new Set(groupInfo.modulos || []);
   const allowedAlmIds = new Set(groupInfo.reportesAlmacenaje || []);
   const allowedBufIds = new Set(groupInfo.reportesBuffer || []);
+  const allowedInvIds = new Set(groupInfo.reportesInventario || []);
+  const allowedAnaIds = new Set(groupInfo.reportesAnalisis || []);
 
   modulos = ALL_MODULES.filter(m => allowedModIds.has(m.id)).map(m => {
     const clone = { ...m };
@@ -85,9 +100,15 @@ async function init() {
     if (clone.id === 'buffer' && clone.subTabs) {
       clone.subTabs = clone.subTabs.filter(s => allowedBufIds.has(s.id));
     }
+    if (clone.id === 'inventario' && clone.subTabs) {
+      clone.subTabs = clone.subTabs.filter(s => allowedInvIds.has(s.id));
+    }
+    if (clone.id === 'analisis_sku' && clone.subTabs) {
+      clone.subTabs = clone.subTabs.filter(s => allowedAnaIds.has(s.id));
+    }
     return clone;
   }).filter(m => {
-    if ((m.id === 'almacenaje' || m.id === 'buffer') && (!m.subTabs || m.subTabs.length === 0)) {
+    if ((m.id === 'almacenaje' || m.id === 'buffer' || m.id === 'inventario' || m.id === 'analisis_sku') && (!m.subTabs || m.subTabs.length === 0)) {
       return false;
     }
     return true;
@@ -138,7 +159,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.492</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.493</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -246,12 +267,12 @@ async function renderContent() {
 
   try {
     switch(currentTab) {
-      case 'inventario':  await renderAreaModule('stockActivo', 'Inventario');   break;
-      case 'picking':     await renderAreaModule('picking',     'Picking');      break;
-      case 'packing':     await renderAreaModule('packing',     'Packing');      break;
-      case 'despacho':    await renderAreaModule('despacho',    'Despacho');     break;
-      case 'no_retail':   await renderAreaModule('no_retail',   'NO RETAIL');    break;
-      case 'recepcion':   await renderAreaModule('recepcion',   'Recepción');    break;
+      case 'inventario':  await renderInventarioModule();   break;
+      case 'picking':     await renderAreaModule('picking', 'Picking');           break;
+      case 'packing':     await renderAreaModule('packing', 'Packing');           break;
+      case 'despacho':    await renderAreaModule('despacho', 'Despacho');         break;
+      case 'no_retail':   await renderAreaModule('noRetail', 'NO RETAIL');        break;
+      case 'recepcion':   await renderAreaModule('recepcion', 'Recepción');       break;
       case 'almacenaje':  await renderAlmacenajeModule(); break;
       case 'buffer':      await renderBufferModule();     break;
       case 'analisis_sku':await renderSkuModule();        break;
@@ -2143,44 +2164,33 @@ async function renderAnalisisBuffer() {
 // ============================================================
 async function renderSkuModule() {
   const area = document.getElementById('contentArea');
-  let reserva = [];
-  try { reserva = await fetchReservaHistory(); } catch(e) { console.warn(e); }
-
-  const filtered = reserva.filter(r => {
-    const d = (r.fecha || '').substring(0, 10);
-    return (!filterStart || d >= filterStart) && (!filterEnd || d <= filterEnd);
-  }).slice(0, 200);
-
-  if (filtered.length === 0) {
-    area.innerHTML = `
-      <div class="report-card">
-        <div class="report-title">🔍 ANÁLISIS SKU</div>
-        <div class="empty-msg">Sin datos de Análisis SKU en el rango seleccionado.</div>
-      </div>`;
-    return;
+  switch(currentSubTab) {
+    case 'layout_activo':
+      await renderLayoutActivo(area);
+      break;
+    default:
+      renderUnderConstruction(area, 'Análisis SKU');
+      break;
   }
+}
 
-  const headers = Object.keys(filtered[0]);
-  const rows = filtered.map(r => `
-    <tr style="border-bottom:1px solid rgba(0,229,255,0.08);">
-      ${headers.map(h => `<td style="padding:5px 8px;color:#fff;font-size:0.75rem;">${r[h] || ''}</td>`).join('')}
-    </tr>`).join('');
+async function renderInventarioModule() {
+  const area = document.getElementById('contentArea');
+  switch(currentSubTab) {
+    default:
+      renderUnderConstruction(area, 'Inventario');
+      break;
+  }
+}
 
-  area.innerHTML = `
-    <div class="report-card">
-      <div class="report-title">🔍 ANÁLISIS SKU</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.8rem;">
-        Mostrando ${filtered.length} registros
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="rpt">
-          <thead><tr>
-            ${headers.map(h => `<th style="text-align:left;padding:6px 8px;">${h}</th>`).join('')}
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
+function renderUnderConstruction(container, moduleName) {
+  container.innerHTML = `
+    <div class="glass-panel" style="padding:4rem; text-align:center; color:#94a3b8; border:1px dashed var(--border);">
+      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🏗️</div>
+      <h3 style="color:#fff; margin-bottom:0.5rem;">Reporte en Migración</h3>
+      <p style="font-size:0.9rem;">El sub-módulo seleccionado de <b>${moduleName}</b> se encuentra en proceso de adaptación para la vista pública.<br>Estará disponible muy pronto.</p>
+    </div>
+  `;
 }
 
 // ============================================================
