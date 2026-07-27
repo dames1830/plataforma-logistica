@@ -482,7 +482,7 @@ export const renderLayoutActivo = async (container) => {
 
           const btnCompartir = '';
 
-          const btnSincronizar = ''; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+          const btnSincronizar = ''; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
                   <svg id="sync-icon-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
               </button>
           `;
