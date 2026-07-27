@@ -336,7 +336,7 @@ async function renderAreaModule(areaKey, title) {
 async function renderAlmacenajeModule() {
   switch(currentSubTab) {
     case 'reporte_marcas':     renderMarcasReport();    break;
-    case 'rendimiento_ops':    renderRendimientoOps();  break;
+    case 'rendimiento_ops':    renderRendimientoOperarios();  break;
     case 'produccion_hora':    renderProduccionHora();  break;
     case 'almacenado_semana':  renderAlmacenadoSemana(); break;
     case 'grafico_rendimiento': renderGraficoRendimiento(); break;
