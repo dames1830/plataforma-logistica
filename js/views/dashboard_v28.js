@@ -13196,6 +13196,7 @@ const renderRFSection = (container) => {
       };
 
       let localLayoutData = {};
+      let padreStock = {};
         window.globalLayoutData = window.globalLayoutData || {};
         window.globalArticulosRaw = articulosRaw;
       let localStats = { 'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() }, 'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
@@ -13245,7 +13246,7 @@ const renderRFSection = (container) => {
             });
           window.DEBUG_SKU_GENDER = skuGender;
 
-          const padreStock = {};
+          padreStock = {};
           activoRaw.forEach(row => {
               const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();

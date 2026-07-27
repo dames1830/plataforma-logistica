@@ -2,6 +2,7 @@ let currentLayoutZona = 'SEL';
 
 export const renderLayoutActivo = async (container) => {
       let activoRaw = []; let articulosRaw = [];
+      let padreStock = {};
 
       let globalPayload = null;
       try {
@@ -99,7 +100,7 @@ export const renderLayoutActivo = async (container) => {
             });
           window.DEBUG_SKU_GENDER = skuGender;
 
-          const padreStock = {};
+          padreStock = {};
           activoRaw.forEach(row => {
               const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
