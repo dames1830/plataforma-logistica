@@ -3,17 +3,17 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.500
+ * v26.5.501
  */
 
 import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.500';
+} from '../services_v245/csvHub_v6.js?v=26.5.501';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.500';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.500';
+import * as adminService from '../services_v245/adminService.js?v=26.5.501';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.501';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -159,7 +159,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.500</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.501</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -1043,6 +1043,15 @@ const renderWeeklyStorageReport = (tasksList) => {
         });
 
         if (!window.__weeklySetPage) window.__weeklySetPage = (p) => { const _sy=window.scrollY; window.__weeklyPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); else renderAlmacenajeModule(); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
+        if (!window.toggleStorageReportWeek) window.toggleStorageReportWeek = (week) => {
+            if (!window.__expandedStorageReportWeeks) window.__expandedStorageReportWeeks = [];
+            const idx = window.__expandedStorageReportWeeks.indexOf(week);
+            if (idx > -1) window.__expandedStorageReportWeeks.splice(idx, 1);
+            else window.__expandedStorageReportWeeks.push(week);
+            const _sy = window.scrollY;
+            if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(document.getElementById('contentArea') || document.body); else renderAlmacenajeModule();
+            requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'}));
+        };
         const _weeklyPage = window.__weeklyPage || 0;
         const _weeklyTotalPages = Math.ceil(sortedWeeks.length / 25);
         window.__weeklyTotalPages = _weeklyTotalPages;
