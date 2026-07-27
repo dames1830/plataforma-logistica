@@ -480,12 +480,9 @@ export const renderLayoutActivo = async (container) => {
           const percUnidActual = totalUnits > 0 ? Math.round((stats['ACTUAL'].units / totalUnits) * 100) : 0;
           const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
-          const btnCompartir = ''; border:1px solid #3b82f6; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-              </button>
-          ` : '';
+          const btnCompartir = '';
 
-          const btnSincronizar = ''; border:1px solid #10b981; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+          const btnSincronizar = ''; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
                   <svg id="sync-icon-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
               </button>
           `;
