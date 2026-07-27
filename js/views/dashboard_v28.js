@@ -5372,7 +5372,7 @@ const renderRFSection = (container) => {
         const renderPublicReportsTable = () => {
             const baseUrl = window.location.origin + '/reportes.html';
             const rowsHtml = configData.map((g, idx) => {
-                const fullLink = `${baseUrl}?v=${VERSION.replace(/\./g,'')}&token=${g.token}`;
+                const fullLink = `${baseUrl}?token=${g.token}`;
                 return `
                     <tr style="border-bottom:1px solid var(--border);">
                         <td style="padding:0.8rem; font-weight:800; color:#fff;">${g.nombre}</td>
@@ -11165,7 +11165,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.493 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.492 | MOBILE PORTAL
                             </div>
                     </div>
 

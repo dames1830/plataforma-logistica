@@ -234,7 +234,7 @@ export const renderLayoutActivo = async (container) => {
       }
 
       let reservaPayload = null;
-      let reservaRaw = dataStore.analisis_sku_reserva || dataStore.stockReserva || [];
+      let reservaRaw = [];
       let globalPayloadReserva = null;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
