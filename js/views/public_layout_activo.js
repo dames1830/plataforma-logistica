@@ -192,26 +192,8 @@ export const renderLayoutActivo = async (container) => {
                               if (col >= 3 && col <= 4) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
-                      } else if (currentLayoutZona === 'MZN01') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 4 && col <= 11) isValid = true;
-                                else if (col >= 12 && col <= 21) isValid = true;
-                                else if (col === 24) isValid = true;
-                                else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 1 && col <= 3) isValid = true;
-                                else if (col >= 22 && col <= 23) isValid = true;
-                            }
-                        } else if (currentLayoutZona === 'MZN02') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 8 && col <= 24) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 4 && col <= 7) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (isSaldo) {
-                                if (col >= 1 && col <= 3) isValid = true;
-                            }
+                      } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
+                            isValid = true;
                         } else {
                           isValid = true;
                       }
@@ -297,6 +279,9 @@ export const renderLayoutActivo = async (container) => {
                   const col = parseInt(match[1], 10);
                   const rackRow = parseInt(match[2], 10);
                   
+                  const totalStockForPadreRes = padreStock[sku7] || 0;
+                  const isSaldo = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? totalStockForPadreRes < 80 : totalStockForPadreRes < 20;
+                  
                   let maxColsRes = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
                   if (col >= 1 && col <= maxColsRes && rackRow >= 1 && rackRow <= 22) {
                       if (!localLayoutDataRes[col]) localLayoutDataRes[col] = {};
@@ -338,26 +323,8 @@ export const renderLayoutActivo = async (container) => {
                               if (col >= 3 && col <= 4) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
-                      } else if (currentLayoutZona === 'MZN01') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 4 && col <= 11) isValid = true;
-                                else if (col >= 12 && col <= 21) isValid = true;
-                                else if (col === 24) isValid = true;
-                                else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 1 && col <= 3) isValid = true;
-                                else if (col >= 22 && col <= 23) isValid = true;
-                            }
-                      } else if (currentLayoutZona === 'MZN02') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 8 && col <= 24) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 4 && col <= 7) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (isSaldo) {
-                                if (col >= 1 && col <= 3) isValid = true;
-                            }
+                      } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
+                            isValid = true;
                       } else {
                           isValid = true;
                       }
@@ -514,8 +481,8 @@ export const renderLayoutActivo = async (container) => {
           const isMZN = currentLayoutZona.startsWith('MZN');
           
           targetContainer.innerHTML = `
-                <div style="display:flex; width:100%; gap:20px; flex-direction:row; align-items:flex-start;">
-                    <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; background:rgba(0,0,0,0.4); border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1); min-height:500px;">
+                <div style="display:flex; width:100%; gap:20px; flex-direction:column; align-items:center;">
+                    <div class="glass-panel" style="padding:20px; position:relative; width: 100%; max-width: 1450px; background:rgba(0,0,0,0.4); border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1); min-height:500px;">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
@@ -604,10 +571,10 @@ export const renderLayoutActivo = async (container) => {
                           ${isMZN ? `
                       </div>
                       
-                      <div class="glass-panel" style="flex:1; padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="width: 100%; max-width: 1450px; padding:20px; display:flex; flex-direction:row; gap:20px; justify-content: space-between; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           ` : ''}
                           
-                          <div>
+                          <div style="flex: 1;">
                               <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
                               
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
@@ -669,7 +636,7 @@ export const renderLayoutActivo = async (container) => {
                           </div>
                       </div>
 
-                      <div class="glass-panel" style="padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="flex: 1; padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
                           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
                               <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - ${brandTitle}</h4>
                               <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>

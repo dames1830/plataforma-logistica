@@ -13338,26 +13338,8 @@ const renderRFSection = (container) => {
                               if (col >= 3 && col <= 4) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
-                      } else if (currentLayoutZona === 'MZN01') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 4 && col <= 11) isValid = true;
-                                else if (col >= 12 && col <= 21) isValid = true;
-                                else if (col === 24) isValid = true;
-                                else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 1 && col <= 3) isValid = true;
-                                else if (col >= 22 && col <= 23) isValid = true;
-                            }
-                        } else if (currentLayoutZona === 'MZN02') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 8 && col <= 24) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 4 && col <= 7) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (isSaldo) {
-                                if (col >= 1 && col <= 3) isValid = true;
-                            }
+                        } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
+                            isValid = true;
                         } else {
                           isValid = true;
                       }
@@ -13443,6 +13425,9 @@ const renderRFSection = (container) => {
                   const col = parseInt(match[1], 10);
                   const rackRow = parseInt(match[2], 10);
                   
+                  const totalStockForPadreRes = padreStock[sku7] || 0;
+                  const isSaldo = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? totalStockForPadreRes < 80 : totalStockForPadreRes < 20;
+                  
                   let maxColsRes = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
                   if (col >= 1 && col <= maxColsRes && rackRow >= 1 && rackRow <= 22) {
                       if (!localLayoutDataRes[col]) localLayoutDataRes[col] = {};
@@ -13484,27 +13469,9 @@ const renderRFSection = (container) => {
                               if (col >= 3 && col <= 4) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
-                      } else if (currentLayoutZona === 'MZN01') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 4 && col <= 11) isValid = true;
-                                else if (col >= 12 && col <= 21) isValid = true;
-                                else if (col === 24) isValid = true;
-                                else if (isSaldo && ((col >= 1 && col <= 3) || (col >= 22 && col <= 23))) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 1 && col <= 3) isValid = true;
-                                else if (col >= 22 && col <= 23) isValid = true;
-                            }
-                      } else if (currentLayoutZona === 'MZN02') {
-                            if (temporadaClean === 'ACTUAL') {
-                                if (col >= 8 && col <= 24) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (temporadaClean === 'ANTERIOR') {
-                                if (col >= 4 && col <= 7) isValid = true;
-                                else if (isSaldo && (col >= 1 && col <= 3)) isValid = true;
-                            } else if (isSaldo) {
-                                if (col >= 1 && col <= 3) isValid = true;
-                            }
-                      } else {
+                      } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
+                            isValid = true;
+                        } else {
                           isValid = true;
                       }
 
