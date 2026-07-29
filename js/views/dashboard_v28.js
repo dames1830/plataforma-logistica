@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.514';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.515';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.514';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.514';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.514';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.514';
+import * as adminService from '../services_v245/adminService.js?v=26.5.515';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.515';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.515';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.515';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.514';
+const VERSION = '26.5.515';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.514');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.515');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.514 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.515 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13175,10 +13175,6 @@ const renderRFSection = (container) => {
       }
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
-      // Si el admin cargó archivos locales, mostramos SIEMPRE su mapa recién procesado (no la vista "anterior").
-      const hayLocalLayout = activoRaw.length && articulosRaw.length;
-      if (hayLocalLayout) window.__verLayoutAnterior = false;
-
       let globalPayload = null;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
@@ -13664,7 +13660,7 @@ const renderRFSection = (container) => {
               </button>
           ` : '';
 
-          const btnVerVersion = (!isReserva && !hasLocalPayload) ? `
+          const btnVerVersion = (!isReserva) ? `
               <button title="Alterna entre el mapa ACTUAL y el ANTERIOR (penúltimo publicado)" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${window.__verLayoutAnterior ? '#fbbf24' : 'rgba(255,255,255,0.18)'}; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; white-space:nowrap; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
                   ${window.__verLayoutAnterior ? '🔵 Ver Actual' : '🕘 Ver Anterior'}
               </button>
@@ -14030,7 +14026,7 @@ window.showCellModal = function(htmlContent) {
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
                   <div style="font-size:3rem; margin-bottom:1rem; opacity:0.15;">🕘</div>
                   <h4 style="color:#fff; font-size:1.3rem; margin-bottom:10px;">Aún no hay versión anterior para <b>${currentLayoutZona}</b></h4>
-                  <p style="font-size:0.95rem;">Se guardará una versión anterior cuando publiques un mapa nuevo que reemplace a otro. Vuelve a <b>🔵 Ver Actual</b>.</p>
+                  <p style="font-size:0.95rem; max-width:600px; margin:0 auto;">La <b>versión anterior</b> es el mapa <b>publicado</b> previo (no tus archivos recién procesados). Aparece cuando publicas esta zona por <b>segunda vez</b>: el mapa que estaba pasa a ser el anterior. Publica un mapa nuevo y quedará guardado. Mientras tanto, vuelve a <b>🔵 Ver Actual</b>.</p>
               </div>
           `;
       } else if (payloadToRender) {
@@ -14918,6 +14914,7 @@ window.showCellModal = function(htmlContent) {
       }
 
         if (activeAnalisisSub === 'layout_activo') {
+            window.__verLayoutAnterior = false; // al entrar al módulo, siempre arranca en "Actual"
             renderLayoutActivo(skuBuf);
             return;
         }

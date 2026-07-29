@@ -35,7 +35,7 @@ export const renderLayoutActivo = async (container) => {
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
                       <div style="font-size:3rem; margin-bottom:1rem; opacity:0.15;">🕘</div>
                       <h4>Aún no hay una versión anterior de esta zona</h4>
-                      <p>Se guardará una versión anterior cuando se publique un mapa nuevo que reemplace a otro.</p>
+                      <p style="max-width:600px; margin:0 auto;">La versión anterior es el mapa <b>publicado</b> previo. Aparece cuando un administrador publica esta zona por <b>segunda vez</b> (el mapa que estaba pasa a ser el anterior).</p>
                       <button onclick="window.__toggleVerLayout()" style="margin-top:1rem; background:rgba(59,130,246,0.15); border:1px solid #3b82f6; color:#93c5fd; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:800;">🔵 Ver mapa actual</button>
                   </div>` : `
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
