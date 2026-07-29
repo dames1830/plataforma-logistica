@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.508';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.509';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.508';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.508';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.508';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.508';
+import * as adminService from '../services_v245/adminService.js?v=26.5.509';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.509';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.509';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.509';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.508';
+const VERSION = '26.5.509';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.508');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.509');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.508 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.509 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15670,12 +15670,15 @@ window.showCellModal = function(htmlContent) {
   window.renderAlmacenajeTareas = (container) => {
     window.__almacenajeContainer = container;
 
-    // [FIX SCROLL] El scroll real ocurre en '.main-wrapper' (la ventana NO hace scroll).
-    // Guardamos su posición y la restauramos tras redibujar, para que los filtros y el
-    // refresco automático no salten al inicio.
-    const __scroller = document.querySelector('.main-wrapper');
-    const __savedScrollTop = __scroller ? __scroller.scrollTop : 0;
-    if (__scroller) requestAnimationFrame(() => { __scroller.scrollTop = __savedScrollTop; });
+    // [FIX SCROLL] El reporte scrollea dentro de #almacenajeScrollArea (un div interno con
+    // overflow-y:auto y altura fija que se RECREA en cada redibujo, por eso su scroll volvía a 0).
+    // Guardamos su posición antes de redibujar y la restauramos en el nuevo div.
+    const __oldScrollArea = document.getElementById('almacenajeScrollArea');
+    const __savedScrollTop = __oldScrollArea ? __oldScrollArea.scrollTop : 0;
+    if (__savedScrollTop > 0) {
+        const __restoreScroll = () => { const el = document.getElementById('almacenajeScrollArea'); if (el) el.scrollTop = __savedScrollTop; };
+        requestAnimationFrame(() => { __restoreScroll(); requestAnimationFrame(__restoreScroll); });
+    }
 
     // Global helper for toggling chart weeks
     window.toggleChartWeek = (week) => {
@@ -16723,7 +16726,7 @@ window.showCellModal = function(htmlContent) {
 
         <div style="display:flex; flex-direction:column; gap:1.5rem; height:calc(100vh - 280px); width:100%;">
             <!-- CONTENIDO PRINCIPAL -->
-            <div style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto; width:100%; flex:1;">
+            <div id="almacenajeScrollArea" style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto; width:100%; flex:1;">
                 ${isKpi ? `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
             <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
