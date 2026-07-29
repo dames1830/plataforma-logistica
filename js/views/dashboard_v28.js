@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.512';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.513';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.512';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.512';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.512';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.512';
+import * as adminService from '../services_v245/adminService.js?v=26.5.513';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.513';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.513';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.513';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.512';
+const VERSION = '26.5.513';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.512');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.513');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.512 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.513 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13151,6 +13151,11 @@ const renderRFSection = (container) => {
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
   let currentLayoutZona = 'SEL';
+  // [ZONAS] Lista central de zonas activas del mapa de calor.
+  // Cuando MZN03 esté construido, basta con agregar 'MZN03' aquí para que entre en "Publicar Todas".
+  const ZONAS_ACTIVAS = ['SEL', 'MZN01', 'MZN02'];
+  // Visor de versiones: false = mapa ACTUAL, true = mapa ANTERIOR (penúltimo publicado).
+  if (typeof window.__verLayoutAnterior === 'undefined') window.__verLayoutAnterior = false;
 
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
@@ -13168,11 +13173,13 @@ const renderRFSection = (container) => {
       let globalPayload = null;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-          const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}?date=MASTER&t=${Date.now()}`);
+          const __suf = window.__verLayoutAnterior ? '_ANT' : '';
+          const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}${__suf}?date=MASTER&t=${Date.now()}`);
           if (res.ok) {
               const payload = await res.json();
               if (payload && payload.data && payload.data.type === 'processed') {
                   globalPayload = payload.data;
+                  window.__layoutDisplayedUpdatedAt = payload.updated_at || null;
               }
           }
       } catch(e) {}
@@ -13636,9 +13643,21 @@ const renderRFSection = (container) => {
           const percUnidActual = totalUnits > 0 ? Math.round((stats['ACTUAL'].units / totalUnits) * 100) : 0;
           const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
+          const btnPublicarTodas = (hasLocalPayload && !isReserva) ? `
+              <button title="Procesa y publica TODAS las zonas (${ZONAS_ACTIVAS.join(', ')}) de una sola vez" onclick="window.publicarTodasLasZonas(this)" style="background:linear-gradient(135deg,#8b5cf6,#6366f1); border:none; color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:900; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 4px 14px rgba(139,92,246,0.4); transition:all 0.2s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter='brightness(1)'">
+                  🌐 PROCESAR Y PUBLICAR TODAS
+              </button>
+          ` : '';
+
           const btnCompartir = (hasLocalPayload) ? `
-              <button title="Procesa tu mapa y lo publica en el servidor para que TODOS los usuarios vean esta versión" onclick="${isReserva ? 'window.subirLayoutReservaGlobal(this)' : 'window.subirLayoutGlobal(this)'}" style="background:linear-gradient(135deg,#3b82f6,#6366f1); border:none; color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:800; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 4px 14px rgba(59,130,246,0.35); transition:all 0.2s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter='brightness(1)'">
-                  ⚡ PROCESAR Y PUBLICAR
+              <button title="Publica SOLO esta zona (${currentLayoutZona}) en el servidor" onclick="${isReserva ? 'window.subirLayoutReservaGlobal(this)' : 'window.subirLayoutGlobal(this)'}" style="background:rgba(59,130,246,0.15); border:1px solid #3b82f6; color:#93c5fd; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:700; display:flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.2s;">
+                  ⚡ Solo esta zona
+              </button>
+          ` : '';
+
+          const btnVerVersion = (!isReserva) ? `
+              <button title="Alterna entre el mapa ACTUAL y el ANTERIOR (penúltimo publicado)" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${window.__verLayoutAnterior ? '#fbbf24' : 'rgba(255,255,255,0.18)'}; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; white-space:nowrap; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
+                  ${window.__verLayoutAnterior ? '🔵 Ver Actual' : '🕘 Ver Anterior'}
               </button>
           ` : '';
 
@@ -13659,12 +13678,15 @@ const renderRFSection = (container) => {
                               <span style="font-size:1.5rem;">🗺️</span> 
                               ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
+                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
                           </h3>
-                          <div style="display:flex; gap:8px; align-items:center;">
+                          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                               <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
                                   🕒 ${timestampStr}
                               </div>
+                              ${btnPublicarTodas}
                               ${btnCompartir}
+                              ${btnVerVersion}
                               ${btnSincronizar}
                           </div>
                       </div>
@@ -13980,15 +14002,25 @@ window.showCellModal = function(htmlContent) {
           }
       }, 100);
 
-      let payloadToRender = localPayload || globalPayload;
-      let isGlobal = !localPayload && globalPayload;
-      
+      // Si el visor está en "Anterior", forzamos mostrar el mapa global _ANT (ignoramos el local).
+      let payloadToRender = window.__verLayoutAnterior ? globalPayload : (localPayload || globalPayload);
+      let isGlobal = window.__verLayoutAnterior ? true : (!localPayload && globalPayload);
+
       if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
           activoWrap.innerHTML = `
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
                   <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
                   <h4 style="color:#fff; font-size:1.5rem; margin-bottom:10px;">Zona en Construcción</h4>
                   <p style="font-size:1rem;">El mapa de calor y los reportes para la zona <b>${currentLayoutZona}</b> aún no están configurados.</p>
+              </div>
+          `;
+      } else if (window.__verLayoutAnterior && !globalPayload) {
+          window.compartirLayoutPayload = localPayload;
+          activoWrap.innerHTML = `
+              <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
+                  <div style="font-size:3rem; margin-bottom:1rem; opacity:0.15;">🕘</div>
+                  <h4 style="color:#fff; font-size:1.3rem; margin-bottom:10px;">Aún no hay versión anterior para <b>${currentLayoutZona}</b></h4>
+                  <p style="font-size:0.95rem;">Se guardará una versión anterior cuando publiques un mapa nuevo que reemplace a otro. Vuelve a <b>🔵 Ver Actual</b>.</p>
               </div>
           `;
       } else if (payloadToRender) {
@@ -14013,44 +14045,89 @@ window.showCellModal = function(htmlContent) {
       */
     };
 
-    window.subirLayoutGlobal = (btn) => {
-        if (!window.compartirLayoutPayload) { alert('⚠️ Primero carga los archivos (Stock Activo y Maestro) para poder procesar y publicar el mapa.'); return; }
-        const __label = '⚡ PROCESAR Y PUBLICAR';
-        const __bg = 'linear-gradient(135deg,#3b82f6,#6366f1)';
-        btn.innerHTML = '⏳ Publicando...';
-        btn.disabled = true;
+    // Alternar entre el mapa ACTUAL y el ANTERIOR
+    window.__toggleVerLayout = () => {
+        window.__verLayoutAnterior = !window.__verLayoutAnterior;
+        const c = document.getElementById('layout-activo-container');
+        if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
+    };
+
+    // Publica una zona: guarda el mapa ACTUAL como ANTERIOR antes de sobrescribir. Devuelve {zona, ok|skipped}.
+    window.__publicarZonaLayout = async (zona, payload) => {
         const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-        const __zona = currentLayoutZona || 'SEL';
-        if (window.compartirLayoutPayload) window.compartirLayoutPayload.zona = __zona;
-        fetch(`${base}/api/logistics/layout_activo_${__zona}?date=MASTER`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(window.compartirLayoutPayload)
-        }).then(r => {
-            if(r.ok) {
-                btn.innerHTML = '✅ Publicado — todos lo verán';
-                btn.style.background = 'rgba(16, 185, 129, 0.95)';
-                setTimeout(() => {
-                    btn.innerHTML = __label;
-                    btn.style.background = __bg;
-                    btn.disabled = false;
-                    const c = document.getElementById('layout-activo-container');
-                    if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
-                }, 1800);
-            } else {
-                btn.innerHTML = '❌ Error al publicar';
-                btn.style.background = 'rgba(239, 68, 68, 0.9)';
-                setTimeout(() => {
-                    btn.innerHTML = __label;
-                    btn.style.background = __bg;
-                    btn.disabled = false;
-                }, 3000);
+        if (!payload || !(payload.totalUnits > 0)) return { zona, skipped: true };
+        payload.zona = zona;
+        payload.publishedAt = Date.now();
+        // 1) Respaldar el mapa ACTUAL como ANTERIOR (si existe)
+        try {
+            const curRes = await fetch(`${base}/api/logistics/layout_activo_${zona}?date=MASTER&t=${Date.now()}`);
+            if (curRes.ok) {
+                const cur = await curRes.json();
+                if (cur && cur.data && cur.data.type === 'processed' && cur.data.totalUnits > 0) {
+                    await fetch(`${base}/api/logistics/layout_activo_${zona}_ANT?date=MASTER`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cur.data)
+                    });
+                }
             }
-        }).catch(() => {
-            btn.innerHTML = '❌ Sin conexión';
-            btn.style.background = 'rgba(239, 68, 68, 0.9)';
+        } catch(e) { /* si no se pudo respaldar el anterior, igual publicamos el nuevo */ }
+        // 2) Guardar el nuevo como ACTUAL
+        try {
+            const res = await fetch(`${base}/api/logistics/layout_activo_${zona}?date=MASTER`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            return { zona, ok: res.ok };
+        } catch(e) { return { zona, ok: false }; }
+    };
+
+    // Publicar SOLO la zona actual
+    window.subirLayoutGlobal = async (btn) => {
+        if (!window.compartirLayoutPayload) { alert('⚠️ Primero carga los archivos (Stock Activo y Maestro) para poder procesar y publicar el mapa.'); return; }
+        const __label = '⚡ Solo esta zona';
+        const __bg = 'rgba(59,130,246,0.15)';
+        btn.innerHTML = '⏳ Publicando...'; btn.disabled = true;
+        const r = await window.__publicarZonaLayout(currentLayoutZona || 'SEL', window.compartirLayoutPayload);
+        if (r.ok) {
+            btn.innerHTML = '✅ Publicado'; btn.style.background = 'rgba(16,185,129,0.9)';
+            setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false;
+                const c = document.getElementById('layout-activo-container'); if (c) renderLayoutActivo(c); }, 1600);
+        } else {
+            btn.innerHTML = '❌ Error'; btn.style.background = 'rgba(239,68,68,0.9)';
             setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false; }, 3000);
-        });
+        }
+    };
+
+    // Publicar TODAS las zonas activas de una sola vez (usa una capa/overlay porque el botón se redibuja)
+    window.publicarTodasLasZonas = async () => {
+        const container = document.getElementById('layout-activo-container');
+        const original = currentLayoutZona;
+        const verAntPrev = window.__verLayoutAnterior;
+        window.__verLayoutAnterior = false; // procesamos sobre el mapa actual, no la vista "anterior"
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(2,6,23,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; color:#fff; font-family:Inter,sans-serif; text-align:center; padding:1rem;';
+        ov.innerHTML = '<div style="font-size:2.4rem;">🌐</div><div id="__pubTodasMsg" style="font-size:1.15rem; font-weight:800;">Procesando y publicando todas las zonas...</div><div style="font-size:0.85rem; color:#94a3b8;">Esto toma unos segundos, no cierres la página.</div>';
+        document.body.appendChild(ov);
+        const setMsg = (t) => { const m = document.getElementById('__pubTodasMsg'); if (m) m.textContent = t; };
+        const resultados = [];
+        for (const z of ZONAS_ACTIVAS) {
+            setMsg(`Procesando zona ${z}...`);
+            currentLayoutZona = z;
+            window.compartirLayoutPayload = null;
+            try { if (container) await renderLayoutActivo(container); } catch(e) {}
+            setMsg(`Publicando zona ${z}...`);
+            const r = await window.__publicarZonaLayout(z, window.compartirLayoutPayload);
+            resultados.push(r);
+        }
+        currentLayoutZona = original;
+        window.__verLayoutAnterior = verAntPrev;
+        try { if (container) await renderLayoutActivo(container); } catch(e) {}
+        ov.remove();
+        const okZ = resultados.filter(r => r.ok).map(r => r.zona);
+        const skipZ = resultados.filter(r => r.skipped).map(r => r.zona);
+        const failZ = resultados.filter(r => !r.ok && !r.skipped).map(r => r.zona);
+        let msg = `✅ Zonas publicadas: ${okZ.join(', ') || '(ninguna)'}`;
+        if (skipZ.length) msg += `\n⏭️ Sin datos en tus archivos (saltadas): ${skipZ.join(', ')}`;
+        if (failZ.length) msg += `\n❌ Con error de conexión: ${failZ.join(', ')}`;
+        alert(msg);
     };
 
     window.syncLayoutActivo = async (btn) => {

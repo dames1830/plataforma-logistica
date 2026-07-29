@@ -4,21 +4,35 @@ export const renderLayoutActivo = async (container) => {
       let activoRaw = []; let articulosRaw = [];
       let padreStock = {};
 
+      if (typeof window.__verLayoutAnterior === 'undefined') window.__verLayoutAnterior = false;
+      // Handlers del visor de versiones (definidos temprano para que funcionen aun en el estado vacío)
+      window.__toggleVerLayout = () => { window.__verLayoutAnterior = !window.__verLayoutAnterior; const av = document.getElementById('__avisoNuevoMapa'); if (av) av.remove(); renderLayoutActivo(container); };
+      window.__aplicarNuevoMapa = () => { const av = document.getElementById('__avisoNuevoMapa'); if (av) av.remove(); renderLayoutActivo(container); };
+      window.__cerrarAvisoNuevoMapa = () => { const av = document.getElementById('__avisoNuevoMapa'); if (av) av.remove(); };
+
       let globalPayload = null;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-          const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}?date=MASTER&t=${Date.now()}`);
+          const __suf = window.__verLayoutAnterior ? '_ANT' : '';
+          const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}${__suf}?date=MASTER&t=${Date.now()}`);
           if (res.ok) {
               const payload = await res.json();
               if (payload && payload.data && payload.data.type === 'processed') {
                   globalPayload = payload.data;
+                  window.__layoutDisplayedUpdatedAt = payload.updated_at || null;
               }
           }
       } catch(e) {}
 
       if (!activoRaw.length || !articulosRaw.length) {
           if (!globalPayload || globalPayload.totalUnits === 0) {
-              container.innerHTML = `
+              container.innerHTML = window.__verLayoutAnterior ? `
+                  <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.15;">🕘</div>
+                      <h4>Aún no hay una versión anterior de esta zona</h4>
+                      <p>Se guardará una versión anterior cuando se publique un mapa nuevo que reemplace a otro.</p>
+                      <button onclick="window.__toggleVerLayout()" style="margin-top:1rem; background:rgba(59,130,246,0.15); border:1px solid #3b82f6; color:#93c5fd; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:800;">🔵 Ver mapa actual</button>
+                  </div>` : `
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
                       <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🗺️</div>
                       <h4>Aún no hay un mapa publicado para esta zona</h4>
@@ -476,6 +490,12 @@ export const renderLayoutActivo = async (container) => {
 
           const btnCompartir = '';
 
+          const btnVerVersion = (!isReserva) ? `
+              <button title="Alterna entre el mapa ACTUAL y el ANTERIOR" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${window.__verLayoutAnterior ? '#fbbf24' : 'rgba(255,255,255,0.18)'}; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+                  ${window.__verLayoutAnterior ? '🔵 Ver mapa actual' : '🕘 Ver mapa anterior'}
+              </button>
+          ` : '';
+
           const btnSincronizar = '';
 
           const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : (currentLayoutZona === 'MZN02' ? 'NORTH STAR' : 'BATA');
@@ -489,11 +509,13 @@ export const renderLayoutActivo = async (container) => {
                               <span style="font-size:1.5rem;">🗺️</span> 
                               ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
                               ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
+                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
                           </h3>
-                          <div style="display:flex; gap:8px; align-items:center;">
+                          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                               <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
                                   🕒 ${timestampStr}
                               </div>
+                              ${btnVerVersion}
                               ${btnCompartir}
                               ${btnSincronizar}
                           </div>
@@ -809,6 +831,33 @@ window.showCellModal = function(htmlContent) {
               });
           }
       }, 100);
+
+      // Aviso "nuevo mapa disponible": chequea cada 60s si el servidor tiene una versión más nueva
+      // que la que se está viendo. NO cambia el mapa solo; el operario decide cuándo actualizar.
+      if (window.__layoutAvisoInterval) clearInterval(window.__layoutAvisoInterval);
+      window.__layoutAvisoInterval = setInterval(async () => {
+          try {
+              if (!document.body.contains(container)) { clearInterval(window.__layoutAvisoInterval); return; }
+              if (window.__verLayoutAnterior) return; // viendo el anterior a propósito: no molestar
+              const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+              const zona = currentLayoutZona || 'SEL';
+              const res = await fetch(`${base}/api/logistics/layout_activo_${zona}?date=MASTER&t=${Date.now()}`);
+              if (!res.ok) return;
+              const p = await res.json();
+              const serverUpd = (p && p.data && p.data.type === 'processed') ? (p.updated_at || null) : null;
+              if (serverUpd && window.__layoutDisplayedUpdatedAt && serverUpd !== window.__layoutDisplayedUpdatedAt) {
+                  if (!document.getElementById('__avisoNuevoMapa')) {
+                      const b = document.createElement('div');
+                      b.id = '__avisoNuevoMapa';
+                      b.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:linear-gradient(135deg,#8b5cf6,#6366f1); color:#fff; padding:14px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.4); font-family:Inter,sans-serif; display:flex; align-items:center; gap:12px; font-size:0.9rem; font-weight:700; max-width:90vw;';
+                      b.innerHTML = '<span>🔄 Hay un mapa nuevo disponible</span>'
+                          + '<button onclick="window.__aplicarNuevoMapa()" style="background:#fff; color:#4f46e5; border:none; padding:6px 12px; border-radius:8px; font-weight:800; cursor:pointer;">Actualizar</button>'
+                          + '<button onclick="window.__cerrarAvisoNuevoMapa()" title="Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:1rem;">✕</button>';
+                      document.body.appendChild(b);
+                  }
+              }
+          } catch(e) {}
+      }, 60000);
 
       let payloadToRender = localPayload || globalPayload;
       let isGlobal = !localPayload && globalPayload;
