@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.509';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.510';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.509';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.509';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.509';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.509';
+import * as adminService from '../services_v245/adminService.js?v=26.5.510';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.510';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.510';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.510';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.509';
+const VERSION = '26.5.510';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -651,7 +651,7 @@ const TABS = [
     { id: 'articulo_temp', label: 'Artículo', icon: '👕' },
     { id: 'replenishment', label: 'Replenishment', icon: '🔄' },
     { id: 'analisis_reserva', label: 'Análisis Reserva', icon: '📦' },
-      { id: 'layout_activo', label: 'Layout Activo', icon: '???' },
+      { id: 'layout_activo', label: 'Layout Activo', icon: '🗺️' },
     { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.509');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.510');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.509 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.510 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13637,8 +13637,8 @@ const renderRFSection = (container) => {
           const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
           const btnCompartir = (hasLocalPayload) ? `
-              <button title="Compartir Layout" onclick="${isReserva ? 'window.subirLayoutReservaGlobal(this)' : 'window.subirLayoutGlobal(this)'}" style="background:rgba(59, 130, 246, 0.2); border:1px solid #3b82f6; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <button title="Procesa tu mapa y lo publica en el servidor para que TODOS los usuarios vean esta versión" onclick="${isReserva ? 'window.subirLayoutReservaGlobal(this)' : 'window.subirLayoutGlobal(this)'}" style="background:linear-gradient(135deg,#3b82f6,#6366f1); border:none; color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:800; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 4px 14px rgba(59,130,246,0.35); transition:all 0.2s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter='brightness(1)'">
+                  ⚡ PROCESAR Y PUBLICAR
               </button>
           ` : '';
 
@@ -14014,8 +14014,10 @@ window.showCellModal = function(htmlContent) {
     };
 
     window.subirLayoutGlobal = (btn) => {
-        if (!window.compartirLayoutPayload) return;
-        btn.innerHTML = '⏳';
+        if (!window.compartirLayoutPayload) { alert('⚠️ Primero carga los archivos (Stock Activo y Maestro) para poder procesar y publicar el mapa.'); return; }
+        const __label = '⚡ PROCESAR Y PUBLICAR';
+        const __bg = 'linear-gradient(135deg,#3b82f6,#6366f1)';
+        btn.innerHTML = '⏳ Publicando...';
         btn.disabled = true;
         const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
         fetch(`${base}/api/logistics/layout_activo`, {
@@ -14024,28 +14026,28 @@ window.showCellModal = function(htmlContent) {
             body: JSON.stringify(window.compartirLayoutPayload)
         }).then(r => {
             if(r.ok) {
-                btn.innerHTML = '✔️';
-                btn.style.background = 'rgba(16, 185, 129, 0.2)';
-                btn.style.borderColor = '#10b981';
-                setTimeout(() => { 
-                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
-                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
-                    btn.style.borderColor = '#3b82f6';
+                btn.innerHTML = '✅ Publicado — todos lo verán';
+                btn.style.background = 'rgba(16, 185, 129, 0.95)';
+                setTimeout(() => {
+                    btn.innerHTML = __label;
+                    btn.style.background = __bg;
                     btn.disabled = false;
                     const c = document.getElementById('layout-activo-container');
                     if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
-                }, 1500);
+                }, 1800);
             } else {
-                btn.innerHTML = '❌';
-                btn.style.background = 'rgba(239, 68, 68, 0.2)';
-                btn.style.borderColor = '#ef4444';
-                setTimeout(() => { 
-                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
-                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
-                    btn.style.borderColor = '#3b82f6';
-                    btn.disabled = false; 
+                btn.innerHTML = '❌ Error al publicar';
+                btn.style.background = 'rgba(239, 68, 68, 0.9)';
+                setTimeout(() => {
+                    btn.innerHTML = __label;
+                    btn.style.background = __bg;
+                    btn.disabled = false;
                 }, 3000);
             }
+        }).catch(() => {
+            btn.innerHTML = '❌ Sin conexión';
+            btn.style.background = 'rgba(239, 68, 68, 0.9)';
+            setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false; }, 3000);
         });
     };
 
@@ -14099,8 +14101,10 @@ window.showCellModal = function(htmlContent) {
     };
 
     window.subirLayoutReservaGlobal = (btn) => {
-        if (!window.compartirLayoutReservaPayload) return;
-        btn.innerHTML = '⏳';
+        if (!window.compartirLayoutReservaPayload) { alert('⚠️ Primero carga los archivos para poder procesar y publicar el layout de reserva.'); return; }
+        const __label = '⚡ PROCESAR Y PUBLICAR';
+        const __bg = 'linear-gradient(135deg,#3b82f6,#6366f1)';
+        btn.innerHTML = '⏳ Publicando...';
         btn.disabled = true;
         const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
         fetch(`${base}/api/logistics/layout_reserva`, {
@@ -14109,28 +14113,28 @@ window.showCellModal = function(htmlContent) {
             body: JSON.stringify(window.compartirLayoutReservaPayload)
         }).then(r => {
             if(r.ok) {
-                btn.innerHTML = '✔️';
-                btn.style.background = 'rgba(16, 185, 129, 0.2)';
-                btn.style.borderColor = '#10b981';
-                setTimeout(() => { 
-                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
-                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
-                    btn.style.borderColor = '#3b82f6';
+                btn.innerHTML = '✅ Publicado — todos lo verán';
+                btn.style.background = 'rgba(16, 185, 129, 0.95)';
+                setTimeout(() => {
+                    btn.innerHTML = __label;
+                    btn.style.background = __bg;
                     btn.disabled = false;
                     const c = document.getElementById('layout-activo-container');
                     if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
-                }, 1500);
+                }, 1800);
             } else {
-                btn.innerHTML = '❌';
-                btn.style.background = 'rgba(239, 68, 68, 0.2)';
-                btn.style.borderColor = '#ef4444';
-                setTimeout(() => { 
-                    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>`; 
-                    btn.style.background = 'rgba(59, 130, 246, 0.2)';
-                    btn.style.borderColor = '#3b82f6';
-                    btn.disabled = false; 
+                btn.innerHTML = '❌ Error al publicar';
+                btn.style.background = 'rgba(239, 68, 68, 0.9)';
+                setTimeout(() => {
+                    btn.innerHTML = __label;
+                    btn.style.background = __bg;
+                    btn.disabled = false;
                 }, 3000);
             }
+        }).catch(() => {
+            btn.innerHTML = '❌ Sin conexión';
+            btn.style.background = 'rgba(239, 68, 68, 0.9)';
+            setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false; }, 3000);
         });
     };
 
