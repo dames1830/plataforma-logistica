@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.517
+ * v26.5.518
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.517';
+} from '../services_v245/csvHub_v6.js?v=26.5.518';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.517';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.517';
+import * as adminService from '../services_v245/adminService.js?v=26.5.518';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.518';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -149,6 +149,14 @@ async function init() {
     console.warn('[Reportes] initPersistentData falló, continuando...', e);
   }
 
+  // Sincronizar con el servidor para obtener tareas activas e historial
+  try {
+    await adminService.initializeAdminData();
+    await adminService.loadAlmacenajeTasksHistory(true);
+  } catch(e) {
+    console.warn('[Reportes] Sincronización parcial con servidor:', e);
+  }
+
   // 2. Cargar configuración dinámica desde Backend / LocalStorage
   const configList = adminService.getPublicReportsConfig() || [];
   groupInfo = configList.find(g => g.token === token);
@@ -232,7 +240,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.517</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.518</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -440,11 +448,26 @@ async function renderAlmacenajeModule() {
 
 function getAlmacenajeTasks() {
   const fromStore = adminService.adminStore.almacenaje_tasks;
-  if (Array.isArray(fromStore) && fromStore.length > 0) return fromStore;
-  try {
-    const raw = localStorage.getItem('logistics_sync_v24_almacenaje_tasks');
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
+  const historyStore = adminService.adminStore.almacenaje_tasks_history || [];
+
+  let active = [];
+  if (Array.isArray(fromStore) && fromStore.length > 0) {
+    active = fromStore;
+  } else {
+    try {
+      const raw = localStorage.getItem('logistics_sync_v24_almacenaje_tasks');
+      active = raw ? JSON.parse(raw) : [];
+    } catch(e) { active = []; }
+  }
+
+  if (historyStore.length === 0) return active;
+  const seen = new Set();
+  return [...active, ...historyStore].filter(t => {
+    const key = t.id || JSON.stringify(t);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 const getTaskTotalAvance = (t) => {
