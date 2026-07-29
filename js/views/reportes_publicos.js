@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.520
+ * v26.5.521
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.520';
+} from '../services_v245/csvHub_v6.js?v=26.5.521';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.520';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.520';
+import * as adminService from '../services_v245/adminService.js?v=26.5.521';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.521';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -240,7 +240,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.520</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.521</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -661,7 +661,147 @@ function renderMarcasReport() {
                             </tbody>
                         </table>
                     </div>
-                </div></div>`;
+                </div>
+
+                <!-- REPORTE ALMACENAJE - GENDER RIMS (DERECHA) -->
+                <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                            <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                                REPORTE ALMACENAJE - GENDER RIMS
+                            </h3>
+                            <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                                SYNC_ID: ${(() => {
+                                    const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+                                    const startStr = window.__kpiStartDate.split('-').reverse().join('/');
+                                    const endStr = window.__kpiEndDate.split('-').reverse().join('/');
+                                    const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
+                                    return `${syncDateStr} ${syncTimeStr}`;
+                                })()}
+                            </div>
+                        </div>
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                            🔄
+                        </button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+                            <thead>
+                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                                    <th style="padding:6px 8px; text-align:left; width:120px;">AREA</th>
+                                    <th style="padding:6px 8px; text-align:left;">GENDER RIMS</th>
+                                    <th style="padding:6px 8px; text-align:center; width:90px;">BUFFER</th>
+                                    <th style="padding:6px 8px; text-align:center; width:90px;">AVANCE</th>
+                                    <th style="padding:6px 8px; text-align:center; width:90px;">%</th>
+                                    <th style="padding:6px 8px; text-align:center; width:100px;">PENDIENTE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                                    const liveGenderRimsMap = new Map();
+                                    const activeMaestro = dataStore.articulos || [];
+                                    if (activeMaestro.length === 0) {
+                                        fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/articulos')
+                                            .then(r => r.json())
+                                            .then(rd => {
+                                                if (rd && rd.data) {
+                                                    dataStore.articulos = rd.data;
+                                                    if (window.__refreshMarcasReport) window.__refreshMarcasReport();
+                                                }
+                                            }).catch(() => {});
+                                    }
+                                    if (activeMaestro.length > 0) {
+                                        const isArray = Array.isArray(activeMaestro[0]);
+                                        if (isArray) {
+                                            const headers = activeMaestro[0].map(h => String(h || '').trim().toUpperCase());
+                                            let skuIdx = headers.indexOf('CODARTICULO'); if (skuIdx === -1) skuIdx = headers.indexOf('SKU'); if (skuIdx === -1) skuIdx = 1;
+                                            let grIdx = headers.findIndex(h => h.includes('GENDER') && h.includes('RIMS')); if (grIdx === -1) grIdx = 3;
+                                            for (let i = 1; i < activeMaestro.length; i++) {
+                                                const row = activeMaestro[i]; if (!row) continue;
+                                                const sku7 = String(row[skuIdx] || '').trim().substring(0, 7);
+                                                if (sku7 && !liveGenderRimsMap.has(sku7)) liveGenderRimsMap.set(sku7, String(row[grIdx] || '').trim().toUpperCase());
+                                            }
+                                        } else {
+                                            activeMaestro.forEach(row => {
+                                                if (!row) return;
+                                                const keys = Object.keys(row);
+                                                const skuKey = keys.find(k => ['CODARTICULO','SKU','ARTICULO'].includes(k.trim().toUpperCase())) || keys[1] || 'CodArticulo';
+                                                const grKey = keys.find(k => k.toUpperCase().includes('GENDER') && k.toUpperCase().includes('RIMS')) || 'Gender RIMS';
+                                                const sku7 = String(row[skuKey] || '').trim().substring(0, 7);
+                                                if (sku7 && !liveGenderRimsMap.has(sku7)) liveGenderRimsMap.set(sku7, String(row[grKey] || '').trim().toUpperCase());
+                                            });
+                                        }
+                                    }
+                                    const genderGroups = {};
+                                    const filteredTasksGR = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
+                                    filteredTasksGR.forEach(t => {
+                                        (t.items || []).forEach(art => {
+                                            const sku7 = String(art.sku7 || '').trim().substring(0, 7);
+                                            const genderRims = String(liveGenderRimsMap.get(sku7) || art.genderRims || art.gender || 'S/GR').trim();
+                                            (art.items || []).forEach(i => {
+                                                const ubi = String(i.ubi || '').toUpperCase().trim();
+                                                if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
+                                                    let area = 'CDBUFFER-A';
+                                                    if (ubi.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
+                                                    else if (ubi.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
+                                                    else { const parts = ubi.split('-'); area = parts.length > 1 ? `${parts[0]}-${parts[1]}` : parts[0]; }
+                                                    const qty = parseFloat(i.qty) || 0;
+                                                    if (!genderGroups[area]) genderGroups[area] = {};
+                                                    if (!genderGroups[area][genderRims]) genderGroups[area][genderRims] = { buffer: 0, avance: 0 };
+                                                    genderGroups[area][genderRims].buffer += qty;
+                                                    if (t.status === 'Finalizado') {
+                                                        const avanceVal = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
+                                                        genderGroups[area][genderRims].avance += avanceVal;
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    });
+                                    const areas = Object.keys(genderGroups).sort((a, b) => b.localeCompare(a));
+                                    if (areas.length === 0) return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0,229,255,0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
+                                    let genderTableRows = '';
+                                    let grandBuffer = 0, grandAvance = 0;
+                                    areas.forEach(area => {
+                                        const genders = Object.keys(genderGroups[area]).sort((a, b) => a.localeCompare(b));
+                                        let areaBufferSum = 0, areaAvanceSum = 0;
+                                        genders.forEach(gender => {
+                                            const data = genderGroups[area][gender];
+                                            const pendiente = data.buffer - data.avance;
+                                            areaBufferSum += data.buffer; areaAvanceSum += data.avance;
+                                            grandBuffer += data.buffer; grandAvance += data.avance;
+                                            genderTableRows += `<tr style="border-bottom:1px solid rgba(0,229,255,0.08); background:#000000;">
+                                                <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
+                                                <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit',sans-serif;">${gender}</b></td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">${getPctHtml(data.avance, data.buffer)}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
+                                            </tr>`;
+                                        });
+                                        const areaPendiente = areaBufferSum - areaAvanceSum;
+                                        genderTableRows += `<tr style="background:linear-gradient(90deg,rgba(0,229,255,0.12) 0%,rgba(15,23,42,0.5) 100%); border-top:1.5px solid rgba(0,229,255,0.6); border-bottom:1.5px solid rgba(0,229,255,0.6); font-weight:900;">
+                                            <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit',sans-serif; border-left:4px solid #00E5FF;">Total ${area}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBufferSum.toLocaleString()}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaAvanceSum.toLocaleString()}</td>
+                                            <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800;">${getPctHtml(areaAvanceSum, areaBufferSum)}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
+                                        </tr>`;
+                                    });
+                                    const grandPendiente = grandBuffer - grandAvance;
+                                    genderTableRows += `<tr style="background:linear-gradient(90deg,rgba(0,229,255,0.25) 0%,rgba(15,23,42,0.8) 100%); border-top:2px solid #00E5FF; border-bottom:2px solid #00E5FF; font-weight:900;">
+                                        <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit',sans-serif; font-weight:900; border-left:6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandAvance.toLocaleString()}</td>
+                                        <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900;">${getPctHtml(grandAvance, grandBuffer)}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow:0 0 10px rgba(0,229,255,0.5);">${grandPendiente.toLocaleString()}</td>
+                                    </tr>`;
+                                    return genderTableRows;
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
 }
 
 function renderRendimientoOperarios() {
