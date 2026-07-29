@@ -3,17 +3,18 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.501
+ * v26.5.502
  */
 
 import {
   getAreaData, fetchBufferHistory, loadBufferReport,
   dataStore, initPersistentData, fetchKPIDates,
-  loadKPIResultsRange, fetchReservaHistory
-} from '../services_v245/csvHub_v6.js?v=26.5.501';
+  loadKPIResultsRange, fetchReservaHistory,
+  getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
+} from '../services_v245/csvHub_v6.js?v=26.5.502';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.501';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.501';
+import * as adminService from '../services_v245/adminService.js?v=26.5.502';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.502';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -58,6 +59,78 @@ let groupInfo     = null;
 let modulos       = [];
 let filterStart   = '';
 let filterEnd     = '';
+
+// ============================================================
+// FUNCIONES AUXILIARES (no disponibles en contexto público)
+// ============================================================
+
+/**
+ * showPremiumAlert — versión local para el portal público.
+ * En el dashboard principal se define en app.js, que no se carga aquí.
+ */
+function showPremiumAlert(title, message, type = 'info') {
+  const colors = {
+    success: { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', icon: '✅' },
+    error:   { bg: 'rgba(239,68,68,0.15)', border: '#ef4444', icon: '❌' },
+    info:    { bg: 'rgba(0,229,255,0.15)', border: '#00E5FF', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.15)', border: '#f59e0b', icon: '⚠️' }
+  };
+  const c = colors[type] || colors.info;
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; z-index:99999; animation:fadeInOverlay 0.15s ease;`;
+  overlay.innerHTML = `
+    <style>
+      @keyframes fadeInOverlay { from{opacity:0} to{opacity:1} }
+      @keyframes slideUpModal { from{opacity:0;transform:translateY(20px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    </style>
+    <div style="
+      background:linear-gradient(135deg,#1e293b,#0f172a);
+      border:1px solid ${c.border}44;
+      border-radius:16px;
+      padding:2rem 2.2rem;
+      max-width:380px; width:90%;
+      box-shadow:0 25px 60px rgba(0,0,0,0.6);
+      text-align:center;
+      animation:slideUpModal 0.2s cubic-bezier(0.4,0,0.2,1);
+    ">
+      <div style="font-size:2.5rem; margin-bottom:0.8rem;">${c.icon}</div>
+      <h3 style="margin:0 0 0.5rem; color:#fff; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">${title}</h3>
+      <p style="margin:0 0 1.4rem; color:#94a3b8; font-size:0.82rem; line-height:1.55;">${message}</p>
+      <button style="
+        padding:0.6rem 2rem; border-radius:9px;
+        background:${c.bg}; border:1px solid ${c.border}55;
+        color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;
+      ">Cerrar</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('button').onclick = () => overlay.remove();
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+
+/**
+ * window.setChartDateRange — controla los inputs de fecha del gráfico de rendimiento.
+ * En el dashboard se define dentro de renderAlmacenajeTareas.
+ */
+window.setChartDateRange = (start, end) => {
+  if (start !== null) window.__chartStartDate = start;
+  if (end !== null) window.__chartEndDate = end;
+  // Re-renderizar el gráfico
+  const area = document.getElementById('contentArea');
+  if (area && currentSubTab === 'grafico_rendimiento') {
+    renderGraficoRendimiento();
+  }
+};
+
+/**
+ * window.downloadExcelDetail — placeholder para exportación de buffer.
+ * La implementación completa depende del estado de lastBufferResult del dashboard.
+ */
+window.downloadExcelDetail = () => {
+  showPremiumAlert('Exportación', 'La exportación detallada de Excel no está disponible en el portal público. Utilice el dashboard principal para esta función.', 'info');
+};
 
 // ============================================================
 // INIT
@@ -159,7 +232,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.501</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.502</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -408,12 +481,14 @@ function getPctHtml(avance, buffer) {
     <span>${ic}</span><span>${p}%</span></span>`;
 }
 
+window.__refreshMarcasReport = () => renderMarcasReport();
+
 function renderMarcasReport() {
   const area = document.getElementById('contentArea');
   const tasks = getFilteredTasks();
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
-  area.innerHTML = `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; align-items:start;"><div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+  area.innerHTML = `<div style="display:grid; grid-template-columns:1fr; gap:1.5rem; align-items:start;"><div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                             <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
@@ -429,7 +504,7 @@ function renderMarcasReport() {
                                 })()}
                             </div>
                         </div>
-                        <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
                             🔄
                         </button>
                     </div>
@@ -2096,11 +2171,12 @@ async function renderAnalisisBuffer() {
     lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
     const ts = data.timestamp || new Date().toLocaleString();
     const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
-    const widthLeft = '580px';
-    const widthRight = '1200px';
+    const widthLeft = 'minmax(400px, 1fr)';
+    const widthRight = 'minmax(600px, 2fr)';
 
     container.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthLeft};">
+      <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:0.6rem; flex:1; min-width:380px;">
             <!-- COLUMNA IZQUIERDA: ZONAS + SKU -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
                 <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER ZONAS ${tsHtml}</h3></div>
@@ -2148,10 +2224,11 @@ async function renderAnalisisBuffer() {
             </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:0.6rem; width:${widthRight};">
+        <div style="display:flex; flex-direction:column; gap:0.6rem; flex:2; min-width:500px;">
             ${createMatrixHTML(data.resumenMatrix, 'DISCREPANCIA BUFFER | ZONAS 3, 4, 5, 6', ts)}
             ${createMatrixHTML(data.resumenMatrixSinStock, 'ANÁLISIS BUFFER | SIN STOCK (ZONA 7)', ts)}
         </div>
+      </div>
     `;
 
     const exportArea = document.getElementById('export_actions');
