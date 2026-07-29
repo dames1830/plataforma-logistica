@@ -483,7 +483,7 @@ export const renderLayoutActivo = async (container) => {
           const generalPerc = calcPerc(statsGeneral);
 
           const now = new Date();
-          const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+          const timestampStr = window.__layoutHeaderTs || `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
           
           const statsActualPadresSize = Array.isArray(stats['ACTUAL'].padres) ? stats['ACTUAL'].padres.length : (stats['ACTUAL'].padres ? stats['ACTUAL'].padres.size : 0);
           const statsAnteriorPadresSize = Array.isArray(stats['ANTERIOR'].padres) ? stats['ANTERIOR'].padres.length : (stats['ANTERIOR'].padres ? stats['ANTERIOR'].padres.size : 0);
@@ -867,6 +867,15 @@ window.showCellModal = function(htmlContent) {
 
       let payloadToRender = localPayload || globalPayload;
       let isGlobal = !localPayload && globalPayload;
+
+      // Fecha del encabezado = momento real de publicación del mapa que se muestra
+      if (globalPayload && globalPayload.publishedAt) {
+          window.__layoutHeaderTs = 'Publicado: ' + new Date(globalPayload.publishedAt).toLocaleString('es-PE');
+      } else if (globalPayload && window.__layoutDisplayedUpdatedAt) {
+          window.__layoutHeaderTs = 'Publicado: ' + window.__layoutDisplayedUpdatedAt;
+      } else {
+          window.__layoutHeaderTs = null;
+      }
       
       if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
           activoWrap.innerHTML = `

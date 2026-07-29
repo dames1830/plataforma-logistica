@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.516';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.517';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.516';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.516';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.516';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.516';
+import * as adminService from '../services_v245/adminService.js?v=26.5.517';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.517';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.517';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.517';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.516';
+const VERSION = '26.5.517';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.516');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.517');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.516 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.517 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13639,7 +13639,7 @@ const renderRFSection = (container) => {
           const generalPerc = calcPerc(statsGeneral);
 
           const now = new Date();
-          const timestampStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+          const timestampStr = window.__layoutHeaderTs || `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
           
           const statsActualPadresSize = Array.isArray(stats['ACTUAL'].padres) ? stats['ACTUAL'].padres.length : (stats['ACTUAL'].padres ? stats['ACTUAL'].padres.size : 0);
           const statsAnteriorPadresSize = Array.isArray(stats['ANTERIOR'].padres) ? stats['ANTERIOR'].padres.length : (stats['ANTERIOR'].padres ? stats['ANTERIOR'].padres.size : 0);
@@ -13691,9 +13691,7 @@ const renderRFSection = (container) => {
                                   🕒 ${timestampStr}
                               </div>
                               ${btnPublicarTodas}
-                              ${btnCompartir}
                               ${btnVerVersion}
-                              ${btnSincronizar}
                           </div>
                       </div>
                       
@@ -14012,6 +14010,17 @@ window.showCellModal = function(htmlContent) {
       // Si el visor está en "Anterior", forzamos mostrar el mapa global _ANT (ignoramos el local).
       let payloadToRender = window.__verLayoutAnterior ? globalPayload : (localPayload || globalPayload);
       let isGlobal = window.__verLayoutAnterior ? true : (!localPayload && globalPayload);
+
+      // Fecha del encabezado = momento real de publicación del mapa que se muestra
+      if (localPayload && !window.__verLayoutAnterior) {
+          window.__layoutHeaderTs = 'Sin publicar · procesado ahora';
+      } else if (globalPayload && globalPayload.publishedAt) {
+          window.__layoutHeaderTs = 'Publicado: ' + new Date(globalPayload.publishedAt).toLocaleString('es-PE');
+      } else if (globalPayload && window.__layoutDisplayedUpdatedAt) {
+          window.__layoutHeaderTs = 'Publicado: ' + window.__layoutDisplayedUpdatedAt;
+      } else {
+          window.__layoutHeaderTs = null;
+      }
 
       if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
           activoWrap.innerHTML = `
