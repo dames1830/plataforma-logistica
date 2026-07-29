@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.515';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.516';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.515';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.515';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.515';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.515';
+import * as adminService from '../services_v245/adminService.js?v=26.5.516';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.516';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.516';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.516';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.515';
+const VERSION = '26.5.516';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.515');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.516');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.515 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.516 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13162,6 +13162,7 @@ const renderRFSection = (container) => {
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
     const renderLayoutActivo = async (container) => {
+      window.__layoutContainer = container; // referencia real del contenedor (antes se buscaba un id inexistente)
       // Indicador de carga mientras se consulta el servidor (el backend puede tardar si estaba dormido)
       if (container) container.innerHTML = `<div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1.2rem;">
           <div style="width:48px; height:48px; border:4px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
@@ -14054,7 +14055,7 @@ window.showCellModal = function(htmlContent) {
     // Alternar entre el mapa ACTUAL y el ANTERIOR
     window.__toggleVerLayout = () => {
         window.__verLayoutAnterior = !window.__verLayoutAnterior;
-        const c = document.getElementById('layout-activo-container');
+        const c = window.__layoutContainer;
         if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
     };
 
@@ -14095,7 +14096,7 @@ window.showCellModal = function(htmlContent) {
         if (r.ok) {
             btn.innerHTML = '✅ Publicado'; btn.style.background = 'rgba(16,185,129,0.9)';
             setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false;
-                const c = document.getElementById('layout-activo-container'); if (c) renderLayoutActivo(c); }, 1600);
+                const c = window.__layoutContainer; if (c) renderLayoutActivo(c); }, 1600);
         } else {
             btn.innerHTML = '❌ Error'; btn.style.background = 'rgba(239,68,68,0.9)';
             setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false; }, 3000);
@@ -14104,7 +14105,7 @@ window.showCellModal = function(htmlContent) {
 
     // Publicar TODAS las zonas activas de una sola vez (usa una capa/overlay porque el botón se redibuja)
     window.publicarTodasLasZonas = async () => {
-        const container = document.getElementById('layout-activo-container');
+        const container = window.__layoutContainer;
         const original = currentLayoutZona;
         const verAntPrev = window.__verLayoutAnterior;
         window.__verLayoutAnterior = false; // procesamos sobre el mapa actual, no la vista "anterior"
@@ -14204,7 +14205,7 @@ window.showCellModal = function(htmlContent) {
                     btn.innerHTML = __label;
                     btn.style.background = __bg;
                     btn.disabled = false;
-                    const c = document.getElementById('layout-activo-container');
+                    const c = window.__layoutContainer;
                     if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
                 }, 1800);
             } else {
