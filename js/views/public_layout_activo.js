@@ -7,7 +7,7 @@ export const renderLayoutActivo = async (container) => {
       let globalPayload = null;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-          const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
+          const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}?date=MASTER&t=${Date.now()}`);
           if (res.ok) {
               const payload = await res.json();
               if (payload && payload.data && payload.data.type === 'processed') {

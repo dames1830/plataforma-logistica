@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.510';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.511';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.510';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.510';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.510';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.510';
+import * as adminService from '../services_v245/adminService.js?v=26.5.511';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.511';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.511';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.511';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.510';
+const VERSION = '26.5.511';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.510');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.511');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.510 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.511 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13168,7 +13168,7 @@ const renderRFSection = (container) => {
       let globalPayload = null;
       try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-          const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
+          const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}?date=MASTER&t=${Date.now()}`);
           if (res.ok) {
               const payload = await res.json();
               if (payload && payload.data && payload.data.type === 'processed') {
@@ -14020,7 +14020,9 @@ window.showCellModal = function(htmlContent) {
         btn.innerHTML = '⏳ Publicando...';
         btn.disabled = true;
         const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-        fetch(`${base}/api/logistics/layout_activo`, {
+        const __zona = currentLayoutZona || 'SEL';
+        if (window.compartirLayoutPayload) window.compartirLayoutPayload.zona = __zona;
+        fetch(`${base}/api/logistics/layout_activo_${__zona}?date=MASTER`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(window.compartirLayoutPayload)
@@ -14058,7 +14060,7 @@ window.showCellModal = function(htmlContent) {
         btn.style.opacity = '0.7';
         try {
             const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-            const res = await fetch(`${base}/api/logistics/layout_activo?t=${Date.now()}`);
+            const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}?date=MASTER&t=${Date.now()}`);
             if (res.ok) {
                 const payload = await res.json();
                 if (payload && payload.data && payload.data.type === 'processed' && payload.data.totalUnits > 0) {
