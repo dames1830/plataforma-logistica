@@ -21,8 +21,8 @@ export const renderLayoutActivo = async (container) => {
               container.innerHTML = `
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
                       <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🗺️</div>
-                      <h4>Faltan Datos Base</h4>
-                      <p>Para ver el Layout, por favor carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> (para las temporadas).</p>
+                      <h4>Aún no hay un mapa publicado para esta zona</h4>
+                      <p>Un administrador debe procesarlo y publicarlo desde la web principal (botón <b>⚡ PROCESAR Y PUBLICAR</b>). En cuanto se publique, aparecerá aquí automáticamente.</p>
                   </div>`;
               return;
           }
@@ -482,8 +482,8 @@ export const renderLayoutActivo = async (container) => {
           const isMZN = currentLayoutZona.startsWith('MZN');
           
           targetContainer.innerHTML = `
-                <div style="display:flex; width:100%; gap:20px; flex-direction:column; align-items:center;">
-                    <div class="glass-panel" style="padding:20px; position:relative; width: 100%; max-width: 1450px; background:rgba(0,0,0,0.4); border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1); min-height:500px;">
+                <div style="display:flex; width:100%; gap:20px; flex-direction:row; align-items:flex-start;">
+                    <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; min-width:0; overflow-x:auto; background:rgba(0,0,0,0.4); border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1); min-height:500px;">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                           <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span> 
