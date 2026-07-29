@@ -1,6 +1,11 @@
 let currentLayoutZona = 'SEL';
 
 export const renderLayoutActivo = async (container) => {
+      // Indicador de carga mientras se consulta el servidor (el backend puede tardar si estaba dormido)
+      if (container) container.innerHTML = `<div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1.2rem;">
+          <div style="width:48px; height:48px; border:4px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <div><h4 style="color:#fff; margin:0;">Cargando mapa de calor...</h4><p style="margin:6px 0 0; font-size:0.85rem;">Obteniendo la última versión del servidor.</p></div>
+      </div>`;
       let activoRaw = []; let articulosRaw = [];
       let padreStock = {};
 
@@ -827,6 +832,7 @@ window.showCellModal = function(htmlContent) {
           if (select) {
               select.addEventListener('change', (e) => {
                   currentLayoutZona = e.target.value;
+                  window.__verLayoutAnterior = false;
                   renderLayoutActivo(container);
               });
           }

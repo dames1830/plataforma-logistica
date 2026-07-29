@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.513';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.514';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.513';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.513';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.513';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.513';
+import * as adminService from '../services_v245/adminService.js?v=26.5.514';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.514';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.514';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.514';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.513';
+const VERSION = '26.5.514';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1783,7 +1783,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.513');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.514');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11181,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.513 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.514 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13162,6 +13162,11 @@ const renderRFSection = (container) => {
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
     const renderLayoutActivo = async (container) => {
+      // Indicador de carga mientras se consulta el servidor (el backend puede tardar si estaba dormido)
+      if (container) container.innerHTML = `<div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1.2rem;">
+          <div style="width:48px; height:48px; border:4px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <div><h4 style="color:#fff; margin:0;">Cargando mapa de calor...</h4><p style="margin:6px 0 0; font-size:0.85rem;">Obteniendo la última versión del servidor.</p></div>
+      </div>`;
       let activoRaw = [];
       if (typeof activeAnalisisSub !== 'undefined' && (activeAnalisisSub === 'archivo_analisis' || activeAnalisisSub === 'layout_activo')) {
           activoRaw = dataStore.analisis_sku_activo || dataStore.buffer_activo || [];
@@ -13169,6 +13174,10 @@ const renderRFSection = (container) => {
           activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
       }
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
+
+      // Si el admin cargó archivos locales, mostramos SIEMPRE su mapa recién procesado (no la vista "anterior").
+      const hayLocalLayout = activoRaw.length && articulosRaw.length;
+      if (hayLocalLayout) window.__verLayoutAnterior = false;
 
       let globalPayload = null;
       try {
@@ -13655,7 +13664,7 @@ const renderRFSection = (container) => {
               </button>
           ` : '';
 
-          const btnVerVersion = (!isReserva) ? `
+          const btnVerVersion = (!isReserva && !hasLocalPayload) ? `
               <button title="Alterna entre el mapa ACTUAL y el ANTERIOR (penúltimo publicado)" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${window.__verLayoutAnterior ? '#fbbf24' : 'rgba(255,255,255,0.18)'}; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; white-space:nowrap; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
                   ${window.__verLayoutAnterior ? '🔵 Ver Actual' : '🕘 Ver Anterior'}
               </button>
@@ -13997,6 +14006,7 @@ window.showCellModal = function(htmlContent) {
           if (select) {
               select.addEventListener('change', (e) => {
                   currentLayoutZona = e.target.value;
+                  window.__verLayoutAnterior = false;
                   renderLayoutActivo(container);
               });
           }
