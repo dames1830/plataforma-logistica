@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.526
+ * v26.5.527
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.526';
+} from '../services_v245/csvHub_v6.js?v=26.5.527';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.526';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.526';
+import * as adminService from '../services_v245/adminService.js?v=26.5.527';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.527';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -200,10 +200,9 @@ async function init() {
     return;
   }
 
-  // 4. Establecer fechas de filtro por defecto (semana actual)
+  // 4. Establecer fechas de filtro por defecto (día actual)
   const today = new Date().toISOString().split('T')[0];
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-  filterStart = weekAgo;
+  filterStart = today;
   filterEnd   = today;
 
   // 5. Tab inicial
@@ -240,9 +239,8 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:var(--accent)">DEAM1830</span>
-          <span style="font-size:11px; color:var(--text-muted); font-weight:700; margin-left:4px">v26.5.526</span>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:700; margin-left:4px">v26.5.527</span>
         </h2>
-        <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
       <div class="topbar-right">
         <span class="group-badge">${groupInfo.nombre}</span>
@@ -771,7 +769,7 @@ function renderMarcasReport() {
                                             grandBuffer += data.buffer; grandAvance += data.avance;
                                             genderTableRows += `<tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
                                                 <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit',sans-serif;">${gender}</b></td>
+                                                <td style="padding:5px 6px;"><b style="color:#1C2B3A; font-weight:800; font-size:0.8rem; font-family:'Outfit',sans-serif;">${gender}</b></td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">${getPctHtml(data.avance, data.buffer)}</td>
