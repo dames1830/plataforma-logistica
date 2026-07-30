@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.529
+ * v26.5.530
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.529';
+} from '../services_v245/csvHub_v6.js?v=26.5.530';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.529';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.529';
+import * as adminService from '../services_v245/adminService.js?v=26.5.530';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.530';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -238,9 +238,7 @@ function renderShell(app) {
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-brand">
-        <h2>LOGÍSTICA <span style="color:var(--accent)">DEAM1830</span>
-          <span style="font-size:11px; color:rgba(255,255,255,0.35); font-weight:600; margin-left:4px">v26.5.529</span>
-        </h2>
+        <h2>LOGÍSTICA <span style="color:var(--accent)">DEAM1830</span></h2>
       </div>
       <div class="topbar-right">
         <span class="group-badge">${groupInfo.nombre}</span>
@@ -262,7 +260,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v26.5.529</span>
+      <span style="color:var(--text-muted); font-weight:500;">v26.5.530</span>
     </div>`;
 
   buildTabNav();
