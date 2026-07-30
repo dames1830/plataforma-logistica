@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.521
+ * v26.5.522
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.521';
+} from '../services_v245/csvHub_v6.js?v=26.5.522';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.521';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.521';
+import * as adminService from '../services_v245/adminService.js?v=26.5.522';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.522';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -240,7 +240,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.521</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.522</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -255,23 +255,12 @@ function renderShell(app) {
     <!-- SUBTAB NAV -->
     <div class="subtab-nav" id="subTabNav" style="display:none;"></div>
 
-    <!-- FILTER BAR -->
-    <div class="filter-bar" id="filterBar">
-      <label>DESDE</label>
-      <input type="date" id="f_start" value="${filterStart}" />
-      <label>HASTA</label>
-      <input type="date" id="f_end" value="${filterEnd}" />
-      <button class="btn-filter" id="btnApply">🔍 APLICAR</button>
-      <button class="btn-filter" id="btnToday" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4);color:#fbbf24;">📅 HOY</button>
-    </div>
-
     <!-- CONTENT -->
     <div class="content-area" id="contentArea">
       <div style="color:var(--text-muted); text-align:center; padding:4rem;">Cargando...</div>
     </div>`;
 
   buildTabNav();
-  attachFilterEvents();
 }
 
 function buildTabNav() {
@@ -319,22 +308,6 @@ function buildSubTabNav() {
       renderContent();
     };
   });
-}
-
-function attachFilterEvents() {
-  document.getElementById('btnApply').onclick = () => {
-    filterStart = document.getElementById('f_start').value;
-    filterEnd   = document.getElementById('f_end').value;
-    renderContent();
-  };
-  document.getElementById('btnToday').onclick = () => {
-    const today = new Date().toISOString().split('T')[0];
-    filterStart = today;
-    filterEnd   = today;
-    document.getElementById('f_start').value = today;
-    document.getElementById('f_end').value   = today;
-    renderContent();
-  };
 }
 
 // ============================================================
@@ -435,7 +408,29 @@ async function renderAreaModule(areaKey, title) {
 // ============================================================
 // MÓDULO ALMACENAJE
 // ============================================================
+window.__almacenajeDateChange = function(field, value) {
+  if (field === 'start') filterStart = value;
+  if (field === 'end')   filterEnd   = value;
+  renderContent();
+};
+
 async function renderAlmacenajeModule() {
+  const area = document.getElementById('contentArea');
+
+  // Inyectar filtro de fecha al tope del content-area (igual que la web original)
+  const filterHtml = `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+    <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">DE</label>
+    <input type="date" value="${filterStart}"
+      onchange="window.__almacenajeDateChange('start', this.value)"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 10px;font-size:0.75rem;font-weight:600;outline:none;" />
+    <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">HASTA</label>
+    <input type="date" value="${filterEnd}"
+      onchange="window.__almacenajeDateChange('end', this.value)"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 10px;font-size:0.75rem;font-weight:600;outline:none;" />
+  </div>`;
+
+  area.innerHTML = filterHtml + `<div id="almacenajeContent"></div>`;
+
   switch(currentSubTab) {
     case 'reporte_marcas':     renderMarcasReport();    break;
     case 'rendimiento_ops':    renderRendimientoOperarios();  break;
@@ -507,7 +502,7 @@ function getPctHtml(avance, buffer) {
 window.__refreshMarcasReport = () => renderMarcasReport();
 
 function renderMarcasReport() {
-  const area = document.getElementById('contentArea');
+  const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasks = getFilteredTasks();
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
@@ -805,7 +800,7 @@ function renderMarcasReport() {
 }
 
 function renderRendimientoOperarios() {
-  const area = document.getElementById('contentArea');
+  const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasks = getFilteredTasks();
   const filteredTasks = tasks.filter(t => t.fecha >= filterStart && t.fecha <= filterEnd);
   const weeklyDailyTasks = tasks;
@@ -1784,7 +1779,7 @@ const getWeekNumber = (d) => {
 
 
 function renderProduccionHora() {
-  const area = document.getElementById('contentArea');
+  const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasksList = getFilteredTasks();
   if (tasksList.length === 0) {
     area.innerHTML = `<div class="report-card"><div class="report-title">⏱️ PRODUCCIÓN POR HORA</div><div class="empty-msg">Sin datos.</div></div>`;
@@ -1794,7 +1789,7 @@ function renderProduccionHora() {
 }
 
 function renderAlmacenadoSemana() {
-  const area = document.getElementById('contentArea');
+  const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasksList = getFilteredTasks();
   if (tasksList.length === 0) {
     area.innerHTML = `<div class="report-card"><div class="report-title">📅 ALMACENADO POR SEMANA</div><div class="empty-msg">Sin datos.</div></div>`;
@@ -1804,7 +1799,7 @@ function renderAlmacenadoSemana() {
 }
 
 function renderGraficoRendimiento() {
-  const area = document.getElementById('contentArea');
+  const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasksList = getFilteredTasks();
   if (tasksList.length === 0) {
     area.innerHTML = `<div class="report-card"><div class="report-title">📈 GRÁFICO RENDIMIENTO</div><div class="empty-msg">Sin datos.</div></div>`;

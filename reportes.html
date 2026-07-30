@@ -238,42 +238,6 @@ window.addEventListener('unhandledrejection', function(event) {
     table.rpt tbody tr { border-bottom: 1px solid rgba(0,229,255,0.07); }
     table.rpt tbody tr:hover { background: rgba(0,229,255,0.03); }
     table.rpt tbody td { padding: 5px 8px; }
-    /* ── Date filter bar ── */
-    .filter-bar {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      padding: 0.75rem 1.5rem;
-      background: rgba(0,229,255,0.03);
-      border-bottom: 1px solid var(--border);
-    }
-    .filter-bar label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
-    .filter-bar input[type=date], .filter-bar select {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      padding: 5px 10px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      outline: none;
-    }
-    .filter-bar input[type=date]:focus, .filter-bar select:focus {
-      border-color: var(--accent);
-    }
-    .btn-filter {
-      background: rgba(0,229,255,0.12);
-      border: 1px solid rgba(0,229,255,0.4);
-      color: var(--accent);
-      padding: 6px 16px;
-      border-radius: 8px;
-      font-size: 0.72rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-filter:hover { background: rgba(0,229,255,0.22); }
     /* ── Grid helpers ── */
     .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.2rem; align-items: start; }
     .grid-1 { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
@@ -354,6 +318,6 @@ window.addEventListener('unhandledrejection', function(event) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script type="module" src="js/views/reportes_publicos.js?v=26.5.521"></script>
+  <script type="module" src="js/views/reportes_publicos.js?v=26.5.522"></script>
 </body>
 </html>
