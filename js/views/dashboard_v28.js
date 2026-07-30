@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.535';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.536';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.535';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.535';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.535';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.535';
+import * as adminService from '../services_v245/adminService.js?v=26.5.536';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.536';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.536';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.536';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -360,7 +360,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.535';
+const VERSION = '26.5.536';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1800,7 +1800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.535');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.536');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11297,7 +11297,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.535 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.536 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -13484,8 +13484,12 @@ const renderRFSection = (container) => {
                               if (col >= 3 && col <= 4) isValid = true;
                               else if (isSaldo && [1, 2].includes(col)) isValid = true;
                           }
-                        } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
-                            isValid = true;
+                        } else if (currentLayoutZona === 'MZN01') {
+                            if (temporadaClean === 'ANTERIOR') isValid = (col >= 1 && col <= 3) || (col >= 21 && col <= 23);
+                            else isValid = (col >= 4 && col <= 20) || col === 24;
+                        } else if (currentLayoutZona === 'MZN02') {
+                            if (temporadaClean === 'ANTERIOR') isValid = col >= 1 && col <= 5;
+                            else isValid = col >= 6 && col <= 24;
                         } else {
                           isValid = true;
                       }
