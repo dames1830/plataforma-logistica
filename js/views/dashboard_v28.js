@@ -1,9 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.536';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.537';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.536';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.536';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.536';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.536';
+import * as adminService from '../services_v245/adminService.js?v=26.5.537';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.537';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.537';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.537';
+import * as metasService from '../services_v245/metasService.js?v=26.5.537';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -360,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.536';
+const VERSION = '26.5.537';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -383,6 +384,125 @@ const getTaskTotalAvance = (t) => {
         });
     });
     return sum;
+};
+
+/**
+ * Categoría de una tarea, leída del Gender RIMS de sus artículos.
+ * El generador ya separa calzado de complementos, así que una tarea normalmente
+ * es homogénea; si llegara mezclada se marca para poder auditarla.
+ */
+const getTaskCategoria = (t) => {
+    const vacio = { categoria: '', grupo: 'FOOTWEAR', mixta: false, etiqueta: 'Footwear' };
+    if (!t || !Array.isArray(t.items) || t.items.length === 0) return vacio;
+
+    const categorias = new Set();
+    t.items.forEach(art => {
+        const gr = String(art.genderRims || art.gender || '').trim().toUpperCase();
+        if (gr && gr !== '-' && gr !== 'S/GR') categorias.add(gr);
+    });
+
+    if (categorias.size === 0) return vacio;
+
+    const lista = [...categorias];
+    const grupos = new Set(lista.map(c => metasService.grupoDe(c)));
+    const mixta = grupos.size > 1;
+    const principal = lista[0];
+    const grupo = metasService.grupoDe(principal);
+
+    // Para las de calzado el Gender RIMS es el género (01 MEN, 02 WOMEN…), que no
+    // aporta al KPI; lo que importa es que sea calzado. Los complementos sí van con su nombre.
+    const etiqueta = grupo === 'FOOTWEAR'
+        ? 'Footwear'
+        : principal.replace(/^\d+\s*/, '').toLowerCase().replace(/^./, c => c.toUpperCase());
+
+    return { categoria: principal, grupo, mixta, etiqueta };
+};
+
+/** Meta de u/h y tamaño de tarea vigentes para una tarea, según su categoría y su fecha. */
+const getTaskMeta = (t) => {
+    const { categoria } = getTaskCategoria(t);
+    return metasService.resolverMeta(categoria, t && t.fecha);
+};
+
+/** Minutos trabajados en una tarea, descontando el break de 23:00 a 23:50. */
+const getTaskMinutos = (t) => {
+    if (!t || !t.inicio || !t.termino) return 0;
+    const s = new Date(t.inicio);
+    let e = new Date(t.termino);
+    if (e < s) e = new Date(e.getTime() + 86400000);
+    const sd = s.getHours() < 12 ? new Date(s.getTime() - 43200000) : s;
+    const bS = new Date(sd.getFullYear(), sd.getMonth(), sd.getDate(), 23, 0, 0);
+    const bE = new Date(sd.getFullYear(), sd.getMonth(), sd.getDate(), 23, 50, 0);
+    const solape = Math.max(0, Math.min(e, bE) - Math.max(s, bS));
+    return Math.max(0, Math.floor(((e - s) - solape) / 60000));
+};
+
+/**
+ * Base común de los 3 reportes de KPI: una fila por tarea finalizada dentro del rango,
+ * ya con su meta resuelta, su rendimiento y su desviación en unidades.
+ */
+const buildKpiDataset = (tasks, desde, hasta) => {
+    const filas = [];
+    (tasks || []).forEach(t => {
+        if (!t || t.status !== 'Finalizado') return;
+        if (!(t.fecha >= desde && t.fecha <= hasta)) return;
+
+        const mins = getTaskMinutos(t);
+        const qty = getTaskTotalAvance(t);
+        const cat = getTaskCategoria(t);
+        const meta = getTaskMeta(t);
+        const uph = mins > 0 ? (qty / mins) * 60 : 0;
+        const esperado = mins > 0 ? meta.metaUph * (mins / 60) : 0;
+        const usuarios = [t.u1, t.u2].filter(u => u && u !== '---');
+
+        filas.push({
+            id: t.id,
+            fecha: t.fecha,
+            marca: t.marca || 'S/M',
+            usuarios,
+            grupo: usuarios.join(' + ') || '---',
+            qty,
+            mins,
+            uph,
+            metaUph: meta.metaUph,
+            esperado,
+            desviacion: qty - esperado,
+            pct: meta.metaUph > 0 ? (uph / meta.metaUph) * 100 : 0,
+            categoria: cat.etiqueta,
+            esFootwear: cat.grupo === 'FOOTWEAR',
+            mixta: cat.mixta,
+            ok: mins > 0 && uph >= meta.metaUph,
+            inicio: t.inicio,
+            termino: t.termino
+        });
+    });
+    return filas;
+};
+
+/** hh:mm a partir de minutos. */
+const fmtHM = (mins) => `${Math.floor(mins / 60).toString().padStart(2, '0')}:${(mins % 60).toString().padStart(2, '0')}`;
+
+/** Color del semáforo de 3 niveles según el % de meta alcanzado. */
+const colorPorPct = (pct) => pct >= 100 ? '#22c55e' : pct >= 85 ? '#f59e0b' : '#ef4444';
+
+/** Fila de cierre de jornada en el reporte acumulado. */
+const filaSubtotal = (fecha, tot) => {
+    if (!tot) return '';
+    const pct = tot.meta > 0 ? (tot.qty / tot.meta) * 100 : 0;
+    const col = colorPorPct(pct);
+    const uph = tot.mins > 0 ? (tot.qty / tot.mins) * 60 : 0;
+    return `<tr style="background:rgba(245,158,11,0.07); border-bottom:2px solid rgba(245,158,11,0.25);">
+        <td style="padding:0.6rem 1rem; color:#fbbf24; font-weight:900; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px;">Total ${fecha.split('-').reverse().join('/')}</td>
+        <td style="padding:0.6rem 1rem; color:rgba(255,255,255,0.5); font-size:0.72rem;">${tot.users.size} operario${tot.users.size !== 1 ? 's' : ''}</td>
+        <td style="padding:0.6rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:800; font-size:0.78rem;">${tot.tasks}</td>
+        <td style="padding:0.6rem 1rem; text-align:center; color:#fbbf24; font-weight:900; font-size:0.95rem;">${tot.qty.toLocaleString('es-PE')}</td>
+        <td style="padding:0.6rem 1rem; text-align:center; color:rgba(255,255,255,0.4); font-weight:800; font-size:0.8rem;">${Math.round(tot.meta).toLocaleString('es-PE')}</td>
+        <td style="padding:0.6rem 1rem; text-align:center; color:${col}; font-weight:900; font-size:0.8rem;">${tot.qty - tot.meta >= 0 ? '+' : ''}${Math.round(tot.qty - tot.meta).toLocaleString('es-PE')}</td>
+        <td style="padding:0.6rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:800; font-size:0.78rem;">${fmtHM(tot.mins)}</td>
+        <td style="padding:0.6rem 1rem; text-align:center; color:${col}; font-weight:900; font-size:0.85rem;">${Math.round(uph).toLocaleString('es-PE')}</td>
+        <td style="padding:0.6rem 1.2rem; text-align:right; color:${col}; font-weight:900; font-size:0.75rem;">${Math.round(pct)}% de meta</td>
+        <td style="padding:0.6rem 1rem;"></td>
+    </tr>`;
 };
 
 const getLogicalDate = () => {
@@ -654,7 +774,8 @@ const TABS = [
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
     { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
-    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' }
+    { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' },
+    { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
@@ -1099,6 +1220,8 @@ export const renderDashboard = async (container, user, onLogout) => {
   }
 
   adminService.initPermissions(TABS);
+  // Metas de productividad: se cargan una vez y quedan en memoria para los KPI y el generador
+  metasService.cargarReglas().catch(err => console.warn('[METAS] Carga inicial falló, se usan valores por defecto.', err));
   container.className = 'dashboard-layout animate-fade-in';
   
   // [CRÍTICO] Los permisos ya vienen sincronizados desde app.js (adminService.initializeAdminData)
@@ -1800,7 +1923,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.536');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.537');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9317,7 +9440,17 @@ const renderRFSection = (container) => {
     contentSubtitle.textContent = subtitle;
     const tabDef = TABS.find(t => t.id === tabId);
     const perms = adminService.getPermissions(user.role) || {};
-    const allowedSubTabs = tabDef.subTabs.filter(sub => user.role === 'admin' || sub.id === 'reportes_recepcion' || perms[`${tabId}_${sub.id}`] === 1);
+    // Estas sub-pestañas no tienen el bypass del rol admin: lo que diga la matriz de
+    // Configuración > Permisos es lo que manda, para todos los roles sin excepción.
+    // Mientras nadie las haya configurado todavía, quedan visibles solo para admin.
+    const SUBTABS_SOLO_MATRIZ = ['config_tareas'];
+    const allowedSubTabs = tabDef.subTabs.filter(sub => {
+        if (SUBTABS_SOLO_MATRIZ.includes(sub.id)) {
+            const valor = perms[`${tabId}_${sub.id}`];
+            return valor === undefined ? user.role === 'admin' : valor === 1;
+        }
+        return user.role === 'admin' || sub.id === 'reportes_recepcion' || perms[`${tabId}_${sub.id}`] === 1;
+    });
 
     let activeSub = localStorage.getItem(`activeSub_${tabId}`) || (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined);
     if (!allowedSubTabs.find(s => s.id === activeSub)) activeSub = (allowedSubTabs[0] ? allowedSubTabs[0].id : undefined);
@@ -9420,6 +9553,9 @@ const renderRFSection = (container) => {
         // Ceder un frame al navegador para que pinte el spinner antes de renderizar
         await new Promise(r => setTimeout(r, 0));
         renderAlmacenajeTareas(container);
+    } else if (tabId === 'almacenaje' && activeSub === 'config_tareas') {
+        await new Promise(r => setTimeout(r, 0));
+        renderConfigTareas(container);
     } else if (tabId === 'inventario' && activeSub === 'reportes_inventario') {
         container.innerHTML = `
             <div class="glass-panel" style="padding:3rem; text-align:center;">
@@ -11297,7 +11433,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.536 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.537 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15594,19 +15730,22 @@ window.showCellModal = function(htmlContent) {
                 });
             });
 
-            const bigNormals = normalArts.filter(a => a.bufferQty >= 300);
-            const smallNormals = normalArts.filter(a => a.bufferQty < 300);
-            
+            // Tamaño de tarea según la regla vigente para calzado (Config. Tareas).
+            // Un artículo nunca se parte: si supera el tamaño, va solo en su propia tarea.
+            const tamanoTarea = metasService.resolverMetaHoy('01 MEN').tamanoTarea || 300;
+            const bigNormals = normalArts.filter(a => a.bufferQty >= tamanoTarea);
+            const smallNormals = normalArts.filter(a => a.bufferQty < tamanoTarea);
+
             bigNormals.forEach(a => {
                 finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], creador: user.username, fechaProcesado: new Date().toISOString() });
             });
-            
+
             let currentGroup = [];
             let currentBufferQty = 0;
             smallNormals.forEach((art, index) => {
                 currentGroup.push(art);
                 currentBufferQty += art.bufferQty;
-                if (currentBufferQty >= 300 || index === smallNormals.length - 1) {
+                if (currentBufferQty >= tamanoTarea || index === smallNormals.length - 1) {
                     finalTasks.push({ id: getNextFreeId(), marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup], creador: user.username, fechaProcesado: new Date().toISOString() });
                     currentGroup = [];
                     currentBufferQty = 0;
@@ -15885,6 +16024,335 @@ window.showCellModal = function(htmlContent) {
         alert("❌ Error al generar el Excel: " + err.message);
         updateSyncIndicator('offline', 'ERROR EXCEL');
     }
+  };
+
+  // ── EXPORTAR KPI TAREAS A EXCEL (las 3 tablas + el resumen ejecutivo) ──
+  window.exportarKpiTareas = async (btn) => {
+    const filas = window.__kpiFilas || [];
+    if (filas.length === 0) {
+        showPremiumAlert('SIN DATOS', 'No hay tareas finalizadas en el rango seleccionado para exportar.', 'warning');
+        return;
+    }
+
+    await withLoading(btn, '⌛ Generando...', async () => {
+      try {
+        const wb = new ExcelJS.Workbook();
+        wb.creator = 'Logística DEAM1830';
+        wb.created = new Date();
+
+        const rango = `${window.__kpiStartDate.split('-').reverse().join('/')} al ${window.__kpiEndDate.split('-').reverse().join('/')}`;
+        const AZUL = 'FF1C2B3A';
+
+        const cabecera = (ws, titulo, columnas) => {
+            ws.mergeCells(1, 1, 1, columnas.length);
+            const t = ws.getCell('A1');
+            t.value = `${titulo}  —  ${rango}`;
+            t.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+            t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL } };
+            t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+            ws.getRow(1).height = 26;
+
+            const h = ws.getRow(2);
+            columnas.forEach((c, i) => {
+                const cell = h.getCell(i + 1);
+                cell.value = c.h;
+                cell.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+            });
+            h.height = 30;
+            ws.columns = columnas.map(c => ({ width: c.w }));
+            ws.views = [{ state: 'frozen', ySplit: 2 }];
+        };
+
+        // ── Hoja 1: Resumen ejecutivo ──
+        const wsR = wb.addWorksheet('Resumen Ejecutivo');
+        const sum = (f) => filas.reduce((a, r) => a + f(r), 0);
+        const unidades = sum(r => r.qty);
+        const minsGrupo = sum(r => r.mins);
+        const metaTotal = sum(r => r.esperado);
+        const enMeta = filas.filter(r => r.ok).length;
+        const operarios = new Set(); filas.forEach(r => r.usuarios.forEach(u => operarios.add(u)));
+
+        cabecera(wsR, 'RESUMEN EJECUTIVO — KPI ALMACENAJE', [{ h: 'Indicador', w: 34 }, { h: 'Valor', w: 20 }]);
+        [
+            ['Unidades del período', unidades],
+            ['Horas-hombre', Math.round(sum(r => r.mins * (r.usuarios.length || 2)) / 60)],
+            ['Horas de trabajo en grupo', Math.round(minsGrupo / 60)],
+            ['Productividad global (u/h)', minsGrupo > 0 ? Math.round((unidades / minsGrupo) * 60) : 0],
+            ['Meta de unidades del período', Math.round(metaTotal)],
+            ['Cumplimiento sobre meta (%)', metaTotal > 0 ? Math.round((unidades / metaTotal) * 100) : 0],
+            ['Tareas finalizadas', filas.length],
+            ['Tareas que alcanzaron meta', enMeta],
+            ['Tareas en meta (%)', filas.length > 0 ? Math.round((enMeta / filas.length) * 100) : 0],
+            ['Operarios que participaron', operarios.size]
+        ].forEach(([k, v], i) => {
+            const row = wsR.getRow(i + 3);
+            row.getCell(1).value = k;
+            row.getCell(2).value = v;
+            row.getCell(2).alignment = { horizontal: 'right' };
+            row.getCell(2).numFmt = '#,##0';
+        });
+
+        // ── Hoja 2: Productividad por grupo ──
+        const wsP = wb.addWorksheet('Productividad');
+        cabecera(wsP, 'PRODUCTIVIDAD POR GRUPO', [
+            { h: 'Fecha', w: 12 }, { h: 'Grupo', w: 28 }, { h: 'Categoría', w: 18 }, { h: 'Marca', w: 16 },
+            { h: 'Unidades', w: 12 }, { h: 'Tiempo', w: 10 }, { h: 'U/H', w: 10 },
+            { h: 'Meta U/H', w: 11 }, { h: 'Desviación', w: 12 }, { h: '% Meta', w: 10 }, { h: 'Estado', w: 14 }
+        ]);
+        filas.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach((r, i) => {
+            const row = wsP.getRow(i + 3);
+            row.values = [
+                r.fecha.split('-').reverse().join('/'), r.grupo, r.categoria, r.marca,
+                r.qty, r.mins > 0 ? fmtHM(r.mins) : '--:--', r.mins > 0 ? Math.round(r.uph) : 0,
+                r.metaUph, Math.round(r.desviacion), Math.round(r.pct),
+                r.pct >= 100 ? 'CUMPLIÓ' : r.pct >= 85 ? 'AL LÍMITE' : 'NO CUMPLIÓ'
+            ];
+            [5, 7, 8, 9, 10].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+        });
+
+        // ── Hoja 3: Acumulado por día y usuario ──
+        const wsA = wb.addWorksheet('Acumulado por Día');
+        cabecera(wsA, 'ACUMULADO POR DÍA × USUARIO', [
+            { h: 'Fecha', w: 12 }, { h: 'Usuario', w: 20 }, { h: 'Tareas', w: 9 },
+            { h: 'Unid. Acumuladas', w: 17 }, { h: 'Meta del Día', w: 14 }, { h: 'Desviación', w: 12 },
+            { h: 'Tiempo Total', w: 13 }, { h: 'U/H', w: 10 }, { h: '% Meta', w: 10 }
+        ]);
+        (window.__kpiAcumulado || []).forEach((r, i) => {
+            const row = wsA.getRow(i + 3);
+            const pct = r.meta > 0 ? (r.qty / r.meta) * 100 : 0;
+            row.values = [
+                r.fecha.split('-').reverse().join('/'), r.user, r.tasks,
+                r.qty, Math.round(r.meta), Math.round(r.qty - r.meta),
+                fmtHM(r.mins), r.mins > 0 ? Math.round((r.qty / r.mins) * 60) : 0, Math.round(pct)
+            ];
+            [3, 4, 5, 6, 8, 9].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+        });
+
+        // ── Hoja 4: Ranking ──
+        const wsK = wb.addWorksheet('Ranking');
+        cabecera(wsK, 'RANKING DE VELOCIDAD', [
+            { h: '#', w: 6 }, { h: 'Operador', w: 22 }, { h: 'Tareas', w: 9 }, { h: 'U/H Prom', w: 12 },
+            { h: '% Meta Prom', w: 13 }, { h: 'Consistencia', w: 13 }, { h: '% Tareas en Meta', w: 17 },
+            { h: 'Unid. de sus Grupos', w: 19 }, { h: 'Horas', w: 10 }
+        ]);
+        (window.__kpiRanking || []).forEach((r, i) => {
+            const row = wsK.getRow(i + 3);
+            row.values = [
+                i + 1, r.user, r.tasks, Math.round(r.avgUph), Math.round(r.promPct),
+                Math.round(r.consistencia), Math.round(r.pctEnMeta), Math.round(r.qty), Math.round(r.mins / 60)
+            ];
+            [1, 3, 4, 5, 6, 7, 8, 9].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+        });
+
+        const buf = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `KPI_Almacenaje_${window.__kpiStartDate}_a_${window.__kpiEndDate}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('[KPI] Error al exportar:', err);
+        showPremiumAlert('ERROR AL EXPORTAR', 'No se pudo generar el Excel: ' + err.message, 'error');
+      }
+    });
+  };
+
+  // ── CONFIGURACIÓN DE TAREAS: metas de productividad por categoría y vigencia ──
+  const renderConfigTareas = async (container) => {
+    if (!container) return;
+    container.innerHTML = `<div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1rem;">
+        <div style="width:34px; height:34px; border:2px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Cargando reglas de productividad...</span>
+    </div>`;
+
+    await metasService.cargarReglas(true);
+    if (!container.isConnected) return;
+
+    // Categorías reales del Maestro de Artículos, para no tener que escribirlas a mano
+    const maestro = dataStore.analisis_sku_maestro || dataStore.articulos || [];
+    const catsMaestro = new Set();
+    maestro.forEach((row, i) => {
+        if (i === 0 && Array.isArray(row) && String(row[0] || '').toUpperCase().includes('COD')) return;
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        const gr = String(getCol(row, ['Gender RIMS', 'GENDER RIMS', 'GENDERRIMS', 'DEPARTAMENTO', 'GENERO']) || raw[3] || '').trim().toUpperCase();
+        if (gr && gr !== '-' && gr !== 'GENDER RIMS') catsMaestro.add(gr);
+    });
+    const opcionesCat = ['FOOTWEAR', 'NO_FOOTWEAR', 'GLOBAL', ...[...catsMaestro].sort()];
+
+    const hoyStr = getLogicalDate();
+    const fmt = (f) => f ? f.split('-').reverse().join('/') : '';
+    const esc = (s) => String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    const pintar = () => {
+        if (!container.isConnected) return;
+        const reglas = metasService.getReglas();
+        const ordenadas = [...reglas].sort((a, b) => String(a.categoria).localeCompare(String(b.categoria)) || String(b.desde || '').localeCompare(String(a.desde || '')));
+
+        container.innerHTML = `
+        <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem;">
+            <div style="background:rgba(15,23,42,0.9); border:2px solid #6366f1; border-radius:14px; overflow:hidden; box-shadow:0 0 25px rgba(99,102,241,0.15);">
+                <div style="padding:1rem 1.2rem; background:rgba(99,102,241,0.1); border-bottom:1px solid rgba(99,102,241,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <h3 style="color:#fff; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">⚙️ CONFIGURACIÓN DE TAREAS</h3>
+                        <div style="font-size:0.68rem; color:rgba(165,180,252,0.7); font-weight:600;">Metas de productividad por categoría y vigencia · las usan los KPI, Tareas Día y el generador</div>
+                    </div>
+                    <button id="cfg_nueva" class="btn-premium-pulse" style="padding:8px 16px; font-size:0.75rem; background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; border:none; border-radius:8px; font-weight:900; cursor:pointer; letter-spacing:0.3px;">➕ NUEVA REGLA</button>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.6);">
+                            <tr style="color:rgba(165,180,252,0.85); text-transform:uppercase; font-size:0.66rem; letter-spacing:0.06em; border-bottom:2px solid rgba(99,102,241,0.25);">
+                                <th style="padding:0.8rem 1rem; text-align:left;">Categoría</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;">Meta U/H</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;">Tamaño Tarea</th>
+                                <th style="padding:0.8rem 1rem; text-align:left;">Vigencia</th>
+                                <th style="padding:0.8rem 0.8rem; text-align:center;">Estado</th>
+                                <th style="padding:0.8rem 0.8rem; text-align:center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ordenadas.length === 0 ? `<tr><td colspan="6" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
+                                const vigente = metasService.reglaVigenteEn(r, hoyStr);
+                                const badge = vigente
+                                    ? '<span style="background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">VIGENTE</span>'
+                                    : '<span style="background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">FUERA DE VIGENCIA</span>';
+                                const vig = `${fmt(r.desde)} → ${r.hasta ? fmt(r.hasta) : '<span style="color:rgba(255,255,255,0.3);">sin fin</span>'}`;
+                                const nota = r.nota ? `<div style="font-size:0.65rem; color:rgba(255,255,255,0.35); margin-top:2px;">${esc(r.nota)}</div>` : '';
+                                const fondo = r.base ? 'background:rgba(99,102,241,0.06);' : '';
+                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${fondo}">
+                                    <td style="padding:0.75rem 1rem;"><b style="color:#fff;">${esc(r.categoria)}</b>${r.base ? ' <span style="font-size:0.58rem; color:#818cf8; border:1px solid rgba(129,140,248,0.4); padding:1px 6px; border-radius:6px; vertical-align:middle;">BASE</span>' : ''}${nota}</td>
+                                    <td style="padding:0.75rem 0.6rem; text-align:right; color:#a5b4fc; font-weight:900; font-size:0.95rem;">${Number(r.metaUph).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(255,255,255,0.65); font-weight:700;">${Number(r.tamanoTarea).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.75rem 1rem; color:rgba(255,255,255,0.6); font-size:0.75rem;">${vig}</td>
+                                    <td style="padding:0.75rem 0.8rem; text-align:center;">${badge}</td>
+                                    <td style="padding:0.75rem 0.8rem; text-align:center; white-space:nowrap;">
+                                        <button data-edit="${r.id}" title="Editar" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#facc15;">✏️</button>
+                                        ${r.base ? '' : `<button data-del="${r.id}" title="Borrar" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#ef4444;">🗑️</button>`}
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
+                    La meta se elige por la <b style="color:rgba(255,255,255,0.6);">fecha de la tarea</b>, no por la de hoy: un reporte de mayo sigue midiendo contra la meta que estaba vigente en mayo.
+                    Precedencia: categoría exacta → grupo (FOOTWEAR / NO_FOOTWEAR) → GLOBAL. Entre reglas del mismo nivel gana la de inicio más reciente.
+                </div>
+            </div>
+        </div>`;
+
+        container.querySelector('#cfg_nueva').onclick = () => abrirModal(null);
+        container.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+            abrirModal(metasService.getReglas().find(r => r.id === b.dataset.edit));
+        });
+        container.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+            const r = metasService.getReglas().find(x => x.id === b.dataset.del);
+            if (!r) return;
+            if (!await showPremiumConfirm('BORRAR REGLA', `¿Borrar la regla de ${r.categoria} (${r.metaUph} u/h)? Las tareas volverán a la regla que corresponda por precedencia.`, 'warning')) return;
+            const res = await metasService.borrarRegla(r.id);
+            if (!res.ok) { showPremiumAlert('NO SE PUEDE BORRAR', res.mensaje, 'error'); return; }
+            pintar();
+        });
+    };
+
+    const abrirModal = (regla) => {
+        const editando = !!regla;
+        const r = regla || { categoria: 'FOOTWEAR', metaUph: 300, tamanoTarea: 300, desde: hoyStr, hasta: '', nota: '' };
+        const prev = document.getElementById('cfg_meta_modal');
+        if (prev) prev.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'cfg_meta_modal';
+        modal.style = 'position:fixed; inset:0; background:rgba(11,15,25,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px);';
+        modal.innerHTML = `
+            <div class="glass-panel" style="width:480px; max-width:92vw; padding:1.8rem; border:1px solid rgba(99,102,241,0.35); border-radius:16px; background:rgba(15,23,42,0.97); box-shadow:0 0 40px rgba(99,102,241,0.2);">
+                <h3 style="color:#fff; margin:0 0 1.4rem 0; font-size:1.05rem; font-weight:800; letter-spacing:0.5px;">${editando ? 'EDITAR REGLA' : 'NUEVA REGLA'}</h3>
+
+                <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Categoría</label>
+                <select id="cfg_cat" ${r.base ? 'disabled' : ''} style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.85rem; margin-bottom:1rem; ${r.base ? 'opacity:0.6;' : ''}">
+                    ${opcionesCat.map(c => `<option value="${esc(c)}" ${String(r.categoria).toUpperCase() === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+                </select>
+
+                <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:0.5rem;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Meta U/H (grupo de 2)</label>
+                        <input type="number" id="cfg_meta" min="1" value="${r.metaUph}" style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.9rem; font-weight:800;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Tamaño de tarea</label>
+                        <input type="number" id="cfg_tam" min="1" value="${r.tamanoTarea}" style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.9rem; font-weight:800;">
+                    </div>
+                </div>
+                <label style="display:flex; align-items:center; gap:7px; font-size:0.72rem; color:rgba(255,255,255,0.55); cursor:pointer; margin-bottom:1rem;">
+                    <input type="checkbox" id="cfg_link" checked style="accent-color:#6366f1; width:15px; height:15px; cursor:pointer;"> 🔗 Mover el tamaño de tarea junto con la meta
+                </label>
+
+                <div style="display:flex; gap:12px; margin-bottom:1rem;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Vigente desde</label>
+                        <input type="date" id="cfg_desde" value="${r.desde || ''}" style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.82rem; color-scheme:dark;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Hasta <span style="text-transform:none; font-weight:600;">(vacío = sin fin)</span></label>
+                        <input type="date" id="cfg_hasta" value="${r.hasta || ''}" style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.82rem; color-scheme:dark;">
+                    </div>
+                </div>
+
+                <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Motivo</label>
+                <input type="text" id="cfg_nota" maxlength="80" placeholder="Ej: Campaña Día de la Madre" value="${esc(r.nota)}" style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.82rem; margin-bottom:0.4rem;">
+                <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-bottom:1.5rem;">Queda guardado con la regla. Sirve para explicar en comité por qué esa meta era distinta.</div>
+
+                <div style="display:flex; gap:10px;">
+                    <button id="cfg_save" class="btn" style="flex:1; background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; font-weight:900; border:none;">GUARDAR</button>
+                    <button id="cfg_cancel" class="btn" style="flex:1; background:rgba(255,255,255,0.05); color:var(--text-muted);">CANCELAR</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        const inMeta = modal.querySelector('#cfg_meta');
+        const inTam = modal.querySelector('#cfg_tam');
+        const chkLink = modal.querySelector('#cfg_link');
+        inMeta.addEventListener('input', () => { if (chkLink.checked) inTam.value = inMeta.value; });
+        inTam.addEventListener('input', () => { chkLink.checked = false; });
+
+        modal.querySelector('#cfg_cancel').onclick = () => modal.remove();
+        modal.querySelector('#cfg_save').onclick = async () => {
+            const meta = parseInt(inMeta.value, 10);
+            const tam = parseInt(inTam.value, 10);
+            const desde = modal.querySelector('#cfg_desde').value;
+            const hasta = modal.querySelector('#cfg_hasta').value;
+
+            if (!meta || meta <= 0) { showPremiumAlert('DATO INVÁLIDO', 'La meta U/H debe ser un número mayor a cero.', 'error'); return; }
+            if (!tam || tam <= 0) { showPremiumAlert('DATO INVÁLIDO', 'El tamaño de tarea debe ser un número mayor a cero.', 'error'); return; }
+            if (!desde) { showPremiumAlert('DATO INVÁLIDO', 'La fecha de inicio de vigencia es obligatoria.', 'error'); return; }
+            if (hasta && hasta < desde) { showPremiumAlert('FECHAS INVERTIDAS', 'La fecha final no puede ser anterior a la de inicio.', 'error'); return; }
+
+            const datos = {
+                categoria: modal.querySelector('#cfg_cat').value,
+                metaUph: meta,
+                tamanoTarea: tam,
+                desde,
+                hasta,
+                nota: modal.querySelector('#cfg_nota').value.trim()
+            };
+
+            if (editando) await metasService.actualizarRegla(r.id, datos);
+            else await metasService.agregarRegla(datos);
+
+            modal.remove();
+            pintar();
+        };
+    };
+
+    pintar();
   };
 
   window.renderAlmacenajeTareas = (container) => {
@@ -16955,6 +17423,89 @@ window.showCellModal = function(htmlContent) {
             <div id="almacenajeScrollArea" style="display:flex; flex-direction:column; gap:1rem; overflow-y:auto; width:100%; flex:1;">
                 ${isKpi ? `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
+            <!-- CABECERA EJECUTIVA: los 6 números que abren la presentación de comité -->
+            ${(() => {
+                const filas = buildKpiDataset(tasks, window.__kpiStartDate, window.__kpiEndDate);
+                window.__kpiFilas = filas;
+
+                // Mismo número de días hacia atrás, para el comparativo
+                const d0 = new Date(window.__kpiStartDate), d1 = new Date(window.__kpiEndDate);
+                const dias = Math.max(1, Math.round((d1 - d0) / 86400000) + 1);
+                const pDesde = new Date(d0.getTime() - dias * 86400000).toISOString().split('T')[0];
+                const pHasta = new Date(d0.getTime() - 86400000).toISOString().split('T')[0];
+                const prev = buildKpiDataset(tasks, pDesde, pHasta);
+
+                const sum = (arr, f) => arr.reduce((a, r) => a + f(r), 0);
+                const unidades = sum(filas, r => r.qty);
+                const minsGrupo = sum(filas, r => r.mins);
+                const horasHombre = sum(filas, r => r.mins * (r.usuarios.length || 2)) / 60;
+                const uphGlobal = minsGrupo > 0 ? (unidades / minsGrupo) * 60 : 0;
+                const metaGlobal = sum(filas, r => r.esperado);
+                const pctGlobal = metaGlobal > 0 ? (unidades / metaGlobal) * 100 : 0;
+                const enMeta = filas.filter(r => r.ok).length;
+                const pctEnMeta = filas.length > 0 ? (enMeta / filas.length) * 100 : 0;
+
+                const grupos = new Set(filas.map(r => r.grupo).filter(g => g !== '---'));
+                const operarios = new Set(); filas.forEach(r => r.usuarios.forEach(u => operarios.add(u)));
+
+                const porDia = new Map();
+                filas.forEach(r => porDia.set(r.fecha, (porDia.get(r.fecha) || 0) + r.qty));
+                let mejorDia = null, mejorQty = 0;
+                porDia.forEach((q, f) => { if (q > mejorQty) { mejorQty = q; mejorDia = f; } });
+
+                const unidadesPrev = sum(prev, r => r.qty);
+                const varUnid = unidadesPrev > 0 ? ((unidades - unidadesPrev) / unidadesPrev) * 100 : null;
+                const flecha = (v) => v === null ? '<span style="color:rgba(255,255,255,0.25);">sin período previo</span>'
+                    : (v >= 0 ? `<span style="color:#22c55e;">▲ ${v.toFixed(0)}% vs período previo</span>` : `<span style="color:#ef4444;">▼ ${Math.abs(v).toFixed(0)}% vs período previo</span>`);
+
+                const tile = (label, valor, sub) => `
+                    <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:1rem 1.1rem;">
+                        <div style="font-size:0.66rem; color:rgba(255,255,255,0.4); font-weight:800; text-transform:uppercase; letter-spacing:0.06em;">${label}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#fff; margin-top:5px; line-height:1.1;">${valor}</div>
+                        <div style="font-size:0.66rem; margin-top:4px; color:rgba(255,255,255,0.4);">${sub}</div>
+                    </div>`;
+
+                const fmtDia = mejorDia ? mejorDia.split('-').reverse().slice(0, 2).join('/') : '---';
+
+                return `
+                <div style="background:rgba(10,15,30,0.95); border:2px solid #4f46e5; border-radius:14px; padding:1.2rem; box-shadow:0 0 30px rgba(79,70,229,0.15);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+                        <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📈 RESUMEN EJECUTIVO</h3>
+                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:12px;">
+                        ${tile('Unidades del período', unidades.toLocaleString('es-PE'), flecha(varUnid))}
+                        ${tile('Horas-hombre', Math.round(horasHombre).toLocaleString('es-PE'), `${fmtHM(minsGrupo)} de trabajo en grupo`)}
+                        ${tile('Productividad global', `${Math.round(uphGlobal).toLocaleString('es-PE')} <span style="font-size:0.8rem; color:rgba(255,255,255,0.4);">u/h</span>`, `<span style="color:${colorPorPct(pctGlobal)};">${pctGlobal.toFixed(0)}% de la meta</span>`)}
+                        ${tile('Tareas en meta', `${pctEnMeta.toFixed(0)}%`, `${enMeta} de ${filas.length} tareas`)}
+                        ${tile('Grupos activos', String(grupos.size), `${operarios.size} operarios`)}
+                        ${tile('Mejor jornada', fmtDia, mejorQty > 0 ? `${mejorQty.toLocaleString('es-PE')} unidades` : 'sin datos')}
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:1.5rem; align-items:stretch;">
+                    <div style="background:rgba(10,15,30,0.95); border:2px solid #3b82f6; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(59,130,246,0.12);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                            <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Producción diaria vs meta</h4>
+                            <div style="display:flex; gap:12px; font-size:0.65rem; color:rgba(255,255,255,0.45);">
+                                <span><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#3b82f6; margin-right:5px;"></span>Real</span>
+                                <span><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#94a3b8; margin-right:5px;"></span>Meta</span>
+                            </div>
+                        </div>
+                        <div style="position:relative; height:220px;"><canvas id="kpiTrendChart"></canvas></div>
+                    </div>
+                    <div style="background:rgba(10,15,30,0.95); border:2px solid #10b981; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(16,185,129,0.12); display:flex; flex-direction:column;">
+                        <h4 style="color:#fff; font-weight:900; margin:0 0 12px 0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Cumplimiento por categoría</h4>
+                        <div style="position:relative; flex:1; min-height:220px;"><canvas id="kpiCatChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(10,15,30,0.95); border:2px solid #eab308; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(234,179,8,0.12);">
+                    <h4 style="color:#fff; font-weight:900; margin:0 0 12px 0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Turno día vs turno noche</h4>
+                    <div style="position:relative; height:200px;"><canvas id="kpiTurnoChart"></canvas></div>
+                </div>`;
+            })()}
+
             <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
             <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2);">
                 <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
@@ -16969,115 +17520,64 @@ window.showCellModal = function(htmlContent) {
                         <thead style="background:rgba(0,0,0,0.8); position:sticky; top:0; z-index:10;">
                             <tr style="color:rgba(255,255,255,0.7); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.3);">
                                 <th style="padding:1rem; text-align:left;">Fecha</th>
-                                <th style="padding:1rem; text-align:left;">Usuario</th>
-                                <th style="padding:1rem; text-align:center;">Unid. Indiv.</th>
-                                <th style="padding:1rem; text-align:left;">Inicio</th>
-                                <th style="padding:1rem; text-align:left;">Termino</th>
+                                <th style="padding:1rem; text-align:left;">Grupo</th>
+                                <th style="padding:1rem; text-align:left;">Categoría</th>
+                                <th style="padding:1rem; text-align:center;">Unidades</th>
                                 <th style="padding:1rem; text-align:center;">Tiempo</th>
-                                <th style="padding:1rem; text-align:center;">Rendimiento %</th>
+                                <th style="padding:1rem; text-align:center;">U/H</th>
+                                <th style="padding:1rem; text-align:center;">Meta</th>
+                                <th style="padding:1rem; text-align:center;">Desviación</th>
+                                <th style="padding:1rem; text-align:center;">Rendimiento</th>
                                 <th style="padding:1rem; text-align:center;">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${(() => {
-                                const indRows = [];
-                                tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate).forEach(t => {
-                                    if (t.status !== 'Finalizado') return;
+                                const filas = (window.__kpiFilas || []).slice()
+                                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.grupo.localeCompare(b.grupo));
 
-                                    let timeStr = '--:--';
-                                    let totalMinutes = 0;
-                                    
-                                    if (t.inicio && t.termino) {
-                                        const s = new Date(t.inicio);
-                                        let e = new Date(t.termino);
-                                        if (e < s) {
-                                            e = new Date(e.getTime() + 24 * 60 * 60 * 1000);
-                                        }
-                                        let ms = e - s;
-
-                                        // Descontar break si aplica
-                                        const shiftDate = (s.getHours() < 12) ? new Date(s.getTime() - 12*60*60*1000) : s;
-                                        const bStart = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 0, 0);
-                                        const bEnd = new Date(shiftDate.getFullYear(), shiftDate.getMonth(), shiftDate.getDate(), 23, 50, 0);
-                                        const overlapStart = Math.max(s, bStart);
-                                        const overlapEnd = Math.min(e, bEnd);
-                                        const overlap = Math.max(0, overlapEnd - overlapStart);
-                                        ms = ms - overlap;
-
-                                        totalMinutes = Math.floor(ms / (1000 * 60));
-                                        if (totalMinutes > 0) {
-                                            timeStr = `${Math.floor(totalMinutes/60).toString().padStart(2,'0')}:${(totalMinutes%60).toString().padStart(2,'0')}`;
-                                        }
-                                    }
-
-                                    const uList = [t.u1, t.u2].filter(u => u && u !== '---');
-                                    
-                                    if (uList.length > 0) {
-                                        uList.forEach((user, idx) => {
-                                            const totalAvance = getTaskTotalAvance(t);
-                                            const qtyForThisUser = (uList.length === 2) 
-                                                ? (idx === 0 ? Math.ceil(totalAvance / 2) : Math.floor(totalAvance / 2)) 
-                                                : totalAvance;
-                                                
-                                            let uph = 0;
-                                            let pct = 0;
-                                            let ok = false;
-                                            
-                                            if (totalMinutes > 0) {
-                                                uph = (qtyForThisUser / totalMinutes) * 60;
-                                                pct = Math.round((uph / 150) * 100);
-                                                ok = uph >= 150;
-                                            }
-
-                                            indRows.push({
-                                                fecha: t.fecha,
-                                                user: user,
-                                                qty: qtyForThisUser,
-                                                inicio: t.inicio,
-                                                termino: t.termino,
-                                                time: timeStr,
-                                                pct: pct,
-                                                ok: ok
-                                            });
-                                        });
-                                    }
-                                });
-
-                                if (indRows.length === 0) return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay datos de productividad finalizados para mostrar.</td></tr>`;
-
-                                indRows.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.user.localeCompare(b.user));
+                                if (filas.length === 0) return `<tr><td colspan="10" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay tareas finalizadas en este rango de fechas.</td></tr>`;
 
                                 // --- PAGINACIÓN 10 por página ---
                                 const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__kpiLastDate !== rangeKey) { window.__kpiPage = 0; window.__kpiLastDate = rangeKey; }
                                 if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _pg = window.__kpiPage || 0;
-                                const _ptot = Math.ceil(indRows.length / 10);
-                                window.__kpiTotalPages = _ptot;
-                                window.__kpiTotalRows = indRows.length;
-                                const pagedRows = indRows.slice(_pg * 10, (_pg + 1) * 10);
+                                window.__kpiTotalPages = Math.ceil(filas.length / 10);
+                                window.__kpiTotalRows = filas.length;
+                                const pagedRows = filas.slice(_pg * 10, (_pg + 1) * 10);
 
-                                return pagedRows.map(r => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition: all 0.2s;">
+                                return pagedRows.map(r => {
+                                    // Piso y no redondeo: con 299 de 300 debe verse 99%, nunca "100% NO CUMPLIÓ"
+                                    const pctR = Math.floor(r.pct);
+                                    const col = colorPorPct(r.pct);
+                                    const etiqueta = r.pct >= 100 ? 'CUMPLIÓ' : r.pct >= 85 ? 'AL LÍMITE' : 'NO CUMPLIÓ';
+                                    const desvTxt = r.mins > 0
+                                        ? (r.desviacion >= 0 ? `<span style="color:#22c55e; font-weight:800;">+${Math.round(r.desviacion).toLocaleString('es-PE')}</span>` : `<span style="color:#ef4444; font-weight:800;">${Math.round(r.desviacion).toLocaleString('es-PE')}</span>`)
+                                        : '<span style="color:rgba(255,255,255,0.2);">---</span>';
+                                    const catColor = r.esFootwear ? '#818cf8' : '#f59e0b';
+                                    const badgeCat = `<span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}55; padding:2px 8px; border-radius:8px; font-size:0.62rem; font-weight:800; white-space:nowrap;">${r.categoria}</span>${r.mixta ? ' <span title="La tarea mezcla calzado y complementos" style="color:#ef4444; font-size:0.7rem;">⚠️</span>' : ''}`;
+                                    return `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition:all 0.2s;">
                                         <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
-                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase;">${r.user}</b></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString()}</td>
-                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${r.inicio ? new Date(r.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                        <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${r.termino ? new Date(r.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.time}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.8rem;">${r.grupo}</b></td>
+                                        <td style="padding:0.8rem 1rem;">${badgeCat}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.mins > 0 ? fmtHM(r.mins) : '--:--'}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:${col}; font-weight:900;">${r.mins > 0 ? Math.round(r.uph).toLocaleString('es-PE') : '---'}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${r.metaUph.toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">${desvTxt}</td>
                                         <td style="padding:0.8rem 1rem; text-align:center;">
                                             <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
-                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${r.ok?'#22c55e':'#ef4444'}; border-radius:10px; box-shadow: 0 0 10px ${r.ok?'rgba(34,197,94,0.4)':'rgba(239,68,68,0.4)'}"></div>
+                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${col}; border-radius:10px; box-shadow:0 0 10px ${col}66;"></div>
                                             </div>
-                                            <span style="font-size:0.7rem; font-weight:800; color:${r.ok?'#22c55e':'#ef4444'};">${r.pct}%</span>
+                                            <span style="font-size:0.7rem; font-weight:800; color:${col};">${pctR}%</span>
                                         </td>
                                         <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="background:${r.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}; color:${r.ok ? '#22c55e' : '#ef4444'}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.65rem; border:1px solid ${r.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}">
-                                                ${r.ok ? 'CUMPLIÓ' : 'BAJO PROMEDIO'}
-                                            </span>
+                                            <span style="background:${col}1a; color:${col}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.62rem; border:1px solid ${col}4d; white-space:nowrap;">${etiqueta}</span>
                                         </td>
-                                    </tr>
-                                `).join('');
+                                    </tr>`;
+                                }).join('');
                             })()}
                         </tbody>
                     </table>
@@ -17085,8 +17585,8 @@ window.showCellModal = function(htmlContent) {
                 
                 <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">* Base: 150 Unid/Hr por usuario &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.6);">${window.__kpiTotalRows||0} registros totales</span></div>
-                        <button class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">📥 EXPORTAR KPI</button>
+                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">Meta por grupo de 2, según Config. Tareas &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.6);">${window.__kpiTotalRows||0} tareas</span></div>
+                        <button onclick="window.exportarKpiTareas(this)" class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981; cursor:pointer;">📥 EXPORTAR KPI</button>
                     </div>
                     ${(() => {
                         const tp = window.__kpiTotalPages || 1;
@@ -17121,75 +17621,93 @@ window.showCellModal = function(htmlContent) {
                                 <th style="padding:0.85rem 1rem; text-align:left;">Usuario</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Tareas</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Unid. Acumuladas</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Meta del Día</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Desviación</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Tiempo Total</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Unid/Hr</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Progreso</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Avance vs Meta</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${(() => {
+                                // Cada operario carga las unidades del grupo repartidas por mitades,
+                                // pero la meta se reparte igual, así el % refleja el rendimiento real del grupo.
                                 const accMap = new Map();
-                                tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate && t.status === 'Finalizado').forEach(t => {
-                                    let mins = 0;
-                                    if (t.inicio && t.termino) {
-                                        const s = new Date(t.inicio); let e = new Date(t.termino);
-                                        if (e < s) e = new Date(e.getTime() + 86400000);
-                                        const sd = s.getHours() < 12 ? new Date(s.getTime()-43200000) : s;
-                                        const bS = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,0,0);
-                                        const bE = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,50,0);
-                                        mins = Math.max(0,Math.floor(((e-s)-Math.max(0,Math.min(e,bE)-Math.max(s,bS)))/60000));
-                                    }
-                                    const uList = [t.u1,t.u2].filter(u=>u&&u!=='---');
-                                    uList.forEach((user,idx) => {
-                                        const totalAvance = getTaskTotalAvance(t);
-                                        const qty = uList.length===2?(idx===0?Math.ceil(totalAvance/2):Math.floor(totalAvance/2)):totalAvance;
-                                        const key = t.fecha+'|'+user;
-                                        const cur = accMap.get(key)||{fecha:t.fecha,user,qty:0,mins:0,tasks:0};
-                                        cur.qty+=qty; cur.mins+=mins; cur.tasks++;
-                                        accMap.set(key,cur);
+                                (window.__kpiFilas || []).forEach(r => {
+                                    const n = r.usuarios.length || 1;
+                                    r.usuarios.forEach((user, idx) => {
+                                        const qty = n === 2 ? (idx === 0 ? Math.ceil(r.qty / 2) : Math.floor(r.qty / 2)) : r.qty;
+                                        const key = r.fecha + '|' + user;
+                                        const cur = accMap.get(key) || { fecha: r.fecha, user, qty: 0, mins: 0, tasks: 0, meta: 0 };
+                                        cur.qty += qty;
+                                        cur.mins += r.mins;
+                                        cur.meta += r.esperado / n;
+                                        cur.tasks++;
+                                        accMap.set(key, cur);
                                     });
                                 });
                                 const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
-                                if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
+                                if (!rows.length) return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
+                                window.__kpiAcumulado = rows;
+
                                 // --- PAGINACIÓN ACUMULADO ---
                                 const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__accLastDate !== rangeKey) { window.__accPage=0; window.__accLastDate=rangeKey; }
                                 if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _apg = window.__accPage||0;
-                                const _aptot = Math.ceil(rows.length/10);
-                                window.__accTotalPages = _aptot;
+                                window.__accTotalPages = Math.ceil(rows.length/10);
                                 window.__accTotalRows = rows.length;
                                 const accPagedRows = rows.slice(_apg*10, (_apg+1)*10);
-                                const maxQty = Math.max(...rows.map(r=>r.qty),1);
-                                return accPagedRows.map(r => {
+
+                                // Subtotal por fecha, para cerrar cada jornada
+                                const totalesDia = new Map();
+                                rows.forEach(r => {
+                                    const cur = totalesDia.get(r.fecha) || { qty:0, meta:0, mins:0, users:new Set(), tasks:0 };
+                                    cur.qty += r.qty; cur.meta += r.meta; cur.mins += r.mins; cur.users.add(r.user); cur.tasks += r.tasks;
+                                    totalesDia.set(r.fecha, cur);
+                                });
+
+                                let html = '';
+                                let fechaPrevia = null;
+                                accPagedRows.forEach(r => {
+                                    if (fechaPrevia !== null && r.fecha !== fechaPrevia) html += filaSubtotal(fechaPrevia, totalesDia.get(fechaPrevia));
+                                    fechaPrevia = r.fecha;
+
                                     const uph = r.mins>0?(r.qty/r.mins*60):0;
-                                    const uphColor = uph>=150?'#22c55e':uph>=100?'#f59e0b':'#ef4444';
-                                    const uphOk = uph>=150;
-                                    const bar = Math.round(r.qty/maxQty*100);
-                                    const hh = Math.floor(r.mins/60).toString().padStart(2,'0');
-                                    const mm = (r.mins%60).toString().padStart(2,'0');
-                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.04)'" onmouseout="this.style.background=''">
+                                    const pct = r.meta>0?(r.qty/r.meta*100):0;
+                                    const col = colorPorPct(pct);
+                                    const desv = r.qty - r.meta;
+                                    const desvTxt = r.meta>0
+                                        ? (desv>=0?`<span style="color:#22c55e; font-weight:800;">+${Math.round(desv).toLocaleString('es-PE')}</span>`:`<span style="color:#ef4444; font-weight:800;">${Math.round(desv).toLocaleString('es-PE')}</span>`)
+                                        : '<span style="color:rgba(255,255,255,0.2);">---</span>';
+                                    const etiqueta = pct>=100?'✅ META':pct>=85?'⚠️ AL LÍMITE':'🔴 BAJO';
+
+                                    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.04)'" onmouseout="this.style.background=''">
                                         <td style="padding:0.8rem 1rem; opacity:0.65; font-size:0.78rem;">${r.fecha.split('-').reverse().join('/')}</td>
                                         <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.85rem;">${r.user}</b></td>
                                         <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${r.tasks}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#f59e0b; font-weight:900; font-size:1.05rem;">${r.qty.toLocaleString()}</span></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.6); font-weight:700; font-size:0.82rem;">${hh}:${mm}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${uphColor}; font-weight:900; font-size:0.95rem;">${uph>0?Math.round(uph):'---'}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-left:3px;">u/h</span></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#f59e0b; font-weight:900; font-size:1.05rem;">${r.qty.toLocaleString('es-PE')}</span></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${Math.round(r.meta).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">${desvTxt}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.6); font-weight:700; font-size:0.82rem;">${fmtHM(r.mins)}</td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${col}; font-weight:900; font-size:0.95rem;">${uph>0?Math.round(uph).toLocaleString('es-PE'):'---'}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-left:3px;">u/h</span></td>
                                         <td style="padding:0.8rem 1.2rem;">
-                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${bar}%; height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:6px; box-shadow:0 0 8px rgba(245,158,11,0.4);"></div></div>
-                                            <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:3px; text-align:right;">${bar}%</div>
+                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct,100)}%; height:100%; background:${col}; border-radius:6px; box-shadow:0 0 8px ${col}66;"></div></div>
+                                            <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:700;">${Math.floor(pct)}% de meta</div>
                                         </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${uphOk?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; color:${uphOk?'#22c55e':'#ef4444'}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${uphOk?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}">${uphOk?'✅ META':'⚠️ BAJO'}</span></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${col}1a; color:${col}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${col}4d; white-space:nowrap;">${etiqueta}</span></td>
                                     </tr>`;
-                                }).join('');
+                                });
+                                if (fechaPrevia !== null) html += filaSubtotal(fechaPrevia, totalesDia.get(fechaPrevia));
+                                return html;
                             })()}
                         </tbody>
                     </table>
                 </div>
                 <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(245,158,11,0.15);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.3);">💡 3 tareas × 100 unid = <b style="color:#f59e0b;">300 acumuladas</b> &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.5);">${window.__accTotalRows||0} registros</span></div>
+                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.3);">La meta del día se arma sumando la meta real de cada tarea &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.5);">${window.__accTotalRows||0} registros</span></div>
                     </div>
                     ${(()=>{ const tp=window.__accTotalPages||1; const cp=window.__accPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#f59e0b':'rgba(255,255,255,0.1)'};background:${a?'rgba(245,158,11,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#fbbf24'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__accSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__accSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__accSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
                 </div>
@@ -17200,9 +17718,9 @@ window.showCellModal = function(htmlContent) {
                 <div style="padding:1rem 1.2rem; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.25); display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <h3 style="color:#a78bfa; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">⚡ RANKING DE VELOCIDAD — UNID/HORA</h3>
-                        <div style="font-size:0.68rem; color:rgba(167,139,250,0.55); font-weight:600;">Eficiencia promedio por operador · Ordenado de mayor a menor velocidad</div>
+                        <div style="font-size:0.68rem; color:rgba(167,139,250,0.55); font-weight:600;">Rendimiento de cada operario según los grupos donde trabajó · mínimo 3 tareas para entrar al ranking</div>
                     </div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">BASE: 150 U/Hr = 100%</div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">100% = meta vigente de su categoría</div>
                 </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
@@ -17211,67 +17729,109 @@ window.showCellModal = function(htmlContent) {
                                 <th style="padding:0.85rem 1rem; text-align:center; width:50px;">#</th>
                                 <th style="padding:0.85rem 1rem; text-align:left;">Operador</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Unid/Hr Prom</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Mejor Unid/Hr</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Total Unid</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Consistencia</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">% Tareas en Meta</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Unid. de sus Grupos</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Horas Trab.</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Tendencia</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Eficiencia</th>
                                 <th style="padding:0.85rem 1rem; text-align:center;">Rango</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${(() => {
+                                const MIN_TAREAS = 3;
+                                // Cada operario hereda el % de meta del grupo en el que trabajó, no una mitad inventada.
                                 const uMap = new Map();
-                                tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate && t.status === 'Finalizado').forEach(t => {
-                                    let mins = 0;
-                                    if (t.inicio && t.termino) {
-                                        const s = new Date(t.inicio); let e = new Date(t.termino);
-                                        if (e < s) e = new Date(e.getTime() + 86400000);
-                                        const sd = s.getHours() < 12 ? new Date(s.getTime()-43200000) : s;
-                                        const bS = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,0,0);
-                                        const bE = new Date(sd.getFullYear(),sd.getMonth(),sd.getDate(),23,50,0);
-                                        mins = Math.max(0,Math.floor(((e-s)-Math.max(0,Math.min(e,bE)-Math.max(s,bS)))/60000));
-                                    }
-                                    const uList = [t.u1,t.u2].filter(u=>u&&u!=='---');
-                                    uList.forEach((user,idx) => {
-                                        const totalAvance = getTaskTotalAvance(t);
-                                        const qty = uList.length===2?(idx===0?Math.ceil(totalAvance/2):Math.floor(totalAvance/2)):totalAvance;
-                                        const taskUph = mins>0?(qty/mins*60):0;
-                                        const cur = uMap.get(user)||{user,qty:0,mins:0,bestUph:0,tasks:0};
-                                        cur.qty+=qty; cur.mins+=mins; cur.tasks++;
-                                        if (taskUph>cur.bestUph) cur.bestUph=taskUph;
-                                        uMap.set(user,cur);
+                                (window.__kpiFilas || []).forEach(r => {
+                                    if (r.mins <= 0) return;
+                                    r.usuarios.forEach(user => {
+                                        const n = r.usuarios.length || 1;
+                                        const cur = uMap.get(user) || { user, qty:0, mins:0, tasks:0, enMeta:0, pcts:[] };
+                                        // Unidades del grupo completo: es lo comparable contra la meta, que también es de grupo
+                                        cur.qty += r.qty;
+                                        cur.mins += r.mins;
+                                        cur.tasks++;
+                                        if (r.ok) cur.enMeta++;
+                                        cur.pcts.push(r.pct);
+                                        uMap.set(user, cur);
                                     });
                                 });
-                                const rows = [...uMap.values()].map(r=>({...r, avgUph:r.mins>0?(r.qty/r.mins*60):0}))
-                                    .sort((a,b)=>b.avgUph-a.avgUph);
-                                if (!rows.length) return `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos de velocidad para mostrar.</td></tr>`;
+
+                                // Mismo cálculo sobre el período anterior, para la flecha de tendencia
+                                const d0 = new Date(window.__kpiStartDate), d1 = new Date(window.__kpiEndDate);
+                                const dias = Math.max(1, Math.round((d1 - d0) / 86400000) + 1);
+                                const prevFilas = buildKpiDataset(tasks,
+                                    new Date(d0.getTime() - dias*86400000).toISOString().split('T')[0],
+                                    new Date(d0.getTime() - 86400000).toISOString().split('T')[0]);
+                                const prevMap = new Map();
+                                prevFilas.forEach(r => {
+                                    if (r.mins <= 0) return;
+                                    r.usuarios.forEach(u => {
+                                        const c = prevMap.get(u) || { suma:0, n:0 };
+                                        c.suma += r.pct; c.n++;
+                                        prevMap.set(u, c);
+                                    });
+                                });
+
+                                const todas = [...uMap.values()].map(r => {
+                                    const promPct = r.pcts.reduce((a,b)=>a+b,0) / r.pcts.length;
+                                    // Coeficiente de variación: cuánto oscila respecto de su propio promedio
+                                    const media = promPct || 1;
+                                    const varianza = r.pcts.reduce((a,p)=>a+Math.pow(p-media,2),0) / r.pcts.length;
+                                    const cv = media > 0 ? (Math.sqrt(varianza)/media)*100 : 0;
+                                    const prev = prevMap.get(r.user);
+                                    return {
+                                        ...r,
+                                        avgUph: r.mins>0 ? (r.qty/r.mins)*60 : 0,
+                                        promPct,
+                                        consistencia: Math.max(0, 100 - cv),
+                                        pctEnMeta: r.tasks>0 ? (r.enMeta/r.tasks)*100 : 0,
+                                        delta: prev && prev.n>0 ? promPct - (prev.suma/prev.n) : null
+                                    };
+                                });
+
+                                const rows = todas.filter(r => r.tasks >= MIN_TAREAS).sort((a,b)=>b.promPct-a.promPct);
+                                const excluidos = todas.length - rows.length;
+                                window.__kpiRanking = rows;
+                                window.__rkExcluidos = excluidos;
+
+                                if (!rows.length) return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Ningún operario alcanza las ${MIN_TAREAS} tareas mínimas en este rango.</td></tr>`;
+
                                 // --- PAGINACIÓN RANKING ---
                                 const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
                                 if (window.__rkLastDate !== rangeKey) { window.__rkPage=0; window.__rkLastDate = rangeKey; }
                                 if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
                                 const _rpg = window.__rkPage||0;
-                                const _rptot = Math.ceil(rows.length/10);
-                                window.__rkTotalPages = _rptot;
+                                window.__rkTotalPages = Math.ceil(rows.length/10);
                                 window.__rkTotalRows = rows.length;
                                 const rkPagedRows = rows.slice(_rpg*10, (_rpg+1)*10);
-                                const maxUph = Math.max(...rows.map(r=>r.avgUph),1);
                                 const medals = ['🥇','🥈','🥉'];
+
                                 return rkPagedRows.map((r,i) => {
                                     const globalIdx = _rpg*10+i;
-                                    const pct = Math.round(r.avgUph/150*100);
-                                    const uphColor = r.avgUph>=150?'#22c55e':r.avgUph>=100?'#f59e0b':'#ef4444';
-                                    const barPct = Math.min(Math.round(r.avgUph/maxUph*100),100);
+                                    const col = colorPorPct(r.promPct);
+                                    const barPct = Math.min(Math.round(r.promPct),100);
                                     const hh = Math.floor(r.mins/60); const mm = r.mins%60;
-                                    const rangeLabel = r.avgUph>=150?'ELITE':r.avgUph>=120?'ALTO':r.avgUph>=90?'MEDIO':'BAJO';
-                                    const rangeColor = r.avgUph>=150?'#22c55e':r.avgUph>=120?'#a78bfa':r.avgUph>=90?'#f59e0b':'#ef4444';
+                                    const rangeLabel = r.promPct>=120?'ELITE':r.promPct>=100?'ALTO':r.promPct>=85?'MEDIO':'BAJO';
+                                    const rangeColor = r.promPct>=120?'#22c55e':r.promPct>=100?'#a78bfa':r.promPct>=85?'#f59e0b':'#ef4444';
+                                    const consColor = r.consistencia>=80?'#22c55e':r.consistencia>=60?'#f59e0b':'#ef4444';
+                                    const consLabel = r.consistencia>=80?'Estable':r.consistencia>=60?'Variable':'Irregular';
+                                    const tend = r.delta === null
+                                        ? '<span style="color:rgba(255,255,255,0.2); font-size:0.75rem;">—</span>'
+                                        : (r.delta >= 0
+                                            ? `<span style="color:#22c55e; font-weight:800; font-size:0.78rem;">▲ ${r.delta.toFixed(0)}pp</span>`
+                                            : `<span style="color:#ef4444; font-weight:800; font-size:0.78rem;">▼ ${Math.abs(r.delta).toFixed(0)}pp</span>`);
                                     return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(139,92,246,0.05)'" onmouseout="this.style.background=''">
                                         <td style="padding:0.8rem 1rem; text-align:center; font-size:1.1rem;">${medals[globalIdx]||`<span style='color:rgba(255,255,255,0.4);font-weight:700;'>${globalIdx+1}</span>`}</td>
-                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.88rem;">${r.user}</b><div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.tasks} tarea${r.tasks!==1?'s':''} realizadas</div></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${uphColor}; font-weight:900; font-size:1.15rem;">${Math.round(r.avgUph)}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#a78bfa; font-weight:800;">${Math.round(r.bestUph)}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:#e2e8f0; font-weight:700;">${r.qty.toLocaleString()}</td>
+                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.88rem;">${r.user}</b><div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.tasks} tarea${r.tasks!==1?'s':''} en grupo</div></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${col}; font-weight:900; font-size:1.15rem;">${Math.round(r.avgUph).toLocaleString('es-PE')}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${consColor}; font-weight:900;">${Math.round(r.consistencia)}%</span><div style="font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px;">${consLabel}</div></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#e2e8f0; font-weight:800;">${Math.round(r.pctEnMeta)}%</span><div style="font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.enMeta} de ${r.tasks}</div></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center; color:#e2e8f0; font-weight:700;">${Math.round(r.qty).toLocaleString('es-PE')}</td>
                                         <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-size:0.82rem;">${hh}h ${mm.toString().padStart(2,'0')}m</td>
-                                        <td style="padding:0.8rem 1.2rem;"><div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${barPct}%; height:100%; background:linear-gradient(90deg,${uphColor},${globalIdx===0?'#86efac':'rgba(255,255,255,0.3)'}); border-radius:6px; box-shadow:0 0 8px ${uphColor}44;"></div></div><div style="font-size:0.62rem; color:${uphColor}; margin-top:3px; text-align:right; font-weight:700;">${pct}% de meta</div></td>
+                                        <td style="padding:0.8rem 1rem; text-align:center;">${tend}</td>
+                                        <td style="padding:0.8rem 1.2rem;"><div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${barPct}%; height:100%; background:${col}; border-radius:6px; box-shadow:0 0 8px ${col}66;"></div></div><div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:700;">${Math.round(r.promPct)}% de meta</div></td>
                                         <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${rangeColor}22; color:${rangeColor}; padding:3px 10px; border-radius:8px; font-weight:900; font-size:0.65rem; border:1px solid ${rangeColor}55; letter-spacing:0.5px;">${rangeLabel}</span></td>
                                     </tr>`;
                                 }).join('');
@@ -17281,11 +17841,12 @@ window.showCellModal = function(htmlContent) {
                 </div>
                 <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15);">
                     <div style="display:flex; gap:1.5rem; font-size:0.68rem; color:rgba(255,255,255,0.3); margin-bottom:0.5rem; flex-wrap:wrap;">
-                        <span>🟢 ELITE ≥ 150 u/h</span>
-                        <span>🟣 ALTO ≥ 120 u/h</span>
-                        <span>🟡 MEDIO ≥ 90 u/h</span>
-                        <span>🔴 BAJO &lt; 90 u/h</span>
-                        <span style="margin-left:auto; color:rgba(255,255,255,0.5);">${window.__rkTotalRows||0} operadores</span>
+                        <span>🟢 ELITE ≥ 120% de meta</span>
+                        <span>🟣 ALTO ≥ 100%</span>
+                        <span>🟡 MEDIO ≥ 85%</span>
+                        <span>🔴 BAJO &lt; 85%</span>
+                        <span>Consistencia: 100% = rinde siempre igual</span>
+                        <span style="margin-left:auto; color:rgba(255,255,255,0.5);">${window.__rkTotalRows||0} operadores${window.__rkExcluidos ? ` · ${window.__rkExcluidos} fuera por tener menos de 3 tareas` : ''}</span>
                     </div>
                     ${(()=>{ const tp=window.__rkTotalPages||1; const cp=window.__rkPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#8b5cf6':'rgba(255,255,255,0.1)'};background:${a?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#a78bfa'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__rkSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__rkSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__rkSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
                 </div>
@@ -17997,7 +18558,8 @@ window.showCellModal = function(htmlContent) {
                                     if (totalMinutes > 0) {
                                         const totalAvance = getTaskTotalAvance(t);
                                         const unitsPerHour = (totalAvance / totalMinutes) * 60;
-                                        if (unitsPerHour >= 300) {
+                                        const metaTarea = getTaskMeta(t).metaUph;
+                                        if (unitsPerHour >= metaTarea) {
                                             objetivo = 'CUMPLIÓ';
                                             objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
                                         } else {
@@ -18760,7 +19322,14 @@ window.showCellModal = function(htmlContent) {
         document.getElementById('m_save').onclick = () => {
             const u1 = document.getElementById('m_u1').value;
             const u2 = document.getElementById('m_u2').value;
-            if (!u1) { showPremiumAlert("ASIGNAR TAREA", "Usuario 1 es obligatorio.", "error"); return; }
+            if (!u1 || !u2 || u2 === '---') {
+                showPremiumAlert("GRUPO INCOMPLETO", "Toda tarea de almacenaje se trabaja en grupo de 2. Asigna Usuario 1 y Usuario 2 para continuar.", "error");
+                return;
+            }
+            if (u1 === u2) {
+                showPremiumAlert("USUARIO REPETIDO", "Usuario 1 y Usuario 2 no pueden ser la misma persona.", "error");
+                return;
+            }
 
             // Validate: U1 and U2 cannot be from different shifts
             if (u1 && u2 && u2 !== '') {
@@ -18952,7 +19521,14 @@ window.showCellModal = function(htmlContent) {
             const newStart = modal.querySelector('#edit_start').value;
             const newEnd = modal.querySelector('#edit_end').value;
             
-            if (!u1) { showPremiumAlert("EDITAR TAREA", "El Usuario 1 es obligatorio.", "error"); return; }
+            if (!u1 || !u2 || u2 === '---') {
+                showPremiumAlert("GRUPO INCOMPLETO", "Toda tarea de almacenaje se trabaja en grupo de 2. Asigna Usuario 1 y Usuario 2 para continuar.", "error");
+                return;
+            }
+            if (u1 === u2) {
+                showPremiumAlert("USUARIO REPETIDO", "Usuario 1 y Usuario 2 no pueden ser la misma persona.", "error");
+                return;
+            }
             if (newEnd && !newStart) {
                 showPremiumAlert("EDITAR TAREA", "Si ingresas la Hora de Término, también debes ingresar la Hora de Inicio.", "warning");
                 return;
@@ -19027,6 +19603,130 @@ window.showCellModal = function(htmlContent) {
             if (window.openShiftModal) window.openShiftModal();
             else alert("❌ Error: Función no cargada.");
         };
+    }
+
+    // --- Gráficos del resumen ejecutivo (solo en la vista KPI) ---
+    if (isKpi && typeof Chart !== 'undefined') {
+        const filas = window.__kpiFilas || [];
+        const ejeColor = 'rgba(255,255,255,0.45)';
+        const gridColor = 'rgba(255,255,255,0.06)';
+        const baseOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        };
+
+        // Los gráficos se recrean en cada redibujo; hay que destruir los anteriores
+        (window.__kpiCharts || []).forEach(c => { try { c.destroy(); } catch(e) {} });
+        window.__kpiCharts = [];
+
+        // 1. Producción diaria contra meta
+        const cvTrend = document.getElementById('kpiTrendChart');
+        if (cvTrend) {
+            const porDia = new Map();
+            filas.forEach(r => {
+                const cur = porDia.get(r.fecha) || { real: 0, meta: 0 };
+                cur.real += r.qty;
+                cur.meta += r.esperado;
+                porDia.set(r.fecha, cur);
+            });
+            const fechas = [...porDia.keys()].sort();
+            window.__kpiCharts.push(new Chart(cvTrend, {
+                type: 'bar',
+                data: {
+                    labels: fechas.map(f => f.split('-').reverse().slice(0, 2).join('/')),
+                    datasets: [
+                        { label: 'Real', data: fechas.map(f => Math.round(porDia.get(f).real)), backgroundColor: '#3b82f6', borderRadius: 4, order: 2 },
+                        { label: 'Meta', data: fechas.map(f => Math.round(porDia.get(f).meta)), type: 'line', borderColor: '#94a3b8', borderWidth: 2, borderDash: [5, 4], pointRadius: 0, fill: false, order: 1 }
+                    ]
+                },
+                options: {
+                    ...baseOpts,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString('es-PE')} u` } } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
+                        x: { grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
+                    }
+                }
+            }));
+        }
+
+        // 2. Cumplimiento por categoría
+        const cvCat = document.getElementById('kpiCatChart');
+        if (cvCat) {
+            const porCat = new Map();
+            filas.forEach(r => {
+                const cur = porCat.get(r.categoria) || { real: 0, meta: 0 };
+                cur.real += r.qty;
+                cur.meta += r.esperado;
+                porCat.set(r.categoria, cur);
+            });
+            const cats = [...porCat.keys()];
+            const pcts = cats.map(c => { const v = porCat.get(c); return v.meta > 0 ? Math.round((v.real / v.meta) * 100) : 0; });
+            window.__kpiCharts.push(new Chart(cvCat, {
+                type: 'bar',
+                data: {
+                    labels: cats,
+                    datasets: [{ data: pcts, backgroundColor: pcts.map(p => colorPorPct(p)), borderRadius: 4 }]
+                },
+                options: {
+                    ...baseOpts,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.x}% de la meta` } } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v + '%' } },
+                        y: { grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
+                    }
+                }
+            }));
+        }
+
+        // 3. Turno día vs turno noche
+        const cvTurno = document.getElementById('kpiTurnoChart');
+        if (cvTurno) {
+            const workers = adminService.getWorkers() || [];
+            const turnoDe = (username) => {
+                const clean = String(username || '').trim().toLowerCase();
+                const w = workers.find(w => {
+                    const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+                    const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+                    return nom ? (`${nom[0]}${ape}` === clean) : false;
+                });
+                if (!w) return null;
+                return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DÍA';
+            };
+
+            const porTurnoDia = new Map();
+            filas.forEach(r => {
+                const turno = turnoDe(r.usuarios[0]) || (r.inicio && new Date(r.inicio).getHours() >= 18 ? 'NOCHE' : 'DÍA');
+                const clave = r.fecha;
+                const cur = porTurnoDia.get(clave) || { 'DÍA': 0, 'NOCHE': 0 };
+                cur[turno] += r.qty;
+                porTurnoDia.set(clave, cur);
+            });
+            const fechasT = [...porTurnoDia.keys()].sort();
+            window.__kpiCharts.push(new Chart(cvTurno, {
+                type: 'bar',
+                data: {
+                    labels: fechasT.map(f => f.split('-').reverse().slice(0, 2).join('/')),
+                    datasets: [
+                        { label: 'Día', data: fechasT.map(f => Math.round(porTurnoDia.get(f)['DÍA'])), backgroundColor: '#facc15', borderRadius: 4 },
+                        { label: 'Noche', data: fechasT.map(f => Math.round(porTurnoDia.get(f)['NOCHE'])), backgroundColor: '#818cf8', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    ...baseOpts,
+                    plugins: {
+                        legend: { display: true, position: 'top', align: 'end', labels: { color: ejeColor, boxWidth: 10, boxHeight: 10, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString('es-PE')} u` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
+                        x: { grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
+                    }
+                }
+            }));
+        }
     }
 
     // --- Lógica del Botón de Refresco Local ---

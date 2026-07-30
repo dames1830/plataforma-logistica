@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=26.5.536';
+import * as syncEngine from './sync_engine_v24_9.js?v=26.5.537';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -279,6 +279,7 @@ export const savePerformanceLog = (data) => save('performance_log', data);
 export const FORCED_ASISTENTE = [
     'inicio',
     'almacenaje', 'almacenaje_archivo_almacenaje', 'almacenaje_tareas_dia', 'almacenaje_kpi_tareas',
+    // 'almacenaje_config_tareas' queda fuera a propósito: solo se habilita desde la matriz.
     'buffer', 'buffer_maestros', 'buffer_reportes', 'buffer_historial_buffer', 'buffer_kpi_buffer', 'buffer_config_buffer',
     'admin_pers', 'admin_pers_asistencia', 'admin_pers_performance', 'admin_pers_rfs',
     'performance_historial', 'performance_graficos', 'performance_reporte'
