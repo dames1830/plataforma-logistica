@@ -1,9 +1,25 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.523';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.524';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.523';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.523';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.523';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.523';
+import * as adminService from '../services_v245/adminService.js?v=26.5.524';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.524';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.524';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.524';
+
+// Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
+async function withLoading(btn, loadingLabel, fn) {
+    if (!btn) return fn();
+    const orig = btn.innerHTML;
+    const origDisabled = btn.disabled;
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.innerHTML = loadingLabel;
+    try { return await fn(); }
+    finally {
+        btn.disabled = origDisabled;
+        btn.style.opacity = '';
+        btn.innerHTML = orig;
+    }
+}
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +360,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.523';
+const VERSION = '26.5.524';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1784,7 +1800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.523');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.524');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -1934,6 +1950,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Listeners
     document.getElementById('form_new_worker').onsubmit = async (e) => {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('[type=submit]');
         const nw = {
             dni: document.getElementById('nw_dni').value.trim(),
             nombre: document.getElementById('nw_nombre').value.toUpperCase().trim(),
@@ -1941,13 +1958,17 @@ export const renderDashboard = async (container, user, onLogout) => {
             puesto: document.getElementById('nw_puesto').value.toUpperCase().trim(),
             turno: document.getElementById('nw_turno').value
         };
-        await adminService.saveWorker(nw);
+        await withLoading(submitBtn, '⏳ GUARDANDO...', async () => {
+            await adminService.saveWorker(nw);
+        });
         renderAdminTab();
     };
 
     document.querySelectorAll('.btn-worker-status').forEach(btn => {
-        btn.onclick = async () => {
-            await adminService.toggleWorkerStatus(btn.dataset.dni);
+        btn.onclick = async function() {
+            await withLoading(this, '⏳...', async () => {
+                await adminService.toggleWorkerStatus(btn.dataset.dni);
+            });
             renderAdminTab();
         };
     });
@@ -2199,14 +2220,18 @@ export const renderDashboard = async (container, user, onLogout) => {
         isEditing = false;
     };
 
-    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = async () => {
-        await adminService.toggleUserStatus(btn.dataset.user);
+    document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = async function() {
+        await withLoading(this, '⏳...', async () => {
+            await adminService.toggleUserStatus(btn.dataset.user);
+        });
         renderAdminTab();
     });
 
-    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = async () => {
+    document.querySelectorAll('.btn-del').forEach(btn => btn.onclick = async function() {
         if (await showPremiumConfirm('ELIMINAR USUARIO', '¿Estás seguro de eliminar permanentemente este usuario?', 'danger')) {
-            await adminService.deleteUser(btn.dataset.user);
+            await withLoading(this, '⏳...', async () => {
+                await adminService.deleteUser(btn.dataset.user);
+            });
             renderAdminTab();
         }
     });
@@ -4485,11 +4510,13 @@ const renderRFSection = (container) => {
       });
 
       container.querySelectorAll('.btn-delete-rf').forEach(btn => {
-        btn.onclick = async (e) => {
+        btn.onclick = async function(e) {
           const serie = e.currentTarget.dataset.serie;
           if (confirm(`¿Estás seguro de eliminar el terminal RF ${serie} de forma permanente?`)) {
-            const list = adminService.getRfs().filter(r => r.serie !== serie);
-            await adminService.saveRfs(list);
+            await withLoading(this, '⏳...', async () => {
+              const list = adminService.getRfs().filter(r => r.serie !== serie);
+              await adminService.saveRfs(list);
+            });
             alert("✅ Equipo eliminado con éxito.");
             renderRFSection(container);
           }
@@ -4505,11 +4532,13 @@ const renderRFSection = (container) => {
       });
 
       container.querySelectorAll('.btn-delete-battery').forEach(btn => {
-        btn.onclick = async (e) => {
+        btn.onclick = async function(e) {
           const codigo = e.currentTarget.dataset.codigo;
           if (confirm(`¿Estás seguro de eliminar la batería ${codigo} de forma permanente?`)) {
-            const list = adminService.getRfsBatteries().filter(b => b.codigo !== codigo);
-            await adminService.saveRfsBatteries(list);
+            await withLoading(this, '⏳...', async () => {
+              const list = adminService.getRfsBatteries().filter(b => b.codigo !== codigo);
+              await adminService.saveRfsBatteries(list);
+            });
             alert("✅ Batería eliminada con éxito.");
             renderRFSection(container);
           }
@@ -4525,11 +4554,13 @@ const renderRFSection = (container) => {
       });
 
       container.querySelectorAll('.btn-delete-charger').forEach(btn => {
-        btn.onclick = async (e) => {
+        btn.onclick = async function(e) {
           const codigo = e.currentTarget.dataset.codigo;
           if (confirm(`¿Estás seguro de eliminar el cargador ${codigo} de forma permanente?`)) {
-            const list = adminService.getRfsChargers().filter(c => c.codigo !== codigo);
-            await adminService.saveRfsChargers(list);
+            await withLoading(this, '⏳...', async () => {
+              const list = adminService.getRfsChargers().filter(c => c.codigo !== codigo);
+              await adminService.saveRfsChargers(list);
+            });
             alert("✅ Cargador eliminado con éxito.");
             renderRFSection(container);
           }
@@ -4564,24 +4595,25 @@ const renderRFSection = (container) => {
 
       // BORRAR ASIGNACIÓN EN BITÁCORA
       container.querySelectorAll('.btn-delete-assignment').forEach(btn => {
-        btn.onclick = async (e) => {
+        btn.onclick = async function(e) {
           const id = e.currentTarget.dataset.id;
           const serial = e.currentTarget.dataset.serial;
           const isPendingDel = e.currentTarget.dataset.pending === 'true';
           if (!confirm(`¿Eliminar este registro de asignación del equipo ${serial}?\nEsta acción no se puede deshacer.`)) return;
-          let listAsig = adminService.getRfAssignments().filter(a => a.id !== id);
-          await adminService.saveRfAssignments(listAsig);
-          // Si estaba activa (en uso), liberar el RF
-          if (isPendingDel) {
-            const listRfs = adminService.getRfs();
-            const rfIdx = listRfs.findIndex(r => r.serie === serial);
-            if (rfIdx !== -1) {
-              listRfs[rfIdx].asignadoDni = null;
-              listRfs[rfIdx].asignadoNombre = null;
-              listRfs[rfIdx].asignadoTurno = null;
-              await adminService.saveRfs(listRfs);
+          await withLoading(this, '⏳...', async () => {
+            let listAsig = adminService.getRfAssignments().filter(a => a.id !== id);
+            await adminService.saveRfAssignments(listAsig);
+            if (isPendingDel) {
+              const listRfs = adminService.getRfs();
+              const rfIdx = listRfs.findIndex(r => r.serie === serial);
+              if (rfIdx !== -1) {
+                listRfs[rfIdx].asignadoDni = null;
+                listRfs[rfIdx].asignadoNombre = null;
+                listRfs[rfIdx].asignadoTurno = null;
+                await adminService.saveRfs(listRfs);
+              }
             }
-          }
+          });
           alert('✅ Registro eliminado correctamente.');
           renderRFSection(container);
         };
@@ -5186,8 +5218,11 @@ const renderRFSection = (container) => {
         return_notes: null
       });
 
-      await adminService.saveRfs(listRfs);
-      await adminService.saveRfAssignments(listAssignments);
+      const submitBtn = modal.querySelector('[type=submit]');
+      await withLoading(submitBtn, '⏳ ASIGNANDO...', async () => {
+        await adminService.saveRfs(listRfs);
+        await adminService.saveRfAssignments(listAssignments);
+      });
 
       alert(`✅ Equipo RF ${serie} asignado correctamente.`);
       modal.remove();
@@ -5296,13 +5331,16 @@ const renderRFSection = (container) => {
         }
       }
 
-      await adminService.saveRfs(listRfs);
-      await adminService.saveRfAssignments(listAssignments);
+      const submitBtnR = modal.querySelector('[type=submit]');
+      await withLoading(submitBtnR, '⏳ GUARDANDO...', async () => {
+        await adminService.saveRfs(listRfs);
+        await adminService.saveRfAssignments(listAssignments);
+      });
 
-      const successMsg = nuevoEstado === 'En Mantenimiento' 
+      const successMsg = nuevoEstado === 'En Mantenimiento'
         ? `⚠️ Equipo RF ${serie} devuelto CON DAÑOS. Se envió automáticamente al taller.`
         : `✅ Equipo RF ${serie} devuelto conforme y disponible.`;
-      
+
       alert(successMsg);
       modal.remove();
       renderRFSection(container);
@@ -5503,7 +5541,7 @@ const renderRFSection = (container) => {
             document.body.appendChild(modal);
 
             modal.querySelector('#btnCloseModal').onclick = () => { if (modal && modal.parentNode) modal.parentNode.removeChild(modal); };
-            modal.querySelector('#btnSavePerms').onclick = async () => {
+            modal.querySelector('#btnSavePerms').onclick = async function() {
                 const newModulos = Array.from(modal.querySelectorAll('.chk-mod:checked')).map(c => c.value);
                 const newAlm = Array.from(modal.querySelectorAll('.chk-alm:checked')).map(c => c.value);
                 const newBuf = Array.from(modal.querySelectorAll('.chk-buf:checked')).map(c => c.value);
@@ -5516,7 +5554,9 @@ const renderRFSection = (container) => {
                 g.reportesInventario = newInv;
                 g.reportesAnalisis = newAna;
 
-                await adminService.savePublicReportsConfig(configData);
+                await withLoading(this, '⏳ GUARDANDO...', async () => {
+                    await adminService.savePublicReportsConfig(configData);
+                });
                 if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
                 configContainer.innerHTML = renderPublicReportsTable();
                 bindTableEvents();
@@ -5539,11 +5579,13 @@ const renderRFSection = (container) => {
             });
 
             configContainer.querySelectorAll('.btn-regen-tok').forEach(btn => {
-                btn.onclick = async () => {
+                btn.onclick = async function() {
                     const idx = parseInt(btn.dataset.idx);
                     if (await showPremiumConfirm("REGENERAR TOKEN SEGURO", `¿Estás seguro de regenerar el token de ${configData[idx].nombre}? El enlace actual dejará de funcionar inmediatamente.`, "warning")) {
                         configData[idx].token = generateSecureToken();
-                        await adminService.savePublicReportsConfig(configData);
+                        await withLoading(this, '⏳...', async () => {
+                            await adminService.savePublicReportsConfig(configData);
+                        });
                         configContainer.innerHTML = renderPublicReportsTable();
                         bindTableEvents();
                         showPremiumAlert("TOKEN ACTUALIZADO", "Se generó un nuevo token seguro para el grupo.", "success");
@@ -5552,11 +5594,13 @@ const renderRFSection = (container) => {
             });
 
             configContainer.querySelectorAll('.btn-del-grp').forEach(btn => {
-                btn.onclick = async () => {
+                btn.onclick = async function() {
                     const idx = parseInt(btn.dataset.idx);
                     if (await showPremiumConfirm("ELIMINAR GRUPO", `¿Deseas eliminar el grupo ${configData[idx].nombre}? Su enlace público será revocado de inmediato.`, "danger")) {
                         configData.splice(idx, 1);
-                        await adminService.savePublicReportsConfig(configData);
+                        await withLoading(this, '⏳ ELIMINANDO...', async () => {
+                            await adminService.savePublicReportsConfig(configData);
+                        });
                         configContainer.innerHTML = renderPublicReportsTable();
                         bindTableEvents();
                         showPremiumAlert("GRUPO ELIMINADO", "El grupo y su enlace han sido revocados.", "success");
@@ -5566,7 +5610,7 @@ const renderRFSection = (container) => {
 
             const newGroupBtn = configContainer.querySelector('#btnNewReportGroup');
             if (newGroupBtn) {
-                newGroupBtn.onclick = async () => {
+                newGroupBtn.onclick = async function() {
                     const nombre = prompt("Ingresa el nombre del nuevo grupo de reportes (Ej: AUDITORES, CLIENTES_VIP):");
                     if (nombre && nombre.trim()) {
                         const cleanName = nombre.trim().toUpperCase();
@@ -5578,7 +5622,9 @@ const renderRFSection = (container) => {
                             reportesAlmacenaje: [],
                             reportesBuffer: []
                         });
-                        await adminService.savePublicReportsConfig(configData);
+                        await withLoading(this, '⏳ CREANDO...', async () => {
+                            await adminService.savePublicReportsConfig(configData);
+                        });
                         configContainer.innerHTML = renderPublicReportsTable();
                         bindTableEvents();
                         showPremiumAlert("GRUPO CREADO", `Se creó el grupo ${cleanName} con su token seguro automático.`, "success");
@@ -5598,9 +5644,11 @@ const renderRFSection = (container) => {
                 <button id="resetDataBtn" class="btn" style="background:#ef4444; font-size:0.85rem; padding:0.7rem; font-weight:700;">⚠️ REINICIAR ASISTENCIA Y PERFORMANCE</button>
             </div>
         `;
-        document.getElementById('resetDataBtn').onclick = async () => {
+        document.getElementById('resetDataBtn').onclick = async function() {
             if (await showPremiumConfirm("ZONA DE PELIGRO - REINICIAR DATOS", "¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.", "danger")) {
-                await adminService.resetProductionData();
+                await withLoading(this, '⏳ REINICIANDO...', async () => {
+                    await adminService.resetProductionData();
+                });
                 alert("✅ Se han reiniciado los datos. La aplicación se recargará.");
                 window.location.reload();
             }
@@ -11182,7 +11230,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.523 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.524 | MOBILE PORTAL
                             </div>
                     </div>
 
