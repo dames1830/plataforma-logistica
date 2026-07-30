@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.528
+ * v26.5.529
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.528';
+} from '../services_v245/csvHub_v6.js?v=26.5.529';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.528';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.528';
+import * as adminService from '../services_v245/adminService.js?v=26.5.529';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.529';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -239,7 +239,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:var(--accent)">DEAM1830</span>
-          <span style="font-size:11px; color:rgba(255,255,255,0.35); font-weight:600; margin-left:4px">v26.5.528</span>
+          <span style="font-size:11px; color:rgba(255,255,255,0.35); font-weight:600; margin-left:4px">v26.5.529</span>
         </h2>
       </div>
       <div class="topbar-right">
@@ -261,6 +261,8 @@ function renderShell(app) {
     <!-- FOOTER -->
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
+      <span style="color:var(--border); margin:0 8px;">·</span>
+      <span style="color:var(--text-muted); font-weight:500;">v26.5.529</span>
     </div>`;
 
   buildTabNav();
@@ -420,8 +422,8 @@ window.__almacenajeDateChange = function(field, value) {
 async function renderAlmacenajeModule() {
   const area = document.getElementById('contentArea');
 
-  // Inyectar filtro de fecha al tope del content-area (igual que la web original)
-  const filterHtml = `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+  // El gráfico de rendimiento tiene su propio selector de fechas interno; los demás usan este filtro global
+  const filterHtml = currentSubTab === 'grafico_rendimiento' ? '' : `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
     <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">DE</label>
     <input type="date" value="${filterStart}"
       onchange="window.__almacenajeDateChange('start', this.value)"
