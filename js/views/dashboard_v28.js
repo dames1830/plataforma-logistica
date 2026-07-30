@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.522';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.523';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.522';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.522';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.522';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.522';
+import * as adminService from '../services_v245/adminService.js?v=26.5.523';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.523';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.523';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.523';
 
 export const showPremiumAlert = (title, message, type = 'error') => {
     return new Promise((resolve) => {
@@ -344,7 +344,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.522';
+const VERSION = '26.5.523';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -455,6 +455,10 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
       // 1. Persistencia LOCAL inmediata
       safeSaveAlmacenajeTasksCache();
       adminService.adminStore.almacenaje_tasks = almacenajeTasksCache;
+      // Activar guard de pull inmediatamente para proteger el estado local durante el debounce
+      if (window._pulseSyncState && window._pulseSyncState.lastPushTimes) {
+          window._pulseSyncState.lastPushTimes['almacenaje_tasks'] = Date.now();
+      }
 
         // BUGFIX: Always send the full array to ensure backend compaction and data integrity
         const dataToSave = almacenajeTasksCache;
@@ -486,9 +490,6 @@ const loadAlmacenajeTasks = async () => {
       updateSyncIndicator('working', 'SINCRONIZANDO CON LA NUBE...');
       // Carga desde el puente v24 (que ya hizo el pull)
       const syncedTasks = await adminService.loadAlmacenajeTasks();
-        if (typeof adminService.loadAlmacenajeTasksHistory === 'function') {
-            await adminService.loadAlmacenajeTasksHistory();
-        }
         if (typeof adminService.loadAlmacenajeTasksHistory === 'function') {
             await adminService.loadAlmacenajeTasksHistory();
         }
@@ -1743,7 +1744,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
   const renderAdminTab = () => {
     // [SUPER PULL v25.0.4] Forzamos descarga REAL de historial reciente al entrar
-    syncEngine.pullGlobal(['performance_log', 'almacenaje_tasks'], true);
+    syncEngine.pullGlobal(['performance_log'], true);
     
     const adminTabDef = TABS.find(t => t.id === 'admin_pers');
     const rolePerms = adminService.getPermissions(user.role) || {};
@@ -1783,7 +1784,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.522');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.523');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11181,7 +11182,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.522 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.523 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15922,9 +15923,15 @@ window.showCellModal = function(htmlContent) {
         });
     }
     
-    // SINCRONIZACIÓN CRÍTICA: Asegurar que el cache local tenga lo que el radar encontró
-    if (adminService.adminStore.almacenaje_tasks) {
-        almacenajeTasksCache = adminService.adminStore.almacenaje_tasks;
+    // SINCRONIZACIÓN: solo actualizar cache si no hay tareas locales pendientes (_dirty)
+    const _serverSnap = adminService.adminStore.almacenaje_tasks;
+    if (Array.isArray(_serverSnap) && _serverSnap !== almacenajeTasksCache) {
+        const _dirtyMap = new Map((almacenajeTasksCache || []).filter(t => t._dirty).map(t => [t.id, t]));
+        if (_dirtyMap.size === 0) {
+            almacenajeTasksCache = _serverSnap;
+        } else {
+            almacenajeTasksCache = _serverSnap.map(st => _dirtyMap.has(st.id) ? _dirtyMap.get(st.id) : st);
+        }
     }
     const historicalTasks = typeof adminService.getAlmacenajeTasksHistory === 'function' ? adminService.getAlmacenajeTasksHistory() : [];
       const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache, ...historicalTasks] : [...historicalTasks];
