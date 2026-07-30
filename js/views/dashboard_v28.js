@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.540';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.541';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.540';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.540';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.540';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.540';
-import * as metasService from '../services_v245/metasService.js?v=26.5.540';
+import * as adminService from '../services_v245/adminService.js?v=26.5.541';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.541';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.541';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.541';
+import * as metasService from '../services_v245/metasService.js?v=26.5.541';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.540';
+const VERSION = '26.5.541';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1984,7 +1984,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.540');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.541');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11494,7 +11494,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.540 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.541 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16098,7 +16098,9 @@ window.showCellModal = function(htmlContent) {
         wb.creator = 'Logística DEAM1830';
         wb.created = new Date();
 
-        const rango = `${window.__kpiStartDate.split('-').reverse().join('/')} al ${window.__kpiEndDate.split('-').reverse().join('/')}`;
+        const catFiltro = window.__kpiCatFiltro || 'TODAS';
+        const rango = `${window.__kpiStartDate.split('-').reverse().join('/')} al ${window.__kpiEndDate.split('-').reverse().join('/')}`
+            + (catFiltro !== 'TODAS' ? `  ·  Solo ${catFiltro}` : '');
         const AZUL = 'FF1C2B3A';
 
         const cabecera = (ws, titulo, columnas) => {
@@ -16143,7 +16145,8 @@ window.showCellModal = function(htmlContent) {
             ['Tareas finalizadas', filas.length],
             ['Tareas que alcanzaron meta', enMeta],
             ['Tareas en meta (%)', filas.length > 0 ? Math.round((enMeta / filas.length) * 100) : 0],
-            ['Operarios que participaron', operarios.size]
+            ['Operarios que participaron', operarios.size],
+            ['Filtro de categoría aplicado', catFiltro]
         ].forEach(([k, v], i) => {
             const row = wsR.getRow(i + 3);
             row.getCell(1).value = k;
@@ -16227,7 +16230,8 @@ window.showCellModal = function(htmlContent) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `KPI_Almacenaje_${window.__kpiStartDate}_a_${window.__kpiEndDate}.xlsx`;
+        const sufijoCat = catFiltro !== 'TODAS' ? '_' + catFiltro.replace(/\s+/g, '') : '';
+        a.download = `KPI_Almacenaje_${window.__kpiStartDate}_a_${window.__kpiEndDate}${sufijoCat}.xlsx`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -17571,7 +17575,26 @@ window.showCellModal = function(htmlContent) {
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.5rem;">
             <!-- CABECERA EJECUTIVA: los 6 números que abren la presentación de comité -->
             ${(() => {
-                const filas = buildKpiDataset(tasks, window.__kpiStartDate, window.__kpiEndDate);
+                // Todas las tareas del rango. El filtro por categoría se aplica una sola vez acá
+                // y de ahí lo heredan las tarjetas, los gráficos y las cuatro tablas.
+                const todas = buildKpiDataset(tasks, window.__kpiStartDate, window.__kpiEndDate);
+                window.__kpiFilasTodas = todas;
+
+                if (!window.__kpiCatFiltro) window.__kpiCatFiltro = 'TODAS';
+                const familiasDisponibles = [...new Set(todas.map(r => r.familia).filter(Boolean))].sort();
+                if (window.__kpiCatFiltro !== 'TODAS' && !familiasDisponibles.includes(window.__kpiCatFiltro)) {
+                    window.__kpiCatFiltro = 'TODAS';
+                }
+                if (!window.__kpiSetCat) window.__kpiSetCat = (c) => {
+                    const _sy = window.scrollY;
+                    window.__kpiCatFiltro = c;
+                    window.__kpiPage = 0; window.__accPage = 0; window.__rkPage = 0;
+                    if (window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(window.__almacenajeContainer);
+                    requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
+                };
+
+                const cat = window.__kpiCatFiltro;
+                const filas = cat === 'TODAS' ? todas : todas.filter(r => r.familia === cat);
                 window.__kpiFilas = filas;
 
                 // Mismo número de días hacia atrás, para el comparativo
@@ -17613,12 +17636,33 @@ window.showCellModal = function(htmlContent) {
 
                 const fmtDia = mejorDia ? mejorDia.split('-').reverse().slice(0, 2).join('/') : '---';
 
+                // Chips de categoría: gobiernan todo el módulo, no solo un gráfico
+                const chips = ['TODAS', ...familiasDisponibles].map(c => {
+                    const activo = c === cat;
+                    const cuenta = c === 'TODAS' ? todas.length : todas.filter(r => r.familia === c).length;
+                    const etiqueta = c === 'TODAS' ? 'TODAS' : etiquetaCategoria(c).toUpperCase();
+                    return `<button onclick="window.__kpiSetCat('${c.replace(/'/g, "\\'")}')" style="
+                        padding:5px 14px; border-radius:20px; cursor:pointer; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;
+                        border:1px solid ${activo ? '#818cf8' : 'rgba(255,255,255,0.12)'};
+                        background:${activo ? 'rgba(129,140,248,0.22)' : 'rgba(255,255,255,0.03)'};
+                        color:${activo ? '#c7d2fe' : 'rgba(255,255,255,0.5)'}; transition:all 0.15s; white-space:nowrap;">
+                        ${etiqueta} <span style="opacity:0.55; font-weight:600;">${cuenta}</span>
+                    </button>`;
+                }).join('');
+
                 return `
                 <div style="background:rgba(10,15,30,0.95); border:2px solid #4f46e5; border-radius:14px; padding:1.2rem; box-shadow:0 0 30px rgba(79,70,229,0.15);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
                         <h3 style="color:#fff; font-weight:900; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📈 RESUMEN EJECUTIVO</h3>
                         <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
                     </div>
+
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:0.66rem; color:rgba(255,255,255,0.35); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-right:2px;">Categoría:</span>
+                        ${chips}
+                        ${cat !== 'TODAS' ? `<span style="font-size:0.66rem; color:#fbbf24; margin-left:6px;">Todo el módulo está filtrado por ${etiquetaCategoria(cat)}</span>` : ''}
+                    </div>
+
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:12px;">
                         ${tile('Unidades del período', unidades.toLocaleString('es-PE'), flecha(varUnid))}
                         ${tile('Horas-hombre', Math.round(horasHombre).toLocaleString('es-PE'), `${fmtHM(minsGrupo)} de trabajo en grupo`)}
@@ -17633,15 +17677,12 @@ window.showCellModal = function(htmlContent) {
                     <div style="background:rgba(10,15,30,0.95); border:2px solid #3b82f6; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(59,130,246,0.12);">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
                             <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Producción diaria vs meta</h4>
-                            <div style="display:flex; gap:12px; font-size:0.65rem; color:rgba(255,255,255,0.45);">
-                                <span><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#3b82f6; margin-right:5px;"></span>Real</span>
-                                <span><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#94a3b8; margin-right:5px;"></span>Meta</span>
-                            </div>
+                            <div id="kpiTrendLegend" style="display:flex; gap:12px; font-size:0.65rem; color:rgba(255,255,255,0.45); flex-wrap:wrap;"></div>
                         </div>
                         <div style="position:relative; height:220px;"><canvas id="kpiTrendChart"></canvas></div>
                     </div>
                     <div style="background:rgba(10,15,30,0.95); border:2px solid #10b981; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(16,185,129,0.12); display:flex; flex-direction:column;">
-                        <h4 style="color:#fff; font-weight:900; margin:0 0 12px 0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Cumplimiento por categoría</h4>
+                        <h4 style="color:#fff; font-weight:900; margin:0 0 12px 0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Cumplimiento por ${cat === 'TODAS' ? 'categoría' : 'detalle'}</h4>
                         <div style="position:relative; flex:1; min-height:220px;"><canvas id="kpiCatChart"></canvas></div>
                     </div>
                 </div>
@@ -19852,43 +19893,70 @@ window.showCellModal = function(htmlContent) {
         (window.__kpiCharts || []).forEach(c => { try { c.destroy(); } catch(e) {} });
         window.__kpiCharts = [];
 
-        // 1. Producción diaria contra meta
+        // 1. Producción diaria contra meta.
+        // En TODAS se apila por familia para ver la mezcla del día; con una categoría
+        // elegida queda de un solo color, que se lee mejor.
         const cvTrend = document.getElementById('kpiTrendChart');
         if (cvTrend) {
-            const porDia = new Map();
-            filas.forEach(r => {
-                const cur = porDia.get(r.fecha) || { real: 0, meta: 0 };
-                cur.real += r.qty;
-                cur.meta += r.esperado;
-                porDia.set(r.fecha, cur);
-            });
-            const fechas = [...porDia.keys()].sort();
+            const apilado = (window.__kpiCatFiltro || 'TODAS') === 'TODAS';
+            const fechas = [...new Set(filas.map(r => r.fecha))].sort();
+            const etiquetasX = fechas.map(f => f.split('-').reverse().slice(0, 2).join('/'));
+            const metaPorDia = fechas.map(f => Math.round(filas.filter(r => r.fecha === f).reduce((a, r) => a + r.esperado, 0)));
+            const PALETA = ['#3b82f6', '#f59e0b', '#22d3ee', '#a78bfa', '#f472b6', '#4ade80'];
+
+            let datasets;
+            if (apilado) {
+                const familias = [...new Set(filas.map(r => r.etiquetaCorta || 'Sin categoría'))].sort();
+                datasets = familias.map((fam, i) => ({
+                    label: fam,
+                    data: fechas.map(f => Math.round(filas.filter(r => r.fecha === f && (r.etiquetaCorta || 'Sin categoría') === fam).reduce((a, r) => a + r.qty, 0))),
+                    backgroundColor: PALETA[i % PALETA.length],
+                    stack: 'produccion',
+                    borderRadius: 4,
+                    order: 2
+                }));
+            } else {
+                datasets = [{
+                    label: etiquetaCategoria(window.__kpiCatFiltro) || 'Real',
+                    data: fechas.map(f => Math.round(filas.filter(r => r.fecha === f).reduce((a, r) => a + r.qty, 0))),
+                    backgroundColor: '#3b82f6', borderRadius: 4, order: 2
+                }];
+            }
+            datasets.push({ label: 'Meta', data: metaPorDia, type: 'line', borderColor: '#94a3b8', borderWidth: 2, borderDash: [5, 4], pointRadius: 0, fill: false, order: 1 });
+
+            // La leyenda se arma sola según lo que se esté mostrando
+            const cajaLeyenda = document.getElementById('kpiTrendLegend');
+            if (cajaLeyenda) {
+                cajaLeyenda.innerHTML = datasets.map(d => {
+                    const color = d.type === 'line' ? '#94a3b8' : d.backgroundColor;
+                    return `<span><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:${color}; margin-right:5px;"></span>${d.label}</span>`;
+                }).join('');
+            }
+
             window.__kpiCharts.push(new Chart(cvTrend, {
                 type: 'bar',
-                data: {
-                    labels: fechas.map(f => f.split('-').reverse().slice(0, 2).join('/')),
-                    datasets: [
-                        { label: 'Real', data: fechas.map(f => Math.round(porDia.get(f).real)), backgroundColor: '#3b82f6', borderRadius: 4, order: 2 },
-                        { label: 'Meta', data: fechas.map(f => Math.round(porDia.get(f).meta)), type: 'line', borderColor: '#94a3b8', borderWidth: 2, borderDash: [5, 4], pointRadius: 0, fill: false, order: 1 }
-                    ]
-                },
+                data: { labels: etiquetasX, datasets },
                 options: {
                     ...baseOpts,
                     plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString('es-PE')} u` } } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
-                        x: { grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
+                        y: { stacked: apilado, beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
+                        x: { stacked: apilado, grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
                     }
                 }
             }));
         }
 
-        // 2. Cumplimiento por familia (G. Gender) — pocas barras, legible para comité
+        // 2. Cumplimiento por categoría. En TODAS agrupa por familia (pocas barras, legible
+        // para comité); con una familia elegida baja al detalle de Gender RIMS.
         const cvCat = document.getElementById('kpiCatChart');
         if (cvCat) {
+            const porFamilia = (window.__kpiCatFiltro || 'TODAS') === 'TODAS';
             const porCat = new Map();
             filas.forEach(r => {
-                const clave = r.etiquetaCorta || 'Sin categoría';
+                const clave = porFamilia
+                    ? (r.etiquetaCorta || 'Sin categoría')
+                    : (r.detalle ? etiquetaCategoria(r.detalle) : 'Sin detalle');
                 const cur = porCat.get(clave) || { real: 0, meta: 0 };
                 cur.real += r.qty;
                 cur.meta += r.esperado;
