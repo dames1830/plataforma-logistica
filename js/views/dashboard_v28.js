@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.541';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.542';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.541';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.541';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.541';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.541';
-import * as metasService from '../services_v245/metasService.js?v=26.5.541';
+import * as adminService from '../services_v245/adminService.js?v=26.5.542';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.542';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.542';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.542';
+import * as metasService from '../services_v245/metasService.js?v=26.5.542';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.541';
+const VERSION = '26.5.542';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -545,6 +545,79 @@ const fmtHM = (mins) => `${Math.floor(mins / 60).toString().padStart(2, '0')}:${
 
 /** Color del semáforo de 3 niveles según el % de meta alcanzado. */
 const colorPorPct = (pct) => pct >= 100 ? '#22c55e' : pct >= 85 ? '#f59e0b' : '#ef4444';
+
+const mediana = (arr) => {
+    if (!arr || !arr.length) return 0;
+    const s = [...arr].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+
+/** Porcentaje del equipo que queda por debajo de este valor. */
+const percentilDe = (valor, todos) => {
+    if (!todos || todos.length < 2) return 100;
+    return Math.round((todos.filter(v => v < valor).length / (todos.length - 1)) * 100);
+};
+
+/**
+ * Estadística por operario a partir de las tareas de sus grupos.
+ * Las unidades son las del grupo completo, que es lo comparable contra la meta
+ * (que también es de grupo). El detalle por día queda listo para desplegar.
+ */
+const buildStatsOperarios = (filas) => {
+    const m = new Map();
+    (filas || []).forEach(r => {
+        if (r.mins <= 0) return;
+        r.usuarios.forEach(u => {
+            const c = m.get(u) || { user: u, qty: 0, mins: 0, tareas: 0, enMeta: 0, pcts: [], uphs: [], porDia: new Map() };
+            c.qty += r.qty;
+            c.mins += r.mins;
+            c.tareas++;
+            if (r.ok) c.enMeta++;
+            c.pcts.push(r.pct);
+            c.uphs.push(r.uph);
+            const d = c.porDia.get(r.fecha) || { fecha: r.fecha, qty: 0, mins: 0, meta: 0, tareas: 0 };
+            d.qty += r.qty; d.mins += r.mins; d.meta += r.esperado; d.tareas++;
+            c.porDia.set(r.fecha, d);
+            m.set(u, c);
+        });
+    });
+
+    const lista = [...m.values()].map(c => {
+        const prom = c.pcts.reduce((a, b) => a + b, 0) / c.pcts.length;
+        const varianza = c.pcts.reduce((a, p) => a + Math.pow(p - prom, 2), 0) / c.pcts.length;
+        const cv = prom > 0 ? (Math.sqrt(varianza) / prom) * 100 : 0;
+        return {
+            ...c,
+            promPct: prom,
+            avgUph: c.mins > 0 ? (c.qty / c.mins) * 60 : 0,
+            minUph: Math.min(...c.uphs),
+            medUph: mediana(c.uphs),
+            maxUph: Math.max(...c.uphs),
+            consistencia: Math.max(0, 100 - cv),
+            pctEnMeta: c.tareas > 0 ? (c.enMeta / c.tareas) * 100 : 0,
+            dias: [...c.porDia.values()].sort((a, b) => b.fecha.localeCompare(a.fecha))
+        };
+    });
+
+    const todosProm = lista.map(x => x.promPct);
+    lista.forEach(x => { x.percentil = percentilDe(x.promPct, todosProm); });
+    return lista;
+};
+
+/** Promedio de rendimiento de cada grupo en el período, para comparar cada tarea contra su propia marca. */
+const buildPromedioPorGrupo = (filas) => {
+    const m = new Map();
+    (filas || []).forEach(r => {
+        if (r.mins <= 0) return;
+        const c = m.get(r.grupo) || { suma: 0, n: 0 };
+        c.suma += r.pct; c.n++;
+        m.set(r.grupo, c);
+    });
+    const out = new Map();
+    m.forEach((v, k) => out.set(k, v.n > 0 ? v.suma / v.n : 0));
+    return out;
+};
 
 /** Fila de cierre de jornada en el reporte acumulado. */
 const filaSubtotal = (fecha, tot) => {
@@ -1984,7 +2057,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.541');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.542');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11494,7 +11567,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.541 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.542 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16180,7 +16253,17 @@ window.showCellModal = function(htmlContent) {
             { h: 'Unidades', w: 13 }, { h: 'Horas', w: 10 }, { h: 'U/H Real', w: 11 },
             { h: 'Meta U/H', w: 11 }, { h: 'Desviación', w: 13 }, { h: '% Meta', w: 10 }, { h: 'Origen Meta', w: 16 }
         ]);
-        (window.__kpiPorCategoria || []).forEach((c, i) => {
+        // Se calcula acá y no se toma de la vista, para que exporte igual sin importar
+        // qué pestaña esté abierta en pantalla
+        const mapaCat = new Map();
+        filas.forEach(r => {
+            const clave = (r.etiquetaCorta || 'Sin categoría') + '||' + (r.detalle || '');
+            const cur = mapaCat.get(clave) || { fam: r.etiquetaCorta || 'Sin categoría', det: r.detalle || '', qty: 0, mins: 0, meta: 0, metaUph: 0, tareas: 0, origen: r.origenMeta };
+            cur.qty += r.qty; cur.mins += r.mins; cur.meta += r.esperado; cur.tareas++;
+            cur.metaUph = r.metaUph;
+            mapaCat.set(clave, cur);
+        });
+        [...mapaCat.values()].sort((a, b) => a.fam.localeCompare(b.fam) || b.qty - a.qty).forEach((c, i) => {
             const row = wsC.getRow(i + 3);
             const pct = c.meta > 0 ? (c.qty / c.meta) * 100 : 0;
             row.values = [
@@ -16191,38 +16274,44 @@ window.showCellModal = function(htmlContent) {
             [3, 4, 5, 6, 7, 8, 9].forEach(n => { row.getCell(n).numFmt = '#,##0'; row.getCell(n).alignment = { horizontal: 'right' }; });
         });
 
-        // ── Hoja 3: Acumulado por día y usuario ──
-        const wsA = wb.addWorksheet('Acumulado por Día');
-        cabecera(wsA, 'ACUMULADO POR DÍA × USUARIO', [
-            { h: 'Fecha', w: 12 }, { h: 'Usuario', w: 20 }, { h: 'Tareas', w: 9 },
-            { h: 'Unid. Acumuladas', w: 17 }, { h: 'Meta del Día', w: 14 }, { h: 'Desviación', w: 12 },
-            { h: 'Tiempo Total', w: 13 }, { h: 'U/H', w: 10 }, { h: '% Meta', w: 10 }
+        // ── Hoja: Operación, una fila por jornada ──
+        const wsO = wb.addWorksheet('Operación');
+        cabecera(wsO, 'OPERACIÓN POR JORNADA', [
+            { h: 'Fecha', w: 12 }, { h: 'Tareas', w: 9 }, { h: 'Grupos', w: 9 },
+            { h: 'Unidades', w: 13 }, { h: 'Meta', w: 13 }, { h: 'Desviación', w: 13 },
+            { h: 'Horas', w: 10 }, { h: 'U/H', w: 10 }, { h: '% Meta', w: 10 }
         ]);
-        (window.__kpiAcumulado || []).forEach((r, i) => {
-            const row = wsA.getRow(i + 3);
-            const pct = r.meta > 0 ? (r.qty / r.meta) * 100 : 0;
+        [...new Set(filas.map(r => r.fecha))].sort((a, b) => b.localeCompare(a)).forEach((f, i) => {
+            const dd = filas.filter(r => r.fecha === f);
+            const q = dd.reduce((a, r) => a + r.qty, 0);
+            const mt = dd.reduce((a, r) => a + r.esperado, 0);
+            const mins = dd.reduce((a, r) => a + r.mins, 0);
+            const row = wsO.getRow(i + 3);
             row.values = [
-                r.fecha.split('-').reverse().join('/'), r.user, r.tasks,
-                r.qty, Math.round(r.meta), Math.round(r.qty - r.meta),
-                fmtHM(r.mins), r.mins > 0 ? Math.round((r.qty / r.mins) * 60) : 0, Math.round(pct)
+                f.split('-').reverse().join('/'), dd.length, new Set(dd.map(r => r.grupo)).size,
+                Math.round(q), Math.round(mt), Math.round(q - mt), Math.round(mins / 60),
+                mins > 0 ? Math.round((q / mins) * 60) : 0, mt > 0 ? Math.floor((q / mt) * 100) : 0
             ];
-            [3, 4, 5, 6, 8, 9].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+            [2, 3, 4, 5, 6, 7, 8, 9].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
         });
 
-        // ── Hoja 4: Ranking ──
-        const wsK = wb.addWorksheet('Ranking');
-        cabecera(wsK, 'RANKING DE VELOCIDAD', [
-            { h: '#', w: 6 }, { h: 'Operador', w: 22 }, { h: 'Tareas', w: 9 }, { h: 'U/H Prom', w: 12 },
+        // ── Hoja: Personas, con la estadística del ranking ──
+        const wsK = wb.addWorksheet('Personas');
+        cabecera(wsK, 'RENDIMIENTO POR OPERARIO', [
+            { h: '#', w: 6 }, { h: 'Operador', w: 22 }, { h: 'Tareas', w: 9 }, { h: 'Jornadas', w: 10 },
+            { h: 'U/H Prom', w: 11 }, { h: 'Percentil', w: 10 }, { h: 'U/H Mín', w: 10 }, { h: 'U/H Mediana', w: 13 }, { h: 'U/H Máx', w: 10 },
             { h: '% Meta Prom', w: 13 }, { h: 'Consistencia', w: 13 }, { h: '% Tareas en Meta', w: 17 },
             { h: 'Unid. de sus Grupos', w: 19 }, { h: 'Horas', w: 10 }
         ]);
-        (window.__kpiRanking || []).forEach((r, i) => {
+        buildStatsOperarios(filas).sort((a, b) => b.promPct - a.promPct).forEach((o, i) => {
             const row = wsK.getRow(i + 3);
             row.values = [
-                i + 1, r.user, r.tasks, Math.round(r.avgUph), Math.round(r.promPct),
-                Math.round(r.consistencia), Math.round(r.pctEnMeta), Math.round(r.qty), Math.round(r.mins / 60)
+                i + 1, o.user, o.tareas, o.dias.length, Math.round(o.avgUph), o.percentil,
+                Math.round(o.minUph), Math.round(o.medUph), Math.round(o.maxUph),
+                Math.floor(o.promPct), Math.round(o.consistencia), Math.round(o.pctEnMeta),
+                Math.round(o.qty), Math.round(o.mins / 60)
             ];
-            [1, 3, 4, 5, 6, 7, 8, 9].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+            [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
         });
 
         const buf = await wb.xlsx.writeBuffer();
@@ -17585,16 +17674,38 @@ window.showCellModal = function(htmlContent) {
                 if (window.__kpiCatFiltro !== 'TODAS' && !familiasDisponibles.includes(window.__kpiCatFiltro)) {
                     window.__kpiCatFiltro = 'TODAS';
                 }
-                if (!window.__kpiSetCat) window.__kpiSetCat = (c) => {
+                const repintar = () => {
                     const _sy = window.scrollY;
-                    window.__kpiCatFiltro = c;
                     window.__kpiPage = 0; window.__accPage = 0; window.__rkPage = 0;
                     if (window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(window.__almacenajeContainer);
                     requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
                 };
+                if (!window.__kpiSetCat) window.__kpiSetCat = (c) => { window.__kpiCatFiltro = c; repintar(); };
+                if (!window.__kpiVista) window.__kpiVista = 'operacion';
+                if (!window.__kpiSetVista) window.__kpiSetVista = (v) => { window.__kpiVista = v; repintar(); };
+                // Despliegue de filas sin volver a dibujar todo: los gráficos no se recrean
+                if (!window.__kpiToggleFila) window.__kpiToggleFila = (id) => {
+                    let abierto = false;
+                    document.querySelectorAll(`[data-parent="${id}"]`).forEach(el => {
+                        const oculto = el.style.display === 'none';
+                        el.style.display = oculto ? '' : 'none';
+                        abierto = oculto;
+                    });
+                    const ic = document.getElementById('ic_' + id);
+                    if (ic) ic.textContent = abierto ? '▾' : '▸';
+                };
+                // Clic en un día lo aísla; volver a hacer clic en el mismo lo suelta
+                if (!window.__kpiSetDia) window.__kpiSetDia = (f) => {
+                    window.__kpiDiaFiltro = (f && window.__kpiDiaFiltro !== f) ? f : null;
+                    repintar();
+                };
 
                 const cat = window.__kpiCatFiltro;
-                const filas = cat === 'TODAS' ? todas : todas.filter(r => r.familia === cat);
+                const dia = window.__kpiDiaFiltro;
+                if (dia && !todas.some(r => r.fecha === dia)) window.__kpiDiaFiltro = null;
+
+                let filas = cat === 'TODAS' ? todas : todas.filter(r => r.familia === cat);
+                if (window.__kpiDiaFiltro) filas = filas.filter(r => r.fecha === window.__kpiDiaFiltro);
                 window.__kpiFilas = filas;
 
                 // Mismo número de días hacia atrás, para el comparativo
@@ -17660,7 +17771,8 @@ window.showCellModal = function(htmlContent) {
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.06);">
                         <span style="font-size:0.66rem; color:rgba(255,255,255,0.35); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-right:2px;">Categoría:</span>
                         ${chips}
-                        ${cat !== 'TODAS' ? `<span style="font-size:0.66rem; color:#fbbf24; margin-left:6px;">Todo el módulo está filtrado por ${etiquetaCategoria(cat)}</span>` : ''}
+                        ${window.__kpiDiaFiltro ? `<button onclick="window.__kpiSetDia(null)" style="padding:5px 14px; border-radius:20px; cursor:pointer; font-size:0.7rem; font-weight:800; border:1px solid #34d399; background:rgba(16,185,129,0.2); color:#6ee7b7; white-space:nowrap;">📅 ${window.__kpiDiaFiltro.split('-').reverse().join('/')} ✕</button>` : ''}
+                        ${(cat !== 'TODAS' || window.__kpiDiaFiltro) ? `<span style="font-size:0.66rem; color:#fbbf24; margin-left:6px;">Todo el módulo está filtrado${cat !== 'TODAS' ? ` por ${etiquetaCategoria(cat)}` : ''}${window.__kpiDiaFiltro ? ` al ${window.__kpiDiaFiltro.split('-').reverse().join('/')}` : ''}</span>` : ''}
                     </div>
 
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:12px;">
@@ -17673,456 +17785,311 @@ window.showCellModal = function(htmlContent) {
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:1.5rem; align-items:stretch;">
+                <div style="display:grid; grid-template-columns:1.75fr 1fr; gap:1.5rem; align-items:stretch;">
                     <div style="background:rgba(10,15,30,0.95); border:2px solid #3b82f6; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(59,130,246,0.12);">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                            <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Producción diaria vs meta</h4>
+                            <div>
+                                <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Producción diaria vs meta</h4>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">Clic en una barra para ver ese día en detalle</div>
+                            </div>
                             <div id="kpiTrendLegend" style="display:flex; gap:12px; font-size:0.65rem; color:rgba(255,255,255,0.45); flex-wrap:wrap;"></div>
                         </div>
-                        <div style="position:relative; height:220px;"><canvas id="kpiTrendChart"></canvas></div>
+                        <div style="position:relative; height:250px;"><canvas id="kpiTrendChart" style="cursor:pointer;"></canvas></div>
                     </div>
-                    <div style="background:rgba(10,15,30,0.95); border:2px solid #10b981; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(16,185,129,0.12); display:flex; flex-direction:column;">
-                        <h4 style="color:#fff; font-weight:900; margin:0 0 12px 0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Cumplimiento por ${cat === 'TODAS' ? 'categoría' : 'detalle'}</h4>
-                        <div style="position:relative; flex:1; min-height:220px;"><canvas id="kpiCatChart"></canvas></div>
-                    </div>
-                </div>
 
-                <div style="background:rgba(10,15,30,0.95); border:2px solid #eab308; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(234,179,8,0.12);">
-                    <h4 style="color:#fff; font-weight:900; margin:0 0 12px 0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Turno día vs turno noche</h4>
-                    <div style="position:relative; height:200px;"><canvas id="kpiTurnoChart"></canvas></div>
+                    <!-- PANEL DE DÍAS: barrido rápido de la jornada, con clic para entrar al detalle -->
+                    <div style="background:rgba(10,15,30,0.95); border:2px solid #10b981; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(16,185,129,0.12); display:flex; flex-direction:column; min-width:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; gap:8px;">
+                            <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Detalle por día</h4>
+                            ${window.__kpiDiaFiltro ? `<button onclick="window.__kpiSetDia(null)" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#34d399; padding:2px 9px; border-radius:12px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">Ver todos ✕</button>` : ''}
+                        </div>
+                        <div style="overflow-y:auto; max-height:250px; margin:-4px -6px; padding:4px 6px;">
+                            ${(() => {
+                                const dias = [...new Set(todas.map(r => r.fecha))].sort((a, b) => b.localeCompare(a));
+                                if (!dias.length) return '<div style="color:rgba(255,255,255,0.2); font-size:0.75rem; text-align:center; padding:2rem;">Sin jornadas en el rango.</div>';
+
+                                const baseFiltro = cat === 'TODAS' ? todas : todas.filter(r => r.familia === cat);
+                                return dias.map(f => {
+                                    const dd = baseFiltro.filter(r => r.fecha === f);
+                                    if (!dd.length) return '';
+                                    const q = dd.reduce((a, r) => a + r.qty, 0);
+                                    const m = dd.reduce((a, r) => a + r.esperado, 0);
+                                    const pct = m > 0 ? (q / m) * 100 : 0;
+                                    const col = colorPorPct(pct);
+                                    const activo = window.__kpiDiaFiltro === f;
+
+                                    // Grupo que más aportó ese día, para saber a quién reconocer
+                                    const porGrupo = new Map();
+                                    dd.forEach(r => porGrupo.set(r.grupo, (porGrupo.get(r.grupo) || 0) + r.qty));
+                                    const mejor = [...porGrupo.entries()].sort((a, b) => b[1] - a[1])[0];
+
+                                    return `<div onclick="window.__kpiSetDia('${f}')" style="
+                                        padding:9px 11px; margin-bottom:6px; border-radius:10px; cursor:pointer; transition:all 0.15s;
+                                        background:${activo ? 'rgba(16,185,129,0.14)' : 'rgba(255,255,255,0.025)'};
+                                        border:1px solid ${activo ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.05)'};"
+                                        onmouseover="if(!${activo}) this.style.background='rgba(255,255,255,0.05)'"
+                                        onmouseout="if(!${activo}) this.style.background='rgba(255,255,255,0.025)'">
+                                        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
+                                            <b style="color:#fff; font-size:0.78rem;">${f.split('-').reverse().slice(0, 2).join('/')}</b>
+                                            <span style="color:${col}; font-weight:900; font-size:0.85rem;">${Math.floor(pct)}%</span>
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between; gap:8px; margin-top:3px;">
+                                            <span style="color:#67e8f9; font-weight:800; font-size:0.72rem;">${Math.round(q).toLocaleString('es-PE')} u</span>
+                                            <span style="color:rgba(255,255,255,0.3); font-size:0.65rem;">meta ${Math.round(m).toLocaleString('es-PE')}</span>
+                                        </div>
+                                        <div style="height:3px; background:rgba(255,255,255,0.06); border-radius:3px; margin-top:6px; overflow:hidden;">
+                                            <div style="width:${Math.min(pct, 100)}%; height:100%; background:${col};"></div>
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between; gap:8px; margin-top:5px; font-size:0.62rem; color:rgba(255,255,255,0.3);">
+                                            <span>${dd.length} tarea${dd.length !== 1 ? 's' : ''}</span>
+                                            ${mejor ? `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%;" title="Grupo que más aportó">🏅 ${mejor[0]}</span>` : ''}
+                                        </div>
+                                    </div>`;
+                                }).join('');
+                            })()}
+                        </div>
+                    </div>
                 </div>`;
             })()}
 
-            <!-- REPORTE PRODUCTIVIDAD INDIVIDUAL (ESTILO NEON) -->
-            <div style="background:rgba(15,23,42,0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 25px rgba(79,70,229,0.2);">
-                <div style="padding:1rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="color:#fff; font-weight:800; margin:0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">
-                        📊 PRODUCTIVIDAD <span style="font-size:0.7rem; opacity:0.6; margin-left:10px;">${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
-                    </h3>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-weight:600;">FILTRO: ${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
-                </div>
-                
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:#eee;">
-                        <thead style="background:rgba(0,0,0,0.8); position:sticky; top:0; z-index:10;">
-                            <tr style="color:rgba(255,255,255,0.7); text-transform:uppercase; font-size:0.7rem; letter-spacing:0.05em; border-bottom:1px solid rgba(79,70,229,0.3);">
-                                <th style="padding:1rem; text-align:left;">Fecha</th>
-                                <th style="padding:1rem; text-align:left;">Grupo</th>
-                                <th style="padding:1rem; text-align:left;">Categoría</th>
-                                <th style="padding:1rem; text-align:center;">Unidades</th>
-                                <th style="padding:1rem; text-align:center;">Tiempo</th>
-                                <th style="padding:1rem; text-align:center;">U/H</th>
-                                <th style="padding:1rem; text-align:center;">Meta</th>
-                                <th style="padding:1rem; text-align:center;">Desviación</th>
-                                <th style="padding:1rem; text-align:center;">Rendimiento</th>
-                                <th style="padding:1rem; text-align:center;">Estado</th>
+            <!-- PANEL DE ANÁLISIS: tres vistas, una por pregunta -->
+            ${(() => {
+                const filas = window.__kpiFilas || [];
+                const vista = window.__kpiVista || 'operacion';
+                const promGrupo = buildPromedioPorGrupo(filas);
+                const statsOp = buildStatsOperarios(filas);
+
+                const VISTAS = [
+                    { id: 'operacion', icono: '🏭', label: 'Operación', sub: '¿Cómo salió cada jornada?' },
+                    { id: 'personas',  icono: '👥', label: 'Personas',  sub: '¿Quién rinde y quién no?' },
+                    { id: 'producto',  icono: '🏷️', label: 'Producto',  sub: '¿Qué categoría rinde mejor?' }
+                ];
+
+                const nav = VISTAS.map(v => {
+                    const on = v.id === vista;
+                    return `<button onclick="window.__kpiSetVista('${v.id}')" style="
+                        flex:1; min-width:150px; text-align:left; padding:0.75rem 1rem; cursor:pointer; transition:all 0.15s;
+                        background:${on ? 'rgba(99,102,241,0.14)' : 'transparent'}; border:none;
+                        border-bottom:2px solid ${on ? '#818cf8' : 'transparent'};">
+                        <div style="color:${on ? '#fff' : 'rgba(255,255,255,0.55)'}; font-weight:900; font-size:0.8rem; letter-spacing:0.5px; text-transform:uppercase;">${v.icono} ${v.label}</div>
+                        <div style="color:${on ? 'rgba(199,210,254,0.75)' : 'rgba(255,255,255,0.25)'}; font-size:0.63rem; margin-top:2px;">${v.sub}</div>
+                    </button>`;
+                }).join('');
+
+                const th = (t, al = 'center') => `<th style="padding:0.7rem 0.8rem; text-align:${al}; font-weight:700;">${t}</th>`;
+                const vacio = (n, msg) => `<tr><td colspan="${n}" style="padding:3.5rem; text-align:center; color:rgba(255,255,255,0.2);">${msg}</td></tr>`;
+
+                let cuerpo = '';
+
+                // ── VISTA OPERACIÓN: la jornada, y al desplegar sus tareas ──
+                if (vista === 'operacion') {
+                    const dias = [...new Set(filas.map(r => r.fecha))].sort((a, b) => b.localeCompare(a));
+                    cuerpo = `
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.55);">
+                            <tr style="color:rgba(165,180,252,0.85); text-transform:uppercase; font-size:0.64rem; letter-spacing:0.06em; border-bottom:2px solid rgba(99,102,241,0.2);">
+                                ${th('', 'center')}${th('Jornada', 'left')}${th('Tareas')}${th('Grupos')}${th('Unidades')}${th('Meta')}${th('Desviación')}${th('U/H')}${th('Cumplimiento')}
                             </tr>
                         </thead>
                         <tbody>
-                            ${(() => {
-                                const filas = (window.__kpiFilas || []).slice()
-                                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || a.grupo.localeCompare(b.grupo));
+                        ${dias.length === 0 ? vacio(9, 'No hay tareas finalizadas con los filtros actuales.') : dias.map((f, di) => {
+                            const dd = filas.filter(r => r.fecha === f);
+                            const q = dd.reduce((a, r) => a + r.qty, 0);
+                            const mt = dd.reduce((a, r) => a + r.esperado, 0);
+                            const mins = dd.reduce((a, r) => a + r.mins, 0);
+                            const pct = mt > 0 ? (q / mt) * 100 : 0;
+                            const col = colorPorPct(pct);
+                            const uph = mins > 0 ? (q / mins) * 60 : 0;
+                            const grupos = new Set(dd.map(r => r.grupo)).size;
+                            const id = 'dia' + di;
 
-                                if (filas.length === 0) return `<tr><td colspan="10" style="padding:4rem; text-align:center; color:rgba(255,255,255,0.2);">No hay tareas finalizadas en este rango de fechas.</td></tr>`;
+                            const detalle = dd.slice().sort((a, b) => b.pct - a.pct).map(r => {
+                                const c2 = colorPorPct(r.pct);
+                                const prom = promGrupo.get(r.grupo) || 0;
+                                const delta = r.pct - prom;
+                                const vsProm = Math.abs(delta) < 5
+                                    ? '<span style="color:rgba(255,255,255,0.28);">en su promedio</span>'
+                                    : (delta > 0 ? `<span style="color:#22c55e;">▲ ${Math.round(delta)}pp</span>` : `<span style="color:#f59e0b;">▼ ${Math.round(Math.abs(delta))}pp</span>`);
+                                const catColor = String(r.familia).toUpperCase() === 'FOOTWEAR' ? '#818cf8' : '#f59e0b';
+                                return `<tr data-parent="${id}" style="display:none; background:rgba(0,0,0,0.28); border-bottom:1px solid rgba(255,255,255,0.02);">
+                                    <td></td>
+                                    <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:#fff; font-weight:700; font-size:0.74rem;">${r.grupo}
+                                        <span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}44; padding:1px 6px; border-radius:6px; font-size:0.56rem; font-weight:800; margin-left:6px; white-space:nowrap;">${r.categoria}</span>
+                                        ${r.mixta ? ' <span title="Mezcla familias distintas" style="color:#ef4444;">⚠️</span>' : ''}
+                                    </td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.7rem;">${r.mins > 0 ? fmtHM(r.mins) : '--:--'}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.7rem;">${r.usuarios.length}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:#a5b4fc; font-weight:800;">${r.qty.toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3);">${Math.round(r.esperado).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${r.desviacion >= 0 ? '#22c55e' : '#ef4444'}; font-weight:700;">${r.desviacion >= 0 ? '+' : ''}${Math.round(r.desviacion).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${c2}; font-weight:800;">${Math.round(r.uph).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center;">
+                                        <span style="color:${c2}; font-weight:800;">${Math.floor(r.pct)}%</span>
+                                        <div style="font-size:0.6rem; margin-top:1px;">${vsProm}</div>
+                                    </td>
+                                </tr>`;
+                            }).join('');
 
-                                // --- PAGINACIÓN 10 por página ---
-                                const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
-                                if (window.__kpiLastDate !== rangeKey) { window.__kpiPage = 0; window.__kpiLastDate = rangeKey; }
-                                if (!window.__kpiSetPage) window.__kpiSetPage = (p) => { const _sy=window.scrollY; window.__kpiPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
-                                const _pg = window.__kpiPage || 0;
-                                window.__kpiTotalPages = Math.ceil(filas.length / 10);
-                                window.__kpiTotalRows = filas.length;
-                                const pagedRows = filas.slice(_pg * 10, (_pg + 1) * 10);
-
-                                return pagedRows.map(r => {
-                                    // Piso y no redondeo: con 299 de 300 debe verse 99%, nunca "100% NO CUMPLIÓ"
-                                    const pctR = Math.floor(r.pct);
-                                    const col = colorPorPct(r.pct);
-                                    const etiqueta = r.pct >= 100 ? 'CUMPLIÓ' : r.pct >= 85 ? 'AL LÍMITE' : 'NO CUMPLIÓ';
-                                    const desvTxt = r.mins > 0
-                                        ? (r.desviacion >= 0 ? `<span style="color:#22c55e; font-weight:800;">+${Math.round(r.desviacion).toLocaleString('es-PE')}</span>` : `<span style="color:#ef4444; font-weight:800;">${Math.round(r.desviacion).toLocaleString('es-PE')}</span>`)
-                                        : '<span style="color:rgba(255,255,255,0.2);">---</span>';
-                                    // Azul para calzado, ámbar para el resto de familias
-                                    const catColor = String(r.familia).toUpperCase() === 'FOOTWEAR' ? '#818cf8' : '#f59e0b';
-                                    const avisoMeta = r.origenMeta === 'global' || r.origenMeta === 'respaldo'
-                                        ? ` <span title="Esta categoría no tiene regla propia ni de familia: usa la meta de respaldo" style="color:#94a3b8; font-size:0.7rem;">•</span>` : '';
-                                    const badgeCat = `<span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}55; padding:2px 8px; border-radius:8px; font-size:0.62rem; font-weight:800; white-space:nowrap;">${r.categoria}</span>${r.mixta ? ' <span title="La tarea mezcla artículos de familias distintas" style="color:#ef4444; font-size:0.7rem;">⚠️</span>' : ''}${avisoMeta}`;
-                                    return `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition:all 0.2s;">
-                                        <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
-                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.8rem;">${r.grupo}</b></td>
-                                        <td style="padding:0.8rem 1rem;">${badgeCat}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:var(--primary); font-weight:800;">${r.qty.toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; font-weight:700; color:#fff;">${r.mins > 0 ? fmtHM(r.mins) : '--:--'}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:${col}; font-weight:900;">${r.mins > 0 ? Math.round(r.uph).toLocaleString('es-PE') : '---'}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${r.metaUph.toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">${desvTxt}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:4px;">
-                                                <div style="width:${Math.min(r.pct, 100)}%; height:100%; background:${col}; border-radius:10px; box-shadow:0 0 10px ${col}66;"></div>
-                                            </div>
-                                            <span style="font-size:0.7rem; font-weight:800; color:${col};">${pctR}%</span>
-                                        </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">
-                                            <span style="background:${col}1a; color:${col}; padding:4px 10px; border-radius:10px; font-weight:900; font-size:0.62rem; border:1px solid ${col}4d; white-space:nowrap;">${etiqueta}</span>
-                                        </td>
-                                    </tr>`;
-                                }).join('');
-                            })()}
+                            return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.05)'" onmouseout="this.style.background=''">
+                                <td style="padding:0.75rem 0.5rem; text-align:center; color:#818cf8; font-weight:900; width:30px;"><span id="ic_${id}">▸</span></td>
+                                <td style="padding:0.75rem 0.8rem;"><b style="color:#fff; font-size:0.88rem;">${f.split('-').reverse().join('/')}</b></td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${dd.length}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${grupos}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:#67e8f9; font-weight:900; font-size:0.95rem;">${Math.round(q).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.4); font-weight:700;">${Math.round(mt).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${q - mt >= 0 ? '#22c55e' : '#ef4444'}; font-weight:800;">${q - mt >= 0 ? '+' : ''}${Math.round(q - mt).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${col}; font-weight:900;">${Math.round(uph).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 1rem; min-width:130px;">
+                                    <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct, 100)}%; height:100%; background:${col};"></div></div>
+                                    <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:800;">${Math.floor(pct)}% de meta</div>
+                                </td>
+                            </tr>${detalle}`;
+                        }).join('')}
                         </tbody>
                     </table>
-                </div>
-                
-                <div style="padding:1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(79,70,229,0.2);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">Meta por grupo de 2, según Config. Tareas &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.6);">${window.__kpiTotalRows||0} tareas</span></div>
-                        <button onclick="window.exportarKpiTareas(this)" class="btn" style="width:auto; padding:6px 12px; font-size:0.7rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981; cursor:pointer;">📥 EXPORTAR KPI</button>
-                    </div>
-                    ${(() => {
-                        const tp = window.__kpiTotalPages || 1;
-                        const cp = window.__kpiPage || 0;
-                        if (tp <= 1) return '';
-                        const btnStyle = (active, dis) => `padding:5px 11px; border-radius:8px; border:1px solid ${active?'#6366f1':'rgba(255,255,255,0.1)'}; background:${active?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a5b4fc'}; cursor:${dis?'default':'pointer'}; font-size:0.75rem; font-weight:${active?900:500};`;
-                        const pages = Array.from({length: tp}, (_, i) => i);
-                        return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(255,255,255,0.05);">
-                            <button onclick="window.__kpiSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
-                            ${pages.map(p=>`<button onclick="window.__kpiSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
-                            <button onclick="window.__kpiSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                            <span style="font-size:0.7rem; color:rgba(255,255,255,0.3); margin-left:6px;">Pág ${cp+1} / ${tp}</span>
-                        </div>`;
-                    })()}
-                </div>
-            </div>
+                    <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.6;">
+                        Clic en una jornada para ver sus tareas. <b style="color:rgba(255,255,255,0.55);">Cumplimiento</b> compara contra la meta; la línea de abajo compara cada tarea contra el promedio de ese mismo grupo en el período, para detectar a quien bajó su ritmo aunque siga cumpliendo.
+                    </div>`;
+                }
 
-            <!-- REPORTE: ACUMULADO DÍA × USUARIO -->
-            <div style="background:rgba(10,15,30,0.95); border:2px solid #f59e0b; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(245,158,11,0.15);">
-                <div style="padding:1rem 1.2rem; background:rgba(245,158,11,0.08); border-bottom:1px solid rgba(245,158,11,0.25); display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="color:#f59e0b; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">📅 ACUMULADO POR DÍA × USUARIO</h3>
-                        <div style="font-size:0.68rem; color:rgba(245,158,11,0.55); font-weight:600;">Suma de unidades por operador por jornada — incluye todas las tareas del día</div>
-                    </div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">FILTRO: ${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
-                        <thead style="background:rgba(0,0,0,0.6);">
-                            <tr style="color:rgba(245,158,11,0.8); text-transform:uppercase; font-size:0.68rem; letter-spacing:0.06em; border-bottom:2px solid rgba(245,158,11,0.25);">
-                                <th style="padding:0.85rem 1rem; text-align:left;">Fecha</th>
-                                <th style="padding:0.85rem 1rem; text-align:left;">Usuario</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Tareas</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Unid. Acumuladas</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Meta del Día</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Desviación</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Tiempo Total</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Unid/Hr</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Avance vs Meta</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Estado</th>
+                // ── VISTA PERSONAS: ranking, y al desplegar los días de cada operario ──
+                else if (vista === 'personas') {
+                    const MIN_TAREAS = 3;
+                    const rank = statsOp.filter(o => o.tareas >= MIN_TAREAS).sort((a, b) => b.promPct - a.promPct);
+                    const excluidos = statsOp.length - rank.length;
+                    window.__kpiRanking = rank;
+                    const medallas = ['🥇', '🥈', '🥉'];
+
+                    cuerpo = `
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.55);">
+                            <tr style="color:rgba(167,139,250,0.85); text-transform:uppercase; font-size:0.64rem; letter-spacing:0.06em; border-bottom:2px solid rgba(139,92,246,0.2);">
+                                ${th('', 'center')}${th('#')}${th('Operador', 'left')}${th('Tareas')}${th('U/H Prom')}${th('Percentil')}${th('Mín · Mediana · Máx')}${th('% en Meta')}${th('Consistencia')}${th('Cumplimiento')}
                             </tr>
                         </thead>
                         <tbody>
-                            ${(() => {
-                                // Cada operario carga las unidades del grupo repartidas por mitades,
-                                // pero la meta se reparte igual, así el % refleja el rendimiento real del grupo.
-                                const accMap = new Map();
-                                (window.__kpiFilas || []).forEach(r => {
-                                    const n = r.usuarios.length || 1;
-                                    r.usuarios.forEach((user, idx) => {
-                                        const qty = n === 2 ? (idx === 0 ? Math.ceil(r.qty / 2) : Math.floor(r.qty / 2)) : r.qty;
-                                        const key = r.fecha + '|' + user;
-                                        const cur = accMap.get(key) || { fecha: r.fecha, user, qty: 0, mins: 0, tasks: 0, meta: 0 };
-                                        cur.qty += qty;
-                                        cur.mins += r.mins;
-                                        cur.meta += r.esperado / n;
-                                        cur.tasks++;
-                                        accMap.set(key, cur);
-                                    });
-                                });
-                                const rows = [...accMap.values()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)||a.user.localeCompare(b.user));
-                                if (!rows.length) return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos acumulados para mostrar.</td></tr>`;
-                                window.__kpiAcumulado = rows;
+                        ${rank.length === 0 ? vacio(10, `Ningún operario alcanza las ${MIN_TAREAS} tareas mínimas con los filtros actuales.`) : rank.map((o, i) => {
+                            const col = colorPorPct(o.promPct);
+                            const id = 'op' + i;
+                            const consColor = o.consistencia >= 80 ? '#22c55e' : o.consistencia >= 60 ? '#f59e0b' : '#ef4444';
+                            const pColor = o.percentil >= 75 ? '#22c55e' : o.percentil >= 40 ? '#a78bfa' : '#f59e0b';
 
-                                // --- PAGINACIÓN ACUMULADO ---
-                                const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
-                                if (window.__accLastDate !== rangeKey) { window.__accPage=0; window.__accLastDate=rangeKey; }
-                                if (!window.__accSetPage) window.__accSetPage = (p) => { const _sy=window.scrollY; window.__accPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
-                                const _apg = window.__accPage||0;
-                                window.__accTotalPages = Math.ceil(rows.length/10);
-                                window.__accTotalRows = rows.length;
-                                const accPagedRows = rows.slice(_apg*10, (_apg+1)*10);
+                            const detalle = o.dias.map(d => {
+                                const p = d.meta > 0 ? (d.qty / d.meta) * 100 : 0;
+                                const c2 = colorPorPct(p);
+                                return `<tr data-parent="${id}" style="display:none; background:rgba(0,0,0,0.28); border-bottom:1px solid rgba(255,255,255,0.02);">
+                                    <td></td><td></td>
+                                    <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:rgba(255,255,255,0.7); font-size:0.74rem;">${d.fecha.split('-').reverse().join('/')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.35);">${d.tareas}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${c2}; font-weight:800;">${d.mins > 0 ? Math.round((d.qty / d.mins) * 60).toLocaleString('es-PE') : '---'}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.7rem;">${fmtHM(d.mins)}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:#a5b4fc; font-weight:700;">${Math.round(d.qty).toLocaleString('es-PE')} u</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3);">meta ${Math.round(d.meta).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${d.qty - d.meta >= 0 ? '#22c55e' : '#ef4444'}; font-weight:700;">${d.qty - d.meta >= 0 ? '+' : ''}${Math.round(d.qty - d.meta).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 1rem; text-align:right; color:${c2}; font-weight:800;">${Math.floor(p)}%</td>
+                                </tr>`;
+                            }).join('');
 
-                                // Subtotal por fecha, para cerrar cada jornada
-                                const totalesDia = new Map();
-                                rows.forEach(r => {
-                                    const cur = totalesDia.get(r.fecha) || { qty:0, meta:0, mins:0, users:new Set(), tasks:0 };
-                                    cur.qty += r.qty; cur.meta += r.meta; cur.mins += r.mins; cur.users.add(r.user); cur.tasks += r.tasks;
-                                    totalesDia.set(r.fecha, cur);
-                                });
-
-                                let html = '';
-                                let fechaPrevia = null;
-                                accPagedRows.forEach(r => {
-                                    if (fechaPrevia !== null && r.fecha !== fechaPrevia) html += filaSubtotal(fechaPrevia, totalesDia.get(fechaPrevia));
-                                    fechaPrevia = r.fecha;
-
-                                    const uph = r.mins>0?(r.qty/r.mins*60):0;
-                                    const pct = r.meta>0?(r.qty/r.meta*100):0;
-                                    const col = colorPorPct(pct);
-                                    const desv = r.qty - r.meta;
-                                    const desvTxt = r.meta>0
-                                        ? (desv>=0?`<span style="color:#22c55e; font-weight:800;">+${Math.round(desv).toLocaleString('es-PE')}</span>`:`<span style="color:#ef4444; font-weight:800;">${Math.round(desv).toLocaleString('es-PE')}</span>`)
-                                        : '<span style="color:rgba(255,255,255,0.2);">---</span>';
-                                    const etiqueta = pct>=100?'✅ META':pct>=85?'⚠️ AL LÍMITE':'🔴 BAJO';
-
-                                    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.04)'" onmouseout="this.style.background=''">
-                                        <td style="padding:0.8rem 1rem; opacity:0.65; font-size:0.78rem;">${r.fecha.split('-').reverse().join('/')}</td>
-                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.85rem;">${r.user}</b></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${r.tasks}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#f59e0b; font-weight:900; font-size:1.05rem;">${r.qty.toLocaleString('es-PE')}</span></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${Math.round(r.meta).toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">${desvTxt}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.6); font-weight:700; font-size:0.82rem;">${fmtHM(r.mins)}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${col}; font-weight:900; font-size:0.95rem;">${uph>0?Math.round(uph).toLocaleString('es-PE'):'---'}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-left:3px;">u/h</span></td>
-                                        <td style="padding:0.8rem 1.2rem;">
-                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct,100)}%; height:100%; background:${col}; border-radius:6px; box-shadow:0 0 8px ${col}66;"></div></div>
-                                            <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:700;">${Math.floor(pct)}% de meta</div>
-                                        </td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${col}1a; color:${col}; padding:3px 9px; border-radius:8px; font-weight:900; font-size:0.62rem; border:1px solid ${col}4d; white-space:nowrap;">${etiqueta}</span></td>
-                                    </tr>`;
-                                });
-                                if (fechaPrevia !== null) html += filaSubtotal(fechaPrevia, totalesDia.get(fechaPrevia));
-                                return html;
-                            })()}
+                            return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;" onmouseover="this.style.background='rgba(139,92,246,0.05)'" onmouseout="this.style.background=''">
+                                <td style="padding:0.75rem 0.5rem; text-align:center; color:#a78bfa; font-weight:900; width:30px;"><span id="ic_${id}">▸</span></td>
+                                <td style="padding:0.75rem 0.5rem; text-align:center; font-size:1rem;">${medallas[i] || `<span style="color:rgba(255,255,255,0.35); font-weight:700;">${i + 1}</span>`}</td>
+                                <td style="padding:0.75rem 0.8rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.85rem;">${o.user}</b><div style="font-size:0.62rem; color:rgba(255,255,255,0.28); margin-top:2px;">${o.dias.length} jornada${o.dias.length !== 1 ? 's' : ''}</div></td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${o.tareas}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:${col}; font-weight:900; font-size:1.05rem;">${Math.round(o.avgUph).toLocaleString('es-PE')}</span><div style="font-size:0.58rem; color:rgba(255,255,255,0.25);">u/h</div></td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:${pColor}; font-weight:900;">P${o.percentil}</span><div style="font-size:0.58rem; color:rgba(255,255,255,0.28);">${o.percentil >= 75 ? 'top del equipo' : o.percentil >= 40 ? 'zona media' : 'cola'}</div></td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; font-size:0.72rem; white-space:nowrap;">
+                                    <span style="color:rgba(255,255,255,0.35);">${Math.round(o.minUph).toLocaleString('es-PE')}</span>
+                                    <span style="color:rgba(255,255,255,0.2);"> · </span><b style="color:#e2e8f0;">${Math.round(o.medUph).toLocaleString('es-PE')}</b>
+                                    <span style="color:rgba(255,255,255,0.2);"> · </span><span style="color:rgba(255,255,255,0.35);">${Math.round(o.maxUph).toLocaleString('es-PE')}</span>
+                                </td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:#e2e8f0; font-weight:800;">${Math.round(o.pctEnMeta)}%</span><div style="font-size:0.58rem; color:rgba(255,255,255,0.28);">${o.enMeta} de ${o.tareas}</div></td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:${consColor}; font-weight:900;">${Math.round(o.consistencia)}%</span><div style="font-size:0.58rem; color:rgba(255,255,255,0.28);">${o.consistencia >= 80 ? 'estable' : o.consistencia >= 60 ? 'variable' : 'irregular'}</div></td>
+                                <td style="padding:0.75rem 1rem; min-width:130px;">
+                                    <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(o.promPct, 100)}%; height:100%; background:${col};"></div></div>
+                                    <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:800;">${Math.floor(o.promPct)}% de meta</div>
+                                </td>
+                            </tr>${detalle}`;
+                        }).join('')}
                         </tbody>
                     </table>
-                </div>
-                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(245,158,11,0.15);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.3);">La meta del día se arma sumando la meta real de cada tarea &nbsp;|&nbsp; <span style="color:rgba(255,255,255,0.5);">${window.__accTotalRows||0} registros</span></div>
-                    </div>
-                    ${(()=>{ const tp=window.__accTotalPages||1; const cp=window.__accPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#f59e0b':'rgba(255,255,255,0.1)'};background:${a?'rgba(245,158,11,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#fbbf24'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__accSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__accSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__accSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
-                </div>
-            </div>
+                    <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.7;">
+                        Clic en un operario para ver sus jornadas. <b style="color:rgba(255,255,255,0.55);">Percentil</b>: P80 significa que rinde por encima del 80% del equipo. <b style="color:rgba(255,255,255,0.55);">Mín · Mediana · Máx</b>: un promedio de 300 no es lo mismo si oscila entre 100 y 500 que si se mantiene en 300. <b style="color:rgba(255,255,255,0.55);">Consistencia</b>: 100% es rendir siempre igual.
+                        ${excluidos > 0 ? `<br><span style="color:rgba(255,255,255,0.28);">${excluidos} operario${excluidos !== 1 ? 's' : ''} fuera del ranking por tener menos de ${MIN_TAREAS} tareas.</span>` : ''}
+                    </div>`;
+                }
 
-            <!-- REPORTE: RANKING VELOCIDAD (UNID/HR) -->
-            <div style="background:rgba(10,15,30,0.95); border:2px solid #8b5cf6; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(139,92,246,0.15);">
-                <div style="padding:1rem 1.2rem; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.25); display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="color:#a78bfa; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">⚡ RANKING DE VELOCIDAD — UNID/HORA</h3>
-                        <div style="font-size:0.68rem; color:rgba(167,139,250,0.55); font-weight:600;">Rendimiento de cada operario según los grupos donde trabajó · mínimo 3 tareas para entrar al ranking</div>
-                    </div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">100% = meta vigente de su categoría</div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
-                        <thead style="background:rgba(0,0,0,0.6);">
-                            <tr style="color:rgba(167,139,250,0.8); text-transform:uppercase; font-size:0.68rem; letter-spacing:0.06em; border-bottom:2px solid rgba(139,92,246,0.25);">
-                                <th style="padding:0.85rem 1rem; text-align:center; width:50px;">#</th>
-                                <th style="padding:0.85rem 1rem; text-align:left;">Operador</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Unid/Hr Prom</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Consistencia</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">% Tareas en Meta</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Unid. de sus Grupos</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Horas Trab.</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Tendencia</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Eficiencia</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Rango</th>
+                // ── VISTA PRODUCTO: rendimiento por familia y por Gender RIMS ──
+                else {
+                    const mapa = new Map();
+                    filas.forEach(r => {
+                        const fam = r.etiquetaCorta || 'Sin categoría';
+                        const det = r.detalle ? etiquetaCategoria(r.detalle) : '';
+                        const clave = fam + '||' + det;
+                        const cur = mapa.get(clave) || { fam, det, qty: 0, mins: 0, meta: 0, metaUph: 0, tareas: 0, origen: r.origenMeta, grupos: new Set() };
+                        cur.qty += r.qty; cur.mins += r.mins; cur.meta += r.esperado; cur.tareas++;
+                        cur.metaUph = r.metaUph;
+                        cur.grupos.add(r.grupo);
+                        mapa.set(clave, cur);
+                    });
+                    const cats = [...mapa.values()].sort((a, b) => a.fam.localeCompare(b.fam) || b.qty - a.qty);
+                    window.__kpiPorCategoria = cats;
+                    const totalUnid = cats.reduce((a, c) => a + c.qty, 0) || 1;
+
+                    cuerpo = `
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.55);">
+                            <tr style="color:rgba(103,232,249,0.85); text-transform:uppercase; font-size:0.64rem; letter-spacing:0.06em; border-bottom:2px solid rgba(34,211,238,0.2);">
+                                ${th('Categoría', 'left')}${th('Tareas')}${th('Grupos')}${th('Unidades')}${th('% del Volumen')}${th('Horas')}${th('U/H Real')}${th('Meta U/H')}${th('Desviación')}${th('Cumplimiento')}${th('Origen Meta')}
                             </tr>
                         </thead>
                         <tbody>
-                            ${(() => {
-                                const MIN_TAREAS = 3;
-                                // Cada operario hereda el % de meta del grupo en el que trabajó, no una mitad inventada.
-                                const uMap = new Map();
-                                (window.__kpiFilas || []).forEach(r => {
-                                    if (r.mins <= 0) return;
-                                    r.usuarios.forEach(user => {
-                                        const n = r.usuarios.length || 1;
-                                        const cur = uMap.get(user) || { user, qty:0, mins:0, tasks:0, enMeta:0, pcts:[] };
-                                        // Unidades del grupo completo: es lo comparable contra la meta, que también es de grupo
-                                        cur.qty += r.qty;
-                                        cur.mins += r.mins;
-                                        cur.tasks++;
-                                        if (r.ok) cur.enMeta++;
-                                        cur.pcts.push(r.pct);
-                                        uMap.set(user, cur);
-                                    });
-                                });
-
-                                // Mismo cálculo sobre el período anterior, para la flecha de tendencia
-                                const d0 = new Date(window.__kpiStartDate), d1 = new Date(window.__kpiEndDate);
-                                const dias = Math.max(1, Math.round((d1 - d0) / 86400000) + 1);
-                                const prevFilas = buildKpiDataset(tasks,
-                                    new Date(d0.getTime() - dias*86400000).toISOString().split('T')[0],
-                                    new Date(d0.getTime() - 86400000).toISOString().split('T')[0]);
-                                const prevMap = new Map();
-                                prevFilas.forEach(r => {
-                                    if (r.mins <= 0) return;
-                                    r.usuarios.forEach(u => {
-                                        const c = prevMap.get(u) || { suma:0, n:0 };
-                                        c.suma += r.pct; c.n++;
-                                        prevMap.set(u, c);
-                                    });
-                                });
-
-                                const todas = [...uMap.values()].map(r => {
-                                    const promPct = r.pcts.reduce((a,b)=>a+b,0) / r.pcts.length;
-                                    // Coeficiente de variación: cuánto oscila respecto de su propio promedio
-                                    const media = promPct || 1;
-                                    const varianza = r.pcts.reduce((a,p)=>a+Math.pow(p-media,2),0) / r.pcts.length;
-                                    const cv = media > 0 ? (Math.sqrt(varianza)/media)*100 : 0;
-                                    const prev = prevMap.get(r.user);
-                                    return {
-                                        ...r,
-                                        avgUph: r.mins>0 ? (r.qty/r.mins)*60 : 0,
-                                        promPct,
-                                        consistencia: Math.max(0, 100 - cv),
-                                        pctEnMeta: r.tasks>0 ? (r.enMeta/r.tasks)*100 : 0,
-                                        delta: prev && prev.n>0 ? promPct - (prev.suma/prev.n) : null
-                                    };
-                                });
-
-                                const rows = todas.filter(r => r.tasks >= MIN_TAREAS).sort((a,b)=>b.promPct-a.promPct);
-                                const excluidos = todas.length - rows.length;
-                                window.__kpiRanking = rows;
-                                window.__rkExcluidos = excluidos;
-
-                                if (!rows.length) return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Ningún operario alcanza las ${MIN_TAREAS} tareas mínimas en este rango.</td></tr>`;
-
-                                // --- PAGINACIÓN RANKING ---
-                                const rangeKey = `${window.__kpiStartDate}|${window.__kpiEndDate}`;
-                                if (window.__rkLastDate !== rangeKey) { window.__rkPage=0; window.__rkLastDate = rangeKey; }
-                                if (!window.__rkSetPage) window.__rkSetPage = (p) => { const _sy=window.scrollY; window.__rkPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
-                                const _rpg = window.__rkPage||0;
-                                window.__rkTotalPages = Math.ceil(rows.length/10);
-                                window.__rkTotalRows = rows.length;
-                                const rkPagedRows = rows.slice(_rpg*10, (_rpg+1)*10);
-                                const medals = ['🥇','🥈','🥉'];
-
-                                return rkPagedRows.map((r,i) => {
-                                    const globalIdx = _rpg*10+i;
-                                    const col = colorPorPct(r.promPct);
-                                    const barPct = Math.min(Math.round(r.promPct),100);
-                                    const hh = Math.floor(r.mins/60); const mm = r.mins%60;
-                                    const rangeLabel = r.promPct>=120?'ELITE':r.promPct>=100?'ALTO':r.promPct>=85?'MEDIO':'BAJO';
-                                    const rangeColor = r.promPct>=120?'#22c55e':r.promPct>=100?'#a78bfa':r.promPct>=85?'#f59e0b':'#ef4444';
-                                    const consColor = r.consistencia>=80?'#22c55e':r.consistencia>=60?'#f59e0b':'#ef4444';
-                                    const consLabel = r.consistencia>=80?'Estable':r.consistencia>=60?'Variable':'Irregular';
-                                    const tend = r.delta === null
-                                        ? '<span style="color:rgba(255,255,255,0.2); font-size:0.75rem;">—</span>'
-                                        : (r.delta >= 0
-                                            ? `<span style="color:#22c55e; font-weight:800; font-size:0.78rem;">▲ ${r.delta.toFixed(0)}pp</span>`
-                                            : `<span style="color:#ef4444; font-weight:800; font-size:0.78rem;">▼ ${Math.abs(r.delta).toFixed(0)}pp</span>`);
-                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.2s;" onmouseover="this.style.background='rgba(139,92,246,0.05)'" onmouseout="this.style.background=''">
-                                        <td style="padding:0.8rem 1rem; text-align:center; font-size:1.1rem;">${medals[globalIdx]||`<span style='color:rgba(255,255,255,0.4);font-weight:700;'>${globalIdx+1}</span>`}</td>
-                                        <td style="padding:0.8rem 1rem;"><b style="color:#fff; text-transform:uppercase; font-size:0.88rem;">${r.user}</b><div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.tasks} tarea${r.tasks!==1?'s':''} en grupo</div></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${col}; font-weight:900; font-size:1.15rem;">${Math.round(r.avgUph).toLocaleString('es-PE')}</span><span style="font-size:0.65rem; color:rgba(255,255,255,0.3);"> u/h</span></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:${consColor}; font-weight:900;">${Math.round(r.consistencia)}%</span><div style="font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px;">${consLabel}</div></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="color:#e2e8f0; font-weight:800;">${Math.round(r.pctEnMeta)}%</span><div style="font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px;">${r.enMeta} de ${r.tasks}</div></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:#e2e8f0; font-weight:700;">${Math.round(r.qty).toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-size:0.82rem;">${hh}h ${mm.toString().padStart(2,'0')}m</td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;">${tend}</td>
-                                        <td style="padding:0.8rem 1.2rem;"><div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${barPct}%; height:100%; background:${col}; border-radius:6px; box-shadow:0 0 8px ${col}66;"></div></div><div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:700;">${Math.round(r.promPct)}% de meta</div></td>
-                                        <td style="padding:0.8rem 1rem; text-align:center;"><span style="background:${rangeColor}22; color:${rangeColor}; padding:3px 10px; border-radius:8px; font-weight:900; font-size:0.65rem; border:1px solid ${rangeColor}55; letter-spacing:0.5px;">${rangeLabel}</span></td>
-                                    </tr>`;
-                                }).join('');
-                            })()}
+                        ${cats.length === 0 ? vacio(11, 'Sin datos por categoría con los filtros actuales.') : cats.map(c => {
+                            const pct = c.meta > 0 ? (c.qty / c.meta) * 100 : 0;
+                            const col = colorPorPct(pct);
+                            const uph = c.mins > 0 ? (c.qty / c.mins) * 60 : 0;
+                            const share = (c.qty / totalUnid) * 100;
+                            const origenTxt = c.origen === 'detalle' ? '<span style="color:#22d3ee;">Regla propia</span>'
+                                : c.origen === 'familia' ? '<span style="color:#a78bfa;">Heredada de familia</span>'
+                                : '<span style="color:#f59e0b;">Respaldo · sin calibrar</span>';
+                            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(34,211,238,0.04)'" onmouseout="this.style.background=''">
+                                <td style="padding:0.75rem 0.8rem;"><b style="color:#fff;">${c.det || c.fam}</b><div style="font-size:0.62rem; color:rgba(255,255,255,0.28); margin-top:2px;">${c.det ? c.fam : 'sin detalle de Gender RIMS'}</div></td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${c.tareas}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${c.grupos.size}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:#67e8f9; font-weight:900; font-size:0.95rem;">${Math.round(c.qty).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center;">
+                                    <div style="height:5px; background:rgba(255,255,255,0.05); border-radius:5px; overflow:hidden;"><div style="width:${share}%; height:100%; background:#22d3ee;"></div></div>
+                                    <div style="font-size:0.6rem; color:rgba(255,255,255,0.35); margin-top:2px;">${share.toFixed(1)}%</div>
+                                </td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${fmtHM(c.mins)}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${col}; font-weight:900;">${Math.round(uph).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.4); font-weight:700;">${Math.round(c.metaUph).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${c.qty - c.meta >= 0 ? '#22c55e' : '#ef4444'}; font-weight:800;">${c.qty - c.meta >= 0 ? '+' : ''}${Math.round(c.qty - c.meta).toLocaleString('es-PE')}</td>
+                                <td style="padding:0.75rem 1rem; min-width:130px;">
+                                    <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct, 100)}%; height:100%; background:${col};"></div></div>
+                                    <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:800;">${Math.floor(pct)}% de meta</div>
+                                </td>
+                                <td style="padding:0.75rem 0.8rem; text-align:center; font-size:0.63rem; font-weight:700;">${origenTxt}</td>
+                            </tr>`;
+                        }).join('')}
                         </tbody>
                     </table>
-                </div>
-                <div style="padding:0.75rem 1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(139,92,246,0.15);">
-                    <div style="display:flex; gap:1.5rem; font-size:0.68rem; color:rgba(255,255,255,0.3); margin-bottom:0.5rem; flex-wrap:wrap;">
-                        <span>🟢 ELITE ≥ 120% de meta</span>
-                        <span>🟣 ALTO ≥ 100%</span>
-                        <span>🟡 MEDIO ≥ 85%</span>
-                        <span>🔴 BAJO &lt; 85%</span>
-                        <span>Consistencia: 100% = rinde siempre igual</span>
-                        <span style="margin-left:auto; color:rgba(255,255,255,0.5);">${window.__rkTotalRows||0} operadores${window.__rkExcluidos ? ` · ${window.__rkExcluidos} fuera por tener menos de 3 tareas` : ''}</span>
+                    <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,211,238,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.6;">
+                        <b style="color:rgba(255,255,255,0.55);">% del Volumen</b> muestra cuánto pesa cada categoría en el total: una con cumplimiento bajo pero 2% del volumen no es lo mismo que una con el 90%.
+                        <b style="color:rgba(255,255,255,0.55);">Origen Meta</b> en ámbar significa que esa categoría todavía no tiene meta propia y se mide con el respaldo.
+                    </div>`;
+                }
+
+                return `
+                <div style="background:rgba(15,23,42,0.92); border:2px solid #4f46e5; border-radius:14px; overflow:hidden; box-shadow:0 0 25px rgba(79,70,229,0.14);">
+                    <div style="display:flex; background:rgba(0,0,0,0.35); border-bottom:1px solid rgba(99,102,241,0.2); flex-wrap:wrap;">
+                        ${nav}
+                        <div style="display:flex; align-items:center; padding:0 1rem; gap:8px; margin-left:auto;">
+                            <button onclick="window.exportarKpiTareas(this)" class="btn" style="width:auto; padding:6px 12px; font-size:0.68rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981; cursor:pointer; white-space:nowrap;">📥 EXPORTAR</button>
+                        </div>
                     </div>
-                    ${(()=>{ const tp=window.__rkTotalPages||1; const cp=window.__rkPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#8b5cf6':'rgba(255,255,255,0.1)'};background:${a?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#a78bfa'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__rkSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__rkSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__rkSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
-                </div>
-            </div>
-
-            <!-- REPORTE: PRODUCTIVIDAD POR GENDER RIMS (lo que pide Comercial) -->
-            <div style="background:rgba(10,15,30,0.95); border:2px solid #22d3ee; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(34,211,238,0.12);">
-                <div style="padding:1rem 1.2rem; background:rgba(34,211,238,0.08); border-bottom:1px solid rgba(34,211,238,0.25); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div>
-                        <h3 style="color:#67e8f9; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">🏷️ PRODUCTIVIDAD POR CATEGORÍA</h3>
-                        <div style="font-size:0.68rem; color:rgba(103,232,249,0.55); font-weight:600;">Familia (G. Gender) y detalle (Gender RIMS) del Maestro de Artículos</div>
-                    </div>
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
-                        <thead style="background:rgba(0,0,0,0.6);">
-                            <tr style="color:rgba(103,232,249,0.8); text-transform:uppercase; font-size:0.68rem; letter-spacing:0.06em; border-bottom:2px solid rgba(34,211,238,0.25);">
-                                <th style="padding:0.85rem 1rem; text-align:left;">Categoría</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Tareas</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Unidades</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Horas</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">U/H Real</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Meta U/H</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Desviación</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Cumplimiento</th>
-                                <th style="padding:0.85rem 1rem; text-align:center;">Origen Meta</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${(() => {
-                                const filas = window.__kpiFilas || [];
-                                if (!filas.length) return `<tr><td colspan="9" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos por categoría en este rango.</td></tr>`;
-
-                                // Se agrupa por familia y, dentro, por el detalle de Gender RIMS
-                                const mapa = new Map();
-                                filas.forEach(r => {
-                                    const fam = r.etiquetaCorta || 'Sin categoría';
-                                    const det = r.detalle ? etiquetaCategoria(r.detalle) : '';
-                                    const clave = fam + '||' + det;
-                                    const cur = mapa.get(clave) || { fam, det, qty:0, mins:0, meta:0, metaUph:0, tareas:0, origen:r.origenMeta };
-                                    cur.qty += r.qty; cur.mins += r.mins; cur.meta += r.esperado; cur.tareas++;
-                                    cur.metaUph = r.metaUph;
-                                    mapa.set(clave, cur);
-                                });
-
-                                const filasCat = [...mapa.values()].sort((a,b) => a.fam.localeCompare(b.fam) || b.qty - a.qty);
-                                window.__kpiPorCategoria = filasCat;
-
-                                let famPrevia = null;
-                                return filasCat.map(c => {
-                                    const pct = c.meta > 0 ? (c.qty / c.meta) * 100 : 0;
-                                    const col = colorPorPct(pct);
-                                    const uph = c.mins > 0 ? (c.qty / c.mins) * 60 : 0;
-                                    const desv = c.qty - c.meta;
-                                    const nuevaFam = c.fam !== famPrevia;
-                                    famPrevia = c.fam;
-                                    const nombre = c.det
-                                        ? `<b style="color:#fff;">${c.det}</b><div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">${c.fam}</div>`
-                                        : `<b style="color:#fff;">${c.fam}</b><div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">sin detalle de Gender RIMS</div>`;
-                                    const origenTxt = c.origen === 'detalle' ? '<span style="color:#22d3ee;">Regla propia</span>'
-                                        : c.origen === 'familia' ? '<span style="color:#a78bfa;">Heredada de familia</span>'
-                                        : '<span style="color:#94a3b8;">Respaldo</span>';
-                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${nuevaFam ? 'border-top:1px solid rgba(34,211,238,0.15);' : ''}">
-                                        <td style="padding:0.75rem 1rem;">${nombre}</td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${c.tareas}</td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; color:#67e8f9; font-weight:900; font-size:1rem;">${Math.round(c.qty).toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; color:rgba(255,255,255,0.55); font-weight:700;">${fmtHM(c.mins)}</td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; color:${col}; font-weight:900;">${Math.round(uph).toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${Math.round(c.metaUph).toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; color:${desv>=0?'#22c55e':'#ef4444'}; font-weight:800;">${desv>=0?'+':''}${Math.round(desv).toLocaleString('es-PE')}</td>
-                                        <td style="padding:0.75rem 1.2rem;">
-                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct,100)}%; height:100%; background:${col}; border-radius:6px; box-shadow:0 0 8px ${col}66;"></div></div>
-                                            <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:700;">${Math.floor(pct)}% de meta</div>
-                                        </td>
-                                        <td style="padding:0.75rem 1rem; text-align:center; font-size:0.65rem; font-weight:700;">${origenTxt}</td>
-                                    </tr>`;
-                                }).join('');
-                            })()}
-                        </tbody>
-                    </table>
-                </div>
-                <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,211,238,0.15); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
-                    <b style="color:rgba(255,255,255,0.55);">Origen Meta</b> indica de dónde salió el número contra el que se mide cada categoría: regla propia, heredada de su familia, o la de respaldo. Las heredadas conviene revisarlas en <b style="color:rgba(255,255,255,0.55);">Config. Tareas</b>.
-                </div>
-            </div>
+                    <div style="overflow-x:auto;">${cuerpo}</div>
+                </div>`;
+            })()}
 
             <!-- FILA INFERIOR DE REPORTES (2 COLUMNAS) -->
             <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; align-items:start;">
@@ -19938,7 +19905,13 @@ window.showCellModal = function(htmlContent) {
                 data: { labels: etiquetasX, datasets },
                 options: {
                     ...baseOpts,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString('es-PE')} u` } } },
+                    // Clic en una barra aísla ese día en todo el módulo
+                    onClick: (evt, elementos, grafico) => {
+                        const puntos = grafico.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
+                        if (puntos.length && window.__kpiSetDia) window.__kpiSetDia(fechas[puntos[0].index]);
+                    },
+                    onHover: (evt, elementos) => { evt.native.target.style.cursor = 'pointer'; },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString('es-PE')} u`, footer: () => 'Clic para ver el día en detalle' } } },
                     scales: {
                         y: { stacked: apilado, beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
                         x: { stacked: apilado, grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
@@ -19947,87 +19920,6 @@ window.showCellModal = function(htmlContent) {
             }));
         }
 
-        // 2. Cumplimiento por categoría. En TODAS agrupa por familia (pocas barras, legible
-        // para comité); con una familia elegida baja al detalle de Gender RIMS.
-        const cvCat = document.getElementById('kpiCatChart');
-        if (cvCat) {
-            const porFamilia = (window.__kpiCatFiltro || 'TODAS') === 'TODAS';
-            const porCat = new Map();
-            filas.forEach(r => {
-                const clave = porFamilia
-                    ? (r.etiquetaCorta || 'Sin categoría')
-                    : (r.detalle ? etiquetaCategoria(r.detalle) : 'Sin detalle');
-                const cur = porCat.get(clave) || { real: 0, meta: 0 };
-                cur.real += r.qty;
-                cur.meta += r.esperado;
-                porCat.set(clave, cur);
-            });
-            const cats = [...porCat.keys()];
-            const pcts = cats.map(c => { const v = porCat.get(c); return v.meta > 0 ? Math.round((v.real / v.meta) * 100) : 0; });
-            window.__kpiCharts.push(new Chart(cvCat, {
-                type: 'bar',
-                data: {
-                    labels: cats,
-                    datasets: [{ data: pcts, backgroundColor: pcts.map(p => colorPorPct(p)), borderRadius: 4 }]
-                },
-                options: {
-                    ...baseOpts,
-                    indexAxis: 'y',
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.x}% de la meta` } } },
-                    scales: {
-                        x: { beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v + '%' } },
-                        y: { grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
-                    }
-                }
-            }));
-        }
-
-        // 3. Turno día vs turno noche
-        const cvTurno = document.getElementById('kpiTurnoChart');
-        if (cvTurno) {
-            const workers = adminService.getWorkers() || [];
-            const turnoDe = (username) => {
-                const clean = String(username || '').trim().toLowerCase();
-                const w = workers.find(w => {
-                    const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
-                    const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
-                    return nom ? (`${nom[0]}${ape}` === clean) : false;
-                });
-                if (!w) return null;
-                return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DÍA';
-            };
-
-            const porTurnoDia = new Map();
-            filas.forEach(r => {
-                const turno = turnoDe(r.usuarios[0]) || (r.inicio && new Date(r.inicio).getHours() >= 18 ? 'NOCHE' : 'DÍA');
-                const clave = r.fecha;
-                const cur = porTurnoDia.get(clave) || { 'DÍA': 0, 'NOCHE': 0 };
-                cur[turno] += r.qty;
-                porTurnoDia.set(clave, cur);
-            });
-            const fechasT = [...porTurnoDia.keys()].sort();
-            window.__kpiCharts.push(new Chart(cvTurno, {
-                type: 'bar',
-                data: {
-                    labels: fechasT.map(f => f.split('-').reverse().slice(0, 2).join('/')),
-                    datasets: [
-                        { label: 'Día', data: fechasT.map(f => Math.round(porTurnoDia.get(f)['DÍA'])), backgroundColor: '#facc15', borderRadius: 4 },
-                        { label: 'Noche', data: fechasT.map(f => Math.round(porTurnoDia.get(f)['NOCHE'])), backgroundColor: '#818cf8', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    ...baseOpts,
-                    plugins: {
-                        legend: { display: true, position: 'top', align: 'end', labels: { color: ejeColor, boxWidth: 10, boxHeight: 10, font: { size: 11 } } },
-                        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString('es-PE')} u` } }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
-                        x: { grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
-                    }
-                }
-            }));
-        }
     }
 
     // --- Lógica del Botón de Refresco Local ---
