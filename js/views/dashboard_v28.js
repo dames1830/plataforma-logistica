@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.534';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.535';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.534';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.534';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.534';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.534';
+import * as adminService from '../services_v245/adminService.js?v=26.5.535';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.535';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.535';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.535';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -360,7 +360,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.534';
+const VERSION = '26.5.535';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1800,7 +1800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.534');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.535');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6877,13 +6877,16 @@ const renderRFSection = (container) => {
     const l2Container = document.getElementById('inventarioLevel2Content');
     
     if (activeInventarioSub === 'archivo_inventario') {
-       const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '1rem'; l2Container.appendChild(wrap);
+       l2Container.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:1rem;"><div style="width:30px; height:30px; border:2px solid rgba(129, 140, 248, 0.1); border-top:2px solid #818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div><span style="color:var(--text-muted); font-size:0.85rem;">Cargando archivos...</span></div>`;
        const [matriz, reserva, stock, articulos] = await Promise.all([
            getAreaData('matriz_ubicaciones'),
            getAreaData('stockReserva'),
            getAreaData('inventario'),
            getAreaData('articulos')
        ]);
+       if (!l2Container.isConnected) return;
+       l2Container.innerHTML = '';
+       const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '1rem'; l2Container.appendChild(wrap);
        renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES (Col A)');
        renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA (Col E, Col I)');
        renderUploadArea(wrap, 'inventario', stock, '.csv', 'STOCK ACTIVO');
@@ -6924,12 +6927,44 @@ const renderRFSection = (container) => {
     }));
 
     const content = document.getElementById('moduloInvContent');
-    const [matriz, reserva, stock, articulos] = await Promise.all([
+    const [matriz, reserva, stock, articulos, serverConteos] = await Promise.all([
         getAreaData('matriz_ubicaciones'),
         getAreaData('stockReserva'),
         getAreaData('inventario'),
-        getAreaData('articulos')
+        getAreaData('articulos'),
+        getAreaData('inventario_conteos', true)
     ]);
+    if (!content.isConnected) return;
+
+    // Mapa de conteos cerrados del servidor para sincronización global
+    const serverConteoMap = new Map();
+    if (serverConteos && Array.isArray(serverConteos)) {
+        serverConteos.forEach(r => { if (r.location) serverConteoMap.set(r.location, r); });
+    }
+
+    // Función helper para sincronizar conteos cerrados al servidor
+    const syncConteoToServer = () => {
+        try {
+            const allScans = cyclicService.getScans();
+            const allTasks = cyclicService.getTasks();
+            const allClosed = cyclicService.getClosedLocations();
+            const payload = allTasks
+                .filter(t => allClosed.includes(t.location))
+                .map(t => ({
+                    location: t.location,
+                    scans: allScans.filter(s => s.location === t.location),
+                    closedAt: Date.now(),
+                    closedBy: t.user || 'operario'
+                }));
+            if (payload.length > 0) {
+                fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/inventario_conteos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.warn('[CONTEO] Sync falló:', err));
+            }
+        } catch(err) { console.warn('[CONTEO] Error al preparar sync:', err); }
+    };
 
     // Construir mapa de Código de Barras a SKU para traducción instantánea en el escaneo
     const barcodeToSkuMap = new Map();
@@ -6996,6 +7031,7 @@ const renderRFSection = (container) => {
             document.getElementById('btn_close_loc').onclick = async () => {
                 if(await showPremiumConfirm('CERRAR UBICACIÓN', '¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.', 'warning')) {
                     cyclicService.closeLocation(activeLocation);
+                    syncConteoToServer();
                     localStorage.removeItem('eru_active_location');
                     renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                 }
@@ -7105,16 +7141,18 @@ const renderRFSection = (container) => {
                                 </thead>
                                 <tbody>
                                     ${currentTasks.map((t, i) => {
-                                        const isClosed = cyclicService.isLocationClosed(t.location);
-                                        const badge = isClosed 
+                                        const isClosed = cyclicService.isLocationClosed(t.location) || serverConteoMap.has(t.location);
+                                        const badge = isClosed
                                             ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">CERRADA 🔒</span>'
                                             : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">EN PROCESO ⏳</span>';
-                                        
+
                                         // 1. Qty Sistema
                                         const qSis = systemStockMap.get(t.location.toUpperCase()) || 0;
-                                        
-                                        // 2. Qty Conteo
-                                        const locationScans = cyclicService.getScansByLocation(t.location);
+
+                                        // 2. Qty Conteo (local si está cerrado localmente, servidor si está cerrado remotamente)
+                                        const locationScans = !cyclicService.isLocationClosed(t.location) && serverConteoMap.has(t.location)
+                                            ? (serverConteoMap.get(t.location).scans || [])
+                                            : cyclicService.getScansByLocation(t.location);
                                         const scansCount = locationScans.reduce((acc, curr) => acc + curr.qty, 0);
                                         
                                         // 3. Qty Diferencia
@@ -7227,7 +7265,7 @@ const renderRFSection = (container) => {
                         const cleanCode = code.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase();
                         const t = currentTasks.find(x => x.location.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase() === cleanCode);
                         if(t) {
-                            if(cyclicService.isLocationClosed(t.location)) {
+                            if(cyclicService.isLocationClosed(t.location) || serverConteoMap.has(t.location)) {
                                 alert('Ubicación Cerrada.');
                             } else {
                                 localStorage.setItem('eru_active_location', t.location);
@@ -7437,7 +7475,7 @@ const renderRFSection = (container) => {
                     container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:2rem; font-style:italic;">No hay ubicaciones asignadas por el Administrador.</div>';
                 } else {
                     tasks.forEach(t => {
-                        const isClosed = cyclicService.isLocationClosed(t.location);
+                        const isClosed = cyclicService.isLocationClosed(t.location) || serverConteoMap.has(t.location);
                         const color = isClosed ? '#10b981' : 'var(--text-muted)';
                         const bg = isClosed ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)';
                         const statusText = isClosed ? 'CERRADA 🔒' : 'PENDIENTE';
@@ -7479,7 +7517,7 @@ const renderRFSection = (container) => {
                             const cleanCode = code.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase();
                             const t = tasks.find(x => x.location.replace(/[^a-zA-Z0-9-]/g, '').trim().toUpperCase() === cleanCode);
                             if(t) {
-                                if(cyclicService.isLocationClosed(t.location)) {
+                                if(cyclicService.isLocationClosed(t.location) || serverConteoMap.has(t.location)) {
                                     alert('Ubicación Cerrada.');
                                 } else {
                                     localStorage.setItem('eru_active_location', t.location);
@@ -7522,6 +7560,7 @@ const renderRFSection = (container) => {
                 document.getElementById('btn_close_loc').onclick = async () => {
                     if(await showPremiumConfirm('CERRAR UBICACIÓN', '¿Seguro que deseas cerrar esta ubicación? Ya no podrás pistolear más SKUs aquí.', 'warning')) {
                         cyclicService.closeLocation(activeLocation);
+                        syncConteoToServer();
                         localStorage.removeItem('eru_active_location');
                         renderModuloInventarios(document.getElementById('inventarioLevel2Content') || document.querySelector('.main-content'));
                     }
@@ -11258,7 +11297,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.534 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.535 | MOBILE PORTAL
                             </div>
                     </div>
 
