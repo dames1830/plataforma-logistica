@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.524
+ * v26.5.525
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.524';
+} from '../services_v245/csvHub_v6.js?v=26.5.525';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.524';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.524';
+import * as adminService from '../services_v245/adminService.js?v=26.5.525';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.525';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -72,7 +72,7 @@ function showPremiumAlert(title, message, type = 'info') {
   const colors = {
     success: { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', icon: '✅' },
     error:   { bg: 'rgba(239,68,68,0.15)', border: '#ef4444', icon: '❌' },
-    info:    { bg: 'rgba(0,229,255,0.15)', border: '#00E5FF', icon: 'ℹ️' },
+    info:    { bg: 'rgba(28,43,58,0.08)', border: '#1C2B3A', icon: 'ℹ️' },
     warning: { bg: 'rgba(245,158,11,0.15)', border: '#f59e0b', icon: '⚠️' }
   };
   const c = colors[type] || colors.info;
@@ -86,22 +86,22 @@ function showPremiumAlert(title, message, type = 'info') {
       @keyframes slideUpModal { from{opacity:0;transform:translateY(20px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
     </style>
     <div style="
-      background:linear-gradient(135deg,#1e293b,#0f172a);
-      border:1px solid ${c.border}44;
-      border-radius:16px;
+      background:#FFFFFF;
+      border:1px solid #DDD8CF;
+      border-radius:8px;
       padding:2rem 2.2rem;
       max-width:380px; width:90%;
-      box-shadow:0 25px 60px rgba(0,0,0,0.6);
+      box-shadow:0 4px 24px rgba(28,43,58,0.15);
       text-align:center;
       animation:slideUpModal 0.2s cubic-bezier(0.4,0,0.2,1);
     ">
       <div style="font-size:2.5rem; margin-bottom:0.8rem;">${c.icon}</div>
-      <h3 style="margin:0 0 0.5rem; color:#fff; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">${title}</h3>
-      <p style="margin:0 0 1.4rem; color:#94a3b8; font-size:0.82rem; line-height:1.55;">${message}</p>
+      <h3 style="margin:0 0 0.5rem; color:#1C2B3A; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">${title}</h3>
+      <p style="margin:0 0 1.4rem; color:#9C9590; font-size:0.82rem; line-height:1.55;">${message}</p>
       <button style="
-        padding:0.6rem 2rem; border-radius:9px;
+        padding:0.6rem 2rem; border-radius:6px;
         background:${c.bg}; border:1px solid ${c.border}55;
-        color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;
+        color:#1C2B3A; font-size:0.82rem; font-weight:700; cursor:pointer;
       ">Cerrar</button>
     </div>
   `;
@@ -240,7 +240,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.524</span>
+          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.525</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -506,13 +506,13 @@ function renderMarcasReport() {
   const tasks = getFilteredTasks();
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
-  area.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;"><div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+  area.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;"><div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                            <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                        <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                            <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - MARCAS
                             </h3>
-                            <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                            <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
                                 SYNC_ID: ${(() => {
                                     const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
                                     const startStr = window.__kpiStartDate.split('-').reverse().join('/');
@@ -522,7 +522,7 @@ function renderMarcasReport() {
                                 })()}
                             </div>
                         </div>
-                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:transparent; border:1px solid #DDD8CF; color:#9C9590; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'; this.style.borderColor='#B45309'; this.style.color='#B45309'" onmouseout="this.style.background='transparent'; this.style.borderColor='#DDD8CF'; this.style.color='#9C9590'">
                             🔄
                         </button>
                     </div>
@@ -530,12 +530,12 @@ function renderMarcasReport() {
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
-                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                                <tr style="background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;">
                                     <th style="padding:6px 8px; text-align:left; width: 100px;">AREA</th>
                                     <th style="padding:6px 8px; text-align:left; max-width:130px; width:130px;">MARCAS</th>
                                     <th style="padding:6px 8px; text-align:center; width: 85px;">BUFFER</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px; color:#facc15;">DÍA</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px; color:#818cf8;">NOCHE</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 75px;">DÍA</th>
+                                    <th style="padding:6px 8px; text-align:center; width: 75px;">NOCHE</th>
                                     <th style="padding:6px 8px; text-align:center; width: 75px;">TOTAL</th>
                                     <th style="padding:6px 8px; text-align:center; width: 70px;">%</th>
                                     <th style="padding:6px 8px; text-align:center; width: 90px;">PENDIENTE</th>
@@ -609,15 +609,15 @@ function renderMarcasReport() {
                                             grandBuffer += data.buffer; grandDia += data.dia; grandNoche += data.noche;
 
                                             brandTableRows += `
-                                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                                    <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#facc15; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${total.toLocaleString()}</td>
+                                                <tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
+                                                    <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
+                                                    <td style="padding:5px 6px;"><b style="color:#1C2B3A; font-weight:700; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#4A4540; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${total.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem; white-space:nowrap;">${(() => { const _p = data.buffer > 0 ? Math.round((total/data.buffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (total < data.buffer ? '#fbbf24' : '#22c55e'); const _ic = _p === 0 ? '●' : '▲'; return `<span style="color:${_col}; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${_ic}</span><span>${_p}%</span></span>`; })()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
                                                 </tr>
                                             `;
                                         });
@@ -625,14 +625,14 @@ function renderMarcasReport() {
                                         const areaTotal = areaDia + areaNoche;
                                         const areaPendiente = areaBuffer - areaTotal;
                                         brandTableRows += `
-                                            <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(15, 23, 42, 0.5) 100%); border-top: 1.5px solid rgba(0, 229, 255, 0.6); border-bottom: 1.5px solid rgba(0, 229, 255, 0.6); font-weight: 900;">
-                                                <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid #00E5FF;">Total ${area}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBuffer.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#facc15; font-size:0.82rem; font-weight:800;">${areaDia.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#818cf8; font-size:0.82rem; font-weight:800;">${areaNoche.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaTotal.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800; white-space:nowrap;">${(() => { const _p = areaBuffer > 0 ? Math.round((areaTotal/areaBuffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (areaTotal < areaBuffer ? '#fbbf24' : '#22c55e'); return `<span style="color:${_col}; font-weight:800; font-size:0.82rem;">${_p}%</span>`; })()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
+                                            <tr style="background:#F4F1EC; border-top:1px solid #DDD8CF; border-bottom:1px solid #DDD8CF; font-weight:700;">
+                                                <td colspan="2" style="padding:7px 8px; color:#1C2B3A; font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 3px solid #B45309;">Total ${area}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaBuffer.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaDia.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#4A4540; font-size:0.78rem; font-weight:700;">${areaNoche.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaTotal.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; font-size:0.78rem; font-weight:700; white-space:nowrap;">${(() => { const _p = areaBuffer > 0 ? Math.round((areaTotal/areaBuffer)*100) : 0; const _col = _p === 0 ? '#991B1B' : (areaTotal < areaBuffer ? '#B45309' : '#1A6336'); return `<span style="color:${_col}; font-weight:700; font-size:0.78rem;">${_p}%</span>`; })()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaPendiente.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     });
@@ -640,14 +640,14 @@ function renderMarcasReport() {
                                     const grandTotal = grandDia + grandNoche;
                                     const grandPendiente = grandBuffer - grandTotal;
                                     brandTableRows += `
-                                        <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #00E5FF; border-bottom: 2px solid #00E5FF; font-weight: 900;">
-                                            <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#facc15; font-size:0.85rem; font-weight:900;">${grandDia.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#818cf8; font-size:0.85rem; font-weight:900;">${grandNoche.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandTotal.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900; white-space:nowrap;">${(() => { const _p = grandBuffer > 0 ? Math.round((grandTotal/grandBuffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (grandTotal < grandBuffer ? '#fbbf24' : '#22c55e'); return `<span style="color:${_col}; font-weight:900; font-size:0.85rem;">${_p}%</span>`; })()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);">${grandPendiente.toLocaleString()}</td>
+                                        <tr style="background:#1C2B3A; font-weight:700;">
+                                            <td colspan="2" style="padding:9px 8px; color:#fff; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; font-family:'Outfit', sans-serif; font-weight:700; border-left: 4px solid #B45309;">TOTAL GENERAL CDBUFFER</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandBuffer.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandDia.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#A8B8C8; font-size:0.8rem; font-weight:700;">${grandNoche.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandTotal.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; font-size:0.8rem; font-weight:700; white-space:nowrap;">${(() => { const _p = grandBuffer > 0 ? Math.round((grandTotal/grandBuffer)*100) : 0; const _col = _p === 0 ? '#FCA5A5' : (grandTotal < grandBuffer ? '#FCD34D' : '#6EE7B7'); return `<span style="color:${_col}; font-weight:700; font-size:0.8rem;">${_p}%</span>`; })()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandPendiente.toLocaleString()}</td>
                                         </tr>
                                     `;
 
@@ -659,13 +659,13 @@ function renderMarcasReport() {
                 </div>
 
                 <!-- REPORTE ALMACENAJE - GENDER RIMS (DERECHA) -->
-                <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem;">
+                <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                            <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                        <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                            <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - GENDER RIMS
                             </h3>
-                            <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                            <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
                                 SYNC_ID: ${(() => {
                                     const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
                                     const startStr = window.__kpiStartDate.split('-').reverse().join('/');
@@ -675,14 +675,14 @@ function renderMarcasReport() {
                                 })()}
                             </div>
                         </div>
-                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:transparent; border:1px solid #DDD8CF; color:#9C9590; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'; this.style.borderColor='#B45309'; this.style.color='#B45309'" onmouseout="this.style.background='transparent'; this.style.borderColor='#DDD8CF'; this.style.color='#9C9590'">
                             🔄
                         </button>
                     </div>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
-                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                                <tr style="background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;">
                                     <th style="padding:6px 8px; text-align:left; width:120px;">AREA</th>
                                     <th style="padding:6px 8px; text-align:left;">GENDER RIMS</th>
                                     <th style="padding:6px 8px; text-align:center; width:90px;">BUFFER</th>
@@ -753,7 +753,7 @@ function renderMarcasReport() {
                                         });
                                     });
                                     const areas = Object.keys(genderGroups).sort((a, b) => b.localeCompare(a));
-                                    if (areas.length === 0) return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:rgba(0,229,255,0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
+                                    if (areas.length === 0) return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:#9C9590; font-weight:600;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
                                     let genderTableRows = '';
                                     let grandBuffer = 0, grandAvance = 0;
                                     areas.forEach(area => {
@@ -764,31 +764,31 @@ function renderMarcasReport() {
                                             const pendiente = data.buffer - data.avance;
                                             areaBufferSum += data.buffer; areaAvanceSum += data.avance;
                                             grandBuffer += data.buffer; grandAvance += data.avance;
-                                            genderTableRows += `<tr style="border-bottom:1px solid rgba(0,229,255,0.08); background:#000000;">
-                                                <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
+                                            genderTableRows += `<tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
+                                                <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
                                                 <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit',sans-serif;">${gender}</b></td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">${getPctHtml(data.avance, data.buffer)}</td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
                                             </tr>`;
                                         });
                                         const areaPendiente = areaBufferSum - areaAvanceSum;
-                                        genderTableRows += `<tr style="background:linear-gradient(90deg,rgba(0,229,255,0.12) 0%,rgba(15,23,42,0.5) 100%); border-top:1.5px solid rgba(0,229,255,0.6); border-bottom:1.5px solid rgba(0,229,255,0.6); font-weight:900;">
-                                            <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit',sans-serif; border-left:4px solid #00E5FF;">Total ${area}</td>
-                                            <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBufferSum.toLocaleString()}</td>
-                                            <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaAvanceSum.toLocaleString()}</td>
-                                            <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800;">${getPctHtml(areaAvanceSum, areaBufferSum)}</td>
-                                            <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
+                                        genderTableRows += `<tr style="background:#F4F1EC; border-top:1px solid #DDD8CF; border-bottom:1px solid #DDD8CF; font-weight:700;">
+                                            <td colspan="2" style="padding:7px 8px; color:#1C2B3A; font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit',sans-serif; border-left:3px solid #B45309;">Total ${area}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaBufferSum.toLocaleString()}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaAvanceSum.toLocaleString()}</td>
+                                            <td style="padding:7px 8px; text-align:center; font-size:0.78rem; font-weight:700;">${getPctHtml(areaAvanceSum, areaBufferSum)}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaPendiente.toLocaleString()}</td>
                                         </tr>`;
                                     });
                                     const grandPendiente = grandBuffer - grandAvance;
-                                    genderTableRows += `<tr style="background:linear-gradient(90deg,rgba(0,229,255,0.25) 0%,rgba(15,23,42,0.8) 100%); border-top:2px solid #00E5FF; border-bottom:2px solid #00E5FF; font-weight:900;">
-                                        <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit',sans-serif; font-weight:900; border-left:6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
-                                        <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
-                                        <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandAvance.toLocaleString()}</td>
-                                        <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900;">${getPctHtml(grandAvance, grandBuffer)}</td>
-                                        <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow:0 0 10px rgba(0,229,255,0.5);">${grandPendiente.toLocaleString()}</td>
+                                    genderTableRows += `<tr style="background:#1C2B3A; font-weight:700;">
+                                        <td colspan="2" style="padding:9px 8px; color:#fff; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; font-family:'Outfit',sans-serif; font-weight:700; border-left:4px solid #B45309;">TOTAL GENERAL CDBUFFER</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandBuffer.toLocaleString()}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandAvance.toLocaleString()}</td>
+                                        <td style="padding:9px 8px; text-align:center; font-size:0.8rem; font-weight:700;">${getPctHtml(grandAvance, grandBuffer)}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandPendiente.toLocaleString()}</td>
                                     </tr>`;
                                     return genderTableRows;
                                 })()}
@@ -806,13 +806,13 @@ function renderRendimientoOperarios() {
   const weeklyDailyTasks = tasks;
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
-  area.innerHTML = `<div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
+  area.innerHTML = `<div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                        <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                    <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                        <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                             RENDIMIENTO DE OPERARIOS
                         </h3>
-                        <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                        <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
                             MEDICIÓN DE TAREAS FINALIZADAS
                         </div>
                     </div>
@@ -821,7 +821,7 @@ function renderRendimientoOperarios() {
                 <div style="overflow-x:auto; margin-top:0.4rem;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                         <thead>
-                            <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                            <tr style="background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;">
                                 <th style="padding:6px 4px; text-align:left; width:70px; white-space:nowrap;">FECHA</th>
                                 <th style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;">TURNO</th>
                                 <th style="padding:6px 8px; text-align:center; width: 90px; white-space:nowrap;">N° OPERARIOS</th>
@@ -1038,17 +1038,17 @@ function renderRendimientoOperarios() {
                                         return `${parts[2]}/${parts[1]}`;
                                     })();
                                     return `
-                                        <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                            <td style="padding:6px 4px; color:#ffffff; font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
-                                            <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(0,229,255,0.2)' : 'rgba(234,179,8,0.2)'}; color:${row.turno === 'NOCHE' ? '#00E5FF' : '#fef08a'}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800;">${row.turno}</span></td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:800; color:#ffffff;">${row.operators.size}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#ffffff;">${row.totalQty.toLocaleString()}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#00E5FF;">${row.taskCount}</td>
-                                            <td style="padding:6px 8px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${startStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; color:#a1a1aa; font-size:0.75rem;">${endStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; color:#38bdf8; font-weight:700;">${durationStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; color:#22c55e; font-weight:800;">${qtyPerHourStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:800; color:#eab308;">${avgQty.toLocaleString()}</td>
+                                        <tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
+                                            <td style="padding:6px 4px; color:#1C2B3A; font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
+                                            <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(28,43,58,0.1)' : 'rgba(180,83,9,0.1)'}; color:${row.turno === 'NOCHE' ? '#1C2B3A' : '#B45309'}; padding:2px 6px; border-radius:3px; font-size:0.68rem; font-weight:700;">${row.turno}</span></td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.operators.size}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.totalQty.toLocaleString()}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${row.taskCount}</td>
+                                            <td style="padding:6px 8px; text-align:center; color:#9C9590; font-size:0.75rem;">${startStr}</td>
+                                            <td style="padding:6px 8px; text-align:center; color:#9C9590; font-size:0.75rem;">${endStr}</td>
+                                            <td style="padding:6px 8px; text-align:center; color:#4A4540; font-weight:700;">${durationStr}</td>
+                                            <td style="padding:6px 8px; text-align:center; color:#1A6336; font-weight:700;">${qtyPerHourStr}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${avgQty.toLocaleString()}</td>
                                         </tr>
                                     `;
                                 }).join('');
@@ -1060,13 +1060,13 @@ function renderRendimientoOperarios() {
                     const tp = window.__perfTotalPages || 1;
                     const cp = window.__perfPage || 0;
                     if (tp <= 1) return '';
-                    const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid ${active?'#00E5FF':'rgba(255,255,255,0.1)'}; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
+                    const btnStyle = (active, dis) => `padding:4px 9px; border-radius:3px; border:1px solid ${active?'#1C2B3A':'#DDD8CF'}; background:${active?'#1C2B3A':'#fff'}; color:${dis?'#DDD8CF':active?'#fff':'#4A4540'}; cursor:${dis?'default':'pointer'}; font-size:0.68rem; font-weight:${active?700:500};`;
                     const pages = Array.from({length: tp}, (_, i) => i);
-                    return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
+                    return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid #EEE9E3; margin-top:0.4rem;">
                         <button onclick="window.__perfSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                         ${pages.map(p=>`<button onclick="window.__perfSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
                         <button onclick="window.__perfSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                        <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
+                        <span style="font-size:0.68rem; color:#9C9590; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
                     </div>`;
                 })()}
             </div>`;
@@ -1125,36 +1125,36 @@ const renderHourlyProductionReport = (tasksList) => {
 
         return `
         <!-- REPORTE DE PRODUCCIÓN POR HORA (ANCHO COMPLETO) -->
-        <div style="background:#000000; border:2px solid #00E5FF; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(0,229,255,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid #00E5FF; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                <h3 style="color:#00E5FF; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+        <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                     REPORTE DE PRODUCCIÓN POR HORA
                 </h3>
-                <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
+                <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
                     CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                     <thead>
-                        <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
+                        <tr style="background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;">
                             <th style="padding:6px 8px; text-align:left; width:80px;">FECHA</th>
                             ${targetHours.map(hr => `<th style="padding:6px 4px; text-align:center;">${hr.toString().padStart(2, '0')}:00</th>`).join('')}
                             <th style="padding:6px 8px; text-align:center; width:90px;">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
+                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:#9C9590; font-weight:600;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
                             const rowData = hourlyData[dateKey];
                             const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
                             return `
-                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700;">${formatLogicalDate(dateKey)}</td>
+                                <tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
+                                    <td style="padding:6px 8px; color:#1C2B3A; font-weight:700;">${formatLogicalDate(dateKey)}</td>
                                     ${targetHours.map(hr => {
                                         const qty = rowData[hr];
-                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:#00E5FF; font-weight:900; background:rgba(0, 229, 255, 0.05);">${rowTotal.toLocaleString()}</td>
+                                    <td style="padding:6px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${rowTotal.toLocaleString()}</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -1165,13 +1165,13 @@ const renderHourlyProductionReport = (tasksList) => {
                 const tp = window.__hourlyTotalPages || 1;
                 const cp = window.__hourlyPage || 0;
                 if (tp <= 1) return '';
-                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #00E5FF; background:${active?'rgba(0,229,255,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#00E5FF'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
+                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:3px; border:1px solid ${active?'#1C2B3A':'#DDD8CF'}; background:${active?'#1C2B3A':'#fff'}; color:${dis?'#DDD8CF':active?'#fff':'#4A4540'}; cursor:${dis?'default':'pointer'}; font-size:0.68rem; font-weight:${active?700:500};`;
                 const pages = Array.from({length: tp}, (_, i) => i);
-                return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(0,229,255,0.1); margin-top:0.4rem;">
+                return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid #EEE9E3; margin-top:0.4rem;">
                     <button onclick="window.__hourlySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                     ${pages.map(p=>`<button onclick="window.__hourlySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
                     <button onclick="window.__hourlySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                    <span style="font-size:0.7rem; color:rgba(0,229,255,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
+                    <span style="font-size:0.68rem; color:#9C9590; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
                 </div>`;
             })()}
         </div>
@@ -1307,68 +1307,68 @@ const renderWeeklyStorageReport = (tasksList) => {
 
         return `
         <!-- REPORTE DE ALMACENADO POR SEMANA (ANCHO COMPLETO) -->
-        <div style="background:#000000; border:2px solid #8b5cf6; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(139,92,246,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid #8b5cf6; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                <h3 style="color:#a78bfa; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+        <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                     REPORTE DE ALMACENADO POR SEMANA Y MARCA
                 </h3>
-                <div style="font-size:0.68rem; color:rgba(167, 139, 250, 0.6); font-weight:700; letter-spacing:0.5px;">
+                <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
                     DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES (HAGA CLIC EN UNA SEMANA PARA EXPANDIR POR GÉNERO)
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                     <thead>
-                        <tr style="color:#a78bfa; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #8b5cf6;">
+                        <tr style="background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;">
                             <th style="padding:6px 8px; text-align:left; width:120px;">SEMANA</th>
                             ${sortedBrands.map(b => `<th style="padding:6px 8px; text-align:center;">${b}</th>`).join('')}
                             <th style="padding:6px 8px; text-align:center; width:100px;">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${pagedSortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:rgba(167, 139, 250, 0.4); font-weight:700;">No hay datos semanales registrados.</td></tr>` : pagedSortedWeeks.map(w => {
+                        ${pagedSortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:#9C9590; font-weight:600;">No hay datos semanales registrados.</td></tr>` : pagedSortedWeeks.map(w => {
                             const rowData = weeklyBrandData[w];
                             const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
                             const isExpanded = window.__expandedStorageReportWeeks && window.__expandedStorageReportWeeks.includes(w);
-                            
+
                             const genderRowsHtml = isExpanded ? Array.from(allGendersPerWeek[w] || []).sort().map(gender => {
                                 const genderData = weeklyBrandGenderData[w][gender] || {};
                                 const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
                                 return `
-                                    <tr style="background: rgba(139, 92, 246, 0.04); border-bottom: 1px solid rgba(139,92,246,0.06); font-size:0.74rem;">
-                                        <td style="padding:5px 8px 5px 24px; color:rgba(255,255,255,0.7); font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
+                                    <tr style="background:#F4F1EC; border-bottom:1px solid #EEE9E3; font-size:0.74rem;">
+                                        <td style="padding:5px 8px 5px 24px; color:#9C9590; font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
-                                            return `<td style="padding:5px 8px; text-align:center; color:rgba(255,255,255,0.65);">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                            return `<td style="padding:5px 8px; text-align:center; color:#4A4540;">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
                                         }).join('')}
-                                        <td style="padding:5px 8px; text-align:center; color:#a78bfa; font-weight:700; background:rgba(139,92,246,0.04);">${genderRowTotal.toLocaleString()}</td>
+                                        <td style="padding:5px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${genderRowTotal.toLocaleString()}</td>
                                     </tr>
                                 `;
                             }).join('') : '';
 
                             return `
-                                <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(139,92,246,0.08); background:#000000; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='#000000'">
-                                    <td style="padding:6px 8px; color:#ffffff; font-weight:700; white-space:nowrap;">
-                                        <span style="color:#8b5cf6; margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
+                                <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom:1px solid #EEE9E3; background:#fff; cursor:pointer;" onmouseover="this.style.background='#F4F1EC'" onmouseout="this.style.background='#fff'">
+                                    <td style="padding:6px 8px; color:#1C2B3A; font-weight:700; white-space:nowrap;">
+                                        <span style="color:#B45309; margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
                                         ${w}
                                     </td>
                                     ${sortedBrands.map(b => {
                                         const qty = rowData[b] || 0;
-                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#ffffff' : 'rgba(255,255,255,0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
                                     }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.05);">${rowTotal.toLocaleString()}</td>
+                                    <td style="padding:6px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${rowTotal.toLocaleString()}</td>
                                 </tr>
                                 ${genderRowsHtml}
                             `;
                         }).join('')}
                         ${sortedWeeks.length > 0 ? `
-                            <tr style="background: linear-gradient(90deg, rgba(139,92,246,0.2) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #8b5cf6; font-weight:900;">
-                                <td style="padding:8px 8px; color:#ffffff; font-weight:900;">TOTAL GENERAL</td>
+                            <tr style="background:#1C2B3A; font-weight:700;">
+                                <td style="padding:8px 8px; color:#fff; font-weight:700; border-left:4px solid #B45309;">TOTAL GENERAL</td>
                                 ${sortedBrands.map(b => {
                                     const qty = colTotals[b];
-                                    return `<td style="padding:8px 8px; text-align:center; color:#a78bfa; font-weight:900;">${qty.toLocaleString()}</td>`;
+                                    return `<td style="padding:8px 8px; text-align:center; color:#fff; font-weight:700;">${qty.toLocaleString()}</td>`;
                                 }).join('')}
-                                <td style="padding:8px 8px; text-align:center; color:#a78bfa; font-weight:900; background:rgba(139,92,246,0.1); text-shadow:0 0 8px rgba(167,139,250,0.5);">${grandTotal.toLocaleString()}</td>
+                                <td style="padding:8px 8px; text-align:center; color:#F5C97A; font-weight:700;">${grandTotal.toLocaleString()}</td>
                             </tr>
                         ` : ''}
                     </tbody>
@@ -1378,13 +1378,13 @@ const renderWeeklyStorageReport = (tasksList) => {
                 const tp = window.__weeklyTotalPages || 1;
                 const cp = window.__weeklyPage || 0;
                 if (tp <= 1) return '';
-                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:6px; border:1px solid #8b5cf6; background:${active?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'}; color:${dis?'rgba(255,255,255,0.2)':active?'#fff':'#a78bfa'}; cursor:${dis?'default':'pointer'}; font-size:0.7rem; font-weight:${active?900:500};`;
+                const btnStyle = (active, dis) => `padding:4px 9px; border-radius:3px; border:1px solid ${active?'#1C2B3A':'#DDD8CF'}; background:${active?'#1C2B3A':'#fff'}; color:${dis?'#DDD8CF':active?'#fff':'#4A4540'}; cursor:${dis?'default':'pointer'}; font-size:0.68rem; font-weight:${active?700:500};`;
                 const pages = Array.from({length: tp}, (_, i) => i);
-                return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid rgba(139,92,246,0.2); margin-top:0.4rem;">
+                return `<div style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:0.6rem; border-top:1px solid #EEE9E3; margin-top:0.4rem;">
                     <button onclick="window.__weeklySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                     ${pages.map(p=>`<button onclick="window.__weeklySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
                     <button onclick="window.__weeklySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                    <span style="font-size:0.7rem; color:rgba(167,139,250,0.4); margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
+                    <span style="font-size:0.68rem; color:#9C9590; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
                 </div>`;
             })()}
         </div>
@@ -1558,7 +1558,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                 const labelSuffix = displayWeeks.length > 1 ? ` (${week})` : '';
                 
                 // Qty Buffer dataset
-                const bufferColor = { border: '#00E5FF', bg: 'rgba(0, 229, 255, 0.05)' };
+                const bufferColor = { border: '#1C2B3A', bg: 'rgba(28,43,58,0.05)' };
                 const filteredBufferData = chartWeeksData[week].qtyBuffer.filter((_, dIdx) => activeIndices.includes(dIdx));
                 datasets.push({
                     label: `Qty Buffer${labelSuffix}`,
@@ -1641,7 +1641,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                             }
                             
                             // Sombra negra para máxima legibilidad sobre cualquier cuadrícula o fondo
-                            ctx.shadowColor = '#000000';
+                            ctx.shadowColor = 'rgba(255,255,255,0.8)';
                             ctx.shadowBlur = 4;
                             ctx.shadowOffsetX = 0;
                             ctx.shadowOffsetY = 1;
@@ -1678,11 +1678,11 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleColor: '#fef08a',
-                            bodyColor: '#ffffff',
-                            borderColor: '#eab308',
-                            borderWidth: 1.5,
+                            backgroundColor: 'rgba(255,255,255,0.98)',
+                            titleColor: '#1C2B3A',
+                            bodyColor: '#4A4540',
+                            borderColor: '#DDD8CF',
+                            borderWidth: 1,
                             titleFont: { family: "'Outfit', sans-serif", weight: '900', size: 13 },
                             bodyFont: { family: "'Inter', sans-serif", size: 12 },
                             padding: 12,
@@ -1711,21 +1711,21 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                     scales: {
                         x: {
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.05)',
-                                borderColor: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(28,43,58,0.06)',
+                                borderColor: '#DDD8CF'
                             },
                             ticks: {
-                                color: '#94a3b8',
+                                color: '#9C9590',
                                 font: { family: "'Inter', sans-serif", weight: '600' }
                             }
                         },
                         y: {
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.05)',
-                                borderColor: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(28,43,58,0.06)',
+                                borderColor: '#DDD8CF'
                             },
                             ticks: {
-                                color: '#94a3b8',
+                                color: '#9C9590',
                                 font: { family: "'Inter', sans-serif", weight: '600' }
                             },
                             beginAtZero: true
@@ -1738,26 +1738,26 @@ const renderWeeklyDailyChartSection = (tasksList) => {
 
         return `
         <!-- GRÁFICO POR SEMANA Y DÍA -->
-        <div style="background:#000000; border:2px solid #eab308; border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(234,179,8,0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:#fff; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(234,179,8,0.15); padding-bottom:8px;">
-                <div style="border-left: 4px solid #eab308; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                    <h3 style="color:#fef08a; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+        <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #DDD8CF; padding-bottom:8px;">
+                <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                    <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                         GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
                     </h3>
-                    <div style="font-size:0.68rem; color:rgba(234, 179, 8, 0.6); font-weight:700; letter-spacing:0.5px;">
+                    <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
                         TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A SÁBADO)
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-family:'Inter', sans-serif;">
-                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                    <div style="display:flex; align-items:center; background:#F4F1EC; border:1px solid #DDD8CF; border-radius:4px; padding:4px 10px; gap:8px;">
                         <span style="font-size:0.85rem; color:#eab308;">📅</span>
-                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Desde:</span>
-                        <input type="date" id="chartStartDateInput" value="${window.__chartStartDate}" onchange="window.setChartDateRange(this.value, null)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                        <span style="font-size:0.68rem; color:#9C9590; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Desde:</span>
+                        <input type="date" id="chartStartDateInput" value="${window.__chartStartDate}" onchange="window.setChartDateRange(this.value, null)" style="background:transparent; border:none; color:#1C2B3A; font-size:0.75rem; font-weight:600; outline:none; cursor:pointer; font-family:'Inter', sans-serif;" />
                     </div>
-                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                    <div style="display:flex; align-items:center; background:#F4F1EC; border:1px solid #DDD8CF; border-radius:4px; padding:4px 10px; gap:8px;">
                         <span style="font-size:0.85rem; color:#eab308;">📅</span>
-                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Hasta:</span>
-                        <input type="date" id="chartEndDateInput" value="${window.__chartEndDate}" onchange="window.setChartDateRange(null, this.value)" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;" />
+                        <span style="font-size:0.68rem; color:#9C9590; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Hasta:</span>
+                        <input type="date" id="chartEndDateInput" value="${window.__chartEndDate}" onchange="window.setChartDateRange(null, this.value)" style="background:transparent; border:none; color:#1C2B3A; font-size:0.75rem; font-weight:600; outline:none; cursor:pointer; font-family:'Inter', sans-serif;" />
                     </div>
                 </div>
             </div>
@@ -1883,19 +1883,19 @@ async function renderHistorialBuffer() {
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:1.5rem; width:100%;">
             <!-- TOOLBAR: filtros + exportar (100% ANCHO) -->
-            <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06); width:100%;">
+            <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:#F4F1EC; padding:0.6rem 1rem; border-radius:4px; border:1px solid #DDD8CF; width:100%;">
                 <!-- Rango de fecha -->
-                <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7);">
+                <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.72rem; font-weight:600; color:#4A4540;">
                     <span>📅 DE:</span>
-                    <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                    <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#fff; color:#1C2B3A; border:1px solid #DDD8CF; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.72rem; outline:none; cursor:pointer;" />
                     <span>HASTA:</span>
-                    <input type="date" id="hist_date_to" value="${savedTo}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
+                    <input type="date" id="hist_date_to" value="${savedTo}" style="background:#fff; color:#1C2B3A; border:1px solid #DDD8CF; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.72rem; outline:none; cursor:pointer;" />
                 </div>
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#4f46e5; color:#fff; border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#1C2B3A; color:#fff; border:none; width:28px; height:28px; border-radius:4px; font-size:0.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                         🔄
                     </button>
-                    <button id="btn_hist_export" style="background:#22c55e; color:#000; border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                    <button id="btn_hist_export" style="background:#1A6336; color:#fff; border:none; padding:0.35rem 0.8rem; border-radius:4px; font-size:0.72rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                         📥 EXPORTAR
                     </button>
                 </div>
@@ -1904,15 +1904,15 @@ async function renderHistorialBuffer() {
             <!-- CONTENIDO DE REPORTES EN DOS COLUMNAS -->
             <div style="display:flex; gap:1rem; width:100%; align-items:start;">
                 <!-- COLUMNA IZQUIERDA: REPORTE DE CONCILIACIÓN DE PALETAS (50%) -->
-                <div style="flex:1; min-width:0; background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                    <div style="padding:0.4rem 0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;">
-                        <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Reporte de Paletas</h3>
+                <div style="flex:1; min-width:0; background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; overflow:hidden;">
+                    <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-bottom:none; border-left:3px solid #B45309;">
+                        <h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">Reporte de Paletas</h3>
                     </div>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:center;">
-                            <thead style="background:rgba(0,0,0,0.5);">
-                                <tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);">
-                                    <th style="padding:0.4rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">Fecha</th>
+                        <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#4A4540; text-align:center;">
+                            <thead>
+                                <tr style="background:#1C2B3A; color:#fff; border-bottom:none;">
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Fecha</th>
                                     <th style="padding:0.4rem 0.5rem; text-align:center;">Paletas Solicitadas</th>
                                     <th style="padding:0.4rem 0.5rem; text-align:center;">Paletas Bajadas</th>
                                     <th style="padding:0.4rem 0.5rem; text-align:center;">Diferencias</th>
@@ -1926,18 +1926,18 @@ async function renderHistorialBuffer() {
                 </div>
 
                 <!-- COLUMNA DERECHA: REPORTE DE BUFFER TEMPORADA (50%) -->
-                <div style="flex:1; min-width:0; background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                    <div style="padding:0.4rem 0.6rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center;">
-                        <h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">Buffer Temporada</h3>
-                        <button id="btn_temp_export" style="background:#22c55e; color:#000; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-size:0.7rem; font-weight:800; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <div style="flex:1; min-width:0; background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; overflow:hidden;">
+                    <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-left:3px solid #B45309; display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">Buffer Temporada</h3>
+                        <button id="btn_temp_export" style="background:#1A6336; color:#fff; border:none; padding:0.3rem 0.7rem; border-radius:4px; font-size:0.68rem; font-weight:700; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                             📥 EXPORTAR TEMPORADA
                         </button>
                     </div>
                     <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee; text-align:center;">
-                            <thead style="background:rgba(0,0,0,0.5);">
-                                <tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);">
-                                    <th style="padding:0.4rem 0.5rem; text-align:center; background:rgba(79,70,229,0.05); color:#fff;">Temporada</th>
+                        <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#4A4540; text-align:center;">
+                            <thead>
+                                <tr style="background:#1C2B3A; color:#fff;">
+                                    <th style="padding:0.4rem 0.5rem; text-align:center;">Temporada</th>
                                     <th style="padding:0.4rem 0.5rem; text-align:center;">Cant. Bajada</th>
                                 </tr>
                             </thead>
@@ -2000,37 +2000,37 @@ async function renderHistorialBuffer() {
             if (editingIdx === idx) {
                 // Fila en modo edición
                 return `
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(99,102,241,0.08);">
-                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
-                        <input id="ed_fecha_${idx}" value="${row.fecha || ''}" style="width:90px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
+                <tr style="border-bottom:1px solid #EEE9E3; background:#F4F1EC;">
+                    <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3;">
+                        <input id="ed_fecha_${idx}" value="${row.fecha || ''}" style="width:90px; background:#fff; color:#1C2B3A; border:1px solid #B45309; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
                     </td>
-                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
-                        <input id="ed_sol_${idx}" value="${row.paletasSolicitadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
+                    <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3;">
+                        <input id="ed_sol_${idx}" value="${row.paletasSolicitadas || 0}" type="number" style="width:70px; background:#fff; color:#1C2B3A; border:1px solid #B45309; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
                     </td>
-                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
-                        <input id="ed_baj_${idx}" value="${row.paletasBajadas || 0}" type="number" style="width:70px; background:#0b1120; color:#fff; border:1px solid #6366f1; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
+                    <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3;">
+                        <input id="ed_baj_${idx}" value="${row.paletasBajadas || 0}" type="number" style="width:70px; background:#fff; color:#1C2B3A; border:1px solid #B45309; border-radius:4px; padding:0.2rem 0.3rem; font-size:0.75rem; text-align:center;" />
                     </td>
-                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05); color:#ef4444; font-weight:700;">${row.diferencias}</td>
-                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05); font-weight:800;">${row.fillRate}</td>
-                    <td style="padding:0.3rem 0.4rem; border:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3; color:#991B1B; font-weight:700;">${row.diferencias}</td>
+                    <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3; font-weight:700;">${row.fillRate}</td>
+                    <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3;">
                         <div style="display:flex; gap:0.4rem; justify-content:center;">
-                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#22c55e; border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
-                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:rgba(255,255,255,0.08); border:none; border-radius:5px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
+                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#1A6336; border:none; border-radius:4px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; color:#fff; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
+                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:#F4F1EC; border:1px solid #DDD8CF; border-radius:4px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
                         </div>
                     </td>
                 </tr>`;
             }
             return `
-            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.fecha}</td>
-                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700;">${row.paletasSolicitadas}</td>
-                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#22c55e;">${row.paletasBajadas}</td>
-                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:700; color:#ef4444;">${row.diferencias}</td>
-                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05); font-weight:800; font-size:0.9rem;">${row.fillRate}</td>
-                <td style="padding:0.35rem 0.5rem; border:1px solid rgba(255,255,255,0.05);">
+            <tr style="border-bottom:1px solid #EEE9E3;">
+                <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3; font-weight:700; color:#1C2B3A;">${row.fecha}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3; font-weight:700; color:#1C2B3A;">${row.paletasSolicitadas}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3; font-weight:700; color:#1A6336;">${row.paletasBajadas}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3; font-weight:700; color:#991B1B;">${row.diferencias}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3; font-weight:700; font-size:0.85rem; color:#1C2B3A;">${row.fillRate}</td>
+                <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3;">
                     <div style="display:flex; gap:0.5rem; justify-content:center;">
-                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">✏️</button>
-                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:6px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.28)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">🗑️</button>
+                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:transparent; border:1px solid #DDD8CF; border-radius:4px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'" onmouseout="this.style.background='transparent'">✏️</button>
+                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:transparent; border:1px solid rgba(153,27,27,0.25); border-radius:4px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(153,27,27,0.08)'" onmouseout="this.style.background='transparent'">🗑️</button>
                     </div>
                 </td>
             </tr>`;
@@ -2085,9 +2085,9 @@ async function renderHistorialBuffer() {
                     tbodyTemp.innerHTML = `<tr><td colspan="2" style="padding:2rem; text-align:center; color:var(--text-muted);">No hay paletas bajadas en el rango seleccionado.</td></tr>`;
                 } else {
                     tbodyTemp.innerHTML = sortedRows.map(r => `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <td style="padding:0.35rem 0.5rem; color:#fff; font-weight:700;">${r.temporada}</td>
-                            <td style="padding:0.35rem 0.5rem; font-weight:800; color:#22c55e;">${r.cantidad}</td>
+                        <tr style="border-bottom:1px solid #EEE9E3;">
+                            <td style="padding:0.35rem 0.5rem; color:#1C2B3A; font-weight:700;">${r.temporada}</td>
+                            <td style="padding:0.35rem 0.5rem; font-weight:700; color:#1A6336;">${r.cantidad}</td>
                         </tr>
                     `).join('');
                 }
@@ -2148,31 +2148,30 @@ async function renderHistorialBuffer() {
                 @keyframes slideUpModal   { from{opacity:0;transform:translateY(20px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
             </style>
             <div style="
-                background:linear-gradient(135deg,#1e293b,#0f172a);
-                border:1px solid rgba(239,68,68,0.35);
-                border-radius:16px;
+                background:#FFFFFF;
+                border:1px solid #DDD8CF;
+                border-radius:8px;
                 padding:2rem 2.2rem;
                 max-width:380px;
                 width:90%;
-                box-shadow:0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+                box-shadow:0 4px 24px rgba(28,43,58,0.15);
                 text-align:center;
                 animation: slideUpModal 0.2s cubic-bezier(0.4,0,0.2,1);
             ">
-                <div style="font-size:2.5rem; margin-bottom:0.8rem; filter:drop-shadow(0 0 12px rgba(239,68,68,0.5));">🗑️</div>
-                <h3 style="margin:0 0 0.5rem 0; color:#fff; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">Eliminar Registro</h3>
-                <p style="margin:0 0 1.6rem 0; color:#94a3b8; font-size:0.82rem; line-height:1.55;">¿Estás seguro de que deseas eliminar este registro del historial? Esta acción no se puede deshacer.</p>
+                <div style="font-size:2.5rem; margin-bottom:0.8rem;">🗑️</div>
+                <h3 style="margin:0 0 0.5rem 0; color:#1C2B3A; font-size:1.05rem; font-weight:700; font-family:'Outfit',sans-serif;">Eliminar Registro</h3>
+                <p style="margin:0 0 1.6rem 0; color:#9C9590; font-size:0.82rem; line-height:1.55;">¿Estás seguro de que deseas eliminar este registro del historial? Esta acción no se puede deshacer.</p>
                 <div style="display:flex; gap:0.8rem; justify-content:center;">
                     <button id="modal_hist_cancel" style="
-                        flex:1; padding:0.65rem 1rem; border-radius:9px;
-                        background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
-                        color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;
+                        flex:1; padding:0.6rem 1rem; border-radius:5px;
+                        background:#F4F1EC; border:1px solid #DDD8CF;
+                        color:#4A4540; font-size:0.82rem; font-weight:600; cursor:pointer;
                         transition:all 0.2s;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Cancelar</button>
+                    " onmouseover="this.style.background='#EEE9E3'" onmouseout="this.style.background='#F4F1EC'">Cancelar</button>
                     <button id="modal_hist_confirm" style="
-                        flex:1; padding:0.65rem 1rem; border-radius:9px;
-                        background:linear-gradient(135deg,#ef4444,#dc2626); border:none;
-                        color:#fff; font-size:0.82rem; font-weight:800; cursor:pointer;
-                        box-shadow:0 4px 15px rgba(239,68,68,0.35);
+                        flex:1; padding:0.6rem 1rem; border-radius:5px;
+                        background:#991B1B; border:none;
+                        color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;
                         transition:all 0.2s;
                     " onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">Sí, eliminar</button>
                 </div>
@@ -2272,34 +2271,34 @@ async function renderHistorialBuffer() {
     };
 
     return `
-        <div style="background:rgba(15,23,42,0.9); border:2px solid #06b6d4; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(6,182,212,0.3); margin-bottom:0.6rem; min-height: 150px;">
-            <div style="padding:0.7rem; background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.3); text-align:center;">
-                <h3 style="color:#06b6d4; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">
-                    ${title} ${timestamp ? `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>` : ''}
+        <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; overflow:hidden; margin-bottom:0.6rem; min-height: 150px;">
+            <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-left:3px solid #B45309;">
+                <h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">
+                    ${title} ${timestamp ? `<span style="font-size:0.68rem; opacity:0.5; margin-left:8px; font-weight:400; vertical-align:middle;">(${timestamp})</span>` : ''}
                 </h3>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
-                    <thead style="background:rgba(0,0,0,0.5);">
-                        <tr style="color:var(--text-muted); border-bottom:1px solid rgba(6,182,212,0.2);">
-                            <th style="padding:0.6rem 0.8rem; text-align:left; background:rgba(6,182,212,0.05); color:#fff;">MARCA</th>
-                            ${hasData ? matrix.columns.map(c => `<th style="padding:0.6rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('') : '<th style="padding:0.6rem 0.3rem; text-align:center;">ESTADO</th>'}
-                            <th style="padding:0.6rem 0.8rem; text-align:center; background:rgba(236,72,153,0.1); color:#ec4899; font-weight:900;">TOTAL</th>
+                    <thead>
+                        <tr style="background:#1C2B3A; color:#fff;">
+                            <th style="padding:0.5rem 0.8rem; text-align:left;">MARCA</th>
+                            ${hasData ? matrix.columns.map(c => `<th style="padding:0.5rem 0.3rem; text-align:center; min-width:70px;">${genderAlias(c)}</th>`).join('') : '<th style="padding:0.5rem 0.3rem; text-align:center;">ESTADO</th>'}
+                            <th style="padding:0.5rem 0.8rem; text-align:center; color:#F5C97A; font-weight:700;">TOTAL</th>
                         </tr>
                     </thead>
-                    <tbody style="color:#eee;">
+                    <tbody>
                         ${hasData ? matrix.rows.map(r => `
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.marca==='TOTAL'?'background:rgba(6,182,212,0.15); font-weight:900;':''}">
-                                <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:#22c55e':''}">${brandAlias(r.marca)}</td>
+                            <tr style="border-bottom:1px solid #EEE9E3; ${r.marca==='TOTAL'?'background:#F4F1EC; font-weight:700;':'background:#fff;'}">
+                                <td style="padding:0.4rem 0.8rem; font-weight:700; color:${r.marca==='TOTAL'?'#1C2B3A':'#4A4540'};">${brandAlias(r.marca)}</td>
                                 ${matrix.columns.map(c => {
                                     const val = r.breakdown[c] || 0;
-                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#fff' : 'rgba(255,255,255,0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
+                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
                                 }).join('')}
-                                <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(236,72,153,0.05); color:#22c55e; font-weight:900; border-left:1px solid rgba(255,255,255,0.05);">${r.total.toLocaleString()}</td>
+                                <td style="padding:0.4rem 0.8rem; text-align:center; background:#FFF8F0; color:#B45309; font-weight:700; border-left:1px solid #EEE9E3;">${r.total.toLocaleString()}</td>
                             </tr>
                         `).join('') : `
                             <tr>
-                                <td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted); font-style:italic;">No hay datos para procesar en este reporte.</td>
+                                <td colspan="3" style="padding:2rem; text-align:center; color:#9C9590; font-style:italic;">No hay datos para procesar en este reporte.</td>
                             </tr>
                         `}
                     </tbody>
@@ -2336,47 +2335,47 @@ async function renderAnalisisBuffer() {
       <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:start;">
         <div style="display:flex; flex-direction:column; gap:0.6rem; flex:1; min-width:380px;">
             <!-- COLUMNA IZQUIERDA: ZONAS + SKU -->
-            <div style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(79,70,229,0.3);">
-                <div style="padding:0.7rem; background:rgba(79,70,229,0.1); border-bottom:1px solid rgba(79,70,229,0.3); text-align:center;"><h3 style="color:#fff; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER ZONAS ${tsHtml}</h3></div>
-                <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
-                    <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(79,70,229,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">ATD %</th></tr></thead>
-                    <tbody style="color:#eee;">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.nivel==='Total'?'background:rgba(79,70,229,0.08); font-weight:900;':''}">
-                        <td style="padding:0.5rem 1rem; color:${r.nivel==='Total'?'#22c55e':'inherit'};">${r.nivel}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center;">${r.rq.toLocaleString()}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? '#fff' : '#64748b'};">${r.atd.toLocaleString()}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${r.pct}</td>
+            <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; overflow:hidden;">
+                <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-left:3px solid #B45309;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">ANÁLISIS BUFFER ZONAS ${tsHtml}</h3></div>
+                <table style="border-collapse:collapse; width:100%; font-size:0.78rem; white-space:nowrap;">
+                    <thead><tr style="background:#1C2B3A; color:#fff;"><th style="padding:0.5rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.5rem 1rem; text-align:center;">RQ</th><th style="padding:0.5rem 1rem; text-align:center;">ATD</th><th style="padding:0.5rem 1rem; text-align:center;">ATD %</th></tr></thead>
+                    <tbody>${data.waterfall.map(r => `<tr style="border-bottom:1px solid #EEE9E3; ${r.nivel==='Total'?'background:#F4F1EC; font-weight:700;':'background:#fff;'}">
+                        <td style="padding:0.5rem 1rem; color:${r.nivel==='Total'?'#1C2B3A':'#4A4540'}; font-weight:${r.nivel==='Total'?'700':'500'};">${r.nivel}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.rq.toLocaleString()}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? '#1C2B3A' : '#DDD8CF'};">${r.atd.toLocaleString()}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#1A6336; font-weight:700;">${r.pct}</td>
                     </tr>`).join('')}</tbody>
                 </table>
             </div>
 
-            <div style="background:rgba(15,23,42,0.9); border:2px solid #f59e0b; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(245,158,11,0.3);">
-                <div style="padding:0.7rem; background:rgba(245,158,11,0.1); border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;"><h3 style="color:#f59e0b; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">ANÁLISIS BUFFER SKU ${tsHtml}</h3></div>
-                <table style="border-collapse:collapse; width:100%; font-size:0.82rem; white-space:nowrap;">
-                    <thead style="background:rgba(0,0,0,0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(245,158,11,0.2);"><th style="padding:0.6rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.6rem 1rem; text-align:left;">TIPO</th><th style="padding:0.6rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.6rem 1rem; text-align:center;">SKU</th><th style="padding:0.6rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
-                    <tbody style="color:#eee;">${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${r.fuente.includes('TOTAL') ? 'background:rgba(255,255,255,0.04); font-weight:700;' : ''}">
-                        <td style="padding:0.5rem 1rem; color:${r.fuente.includes('TOTAL') ? '#d1d5db' : 'var(--primary)'}; font-weight:700;">${r.fuente}</td>
-                        <td style="padding:0.5rem 1rem; color:#94a3b8;">${r.tipo}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:#22c55e;">${Number(r.parcaja).toLocaleString()}</td>
+            <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; overflow:hidden;">
+                <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-left:3px solid #B45309;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">ANÁLISIS BUFFER SKU ${tsHtml}</h3></div>
+                <table style="border-collapse:collapse; width:100%; font-size:0.78rem; white-space:nowrap;">
+                    <thead><tr style="background:#1C2B3A; color:#fff;"><th style="padding:0.5rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.5rem 1rem; text-align:left;">TIPO</th><th style="padding:0.5rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.5rem 1rem; text-align:center;">SKU</th><th style="padding:0.5rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
+                    <tbody>${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid #EEE9E3; ${r.fuente.includes('TOTAL') ? 'background:#F4F1EC; font-weight:700;' : 'background:#fff;'}">
+                        <td style="padding:0.5rem 1rem; color:#1C2B3A; font-weight:700;">${r.fuente}</td>
+                        <td style="padding:0.5rem 1rem; color:#9C9590;">${r.tipo}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.paletas}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.skus}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#1A6336; font-weight:700;">${Number(r.parcaja).toLocaleString()}</td>
                     </tr>`).join('')}</tbody>
                 </table>
             </div>
 
-            <div style="background:rgba(15,23,42,0.9); border:2px solid #ef4444; border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(239,68,68,0.3);">
-                <div style="padding:0.7rem; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.3); text-align:center;"><h3 style="color:#ef4444; font-weight:800; margin:0; font-size:0.85rem; letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
-                <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#eee;">
+            <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; overflow:hidden;">
+                <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-left:3px solid #991B1B;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
+                <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#4A4540;">
                     <div style="text-align:center;">
-                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary.articulos || 0).toLocaleString()}</div>
+                        <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
+                        <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.articulos || 0).toLocaleString()}</div>
                     </div>
-                    <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
-                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#fff;">${(data.sinStockSummary.skus || 0).toLocaleString()}</div>
+                    <div style="text-align:center; border-left:1px solid #DDD8CF; padding-left:0.5rem;">
+                        <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
+                        <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.skus || 0).toLocaleString()}</div>
                     </div>
-                    <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.5rem;">
-                        <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#ef4444;">${(data.sinStockSummary.qty || 0).toLocaleString()}</div>
+                    <div style="text-align:center; border-left:1px solid #DDD8CF; padding-left:0.5rem;">
+                        <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
+                        <div style="font-size:1.6rem; font-weight:700; color:#991B1B; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.qty || 0).toLocaleString()}</div>
                     </div>
                 </div>
             </div>
