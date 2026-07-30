@@ -1,9 +1,9 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.531';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.532';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.531';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.531';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.531';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.531';
+import * as adminService from '../services_v245/adminService.js?v=26.5.532';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.532';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.532';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.532';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -360,7 +360,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.531';
+const VERSION = '26.5.532';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1800,7 +1800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.531');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.532');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9307,13 +9307,10 @@ const renderRFSection = (container) => {
 
     const container = document.getElementById('areaContent');
     if (activeSub && activeSub.startsWith('archivo_')) {
-        // El spinner ya está visible — limpiar antes de cargar desde IndexedDB
-        container.innerHTML = '';
-        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; container.appendChild(wrap);
         const actKey = `${tabId}_activo`;
         const resKey = `${tabId}_reserva`;
 
-        // Cargar asíncronamente de la base de datos local IndexedDB antes de renderizar
+        // Mantener el spinner visible mientras se cargan los datos del IndexedDB
         const [activoData, reservaData, articulosData, matrizData, pedidosData] = await Promise.all([
             getAreaData(actKey),
             getAreaData(resKey),
@@ -9321,6 +9318,10 @@ const renderRFSection = (container) => {
             (tabId === 'inventario') ? getAreaData('matriz_ubicaciones') : Promise.resolve(null),
             (tabId === 'no_retail') ? getAreaData(`${tabId}`) : Promise.resolve(null)
         ]);
+
+        // Datos cargados — ahora sí reemplazar el spinner con el contenido
+        container.innerHTML = '';
+        const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; container.appendChild(wrap);
 
         renderUploadArea(wrap, actKey, activoData, '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, resKey, reservaData, '.xlsx', 'STOCK RESERVA');
@@ -9404,6 +9405,7 @@ const renderRFSection = (container) => {
         await new Promise(r => setTimeout(r, 0));
         renderTrackingNoRetailPortal(container);
     } else if (tabId === 'no_retail' && activeSub === 'kpi_no_retail') {
+        await new Promise(r => setTimeout(r, 0));
         renderKpiNoRetailPortal(container);
     } else {
         const data = await getAreaData(tabId);
@@ -11245,7 +11247,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.531 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.532 | MOBILE PORTAL
                             </div>
                     </div>
 
