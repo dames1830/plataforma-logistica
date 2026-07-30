@@ -3,8 +3,8 @@ let currentLayoutZona = 'SEL';
 export const renderLayoutActivo = async (container) => {
       // Indicador de carga mientras se consulta el servidor (el backend puede tardar si estaba dormido)
       if (container) container.innerHTML = `<div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1.2rem;">
-          <div style="width:48px; height:48px; border:4px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
-          <div><h4 style="color:#fff; margin:0;">Cargando mapa de calor...</h4><p style="margin:6px 0 0; font-size:0.85rem;">Obteniendo la última versión del servidor.</p></div>
+          <div style="width:48px; height:48px; border:4px solid rgba(28,43,58,0.1); border-top-color:#B45309; border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <div><h4 style="color:var(--primary); margin:0;">Cargando mapa de calor...</h4><p style="margin:6px 0 0; font-size:0.85rem;">Obteniendo la última versión del servidor.</p></div>
       </div>`;
       let activoRaw = []; let articulosRaw = [];
       let padreStock = {};
@@ -33,14 +33,14 @@ export const renderLayoutActivo = async (container) => {
           if (!globalPayload || globalPayload.totalUnits === 0) {
               container.innerHTML = window.__verLayoutAnterior ? `
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.15;">🕘</div>
-                      <h4>Aún no hay una versión anterior de esta zona</h4>
+                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🕘</div>
+                      <h4 style="color:var(--primary);">Aún no hay una versión anterior de esta zona</h4>
                       <p style="max-width:600px; margin:0 auto;">La versión anterior es el mapa <b>publicado</b> previo. Aparece cuando un administrador publica esta zona por <b>segunda vez</b> (el mapa que estaba pasa a ser el anterior).</p>
-                      <button onclick="window.__toggleVerLayout()" style="margin-top:1rem; background:rgba(59,130,246,0.15); border:1px solid #3b82f6; color:#93c5fd; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:800;">🔵 Ver mapa actual</button>
+                      <button onclick="window.__toggleVerLayout()" style="margin-top:1rem; background:#F4F1EC; border:1px solid #DDD8CF; color:#1C2B3A; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:700;">🔵 Ver mapa actual</button>
                   </div>` : `
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🗺️</div>
-                      <h4>Aún no hay un mapa publicado para esta zona</h4>
+                      <div style="font-size:3rem; margin-bottom:1rem; opacity:0.2;">🗺️</div>
+                      <h4 style="color:var(--primary);">Aún no hay un mapa publicado para esta zona</h4>
                       <p>Un administrador debe procesarlo y publicarlo desde la web principal (botón <b>⚡ PROCESAR Y PUBLICAR</b>). En cuanto se publique, aparecerá aquí automáticamente.</p>
                   </div>`;
               return;
@@ -408,7 +408,7 @@ export const renderLayoutActivo = async (container) => {
                     }
 
                   const cellData = layoutData[c] && layoutData[c][logicalR] ? layoutData[c][logicalR] : null;
-                  let bgColor = 'rgba(255,255,255,0.02)';
+                  let bgColor = '#EEE9E3';
                   let tooltipHTML = `<b>${zonaLabel} ${String(c).padStart(2,'0')} - Cuerpo ${logicalR}</b><br/>Vacío`;
                   let fullTooltipHTML = tooltipHTML;
                   
@@ -439,7 +439,7 @@ export const renderLayoutActivo = async (container) => {
                   
                   gridHtml += `
                       <div class="layout-cell" 
-                           style="height:15px; border:1px solid rgba(255,255,255,0.1); background:${bgColor}; cursor:pointer; position:relative;"
+                           style="height:15px; border:1px solid rgba(28,43,58,0.08); background:${bgColor}; cursor:pointer; position:relative;"
                            onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
                            onmouseout="window.hideTooltip()"
                            onclick="window.showCellModal(this.getAttribute('data-full-tooltip'))"
@@ -448,7 +448,7 @@ export const renderLayoutActivo = async (container) => {
                       </div>
                   `;
               }
-              gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">${String(c).padStart(2,'0')}</div>`;
+              gridHtml += `<div style="text-align:center; font-size:0.68rem; color:#1C2B3A; font-weight:700; margin-top:8px;">${String(c).padStart(2,'0')}</div>`;
               gridHtml += `</div>`;
           }
           gridHtml += `</div>`;
@@ -496,7 +496,7 @@ export const renderLayoutActivo = async (container) => {
           const btnCompartir = '';
 
           const btnVerVersion = (!isReserva) ? `
-              <button title="Alterna entre el mapa ACTUAL y el ANTERIOR" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${window.__verLayoutAnterior ? '#fbbf24' : 'rgba(255,255,255,0.18)'}; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+              <button title="Alterna entre el mapa ACTUAL y el ANTERIOR" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(180,83,9,0.08)' : '#F4F1EC'}; border:1px solid ${window.__verLayoutAnterior ? '#B45309' : '#DDD8CF'}; color:${window.__verLayoutAnterior ? '#B45309' : '#1C2B3A'}; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:0.75rem; font-weight:700; white-space:nowrap; display:flex; align-items:center; gap:5px;">
                   ${window.__verLayoutAnterior ? '🔵 Ver mapa actual' : '🕘 Ver mapa anterior'}
               </button>
           ` : '';
@@ -508,16 +508,16 @@ export const renderLayoutActivo = async (container) => {
           
           targetContainer.innerHTML = `
                 <div style="display:flex; width:100%; gap:20px; flex-direction:row; align-items:flex-start;">
-                    <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; min-width:0; overflow-x:auto; background:rgba(0,0,0,0.4); border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1); min-height:500px;">
+                    <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; min-width:0; overflow-x:auto; background:#FFFFFF; border:1px solid #DDD8CF; min-height:500px;">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                          <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                              <span style="font-size:1.5rem;">🗺️</span> 
+                          <h3 style="color:#1C2B3A; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
+                              <span style="font-size:1.5rem;">🗺️</span>
                               ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
-                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
-                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
+                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(180,83,9,0.1); color:#B45309; border:1px solid rgba(180,83,9,0.4); padding:2px 8px; border-radius:3px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
+                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(180,83,9,0.1); color:#B45309; border:1px solid rgba(180,83,9,0.4); padding:2px 8px; border-radius:3px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-                              <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
+                              <div style="text-align:right; font-size:0.8rem; color:#9C9590; font-weight:600; border:1px solid #DDD8CF; padding:4px 10px; border-radius:4px; background:#F4F1EC;">
                                   🕒 ${timestampStr}
                               </div>
                               ${btnVerVersion}
@@ -527,10 +527,10 @@ export const renderLayoutActivo = async (container) => {
                       </div>
                       
                       <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
+                          <div style="display:flex; align-items:center; gap:5px; color:#4A4540;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(0,0,0,0.1);"></div> T. Anterior</div>
+                          <div style="display:flex; align-items:center; gap:5px; color:#4A4540;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(0,0,0,0.1);"></div> T. Actual</div>
+                          <div style="display:flex; align-items:center; gap:5px; color:#4A4540;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(0,0,0,0.1);"></div> Mixto</div>
+                          <div style="display:flex; align-items:center; gap:5px; color:#4A4540;"><div style="width:15px; height:15px; background:#EEE9E3; border:1px solid #DDD8CF;"></div> Vacío</div>
                       </div>
                       
                       <div style="display:flex; gap:10px;">
@@ -543,20 +543,20 @@ export const renderLayoutActivo = async (container) => {
 
                   <div style="flex: 0 0 calc(30% - 20px); max-width: calc(30% - 20px); display:flex; flex-direction:column; gap:20px;">
                       
-                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid #DDD8CF;">
                           <div>
-                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
-                                  <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL ${zonaLabel}</h4>
+                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #DDD8CF; padding-bottom:8px; margin-bottom:15px;">
+                                  <h4 style="color:#1C2B3A; font-weight:800; font-size:0.95rem; margin:0;">📊 RESUMEN GLOBAL ${zonaLabel}</h4>
                                   <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                               </div>
-                              
-                              <div style="margin-bottom:15px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+
+                              <div style="margin-bottom:15px; background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF;">
                                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                      <span style="color:var(--text-muted); font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Artículos (Padres)</span>
-                                      <span style="font-weight:900; color:#fff; font-size:1.1rem;">${uniquePadresSize.toLocaleString()}</span>
+                                      <span style="color:var(--text-muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Artículos (Padres)</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.1rem;">${uniquePadresSize.toLocaleString()}</span>
                                   </div>
-                                  
-                                  <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
+
+                                  <div style="width:100%; height:6px; background:#EEE9E3; border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
                                       <div style="width:${percArtActual}%; background:#3b82f6; height:100%; transition:width 1s ease;"></div>
                                       <div style="width:${percArtAnterior}%; background:#ef4444; height:100%; transition:width 1s ease;"></div>
                                   </div>
@@ -567,13 +567,13 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                               </div>
                               
-                              <div style="margin-bottom:15px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                              <div style="margin-bottom:15px; background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF;">
                                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                      <span style="color:var(--text-muted); font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Unidades Totales</span>
-                                      <span style="font-weight:900; color:#fff; font-size:1.1rem;">${totalUnits.toLocaleString()}</span>
+                                      <span style="color:var(--text-muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Unidades Totales</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.1rem;">${totalUnits.toLocaleString()}</span>
                                   </div>
-                                  
-                                  <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
+
+                                  <div style="width:100%; height:6px; background:#EEE9E3; border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
                                       <div style="width:${percUnidActual}%; background:#3b82f6; height:100%; transition:width 1s ease;"></div>
                                       <div style="width:${percUnidAnterior}%; background:#ef4444; height:100%; transition:width 1s ease;"></div>
                                   </div>
@@ -585,13 +585,13 @@ export const renderLayoutActivo = async (container) => {
                               </div>
                               
                               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                  <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">Ubicaciones Vacías</span>
-                                      <span style="font-weight:900; color:#fff; font-size:1.2rem;">${emptyCellsCount.toLocaleString()}</span>
+                                  <div style="background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px; text-align:center;">Ubicaciones Vacías</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.2rem;">${emptyCellsCount.toLocaleString()}</span>
                                   </div>
-                                  <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">Densidad (Unid/Ubi)</span>
-                                      <span style="font-weight:900; color:#fff; font-size:1.2rem;">${densidad}</span>
+                                  <div style="background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px; text-align:center;">Densidad (Unid/Ubi)</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.2rem;">${densidad}</span>
                                   </div>
                               </div>
                           </div>
@@ -599,11 +599,11 @@ export const renderLayoutActivo = async (container) => {
                           ${isMZN ? `
                       </div>
                       
-                      <div class="glass-panel" style="width: 100%; max-width: 1450px; padding:20px; display:flex; flex-direction:row; gap:20px; justify-content: space-between; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
+                      <div class="glass-panel" style="width: 100%; max-width: 1450px; padding:20px; display:flex; flex-direction:row; gap:20px; justify-content: space-between; border:1px solid #DDD8CF;">
                           ` : ''}
                           
                           <div style="flex: 1;">
-                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
+                              <h4 style="color:#1C2B3A; font-weight:800; border-bottom:1px solid #DDD8CF; padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
                               
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
@@ -612,11 +612,11 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:#fff;">${statsActualPadresSize.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${statsActualPadresSize.toLocaleString()}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${stats['ACTUAL'].units.toLocaleString()}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
@@ -631,11 +631,11 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:#fff;">${statsAnteriorPadresSize.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${statsAnteriorPadresSize.toLocaleString()}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${stats['ANTERIOR'].units.toLocaleString()}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
@@ -650,11 +650,11 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:#fff;">${uniquePadresSize.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${uniquePadresSize.toLocaleString()}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:#fff;">${statsGeneral.units.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${statsGeneral.units.toLocaleString()}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Desviación general total')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
@@ -664,9 +664,9 @@ export const renderLayoutActivo = async (container) => {
                           </div>
                       </div>
 
-                      <div class="glass-panel" style="flex: 1; padding:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
-                          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:15px;">
-                              <h4 style="color:#fff; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - ${brandTitle}</h4>
+                      <div class="glass-panel" style="flex: 1; padding:20px; border:1px solid #DDD8CF;">
+                          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #DDD8CF; padding-bottom:8px; margin-bottom:15px;">
+                              <h4 style="color:#1C2B3A; font-weight:800; font-size:0.95rem; margin:0;">REPORTE ${zonaLabel} - ${brandTitle}</h4>
                               <span style="font-size:0.75rem; color:var(--text-muted);">🕒 ${timestampStr}</span>
                           </div>
                           <div style="display:flex; justify-content:space-around; align-items:center; gap:10px;">
@@ -674,13 +674,13 @@ export const renderLayoutActivo = async (container) => {
                               <div style="display:flex; flex-direction:column; align-items:center;">
                                   <div style="position:relative; width:120px; height:120px;">
                                       <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
-                                          <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="rgba(28,43,58,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                           <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                           <path stroke="#3b82f6" fill="none" stroke-width="4" stroke-dasharray="${actualPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                          <span style="font-size:1.2rem; font-weight:800; color:#fff;">${actualPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
+                                          <span style="font-size:1.2rem; font-weight:800; color:#1C2B3A;">${actualPerc}%</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#3b82f6;">T. ACTUAL</div>
@@ -689,13 +689,13 @@ export const renderLayoutActivo = async (container) => {
                               <div style="display:flex; flex-direction:column; align-items:center;">
                                   <div style="position:relative; width:120px; height:120px;">
                                       <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
-                                          <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="rgba(28,43,58,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                           <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                           <path stroke="#10b981" fill="none" stroke-width="4" stroke-dasharray="${anteriorPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                          <span style="font-size:1.2rem; font-weight:800; color:#fff;">${anteriorPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
+                                          <span style="font-size:1.2rem; font-weight:800; color:#1C2B3A;">${anteriorPerc}%</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
@@ -704,13 +704,13 @@ export const renderLayoutActivo = async (container) => {
                               <div style="display:flex; flex-direction:column; align-items:center;">
                                   <div style="position:relative; width:120px; height:120px;">
                                       <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
-                                          <path stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                          <path stroke="rgba(28,43,58,0.1)" fill="none" stroke-width="4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                           <path stroke="#ef4444" fill="none" stroke-width="4" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                           <path stroke="#8b5cf6" fill="none" stroke-width="4" stroke-dasharray="${generalPerc}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                          <span style="font-size:1.2rem; font-weight:800; color:#fff;">${generalPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
+                                          <span style="font-size:1.2rem; font-weight:800; color:#1C2B3A;">${generalPerc}%</span>
+                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
                                   <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#8b5cf6;">GENERAL</div>
@@ -754,9 +754,9 @@ export const renderLayoutActivo = async (container) => {
 window.showCellModal = function(htmlContent) {
     const modalHtml = `
         <div id="custom-cell-modal-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:99999; display:flex; justify-content:center; align-items:center;">
-            <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:20px; min-width:300px; max-width:90vw; max-height:80vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.5); position:relative;">
-                <button onclick="document.getElementById('custom-cell-modal-overlay').remove()" style="position:absolute; top:10px; right:10px; background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
-                <div style="color:#e2e8f0; font-family:sans-serif; line-height:1.5; margin-top:10px;">
+            <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:20px; min-width:300px; max-width:90vw; max-height:80vh; overflow-y:auto; box-shadow:0 4px 16px rgba(28,43,58,0.12); position:relative;">
+                <button onclick="document.getElementById('custom-cell-modal-overlay').remove()" style="position:absolute; top:10px; right:10px; background:transparent; border:none; color:#9C9590; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
+                <div style="color:#1C2B3A; font-family:sans-serif; line-height:1.5; margin-top:10px;">
                     ${htmlContent}
                 </div>
             </div>
@@ -795,25 +795,24 @@ window.showCellModal = function(htmlContent) {
       filterWrap.style.alignItems = 'center';
       filterWrap.style.gap = '15px';
       filterWrap.style.padding = '15px';
-      filterWrap.style.background = 'rgba(15, 23, 42, 0.5)';
-      filterWrap.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-      filterWrap.style.borderRadius = '12px';
+      filterWrap.style.background = '#F4F1EC';
+      filterWrap.style.border = '1px solid #DDD8CF';
+      filterWrap.style.borderRadius = '6px';
       
       filterWrap.innerHTML = `
-          <h3 style="color:#fff; margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
-              <span style="font-size:1.3rem;">🎯</span> ZONA DE VISUALIZACIÓN:
+          <h3 style="color:#1C2B3A; margin:0; font-size:1rem; display:flex; align-items:center; gap:8px; font-weight:700;">
+              <span style="font-size:1.1rem;">🎯</span> ZONA DE VISUALIZACIÓN:
           </h3>
           <select id="zonaFilterSelect" style="
-              background: rgba(15, 23, 42, 0.9);
-              color: #fff;
-              border: 1px solid rgba(255, 255, 255, 0.3);
-              border-radius: 8px;
+              background: #FFFFFF;
+              color: #1C2B3A;
+              border: 1px solid #DDD8CF;
+              border-radius: 4px;
               padding: 6px 15px;
-              font-size: 1rem;
-              font-weight: 800;
+              font-size: 0.9rem;
+              font-weight: 700;
               outline: none;
               cursor: pointer;
-              box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           ">
               <option value="SEL" ${currentLayoutZona === 'SEL' ? 'selected' : ''}>LAYOUT SELECTIVO</option>
               <option value="MZN01" ${currentLayoutZona === 'MZN01' ? 'selected' : ''}>LAYOUT MZN01</option>
@@ -879,9 +878,9 @@ window.showCellModal = function(htmlContent) {
       
       if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
           activoWrap.innerHTML = `
-              <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
-                  <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
-                  <h4 style="color:#fff; font-size:1.5rem; margin-bottom:10px;">Zona en Construcción</h4>
+              <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid #DDD8CF;">
+                  <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.25;">🚧</div>
+                  <h4 style="color:#1C2B3A; font-size:1.5rem; margin-bottom:10px;">Zona en Construcción</h4>
                   <p style="font-size:1rem;">El mapa de calor y los reportes para la zona <b>${currentLayoutZona}</b> aún no están configurados.</p>
               </div>
           `;

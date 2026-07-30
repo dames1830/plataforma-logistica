@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.525
+ * v26.5.526
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.525';
+} from '../services_v245/csvHub_v6.js?v=26.5.526';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.525';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.525';
+import * as adminService from '../services_v245/adminService.js?v=26.5.526';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.526';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -225,7 +225,7 @@ function renderAccessDenied(app, customMsg = null) {
       <div class="icon">🔒</div>
       <h1>ACCESO RESTRINGIDO</h1>
       <p>${customMsg || 'Este enlace no es válido o ha sido revocado. Contacta al administrador para obtener un enlace actualizado.'}</p>
-      <div class="contact">📧 Contactar al administrador del sistema</div>
+      <div class="contact">📧 Contactar con Daniel Ames</div>
     </div>`;
 }
 
@@ -239,8 +239,8 @@ function renderShell(app) {
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-brand">
-        <h2>LOGÍSTICA <span style="color:#818cf8">DEAM1830</span>
-          <span style="font-size:11px; color:#fbbf24; font-weight:900; margin-left:4px">v26.5.525</span>
+        <h2>LOGÍSTICA <span style="color:var(--accent)">DEAM1830</span>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:700; margin-left:4px">v26.5.526</span>
         </h2>
         <span class="topbar-badge">👁️ SOLO LECTURA</span>
       </div>
@@ -258,6 +258,11 @@ function renderShell(app) {
     <!-- CONTENT -->
     <div class="content-area" id="contentArea">
       <div style="color:var(--text-muted); text-align:center; padding:4rem;">Cargando...</div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
+      Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
     </div>`;
 
   buildTabNav();
