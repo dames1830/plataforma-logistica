@@ -1,54 +1,57 @@
 /**
  * Metas de Productividad de Almacenaje
- * Reglas configurables por categoría con vigencia por fechas.
- * Reemplaza los valores fijos de 150/300 que estaban en el código.
+ *
+ * Las categorías NO están escritas en este archivo: salen del Maestro de Artículos.
+ *   Columna C — G. Gender   → familia (FOOTWEAR, NON FOOTWEAR, Non Commercial, Promotions…)
+ *   Columna D — Gender RIMS → detalle (01 MEN, 02 WOMEN, 08 ACCESORIES…)
+ *
+ * Las reglas viven en su propio almacenamiento, aparte del Maestro. Si una categoría
+ * desaparece del Maestro, su regla NO se borra: queda dormida. Es lo que permite que un
+ * reporte de julio siga midiendo con la meta de julio aunque hoy esa categoría ya no exista.
  */
 
 const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config_metas_almacenaje';
-const CACHE_KEY = 'config_metas_almacenaje_v1';
-
-// Categorías que NO son calzado, para el desplegable de configuración.
-export const CATEGORIAS_NO_FOOTWEAR = [
-    '11 NON COMMERCIAL COMPLEMENTS',
-    '08 ACCESORIES',
-    '09 CLOTHING',
-    '06 OTHERS',
-    '10 PROMOTIONS',
-    'NON FOOTWEAR',
-    'NON COMMERCIAL'
-];
-
-// El Maestro trae el mismo concepto escrito de varias formas ('08 ACCESORIES', 'NON FOOTWEAR',
-// 'NON COMMERCIAL'...), así que se reconoce por raíz de palabra en vez de por texto exacto.
-const RAICES_NO_FOOTWEAR = ['NON FOOTWEAR', 'NO FOOTWEAR', 'NON COMMERCIAL', 'ACCESOR', 'CLOTHING', 'OTHERS', 'PROMOTION', 'COMPLEMENT'];
+const CACHE_KEY = 'config_metas_almacenaje_v2';
 
 export const META_FALLBACK = 300;
 export const TAMANO_FALLBACK = 300;
+
+/** Nivel al que aplica una regla. */
+export const NIVEL = { DETALLE: 'detalle', FAMILIA: 'familia', GLOBAL: 'global' };
 
 let reglas = null;
 
 const nuevoId = () => 'r' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
 
-/** Normaliza un Gender RIMS para comparar sin acentos ni espacios de más. */
 const norm = (v) => String(v || '').trim().toUpperCase();
 
-/** true si el Gender RIMS corresponde a una categoría que no es calzado. */
-export const esNoFootwear = (genderRims) => {
-    const g = norm(genderRims);
-    if (!g) return false;
-    if (g === 'FOOTWEAR') return false; // el literal 'FOOTWEAR' contiene 'FOOTWEAR', hay que descartarlo antes
-    return RAICES_NO_FOOTWEAR.some(raiz => g.includes(raiz));
+/**
+ * Los valores de Gender RIMS vienen numerados ('01 MEN', '08 ACCESORIES') y los de
+ * G. Gender no ('FOOTWEAR', 'Non Commercial'). Sirve para leer tareas antiguas, que
+ * guardaban un solo campo sin decir de qué columna salía.
+ */
+export const pareceDetalle = (valor) => /^\d{1,2}[\s.-]/.test(String(valor || '').trim());
+
+/** Valores que no aportan categoría. */
+export const esCategoriaVacia = (valor) => {
+    const v = norm(valor);
+    return !v || v === '-' || v === 'S/G' || v === 'S/GR' || v === 'N/A';
 };
 
-/** Devuelve 'FOOTWEAR' o 'NO_FOOTWEAR' para un Gender RIMS. */
-export const grupoDe = (genderRims) => esNoFootwear(genderRims) ? 'NO_FOOTWEAR' : 'FOOTWEAR';
-
 const reglasPorDefecto = () => ([
-    { id: nuevoId(), categoria: 'FOOTWEAR', metaUph: 300, tamanoTarea: 300, desde: '2026-01-01', hasta: '', nota: 'Regla base calzado', base: true },
-    { id: nuevoId(), categoria: 'NO_FOOTWEAR', metaUph: 1000, tamanoTarea: 1000, desde: '2026-01-01', hasta: '', nota: 'Regla base complementos', base: true }
+    { id: nuevoId(), categoria: 'FOOTWEAR', nivel: NIVEL.FAMILIA, metaUph: 300, tamanoTarea: 300, desde: '2026-01-01', hasta: '', nota: 'Regla base calzado', base: true },
+    { id: nuevoId(), categoria: 'GLOBAL', nivel: NIVEL.GLOBAL, metaUph: 300, tamanoTarea: 300, desde: '2026-01-01', hasta: '', nota: 'Regla de respaldo para cualquier categoría sin regla propia', base: true }
 ]);
 
-/** Carga las reglas del servidor. Si falla, usa la copia local y si no hay, las de fábrica. */
+/** Migra reglas de la versión anterior, que usaba el pseudo-nivel NO_FOOTWEAR. */
+const migrar = (lista) => (lista || []).map(r => {
+    if (r.nivel) return r;
+    const cat = norm(r.categoria);
+    if (cat === 'NO_FOOTWEAR') return { ...r, categoria: 'NON FOOTWEAR', nivel: NIVEL.FAMILIA };
+    if (cat === 'GLOBAL') return { ...r, nivel: NIVEL.GLOBAL };
+    return { ...r, nivel: pareceDetalle(r.categoria) ? NIVEL.DETALLE : NIVEL.FAMILIA };
+});
+
 export const cargarReglas = async (forzar = false) => {
     if (reglas && !forzar) return reglas;
 
@@ -57,7 +60,7 @@ export const cargarReglas = async (forzar = false) => {
         if (res.ok) {
             const payload = await res.json();
             if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
-                reglas = payload.data;
+                reglas = migrar(payload.data);
                 localStorage.setItem(CACHE_KEY, JSON.stringify(reglas));
                 return reglas;
             }
@@ -66,12 +69,12 @@ export const cargarReglas = async (forzar = false) => {
         console.warn('[METAS] Servidor no disponible, se usa la copia local.', err);
     }
 
-    const local = localStorage.getItem(CACHE_KEY);
+    const local = localStorage.getItem(CACHE_KEY) || localStorage.getItem('config_metas_almacenaje_v1');
     if (local) {
         try {
             const parsed = JSON.parse(local);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                reglas = parsed;
+                reglas = migrar(parsed);
                 return reglas;
             }
         } catch (e) { /* copia local corrupta, se ignora */ }
@@ -81,14 +84,11 @@ export const cargarReglas = async (forzar = false) => {
     return reglas;
 };
 
-/** Reglas ya cargadas en memoria, sin ir al servidor. */
 export const getReglas = () => reglas || [];
 
-/** Guarda en local de inmediato y sincroniza con el servidor en segundo plano. */
 export const guardarReglas = async (nuevasReglas) => {
     reglas = nuevasReglas;
     localStorage.setItem(CACHE_KEY, JSON.stringify(reglas));
-
     try {
         const res = await fetch(API_URL, {
             method: 'POST',
@@ -103,7 +103,8 @@ export const guardarReglas = async (nuevasReglas) => {
 };
 
 export const agregarRegla = async (regla) => {
-    const lista = [...getReglas(), { ...regla, id: nuevoId() }];
+    const nivel = regla.nivel || (norm(regla.categoria) === 'GLOBAL' ? NIVEL.GLOBAL : (pareceDetalle(regla.categoria) ? NIVEL.DETALLE : NIVEL.FAMILIA));
+    const lista = [...getReglas(), { ...regla, nivel, id: nuevoId() }];
     await guardarReglas(lista);
     return lista;
 };
@@ -116,13 +117,17 @@ export const actualizarRegla = async (id, cambios) => {
 
 export const borrarRegla = async (id) => {
     const objetivo = getReglas().find(r => r.id === id);
-    if (objetivo && objetivo.base) return { ok: false, mensaje: 'La regla base no se puede borrar. Sin ella el sistema se queda sin meta.' };
+    if (objetivo && objetivo.base) return { ok: false, mensaje: 'La regla base no se puede borrar. Sin ella el sistema se queda sin meta de respaldo.' };
     const lista = getReglas().filter(r => r.id !== id);
     await guardarReglas(lista);
     return { ok: true, lista };
 };
 
-/** true si la fecha (YYYY-MM-DD) cae dentro de la vigencia de la regla. */
+/** Cierra la vigencia en vez de borrar. Preserva los reportes históricos intactos. */
+export const cerrarVigencia = async (id, fechaFin) => {
+    return await actualizarRegla(id, { hasta: fechaFin });
+};
+
 export const reglaVigenteEn = (regla, fecha) => {
     if (!fecha) return false;
     const desde = regla.desde || '0000-01-01';
@@ -131,34 +136,42 @@ export const reglaVigenteEn = (regla, fecha) => {
 };
 
 /**
- * Resuelve la meta que aplica a una categoría en una fecha dada.
- * Precedencia: categoría exacta > grupo (FOOTWEAR/NO_FOOTWEAR) > global > fallback.
+ * Meta vigente para una categoría en una fecha.
+ * Precedencia: Gender RIMS exacto → G. Gender → GLOBAL → respaldo fijo.
  * Entre reglas del mismo nivel gana la de inicio más reciente, así una campaña
- * pisa a la regla base sin tener que borrarla.
+ * pisa a la regla base durante su vigencia sin necesidad de borrar nada.
  */
-export const resolverMeta = (genderRims, fecha) => {
-    const lista = getReglas();
-    const cat = norm(genderRims);
-    const grupo = grupoDe(genderRims);
+export const resolverMeta = (detalle, familia, fecha) => {
+    const vigentes = getReglas().filter(r => reglaVigenteEn(r, fecha));
+    const masReciente = (arr) => arr.sort((a, b) => String(b.desde || '').localeCompare(String(a.desde || '')))[0];
 
-    const vigentes = lista.filter(r => reglaVigenteEn(r, fecha));
-    const masReciente = (candidatas) => candidatas.sort((a, b) => String(b.desde || '').localeCompare(String(a.desde || '')))[0];
+    const d = norm(detalle);
+    if (d && !esCategoriaVacia(d)) {
+        const porDetalle = masReciente(vigentes.filter(r => norm(r.categoria) === d));
+        if (porDetalle) return { metaUph: porDetalle.metaUph, tamanoTarea: porDetalle.tamanoTarea, regla: porDetalle, origen: NIVEL.DETALLE };
+    }
 
-    const exacta = masReciente(vigentes.filter(r => cat && norm(r.categoria) === cat));
-    if (exacta) return { metaUph: exacta.metaUph, tamanoTarea: exacta.tamanoTarea, regla: exacta, origen: 'categoria' };
-
-    const porGrupo = masReciente(vigentes.filter(r => norm(r.categoria) === grupo));
-    if (porGrupo) return { metaUph: porGrupo.metaUph, tamanoTarea: porGrupo.tamanoTarea, regla: porGrupo, origen: 'grupo' };
+    const f = norm(familia);
+    if (f && !esCategoriaVacia(f)) {
+        const porFamilia = masReciente(vigentes.filter(r => norm(r.categoria) === f));
+        if (porFamilia) return { metaUph: porFamilia.metaUph, tamanoTarea: porFamilia.tamanoTarea, regla: porFamilia, origen: NIVEL.FAMILIA };
+    }
 
     const global = masReciente(vigentes.filter(r => norm(r.categoria) === 'GLOBAL'));
-    if (global) return { metaUph: global.metaUph, tamanoTarea: global.tamanoTarea, regla: global, origen: 'global' };
+    if (global) return { metaUph: global.metaUph, tamanoTarea: global.tamanoTarea, regla: global, origen: NIVEL.GLOBAL };
 
-    return { metaUph: META_FALLBACK, tamanoTarea: TAMANO_FALLBACK, regla: null, origen: 'fallback' };
+    return { metaUph: META_FALLBACK, tamanoTarea: TAMANO_FALLBACK, regla: null, origen: 'respaldo' };
 };
 
-/** Meta que aplica hoy, para el generador de tareas. */
-export const resolverMetaHoy = (genderRims) => {
-    const hoy = new Date();
-    const fecha = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-    return resolverMeta(genderRims, fecha);
+/** Meta de hoy, para el generador de tareas. */
+export const resolverMetaHoy = (detalle, familia) => {
+    const h = new Date();
+    const fecha = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
+    return resolverMeta(detalle, familia, fecha);
+};
+
+/** true si existe alguna regla propia para esa categoría, vigente o no. */
+export const tieneReglaPropia = (categoria) => {
+    const c = norm(categoria);
+    return getReglas().some(r => norm(r.categoria) === c);
 };

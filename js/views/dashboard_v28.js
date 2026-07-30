@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.537';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.538';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.537';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.537';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.537';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.537';
-import * as metasService from '../services_v245/metasService.js?v=26.5.537';
+import * as adminService from '../services_v245/adminService.js?v=26.5.538';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.538';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.538';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.538';
+import * as metasService from '../services_v245/metasService.js?v=26.5.538';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.537';
+const VERSION = '26.5.538';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -386,42 +386,100 @@ const getTaskTotalAvance = (t) => {
     return sum;
 };
 
+/** Deja una categoría en formato legible: '08 ACCESORIES' → 'Accesories'. */
+const etiquetaCategoria = (v) => {
+    const s = String(v || '').trim().replace(/^\d{1,2}[\s.-]+/, '');
+    return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+};
+
 /**
- * Categoría de una tarea, leída del Gender RIMS de sus artículos.
- * El generador ya separa calzado de complementos, así que una tarea normalmente
- * es homogénea; si llegara mezclada se marca para poder auditarla.
+ * Categoría de una tarea en sus dos niveles:
+ *   familia → columna C del Maestro (G. Gender)
+ *   detalle → columna D del Maestro (Gender RIMS)
+ *
+ * Las tareas antiguas guardaban un solo campo `gender` que a veces traía el valor de
+ * una columna y a veces el de la otra, según la versión del sistema que las creó. Se
+ * distingue por el prefijo numérico: los Gender RIMS vienen numerados, las familias no.
+ *
+ * Si la tarea junta varios artículos, la categoría se resuelve así:
+ *   todos el mismo detalle           → ese detalle
+ *   distinto detalle, misma familia  → la familia
+ *   distinta familia                 → la familia con más unidades, marcada como mixta
  */
 const getTaskCategoria = (t) => {
-    const vacio = { categoria: '', grupo: 'FOOTWEAR', mixta: false, etiqueta: 'Footwear' };
+    const vacio = { familia: '', detalle: '', mixta: false, etiqueta: 'Sin categoría', etiquetaCorta: 'Sin categoría' };
     if (!t || !Array.isArray(t.items) || t.items.length === 0) return vacio;
 
-    const categorias = new Set();
+    const familias = new Map(); // familia → unidades
+    const detalles = new Map(); // detalle  → unidades
+
     t.items.forEach(art => {
-        const gr = String(art.genderRims || art.gender || '').trim().toUpperCase();
-        if (gr && gr !== '-' && gr !== 'S/GR') categorias.add(gr);
+        const unidades = parseFloat(art.bufferQty) || 0;
+        const campoDetalle = art.genderRims;
+        const campoFamilia = art.gender;
+
+        // Campo explícito de Gender RIMS (tareas nuevas)
+        if (!metasService.esCategoriaVacia(campoDetalle)) {
+            const d = String(campoDetalle).trim().toUpperCase();
+            detalles.set(d, (detalles.get(d) || 0) + unidades);
+        }
+
+        if (!metasService.esCategoriaVacia(campoFamilia)) {
+            const g = String(campoFamilia).trim().toUpperCase();
+            // En tareas viejas este campo podía traer el Gender RIMS en vez de la familia
+            if (metasService.pareceDetalle(g)) {
+                if (!detalles.has(g)) detalles.set(g, (detalles.get(g) || 0) + unidades);
+            } else {
+                familias.set(g, (familias.get(g) || 0) + unidades);
+            }
+        }
     });
 
-    if (categorias.size === 0) return vacio;
+    if (familias.size === 0 && detalles.size === 0) return vacio;
 
-    const lista = [...categorias];
-    const grupos = new Set(lista.map(c => metasService.grupoDe(c)));
-    const mixta = grupos.size > 1;
-    const principal = lista[0];
-    const grupo = metasService.grupoDe(principal);
+    const dominante = (mapa) => [...mapa.entries()].sort((a, b) => b[1] - a[1])[0][0];
 
-    // Para las de calzado el Gender RIMS es el género (01 MEN, 02 WOMEN…), que no
-    // aporta al KPI; lo que importa es que sea calzado. Los complementos sí van con su nombre.
-    const etiqueta = grupo === 'FOOTWEAR'
-        ? 'Footwear'
-        : principal.replace(/^\d+\s*/, '').toLowerCase().replace(/^./, c => c.toUpperCase());
+    const familia = familias.size > 0 ? dominante(familias) : '';
+    const detalle = detalles.size === 1 ? [...detalles.keys()][0] : '';
+    const mixta = familias.size > 1;
 
-    return { categoria: principal, grupo, mixta, etiqueta };
+    const partes = [];
+    if (familia) partes.push(etiquetaCategoria(familia));
+    if (detalle) partes.push(etiquetaCategoria(detalle));
+    const etiqueta = partes.join(' · ') || 'Sin categoría';
+    const etiquetaCorta = etiquetaCategoria(familia) || etiquetaCategoria(detalle) || 'Sin categoría';
+
+    return { familia, detalle, mixta, etiqueta, etiquetaCorta, detalles: [...detalles.keys()] };
 };
 
 /** Meta de u/h y tamaño de tarea vigentes para una tarea, según su categoría y su fecha. */
 const getTaskMeta = (t) => {
-    const { categoria } = getTaskCategoria(t);
-    return metasService.resolverMeta(categoria, t && t.fecha);
+    const { familia, detalle } = getTaskCategoria(t);
+    return metasService.resolverMeta(detalle, familia, t && t.fecha);
+};
+
+/**
+ * Catálogo de categorías del Maestro de Artículos vigente.
+ * Columna C = familias (G. Gender), columna D = detalles (Gender RIMS).
+ */
+const getCatalogoMaestro = () => {
+    const maestro = dataStore.analisis_sku_maestro || dataStore.articulos || [];
+    const familias = new Set();
+    const detalles = new Set();
+
+    maestro.forEach((row, i) => {
+        if (!row) return;
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        if (i === 0 && String(raw[0] || '').toUpperCase().includes('COD')) return;
+
+        const fam = String(getCol(row, ['G. Gender', 'G Gender', 'GENDER']) || raw[2] || '').trim().toUpperCase();
+        const det = String(getCol(row, ['Gender RIMS', 'GENDERRIMS', 'GENDER_RIMS']) || raw[3] || '').trim().toUpperCase();
+
+        if (!metasService.esCategoriaVacia(fam) && !metasService.pareceDetalle(fam)) familias.add(fam);
+        if (!metasService.esCategoriaVacia(det)) detalles.add(det);
+    });
+
+    return { familias: [...familias].sort(), detalles: [...detalles].sort() };
 };
 
 /** Minutos trabajados en una tarea, descontando el break de 23:00 a 23:50. */
@@ -469,7 +527,10 @@ const buildKpiDataset = (tasks, desde, hasta) => {
             desviacion: qty - esperado,
             pct: meta.metaUph > 0 ? (uph / meta.metaUph) * 100 : 0,
             categoria: cat.etiqueta,
-            esFootwear: cat.grupo === 'FOOTWEAR',
+            familia: cat.familia,
+            detalle: cat.detalle,
+            etiquetaCorta: cat.etiquetaCorta,
+            origenMeta: meta.origen,
             mixta: cat.mixta,
             ok: mins > 0 && uph >= meta.metaUph,
             inicio: t.inicio,
@@ -1923,7 +1984,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.537');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.538');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11433,7 +11494,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.537 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.538 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15683,30 +15744,27 @@ window.showCellModal = function(htmlContent) {
             return `${logicalDate}_Tarea${n}`;
         };
 
-        const specialCategories = [
-            '11 NON COMMERCIAL COMPLEMENTS',
-            '08 ACCESORIES',
-            '09 CLOTHING',
-            '06 OTHERS',
-            '10 PROMOTIONS'
-        ];
-        const isSpecialCategory = (gr) => {
-            if (!gr) return false;
-            const clean = String(gr).trim().toUpperCase();
-            return specialCategories.some(cat => clean.includes(cat));
+        // La familia sale del Maestro (columna C, G. Gender). No hay lista fija: si Comercial
+        // agrega una categoría nueva, entra sola. Sin dato de familia se asume calzado, que es
+        // el comportamiento que traía el sistema.
+        const esComplemento = (a) => {
+            const fam = String(a.gender || '').trim().toUpperCase();
+            if (metasService.esCategoriaVacia(fam) || metasService.pareceDetalle(fam)) return false;
+            return fam !== 'FOOTWEAR';
         };
 
         Object.keys(byMarca).forEach(marca => {
             const arts = byMarca[marca];
-            
-            // Separate special category articles and normal articles
-            const specialArts = arts.filter(a => isSpecialCategory(a.genderRims));
-            const normalArts = arts.filter(a => !isSpecialCategory(a.genderRims));
 
-            // Group special articles by genderRims
+            // Los complementos van en una tarea por categoría sin tope; el calzado se corta por tamaño
+            const specialArts = arts.filter(a => esComplemento(a));
+            const normalArts = arts.filter(a => !esComplemento(a));
+
+            // Se agrupan por el nivel más específico disponible: Gender RIMS, o la familia si falta
             const specialGroups = {};
             specialArts.forEach(a => {
-                const cat = String(a.genderRims || 'OTHER_SPECIAL').trim().toUpperCase();
+                const det = String(a.genderRims || '').trim().toUpperCase();
+                const cat = (!metasService.esCategoriaVacia(det) ? det : String(a.gender || 'OTHER_SPECIAL').trim().toUpperCase());
                 if (!specialGroups[cat]) specialGroups[cat] = [];
                 specialGroups[cat].push(a);
             });
@@ -15732,7 +15790,7 @@ window.showCellModal = function(htmlContent) {
 
             // Tamaño de tarea según la regla vigente para calzado (Config. Tareas).
             // Un artículo nunca se parte: si supera el tamaño, va solo en su propia tarea.
-            const tamanoTarea = metasService.resolverMetaHoy('01 MEN').tamanoTarea || 300;
+            const tamanoTarea = metasService.resolverMetaHoy('', 'FOOTWEAR').tamanoTarea || 300;
             const bigNormals = normalArts.filter(a => a.bufferQty >= tamanoTarea);
             const smallNormals = normalArts.filter(a => a.bufferQty < tamanoTarea);
 
@@ -16097,19 +16155,37 @@ window.showCellModal = function(htmlContent) {
         // ── Hoja 2: Productividad por grupo ──
         const wsP = wb.addWorksheet('Productividad');
         cabecera(wsP, 'PRODUCTIVIDAD POR GRUPO', [
-            { h: 'Fecha', w: 12 }, { h: 'Grupo', w: 28 }, { h: 'Categoría', w: 18 }, { h: 'Marca', w: 16 },
+            { h: 'Fecha', w: 12 }, { h: 'Grupo', w: 28 }, { h: 'Familia (G. Gender)', w: 20 }, { h: 'Detalle (Gender RIMS)', w: 24 }, { h: 'Marca', w: 16 },
             { h: 'Unidades', w: 12 }, { h: 'Tiempo', w: 10 }, { h: 'U/H', w: 10 },
-            { h: 'Meta U/H', w: 11 }, { h: 'Desviación', w: 12 }, { h: '% Meta', w: 10 }, { h: 'Estado', w: 14 }
+            { h: 'Meta U/H', w: 11 }, { h: 'Origen Meta', w: 14 }, { h: 'Desviación', w: 12 }, { h: '% Meta', w: 10 }, { h: 'Estado', w: 14 }
         ]);
         filas.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach((r, i) => {
             const row = wsP.getRow(i + 3);
             row.values = [
-                r.fecha.split('-').reverse().join('/'), r.grupo, r.categoria, r.marca,
+                r.fecha.split('-').reverse().join('/'), r.grupo, r.familia || '', r.detalle || '', r.marca,
                 r.qty, r.mins > 0 ? fmtHM(r.mins) : '--:--', r.mins > 0 ? Math.round(r.uph) : 0,
-                r.metaUph, Math.round(r.desviacion), Math.round(r.pct),
+                r.metaUph, r.origenMeta, Math.round(r.desviacion), Math.floor(r.pct),
                 r.pct >= 100 ? 'CUMPLIÓ' : r.pct >= 85 ? 'AL LÍMITE' : 'NO CUMPLIÓ'
             ];
-            [5, 7, 8, 9, 10].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+            [6, 8, 9, 11, 12].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+        });
+
+        // ── Hoja: Productividad por categoría (lo que analiza Comercial) ──
+        const wsC = wb.addWorksheet('Por Categoría');
+        cabecera(wsC, 'PRODUCTIVIDAD POR CATEGORÍA', [
+            { h: 'Familia (G. Gender)', w: 22 }, { h: 'Detalle (Gender RIMS)', w: 26 }, { h: 'Tareas', w: 9 },
+            { h: 'Unidades', w: 13 }, { h: 'Horas', w: 10 }, { h: 'U/H Real', w: 11 },
+            { h: 'Meta U/H', w: 11 }, { h: 'Desviación', w: 13 }, { h: '% Meta', w: 10 }, { h: 'Origen Meta', w: 16 }
+        ]);
+        (window.__kpiPorCategoria || []).forEach((c, i) => {
+            const row = wsC.getRow(i + 3);
+            const pct = c.meta > 0 ? (c.qty / c.meta) * 100 : 0;
+            row.values = [
+                c.fam, c.det || '', c.tareas, Math.round(c.qty), Math.round(c.mins / 60),
+                c.mins > 0 ? Math.round((c.qty / c.mins) * 60) : 0, Math.round(c.metaUph),
+                Math.round(c.qty - c.meta), Math.floor(pct), c.origen
+            ];
+            [3, 4, 5, 6, 7, 8, 9].forEach(n => { row.getCell(n).numFmt = '#,##0'; row.getCell(n).alignment = { horizontal: 'right' }; });
         });
 
         // ── Hoja 3: Acumulado por día y usuario ──
@@ -16174,16 +16250,30 @@ window.showCellModal = function(htmlContent) {
     await metasService.cargarReglas(true);
     if (!container.isConnected) return;
 
-    // Categorías reales del Maestro de Artículos, para no tener que escribirlas a mano
-    const maestro = dataStore.analisis_sku_maestro || dataStore.articulos || [];
-    const catsMaestro = new Set();
-    maestro.forEach((row, i) => {
-        if (i === 0 && Array.isArray(row) && String(row[0] || '').toUpperCase().includes('COD')) return;
-        const raw = Array.isArray(row) ? row : Object.values(row);
-        const gr = String(getCol(row, ['Gender RIMS', 'GENDER RIMS', 'GENDERRIMS', 'DEPARTAMENTO', 'GENERO']) || raw[3] || '').trim().toUpperCase();
-        if (gr && gr !== '-' && gr !== 'GENDER RIMS') catsMaestro.add(gr);
+    // El catálogo sale del Maestro vigente. Se le suman las categorías que ya tienen regla y
+    // las que aparecen en tareas del histórico, para que una categoría dada de baja en el
+    // Maestro no desaparezca de la configuración ni rompa los reportes viejos.
+    const catalogo = getCatalogoMaestro();
+    const enMaestro = new Set([...catalogo.familias, ...catalogo.detalles]);
+    // Sin Maestro cargado no se puede saber qué está vigente: no se marca nada ni se avisa de nada
+    const hayMaestro = enMaestro.size > 0;
+
+    const catsHistorico = new Set();
+    (almacenajeTasksCache || []).forEach(t => {
+        const c = getTaskCategoria(t);
+        if (c.familia) catsHistorico.add(c.familia);
+        (c.detalles || []).forEach(d => catsHistorico.add(d));
     });
-    const opcionesCat = ['FOOTWEAR', 'NO_FOOTWEAR', 'GLOBAL', ...[...catsMaestro].sort()];
+
+    const conRegla = new Set(metasService.getReglas().map(r => String(r.categoria).toUpperCase()));
+
+    const extras = [...new Set([...conRegla, ...catsHistorico])]
+        .filter(c => c && c !== 'GLOBAL' && !enMaestro.has(c));
+    const familiasExtra = extras.filter(c => !metasService.pareceDetalle(c)).sort();
+    const detallesExtra = extras.filter(c => metasService.pareceDetalle(c)).sort();
+
+    // Categorías del Maestro que hoy no tienen regla propia: heredan la de su familia o la global
+    const sinReglaPropia = hayMaestro ? [...catalogo.familias, ...catalogo.detalles].filter(c => !conRegla.has(c)) : [];
 
     const hoyStr = getLogicalDate();
     const fmt = (f) => f ? f.split('-').reverse().join('/') : '';
@@ -16226,15 +16316,24 @@ window.showCellModal = function(htmlContent) {
                                 const vig = `${fmt(r.desde)} → ${r.hasta ? fmt(r.hasta) : '<span style="color:rgba(255,255,255,0.3);">sin fin</span>'}`;
                                 const nota = r.nota ? `<div style="font-size:0.65rem; color:rgba(255,255,255,0.35); margin-top:2px;">${esc(r.nota)}</div>` : '';
                                 const fondo = r.base ? 'background:rgba(99,102,241,0.06);' : '';
+                                const cat = String(r.categoria).toUpperCase();
+                                const nivelBadge = r.nivel === metasService.NIVEL.DETALLE
+                                    ? '<span style="font-size:0.55rem; color:#22d3ee; border:1px solid rgba(34,211,238,0.35); padding:1px 5px; border-radius:5px; vertical-align:middle; margin-left:5px;">DETALLE</span>'
+                                    : r.nivel === metasService.NIVEL.FAMILIA
+                                        ? '<span style="font-size:0.55rem; color:#a78bfa; border:1px solid rgba(167,139,250,0.35); padding:1px 5px; border-radius:5px; vertical-align:middle; margin-left:5px;">FAMILIA</span>'
+                                        : '<span style="font-size:0.55rem; color:#94a3b8; border:1px solid rgba(148,163,184,0.35); padding:1px 5px; border-radius:5px; vertical-align:middle; margin-left:5px;">RESPALDO</span>';
+                                const fueraMaestro = (hayMaestro && cat !== 'GLOBAL' && !enMaestro.has(cat))
+                                    ? '<div style="font-size:0.62rem; color:#94a3b8; margin-top:3px;">🕘 Sin uso actual — no está en el Maestro vigente</div>' : '';
                                 return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${fondo}">
-                                    <td style="padding:0.75rem 1rem;"><b style="color:#fff;">${esc(r.categoria)}</b>${r.base ? ' <span style="font-size:0.58rem; color:#818cf8; border:1px solid rgba(129,140,248,0.4); padding:1px 6px; border-radius:6px; vertical-align:middle;">BASE</span>' : ''}${nota}</td>
+                                    <td style="padding:0.75rem 1rem;"><b style="color:#fff;">${esc(r.categoria)}</b>${nivelBadge}${r.base ? ' <span style="font-size:0.55rem; color:#818cf8; border:1px solid rgba(129,140,248,0.4); padding:1px 5px; border-radius:5px; vertical-align:middle;">BASE</span>' : ''}${nota}${fueraMaestro}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:#a5b4fc; font-weight:900; font-size:0.95rem;">${Number(r.metaUph).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(255,255,255,0.65); font-weight:700;">${Number(r.tamanoTarea).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 1rem; color:rgba(255,255,255,0.6); font-size:0.75rem;">${vig}</td>
                                     <td style="padding:0.75rem 0.8rem; text-align:center;">${badge}</td>
                                     <td style="padding:0.75rem 0.8rem; text-align:center; white-space:nowrap;">
                                         <button data-edit="${r.id}" title="Editar" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#facc15;">✏️</button>
-                                        ${r.base ? '' : `<button data-del="${r.id}" title="Borrar" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#ef4444;">🗑️</button>`}
+                                        ${vigente && !r.base ? `<button data-cerrar="${r.id}" title="Dejar de aplicar desde hoy, sin tocar el histórico" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#38bdf8;">🕘</button>` : ''}
+                                        ${r.base ? '' : `<button data-del="${r.id}" title="Borrar (puede mover números históricos)" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#ef4444;">🗑️</button>`}
                                     </td>
                                 </tr>`;
                             }).join('')}
@@ -16242,9 +16341,23 @@ window.showCellModal = function(htmlContent) {
                     </table>
                 </div>
 
-                <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
-                    La meta se elige por la <b style="color:rgba(255,255,255,0.6);">fecha de la tarea</b>, no por la de hoy: un reporte de mayo sigue midiendo contra la meta que estaba vigente en mayo.
-                    Precedencia: categoría exacta → grupo (FOOTWEAR / NO_FOOTWEAR) → GLOBAL. Entre reglas del mismo nivel gana la de inicio más reciente.
+                ${!hayMaestro ? `
+                <div style="padding:0.85rem 1.2rem; background:rgba(148,163,184,0.07); border-top:1px solid rgba(148,163,184,0.2); font-size:0.72rem; color:#94a3b8; line-height:1.7;">
+                    ℹ️ El Maestro de Artículos no está cargado en esta sesión, así que el desplegable solo muestra las categorías que ya tienen regla. Subí el Maestro en <b style="color:rgba(255,255,255,0.6);">Análisis SKU → Archivo Análisis SKU</b> para ver todas las categorías disponibles.
+                </div>` : ''}
+
+                ${sinReglaPropia.length > 0 ? `
+                <div style="padding:0.85rem 1.2rem; background:rgba(245,158,11,0.07); border-top:1px solid rgba(245,158,11,0.2); font-size:0.72rem; color:#fbbf24; line-height:1.7;">
+                    ⚠️ <b>${sinReglaPropia.length} categoría${sinReglaPropia.length !== 1 ? 's' : ''} del Maestro sin regla propia</b> — están usando la meta de su familia o la de respaldo:
+                    <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:5px;">
+                        ${sinReglaPropia.map(c => `<span style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); padding:2px 8px; border-radius:6px; font-size:0.66rem; font-weight:700;">${esc(c)}</span>`).join('')}
+                    </div>
+                </div>` : ''}
+
+                <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.7;">
+                    Las categorías salen del Maestro de Artículos: <b style="color:rgba(255,255,255,0.55);">G. Gender</b> (columna C) es la familia y <b style="color:rgba(255,255,255,0.55);">Gender RIMS</b> (columna D) el detalle. Si Comercial agrega una nueva, aparece sola.<br>
+                    Precedencia: <b style="color:rgba(255,255,255,0.55);">detalle → familia → respaldo</b>. Entre reglas del mismo nivel gana la de inicio más reciente, así una campaña pisa a la base sin borrarla.<br>
+                    La meta se elige por la <b style="color:rgba(255,255,255,0.55);">fecha de la tarea</b>, no por la de hoy: un reporte de mayo sigue midiendo con la meta que estaba vigente en mayo. Para dejar de usar una regla usá 🕘 (cerrar vigencia), no el borrado.
                 </div>
             </div>
         </div>`;
@@ -16253,10 +16366,20 @@ window.showCellModal = function(htmlContent) {
         container.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
             abrirModal(metasService.getReglas().find(r => r.id === b.dataset.edit));
         });
+        container.querySelectorAll('[data-cerrar]').forEach(b => b.onclick = async () => {
+            const r = metasService.getReglas().find(x => x.id === b.dataset.cerrar);
+            if (!r) return;
+            if (!await showPremiumConfirm('CERRAR VIGENCIA', `La regla de ${r.categoria} (${r.metaUph} u/h) dejará de aplicar a partir de mañana. Los reportes anteriores a hoy no cambian.`, 'warning')) return;
+            await metasService.cerrarVigencia(r.id, hoyStr);
+            pintar();
+        });
+
         container.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
             const r = metasService.getReglas().find(x => x.id === b.dataset.del);
             if (!r) return;
-            if (!await showPremiumConfirm('BORRAR REGLA', `¿Borrar la regla de ${r.categoria} (${r.metaUph} u/h)? Las tareas volverán a la regla que corresponda por precedencia.`, 'warning')) return;
+            const ok = await showPremiumConfirm('BORRAR REGLA',
+                `Borrar la regla de ${r.categoria} (${r.metaUph} u/h) puede CAMBIAR NÚMEROS YA PRESENTADOS: las tareas históricas de esa categoría pasarán a medirse con la meta de su familia.\n\nSi solo querés dejar de usarla de hoy en adelante, cancelá y usá el botón 🕘 de cerrar vigencia.`, 'warning');
+            if (!ok) return;
             const res = await metasService.borrarRegla(r.id);
             if (!res.ok) { showPremiumAlert('NO SE PUEDE BORRAR', res.mensaje, 'error'); return; }
             pintar();
@@ -16277,9 +16400,20 @@ window.showCellModal = function(htmlContent) {
                 <h3 style="color:#fff; margin:0 0 1.4rem 0; font-size:1.05rem; font-weight:800; letter-spacing:0.5px;">${editando ? 'EDITAR REGLA' : 'NUEVA REGLA'}</h3>
 
                 <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Categoría</label>
-                <select id="cfg_cat" ${r.base ? 'disabled' : ''} style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.85rem; margin-bottom:1rem; ${r.base ? 'opacity:0.6;' : ''}">
-                    ${opcionesCat.map(c => `<option value="${esc(c)}" ${String(r.categoria).toUpperCase() === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+                <select id="cfg_cat" ${r.base ? 'disabled' : ''} style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.85rem; margin-bottom:0.4rem; ${r.base ? 'opacity:0.6;' : ''}">
+                    ${(() => {
+                        const sel = String(r.categoria).toUpperCase();
+                        const opt = (c) => `<option value="${esc(c)}" ${sel === c ? 'selected' : ''}>${esc(c)}</option>`;
+                        const grupo = (etiqueta, lista) => lista.length ? `<optgroup label="${etiqueta}">${lista.map(opt).join('')}</optgroup>` : '';
+                        return [
+                            grupo('Familia — G. Gender (columna C)', catalogo.familias),
+                            grupo('Detalle — Gender RIMS (columna D)', catalogo.detalles),
+                            grupo('Fuera del Maestro vigente', [...familiasExtra, ...detallesExtra]),
+                            grupo('Respaldo', ['GLOBAL'])
+                        ].join('');
+                    })()}
                 </select>
+                <div style="font-size:0.63rem; color:rgba(255,255,255,0.3); margin-bottom:1rem;">Una regla de detalle pisa a la de su familia. Si la categoría no está en la lista, es porque no existe en el Maestro.</div>
 
                 <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:0.5rem;">
                     <div style="flex:1;">
@@ -16335,8 +16469,12 @@ window.showCellModal = function(htmlContent) {
             if (!desde) { showPremiumAlert('DATO INVÁLIDO', 'La fecha de inicio de vigencia es obligatoria.', 'error'); return; }
             if (hasta && hasta < desde) { showPremiumAlert('FECHAS INVERTIDAS', 'La fecha final no puede ser anterior a la de inicio.', 'error'); return; }
 
+            const categoria = modal.querySelector('#cfg_cat').value;
             const datos = {
-                categoria: modal.querySelector('#cfg_cat').value,
+                categoria,
+                nivel: categoria.toUpperCase() === 'GLOBAL'
+                    ? metasService.NIVEL.GLOBAL
+                    : (metasService.pareceDetalle(categoria) ? metasService.NIVEL.DETALLE : metasService.NIVEL.FAMILIA),
                 metaUph: meta,
                 tamanoTarea: tam,
                 desde,
@@ -17555,8 +17693,11 @@ window.showCellModal = function(htmlContent) {
                                     const desvTxt = r.mins > 0
                                         ? (r.desviacion >= 0 ? `<span style="color:#22c55e; font-weight:800;">+${Math.round(r.desviacion).toLocaleString('es-PE')}</span>` : `<span style="color:#ef4444; font-weight:800;">${Math.round(r.desviacion).toLocaleString('es-PE')}</span>`)
                                         : '<span style="color:rgba(255,255,255,0.2);">---</span>';
-                                    const catColor = r.esFootwear ? '#818cf8' : '#f59e0b';
-                                    const badgeCat = `<span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}55; padding:2px 8px; border-radius:8px; font-size:0.62rem; font-weight:800; white-space:nowrap;">${r.categoria}</span>${r.mixta ? ' <span title="La tarea mezcla calzado y complementos" style="color:#ef4444; font-size:0.7rem;">⚠️</span>' : ''}`;
+                                    // Azul para calzado, ámbar para el resto de familias
+                                    const catColor = String(r.familia).toUpperCase() === 'FOOTWEAR' ? '#818cf8' : '#f59e0b';
+                                    const avisoMeta = r.origenMeta === 'global' || r.origenMeta === 'respaldo'
+                                        ? ` <span title="Esta categoría no tiene regla propia ni de familia: usa la meta de respaldo" style="color:#94a3b8; font-size:0.7rem;">•</span>` : '';
+                                    const badgeCat = `<span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}55; padding:2px 8px; border-radius:8px; font-size:0.62rem; font-weight:800; white-space:nowrap;">${r.categoria}</span>${r.mixta ? ' <span title="La tarea mezcla artículos de familias distintas" style="color:#ef4444; font-size:0.7rem;">⚠️</span>' : ''}${avisoMeta}`;
                                     return `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.02); transition:all 0.2s;">
                                         <td style="padding:0.8rem 1rem; opacity:0.6;">${r.fecha.split('-').reverse().join('/')}</td>
@@ -17849,6 +17990,88 @@ window.showCellModal = function(htmlContent) {
                         <span style="margin-left:auto; color:rgba(255,255,255,0.5);">${window.__rkTotalRows||0} operadores${window.__rkExcluidos ? ` · ${window.__rkExcluidos} fuera por tener menos de 3 tareas` : ''}</span>
                     </div>
                     ${(()=>{ const tp=window.__rkTotalPages||1; const cp=window.__rkPage||0; if(tp<=1) return ''; const bs=(a,d)=>`padding:5px 11px;border-radius:8px;border:1px solid ${a?'#8b5cf6':'rgba(255,255,255,0.1)'};background:${a?'rgba(139,92,246,0.25)':'rgba(255,255,255,0.03)'};color:${d?'rgba(255,255,255,0.2)':a?'#fff':'#a78bfa'};cursor:${d?'default':'pointer'};font-size:0.75rem;font-weight:${a?900:500};`; return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);"><button onclick="window.__rkSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${bs(false,cp===0)}">← Ant</button>${Array.from({length:tp},(_,i)=>i).map(p=>`<button onclick="window.__rkSetPage(${p})" style="${bs(p===cp,false)}">${p+1}</button>`).join('')}<button onclick="window.__rkSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${bs(false,cp===tp-1)}">Sig →</button><span style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-left:6px;">Pág ${cp+1}/${tp}</span></div>`; })()}
+                </div>
+            </div>
+
+            <!-- REPORTE: PRODUCTIVIDAD POR GENDER RIMS (lo que pide Comercial) -->
+            <div style="background:rgba(10,15,30,0.95); border:2px solid #22d3ee; border-radius:14px; overflow:hidden; box-shadow: 0 0 30px rgba(34,211,238,0.12);">
+                <div style="padding:1rem 1.2rem; background:rgba(34,211,238,0.08); border-bottom:1px solid rgba(34,211,238,0.25); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h3 style="color:#67e8f9; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">🏷️ PRODUCTIVIDAD POR CATEGORÍA</h3>
+                        <div style="font-size:0.68rem; color:rgba(103,232,249,0.55); font-weight:600;">Familia (G. Gender) y detalle (Gender RIMS) del Maestro de Artículos</div>
+                    </div>
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.4);">${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#eee;">
+                        <thead style="background:rgba(0,0,0,0.6);">
+                            <tr style="color:rgba(103,232,249,0.8); text-transform:uppercase; font-size:0.68rem; letter-spacing:0.06em; border-bottom:2px solid rgba(34,211,238,0.25);">
+                                <th style="padding:0.85rem 1rem; text-align:left;">Categoría</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Tareas</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Unidades</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Horas</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">U/H Real</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Meta U/H</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Desviación</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Cumplimiento</th>
+                                <th style="padding:0.85rem 1rem; text-align:center;">Origen Meta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const filas = window.__kpiFilas || [];
+                                if (!filas.length) return `<tr><td colspan="9" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.2);">Sin datos por categoría en este rango.</td></tr>`;
+
+                                // Se agrupa por familia y, dentro, por el detalle de Gender RIMS
+                                const mapa = new Map();
+                                filas.forEach(r => {
+                                    const fam = r.etiquetaCorta || 'Sin categoría';
+                                    const det = r.detalle ? etiquetaCategoria(r.detalle) : '';
+                                    const clave = fam + '||' + det;
+                                    const cur = mapa.get(clave) || { fam, det, qty:0, mins:0, meta:0, metaUph:0, tareas:0, origen:r.origenMeta };
+                                    cur.qty += r.qty; cur.mins += r.mins; cur.meta += r.esperado; cur.tareas++;
+                                    cur.metaUph = r.metaUph;
+                                    mapa.set(clave, cur);
+                                });
+
+                                const filasCat = [...mapa.values()].sort((a,b) => a.fam.localeCompare(b.fam) || b.qty - a.qty);
+                                window.__kpiPorCategoria = filasCat;
+
+                                let famPrevia = null;
+                                return filasCat.map(c => {
+                                    const pct = c.meta > 0 ? (c.qty / c.meta) * 100 : 0;
+                                    const col = colorPorPct(pct);
+                                    const uph = c.mins > 0 ? (c.qty / c.mins) * 60 : 0;
+                                    const desv = c.qty - c.meta;
+                                    const nuevaFam = c.fam !== famPrevia;
+                                    famPrevia = c.fam;
+                                    const nombre = c.det
+                                        ? `<b style="color:#fff;">${c.det}</b><div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">${c.fam}</div>`
+                                        : `<b style="color:#fff;">${c.fam}</b><div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">sin detalle de Gender RIMS</div>`;
+                                    const origenTxt = c.origen === 'detalle' ? '<span style="color:#22d3ee;">Regla propia</span>'
+                                        : c.origen === 'familia' ? '<span style="color:#a78bfa;">Heredada de familia</span>'
+                                        : '<span style="color:#94a3b8;">Respaldo</span>';
+                                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${nuevaFam ? 'border-top:1px solid rgba(34,211,238,0.15);' : ''}">
+                                        <td style="padding:0.75rem 1rem;">${nombre}</td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${c.tareas}</td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; color:#67e8f9; font-weight:900; font-size:1rem;">${Math.round(c.qty).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; color:rgba(255,255,255,0.55); font-weight:700;">${fmtHM(c.mins)}</td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; color:${col}; font-weight:900;">${Math.round(uph).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; color:rgba(255,255,255,0.45); font-weight:700;">${Math.round(c.metaUph).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; color:${desv>=0?'#22c55e':'#ef4444'}; font-weight:800;">${desv>=0?'+':''}${Math.round(desv).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.75rem 1.2rem;">
+                                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct,100)}%; height:100%; background:${col}; border-radius:6px; box-shadow:0 0 8px ${col}66;"></div></div>
+                                            <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:700;">${Math.floor(pct)}% de meta</div>
+                                        </td>
+                                        <td style="padding:0.75rem 1rem; text-align:center; font-size:0.65rem; font-weight:700;">${origenTxt}</td>
+                                    </tr>`;
+                                }).join('');
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,211,238,0.15); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
+                    <b style="color:rgba(255,255,255,0.55);">Origen Meta</b> indica de dónde salió el número contra el que se mide cada categoría: regla propia, heredada de su familia, o la de respaldo. Las heredadas conviene revisarlas en <b style="color:rgba(255,255,255,0.55);">Config. Tareas</b>.
                 </div>
             </div>
 
@@ -19651,15 +19874,16 @@ window.showCellModal = function(htmlContent) {
             }));
         }
 
-        // 2. Cumplimiento por categoría
+        // 2. Cumplimiento por familia (G. Gender) — pocas barras, legible para comité
         const cvCat = document.getElementById('kpiCatChart');
         if (cvCat) {
             const porCat = new Map();
             filas.forEach(r => {
-                const cur = porCat.get(r.categoria) || { real: 0, meta: 0 };
+                const clave = r.etiquetaCorta || 'Sin categoría';
+                const cur = porCat.get(clave) || { real: 0, meta: 0 };
                 cur.real += r.qty;
                 cur.meta += r.esperado;
-                porCat.set(r.categoria, cur);
+                porCat.set(clave, cur);
             });
             const cats = [...porCat.keys()];
             const pcts = cats.map(c => { const v = porCat.get(c); return v.meta > 0 ? Math.round((v.real / v.meta) * 100) : 0; });
