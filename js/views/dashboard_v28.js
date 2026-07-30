@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.539';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.540';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.539';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.539';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.539';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.539';
-import * as metasService from '../services_v245/metasService.js?v=26.5.539';
+import * as adminService from '../services_v245/adminService.js?v=26.5.540';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.540';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.540';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.540';
+import * as metasService from '../services_v245/metasService.js?v=26.5.540';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.539';
+const VERSION = '26.5.540';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1984,7 +1984,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.539');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.540');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11494,7 +11494,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.539 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.540 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16370,17 +16370,21 @@ window.showCellModal = function(htmlContent) {
             const r = metasService.getReglas().find(x => x.id === b.dataset.cerrar);
             if (!r) return;
             if (!await showPremiumConfirm('CERRAR VIGENCIA', `La regla de ${r.categoria} (${r.metaUph} u/h) dejará de aplicar a partir de mañana. Los reportes anteriores a hoy no cambian.`, 'warning')) return;
-            await metasService.cerrarVigencia(r.id, hoyStr);
+            await withLoading(b, '⌛', async () => {
+                const ok = await metasService.cerrarVigencia(r.id, hoyStr);
+                if (ok === false) showPremiumAlert('GUARDADO SOLO EN ESTE EQUIPO', 'El cambio quedó guardado localmente pero el servidor no respondió. Volvé a intentar cuando tengas conexión para que lo vean los demás.', 'warning');
+            });
             pintar();
         });
 
         container.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
             const r = metasService.getReglas().find(x => x.id === b.dataset.del);
             if (!r) return;
-            const ok = await showPremiumConfirm('BORRAR REGLA',
+            const confirmado = await showPremiumConfirm('BORRAR REGLA',
                 `Borrar la regla de ${r.categoria} (${r.metaUph} u/h) puede CAMBIAR NÚMEROS YA PRESENTADOS: las tareas históricas de esa categoría pasarán a medirse con la meta de su familia.\n\nSi solo querés dejar de usarla de hoy en adelante, cancelá y usá el botón 🕘 de cerrar vigencia.`, 'warning');
-            if (!ok) return;
-            const res = await metasService.borrarRegla(r.id);
+            if (!confirmado) return;
+            let res;
+            await withLoading(b, '⌛', async () => { res = await metasService.borrarRegla(r.id); });
             if (!res.ok) { showPremiumAlert('NO SE PUEDE BORRAR', res.mensaje, 'error'); return; }
             pintar();
         });
@@ -16458,7 +16462,8 @@ window.showCellModal = function(htmlContent) {
         inTam.addEventListener('input', () => { chkLink.checked = false; });
 
         modal.querySelector('#cfg_cancel').onclick = () => modal.remove();
-        modal.querySelector('#cfg_save').onclick = async () => {
+        modal.querySelector('#cfg_save').onclick = async (ev) => {
+            const btnGuardar = ev.currentTarget;
             const meta = parseInt(inMeta.value, 10);
             const tam = parseInt(inTam.value, 10);
             const desde = modal.querySelector('#cfg_desde').value;
@@ -16482,8 +16487,11 @@ window.showCellModal = function(htmlContent) {
                 nota: modal.querySelector('#cfg_nota').value.trim()
             };
 
-            if (editando) await metasService.actualizarRegla(r.id, datos);
-            else await metasService.agregarRegla(datos);
+            // El servidor de Render puede tardar en despertar: el botón avisa que está trabajando
+            await withLoading(btnGuardar, '⌛ GUARDANDO...', async () => {
+                if (editando) await metasService.actualizarRegla(r.id, datos);
+                else await metasService.agregarRegla(datos);
+            });
 
             modal.remove();
             pintar();
@@ -17487,7 +17495,7 @@ window.showCellModal = function(htmlContent) {
                 <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
                     ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 AUDITAR WMS</button>` : ''}
                 </div>
 
@@ -18945,7 +18953,8 @@ window.showCellModal = function(htmlContent) {
         }
     };
     window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
-    window.exportAlmacenajeExcel = () => { exportAlmacenajeExcel(); };
+    // Recibe el botón para que muestre que está trabajando: armar el Excel con muchas tareas tarda
+    window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛ GENERANDO...', () => exportAlmacenajeExcel());
 
     // --- LÓGICA DE AUDITORÍA WMS ---
     const handleWmsFile = async (file, modal) => {
