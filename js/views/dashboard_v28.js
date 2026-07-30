@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.542';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.543';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.542';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.542';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.542';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.542';
-import * as metasService from '../services_v245/metasService.js?v=26.5.542';
+import * as adminService from '../services_v245/adminService.js?v=26.5.543';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.543';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.543';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.543';
+import * as metasService from '../services_v245/metasService.js?v=26.5.543';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.542';
+const VERSION = '26.5.543';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -603,6 +603,65 @@ const buildStatsOperarios = (filas) => {
     const todosProm = lista.map(x => x.promPct);
     lista.forEach(x => { x.percentil = percentilDe(x.promPct, todosProm); });
     return lista;
+};
+
+/**
+ * Resumen por jornada. A diferencia del resto del módulo, acá SÍ entran las tareas que no
+ * se finalizaron: son las que explican por qué el buffer no baja aunque el equipo cumpla meta.
+ *
+ * Ojo con `unidPend`: NO se puede sumar entre días. Si una tarea no se ejecuta, su mercadería
+ * sigue en el buffer y al día siguiente el sistema la vuelve a convertir en tarea nueva, así
+ * que el mismo SKU aparece repetido en varias jornadas.
+ */
+const buildJornadas = (tasksAll, desde, hasta, familia) => {
+    const enRango = (tasksAll || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+    const delFiltro = (!familia || familia === 'TODAS')
+        ? enRango
+        : enRango.filter(t => getTaskCategoria(t).familia === familia);
+
+    const dias = [...new Set(delFiltro.map(t => t.fecha))].sort((a, b) => b.localeCompare(a));
+
+    return dias.map(fecha => {
+        const dd = delFiltro.filter(t => t.fecha === fecha);
+        const fin = dd.filter(t => t.status === 'Finalizado');
+        const asignadas = dd.filter(t => t.status === 'Asignado');
+        const creadas = dd.filter(t => t.status !== 'Finalizado' && t.status !== 'Asignado');
+
+        let qty = 0, meta = 0, mins = 0, ok = 0, sinHora = 0;
+        fin.forEach(t => {
+            const m = getTaskMinutos(t);
+            const a = getTaskTotalAvance(t);
+            const metaUph = getTaskMeta(t).metaUph;
+            qty += a; mins += m;
+            if (m > 0) {
+                meta += metaUph * (m / 60);
+                if ((a / m) * 60 >= metaUph) ok++;
+            } else {
+                sinHora++; // finalizada sin inicio o término marcado: no se puede medir
+            }
+        });
+
+        const grupos = new Set(fin.map(t => [t.u1, t.u2].filter(u => u && u !== '---').join(' + ')).filter(Boolean));
+        const operarios = new Set();
+        fin.forEach(t => [t.u1, t.u2].forEach(u => { if (u && u !== '---') operarios.add(u); }));
+
+        return {
+            fecha,
+            qty, meta, mins,
+            pct: meta > 0 ? (qty / meta) * 100 : 0,
+            uph: mins > 0 ? (qty / mins) * 60 : 0,
+            total: dd.length,
+            finalizadas: fin.length,
+            cumplio: ok,
+            noCumplio: fin.length - ok - sinHora,
+            sinHora,
+            asignadas: asignadas.length,
+            creadas: creadas.length,
+            unidPend: [...asignadas, ...creadas].reduce((a, t) => a + (parseFloat(t.qty) || 0), 0),
+            grupos: grupos.size,
+            operarios: operarios.size
+        };
+    });
 };
 
 /** Promedio de rendimiento de cada grupo en el período, para comparar cada tarea contra su propia marca. */
@@ -2057,7 +2116,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.542');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.543');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11567,7 +11626,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.542 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.543 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16274,26 +16333,29 @@ window.showCellModal = function(htmlContent) {
             [3, 4, 5, 6, 7, 8, 9].forEach(n => { row.getCell(n).numFmt = '#,##0'; row.getCell(n).alignment = { horizontal: 'right' }; });
         });
 
-        // ── Hoja: Operación, una fila por jornada ──
+        // ── Hoja: Operación, una fila por jornada, con el estado real de las tareas ──
         const wsO = wb.addWorksheet('Operación');
         cabecera(wsO, 'OPERACIÓN POR JORNADA', [
-            { h: 'Fecha', w: 12 }, { h: 'Tareas', w: 9 }, { h: 'Grupos', w: 9 },
-            { h: 'Unidades', w: 13 }, { h: 'Meta', w: 13 }, { h: 'Desviación', w: 13 },
-            { h: 'Horas', w: 10 }, { h: 'U/H', w: 10 }, { h: '% Meta', w: 10 }
+            { h: 'Fecha', w: 12 }, { h: 'Unid. Almacenadas', w: 18 }, { h: 'Unid. Meta', w: 13 }, { h: '% Meta', w: 10 },
+            { h: 'Desviación', w: 13 }, { h: 'Tareas Total', w: 13 }, { h: 'Finalizadas', w: 12 },
+            { h: 'Cumplió', w: 11 }, { h: 'No Cumplió', w: 13 }, { h: 'Sin Ejecutar', w: 13 },
+            { h: 'Unid. Sin Ejecutar', w: 19 }, { h: 'Grupos', w: 9 }, { h: 'Operarios', w: 11 },
+            { h: 'Horas', w: 10 }, { h: 'U/H', w: 10 }
         ]);
-        [...new Set(filas.map(r => r.fecha))].sort((a, b) => b.localeCompare(a)).forEach((f, i) => {
-            const dd = filas.filter(r => r.fecha === f);
-            const q = dd.reduce((a, r) => a + r.qty, 0);
-            const mt = dd.reduce((a, r) => a + r.esperado, 0);
-            const mins = dd.reduce((a, r) => a + r.mins, 0);
+        (window.__kpiJornadas || []).forEach((j, i) => {
             const row = wsO.getRow(i + 3);
             row.values = [
-                f.split('-').reverse().join('/'), dd.length, new Set(dd.map(r => r.grupo)).size,
-                Math.round(q), Math.round(mt), Math.round(q - mt), Math.round(mins / 60),
-                mins > 0 ? Math.round((q / mins) * 60) : 0, mt > 0 ? Math.floor((q / mt) * 100) : 0
+                j.fecha.split('-').reverse().join('/'), Math.round(j.qty), Math.round(j.meta),
+                j.meta > 0 ? Math.floor(j.pct) : 0, Math.round(j.qty - j.meta),
+                j.total, j.finalizadas, j.cumplio, j.noCumplio, j.creadas + j.asignadas,
+                Math.round(j.unidPend), j.grupos, j.operarios, Math.round(j.mins / 60), Math.round(j.uph)
             ];
-            [2, 3, 4, 5, 6, 7, 8, 9].forEach(c => { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; });
+            for (let c = 2; c <= 15; c++) { row.getCell(c).numFmt = '#,##0'; row.getCell(c).alignment = { horizontal: 'right' }; }
         });
+        // La advertencia va en la hoja, no solo en pantalla
+        const filaNota = (window.__kpiJornadas || []).length + 4;
+        wsO.getCell(`A${filaNota}`).value = 'Unid. Sin Ejecutar no se suma entre días: la mercadería no almacenada vuelve a generar tarea al día siguiente.';
+        wsO.getCell(`A${filaNota}`).font = { italic: true, size: 9, color: { argb: 'FF7A7A7A' } };
 
         // ── Hoja: Personas, con la estadística del ranking ──
         const wsK = wb.addWorksheet('Personas');
@@ -17715,6 +17777,12 @@ window.showCellModal = function(htmlContent) {
                 const pHasta = new Date(d0.getTime() - 86400000).toISOString().split('T')[0];
                 const prev = buildKpiDataset(tasks, pDesde, pHasta);
 
+                // Jornadas con TODAS las tareas, no solo las finalizadas: de ahí salen las
+                // tareas creadas sin ejecutar, que es lo que explica por qué el buffer no baja.
+                const jornadas = buildJornadas(tasks, window.__kpiStartDate, window.__kpiEndDate, cat)
+                    .filter(j => !window.__kpiDiaFiltro || j.fecha === window.__kpiDiaFiltro);
+                window.__kpiJornadas = jornadas;
+
                 const sum = (arr, f) => arr.reduce((a, r) => a + f(r), 0);
                 const unidades = sum(filas, r => r.qty);
                 const minsGrupo = sum(filas, r => r.mins);
@@ -17723,29 +17791,30 @@ window.showCellModal = function(htmlContent) {
                 const metaGlobal = sum(filas, r => r.esperado);
                 const pctGlobal = metaGlobal > 0 ? (unidades / metaGlobal) * 100 : 0;
                 const enMeta = filas.filter(r => r.ok).length;
-                const pctEnMeta = filas.length > 0 ? (enMeta / filas.length) * 100 : 0;
+
+                // Estos salen de las jornadas porque incluyen lo no finalizado
+                const totalTareas = sum(jornadas, j => j.total);
+                const finalizadas = sum(jornadas, j => j.finalizadas);
+                const sinEjecutar = sum(jornadas, j => j.asignadas + j.creadas);
+                const pctEnMeta = finalizadas > 0 ? (enMeta / finalizadas) * 100 : 0;
 
                 const grupos = new Set(filas.map(r => r.grupo).filter(g => g !== '---'));
                 const operarios = new Set(); filas.forEach(r => r.usuarios.forEach(u => operarios.add(u)));
 
-                const porDia = new Map();
-                filas.forEach(r => porDia.set(r.fecha, (porDia.get(r.fecha) || 0) + r.qty));
-                let mejorDia = null, mejorQty = 0;
-                porDia.forEach((q, f) => { if (q > mejorQty) { mejorQty = q; mejorDia = f; } });
-
                 const unidadesPrev = sum(prev, r => r.qty);
                 const varUnid = unidadesPrev > 0 ? ((unidades - unidadesPrev) / unidadesPrev) * 100 : null;
-                const flecha = (v) => v === null ? '<span style="color:rgba(255,255,255,0.25);">sin período previo</span>'
-                    : (v >= 0 ? `<span style="color:#22c55e;">▲ ${v.toFixed(0)}% vs período previo</span>` : `<span style="color:#ef4444;">▼ ${Math.abs(v).toFixed(0)}% vs período previo</span>`);
 
-                const tile = (label, valor, sub) => `
-                    <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:1rem 1.1rem;">
-                        <div style="font-size:0.66rem; color:rgba(255,255,255,0.4); font-weight:800; text-transform:uppercase; letter-spacing:0.06em;">${label}</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#fff; margin-top:5px; line-height:1.1;">${valor}</div>
-                        <div style="font-size:0.66rem; margin-top:4px; color:rgba(255,255,255,0.4);">${sub}</div>
+                // Franja de estadísticas: sin cajas, solo separadores finos
+                const stat = (label, valor, sub) => `
+                    <div style="flex:1; min-width:118px; padding:0 1.1rem;">
+                        <div style="font-size:0.63rem; color:rgba(255,255,255,0.35); font-weight:800; text-transform:uppercase; letter-spacing:0.07em;">${label}</div>
+                        <div style="font-size:1.5rem; font-weight:900; color:#fff; margin-top:3px; line-height:1.15;">${valor}</div>
+                        <div style="font-size:0.65rem; margin-top:3px; color:rgba(255,255,255,0.4);">${sub}</div>
                     </div>`;
-
-                const fmtDia = mejorDia ? mejorDia.split('-').reverse().slice(0, 2).join('/') : '---';
+                const sep = '<div style="width:1px; background:rgba(255,255,255,0.07); align-self:stretch;"></div>';
+                const varTxt = varUnid === null
+                    ? '<span style="color:rgba(255,255,255,0.25);">sin período previo</span>'
+                    : (varUnid >= 0 ? `<span style="color:#22c55e;">▲ ${varUnid.toFixed(0)}% vs previo</span>` : `<span style="color:#ef4444;">▼ ${Math.abs(varUnid).toFixed(0)}% vs previo</span>`);
 
                 // Chips de categoría: gobiernan todo el módulo, no solo un gráfico
                 const chips = ['TODAS', ...familiasDisponibles].map(c => {
@@ -17768,87 +17837,38 @@ window.showCellModal = function(htmlContent) {
                         <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:600;">${window.__kpiStartDate.split('-').reverse().join('/')} AL ${window.__kpiEndDate.split('-').reverse().join('/')}</div>
                     </div>
 
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-                        <span style="font-size:0.66rem; color:rgba(255,255,255,0.35); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-right:2px;">Categoría:</span>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:1rem;">
+                        <span style="font-size:0.66rem; color:rgba(255,255,255,0.35); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-right:2px;">G. Gender:</span>
                         ${chips}
                         ${window.__kpiDiaFiltro ? `<button onclick="window.__kpiSetDia(null)" style="padding:5px 14px; border-radius:20px; cursor:pointer; font-size:0.7rem; font-weight:800; border:1px solid #34d399; background:rgba(16,185,129,0.2); color:#6ee7b7; white-space:nowrap;">📅 ${window.__kpiDiaFiltro.split('-').reverse().join('/')} ✕</button>` : ''}
                         ${(cat !== 'TODAS' || window.__kpiDiaFiltro) ? `<span style="font-size:0.66rem; color:#fbbf24; margin-left:6px;">Todo el módulo está filtrado${cat !== 'TODAS' ? ` por ${etiquetaCategoria(cat)}` : ''}${window.__kpiDiaFiltro ? ` al ${window.__kpiDiaFiltro.split('-').reverse().join('/')}` : ''}</span>` : ''}
                     </div>
 
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:12px;">
-                        ${tile('Unidades del período', unidades.toLocaleString('es-PE'), flecha(varUnid))}
-                        ${tile('Horas-hombre', Math.round(horasHombre).toLocaleString('es-PE'), `${fmtHM(minsGrupo)} de trabajo en grupo`)}
-                        ${tile('Productividad global', `${Math.round(uphGlobal).toLocaleString('es-PE')} <span style="font-size:0.8rem; color:rgba(255,255,255,0.4);">u/h</span>`, `<span style="color:${colorPorPct(pctGlobal)};">${pctGlobal.toFixed(0)}% de la meta</span>`)}
-                        ${tile('Tareas en meta', `${pctEnMeta.toFixed(0)}%`, `${enMeta} de ${filas.length} tareas`)}
-                        ${tile('Grupos activos', String(grupos.size), `${operarios.size} operarios`)}
-                        ${tile('Mejor jornada', fmtDia, mejorQty > 0 ? `${mejorQty.toLocaleString('es-PE')} unidades` : 'sin datos')}
+                    <div style="display:flex; flex-wrap:wrap; row-gap:1.1rem; padding:1.1rem 0; border-top:1px solid rgba(255,255,255,0.12); border-bottom:1px solid rgba(255,255,255,0.12);">
+                        ${stat('Unidades', unidades.toLocaleString('es-PE'), 'almacenadas')}
+                        ${sep}
+                        ${stat('Meta', Math.round(metaGlobal).toLocaleString('es-PE'), `<span style="color:${colorPorPct(pctGlobal)};">${pctGlobal.toFixed(0)}% alcanzado</span>`)}
+                        ${sep}
+                        ${stat('Productividad', `${Math.round(uphGlobal).toLocaleString('es-PE')} <span style="font-size:0.8rem; color:rgba(255,255,255,0.4);">u/h</span>`, `en ${Math.round(horasHombre).toLocaleString('es-PE')} horas-hombre`)}
+                        ${sep}
+                        ${stat('Tareas', `${finalizadas}<span style="font-size:1rem; color:rgba(255,255,255,0.35);">/${totalTareas}</span>`, sinEjecutar > 0 ? `<span style="color:#f59e0b;">${sinEjecutar} sin ejecutar</span>` : 'todas ejecutadas')}
+                        ${sep}
+                        ${stat('Cumplimiento', `${pctEnMeta.toFixed(0)}%`, `${enMeta} de ${finalizadas} finalizadas`)}
+                        ${sep}
+                        ${stat('Equipo', String(grupos.size), `${operarios.size} operarios`)}
                     </div>
+                    ${varUnid !== null ? `<div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:0.7rem;">Unidades ${varTxt}</div>` : ''}
                 </div>
 
-                <div style="display:grid; grid-template-columns:1.75fr 1fr; gap:1.5rem; align-items:stretch;">
-                    <div style="background:rgba(10,15,30,0.95); border:2px solid #3b82f6; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(59,130,246,0.12);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                            <div>
-                                <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Producción diaria vs meta</h4>
-                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">Clic en una barra para ver ese día en detalle</div>
-                            </div>
-                            <div id="kpiTrendLegend" style="display:flex; gap:12px; font-size:0.65rem; color:rgba(255,255,255,0.45); flex-wrap:wrap;"></div>
+                <div style="background:rgba(10,15,30,0.95); border:2px solid #3b82f6; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(59,130,246,0.12);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Producción diaria vs meta</h4>
+                            <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:2px;">Clic en una barra para aislar ese día en todo el módulo</div>
                         </div>
-                        <div style="position:relative; height:250px;"><canvas id="kpiTrendChart" style="cursor:pointer;"></canvas></div>
+                        <div id="kpiTrendLegend" style="display:flex; gap:12px; font-size:0.65rem; color:rgba(255,255,255,0.45); flex-wrap:wrap;"></div>
                     </div>
-
-                    <!-- PANEL DE DÍAS: barrido rápido de la jornada, con clic para entrar al detalle -->
-                    <div style="background:rgba(10,15,30,0.95); border:2px solid #10b981; border-radius:14px; padding:1.2rem; box-shadow:0 0 25px rgba(16,185,129,0.12); display:flex; flex-direction:column; min-width:0;">
-                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; gap:8px;">
-                            <h4 style="color:#fff; font-weight:900; margin:0; font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase;">Detalle por día</h4>
-                            ${window.__kpiDiaFiltro ? `<button onclick="window.__kpiSetDia(null)" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#34d399; padding:2px 9px; border-radius:12px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">Ver todos ✕</button>` : ''}
-                        </div>
-                        <div style="overflow-y:auto; max-height:250px; margin:-4px -6px; padding:4px 6px;">
-                            ${(() => {
-                                const dias = [...new Set(todas.map(r => r.fecha))].sort((a, b) => b.localeCompare(a));
-                                if (!dias.length) return '<div style="color:rgba(255,255,255,0.2); font-size:0.75rem; text-align:center; padding:2rem;">Sin jornadas en el rango.</div>';
-
-                                const baseFiltro = cat === 'TODAS' ? todas : todas.filter(r => r.familia === cat);
-                                return dias.map(f => {
-                                    const dd = baseFiltro.filter(r => r.fecha === f);
-                                    if (!dd.length) return '';
-                                    const q = dd.reduce((a, r) => a + r.qty, 0);
-                                    const m = dd.reduce((a, r) => a + r.esperado, 0);
-                                    const pct = m > 0 ? (q / m) * 100 : 0;
-                                    const col = colorPorPct(pct);
-                                    const activo = window.__kpiDiaFiltro === f;
-
-                                    // Grupo que más aportó ese día, para saber a quién reconocer
-                                    const porGrupo = new Map();
-                                    dd.forEach(r => porGrupo.set(r.grupo, (porGrupo.get(r.grupo) || 0) + r.qty));
-                                    const mejor = [...porGrupo.entries()].sort((a, b) => b[1] - a[1])[0];
-
-                                    return `<div onclick="window.__kpiSetDia('${f}')" style="
-                                        padding:9px 11px; margin-bottom:6px; border-radius:10px; cursor:pointer; transition:all 0.15s;
-                                        background:${activo ? 'rgba(16,185,129,0.14)' : 'rgba(255,255,255,0.025)'};
-                                        border:1px solid ${activo ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.05)'};"
-                                        onmouseover="if(!${activo}) this.style.background='rgba(255,255,255,0.05)'"
-                                        onmouseout="if(!${activo}) this.style.background='rgba(255,255,255,0.025)'">
-                                        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
-                                            <b style="color:#fff; font-size:0.78rem;">${f.split('-').reverse().slice(0, 2).join('/')}</b>
-                                            <span style="color:${col}; font-weight:900; font-size:0.85rem;">${Math.floor(pct)}%</span>
-                                        </div>
-                                        <div style="display:flex; justify-content:space-between; gap:8px; margin-top:3px;">
-                                            <span style="color:#67e8f9; font-weight:800; font-size:0.72rem;">${Math.round(q).toLocaleString('es-PE')} u</span>
-                                            <span style="color:rgba(255,255,255,0.3); font-size:0.65rem;">meta ${Math.round(m).toLocaleString('es-PE')}</span>
-                                        </div>
-                                        <div style="height:3px; background:rgba(255,255,255,0.06); border-radius:3px; margin-top:6px; overflow:hidden;">
-                                            <div style="width:${Math.min(pct, 100)}%; height:100%; background:${col};"></div>
-                                        </div>
-                                        <div style="display:flex; justify-content:space-between; gap:8px; margin-top:5px; font-size:0.62rem; color:rgba(255,255,255,0.3);">
-                                            <span>${dd.length} tarea${dd.length !== 1 ? 's' : ''}</span>
-                                            ${mejor ? `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%;" title="Grupo que más aportó">🏅 ${mejor[0]}</span>` : ''}
-                                        </div>
-                                    </div>`;
-                                }).join('');
-                            })()}
-                        </div>
-                    </div>
+                    <div style="position:relative; height:230px;"><canvas id="kpiTrendChart" style="cursor:pointer;"></canvas></div>
                 </div>`;
             })()}
 
@@ -17881,26 +17901,33 @@ window.showCellModal = function(htmlContent) {
 
                 let cuerpo = '';
 
-                // ── VISTA OPERACIÓN: la jornada, y al desplegar sus tareas ──
+                // ── VISTA OPERACIÓN: una fila por jornada, con el estado real de sus tareas ──
                 if (vista === 'operacion') {
-                    const dias = [...new Set(filas.map(r => r.fecha))].sort((a, b) => b.localeCompare(a));
+                    const jornadas = window.__kpiJornadas || [];
+                    const gris = 'color:rgba(255,255,255,0.2);';
                     cuerpo = `
                     <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#eee;">
                         <thead style="background:rgba(0,0,0,0.55);">
-                            <tr style="color:rgba(165,180,252,0.85); text-transform:uppercase; font-size:0.64rem; letter-spacing:0.06em; border-bottom:2px solid rgba(99,102,241,0.2);">
-                                ${th('', 'center')}${th('Jornada', 'left')}${th('Tareas')}${th('Grupos')}${th('Unidades')}${th('Meta')}${th('Desviación')}${th('U/H')}${th('Cumplimiento')}
+                            <tr style="color:rgba(255,255,255,0.3); font-size:0.58rem; letter-spacing:0.05em; text-transform:uppercase;">
+                                <th colspan="2"></th>
+                                <th colspan="3" style="padding:5px 8px; text-align:center; font-weight:700; color:#67e8f9; border-bottom:1px solid rgba(255,255,255,0.06);">Producción</th>
+                                <th colspan="4" style="padding:5px 8px; text-align:center; font-weight:700; border-bottom:1px solid rgba(255,255,255,0.06);">Tareas</th>
+                                <th colspan="2" style="padding:5px 8px; text-align:center; font-weight:700; color:#f59e0b; border-bottom:1px solid rgba(255,255,255,0.06);">Sin ejecutar</th>
+                                <th colspan="2" style="padding:5px 8px; text-align:center; font-weight:700; border-bottom:1px solid rgba(255,255,255,0.06);">Equipo</th>
+                            </tr>
+                            <tr style="color:rgba(165,180,252,0.85); text-transform:uppercase; font-size:0.62rem; letter-spacing:0.05em; border-bottom:2px solid rgba(99,102,241,0.2);">
+                                ${th('', 'center')}${th('Fecha', 'left')}${th('Almacenadas')}${th('Meta')}${th('% Meta')}${th('Total')}${th('Finaliz.')}${th('Cumplió')}${th('No cumplió')}${th('Creadas')}${th('Unid.')}${th('Grupos')}${th('U/H')}
                             </tr>
                         </thead>
                         <tbody>
-                        ${dias.length === 0 ? vacio(9, 'No hay tareas finalizadas con los filtros actuales.') : dias.map((f, di) => {
+                        ${jornadas.length === 0 ? vacio(13, 'No hay jornadas con los filtros actuales.') : jornadas.map((j, di) => {
+                            const f = j.fecha;
                             const dd = filas.filter(r => r.fecha === f);
-                            const q = dd.reduce((a, r) => a + r.qty, 0);
-                            const mt = dd.reduce((a, r) => a + r.esperado, 0);
-                            const mins = dd.reduce((a, r) => a + r.mins, 0);
-                            const pct = mt > 0 ? (q / mt) * 100 : 0;
+                            const q = j.qty, mt = j.meta, mins = j.mins;
+                            const pct = j.pct;
                             const col = colorPorPct(pct);
-                            const uph = mins > 0 ? (q / mins) * 60 : 0;
-                            const grupos = new Set(dd.map(r => r.grupo)).size;
+                            const uph = j.uph;
+                            const grupos = j.grupos;
                             const id = 'dia' + di;
 
                             const detalle = dd.slice().sort((a, b) => b.pct - a.pct).map(r => {
@@ -17913,42 +17940,69 @@ window.showCellModal = function(htmlContent) {
                                 const catColor = String(r.familia).toUpperCase() === 'FOOTWEAR' ? '#818cf8' : '#f59e0b';
                                 return `<tr data-parent="${id}" style="display:none; background:rgba(0,0,0,0.28); border-bottom:1px solid rgba(255,255,255,0.02);">
                                     <td></td>
-                                    <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:#fff; font-weight:700; font-size:0.74rem;">${r.grupo}
-                                        <span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}44; padding:1px 6px; border-radius:6px; font-size:0.56rem; font-weight:800; margin-left:6px; white-space:nowrap;">${r.categoria}</span>
+                                    <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:#fff; font-weight:700; font-size:0.72rem; white-space:nowrap;">${r.grupo}
+                                        <span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}44; padding:1px 6px; border-radius:6px; font-size:0.54rem; font-weight:800; margin-left:6px;">${r.categoria}</span>
                                         ${r.mixta ? ' <span title="Mezcla familias distintas" style="color:#ef4444;">⚠️</span>' : ''}
                                     </td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.7rem;">${r.mins > 0 ? fmtHM(r.mins) : '--:--'}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.7rem;">${r.usuarios.length}</td>
                                     <td style="padding:0.5rem 0.8rem; text-align:center; color:#a5b4fc; font-weight:800;">${r.qty.toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(255,255,255,0.3);">${Math.round(r.esperado).toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${r.desviacion >= 0 ? '#22c55e' : '#ef4444'}; font-weight:700;">${r.desviacion >= 0 ? '+' : ''}${Math.round(r.desviacion).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; ${gris}">${Math.round(r.esperado).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center;"><span style="color:${c2}; font-weight:800;">${Math.floor(r.pct)}%</span><div style="font-size:0.58rem; margin-top:1px;">${vsProm}</div></td>
+                                    <td colspan="4" style="padding:0.5rem 0.8rem; text-align:center; ${gris} font-size:0.68rem;">${r.mins > 0 ? fmtHM(r.mins) + ' de trabajo' : 'sin horario marcado'}</td>
+                                    <td colspan="2" style="padding:0.5rem 0.8rem; text-align:center; color:${r.desviacion >= 0 ? '#22c55e' : '#ef4444'}; font-weight:700; font-size:0.72rem;">${r.desviacion >= 0 ? '+' : ''}${Math.round(r.desviacion).toLocaleString('es-PE')} u</td>
+                                    <td style="padding:0.5rem 0.8rem; text-align:center; ${gris} font-size:0.68rem;">${r.usuarios.length}</td>
                                     <td style="padding:0.5rem 0.8rem; text-align:center; color:${c2}; font-weight:800;">${Math.round(r.uph).toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center;">
-                                        <span style="color:${c2}; font-weight:800;">${Math.floor(r.pct)}%</span>
-                                        <div style="font-size:0.6rem; margin-top:1px;">${vsProm}</div>
-                                    </td>
                                 </tr>`;
                             }).join('');
 
+                            const cel = (v, estilo = '') => `<td style="padding:0.7rem 0.8rem; text-align:center; ${estilo}">${v}</td>`;
+                            const nada = `<span style="${gris}">—</span>`;
+
                             return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.05)'" onmouseout="this.style.background=''">
-                                <td style="padding:0.75rem 0.5rem; text-align:center; color:#818cf8; font-weight:900; width:30px;"><span id="ic_${id}">▸</span></td>
-                                <td style="padding:0.75rem 0.8rem;"><b style="color:#fff; font-size:0.88rem;">${f.split('-').reverse().join('/')}</b></td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${dd.length}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.5); font-weight:700;">${grupos}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:#67e8f9; font-weight:900; font-size:0.95rem;">${Math.round(q).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(255,255,255,0.4); font-weight:700;">${Math.round(mt).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${q - mt >= 0 ? '#22c55e' : '#ef4444'}; font-weight:800;">${q - mt >= 0 ? '+' : ''}${Math.round(q - mt).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${col}; font-weight:900;">${Math.round(uph).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 1rem; min-width:130px;">
-                                    <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct, 100)}%; height:100%; background:${col};"></div></div>
-                                    <div style="font-size:0.62rem; color:${col}; margin-top:3px; text-align:right; font-weight:800;">${Math.floor(pct)}% de meta</div>
-                                </td>
+                                <td style="padding:0.7rem 0.5rem; text-align:center; color:#818cf8; font-weight:900; width:26px;"><span id="ic_${id}">▸</span></td>
+                                <td style="padding:0.7rem 0.8rem; white-space:nowrap;"><b style="color:#fff; font-size:0.86rem;">${f.split('-').reverse().join('/')}</b>${j.sinHora > 0 ? ` <span title="${j.sinHora} tarea(s) finalizada(s) sin hora de inicio o término: no se pueden medir" style="color:#f59e0b; font-size:0.7rem;">⚠️</span>` : ''}</td>
+                                ${cel(j.finalizadas > 0 ? `<b style="color:#67e8f9; font-size:0.95rem;">${Math.round(q).toLocaleString('es-PE')}</b>` : nada)}
+                                ${cel(mt > 0 ? `<span style="color:rgba(255,255,255,0.4); font-weight:700;">${Math.round(mt).toLocaleString('es-PE')}</span>` : nada)}
+                                ${cel(mt > 0 ? `<b style="color:${col};">${Math.floor(pct)}%</b>` : nada)}
+                                ${cel(`<span style="color:rgba(255,255,255,0.5); font-weight:700;">${j.total}</span>`)}
+                                ${cel(`<span style="color:#fff; font-weight:700;">${j.finalizadas}</span>`)}
+                                ${cel(j.cumplio > 0 ? `<span style="color:#22c55e; font-weight:800;">${j.cumplio}</span>` : `<span style="${gris}">0</span>`)}
+                                ${cel(j.noCumplio > 0 ? `<span style="color:#ef4444; font-weight:800;">${j.noCumplio}</span>` : `<span style="${gris}">0</span>`)}
+                                ${cel(j.creadas + j.asignadas > 0 ? `<span style="color:#f59e0b; font-weight:800;">${j.creadas + j.asignadas}</span>` : `<span style="${gris}">0</span>`)}
+                                ${cel(j.unidPend > 0 ? `<span style="color:#f59e0b; font-size:0.72rem;">${Math.round(j.unidPend).toLocaleString('es-PE')}</span>` : nada)}
+                                ${cel(`<span style="color:rgba(255,255,255,0.5); font-weight:700;">${grupos}</span>`)}
+                                ${cel(uph > 0 ? `<b style="color:${col};">${Math.round(uph).toLocaleString('es-PE')}</b>` : nada)}
                             </tr>${detalle}`;
                         }).join('')}
+                        ${jornadas.length > 0 ? (() => {
+                            const T = jornadas.reduce((a, j) => ({
+                                qty: a.qty + j.qty, meta: a.meta + j.meta, mins: a.mins + j.mins, total: a.total + j.total,
+                                fin: a.fin + j.finalizadas, ok: a.ok + j.cumplio, no: a.no + j.noCumplio, pend: a.pend + j.creadas + j.asignadas
+                            }), { qty: 0, meta: 0, mins: 0, total: 0, fin: 0, ok: 0, no: 0, pend: 0 });
+                            const p = T.meta > 0 ? (T.qty / T.meta) * 100 : 0;
+                            const c = colorPorPct(p);
+                            const ct = (v, e = '') => `<td style="padding:0.75rem 0.8rem; text-align:center; ${e}">${v}</td>`;
+                            return `<tr style="background:rgba(99,102,241,0.09); border-top:2px solid rgba(99,102,241,0.35);">
+                                <td></td>
+                                <td style="padding:0.75rem 0.8rem; color:#c7d2fe; font-weight:900; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px;">Total</td>
+                                ${ct(`<b style="color:#67e8f9; font-size:0.95rem;">${Math.round(T.qty).toLocaleString('es-PE')}</b>`)}
+                                ${ct(`<span style="color:rgba(255,255,255,0.45); font-weight:800;">${Math.round(T.meta).toLocaleString('es-PE')}</span>`)}
+                                ${ct(`<b style="color:${c};">${Math.floor(p)}%</b>`)}
+                                ${ct(`<b style="color:rgba(255,255,255,0.7);">${T.total}</b>`)}
+                                ${ct(`<b style="color:#fff;">${T.fin}</b>`)}
+                                ${ct(`<b style="color:#22c55e;">${T.ok}</b>`)}
+                                ${ct(`<b style="color:#ef4444;">${T.no}</b>`)}
+                                ${ct(`<b style="color:#f59e0b;">${T.pend}</b>`)}
+                                ${ct(`<span style="${gris}" title="No se suma: la mercadería no almacenada vuelve a generar tarea al día siguiente">—</span>`)}
+                                ${ct(`<span style="${gris}">—</span>`)}
+                                ${ct(`<b style="color:${c};">${T.mins > 0 ? Math.round((T.qty / T.mins) * 60).toLocaleString('es-PE') : '—'}</b>`)}
+                            </tr>`;
+                        })() : ''}
                         </tbody>
                     </table>
-                    <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.6;">
-                        Clic en una jornada para ver sus tareas. <b style="color:rgba(255,255,255,0.55);">Cumplimiento</b> compara contra la meta; la línea de abajo compara cada tarea contra el promedio de ese mismo grupo en el período, para detectar a quien bajó su ritmo aunque siga cumpliendo.
+                    <div style="padding:0.75rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.7;">
+                        Clic en una jornada para ver sus tareas. Cada tarea se compara además contra el promedio de ese mismo grupo en el período, para detectar a quien bajó su ritmo aunque siga cumpliendo meta.<br>
+                        <b style="color:#f59e0b;">Unid. sin ejecutar</b> no se suma entre días: si una tarea no se hace, su mercadería sigue en el buffer y al día siguiente vuelve a generar tarea, así que el mismo SKU aparece repetido en varias jornadas.
+                        ${jornadas.some(j => j.sinHora > 0) ? `<br><span style="color:#f59e0b;">⚠️</span> marca jornadas con tareas finalizadas sin hora de inicio o término: no se pueden medir y quedan fuera del cumplimiento.` : ''}
                     </div>`;
                 }
 
