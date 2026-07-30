@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.527
+ * v26.5.528
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.527';
+} from '../services_v245/csvHub_v6.js?v=26.5.528';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.527';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.527';
+import * as adminService from '../services_v245/adminService.js?v=26.5.528';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.528';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -200,10 +200,10 @@ async function init() {
     return;
   }
 
-  // 4. Establecer fechas de filtro por defecto (día actual)
+  // 4. Establecer fechas de filtro (persistir desde localStorage, o hoy por defecto)
   const today = new Date().toISOString().split('T')[0];
-  filterStart = today;
-  filterEnd   = today;
+  filterStart = localStorage.getItem('rpt_filterStart') || today;
+  filterEnd   = localStorage.getItem('rpt_filterEnd')   || today;
 
   // 5. Tab inicial
   currentTab    = modulos[0].id;
@@ -239,7 +239,7 @@ function renderShell(app) {
     <div class="topbar">
       <div class="topbar-brand">
         <h2>LOGÍSTICA <span style="color:var(--accent)">DEAM1830</span>
-          <span style="font-size:11px; color:var(--text-muted); font-weight:700; margin-left:4px">v26.5.527</span>
+          <span style="font-size:11px; color:rgba(255,255,255,0.35); font-weight:600; margin-left:4px">v26.5.528</span>
         </h2>
       </div>
       <div class="topbar-right">
@@ -412,8 +412,8 @@ async function renderAreaModule(areaKey, title) {
 // MÓDULO ALMACENAJE
 // ============================================================
 window.__almacenajeDateChange = function(field, value) {
-  if (field === 'start') filterStart = value;
-  if (field === 'end')   filterEnd   = value;
+  if (field === 'start') { filterStart = value; localStorage.setItem('rpt_filterStart', value); }
+  if (field === 'end')   { filterEnd   = value; localStorage.setItem('rpt_filterEnd',   value); }
   renderContent();
 };
 

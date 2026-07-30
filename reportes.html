@@ -45,8 +45,8 @@ window.addEventListener('unhandledrejection', function(event) {
     body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
 
     .topbar {
-      background: var(--surface);
-      border-bottom: 2px solid var(--primary);
+      background: var(--primary);
+      border-bottom: none;
       padding: 0 1.5rem;
       height: 54px;
       display: flex;
@@ -60,7 +60,7 @@ window.addEventListener('unhandledrejection', function(event) {
     .topbar-brand h2 {
       font-family: var(--font-brand);
       font-weight: 700;
-      color: var(--primary);
+      color: #fff;
       font-size: 1.05rem;
       display: flex;
       align-items: center;
@@ -70,7 +70,7 @@ window.addEventListener('unhandledrejection', function(event) {
     }
     .topbar-badge {
       background: transparent;
-      border: 1.5px solid var(--accent);
+      border: 1.5px solid rgba(180,83,9,0.6);
       color: var(--accent);
       font-size: 0.62rem;
       font-weight: 800;
@@ -82,15 +82,15 @@ window.addEventListener('unhandledrejection', function(event) {
     .topbar-right { display: flex; align-items: center; gap: 12px; }
     .group-badge {
       background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.75);
       font-size: 0.68rem;
       font-weight: 800;
       padding: 3px 10px;
       border-radius: 3px;
       letter-spacing: 1px;
     }
-    .version-tag { color: var(--text-muted); font-size: 0.68rem; }
+    .version-tag { color: rgba(255,255,255,0.35); font-size: 0.68rem; }
 
     .tab-nav {
       background: var(--surface);
@@ -109,8 +109,8 @@ window.addEventListener('unhandledrejection', function(event) {
       padding: 0.65rem 1rem;
       background: none;
       border: none;
-      color: var(--text-muted);
-      font-size: 0.7rem;
+      color: #6B6560;
+      font-size: 0.72rem;
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
@@ -136,14 +136,14 @@ window.addEventListener('unhandledrejection', function(event) {
       border: none;
       border-bottom: 2px solid transparent;
       border-radius: 0;
-      color: var(--text-muted);
-      font-size: 0.68rem;
-      font-weight: 700;
+      color: #6B6560;
+      font-size: 0.76rem;
+      font-weight: 600;
       cursor: pointer;
       transition: color 0.15s, border-color 0.15s;
     }
     .subtab-btn:hover { color: var(--primary); }
-    .subtab-btn.active { color: var(--primary); border-bottom-color: var(--accent); }
+    .subtab-btn.active { color: var(--primary); border-bottom-color: var(--accent); font-weight: 700; }
 
     .content-area { padding: 1.5rem; background: var(--bg); }
 
@@ -253,6 +253,6 @@ window.addEventListener('unhandledrejection', function(event) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script type="module" src="js/views/reportes_publicos.js?v=26.5.527"></script>
+  <script type="module" src="js/views/reportes_publicos.js?v=26.5.528"></script>
 </body>
 </html>
