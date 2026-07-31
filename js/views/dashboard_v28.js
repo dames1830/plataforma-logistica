@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.558';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.559';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.558';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.558';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.558';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.558';
-import * as metasService from '../services_v245/metasService.js?v=26.5.558';
+import * as adminService from '../services_v245/adminService.js?v=26.5.559';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.559';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.559';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.559';
+import * as metasService from '../services_v245/metasService.js?v=26.5.559';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.558';
+const VERSION = '26.5.559';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1875,23 +1875,50 @@ export const renderDashboard = async (container, user, onLogout) => {
             <col style="width:12.5%">
         </colgroup>`;
 
+    /**
+     * Semáforo: verde si supera a la semana anterior, amarillo si empata, rojo
+     * si queda por debajo. Devuelve null cuando no hay nada que comparar (los
+     * dos en cero), porque pintar de amarillo un día en que nadie trabajó
+     * ninguna de las dos semanas seria ruido, no informacion.
+     */
+    const colorKpi = (actual, anterior) => {
+        if (!actual && !anterior) return null;
+        if (actual > anterior) return '#22c55e';
+        if (actual === anterior) return '#fbbf24';
+        return '#ef4444';
+    };
+
     const filaSemana = (etiqueta, categoria, dias, porDia, esActual) => {
         let total = 0;
-        const celdas = dias.map(d => {
+        let totalComparable = 0;   // mismos días de la semana pasada, para el semáforo del total
+        const celdas = dias.map((d, i) => {
             if (esActual && d > r.hastaEsta) {
                 return `<td style="${CELDA} color:rgba(255,255,255,0.15);">·</td>`;
             }
             const v = porDia.get(aISO(d)) || 0;
             total += v;
-            const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
-            return `<td style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'};">${v ? fmt(v) : '—'}</td>`;
+
+            if (!esActual) {
+                const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
+                return `<td style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'};">${v ? fmt(v) : '—'}</td>`;
+            }
+
+            // Semana en curso: cada día se compara con el mismo día de la anterior.
+            const anterior = porDia.get(aISO(diasPasada[i])) || 0;
+            totalComparable += anterior;
+            const kpi = colorKpi(v, anterior);
+            const col = kpi || (v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)');
+            const titulo = kpi ? ` title="${fmt(v)} contra ${fmt(anterior)} el mismo día de la semana pasada"` : '';
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v || kpi ? '800' : '400'};">${v ? fmt(v) : '—'}</td>`;
         }).join('');
+
+        const kpiTotal = esActual ? colorKpi(total, totalComparable) : null;
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                 <td style="${ETIQUETA} font-weight:900; color:var(--text-muted); font-size:0.66rem;">${etiqueta}</td>
                 <td style="${ETIQUETA} color:#fff; font-weight:700;">${categoria}</td>
                 ${celdas}
-                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(total)}</td>
+                <td ${kpiTotal ? `title="${fmt(total)} contra ${fmt(totalComparable)} en los mismos días de la semana pasada"` : ''} style="${CELDA} font-weight:900; color:${kpiTotal || '#fbbf24'}; ${CELDA_TOTAL}">${fmt(total)}</td>
             </tr>`;
     };
 
@@ -1951,33 +1978,72 @@ export const renderDashboard = async (container, user, onLogout) => {
             </table>
         </div>`;
 
-    // --- Marcas almacenadas por semana ---------------------------------------
-    const marcasPasada = unidadesPorMarca(tasks, aISO(r.desdePasada), aISO(diasPasada[6]));
-    const marcasEsta = unidadesPorMarca(tasks, r.estaDesde, r.estaHasta);
-    const marcas = [...new Set([...marcasPasada.keys(), ...marcasEsta.keys()])]
-        .sort((a, b) => ((marcasPasada.get(b) || 0) + (marcasEsta.get(b) || 0))
-                      - ((marcasPasada.get(a) || 0) + (marcasEsta.get(a) || 0)));
+    // --- Marcas almacenadas: cuatro semanas ----------------------------------
+    // La semana en curso lleva menos días que las cerradas, así que su color NO
+    // se calcula contra el total de la anterior (siempre saldría rojo) sino
+    // contra el mismo tramo de días. El número que se muestra sí es lo que va.
+    const SEMANAS = [3, 2, 1, 0].map(atras => {
+        const lunes = new Date(r.desdeEsta);
+        lunes.setDate(lunes.getDate() - atras * 7);
+        const domingo = new Date(lunes);
+        domingo.setDate(domingo.getDate() + 6);
+        const esActual = atras === 0;
+        return {
+            num: semanaISO(lunes),
+            esActual,
+            datos: unidadesPorMarca(tasks, aISO(lunes), esActual ? r.estaHasta : aISO(domingo))
+        };
+    });
+    // Mismo tramo de la semana pasada (lunes → hoy), solo para el semáforo.
+    const marcasTramoPasado = unidadesPorMarca(tasks, r.pasadaDesde, r.pasadaHasta);
 
-    let totMarcaPasada = 0, totMarcaEsta = 0;
+    const marcas = [...new Set(SEMANAS.flatMap(s => [...s.datos.keys()]))]
+        .sort((a, b) => SEMANAS.reduce((t, s) => t + (s.datos.get(b) || 0), 0)
+                      - SEMANAS.reduce((t, s) => t + (s.datos.get(a) || 0), 0));
+
+    const totalesSemana = SEMANAS.map(() => 0);
     const filasMarcas = marcas.map(m => {
-        const a = marcasPasada.get(m) || 0;
-        const b = marcasEsta.get(m) || 0;
-        totMarcaPasada += a; totMarcaEsta += b;
+        let totalFila = 0;
+        const celdas = SEMANAS.map((s, i) => {
+            const v = s.datos.get(m) || 0;
+            totalesSemana[i] += v;
+            totalFila += v;
+
+            // La primera columna no tiene contra qué compararse.
+            const base = i === 0 ? null
+                       : s.esActual ? (marcasTramoPasado.get(m) || 0)
+                       : (SEMANAS[i - 1].datos.get(m) || 0);
+            const kpi = base === null ? null : colorKpi(v, base);
+            const col = kpi || (v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)');
+            const titulo = kpi ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v || kpi ? '800' : '400'};">${v ? fmt(v) : '—'}</td>`;
+        }).join('');
+
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                 <td style="${ETIQUETA} color:#fff; font-weight:700; font-size:0.72rem;">${m}</td>
-                <td style="${CELDA} color:${a ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'};">${a ? fmt(a) : '—'}</td>
-                <td style="${CELDA} color:${b ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'};">${b ? fmt(b) : '—'}</td>
-                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(a + b)}</td>
+                ${celdas}
+                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(totalFila)}</td>
             </tr>`;
+    }).join('');
+
+    const totalGeneralMarcas = totalesSemana.reduce((a, b) => a + b, 0);
+    const tramoPasadoTotal = [...marcasTramoPasado.values()].reduce((a, b) => a + b, 0);
+    const celdasTotalMarcas = totalesSemana.map((v, i) => {
+        const base = i === 0 ? null
+                   : SEMANAS[i].esActual ? tramoPasadoTotal
+                   : totalesSemana[i - 1];
+        const kpi = base === null ? null : colorKpi(v, base);
+        return `<td style="${CELDA} font-weight:900; color:${kpi || '#fbbf24'};">${fmt(v)}</td>`;
     }).join('');
 
     const panelDias = `
         <div class="glass-panel" style="padding:1.1rem; flex:1 1 520px; min-width:0;">
             <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
             <p style="margin:0 0 1rem 0; font-size:0.72rem; color:var(--text-muted);">
-                Cada categoría con sus dos semanas enfrentadas.
-                La pasada va completa; los días que aún no llegan se marcan con <b>·</b>.
+                La fila de la semana en curso lleva semáforo contra el mismo día de la anterior:
+                <b style="color:#22c55e;">verde</b> si supera, <b style="color:#fbbf24;">amarillo</b> si empata,
+                <b style="color:#ef4444;">rojo</b> si queda por debajo. Los días que aún no llegan van con <b>·</b>.
             </p>
             ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
         </div>`;
@@ -1986,28 +2052,32 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="glass-panel" style="padding:1.1rem; flex:1 1 320px; min-width:0;">
             <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Marcas almacenadas</h3>
             <p style="margin:0 0 1rem 0; font-size:0.72rem; color:var(--text-muted);">
-                Unidades por marca en cada semana, de mayor a menor.
+                Últimas cuatro semanas. El color compara cada semana con la anterior:
+                <b style="color:#22c55e;">verde</b> si sube, <b style="color:#fbbf24;">amarillo</b> si empata,
+                <b style="color:#ef4444;">rojo</b> si baja.
             </p>
             <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; min-width:280px; font-size:0.72rem;">
+                <table style="width:100%; border-collapse:collapse; min-width:340px; font-size:0.72rem;">
                     <thead>
                         <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
                             <th style="${ETIQUETA}">MARCA</th>
-                            <th style="${CELDA}">SEM ${semPasada}</th>
-                            <th style="${CELDA}">SEM ${semEsta}</th>
+                            ${SEMANAS.map(s => `<th style="${CELDA}">SEM ${s.num}${s.esActual ? '*' : ''}</th>`).join('')}
                             <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${filasMarcas || '<tr><td colspan="4" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin marcas registradas.</td></tr>'}
+                        ${filasMarcas || `<tr><td colspan="${SEMANAS.length + 2}" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin marcas registradas.</td></tr>`}
                         <tr style="border-top:2px solid rgba(79,70,229,0.5);">
                             <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
-                            <td style="${CELDA} font-weight:900; color:#fbbf24;">${fmt(totMarcaPasada)}</td>
-                            <td style="${CELDA} font-weight:900; color:#fbbf24;">${fmt(totMarcaEsta)}</td>
-                            <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(totMarcaPasada + totMarcaEsta)}</td>
+                            ${celdasTotalMarcas}
+                            <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(totalGeneralMarcas)}</td>
                         </tr>
                     </tbody>
                 </table>
+                <p style="margin:0.6rem 0 0 0; font-size:0.65rem; color:rgba(255,255,255,0.35); line-height:1.5;">
+                    * Semana en curso: lleva menos días que las cerradas, así que el número es lo que va,
+                    pero su color se compara contra los <b>mismos días</b> de la semana anterior.
+                </p>
             </div>
         </div>`;
 
@@ -2568,7 +2638,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.558');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.559');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2903,7 +2973,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.558] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.559] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7596,7 +7666,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.558 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.559 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12098,7 +12168,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.558 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.559 | MOBILE PORTAL
                             </div>
                     </div>
 
