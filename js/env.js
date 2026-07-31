@@ -1,5 +1,5 @@
 /* ============================================================================
-   ENTORNO (produccion vs pruebas)  -  v26.5.551
+   ENTORNO (produccion vs pruebas)  -  v26.5.552
    ----------------------------------------------------------------------------
    Este archivo se carga ANTES que cualquier otro. Hace tres cosas:
 
@@ -174,13 +174,16 @@
       'border:4px solid ' + COLOR
     ].join(';');
 
+    // Abajo al centro: arriba tapaba el logo de la app, y el indicador de
+    // sincronización ocupa la esquina inferior derecha. Este hueco está libre
+    // en todas las vistas.
     var cartel = document.createElement('div');
     cartel.textContent = TEXTO;
     cartel.style.cssText = [
-      'position:absolute', 'top:0', 'left:50%', 'transform:translateX(-50%)',
+      'position:absolute', 'bottom:0', 'left:50%', 'transform:translateX(-50%)',
       'background:' + COLOR, 'color:#fff',
       'font:800 11px/1 Inter,system-ui,sans-serif', 'letter-spacing:.5px',
-      'padding:6px 16px', 'border-radius:0 0 10px 10px',
+      'padding:6px 16px', 'border-radius:10px 10px 0 0',
       'box-shadow:0 4px 14px rgba(0,0,0,.35)', 'white-space:nowrap',
       'text-transform:uppercase', 'max-width:96vw', 'overflow:hidden',
       'text-overflow:ellipsis'
