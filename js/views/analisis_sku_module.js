@@ -1,4 +1,4 @@
-import { calculateBufferPallets, dataStore } from '../services/csvHub_v6.js?v=12.4.36';
+import { calculateBufferPallets, dataStore } from '../services/csvHub_v6.js?v=27';
 
 let lastBufferResult = null;
 const CACHE_KEY = `logistics_v13_0_0_prod_`;

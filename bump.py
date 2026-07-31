@@ -43,6 +43,11 @@ PATRONES = [
     re.compile(r"(SYSTEM BUILD:\s*v)(\d+(?:\.\d+)*)"),          # SYSTEM BUILD: v27
     re.compile(r"(SISTEMA\s+v)(\d+(?:\.\d+)*)"),                # SISTEMA v27 ONLINE
     re.compile(r"(weight:500;\">v)(\d+(?:\.\d+)*)"),            # el numerito de la cabecera
+    # APP_VERSION guarda la 'v' DENTRO del texto, y con el arma la ruta del dashboard y del
+    # login: `login.js?v=${this.APP_VERSION}` daba `?v=v26.5.572`. Como no empezaba por
+    # digito, ningun patron lo reconocia: se quedo en 26.5.572 mientras todo lo demas subia,
+    # y el navegador seguia sirviendo el login viejo de cache lanzamiento tras lanzamiento.
+    re.compile(r"(APP_VERSION\s*=\s*['\"]v)(\d+(?:\.\d+)*)"),    # APP_VERSION = 'v27'
 ]
 
 ROOT = os.path.dirname(os.path.abspath(__file__))

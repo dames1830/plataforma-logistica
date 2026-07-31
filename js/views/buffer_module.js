@@ -9,8 +9,8 @@ import {
     parseFile,
     parseBufferFiles,
     getAreaData
-} from '../services/csvHub_v6.js?v=12.4.36';
-import * as adminService from '../services/adminService.js?v=12.4.60';
+} from '../services/csvHub_v6.js?v=27';
+import * as adminService from '../services/adminService.js?v=27';
 
 let activeBufferSub = 'reportes';
 let lastBufferKPI = null;
