@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.554';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.555';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.554';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.554';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.554';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.554';
-import * as metasService from '../services_v245/metasService.js?v=26.5.554';
+import * as adminService from '../services_v245/adminService.js?v=26.5.555';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.555';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.555';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.555';
+import * as metasService from '../services_v245/metasService.js?v=26.5.555';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.554';
+const VERSION = '26.5.555';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -699,6 +699,23 @@ const unidadesPorGenderYDia = (tasks, desde, hasta) => {
             const porDia = mapa.get(g);
             porDia.set(t.fecha, (porDia.get(t.fecha) || 0) + u);
         });
+    });
+    return mapa;
+};
+
+/**
+ * {marca → unidades} de las tareas finalizadas en un rango.
+ * La marca vive en la tarea, no en el artículo, así que se toma el total de la
+ * tarea con la regla de siempre (getTaskTotalAvance).
+ */
+const unidadesPorMarca = (tasks, desde, hasta) => {
+    const mapa = new Map();
+    (tasks || []).forEach(t => {
+        if (!t || t.status !== 'Finalizado' || !t.fecha) return;
+        if (t.fecha < desde || t.fecha > hasta) return;
+        const m = String(t.marca || '').trim() || 'Sin marca';
+        const u = getTaskTotalAvance(t);
+        if (u) mapa.set(m, (mapa.get(m) || 0) + u);
     });
     return mapa;
 };
@@ -1795,28 +1812,6 @@ export const renderDashboard = async (container, user, onLogout) => {
         return;
     }
 
-    // --- Días de esta semana que pasaron sin cerrar ninguna tarea -------------
-    // HOY no cuenta: el día todavía no termina y marcarlo como perdido a las
-    // 9 de la mañana sería mentir.
-    const diasSinActividad = [];
-    for (let i = 0; i < r.diasCorridos; i++) {
-        const d = new Date(r.desdeEsta);
-        d.setDate(d.getDate() + i);
-        if (d.getDay() === 0) continue;                       // domingo no se trabaja
-        if (!esta.diasActivos.has(aISO(d))) diasSinActividad.push(`${NOMBRE_DIA[i]} ${d.getDate()}`);
-    }
-
-    const avisoDias = diasSinActividad.length ? `
-        <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-left:4px solid #f59e0b; border-radius:10px; padding:0.9rem 1.2rem; margin-bottom:1.2rem; display:flex; gap:12px; align-items:flex-start;">
-            <span style="font-size:1.1rem; line-height:1.2;">⚠️</span>
-            <div style="font-size:0.82rem; color:#fcd34d; line-height:1.55;">
-                <b>${diasSinActividad.join(', ')}</b> ${diasSinActividad.length === 1 ? 'pasó' : 'pasaron'} sin tareas finalizadas.
-                Esta semana lleva <b>${esta.dias} día${esta.dias === 1 ? '' : 's'}</b> con actividad contra
-                <b>${pasada.dias}</b> de la anterior, así que los totales no son comparables de frente.
-                Mira la columna <b>por día activo</b>.
-            </div>
-        </div>` : '';
-
     // --- Tarjetas grandes -----------------------------------------------------
     const tarjeta = (titulo, valor, sufijo, valorPrev, sufijoPrev, v, pie) => `
         <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.35rem;">
@@ -1845,67 +1840,14 @@ export const renderDashboard = async (container, user, onLogout) => {
                 `${esta.dias} de ${r.diasCorridos + 1} días con actividad`)
     ].join('');
 
-    // --- Tabla por G. Gender --------------------------------------------------
+    // Categorías presentes en cualquiera de las dos semanas, de mayor a menor.
     const categorias = [...new Set([...esta.porGender.keys(), ...pasada.porGender.keys()])]
         .sort((a, b) => ((esta.porGender.get(b) || 0) + (pasada.porGender.get(b) || 0))
                       - ((esta.porGender.get(a) || 0) + (pasada.porGender.get(a) || 0)));
 
-    const filasGender = categorias.map(g => {
-        const a = esta.porGender.get(g) || 0;
-        const b = pasada.porGender.get(g) || 0;
-        const aDia = esta.dias ? a / esta.dias : 0;
-        const bDia = pasada.dias ? b / pasada.dias : 0;
-        return `
-            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.6rem 1rem; font-weight:700; color:#fff; font-size:0.82rem;">${etiquetaCategoria(g) || g}</td>
-                <td style="padding:0.6rem 1rem; text-align:right; color:#fbbf24; font-weight:900; font-size:0.85rem;">${fmt(a)}</td>
-                <td style="padding:0.6rem 1rem; text-align:right; color:rgba(255,255,255,0.45); font-weight:700; font-size:0.82rem;">${fmt(b)}</td>
-                <td style="padding:0.6rem 1rem; text-align:right;">${chipVar(variacion(a, b))}</td>
-                <td style="padding:0.6rem 1rem; text-align:right; color:rgba(255,255,255,0.75); font-weight:700; font-size:0.82rem;">${fmt(aDia)} <span style="color:rgba(255,255,255,0.3);">vs ${fmt(bDia)}</span></td>
-                <td style="padding:0.6rem 1rem; text-align:right;">${chipVar(variacion(aDia, bDia))}</td>
-            </tr>`;
-    }).join('');
-
-    const totalDiaEsta = esta.dias ? esta.qty / esta.dias : 0;
-    const totalDiaPasada = pasada.dias ? pasada.qty / pasada.dias : 0;
-
-    const tablaGender = `
-        <div class="glass-panel" style="padding:0; overflow:hidden; margin-bottom:1.5rem;">
-            <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-                <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Unidades por G. Gender</h3>
-                <p style="margin:0.25rem 0 0 0; font-size:0.74rem; color:var(--text-muted);">
-                    Un total puede subir porque entró carga liviana mientras lo pesado cae. Por eso va desglosado.
-                </p>
-            </div>
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; min-width:640px;">
-                    <thead>
-                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px;">
-                            <th style="padding:0.6rem 1rem; text-align:left;">Categoría</th>
-                            <th style="padding:0.6rem 1rem; text-align:right;">Esta semana</th>
-                            <th style="padding:0.6rem 1rem; text-align:right;">Pasada</th>
-                            <th style="padding:0.6rem 1rem; text-align:right;">Var.</th>
-                            <th style="padding:0.6rem 1rem; text-align:right;">Por día activo</th>
-                            <th style="padding:0.6rem 1rem; text-align:right;">Var.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filasGender || '<tr><td colspan="6" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en el periodo.</td></tr>'}
-                        <tr style="background:rgba(79,70,229,0.10); border-top:2px solid rgba(79,70,229,0.35);">
-                            <td style="padding:0.7rem 1rem; font-weight:900; color:#fff; font-size:0.82rem;">TOTAL</td>
-                            <td style="padding:0.7rem 1rem; text-align:right; font-weight:900; color:#fbbf24; font-size:0.9rem;">${fmt(esta.qty)}</td>
-                            <td style="padding:0.7rem 1rem; text-align:right; font-weight:800; color:rgba(255,255,255,0.55);">${fmt(pasada.qty)}</td>
-                            <td style="padding:0.7rem 1rem; text-align:right;">${chipVar(variacion(esta.qty, pasada.qty))}</td>
-                            <td style="padding:0.7rem 1rem; text-align:right; font-weight:800; color:#fff;">${fmt(totalDiaEsta)} <span style="color:rgba(255,255,255,0.3);">vs ${fmt(totalDiaPasada)}</span></td>
-                            <td style="padding:0.7rem 1rem; text-align:right;">${chipVar(variacion(totalDiaEsta, totalDiaPasada))}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>`;
-
     // --- Detalle por día: una tabla por categoría, dos semanas enfrentadas -----
-    const DIAS_COL = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+    // Nombres cortos: la tabla ocupa media pantalla para dejar sitio a la de marcas.
+    const DIAS_COL = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
     const diasEsta = diasDeSemana(r.desdeEsta);
     const diasPasada = diasDeSemana(r.desdePasada);
     const semEsta = semanaISO(r.desdeEsta);
@@ -1920,22 +1862,24 @@ export const renderDashboard = async (container, user, onLogout) => {
     // vale más que la otra. Lo que resalta es el total, que es la conclusión.
     const CELDA_TOTAL = 'background:rgba(79,70,229,0.18); border-left:1px solid rgba(79,70,229,0.45);';
 
+    const CELDA = 'padding:0.38rem 0.45rem; text-align:right;';
+
     const filaSemana = (etiqueta, dias, porDia, esActual) => {
         let total = 0;
         const celdas = dias.map(d => {
             if (esActual && d > r.hastaEsta) {
-                return `<td style="padding:0.5rem 0.6rem; text-align:right; color:rgba(255,255,255,0.15);">·</td>`;
+                return `<td style="${CELDA} color:rgba(255,255,255,0.15);">·</td>`;
             }
             const v = porDia.get(aISO(d)) || 0;
             total += v;
             const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
-            return `<td style="padding:0.5rem 0.6rem; text-align:right; color:${col}; font-weight:${v ? '700' : '400'};">${v ? fmt(v) : '—'}</td>`;
+            return `<td style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'};">${v ? fmt(v) : '—'}</td>`;
         }).join('');
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.5rem 0.8rem; font-weight:900; color:var(--text-muted); font-size:0.72rem; white-space:nowrap;">${etiqueta}</td>
+                <td style="padding:0.38rem 0.5rem; font-weight:900; color:var(--text-muted); font-size:0.66rem; white-space:nowrap;">${etiqueta}</td>
                 ${celdas}
-                <td style="padding:0.5rem 0.8rem; text-align:right; font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(total)}</td>
+                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(total)}</td>
             </tr>`;
     };
 
@@ -1945,29 +1889,29 @@ export const renderDashboard = async (container, user, onLogout) => {
         const celdas = DIAS_COL.map((_, i) => {
             const v = (porDia.get(aISO(diasPasada[i])) || 0) + (porDia.get(aISO(diasEsta[i])) || 0);
             granTotal += v;
-            return `<td style="padding:0.5rem 0.6rem; text-align:right; font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${v ? fmt(v) : '—'}</td>`;
+            return `<td style="${CELDA} font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${v ? fmt(v) : '—'}</td>`;
         }).join('');
         return `
             <tr style="background:rgba(79,70,229,0.14); border-top:2px solid rgba(79,70,229,0.5);">
-                <td style="padding:0.55rem 0.8rem; font-weight:900; color:#a5b4fc; font-size:0.72rem;">TOTAL</td>
+                <td style="padding:0.42rem 0.5rem; font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
                 ${celdas}
-                <td style="padding:0.55rem 0.8rem; text-align:right; font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(granTotal)}</td>
+                <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(granTotal)}</td>
             </tr>`;
     };
 
     const tablaDias = (titulo, porDia, destacado) => `
-        <div style="margin-bottom:1.3rem;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.4rem;">
-                <span style="width:8px; height:8px; border-radius:2px; background:${destacado ? '#fbbf24' : 'var(--primary)'};"></span>
-                <h4 style="margin:0; color:${destacado ? '#fbbf24' : '#fff'}; font-size:0.82rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${titulo}</h4>
+        <div style="margin-bottom:1.1rem;">
+            <div style="display:flex; align-items:center; gap:7px; margin-bottom:0.35rem;">
+                <span style="width:7px; height:7px; border-radius:2px; background:${destacado ? '#fbbf24' : 'var(--primary)'};"></span>
+                <h4 style="margin:0; color:${destacado ? '#fbbf24' : '#fff'}; font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${titulo}</h4>
             </div>
             <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; min-width:680px; font-size:0.78rem; ${destacado ? 'border:1px solid rgba(251,191,36,0.35); border-radius:6px;' : ''}">
+                <table style="width:100%; border-collapse:collapse; min-width:430px; font-size:0.72rem; ${destacado ? 'border:1px solid rgba(251,191,36,0.35); border-radius:6px;' : ''}">
                     <thead>
-                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.63rem; letter-spacing:0.5px;">
-                            <th style="padding:0.5rem 0.8rem; text-align:left;">SEMANA</th>
-                            ${DIAS_COL.map(d => `<th style="padding:0.5rem 0.6rem; text-align:right;">${d}</th>`).join('')}
-                            <th style="padding:0.5rem 0.8rem; text-align:right; ${CELDA_TOTAL}">TOTAL</th>
+                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
+                            <th style="padding:0.38rem 0.5rem; text-align:left;">SEM</th>
+                            ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
+                            <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1989,15 +1933,69 @@ export const renderDashboard = async (container, user, onLogout) => {
         categorias.map(g => tablaDias(etiquetaCategoria(g) || g, detallePorDia.get(g) || new Map(), false)).join('')
         + (categorias.length > 1 ? tablaDias('Todas las categorías', porDiaGeneral, true) : '');
 
-    const grafico = `
-        <div class="glass-panel" style="padding:1.2rem;">
+    // --- Marcas almacenadas por semana ---------------------------------------
+    const marcasPasada = unidadesPorMarca(tasks, aISO(r.desdePasada), aISO(diasPasada[6]));
+    const marcasEsta = unidadesPorMarca(tasks, r.estaDesde, r.estaHasta);
+    const marcas = [...new Set([...marcasPasada.keys(), ...marcasEsta.keys()])]
+        .sort((a, b) => ((marcasPasada.get(b) || 0) + (marcasEsta.get(b) || 0))
+                      - ((marcasPasada.get(a) || 0) + (marcasEsta.get(a) || 0)));
+
+    let totMarcaPasada = 0, totMarcaEsta = 0;
+    const filasMarcas = marcas.map(m => {
+        const a = marcasPasada.get(m) || 0;
+        const b = marcasEsta.get(m) || 0;
+        totMarcaPasada += a; totMarcaEsta += b;
+        return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                <td style="padding:0.38rem 0.5rem; color:#fff; font-weight:700; font-size:0.72rem;">${m}</td>
+                <td style="${CELDA} color:${a ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'};">${a ? fmt(a) : '—'}</td>
+                <td style="${CELDA} color:${b ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'};">${b ? fmt(b) : '—'}</td>
+                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(a + b)}</td>
+            </tr>`;
+    }).join('');
+
+    const panelDias = `
+        <div class="glass-panel" style="padding:1.1rem; flex:1 1 520px; min-width:0;">
             <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
-            <p style="margin:0 0 1rem 0; font-size:0.74rem; color:var(--text-muted);">
-                Cada categoría con sus dos semanas enfrentadas, día por día.
-                La semana pasada va completa; los días de esta semana que aún no llegan se marcan con <b>·</b>.
+            <p style="margin:0 0 1rem 0; font-size:0.72rem; color:var(--text-muted);">
+                Cada categoría con sus dos semanas enfrentadas.
+                La pasada va completa; los días que aún no llegan se marcan con <b>·</b>.
             </p>
             ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
         </div>`;
+
+    const panelMarcas = `
+        <div class="glass-panel" style="padding:1.1rem; flex:1 1 320px; min-width:0;">
+            <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Marcas almacenadas</h3>
+            <p style="margin:0 0 1rem 0; font-size:0.72rem; color:var(--text-muted);">
+                Unidades por marca en cada semana, de mayor a menor.
+            </p>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; min-width:280px; font-size:0.72rem;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
+                            <th style="padding:0.38rem 0.5rem; text-align:left;">MARCA</th>
+                            <th style="${CELDA}">SEM ${semPasada}</th>
+                            <th style="${CELDA}">SEM ${semEsta}</th>
+                            <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasMarcas || '<tr><td colspan="4" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin marcas registradas.</td></tr>'}
+                        <tr style="background:rgba(79,70,229,0.14); border-top:2px solid rgba(79,70,229,0.5);">
+                            <td style="padding:0.42rem 0.5rem; font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+                            <td style="${CELDA} font-weight:900; color:#fbbf24;">${fmt(totMarcaPasada)}</td>
+                            <td style="${CELDA} font-weight:900; color:#fbbf24;">${fmt(totMarcaEsta)}</td>
+                            <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(totMarcaPasada + totMarcaEsta)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+
+    // Se acomodan solos: lado a lado en pantalla ancha, uno debajo del otro
+    // cuando no caben. Sin necesidad de media queries.
+    const grafico = `<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">${panelDias}${panelMarcas}</div>`;
 
     contentArea.innerHTML = cabecera + `
         <div style="margin-bottom:1rem;">
@@ -2011,9 +2009,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 &nbsp;·&nbsp;mismos días de la semana, para que la comparación sea justa
             </p>
         </div>
-        ${avisoDias}
         <div class="kpi-grid" style="margin-bottom:1.5rem;">${tarjetas}</div>
-        ${tablaGender}
         ${grafico}`;
 
     arrancarReloj();
@@ -2554,7 +2550,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.554');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.555');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2889,7 +2885,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.554] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.555] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7582,7 +7578,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.554 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.555 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12084,7 +12080,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.554 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.555 | MOBILE PORTAL
                             </div>
                     </div>
 
