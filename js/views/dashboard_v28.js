@@ -1348,6 +1348,7 @@ const TABS = [
     { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
     { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
     { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' },
+    { id: 'productividad', label: 'Productividad', icon: '📈' },
     { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
@@ -10567,7 +10568,7 @@ const renderRFSection = (container) => {
     // Estas sub-pestañas no tienen el bypass del rol admin: lo que diga la matriz de
     // Configuración > Permisos es lo que manda, para todos los roles sin excepción.
     // Mientras nadie las haya configurado todavía, quedan visibles solo para admin.
-    const SUBTABS_SOLO_MATRIZ = ['config_tareas'];
+    const SUBTABS_SOLO_MATRIZ = ['config_tareas', 'productividad'];
     const allowedSubTabs = tabDef.subTabs.filter(sub => {
         if (SUBTABS_SOLO_MATRIZ.includes(sub.id)) {
             const valor = perms[`${tabId}_${sub.id}`];
@@ -10677,6 +10678,9 @@ const renderRFSection = (container) => {
         // Ceder un frame al navegador para que pinte el spinner antes de renderizar
         await new Promise(r => setTimeout(r, 0));
         renderAlmacenajeTareas(container);
+    } else if (tabId === 'almacenaje' && activeSub === 'productividad') {
+        await new Promise(r => setTimeout(r, 0));
+        renderProductividad(container);
     } else if (tabId === 'almacenaje' && activeSub === 'config_tareas') {
         await new Promise(r => setTimeout(r, 0));
         renderConfigTareas(container);
@@ -17323,6 +17327,373 @@ window.showCellModal = function(htmlContent) {
         showPremiumAlert('ERROR AL EXPORTAR', 'No se pudo generar el Excel: ' + err.message, 'error');
       }
     });
+  };
+
+  // ========================================================================
+  // PESTAÑA PRODUCTIVIDAD — cómo cierra la productividad semana a semana
+  //
+  // Lee las tareas vivas Y el historial: sin el historial la serie arrancaría
+  // en julio y se perderían las primeras semanas.
+  //
+  // La semana en curso se dibuja pero NO entra en la tendencia ni en los
+  // promedios: va a medias y con 30 tareas contra 120 inclinaba la recta un 28%.
+  // ========================================================================
+
+  /** 'esc' vive dentro de renderConfigTareas, así que esta pantalla lleva el suyo. */
+  const prodEsc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  /** Número de semana ISO. El jueves decide a qué semana pertenece la fecha.
+      Lleva prefijo propio: ya existe otra semanaISO en el archivo, con otra firma. */
+  const prodSemanaDe = (fechaStr) => {
+    const d = new Date(String(fechaStr) + 'T12:00:00');
+    if (isNaN(d)) return null;
+    const jue = new Date(d);
+    jue.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const ene4 = new Date(jue.getFullYear(), 0, 4);
+    const n = 1 + Math.round(((jue - ene4) / 86400000 - 3 + ((ene4.getDay() + 6) % 7)) / 7);
+    return { anio: jue.getFullYear(), sem: n, clave: `${jue.getFullYear()}-${String(n).padStart(2, '0')}` };
+  };
+
+  /** Lunes de una semana ISO, para rotular el eje. */
+  const prodLunesDe = (anio, sem) => {
+    const ene4 = new Date(anio, 0, 4);
+    const lun = new Date(ene4);
+    lun.setDate(ene4.getDate() - ((ene4.getDay() + 6) % 7) + (sem - 1) * 7);
+    return lun;
+  };
+
+  /**
+   * Tope de velocidad creíble, sacado de la propia data y no de un número inventado:
+   * la tarea grande más rápida que no parece error. Por encima de eso la hora está mal.
+   */
+  const AUD_TOPE_UPH = 9519;
+
+  /** Serie semanal de una selección de tareas. */
+  const serieSemanal = (tareas) => {
+    const acc = new Map();
+    (tareas || []).forEach(t => {
+      const m = getTaskMinutos(t);
+      const q = getTaskTotalAvance(t);
+      if (!m || m <= 0 || !q) return;
+      if ((q / m) * 60 > AUD_TOPE_UPH) return;      // hora imposible: no ensucia la serie
+      const s = prodSemanaDe(t.fecha);
+      if (!s) return;
+      const d = acc.get(s.clave) || { ...s, qty: 0, mins: 0, tareas: 0 };
+      d.qty += q; d.mins += m; d.tareas++;
+      acc.set(s.clave, d);
+    });
+    return [...acc.values()]
+      .sort((a, b) => a.clave.localeCompare(b.clave))
+      .map(d => ({ ...d, uph: d.mins > 0 ? (d.qty / d.mins) * 60 : 0, horas: d.mins / 60 }));
+  };
+
+  /** Recta de mínimos cuadrados sobre los puntos que se le pasen. */
+  const rectaTendencia = (ys) => {
+    const n = ys.length;
+    if (n < 2) return { m: 0, b: n ? ys[0] : 0 };
+    const mx = (n - 1) / 2;
+    const my = ys.reduce((a, b) => a + b, 0) / n;
+    let num = 0, den = 0;
+    ys.forEach((y, i) => { num += (i - mx) * (y - my); den += (i - mx) * (i - mx); });
+    return { m: den ? num / den : 0, b: my - (den ? num / den : 0) * mx };
+  };
+
+  /** Métricas de comité de una serie, ignorando la semana en curso. */
+  const resumenSerie = (serie, claveEnCurso) => {
+    const cerradas = serie.filter(d => d.clave !== claveEnCurso);
+    const enCurso = serie.find(d => d.clave === claveEnCurso) || null;
+    if (!cerradas.length) return { cerradas, enCurso, vacio: true };
+    const ult4 = cerradas.slice(-4);
+    const { m } = rectaTendencia(cerradas.map(d => d.uph));
+    return {
+      cerradas, enCurso, vacio: false,
+      ultima: cerradas[cerradas.length - 1],
+      anterior: cerradas.length > 1 ? cerradas[cerradas.length - 2] : null,
+      prom4: ult4.reduce((a, d) => a + d.uph, 0) / ult4.length,
+      promTodas: cerradas.reduce((a, d) => a + d.uph, 0) / cerradas.length,
+      pendiente: m,
+      tareas: cerradas.reduce((a, d) => a + d.tareas, 0)
+    };
+  };
+
+  const prodCaja = (titulo, valor, pie, colorPie) => `
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.85rem 1rem;">
+      <div style="font-size:0.7rem; color:rgba(255,255,255,0.45);">${titulo}</div>
+      <div style="font-size:1.75rem; font-weight:900; color:#fff; line-height:1.15;">${valor}</div>
+      <div style="font-size:0.65rem; color:${colorPie || 'rgba(255,255,255,0.35)'};">${pie}</div>
+    </div>`;
+
+  const prodTarjetas = (r) => {
+    if (r.vacio) return '<div style="color:rgba(255,255,255,0.35); font-size:0.8rem;">Sin semanas cerradas todavía.</div>';
+    const sube = r.pendiente > 0;
+    const col = sube ? '#22c55e' : '#ef4444';
+    const fondo = sube ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+    return prodCaja(`Cierre semana ${r.ultima.sem}`, Math.round(r.ultima.uph).toLocaleString('es-PE'),
+                    `${r.ultima.tareas} tareas`)
+      + (r.anterior ? prodCaja(`Cierre semana ${r.anterior.sem}`, Math.round(r.anterior.uph).toLocaleString('es-PE'),
+                    `${r.anterior.tareas} tareas`) : '')
+      + prodCaja('Últimas 4 semanas', Math.round(r.prom4).toLocaleString('es-PE'), 'promedio')
+      + prodCaja('Promedio general', Math.round(r.promTodas).toLocaleString('es-PE'), `${r.cerradas.length} semanas cerradas`)
+      + `<div style="background:${fondo}; border:1px solid ${col}44; border-radius:10px; padding:0.85rem 1rem;">
+           <div style="font-size:0.7rem; color:${col};">${sube ? 'Sube cada semana' : 'Baja cada semana'}</div>
+           <div style="font-size:1.75rem; font-weight:900; color:${col}; line-height:1.15;">${sube ? '+' : '−'}${Math.abs(r.pendiente).toFixed(1)}</div>
+           <div style="font-size:0.65rem; color:${col}bb;">u/h por semana</div>
+         </div>`;
+  };
+
+  /** Dibuja una serie. La semana en curso va aparte y no entra en la recta. */
+  const prodGrafico = (canvasId, r, color) => {
+    const cv = document.getElementById(canvasId);
+    if (!cv || r.vacio) return;
+    if (window.__prodCharts && window.__prodCharts[canvasId]) window.__prodCharts[canvasId].destroy();
+    const todas = r.enCurso ? [...r.cerradas, r.enCurso] : r.cerradas;
+    const etiquetas = todas.map(d => 'S' + d.sem);
+    const { m, b } = rectaTendencia(r.cerradas.map(d => d.uph));
+    const tend = todas.map((_, i) => Math.round(b + m * i));
+    const valores = r.cerradas.map(d => Math.round(d.uph)).concat(r.enCurso ? [null] : []);
+    const curso = r.cerradas.map(() => null).concat(r.enCurso ? [Math.round(r.enCurso.uph)] : []);
+    // El punto en curso se une al último cerrado para que no quede suelto
+    if (r.enCurso && r.cerradas.length) curso[r.cerradas.length - 1] = Math.round(r.cerradas[r.cerradas.length - 1].uph);
+    const radio = todas.map(d => Math.min(7, 2.5 + Math.sqrt(d.tareas) / 2.2));
+
+    window.__prodCharts = window.__prodCharts || {};
+    window.__prodCharts[canvasId] = new Chart(cv, {
+      type: 'line',
+      data: { labels: etiquetas, datasets: [
+        { label: 'Tendencia', data: tend, borderColor: 'rgba(255,255,255,0.35)', borderWidth: 2,
+          borderDash: [6, 5], pointRadius: 0, tension: 0, fill: false, order: 3 },
+        { label: 'En curso', data: curso, borderColor: '#fbbf24', borderWidth: 2, borderDash: [4, 3],
+          pointRadius: radio.map((v, i) => i === todas.length - 1 ? v : 0), pointBackgroundColor: '#fbbf24',
+          tension: 0, fill: false, order: 1 },
+        { label: 'Cierre', data: valores, borderColor: color, backgroundColor: color + '20',
+          borderWidth: 2.5, pointRadius: radio, pointBackgroundColor: color,
+          pointBorderColor: '#0f172a', pointBorderWidth: 2, tension: 0.25, fill: true, order: 2 }
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          title: (it) => {
+            const d = todas[it[0].dataIndex];
+            const l = prodLunesDe(d.anio, d.sem);
+            return `Semana ${d.sem} · desde el ${l.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' })}`;
+          },
+          label: (it) => {
+            if (it.dataset.label === 'Tendencia') return `tendencia ${it.parsed.y} u/h`;
+            const d = todas[it.dataIndex];
+            return [`${Math.round(d.uph).toLocaleString('es-PE')} u/h`,
+                    `${d.tareas} tareas · ${Math.round(d.qty).toLocaleString('es-PE')} pares`,
+                    d.clave === (r.enCurso && r.enCurso.clave) ? 'semana en curso' : ''].filter(Boolean);
+          } } } },
+        scales: {
+          y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.05)' },
+               ticks: { color: '#94a3b8', callback: (v) => v.toLocaleString('es-PE') } },
+          x: { grid: { display: false }, ticks: { color: '#94a3b8', autoSkip: true, maxTicksLimit: 14 } }
+        }
+      }
+    });
+  };
+
+  /**
+   * Gráfico chico de una categoría, para la columna angosta de la derecha: solo la línea,
+   * sin ejes ni leyenda. No se busca leer el número exacto sino ver la forma.
+   */
+  const prodMiniGrafico = (canvasId, r, color) => {
+    const cv = document.getElementById(canvasId);
+    if (!cv || typeof Chart === 'undefined' || r.vacio) return;
+
+    const todas = r.enCurso ? [...r.cerradas, r.enCurso] : r.cerradas;
+    const cerradas = r.cerradas.map(d => Math.round(d.uph)).concat(r.enCurso ? [null] : []);
+    // La semana en curso se dibuja en ámbar y aparte, igual que en los grandes
+    const curso = r.cerradas.map(() => null).concat(r.enCurso ? [Math.round(r.enCurso.uph)] : []);
+    if (r.enCurso && r.cerradas.length) curso[r.cerradas.length - 1] = Math.round(r.cerradas[r.cerradas.length - 1].uph);
+
+    window.__prodCharts = window.__prodCharts || {};
+    if (window.__prodCharts[canvasId]) window.__prodCharts[canvasId].destroy();
+    window.__prodCharts[canvasId] = new Chart(cv, {
+      type: 'line',
+      data: {
+        labels: todas.map(d => 'S' + d.sem),
+        datasets: [
+          { data: cerradas, borderColor: color, borderWidth: 2, pointRadius: 0, tension: 0.3,
+            backgroundColor: color + '1f', fill: true, spanGaps: false },
+          { data: curso, borderColor: '#f59e0b', borderWidth: 2, borderDash: [4, 3],
+            pointRadius: 0, tension: 0.3, fill: false, spanGaps: true }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (it) => 'Semana ' + todas[it[0].dataIndex].sem,
+              label: (it) => `${Number(it.raw).toLocaleString('es-PE')} u/h · ${todas[it.dataIndex].tareas} tareas`
+                + (todas[it.dataIndex].clave === (r.enCurso && r.enCurso.clave) ? '  (en curso)' : '')
+            }
+          }
+        },
+        scales: { y: { display: false }, x: { display: false } }
+      }
+    });
+  };
+
+  /** Tarjeta chica de una categoría: el número de la última semana y hacia dónde va. */
+  const prodMiniPanel = (x, i) => {
+    const r = x.r;
+    const sube = r.pendiente >= 0;
+    const col = sube ? '#22c55e' : '#ef4444';
+    return `
+      <div style="background:rgba(15,23,42,0.75); border:1px solid rgba(255,255,255,0.07); border-radius:11px; padding:0.7rem 0.8rem;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
+          <span style="color:#fff; font-weight:800; font-size:0.72rem; letter-spacing:0.2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${prodEsc(x.nom)}</span>
+          <span style="color:${col}; font-weight:900; font-size:0.62rem; white-space:nowrap;">${sube ? '▲' : '▼'} ${Math.abs(r.pendiente).toFixed(1)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin:2px 0 6px 0;">
+          <span style="color:#e2e8f0; font-weight:900; font-size:1rem;">${Math.round(r.ultima.uph).toLocaleString('es-PE')}<span style="font-size:0.6rem; color:rgba(255,255,255,0.35); font-weight:700;"> u/h</span></span>
+          <span style="color:rgba(255,255,255,0.35); font-size:0.6rem;">${r.cerradas.length} sem · prom ${Math.round(r.promTodas).toLocaleString('es-PE')}</span>
+        </div>
+        <div style="position:relative; width:100%; height:46px;"><canvas id="prodMini${i}"></canvas></div>
+      </div>`;
+  };
+
+  window.exportarProductividad = async (btn) => {
+    const s = window.__prodSeries;
+    if (!s) return;
+    await withLoading(btn, '⌛ GENERANDO...', async () => {
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Productividad semanal');
+      ws.addRow(['Serie', 'Semana', 'Desde', 'Tareas', 'Pares', 'Horas', 'U/H', 'Estado']);
+      s.forEach(({ nombre, resumen }) => {
+        const filas = resumen.enCurso ? [...resumen.cerradas, resumen.enCurso] : resumen.cerradas;
+        filas.forEach(d => ws.addRow([nombre, d.sem,
+          prodLunesDe(d.anio, d.sem).toLocaleDateString('es-PE'), d.tareas,
+          Math.round(d.qty), Math.round(d.horas), Math.round(d.uph),
+          d.clave === (resumen.enCurso && resumen.enCurso.clave) ? 'EN CURSO — no entra en la tendencia' : 'cerrada']));
+      });
+      const cab = ws.getRow(1);
+      cab.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cab.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; });
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+      ws.columns.forEach(col => {
+        let a = 10;
+        col.eachCell({ includeEmpty: false }, c => { a = Math.max(a, String(c.value == null ? '' : c.value).length + 2); });
+        col.width = Math.min(a, 45);
+      });
+      const buf = await wb.xlsx.writeBuffer();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      link.download = `Productividad_semanal_${getLogicalDate()}.xlsx`;
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    });
+  };
+
+  const renderProductividad = async (container) => {
+    container.dataset.vista = 'productividad';
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:4rem; color:var(--text-muted);">
+        <div class="spinner" style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Cargando productividad semanal...</span>
+      </div>
+      <style>@keyframes spin { 100% { transform:rotate(360deg); } }</style>`;
+
+    // El historial vive aparte de las tareas vivas: sin él la serie arranca en julio
+    try {
+      if (typeof adminService.syncAlmacenajeTasksHistory === 'function'
+          && !(adminService.getAlmacenajeTasksHistory() || []).length) {
+        await adminService.syncAlmacenajeTasksHistory();
+      }
+    } catch (e) { console.warn('[PROD] No se pudo traer el historial:', e); }
+    if (!container.isConnected || container.dataset.vista !== 'productividad') return;
+
+    const historial = typeof adminService.getAlmacenajeTasksHistory === 'function'
+      ? (adminService.getAlmacenajeTasksHistory() || []) : [];
+    const porId = new Map();
+    [...historial, ...almacenajeTasksCache].forEach(t => { if (t && t.id) porId.set(t.id, t); });
+    const fin = [...porId.values()].filter(t => t.status === 'Finalizado');
+
+    const enCurso = prodSemanaDe(getLogicalDate());
+    const claveCurso = enCurso ? enCurso.clave : null;
+
+    const deFamilia = (nom) => fin.filter(t => getTaskCategoria(t).familia === nom);
+    const deCategoria = (nom) => fin.filter(t => getTaskCategoria(t).detalle === nom);
+
+    const fw = resumenSerie(serieSemanal(deFamilia('FOOTWEAR')), claveCurso);
+    const ot = resumenSerie(serieSemanal(deCategoria('06 OTHERS')), claveCurso);
+
+    // El resto: cada categoría con datos, salvo la que ya tiene panel propio
+    const otras = [...new Set(fin.map(t => getTaskCategoria(t).detalle).filter(c => c && c !== '06 OTHERS'))]
+      .map(nom => ({ nom, r: resumenSerie(serieSemanal(deCategoria(nom)), claveCurso) }))
+      .filter(x => !x.r.vacio)
+      .sort((a, b) => b.r.cerradas.length - a.r.cerradas.length);
+
+    window.__prodSeries = [{ nombre: 'FOOTWEAR', resumen: fw }, { nombre: '06 OTHERS', resumen: ot }]
+      .concat(otras.map(x => ({ nombre: x.nom, resumen: x.r })));
+
+    const avisoCurso = (r) => r.enCurso
+      ? `<div style="font-size:0.68rem; color:#fbbf24; margin-top:6px;">La semana ${r.enCurso.sem} va en curso (${r.enCurso.tareas} tareas): se dibuja en ámbar pero no entra en la tendencia ni en los promedios.</div>`
+      : '';
+
+    container.innerHTML = `
+      <style>
+        /* Los dos grandes ocupan el 70% y los minigráficos el 30%. En pantallas
+           angostas se apilan, para que no queden dos columnas ilegibles. */
+        .prod-cols { display:grid; grid-template-columns:minmax(0,7fr) minmax(0,3fr); gap:1.2rem; align-items:start; }
+        .prod-lado { display:flex; flex-direction:column; gap:0.75rem; }
+        @media (max-width:1150px) { .prod-cols { grid-template-columns:minmax(0,1fr); } }
+      </style>
+
+      <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.3rem;">
+        <div class="prod-cols">
+
+          <div style="display:flex; flex-direction:column; gap:1.2rem; min-width:0;">
+
+            <div class="glass-panel" style="background:rgba(15,23,42,0.9); border:2px solid #4f46e5; border-radius:14px; padding:1.3rem; box-shadow:0 0 25px rgba(79,70,229,0.15);">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:2px;">
+                <h3 style="color:#fff; font-weight:900; margin:0; font-size:1.15rem; letter-spacing:0.5px;">FOOTWEAR</h3>
+                <button onclick="window.exportarProductividad(this)" class="btn" style="width:auto; padding:6px 14px; font-size:0.68rem; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981; cursor:pointer;">📥 EXPORTAR</button>
+              </div>
+              <div style="font-size:0.72rem; color:rgba(255,255,255,0.4); margin-bottom:1rem;">
+                ${fw.vacio ? 'sin datos' : `${fw.tareas.toLocaleString('es-PE')} tareas en ${fw.cerradas.length} semanas cerradas`}
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:1.2rem;">${prodTarjetas(fw)}</div>
+              <div style="position:relative; width:100%; height:280px;"><canvas id="prodFw"></canvas></div>
+              ${avisoCurso(fw)}
+            </div>
+
+            <div class="glass-panel" style="background:rgba(15,23,42,0.9); border:1px solid rgba(235,104,52,0.35); border-radius:14px; padding:1.3rem;">
+              <h3 style="color:#fff; font-weight:900; margin:0 0 2px 0; font-size:1.05rem; letter-spacing:0.5px;">06 OTHERS</h3>
+              <div style="font-size:0.72rem; color:rgba(255,255,255,0.4); margin-bottom:1rem;">
+                ${ot.vacio ? 'sin datos' : `${ot.tareas.toLocaleString('es-PE')} tareas en ${ot.cerradas.length} semanas cerradas`}
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:1.2rem;">${prodTarjetas(ot)}</div>
+              <div style="position:relative; width:100%; height:210px;"><canvas id="prodOt"></canvas></div>
+              ${avisoCurso(ot)}
+            </div>
+
+          </div>
+
+          <div class="prod-lado" style="min-width:0;">
+            <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); font-weight:800; letter-spacing:0.5px; text-transform:uppercase; padding-left:2px;">
+              Resto de categorías
+            </div>
+            ${otras.length === 0
+              ? '<div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:11px; padding:1.2rem; font-size:0.72rem; color:rgba(255,255,255,0.25);">Sin otras categorías con datos.</div>'
+              : otras.map((x, i) => prodMiniPanel(x, i)).join('')}
+          </div>
+
+        </div>
+
+        <div style="font-size:0.66rem; color:rgba(255,255,255,0.3); line-height:1.7;">
+          El <b style="color:rgba(255,255,255,0.5);">u/h</b> es del grupo de 2 operarios. La tendencia es la recta que mejor pasa por las semanas cerradas: dice cuántos pares por hora se ganan cada semana, no un nivel.<br>
+          El tamaño de cada punto es la cantidad de tareas de esa semana: un punto chico se apoya en pocas tareas y se mueve fácil.<br>
+          Las tareas que superan ${AUD_TOPE_UPH.toLocaleString('es-PE')} u/h quedan fuera: a esa velocidad la hora está mal registrada, no es un récord.
+        </div>
+      </div>`;
+
+    prodGrafico('prodFw', fw, '#4f46e5');
+    prodGrafico('prodOt', ot, '#eb6834');
+    otras.forEach((x, i) => prodMiniGrafico(`prodMini${i}`, x.r, '#38bdf8'));
   };
 
   // ── CONFIGURACIÓN DE TAREAS: metas de productividad por categoría y vigencia ──
