@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.570';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.571';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.570';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.570';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.570';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.570';
-import * as metasService from '../services_v245/metasService.js?v=26.5.570';
+import * as adminService from '../services_v245/adminService.js?v=26.5.571';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.571';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.571';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.571';
+import * as metasService from '../services_v245/metasService.js?v=26.5.571';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.570';
+const VERSION = '26.5.571';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1932,19 +1932,21 @@ export const renderDashboard = async (container, user, onLogout) => {
     // La tabla de marcas lleva muchas más filas que la de días, así que respira
     // con menos espacio entre ellas. Se mantiene atada a --tp para que siga
     // creciendo con el resto cuando la pantalla da para más.
-    const CELDA_M = 'padding:calc(var(--tp,0.27rem) * 0.6) 0.45rem; text-align:center;';
-    const ETIQUETA_M = 'padding:calc(var(--tp,0.27rem) * 0.6) 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+    const CELDA_M = 'padding:calc(var(--tp,0.27rem) * 0.42) 0.45rem; text-align:center;';
+    const ETIQUETA_M = 'padding:calc(var(--tp,0.27rem) * 0.42) 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
 
     // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
     // los suyos según su contenido y el LUNES de una categoría no queda encima
     // del LUNES de la otra.
     // Los días se llevan el ancho que se les quita a SEM, GENDER y TOTAL: con
     // columnas estrechas las cifras quedan pegadas y se leen mal.
+    // GENDER necesita sitio: "Non commercial" es la etiqueta más larga y con la
+    // columna estrecha se cortaba a "Non comm...".
     const COLUMNAS = `
         <colgroup>
-            <col style="width:8%"><col style="width:15%">
-            ${DIAS_COL.map(() => '<col style="width:9.4%">').join('')}
-            <col style="width:11.2%">
+            <col style="width:9%"><col style="width:20%">
+            ${DIAS_COL.map(() => '<col style="width:8.6%">').join('')}
+            <col style="width:10.8%">
         </colgroup>`;
 
     /**
@@ -2237,16 +2239,23 @@ export const renderDashboard = async (container, user, onLogout) => {
         const cont = document.getElementById('homePaneles');
         if (!cont) { window.removeEventListener('resize', ajustarAltoPaneles); return; }
 
-        cont.style.setProperty('--tf', '0.79rem');
-        cont.style.setProperty('--tp', '0.27rem');
+        cont.style.setProperty('--tf', '0.75rem');
+        cont.style.setProperty('--tp', '0.25rem');
 
         // Espacio que queda entre el final del panel más alto y el borde de abajo.
         const libre = () => window.innerHeight - cont.getBoundingClientRect().bottom - 16;
 
-        let f = 0.79, p = 0.27;
+        // La letra tiene techo a propósito: por encima de ~16px una tabla de
+        // cifras se lee peor, no mejor. Lo que sigue creciendo es el aire entre
+        // filas, que es lo que llena la pantalla sin agrandar los números.
+        // Ambos topes son a propósito. Por encima de ~14px una tabla de cifras no
+        // se lee mejor, y filas muy altas separan tanto los números que cuesta
+        // seguir una columna. Si con esos topes sobra pantalla, se deja sobrar:
+        // es preferible a estirar los datos hasta deformarlos.
+        let f = 0.75, p = 0.25;
         for (let i = 0; i < 24 && libre() > 12; i++) {
-            f = Math.min(1.15, f + 0.02);
-            p = Math.min(0.95, p + 0.035);
+            f = Math.min(0.88, f + 0.015);
+            p = Math.min(0.46, p + 0.025);
             cont.style.setProperty('--tf', f.toFixed(3) + 'rem');
             cont.style.setProperty('--tp', p.toFixed(3) + 'rem');
         }
@@ -2809,7 +2818,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.570');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.571');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3144,7 +3153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.570] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.571] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7837,7 +7846,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.570 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.571 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12339,7 +12348,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.570 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.571 | MOBILE PORTAL
                             </div>
                     </div>
 
