@@ -430,11 +430,22 @@ const getTaskCategoria = (t) => {
 
     const familias = new Map(); // familia → unidades
     const detalles = new Map(); // detalle  → unidades
+    const porSku = indexarMaestro().porSku;
 
     t.items.forEach(art => {
         const unidades = parseFloat(art.bufferQty) || 0;
-        const campoDetalle = art.genderRims;
-        const campoFamilia = art.gender;
+        let campoDetalle = art.genderRims;
+        let campoFamilia = art.gender;
+
+        // Las tareas creadas antes de que el Gender RIMS viajara al servidor vuelven sin él.
+        // Se completa con el Maestro, buscando por SKU, para no perder esas tareas del histórico.
+        if (metasService.esCategoriaVacia(campoDetalle) && art.sku7) {
+            const delMaestro = porSku.get(String(art.sku7).trim().substring(0, 7));
+            if (delMaestro) {
+                campoDetalle = delMaestro.detalle;
+                if (metasService.esCategoriaVacia(campoFamilia)) campoFamilia = delMaestro.familia;
+            }
+        }
 
         // Campo explícito de Gender RIMS (tareas nuevas)
         if (!metasService.esCategoriaVacia(campoDetalle)) {
@@ -476,28 +487,139 @@ const getTaskMeta = (t) => {
     return metasService.resolverMeta(detalle, familia, t && t.fecha);
 };
 
+/* ── EL MAESTRO DE ARTÍCULOS ──────────────────────────────────────────────
+   El Maestro no se descarga solo al abrir la web: csvHub lo trata como archivo
+   local, así que si nadie lo subió en esta sesión, dataStore.articulos viene
+   vacío y todas las categorías salen como "Sin categoría". Lo de abajo lo trae
+   bajo demanda y lo deja SOLO EN MEMORIA: no guarda ni sube nada.
+*/
+
+/** Un solo viaje aunque lo pidan dos pantallas a la vez. */
+let _maestroPromesa = null;
+
+const hayMaestroEnMemoria = () => (dataStore.articulos || []).length > 0
+    || (dataStore.analisis_sku_maestro || []).length > 0;
+
+const rescatarMaestro = async () => {
+    if (hayMaestroEnMemoria()) return true;
+    if (_maestroPromesa) return _maestroPromesa;
+
+    _maestroPromesa = (async () => {
+        // Primero lo barato: puede estar guardado en el navegador de una carga anterior
+        try {
+            const local = await getAreaData('articulos');
+            if (Array.isArray(local) && local.length > 0) { dataStore.articulos = local; return true; }
+        } catch (e) { /* no estaba: se intenta con el servidor */ }
+
+        try {
+            // env.js le pone el sello del entorno a este fetch
+            const res = await fetch(`${API_BASE}/logistics/articulos?t=${Date.now()}`);
+            const j = await res.json();
+            const filas = (j && j.data) || [];
+            if (filas.length > 0) { dataStore.articulos = filas; return true; }
+        } catch (e) {
+            console.warn('[Maestro] no se pudo traer del servidor:', e && e.message);
+        }
+        return false;
+    })();
+
+    const listo = await _maestroPromesa;
+    // Si falló, que el próximo intento pueda volver a probar
+    if (!listo) _maestroPromesa = null;
+    return listo;
+};
+
+/* Recordar de qué Gender cuelga cada categoría, para poder mostrarlo aunque en
+   esa sesión el Maestro no esté cargado. Es solo una ayuda visual. */
+const MEMORIA_PADRES = 'config_metas_padres_v1';
+
+const leerPadresRecordados = () => {
+    try {
+        const crudo = JSON.parse(localStorage.getItem(MEMORIA_PADRES) || '{}');
+        // Una versión anterior lo guardaba como lista de pares (un Map serializado). Se
+        // acepta esa forma para no perder lo aprendido en los navegadores que ya la tienen.
+        if (Array.isArray(crudo)) return Object.fromEntries(crudo.filter(p => Array.isArray(p) && p.length === 2));
+        return (crudo && typeof crudo === 'object') ? crudo : {};
+    } catch (e) { return {}; }
+};
+
+const recordarPadres = (padres) => {
+    try {
+        const guardado = leerPadresRecordados();
+        Object.entries(padres).forEach(([det, fam]) => { if (fam) guardado[det] = fam; });
+        const nuevo = JSON.stringify(guardado);
+        // Se reescribe también cuando lo guardado venía en el formato viejo, así se corrige solo
+        if (localStorage.getItem(MEMORIA_PADRES) !== nuevo) localStorage.setItem(MEMORIA_PADRES, nuevo);
+    } catch (e) { /* sin espacio o en modo privado: se sigue sin recordar */ }
+};
+
 /**
- * Catálogo de categorías del Maestro de Artículos vigente.
- * Columna C = familias (G. Gender), columna D = detalles (Gender RIMS).
+ * Todo lo que se necesita del Maestro, armado UNA sola vez por carga: recorrer
+ * 29 mil filas en cada fila de una tabla dejaría la pantalla trabada.
+ * Columna B = SKU, columna C = G. Gender (familias), columna D = Gender RIMS (categorías).
  */
-const getCatalogoMaestro = () => {
-    const maestro = dataStore.analisis_sku_maestro || dataStore.articulos || [];
+// Marca de "todavía no se armó nunca". Tiene que ser un valor que no pueda salir del
+// dataStore: con null, la primera llamada sin Maestro cargado creía que ya estaba armado
+// y devolvía null, y quien pidiera .padres reventaba.
+const SIN_INDEXAR = Symbol('maestro sin indexar');
+let _maestroIndexado = { fuente: SIN_INDEXAR, datos: null };
+
+const indexarMaestro = () => {
+    const maestro = (dataStore.articulos || []).length ? dataStore.articulos
+        : (dataStore.analisis_sku_maestro || []).length ? dataStore.analisis_sku_maestro
+        : null;
+    // Se compara la referencia, no el contenido: si es el mismo arreglo, ya está armado
+    if (_maestroIndexado.fuente === maestro) return _maestroIndexado.datos;
+
+    const porSku = new Map();
     const familias = new Set();
     const detalles = new Set();
+    const padres = {};
 
-    maestro.forEach((row, i) => {
+    (maestro || []).forEach(row => {
         if (!row) return;
         const raw = Array.isArray(row) ? row : Object.values(row);
-        if (i === 0 && String(raw[0] || '').toUpperCase().includes('COD')) return;
 
+        const sku = String(getCol(row, ['CodArticulo', 'SKU', 'Articulo']) || raw[1] || '').trim().substring(0, 7);
         const fam = String(getCol(row, ['G. Gender', 'G Gender', 'GENDER']) || raw[2] || '').trim().toUpperCase();
         const det = String(getCol(row, ['Gender RIMS', 'GENDERRIMS', 'GENDER_RIMS']) || raw[3] || '').trim().toUpperCase();
 
+        // Cuando el Excel llega como arreglos, la fila de títulos entra como una fila más.
+        // Se reconoce porque trae el NOMBRE de la columna en vez de un valor.
+        if (fam.includes('GENDER') || det.includes('GENDER') || det.includes('RIMS')) return;
+
+        if (sku && !porSku.has(sku)) porSku.set(sku, { familia: fam, detalle: det });
         if (!metasService.esCategoriaVacia(fam) && !metasService.pareceDetalle(fam)) familias.add(fam);
-        if (!metasService.esCategoriaVacia(det)) detalles.add(det);
+        if (!metasService.esCategoriaVacia(det)) {
+            detalles.add(det);
+            // De qué Gender cuelga la categoría: '01 MEN' → 'FOOTWEAR'
+            if (!padres[det] && fam && !metasService.pareceDetalle(fam)) padres[det] = fam;
+        }
     });
 
-    return { familias: [...familias].sort(), detalles: [...detalles].sort() };
+    const datos = {
+        porSku,
+        familias: [...familias].sort(),
+        detalles: [...detalles].sort(),
+        padres,
+        filas: (maestro || []).length
+    };
+    _maestroIndexado = { fuente: maestro, datos };
+    recordarPadres(padres);
+    return datos;
+};
+
+/** Catálogo de categorías del Maestro vigente. */
+const getCatalogoMaestro = () => {
+    const d = indexarMaestro();
+    return { familias: d.familias, detalles: d.detalles, padres: d.padres };
+};
+
+/** Gender (familia) del que cuelga una categoría, según el Maestro o lo recordado antes. */
+const getPadreDe = (detalle) => {
+    const d = String(detalle || '').trim().toUpperCase();
+    if (!d) return '';
+    return indexarMaestro().padres[d] || leerPadresRecordados()[d] || '';
 };
 
 /** Minutos trabajados en una tarea, descontando el break de 23:00 a 23:50. */
@@ -17181,6 +17303,11 @@ window.showCellModal = function(htmlContent) {
     </div>`;
 
     await metasService.cargarReglas(true);
+    if (!container.isConnected) return;
+
+    // Sin el Maestro, el desplegable de categorías sale casi vacío y no se puede
+    // mostrar de qué Gender cuelga cada una
+    await rescatarMaestro();
     if (!container.isConnected) return;
 
     // El catálogo sale del Maestro vigente. Se le suman las categorías que ya tienen regla y
