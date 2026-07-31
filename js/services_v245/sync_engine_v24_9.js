@@ -19,11 +19,14 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api/logistics');
+const API_SYNC = API_BASE.replace(/\/logistics$/, '/sync');
 // --- CENTRALIZAR STATE GLOBAL PARA EVITAR DUPLICADOS POR CACHE QUERY STRINGS ---
 if (!window._pulseSyncState) {
     window._pulseSyncState = {
         isFirstPullDone: false,
         lastPushTimes: {},
+        versiones: {},   // ultima marca de cambio conocida de cada area
+        cargadas: {},    // areas que ya se descargaron al menos una vez
         syncStore: {
             almacenaje_tasks: [],
             almacenaje_tasks_history: [],
@@ -43,6 +46,27 @@ if (!window._pulseSyncState) {
 }
 if (!window._pulseSyncState.lastPushTimes) {
     window._pulseSyncState.lastPushTimes = {};
+}
+if (!window._pulseSyncState.versiones) window._pulseSyncState.versiones = {};
+if (!window._pulseSyncState.cargadas) window._pulseSyncState.cargadas = {};
+
+/**
+ * Pregunta al servidor cuándo cambió por última vez cada área. Es una sola
+ * llamada de menos de 1 KB.
+ *
+ * Devuelve null si no se pudo consultar: en ese caso quien llama debe descargar
+ * todo, porque es preferible gastar datos de más que trabajar con datos viejos.
+ */
+async function consultarVersiones() {
+    try {
+        const res = await fetch(`${API_SYNC}/versiones?z=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return null;
+        const j = await res.json();
+        return (j && j.status === 'ok' && j.versiones) ? j.versiones : null;
+    } catch (err) {
+        console.warn('[PULSE] No se pudieron consultar las versiones, se descargará todo:', err);
+        return null;
+    }
 }
 
 export const syncStore = window._pulseSyncState.syncStore;
@@ -107,6 +131,25 @@ export async function pullGlobal(requestedAreas = null, force = false) {
         }, 3000);
     }
 
+    // [SOLO LO QUE CAMBIÓ] Antes se bajaban las 14 áreas completas cada 30 segundos
+    // (unos 930 KB comprimidos, 7.4 MB reales) hubiera cambios o no. Ahora una
+    // llamada de menos de 1 KB dice qué cambió y se descarga únicamente eso.
+    const versionesNuevas = await consultarVersiones();
+    if (versionesNuevas) {
+        const conocidas = window._pulseSyncState.versiones;
+        const cargadas = window._pulseSyncState.cargadas;
+        const antes = areas.length;
+        areas = areas.filter(a => !cargadas[a] || conocidas[a] !== versionesNuevas[a]);
+        const omitidas = antes - areas.length;
+        if (omitidas > 0) console.log(`⚡ [PULSE] ${omitidas} de ${antes} áreas sin cambios: no se descargan.`);
+        if (areas.length === 0) {
+            console.log('✅ [PULSE] Nada cambió en la nube.');
+            window._pulseSyncState.isFirstPullDone = true;
+            isFirstPullDone = true;
+            return syncStore;
+        }
+    }
+
     const results = await Promise.all(areas.map(async (area) => {
         try {
             const res = await fetch(`${API_BASE}/${area}?z=${Date.now()}`);
@@ -145,11 +188,13 @@ export async function pullGlobal(requestedAreas = null, force = false) {
             const lastPush = window._pulseSyncState.lastPushTimes && window._pulseSyncState.lastPushTimes[r.area];
             if (lastPush && (Date.now() - lastPush < 15000)) {
                 console.log(`[PULSE] Omitiendo sobrescritura por Pull en ${r.area} debido a Push local reciente.`);
+                // Ojo: al no aplicarse, TAMPOCO se registra la versión. Si se registrara,
+                // el área quedaría marcada como al día sin haberla aplicado nunca.
                 return;
             }
             const current = syncStore[r.area];
             const incoming = r.data;
-            
+
             // Si el área es un objeto (como attendance), verificamos compatibilidad
             if (current && typeof current === 'object' && !Array.isArray(current)) {
                 if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
@@ -158,6 +203,10 @@ export async function pullGlobal(requestedAreas = null, force = false) {
             } else {
                 syncStore[r.area] = incoming;
             }
+
+            // Solo se marca como al día lo que de verdad se aplicó.
+            window._pulseSyncState.cargadas[r.area] = true;
+            if (versionesNuevas) window._pulseSyncState.versiones[r.area] = versionesNuevas[r.area];
         }
     });
     window._pulseSyncState.isFirstPullDone = true;
