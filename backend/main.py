@@ -5,6 +5,8 @@ from starlette.middleware.gzip import GZipMiddleware
 import sqlite3
 import json
 import os
+import shutil
+from contextvars import ContextVar
 from datetime import datetime
 from typing import Optional
 
@@ -20,35 +22,111 @@ app.add_middleware(
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-DB_PATH = os.environ.get("DB_PATH", "database.db")
+# =============================================================================
+# ENTORNOS: PRODUCCIÓN y PRUEBAS (beta)
+# -----------------------------------------------------------------------------
+# El mismo servidor atiende los dos entornos, pero cada uno escribe en SU PROPIO
+# archivo de base de datos:
+#
+#     producción -> /data/database.db        (la de verdad)
+#     pruebas    -> /data/database_beta.db   (la desechable)
+#
+# ¿Cómo se elige? La web de pruebas manda la cabecera "X-Environment: beta"
+# (también sirve ?env=beta en la URL). Si NO viene nada, se usa producción,
+# exactamente igual que antes de que existiera esta separación.
+# =============================================================================
+
+DB_PATH = os.environ.get("DB_PATH", "database.db")   # producción (nombre histórico)
+
+
+def _ruta_beta(ruta_produccion: str) -> str:
+    base, ext = os.path.splitext(ruta_produccion)
+    return base + "_beta" + (ext or ".db")
+
+
+DB_PATH_BETA = _ruta_beta(DB_PATH)
+
+_entorno = ContextVar("pulse_entorno", default="production")
+
+
+def db_path() -> str:
+    """La base de datos que le toca a la petición que se está atendiendo."""
+    return DB_PATH_BETA if _entorno.get() == "beta" else DB_PATH
+
+
+def entorno_actual() -> str:
+    return _entorno.get()
+
+
+@app.middleware("http")
+async def detectar_entorno(request: Request, call_next):
+    valor = (request.headers.get("X-Environment")
+             or request.query_params.get("env")
+             or "").strip().lower()
+    es_beta = (valor == "beta")
+
+    # Si la base de pruebas no existe todavía (primer uso, o se borró por
+    # emergencia de disco), se crea vacía al vuelo.
+    if es_beta and not os.path.exists(DB_PATH_BETA):
+        try:
+            init_db(DB_PATH_BETA)
+        except Exception as e:
+            print(f"[PULSE] No se pudo crear la base de pruebas: {e}")
+
+    token = _entorno.set("beta" if es_beta else "production")
+    try:
+        respuesta = await call_next(request)
+    finally:
+        _entorno.reset(token)
+    respuesta.headers["X-Environment-Used"] = "beta" if es_beta else "production"
+    return respuesta
+
 
 def hard_reset_if_full():
     """
-    Si el disco está totalmente bloqueado (0MB libres), borramos la DB inflada
-    para permitir que el sistema vuelva a operar.
+    Si el disco está totalmente bloqueado (0MB libres), liberamos espacio.
+
+    Orden de sacrificio: PRIMERO la base de pruebas (es desechable y se puede
+    volver a llenar con un clic). Solo si el disco sigue agotado después de eso
+    se toca la de producción, que era el comportamiento histórico.
     """
     try:
         db_dir = os.path.dirname(DB_PATH) or "."
-        import shutil
         _, _, free = shutil.disk_usage(db_dir)
         free_mb = free / (1024*1024)
-        
-        if free_mb < 5: # Menos de 5MB libres es CRÍTICO
-            print(f"🚨 DISCO AGOTADO ({free_mb}MB). Ejecutando Hard Reset de emergencia...")
-            if os.path.exists(DB_PATH):
-                os.remove(DB_PATH)
-                print("✅ Base de datos inflada eliminada. Espacio recuperado.")
+
+        if free_mb >= 5:   # Menos de 5MB libres es CRÍTICO
+            return
+
+        print(f"🚨 DISCO AGOTADO ({free_mb}MB). Liberando espacio de emergencia...")
+
+        # 1) La base de PRUEBAS va primero: es sacrificable.
+        if os.path.exists(DB_PATH_BETA):
+            os.remove(DB_PATH_BETA)
+            print("✅ Base de PRUEBAS eliminada (se recupera con un clic).")
+            _, _, free = shutil.disk_usage(db_dir)
+            if free / (1024*1024) >= 5:
+                print("✅ Espacio recuperado SIN tocar producción.")
+                return
+
+        # 2) Último recurso: la de producción.
+        if os.path.exists(DB_PATH):
+            os.remove(DB_PATH)
+            print("✅ Base de datos inflada eliminada. Espacio recuperado.")
     except Exception as e:
         print(f"Error en hard reset: {e}")
 
-def init_db():
-    hard_reset_if_full()
-    
-    db_dir = os.path.dirname(DB_PATH)
+def init_db(ruta: Optional[str] = None):
+    ruta = ruta or DB_PATH
+
+    if ruta == DB_PATH:          # la limpieza de emergencia solo aplica a producción
+        hard_reset_if_full()
+
+    db_dir = os.path.dirname(ruta)
     if db_dir and not os.path.exists(db_dir):
         os.makedirs(db_dir, exist_ok=True)
-        
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = sqlite3.connect(ruta)
     cursor = conn.cursor()
     
     # Tablas con estructura optimizada (sin campos pesados innecesarios)
@@ -78,15 +156,15 @@ def init_db():
 
     conn.commit()
     conn.close()
-    prune_old_snapshots()
+    prune_old_snapshots(ruta)
 
-def prune_old_snapshots():
+def prune_old_snapshots(ruta: Optional[str] = None):
     """
     Conserva solo los 2 snapshots más recientes para cada área que no sea singleton
     para evitar que el tamaño de la base de datos sature el disco del servidor.
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(ruta or db_path())
         cursor = conn.cursor()
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
@@ -120,29 +198,117 @@ def prune_old_snapshots():
         print(f"[PULSE] Error al podar snapshots antiguos: {e}")
 
 try:
-    init_db()
+    init_db()                       # producción
 except Exception as startup_db_err:
     print(f"🚨 CRITICAL STARTUP ERROR INITIALIZING DB: {startup_db_err}")
+
+try:
+    init_db(DB_PATH_BETA)           # pruebas (vacía si es la primera vez)
+    print(f"[PULSE] Entorno de PRUEBAS listo en: {DB_PATH_BETA}")
+except Exception as beta_db_err:
+    print(f"[PULSE] Aviso: no se pudo preparar la base de pruebas: {beta_db_err}")
 
 
 @app.get("/api/health")
 def health():
     try:
-        db_size = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
+        db_size = os.path.getsize(db_path()) if os.path.exists(db_path()) else 0
         import shutil
-        _, _, free = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
+        _, _, free = shutil.disk_usage(os.path.dirname(db_path()) or ".")
         return {
             "status": "ok",
+            "entorno": entorno_actual(),
             "db_size_mb": db_size / (1024*1024),
             "disk_free_mb": free / (1024*1024),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e: return {"status": "error", "message": str(e)}
 
+
+# -----------------------------------------------------------------------------
+# ENTORNOS: consulta y copia de datos producción -> pruebas
+# -----------------------------------------------------------------------------
+
+def _mb(ruta: str) -> float:
+    try:
+        return round(os.path.getsize(ruta) / (1024*1024), 2) if os.path.exists(ruta) else 0.0
+    except OSError:
+        return 0.0
+
+
+@app.get("/api/admin/entornos")
+def estado_entornos():
+    """Radiografía de los dos entornos: qué tan grandes son y cuánto disco queda."""
+    try:
+        _, _, libre = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
+        return {
+            "status": "ok",
+            "atendiendo_como": entorno_actual(),
+            "produccion": {"archivo": DB_PATH, "existe": os.path.exists(DB_PATH), "tamano_mb": _mb(DB_PATH)},
+            "pruebas": {"archivo": DB_PATH_BETA, "existe": os.path.exists(DB_PATH_BETA), "tamano_mb": _mb(DB_PATH_BETA)},
+            "disco_libre_mb": round(libre / (1024*1024), 2),
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/admin/clonar-a-beta")
+def clonar_produccion_a_beta(confirmar: str = ""):
+    """
+    Copia la base de PRODUCCIÓN encima de la de PRUEBAS.
+
+    La dirección es SIEMPRE producción -> pruebas. Nunca al revés: este endpoint
+    no tiene forma de escribir en producción, solo la lee.
+
+    Hay que confirmar a propósito:  POST /api/admin/clonar-a-beta?confirmar=COPIAR-A-BETA
+    """
+    if confirmar != "COPIAR-A-BETA":
+        return {"status": "error",
+                "message": "Falta la confirmación. Agrega ?confirmar=COPIAR-A-BETA a la URL."}
+
+    if not os.path.exists(DB_PATH):
+        return {"status": "error", "message": "No existe la base de producción; no hay nada que copiar."}
+
+    try:
+        carpeta = os.path.dirname(DB_PATH) or "."
+        tamano_origen = os.path.getsize(DB_PATH)
+
+        # El archivo viejo de pruebas se borra primero: libera su espacio y evita
+        # que la copia tenga que convivir con la versión anterior.
+        if os.path.exists(DB_PATH_BETA):
+            os.remove(DB_PATH_BETA)
+
+        _, _, libre = shutil.disk_usage(carpeta)
+        necesario = tamano_origen * 1.15 + (20 * 1024 * 1024)   # 15% de holgura + 20MB
+        if libre < necesario:
+            return {"status": "error",
+                    "message": (f"Espacio insuficiente. La copia necesita ~{necesario/(1024*1024):.0f}MB "
+                                f"y solo hay {libre/(1024*1024):.0f}MB libres. No se copió nada.")}
+
+        # backup() de SQLite: copia consistente aunque el servidor esté atendiendo.
+        origen = sqlite3.connect(DB_PATH)
+        destino = sqlite3.connect(DB_PATH_BETA)
+        try:
+            origen.backup(destino)
+        finally:
+            destino.close()
+            origen.close()
+
+        return {
+            "status": "ok",
+            "message": "Datos de producción copiados al entorno de pruebas.",
+            "copiado_mb": _mb(DB_PATH_BETA),
+            "produccion_intacta": True,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"No se pudo copiar: {e}"}
+
+
 @app.get("/api/logistics/{area}/dates")
 def list_area_dates(area: str):
     try:
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         cursor.execute("SELECT DISTINCT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
         dates = [r[0] for r in cursor.fetchall()]
         conn.close()
@@ -152,7 +318,7 @@ def list_area_dates(area: str):
 @app.get("/api/logistics/{area}")
 def get_area_data(area: str, date: Optional[str] = None):
     try:
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         
         # ÁREAS SINGLETON (Siempre un solo registro maestro)
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
@@ -253,7 +419,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
         if area == 'no_retail_cache' and isinstance(payload_data, dict):
-            conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+            conn = sqlite3.connect(db_path()); cursor = conn.cursor()
             cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = 'no_retail_cache' AND snapshot_date = 'MASTER'")
             row = cursor.fetchone()
             existing_cache = {}
@@ -273,7 +439,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
             """, (area, "MASTER", json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
         else:
-            conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+            conn = sqlite3.connect(db_path()); cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
                 VALUES (?, ?, ?, ?)
@@ -283,7 +449,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
 
         # [MOD v25.1.28] Sincronización explícita con la tabla 'users' para mantener el login operativo
         if area == 'users' and isinstance(payload_data, list):
-            conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+            conn = sqlite3.connect(db_path()); cursor = conn.cursor()
             sent_usernames = [u.get('username') for u in payload_data if u.get('username')]
             if sent_usernames:
                 cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(sent_usernames))), sent_usernames)
@@ -321,7 +487,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
 async def restore_workers(request: Request):
     try:
         data = await request.json()
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         # Los trabajadores se guardan como un snapshot especial 'workers' con fecha 'MASTER'
         cursor.execute("INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json) VALUES (?, ?, ?) ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json", ("workers", "MASTER", json.dumps(data)))
         conn.commit(); conn.close()
@@ -332,7 +498,7 @@ async def restore_workers(request: Request):
 async def restore_users(request: Request):
     try:
         data = await request.json()
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         for u in data:
             cursor.execute("INSERT INTO users (username, password, name, role, active) VALUES (?, ?, ?, ?, ?) ON CONFLICT(username) DO UPDATE SET password=excluded.password, name=excluded.name, role=excluded.role, active=excluded.active", (u['username'], u['password'], u['name'], u['role'], u.get('active', 1)))
         conn.commit(); conn.close()
@@ -343,7 +509,7 @@ async def restore_users(request: Request):
 async def restore_permissions(request: Request):
     try:
         data = await request.json()
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         for p in data:
             cursor.execute("INSERT INTO role_permissions (role, module, allowed) VALUES (?, ?, ?) ON CONFLICT(role, module) DO UPDATE SET allowed=excluded.allowed", (p['role'], p['module'], p['allowed']))
         conn.commit(); conn.close()
@@ -354,7 +520,7 @@ async def restore_permissions(request: Request):
 async def restore_performance(request: Request):
     try:
         data = await request.json() # Esperamos un objeto { "YYYY-MM-DD": [records], ... }
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         count = 0
         for date, records in data.items():
             cursor.execute("INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json) VALUES (?, ?, ?) ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json", ("performance", date, json.dumps(records)))
@@ -371,7 +537,7 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         
         cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, target_date))
         row = cursor.fetchone()
@@ -413,7 +579,7 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
 @app.get("/api/buffer/config")
 def get_buffer_config():
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("SELECT key, value FROM buffer_config")
         rows = cursor.fetchall()
@@ -443,7 +609,7 @@ def get_buffer_config():
 async def save_buffer_config(request: Request):
     try:
         data = await request.json()  # Expecting dictionary of key-value configurations
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         for k, v in data.items():
             cursor.execute("""
@@ -460,7 +626,7 @@ async def save_buffer_config(request: Request):
 async def api_login(request: Request):
     try:
         body = await request.json()
-        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         cursor.execute("SELECT id, username, name, role FROM users WHERE username = ? AND password = ? AND active = 1", (body.get("username"), body.get("password")))
         row = cursor.fetchone(); conn.close()
         if row: return {"success": True, "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
@@ -472,8 +638,8 @@ def force_db_cleanup():
     temp_db_path = "/tmp/temp_database.db"
     try:
         import shutil
-        db_size_before = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
-        _, _, free_before = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
+        db_size_before = os.path.getsize(db_path()) if os.path.exists(db_path()) else 0
+        _, _, free_before = shutil.disk_usage(os.path.dirname(db_path()) or ".")
         
         # Remove any leftover temp database from previous failed attempts
         if os.path.exists(temp_db_path):
@@ -481,7 +647,7 @@ def force_db_cleanup():
             except: pass
             
         # Connect to both databases
-        src_conn = sqlite3.connect(DB_PATH)
+        src_conn = sqlite3.connect(db_path())
         src_cursor = src_conn.cursor()
         
         dst_conn = sqlite3.connect(temp_db_path)
@@ -565,15 +731,15 @@ def force_db_cleanup():
         dst_conn.close()
         
         # Overwrite full database file with clean compacted version
-        shutil.copy2(temp_db_path, DB_PATH)
+        shutil.copy2(temp_db_path, db_path())
         
         # Clean up temp file
         if os.path.exists(temp_db_path):
             try: os.remove(temp_db_path)
             except: pass
             
-        db_size_after = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
-        _, _, free_after = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
+        db_size_after = os.path.getsize(db_path()) if os.path.exists(db_path()) else 0
+        _, _, free_after = shutil.disk_usage(os.path.dirname(db_path()) or ".")
         
         return {
             "status": "success",
@@ -596,7 +762,7 @@ def force_db_cleanup():
 @app.get("/api/logistics/no_retail_cache/photo")
 def get_no_retail_photo(client_id: str, photo_type: str):
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = 'no_retail_cache' AND snapshot_date = 'MASTER'")
         row = cursor.fetchone()
@@ -619,7 +785,7 @@ def get_no_retail_photo(client_id: str, photo_type: str):
 def get_buffer_history():
     """Devuelve todos los registros del historial de Buffer KPI, del más reciente al más antiguo."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, created_at
@@ -655,7 +821,7 @@ async def add_buffer_history(request: Request):
         diferencias         = int(body.get("diferencias", 0))
         fill_rate           = str(body.get("fillRate", "0.00%"))
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO buffer_history (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, created_at)
@@ -681,7 +847,7 @@ async def update_buffer_history(record_id: int, request: Request):
         diferencias         = int(body.get("diferencias", 0))
         fill_rate           = str(body.get("fillRate", "0.00%"))
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE buffer_history
@@ -702,7 +868,7 @@ async def update_buffer_history(record_id: int, request: Request):
 def delete_buffer_history(record_id: int):
     """Elimina un registro del historial de Buffer KPI por su id."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("DELETE FROM buffer_history WHERE id=?", (record_id,))
         deleted = cursor.rowcount
@@ -739,7 +905,7 @@ async def save_kpi_results(request: Request):
         row_count    = len(results)
         now_str      = datetime.now().isoformat()
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO buffer_kpi_results (fecha, results_json, row_count, updated_at)
@@ -765,7 +931,7 @@ def get_kpi_results(fecha: Optional[str] = None):
     Query param: ?fecha=YYYY-MM-DD
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         if fecha:
             cursor.execute("""
@@ -796,7 +962,7 @@ def get_kpi_results(fecha: Optional[str] = None):
 def get_kpi_dates():
     """Devuelve todas las fechas disponibles con resultados de Buffer KPI."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
         cursor.execute("""
             SELECT fecha, row_count, updated_at
@@ -821,7 +987,7 @@ def get_kpi_results_range(fecha_from: Optional[str] = None, fecha_to: Optional[s
     Query params: ?fecha_from=YYYY-MM-DD&fecha_to=YYYY-MM-DD
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
 
         if fecha_from and fecha_to:
