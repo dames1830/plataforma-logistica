@@ -17295,20 +17295,60 @@ window.showCellModal = function(htmlContent) {
   };
 
   // ── CONFIGURACIÓN DE TAREAS: metas de productividad por categoría y vigencia ──
+  /* Color fijo por Gender, para reconocerlo de un vistazo. */
+  const COLORES_GENDER = ['#38bdf8', '#a78bfa', '#f472b6', '#fbbf24', '#34d399', '#fb7185', '#22d3ee', '#c084fc'];
+
+  /** Los Gender que el sistema conoce hoy, ordenados: los del Maestro y los recordados. */
+  const generosConocidos = () => {
+      const d = indexarMaestro();
+      const todos = new Set([...d.familias, ...Object.values(d.padres), ...Object.values(leerPadresRecordados())]);
+      return [...todos].filter(Boolean).sort();
+  };
+
+  /**
+   * Se reparten los colores en orden sobre la lista de Gender conocidos, en vez de sacarlos
+   * del nombre: con un hash, dos Gender distintos caían en el mismo color y el color dejaba
+   * de servir para distinguirlos. Así no se pisan mientras no pasen de 8.
+   */
+  const colorDeGender = (g, conocidos) => {
+      const s = String(g || '');
+      if (!s) return '#64748b';
+      const lista = conocidos || generosConocidos();
+      const i = lista.indexOf(s);
+      if (i >= 0) return COLORES_GENDER[i % COLORES_GENDER.length];
+      // Uno que no figura en ninguna lista: al menos que sea siempre el mismo color
+      let h = 0;
+      for (let k = 0; k < s.length; k++) h = (h * 31 + s.charCodeAt(k)) >>> 0;
+      return COLORES_GENDER[h % COLORES_GENDER.length];
+  };
+
+  /** Etiqueta de color con el Gender del que cuelga una categoría. */
+  const chipGender = (categoria) => {
+      const g = getPadreDe(categoria);
+      if (!g) return '';
+      const c = colorDeGender(g);
+      return `<span title="La categoría ${String(categoria)} pertenece al Gender ${g}" style="font-size:0.55rem; color:${c}; background:${c}1a; border:1px solid ${c}59; padding:1px 6px; border-radius:5px; vertical-align:middle; margin-left:6px; font-weight:800; letter-spacing:0.3px;">${g}</span>`;
+  };
+
   const renderConfigTareas = async (container) => {
     if (!container) return;
+    // Esta pantalla y la de KPI comparten el mismo contenedor. Si el usuario cambia de
+    // pestaña mientras se cargan las reglas, la que llegue tarde pintaría encima de la
+    // otra. El sello dice de quién es el contenedor ahora mismo.
+    container.dataset.vista = 'config-tareas';
+    const sigueSiendoMia = () => container.isConnected && container.dataset.vista === 'config-tareas';
     container.innerHTML = `<div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1rem;">
         <div style="width:34px; height:34px; border:2px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
         <span style="font-size:0.85rem;">Cargando reglas de productividad...</span>
     </div>`;
 
     await metasService.cargarReglas(true);
-    if (!container.isConnected) return;
+    if (!sigueSiendoMia()) return;
 
     // Sin el Maestro, el desplegable de categorías sale casi vacío y no se puede
     // mostrar de qué Gender cuelga cada una
     await rescatarMaestro();
-    if (!container.isConnected) return;
+    if (!sigueSiendoMia()) return;
 
     // El catálogo sale del Maestro vigente. Se le suman las categorías que ya tienen regla y
     // las que aparecen en tareas del histórico, para que una categoría dada de baja en el
@@ -17329,18 +17369,17 @@ window.showCellModal = function(htmlContent) {
 
     const extras = [...new Set([...conRegla, ...catsHistorico])]
         .filter(c => c && c !== 'GLOBAL' && !enMaestro.has(c));
-    const familiasExtra = extras.filter(c => !metasService.pareceDetalle(c)).sort();
     const detallesExtra = extras.filter(c => metasService.pareceDetalle(c)).sort();
 
-    // Categorías del Maestro que hoy no tienen regla propia: heredan la de su familia o la global
-    const sinReglaPropia = hayMaestro ? [...catalogo.familias, ...catalogo.detalles].filter(c => !conRegla.has(c)) : [];
+    // Categorías del Maestro sin meta suya: se miden con la del Gender, o con la de respaldo
+    const sinMetaSuya = hayMaestro ? catalogo.detalles.filter(c => !conRegla.has(c)) : [];
 
     const hoyStr = getLogicalDate();
     const fmt = (f) => f ? f.split('-').reverse().join('/') : '';
     const esc = (s) => String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
     const pintar = () => {
-        if (!container.isConnected) return;
+        if (!sigueSiendoMia()) return;
         const reglas = metasService.getReglas();
         const ordenadas = [...reglas].sort((a, b) => String(a.categoria).localeCompare(String(b.categoria)) || String(b.desde || '').localeCompare(String(a.desde || '')));
 
@@ -17370,10 +17409,16 @@ window.showCellModal = function(htmlContent) {
                         </thead>
                         <tbody>
                             ${ordenadas.length === 0 ? `<tr><td colspan="7" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
+                                // "Vigente" solo decía que hoy cae dentro de su rango, y eso confundía:
+                                // dos reglas de la misma categoría podían decir VIGENTE las dos, cuando
+                                // en realidad solo una se usa. Ahora se dice cuál manda.
                                 const vigente = metasService.reglaVigenteEn(r, hoyStr);
-                                const badge = vigente
-                                    ? '<span style="background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">VIGENTE</span>'
-                                    : '<span style="background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">FUERA DE VIGENCIA</span>';
+                                const manda = metasService.reglaQueMandaEn(r.categoria, hoyStr) === r.id;
+                                const badge = !vigente
+                                    ? '<span title="Hoy no se aplica: la fecha de hoy está fuera de su vigencia" style="background:rgba(148,163,184,0.12); color:#94a3b8; border:1px solid rgba(148,163,184,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">CERRADA</span>'
+                                    : manda
+                                        ? '<span title="Esta es la regla que se está usando hoy para esta categoría" style="background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">EN USO</span>'
+                                        : '<span title="Está dentro de su vigencia, pero otra regla de la misma categoría empieza después y es la que manda" style="background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">REEMPLAZADA</span>';
                                 const vig = `${fmt(r.desde)} → ${r.hasta ? fmt(r.hasta) : '<span style="color:rgba(255,255,255,0.3);">sin fin</span>'}`;
                                 const nota = r.nota ? `<div style="font-size:0.65rem; color:rgba(255,255,255,0.35); margin-top:2px;">${esc(r.nota)}</div>` : '';
                                 const fondo = r.base ? 'background:rgba(99,102,241,0.06);' : '';
@@ -17386,7 +17431,7 @@ window.showCellModal = function(htmlContent) {
                                 const fueraMaestro = (hayMaestro && cat !== 'GLOBAL' && !enMaestro.has(cat))
                                     ? '<div style="font-size:0.62rem; color:#94a3b8; margin-top:3px;">🕘 Sin uso actual — no está en el Maestro vigente</div>' : '';
                                 return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${fondo}">
-                                    <td style="padding:0.75rem 1rem;"><b style="color:#fff;">${esc(r.categoria)}</b>${nivelBadge}${r.base ? ' <span style="font-size:0.55rem; color:#818cf8; border:1px solid rgba(129,140,248,0.4); padding:1px 5px; border-radius:5px; vertical-align:middle;">BASE</span>' : ''}${nota}${fueraMaestro}</td>
+                                    <td style="padding:0.75rem 1rem;"><b style="color:#fff;">${esc(r.categoria)}</b>${chipGender(r.categoria)}${nivelBadge}${r.base ? ' <span style="font-size:0.55rem; color:#818cf8; border:1px solid rgba(129,140,248,0.4); padding:1px 5px; border-radius:5px; vertical-align:middle;">BASE</span>' : ''}${nota}${fueraMaestro}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:#a5b4fc; font-weight:900; font-size:0.95rem;">${Number(r.metaUph).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(255,255,255,0.65); font-weight:700;">${Number(r.tamanoTarea).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(255,255,255,0.45); font-weight:700; font-size:0.78rem;">${metasService.tiempoBaseDe(r)} min</td>
@@ -17408,11 +17453,11 @@ window.showCellModal = function(htmlContent) {
                     ℹ️ El Maestro de Artículos no está cargado en esta sesión, así que el desplegable solo muestra las categorías que ya tienen regla. Subí el Maestro en <b style="color:rgba(255,255,255,0.6);">Análisis SKU → Archivo Análisis SKU</b> para ver todas las categorías disponibles.
                 </div>` : ''}
 
-                ${sinReglaPropia.length > 0 ? `
+                ${sinMetaSuya.length > 0 ? `
                 <div style="padding:0.85rem 1.2rem; background:rgba(245,158,11,0.07); border-top:1px solid rgba(245,158,11,0.2); font-size:0.72rem; color:#fbbf24; line-height:1.7;">
-                    ⚠️ <b>${sinReglaPropia.length} categoría${sinReglaPropia.length !== 1 ? 's' : ''} del Maestro sin regla propia</b> — están usando la meta de su familia o la de respaldo:
+                    ⚠️ <b>${sinMetaSuya.length} categoría${sinMetaSuya.length !== 1 ? 's' : ''} sin meta suya</b> — se están midiendo con la meta de su Gender, o con la de respaldo:
                     <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:5px;">
-                        ${sinReglaPropia.map(c => `<span style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); padding:2px 8px; border-radius:6px; font-size:0.66rem; font-weight:700;">${esc(c)}</span>`).join('')}
+                        ${sinMetaSuya.map(c => `<span style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); padding:2px 8px; border-radius:6px; font-size:0.66rem; font-weight:700;">${esc(c)}${chipGender(c)}</span>`).join('')}
                     </div>
                 </div>` : ''}
 
@@ -17468,18 +17513,32 @@ window.showCellModal = function(htmlContent) {
                 <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Categoría</label>
                 <select id="cfg_cat" ${r.base ? 'disabled' : ''} style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.85rem; margin-bottom:0.4rem; ${r.base ? 'opacity:0.6;' : ''}">
                     ${(() => {
+                        // Las metas se ponen SOLO sobre categorías (Gender RIMS). Antes se
+                        // mezclaban Gender y categorías en la misma lista y no quedaba claro cuál
+                        // ganaba: gana siempre la categoría, así que ofrecer el Gender confundía.
                         const sel = String(r.categoria).toUpperCase();
                         const opt = (c) => `<option value="${esc(c)}" ${sel === c ? 'selected' : ''}>${esc(c)}</option>`;
-                        const grupo = (etiqueta, lista) => lista.length ? `<optgroup label="${etiqueta}">${lista.map(opt).join('')}</optgroup>` : '';
-                        return [
-                            grupo('Familia — G. Gender (columna C)', catalogo.familias),
-                            grupo('Detalle — Gender RIMS (columna D)', catalogo.detalles),
-                            grupo('Fuera del Maestro vigente', [...familiasExtra, ...detallesExtra]),
-                            grupo('Respaldo', ['GLOBAL'])
-                        ].join('');
+                        const grupo = (etiqueta, lista) => lista.length ? `<optgroup label="${esc(etiqueta)}">${lista.map(opt).join('')}</optgroup>` : '';
+
+                        // Las categorías se agrupan bajo el Gender del que cuelgan
+                        const porGender = {};
+                        [...catalogo.detalles].forEach(c => {
+                            const g = getPadreDe(c) || 'Sin Gender en el Maestro';
+                            (porGender[g] = porGender[g] || []).push(c);
+                        });
+                        const grupos = Object.keys(porGender).sort().map(g => grupo(g, porGender[g]));
+
+                        // La regla que se está editando puede estar sobre un Gender o sobre una
+                        // categoría que ya no existe. Se le agrega su propia opción para que
+                        // editarla no la mueva de sitio sin querer.
+                        const yaEsta = [...catalogo.detalles, ...detallesExtra].includes(sel);
+                        if (!yaEsta && sel) grupos.push(grupo('Esta regla (no se puede cambiar de categoría desde acá)', [sel]));
+                        if (detallesExtra.length) grupos.push(grupo('Ya no están en el Maestro', detallesExtra));
+                        return grupos.join('');
                     })()}
                 </select>
-                <div style="font-size:0.63rem; color:rgba(255,255,255,0.3); margin-bottom:1rem;">Una regla de detalle pisa a la de su familia. Si la categoría no está en la lista, es porque no existe en el Maestro.</div>
+                <div id="cfg_padre" style="font-size:0.68rem; margin-bottom:0.5rem; min-height:16px;"></div>
+                <div style="font-size:0.63rem; color:rgba(255,255,255,0.3); margin-bottom:1rem;">La meta va sobre la categoría. Si el Gender también tiene una meta, la de la categoría es la que se usa.</div>
 
                 <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:0.5rem;">
                     <div style="flex:1;">
@@ -17521,6 +17580,18 @@ window.showCellModal = function(htmlContent) {
             </div>`;
         document.body.appendChild(modal);
 
+        // Deja a la vista de qué Gender cuelga la categoría elegida, sin tener que adivinarlo
+        const selCat = modal.querySelector('#cfg_cat');
+        const lblPadre = modal.querySelector('#cfg_padre');
+        const pintarPadre = () => {
+            const g = getPadreDe(selCat.value);
+            lblPadre.innerHTML = g
+                ? `Pertenece al Gender <b style="color:${colorDeGender(g)};">${esc(g)}</b>`
+                : '<span style="color:rgba(255,255,255,0.25);">Sin Gender conocido para esta categoría</span>';
+        };
+        selCat.addEventListener('change', pintarPadre);
+        pintarPadre();
+
         const inMeta = modal.querySelector('#cfg_meta');
         const inTam = modal.querySelector('#cfg_tam');
         const chkLink = modal.querySelector('#cfg_link');
@@ -17543,6 +17614,17 @@ window.showCellModal = function(htmlContent) {
             if (hasta && hasta < desde) { showPremiumAlert('FECHAS INVERTIDAS', 'La fecha final no puede ser anterior a la de inicio.', 'error'); return; }
 
             const categoria = modal.querySelector('#cfg_cat').value;
+
+            // Dos reglas con la misma categoría y la misma fecha de inicio son
+            // indistinguibles: una de las dos no se usaría nunca.
+            const repetida = metasService.reglaDuplicada(categoria, desde, editando ? r.id : null);
+            if (repetida) {
+                showPremiumAlert('YA EXISTE ESA REGLA',
+                    `Ya hay una regla de ${categoria} que empieza el ${fmt(desde)} (${repetida.metaUph} u/h).\n\nSi querés cambiarla, editá esa. Si querés una meta distinta a partir de otro día, poné otra fecha de inicio.`,
+                    'error');
+                return;
+            }
+
             const datos = {
                 categoria,
                 nivel: categoria.toUpperCase() === 'GLOBAL'
@@ -17572,6 +17654,9 @@ window.showCellModal = function(htmlContent) {
 
   window.renderAlmacenajeTareas = (container) => {
     window.__almacenajeContainer = container;
+    // Marca el contenedor como suyo: si Config. Tareas venía cargando reglas, al terminar
+    // verá que ya no le pertenece y no pintará encima (comparten el mismo contenedor).
+    if (container) container.dataset.vista = 'almacenaje';
 
     // [FIX SCROLL] El reporte scrollea dentro de #almacenajeScrollArea (un div interno con
     // overflow-y:auto y altura fija que se RECREA en cada redibujo, por eso su scroll volvía a 0).

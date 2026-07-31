@@ -193,6 +193,30 @@ export const resolverMetaHoy = (detalle, familia) => {
     return resolverMeta(detalle, familia, fecha);
 };
 
+/**
+ * De todas las reglas de una categoría, cuál es la que REALMENTE manda en esa fecha.
+ * Devuelve su id, o '' si ninguna está vigente. Usa exactamente el mismo criterio que
+ * resolverMeta, para que la pantalla no diga una cosa y el cálculo haga otra.
+ */
+export const reglaQueMandaEn = (categoria, fecha) => {
+    const c = norm(categoria);
+    const vigentes = getReglas().filter(r => norm(r.categoria) === c && reglaVigenteEn(r, fecha));
+    if (vigentes.length === 0) return '';
+    return vigentes.sort((a, b) => String(b.desde || '').localeCompare(String(a.desde || '')))[0].id;
+};
+
+/**
+ * Otra regla exactamente igual: misma categoría y misma fecha de inicio. Dos así son
+ * indistinguibles y una de las dos nunca se usaría, así que no tiene sentido guardarla.
+ * Rangos distintos SÍ se permiten: es como se hace una campaña que pisa a la regla base.
+ */
+export const reglaDuplicada = (categoria, desde, idIgnorar) => {
+    const c = norm(categoria);
+    return getReglas().find(r => r.id !== idIgnorar
+        && norm(r.categoria) === c
+        && (r.desde || '') === (desde || '')) || null;
+};
+
 /** true si existe alguna regla propia para esa categoría, vigente o no. */
 export const tieneReglaPropia = (categoria) => {
     const c = norm(categoria);
