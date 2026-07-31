@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.547';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.549';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.547';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.547';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.547';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.547';
-import * as metasService from '../services_v245/metasService.js?v=26.5.547';
+import * as adminService from '../services_v245/adminService.js?v=26.5.549';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.549';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.549';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.549';
+import * as metasService from '../services_v245/metasService.js?v=26.5.549';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.547';
+const VERSION = '26.5.549';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -557,6 +557,115 @@ const mediana = (arr) => {
 const percentilDe = (valor, todos) => {
     if (!todos || todos.length < 2) return 100;
     return Math.round((todos.filter(v => v < valor).length / (todos.length - 1)) * 100);
+};
+
+/* ============================================================================
+   INICIO: comparativa de la semana en curso contra la anterior
+   ============================================================================ */
+
+/** Fecha a YYYY-MM-DD en hora LOCAL (toISOString daría el día anterior de noche). */
+const aISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Lunes de la semana a la que pertenece una fecha. */
+const lunesDe = (fecha) => {
+    const d = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // getDay(): 0 = domingo
+    return d;
+};
+
+/**
+ * Semana en curso y el MISMO tramo de la semana anterior.
+ *
+ * Comparar un lunes-a-jueves contra una semana completa inventaría una caída del
+ * 40% que no existe, así que la semana pasada se corta en el mismo día.
+ */
+const rangoSemanas = (hoy = new Date()) => {
+    const desdeEsta = lunesDe(hoy);
+    const hoySinHora = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    const diasCorridos = Math.round((hoySinHora - desdeEsta) / 86400000);
+
+    const desdePasada = new Date(desdeEsta);
+    desdePasada.setDate(desdePasada.getDate() - 7);
+    const hastaPasada = new Date(desdePasada);
+    hastaPasada.setDate(hastaPasada.getDate() + diasCorridos);
+
+    return {
+        desdeEsta, hastaEsta: hoySinHora, desdePasada, hastaPasada, diasCorridos,
+        estaDesde: aISO(desdeEsta), estaHasta: aISO(hoySinHora),
+        pasadaDesde: aISO(desdePasada), pasadaHasta: aISO(hastaPasada)
+    };
+};
+
+/**
+ * Unidades de UNA tarea repartidas por G. Gender (columna C del Maestro).
+ *
+ * Usa exactamente la misma regla que getTaskTotalAvance —solo ubicaciones
+ * CDBUFFER que no sean CDBUFFER-C, y 'avance' cuando existe— para que la suma
+ * de las categorías cuadre con el total que muestra el resto del sistema.
+ */
+const unidadesPorGender = (t) => {
+    const out = new Map();
+    if (!t) return out;
+
+    (t.items || []).forEach(art => {
+        if (!art) return;
+        const g = String(art.gender || '').trim().toUpperCase() || 'SIN CATEGORÍA';
+        let sum = 0;
+        (art.items || []).forEach(i => {
+            const ubi = String((i && i.ubi) || '').toUpperCase().trim();
+            if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+            if (i.avance !== undefined && i.avance !== null) sum += parseFloat(i.avance) || 0;
+            else if (t.status === 'Finalizado') sum += parseFloat(i.qty) || 0;
+        });
+        if (sum) out.set(g, (out.get(g) || 0) + sum);
+    });
+    return out;
+};
+
+/**
+ * Todo lo que necesita la pantalla de Inicio para un rango de fechas.
+ * `filas` son las de buildKpiDataset (ya traen meta, minutos y esperado).
+ */
+const resumenSemana = (tasks, desde, hasta, filtroUsuario = null) => {
+    let filas = buildKpiDataset(tasks, desde, hasta);
+    if (filtroUsuario) filas = filas.filter(r => r.usuarios.includes(filtroUsuario));
+
+    const idsValidos = new Set(filas.map(r => r.id));
+    const porGender = new Map();
+    const porDia = new Map();
+
+    (tasks || []).forEach(t => {
+        if (!t || !idsValidos.has(t.id)) return;
+        unidadesPorGender(t).forEach((u, g) => {
+            porGender.set(g, (porGender.get(g) || 0) + u);
+            porDia.set(t.fecha, (porDia.get(t.fecha) || 0) + u);
+        });
+    });
+
+    const qty = filas.reduce((a, r) => a + r.qty, 0);
+    const mins = filas.reduce((a, r) => a + r.mins, 0);
+    const esperado = filas.reduce((a, r) => a + r.esperado, 0);
+    const diasActivos = new Set(filas.map(r => r.fecha));
+
+    return {
+        filas, porGender, porDia,
+        tareas: filas.length,
+        qty, mins,
+        horas: mins / 60,
+        uph: mins > 0 ? (qty / mins) * 60 : 0,
+        cumplimiento: esperado > 0 ? (qty / esperado) * 100 : 0,
+        diasActivos,
+        dias: diasActivos.size,
+        personas: new Set(filas.flatMap(r => r.usuarios)).size,
+        porDiaActivo: diasActivos.size > 0 ? qty / diasActivos.size : 0
+    };
+};
+
+/** Variación porcentual de a respecto de b, tolerando el cero. */
+const variacion = (a, b) => {
+    if (b > 0) return ((a - b) / b) * 100;
+    if (a > 0) return null;    // null = "nuevo", no hay contra qué comparar
+    return 0;
 };
 
 /**
@@ -1539,53 +1648,286 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  /**
+   * INICIO — comparativa de la semana en curso contra la anterior.
+   *
+   * Antes esta pantalla mostraba cuántas filas tenía cada archivo cargado, que no
+   * dice nada de cómo va la operación. Ahora responde a una sola pregunta:
+   * ¿vamos mejor o peor que la semana pasada?
+   *
+   * Tres decisiones que evitan que los números mientan:
+   *   1. Se compara contra el MISMO tramo de la semana pasada (si hoy es jueves,
+   *      lunes-a-jueves contra lunes-a-jueves).
+   *   2. Las unidades van desglosadas por G. Gender. Un total puede subir porque
+   *      entró carga liviana mientras el footwear se desploma.
+   *   3. Si esta semana tiene menos días trabajados, se avisa y se muestra el
+   *      promedio por día activo, que es lo comparable.
+   */
   const renderHomeTab = async () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const now = new Date();
-    
+
     contentTitle.style.display = 'none'; // Ocultar título estándar para el Home
     contentSubtitle.style.display = 'none';
 
-    contentArea.innerHTML = `
-        <div class="animate-fade-in" style="margin-bottom:2.5rem;">
-            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:2.5rem; border-radius:20px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); position:relative; overflow:hidden;">
+    const ROLES_GESTION = ['admin', 'jefe', 'supervisor', 'encargado'];
+    const esGestion = ROLES_GESTION.includes(user.role);
+
+    // Las tareas archivadas pueden seguir apareciendo en la lista viva. Si se cuela
+    // una repetida, sus unidades se contarían dos veces: se deja una sola por id.
+    const porId = new Map();
+    [
+        ...(adminService.getAlmacenajeTasks() || []),
+        ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
+            ? (adminService.getAlmacenajeTasksHistory() || []) : [])
+    ].forEach(t => { if (t && t.id && !porId.has(t.id)) porId.set(t.id, t); });
+    const tasks = [...porId.values()];
+
+    // Quien no gestiona pero sí ejecuta tareas ve SU comparativa, no la del almacén.
+    const esOperario = tasks.some(t => t && (t.u1 === user.username || t.u2 === user.username));
+    const filtroUsuario = (!esGestion && esOperario) ? user.username : null;
+
+    const NOMBRE_DIA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const fmt = (n) => Math.round(n || 0).toLocaleString('es-PE');
+    const fmtFecha = (d) => `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]}`;
+
+    const chipVar = (v, grande = false) => {
+        const tam = grande ? '0.95rem' : '0.78rem';
+        if (v === null) return `<span style="color:#38bdf8; font-weight:900; font-size:${tam};">NUEVO</span>`;
+        const col = Math.abs(v) < 1 ? '#94a3b8' : (v > 0 ? '#22c55e' : '#ef4444');
+        const fl = Math.abs(v) < 1 ? '=' : (v > 0 ? '▲' : '▼');
+        return `<span style="color:${col}; font-weight:900; font-size:${tam}; white-space:nowrap;">${fl} ${Math.abs(v).toFixed(0)}%</span>`;
+    };
+
+    const cabecera = `
+        <div class="animate-fade-in" style="margin-bottom:1.5rem;">
+            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:1.6rem 2rem; border-radius:18px; border:1px solid rgba(79, 70, 229, 0.3); position:relative; overflow:hidden;">
                 <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary); filter:blur(100px); opacity:0.2;"></div>
-                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
-                <div style="margin-top:0.8rem; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-                    <p style="margin:0; color:#cbd5e1; font-size:1.1rem; font-weight:500;">Bienvenido al centro de control operativo.</p>
-                    <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:15px; flex-wrap:wrap;">
+                    <h1 style="margin:0; font-size:1.9rem; font-weight:900; letter-spacing:-0.5px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+                    <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.85rem;">
                         ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="kpi-grid" id="homeKpiGrid"></div>
-    `;
+        </div>`;
 
-    // Reloj dinámico
-    if (window.homeClockInterval) clearInterval(window.homeClockInterval);
-    window.homeClockInterval = setInterval(() => {
-        const clockEl = document.getElementById('homeClock');
-        if (clockEl) {
+    const arrancarReloj = () => {
+        if (window.homeClockInterval) clearInterval(window.homeClockInterval);
+        window.homeClockInterval = setInterval(() => {
+            const el = document.getElementById('homeClock');
+            if (!el) { clearInterval(window.homeClockInterval); return; }
             const d = new Date();
-            clockEl.textContent = `${d.toLocaleDateString('es-ES', options)} | ${d.toLocaleTimeString()}`;
-        } else {
-            clearInterval(window.homeClockInterval);
-        }
-    }, 1000);
+            el.textContent = `${d.toLocaleDateString('es-ES', options)} | ${d.toLocaleTimeString()}`;
+        }, 1000);
+    };
 
-    ['stockActivo', 'stockReserva', 'buffer', 'picking'].forEach(a => {
-        getAreaLength(a).then(count => {
-            const grid = document.getElementById('homeKpiGrid');
-            if(!grid) return;
-            grid.innerHTML += `
-                <div class="kpi-card" style="transition:transform 0.3s ease; cursor:pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <h4 style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">${a.replace('stock', 'STOCK ')}</h4>
-                    <h2 style="font-size:2.2rem; font-weight:800; color:#fff; margin:0;">${count.toLocaleString()}</h2>
-                    <div style="height:4px; width:40px; background:var(--primary); margin-top:1rem; border-radius:2px;"></div>
-                </div>`;
+    // Roles sin datos de almacenaje: mejor decirlo que mostrar ceros que parecen un problema.
+    if (!esGestion && !esOperario) {
+        contentArea.innerHTML = cabecera + `
+            <div class="glass-panel" style="padding:3rem; text-align:center;">
+                <div style="font-size:2.5rem; margin-bottom:0.8rem;">📭</div>
+                <h3 style="color:#fff; margin:0 0 0.6rem 0;">Todavía no hay indicadores para tu perfil</h3>
+                <p style="color:var(--text-muted); max-width:460px; margin:0 auto; line-height:1.6;">
+                    Esta pantalla resume las tareas de almacenaje. Tu usuario (<b>${user.role}</b>) no
+                    figura en ellas, así que no hay nada que comparar. En cuanto tengas actividad
+                    registrada, aparecerá aquí.
+                </p>
+            </div>`;
+        arrancarReloj();
+        return;
+    }
+
+    const r = rangoSemanas(now);
+    const esta = resumenSemana(tasks, r.estaDesde, r.estaHasta, filtroUsuario);
+    const pasada = resumenSemana(tasks, r.pasadaDesde, r.pasadaHasta, filtroUsuario);
+
+    if (esta.tareas === 0 && pasada.tareas === 0) {
+        contentArea.innerHTML = cabecera + `
+            <div class="glass-panel" style="padding:3rem; text-align:center;">
+                <div style="font-size:2.5rem; margin-bottom:0.8rem;">🗓️</div>
+                <h3 style="color:#fff; margin:0 0 0.6rem 0;">Sin tareas finalizadas en las últimas dos semanas</h3>
+                <p style="color:var(--text-muted);">La comparativa aparecerá en cuanto se cierren tareas.</p>
+            </div>`;
+        arrancarReloj();
+        return;
+    }
+
+    // --- Días de esta semana que pasaron sin cerrar ninguna tarea -------------
+    const diasSinActividad = [];
+    for (let i = 0; i <= r.diasCorridos; i++) {
+        const d = new Date(r.desdeEsta);
+        d.setDate(d.getDate() + i);
+        if (d.getDay() === 0) continue;                       // domingo no se trabaja
+        if (!esta.diasActivos.has(aISO(d))) diasSinActividad.push(`${NOMBRE_DIA[i]} ${d.getDate()}`);
+    }
+
+    const avisoDias = diasSinActividad.length ? `
+        <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-left:4px solid #f59e0b; border-radius:10px; padding:0.9rem 1.2rem; margin-bottom:1.2rem; display:flex; gap:12px; align-items:flex-start;">
+            <span style="font-size:1.1rem; line-height:1.2;">⚠️</span>
+            <div style="font-size:0.82rem; color:#fcd34d; line-height:1.55;">
+                <b>${diasSinActividad.join(', ')}</b> ${diasSinActividad.length === 1 ? 'pasó' : 'pasaron'} sin tareas finalizadas.
+                Esta semana lleva <b>${esta.dias} día${esta.dias === 1 ? '' : 's'}</b> con actividad contra
+                <b>${pasada.dias}</b> de la anterior, así que los totales no son comparables de frente.
+                Mira la columna <b>por día activo</b>.
+            </div>
+        </div>` : '';
+
+    // --- Tarjetas grandes -----------------------------------------------------
+    const tarjeta = (titulo, valor, sufijo, valorPrev, sufijoPrev, v, pie) => `
+        <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.35rem;">
+            <h4 style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; margin:0;">${titulo}</h4>
+            <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+                <h2 style="font-size:2rem; font-weight:900; color:#fff; margin:0; line-height:1.1;">${valor}<span style="font-size:0.9rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+                ${chipVar(v, true)}
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">semana pasada: <b style="color:rgba(255,255,255,0.65);">${valorPrev}${sufijoPrev}</b></div>
+            ${pie ? `<div style="font-size:0.7rem; color:rgba(255,255,255,0.35); margin-top:0.15rem;">${pie}</div>` : ''}
+        </div>`;
+
+    const tarjetas = [
+        tarjeta('Cumplimiento de meta', esta.cumplimiento.toFixed(0), '%', pasada.cumplimiento.toFixed(0), '%',
+                variacion(esta.cumplimiento, pasada.cumplimiento),
+                'unidades hechas contra lo que pedía la meta'),
+        tarjeta('Unidades procesadas', fmt(esta.qty), '', fmt(pasada.qty), '',
+                variacion(esta.qty, pasada.qty),
+                `${fmt(esta.porDiaActivo)} por día activo`),
+        tarjeta('Ritmo', fmt(esta.uph), ' u/h', fmt(pasada.uph), ' u/h',
+                variacion(esta.uph, pasada.uph),
+                `${esta.tareas} tareas · ${esta.horas.toFixed(0)} h trabajadas`),
+        tarjeta(filtroUsuario ? 'Tus tareas' : 'Personas en piso', filtroUsuario ? fmt(esta.tareas) : fmt(esta.personas), '',
+                filtroUsuario ? fmt(pasada.tareas) : fmt(pasada.personas), '',
+                variacion(filtroUsuario ? esta.tareas : esta.personas, filtroUsuario ? pasada.tareas : pasada.personas),
+                `${esta.dias} de ${r.diasCorridos + 1} días con actividad`)
+    ].join('');
+
+    // --- Tabla por G. Gender --------------------------------------------------
+    const categorias = [...new Set([...esta.porGender.keys(), ...pasada.porGender.keys()])]
+        .sort((a, b) => ((esta.porGender.get(b) || 0) + (pasada.porGender.get(b) || 0))
+                      - ((esta.porGender.get(a) || 0) + (pasada.porGender.get(a) || 0)));
+
+    const filasGender = categorias.map(g => {
+        const a = esta.porGender.get(g) || 0;
+        const b = pasada.porGender.get(g) || 0;
+        const aDia = esta.dias ? a / esta.dias : 0;
+        const bDia = pasada.dias ? b / pasada.dias : 0;
+        return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                <td style="padding:0.6rem 1rem; font-weight:700; color:#fff; font-size:0.82rem;">${etiquetaCategoria(g) || g}</td>
+                <td style="padding:0.6rem 1rem; text-align:right; color:#fbbf24; font-weight:900; font-size:0.85rem;">${fmt(a)}</td>
+                <td style="padding:0.6rem 1rem; text-align:right; color:rgba(255,255,255,0.45); font-weight:700; font-size:0.82rem;">${fmt(b)}</td>
+                <td style="padding:0.6rem 1rem; text-align:right;">${chipVar(variacion(a, b))}</td>
+                <td style="padding:0.6rem 1rem; text-align:right; color:rgba(255,255,255,0.75); font-weight:700; font-size:0.82rem;">${fmt(aDia)} <span style="color:rgba(255,255,255,0.3);">vs ${fmt(bDia)}</span></td>
+                <td style="padding:0.6rem 1rem; text-align:right;">${chipVar(variacion(aDia, bDia))}</td>
+            </tr>`;
+    }).join('');
+
+    const totalDiaEsta = esta.dias ? esta.qty / esta.dias : 0;
+    const totalDiaPasada = pasada.dias ? pasada.qty / pasada.dias : 0;
+
+    const tablaGender = `
+        <div class="glass-panel" style="padding:0; overflow:hidden; margin-bottom:1.5rem;">
+            <div style="padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Unidades por G. Gender</h3>
+                <p style="margin:0.25rem 0 0 0; font-size:0.74rem; color:var(--text-muted);">
+                    Un total puede subir porque entró carga liviana mientras lo pesado cae. Por eso va desglosado.
+                </p>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; min-width:640px;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px;">
+                            <th style="padding:0.6rem 1rem; text-align:left;">Categoría</th>
+                            <th style="padding:0.6rem 1rem; text-align:right;">Esta semana</th>
+                            <th style="padding:0.6rem 1rem; text-align:right;">Pasada</th>
+                            <th style="padding:0.6rem 1rem; text-align:right;">Var.</th>
+                            <th style="padding:0.6rem 1rem; text-align:right;">Por día activo</th>
+                            <th style="padding:0.6rem 1rem; text-align:right;">Var.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasGender || '<tr><td colspan="6" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en el periodo.</td></tr>'}
+                        <tr style="background:rgba(79,70,229,0.10); border-top:2px solid rgba(79,70,229,0.35);">
+                            <td style="padding:0.7rem 1rem; font-weight:900; color:#fff; font-size:0.82rem;">TOTAL</td>
+                            <td style="padding:0.7rem 1rem; text-align:right; font-weight:900; color:#fbbf24; font-size:0.9rem;">${fmt(esta.qty)}</td>
+                            <td style="padding:0.7rem 1rem; text-align:right; font-weight:800; color:rgba(255,255,255,0.55);">${fmt(pasada.qty)}</td>
+                            <td style="padding:0.7rem 1rem; text-align:right;">${chipVar(variacion(esta.qty, pasada.qty))}</td>
+                            <td style="padding:0.7rem 1rem; text-align:right; font-weight:800; color:#fff;">${fmt(totalDiaEsta)} <span style="color:rgba(255,255,255,0.3);">vs ${fmt(totalDiaPasada)}</span></td>
+                            <td style="padding:0.7rem 1rem; text-align:right;">${chipVar(variacion(totalDiaEsta, totalDiaPasada))}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+
+    // --- Gráfico día a día ----------------------------------------------------
+    const serie = (resumen, desde) => {
+        const out = new Array(r.diasCorridos + 1).fill(0);
+        resumen.porDia.forEach((u, fecha) => {
+            const d = new Date(fecha + 'T00:00:00');
+            const i = Math.round((d - desde) / 86400000);
+            if (i >= 0 && i < out.length) out[i] += u;
         });
-    });
+        return out;
+    };
+    const serieEsta = serie(esta, r.desdeEsta);
+    const seriePasada = serie(pasada, r.desdePasada);
+    const etiquetas = NOMBRE_DIA.slice(0, r.diasCorridos + 1);
+
+    const grafico = `
+        <div class="glass-panel" style="padding:1.2rem;">
+            <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Unidades día a día</h3>
+            <p style="margin:0 0 0.8rem 0; font-size:0.74rem; color:var(--text-muted);">Mismo día de la semana, una barra contra la otra.</p>
+            <div style="height:230px;"><canvas id="chartSemanas"></canvas></div>
+        </div>`;
+
+    contentArea.innerHTML = cabecera + `
+        <div style="margin-bottom:1rem;">
+            <h2 style="margin:0; color:#fff; font-size:1.15rem; font-weight:900; letter-spacing:-0.3px;">
+                ${filtroUsuario ? 'Tu semana' : 'Esta semana'} contra la anterior
+            </h2>
+            <p style="margin:0.3rem 0 0 0; font-size:0.78rem; color:var(--text-muted);">
+                <b style="color:#a5b4fc;">${fmtFecha(r.desdeEsta)} al ${fmtFecha(r.hastaEsta)}</b>
+                &nbsp;contra&nbsp;
+                <b style="color:rgba(255,255,255,0.55);">${fmtFecha(r.desdePasada)} al ${fmtFecha(r.hastaPasada)}</b>
+                &nbsp;·&nbsp;mismos días de la semana, para que la comparación sea justa
+            </p>
+        </div>
+        ${avisoDias}
+        <div class="kpi-grid" style="margin-bottom:1.5rem;">${tarjetas}</div>
+        ${tablaGender}
+        ${grafico}`;
+
+    arrancarReloj();
+
+    // El gráfico se dibuja después de que el HTML esté en pantalla.
+    setTimeout(() => {
+        const cv = document.getElementById('chartSemanas');
+        if (!cv || typeof Chart === 'undefined') return;
+        if (window.homeChart instanceof Chart) window.homeChart.destroy();
+        window.homeChart = new Chart(cv.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [
+                    { label: 'Esta semana', data: serieEsta, backgroundColor: '#4f46e5', borderRadius: 5 },
+                    { label: 'Semana pasada', data: seriePasada, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 5 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' },
+                         ticks: { color: '#94a3b8', callback: (v) => Number(v).toLocaleString('es-PE') } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { weight: 'bold' } } }
+                },
+                plugins: {
+                    legend: { display: true, labels: { color: '#cbd5e1', boxWidth: 12, font: { size: 11 } } },
+                    tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${Number(c.parsed.y).toLocaleString('es-PE')} u` } }
+                }
+            }
+        });
+    }, 50);
   };
 
   const renderStockTab = async () => {
@@ -2116,7 +2458,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.547');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.549');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2451,7 +2793,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.547] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.549] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7142,18 +7484,33 @@ const renderRFSection = (container) => {
 
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
-              // [FIX PARPADEO] Redibujar Inicio SOLO si los conteos KPI cambiaron (antes lo hacía siempre cada 20s)
+              // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
+              // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
+              // que desde v26.5.549 ya no aparece en esa pantalla: ahora se muestra la
+              // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
-                      const __counts = await Promise.all(['stockActivo', 'stockReserva', 'buffer', 'picking'].map(a => getAreaLength(a)));
-                      const __sig = __counts.join('|');
-                      if (window.__homeKpiSig === undefined) {
-                          window.__homeKpiSig = __sig; // primera lectura: sembrar sin redibujar
-                      } else if (__sig !== window.__homeKpiSig) {
-                          window.__homeKpiSig = __sig;
+                      const __tareas = [
+                          ...(adminService.getAlmacenajeTasks() || []),
+                          ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
+                              ? (adminService.getAlmacenajeTasksHistory() || []) : [])
+                      ];
+                      const __r = rangoSemanas();
+                      let __n = 0, __q = 0;
+                      __tareas.forEach(t => {
+                          if (!t || t.status !== 'Finalizado') return;
+                          if (!(t.fecha >= __r.estaDesde && t.fecha <= __r.estaHasta)) return;
+                          __n++;
+                          __q += getTaskTotalAvance(t);
+                      });
+                      const __sig = `${__n}|${Math.round(__q)}`;
+                      if (window.__homeSemanaSig === undefined) {
+                          window.__homeSemanaSig = __sig; // primera lectura: sembrar sin redibujar
+                      } else if (__sig !== window.__homeSemanaSig) {
+                          window.__homeSemanaSig = __sig;
                           renderTabContent(true); // hubo cambios reales -> actualizar
                       }
-                  } catch (e) { /* si el conteo falla, no forzar redibujo */ }
+                  } catch (e) { /* si el cálculo falla, no forzar redibujo */ }
               }
           }
       }, 20000); 
@@ -11631,7 +11988,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.547 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.549 | MOBILE PORTAL
                             </div>
                     </div>
 
