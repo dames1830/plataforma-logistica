@@ -69,17 +69,27 @@ Cuando quieras que el entorno de pruebas tenga una copia fresca de la informaci�
 
 ### Por qué la copia es "ligera"
 
-El disco del servidor es de **1 GB** y tu base real ya pesa cerca de **390 MB**. Copiarla entera dejaría el disco casi lleno, y entonces la herramienta que compacta y limpia tu base real dejaría de poder trabajar (necesita espacio libre equivalente a la base completa).
+El disco del servidor es de **1 GB** y tu base real ya pesa **389 MB**. Copiarla entera dejaría el disco al 82%, y con tan poco espacio libre la base real deja de poder "encogerse" cuando se limpia.
 
-Por eso la copia normal se lleva **solo lo útil para probar**:
+Por eso la copia normal se lleva **la versión más reciente de cada área**, saltando las que pesan más de 8 MB. Resultado real de la primera copia (30-jul-2026):
 
-| Sí se copia | No se copia |
+- **44 MB** en lugar de 389 MB
+- **41 de 47 áreas** copiadas, con los 5 usuarios reales
+- 757 tareas de almacenaje, 28.925 artículos — datos de verdad para probar
+- El disco libre casi no se movió: de 568 MB a 524 MB
+
+Las 6 áreas que quedaron fuera por tamaño son las más pesadas:
+
+| Área | Peso |
 |---|---|
-| Usuarios y permisos | Cachés de fotos y bultos pesados (más de 8 MB por área) |
-| Configuración y metas | El histórico viejo (solo va la versión más reciente de cada área) |
-| Tareas, layouts, buffer, KPI | |
+| buffer | 61 MB |
+| layout_activo | 41 MB |
+| inventario | 36 MB |
+| almacenaje_activo | 36 MB |
+| analisis_sku_activo | 20 MB |
+| buffer_activo | 20 MB |
 
-El resultado es un beta chiquito pero completamente usable. Si algún día necesitas la copia idéntica byte por byte, existe el modo completo — pero deja el disco al 82%, así que solo se usa a propósito y por poco tiempo.
+Si necesitas probar algo que dependa de esas seis, pídemelo: se puede subir el límite y traerlas (el beta pasaría a ~258 MB y el disco quedaría al 69%). Y si algún día el disco se pone crítico, el sistema borra **primero** la base de pruebas, nunca la real.
 
 ---
 
