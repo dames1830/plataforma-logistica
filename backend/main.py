@@ -543,6 +543,31 @@ def clonar_produccion_a_beta(confirmar: str = "", modo: str = "ligera",
         return {"status": "error", "message": f"No se pudo copiar: {e}"}
 
 
+@app.get("/api/sync/versiones")
+def versiones_de_areas():
+    """
+    Cuándo cambió por última vez cada área, todo en una sola llamada diminuta.
+
+    La web la consulta antes de sincronizar y descarga SOLO las áreas cuya marca
+    cambió. Antes bajaba las 14 áreas completas cada 30 segundos (unos 930 KB
+    comprimidos), hubiera habido cambios o no.
+
+    Solo interesa saber si la marca es distinta a la que ya tiene el navegador,
+    no compararlas entre sí, así que da igual el formato exacto de la fecha.
+    """
+    try:
+        conn = sqlite3.connect(db_path())
+        filas = conn.execute(
+            "SELECT area_id, MAX(updated_at) FROM logistics_snapshots GROUP BY area_id"
+        ).fetchall()
+        conn.close()
+        return {"status": "ok",
+                "entorno": entorno_actual(),
+                "versiones": {f[0]: f[1] for f in filas}}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/api/logistics/{area}/dates")
 def list_area_dates(area: str):
     try:
