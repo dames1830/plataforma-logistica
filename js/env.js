@@ -1,5 +1,5 @@
 /* ============================================================================
-   ENTORNO (produccion vs pruebas)  -  v26.5.562
+   ENTORNO (produccion vs pruebas)  -  v26.5.563
    ----------------------------------------------------------------------------
    Este archivo se carga ANTES que cualquier otro. Hace tres cosas:
 

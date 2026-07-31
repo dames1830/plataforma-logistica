@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.562';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.563';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.562';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.562';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.562';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.562';
-import * as metasService from '../services_v245/metasService.js?v=26.5.562';
+import * as adminService from '../services_v245/adminService.js?v=26.5.563';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.563';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.563';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.563';
+import * as metasService from '../services_v245/metasService.js?v=26.5.563';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.562';
+const VERSION = '26.5.563';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1871,11 +1871,13 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
     // los suyos según su contenido y el LUNES de una categoría no queda encima
     // del LUNES de la otra.
+    // Los días se llevan el ancho que se les quita a SEM, GENDER y TOTAL: con
+    // columnas estrechas las cifras quedan pegadas y se leen mal.
     const COLUMNAS = `
         <colgroup>
-            <col style="width:10%"><col style="width:18%">
-            ${DIAS_COL.map(() => '<col style="width:8.5%">').join('')}
-            <col style="width:12.5%">
+            <col style="width:8%"><col style="width:15%">
+            ${DIAS_COL.map(() => '<col style="width:9.4%">').join('')}
+            <col style="width:11.2%">
         </colgroup>`;
 
     /**
@@ -1900,8 +1902,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         const c = colorKpi(actual, anterior);
         if (!c) return '';
         const simbolo = actual > anterior ? '▲' : (actual === anterior ? '=' : '▼');
-        return ` <span style="color:${c}; font-weight:900; font-size:0.85em;">${simbolo}</span>`;
+        return `<span style="color:${c}; font-weight:900; font-size:0.85em;">${simbolo}</span>`;
     };
+
+    /**
+     * Contenido de una celda: la flecha SIEMPRE ocupa el mismo hueco a la
+     * izquierda y el número va después. Si se dejan seguidas, la flecha se
+     * corre según el ancho del número y en una columna de cifras eso se ve como
+     * un zigzag. El hueco se reserva aunque no haya flecha.
+     */
+    const celdaValor = (texto, flecha = '') => `
+        <span style="display:grid; grid-template-columns:0.95em 1fr; gap:0.28em; align-items:center; width:100%;">
+            <span style="line-height:1;">${flecha}</span>
+            <span style="text-align:center;">${texto}</span>
+        </span>`;
 
     /**
      * Una fila de semana. `diasPrevios` son los mismos días de la semana de
@@ -1926,7 +1940,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 if (flecha) titulo = ` title="${fmt(v)} contra ${fmt(anterior)} el mismo día de la semana anterior"`;
             }
             const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
-            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${v ? fmt(v) : '—'}${flecha}</td>`;
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
         }).join('');
 
         const flechaTotal = diasPrevios ? flechaKpi(total, totalPrevio) : '';
@@ -1935,7 +1949,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <td style="${ETIQUETA} font-weight:900; color:var(--text-muted); font-size:0.62rem;">SEM ${num}${esActual ? '*' : ''}</td>
                 <td style="${ETIQUETA} color:#fff; font-weight:700;">${categoria}</td>
                 ${celdas}
-                <td ${flechaTotal ? `title="${fmt(total)} contra ${fmt(totalPrevio)} en los mismos días de la semana anterior"` : ''} style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap; ${CELDA_TOTAL}">${fmt(total)}${flechaTotal}</td>
+                <td ${flechaTotal ? `title="${fmt(total)} contra ${fmt(totalPrevio)} en los mismos días de la semana anterior"` : ''} style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap; ${CELDA_TOTAL}">${celdaValor(fmt(total), flechaTotal)}</td>
             </tr>`;
     };
 
@@ -1945,7 +1959,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const celdas = DIAS_COL.map((_, i) => {
             const v = SEMANAS_DIAS.reduce((t, s) => t + (porDia.get(aISO(s.dias[i])) || 0), 0);
             granTotal += v;
-            return `<td style="${CELDA} font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${v ? fmt(v) : '—'}</td>`;
+            return `<td style="${CELDA} font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${celdaValor(v ? fmt(v) : '—')}</td>`;
         }).join('');
         // La línea gruesa de abajo es lo que separa un grupo del siguiente.
         return `
@@ -1953,7 +1967,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <td style="${ETIQUETA}"></td>
                 <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.64rem;">TOTAL</td>
                 ${celdas}
-                <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(granTotal)}</td>
+                <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${celdaValor(fmt(granTotal))}</td>
             </tr>`;
     };
 
@@ -2062,14 +2076,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             const flecha = base === null ? '' : flechaKpi(v, base);
             const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
             const titulo = flecha ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
-            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${v ? fmt(v) : '—'}${flecha}</td>`;
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
         }).join('');
 
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="${ETIQUETA} color:#fff; font-weight:700; font-size:0.72rem;">${m}</td>
+                <td style="${ETIQUETA} color:#fff; font-weight:700;">${m}</td>
                 ${celdas}
-                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(totalFila)}</td>
+                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${celdaValor(fmt(totalFila))}</td>
             </tr>`;
     }).join('');
 
@@ -2080,7 +2094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                    : SEMANAS[i].esActual ? tramoPasadoTotal
                    : totalesSemana[i - 1];
         const flecha = base === null ? '' : flechaKpi(v, base);
-        return `<td style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap;">${fmt(v)}${flecha}</td>`;
+        return `<td style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap;">${celdaValor(fmt(v), flecha)}</td>`;
     }).join('');
 
     const LEYENDA = `<span style="font-size:0.62rem; color:var(--text-muted); font-weight:600;">contra la semana anterior: <b style="color:#22c55e;">▲</b> sube <b style="color:#fbbf24;">=</b> igual <b style="color:#ef4444;">▼</b> baja</span>`;
@@ -2114,7 +2128,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tr style="border-top:2px solid rgba(79,70,229,0.5);">
                             <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
                             ${celdasTotalMarcas}
-                            <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(totalGeneralMarcas)}</td>
+                            <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${celdaValor(fmt(totalGeneralMarcas))}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -2745,7 +2759,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.562');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.563');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3080,7 +3094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.562] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.563] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7773,7 +7787,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.562 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.563 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12275,7 +12289,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.562 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.563 | MOBILE PORTAL
                             </div>
                     </div>
 
