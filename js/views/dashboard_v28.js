@@ -19601,7 +19601,11 @@ window.showCellModal = function(htmlContent) {
                                         </span>
                                     </td>
                                     <td style="padding:10.8px 1rem; text-align:center; font-size:1.2rem;">
-                                        ${t.audited ? '📝✅' : '-'} 
+                                        ${(() => {
+                                            const a = t.auditoria;
+                                            if (a) return `<span title="${a.ok ? 'La auditoría cuadró' : a.problemas.join(' · ')}" style="cursor:help;">${a.ok ? '✅' : '⚠️'}</span>`;
+                                            return t.audited ? '<span title="Auditada antes de que se guardara el detalle" style="cursor:help; opacity:0.6;">📝</span>' : '-';
+                                        })()}
                                     </td>
                                     <td style="padding:10.8px 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
                                         <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
@@ -19666,7 +19670,11 @@ window.showCellModal = function(htmlContent) {
                                         </span>
                                     </td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:1rem;">
-                                        ${t.audited ? '📝✅' : '-'} 
+                                        ${(() => {
+                                            const a = t.auditoria;
+                                            if (a) return `<span title="${a.ok ? 'La auditoría cuadró' : a.problemas.join(' · ')}" style="cursor:help;">${a.ok ? '✅' : '⚠️'}</span>`;
+                                            return t.audited ? '<span title="Auditada antes de que se guardara el detalle" style="cursor:help; opacity:0.6;">📝</span>' : '-';
+                                        })()}
                                     </td>
                                 </tr>`;
                             }).join('')}
@@ -19741,279 +19749,567 @@ window.showCellModal = function(htmlContent) {
     window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛ GENERANDO...', () => exportAlmacenajeExcel());
 
     // --- LÓGICA DE AUDITORÍA WMS ---
+    // ========================================================================
+    // Cruza lo que la TAREA dice que pasó contra lo que el WMS dice que pasó.
+    // Tres preguntas por tarea:
+    //   1. ¿El operario declaró la verdad?  declarado        vs  buffer inicial - buffer hoy
+    //   2. ¿La mercadería llegó a la zona?  zona inicial + movido  vs  zona hoy
+    //   3. ¿Dónde quedó exactamente?        ubicaciones nuevas y stock fuera de zona
+    //
+    // La foto inicial (la qty de cada línea al crear la tarea) y el avance declarado
+    // por el operario ya venían guardados dentro de la tarea; antes no se usaban.
+    // ========================================================================
+
+    const AUD_ZONAS = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL']; // mismas áreas que al crear tareas
+    const AUD_TOL = 1;   // pares de tolerancia antes de cantar una diferencia
+
+    // CDBUFFER-C es PreePack: queda fuera aquí igual que al crear las tareas y al sumar avance
+    const audEsBuffer = (ubi) => {
+        const u = String(ubi || '').trim().toUpperCase();
+        return u.startsWith('CDBUFFER') && !u.startsWith('CDBUFFER-C');
+    };
+    const audZonaDe = (ubi) => {
+        const u = String(ubi || '').trim().toUpperCase();
+        return AUD_ZONAS.find(z => u.startsWith(z)) || '';
+    };
+    const audEsZona = (ubi) => !!audZonaDe(ubi);
+    const audNum = (v) => parseFloat(v) || 0;
+    // La qty guardada al crear la tarea ES la foto inicial (qtyInitial es su copia)
+    const audFotoInicial = (i) => audNum((i.qtyInitial !== undefined && i.qtyInitial !== null) ? i.qtyInitial : i.qty);
+    // Sin avance registrado el sistema asume que movió todo: hay que avisarlo, no callarlo
+    const audTieneAvance = (i) => i.avance !== undefined && i.avance !== null;
+    const audDeclarado = (i) => audNum(audTieneAvance(i) ? i.avance : i.qty);
+    const audUbi = (u) => String(u || '').trim().toUpperCase();
+
+    let audResultado = null;   // último resultado, para redibujar al filtrar
+
+    // ── 1. Leer el archivo del WMS ──────────────────────────────────────────
+    const audLeerArchivo = async (file) => {
+        if (file.name.toLowerCase().endsWith('.csv')) {
+            const text = await file.text();
+            const lines = text.split(/\r?\n/);
+            if (!lines.length) return [];
+            const delim = lines[0].includes(';') ? ';' : ',';
+            const headers = lines[0].split(delim).map(h => h.replace(/^"|"$/g, '').trim());
+            const filas = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                let linea = lines[i].replace(/,+$/, '');
+                if (linea.startsWith('"') && linea.endsWith('"')) linea = linea.slice(1, -1);
+                const cols = linea.split(delim);
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    let val = cols[idx] || '';
+                    if (val.startsWith('=""') && val.endsWith('""')) val = val.slice(3, -2);
+                    obj[h] = val.replace(/^"|"$/g, '').trim();
+                });
+                filas.push(obj);
+            }
+            return filas;
+        }
+        const workbook = XLSX.read(await file.arrayBuffer());
+        return XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+    };
+
+    // ── 2. Armar el mapa de stock, validando que el archivo sirva ───────────
+    const audMapearStock = (filas) => {
+        if (!filas.length) {
+            return { error: 'El archivo no tiene ni una fila de datos.' };
+        }
+        const keys = Object.keys(filas[0]);
+        const bajo = keys.map(k => k.toLowerCase());
+        const buscar = (pred) => { const i = bajo.findIndex(pred); return i >= 0 ? keys[i] : null; };
+
+        // Los acentos del WMS a veces llegan rotos ("UbicaciÃ³n"), por eso se busca por trozo
+        const kUbi = buscar(k => k.includes('ubicaci'));
+        const kArt = buscar(k => (k.includes('art') && k.includes('culo')) || k === 'sku');
+        const kQty = buscar(k => k.includes('cantidad actual')) || buscar(k => k.includes('cantidad'));
+
+        const faltan = [];
+        if (!kUbi) faltan.push('Ubicación');
+        if (!kArt) faltan.push('Artículo');
+        if (!kQty) faltan.push('Cantidad actual');
+        if (faltan.length) {
+            return {
+                error: `Al archivo le faltan estas columnas: ${faltan.join(', ')}.`,
+                detalle: `Columnas encontradas: ${keys.slice(0, 12).join(' · ')}`
+            };
+        }
+
+        const stock = {};
+        const porSku = {};
+        let leidas = 0;
+        filas.forEach(row => {
+            const ubi = audUbi(row[kUbi]);
+            const art = String(row[kArt] || '').trim();
+            const qty = audNum(row[kQty]);
+            if (!ubi || !art) return;
+            leidas++;
+            const clave = `${ubi}|${art}`;
+            stock[clave] = (stock[clave] || 0) + qty;
+        });
+
+        if (!leidas) {
+            return { error: 'Se encontraron las columnas pero ninguna fila tenía ubicación y artículo.' };
+        }
+
+        Object.keys(stock).forEach(clave => {
+            const corte = clave.indexOf('|');
+            const ubi = clave.slice(0, corte);
+            const art = clave.slice(corte + 1);
+            if (!porSku[art]) porSku[art] = [];
+            porSku[art].push({ ubi, qty: stock[clave] });
+        });
+
+        return { stock, porSku, leidas, columnas: { ubi: kUbi, art: kArt, qty: kQty } };
+    };
+
+    // ── 3. Auditar una tarea: las tres preguntas ────────────────────────────
+    const audAuditarTarea = (task, stock, porSku) => {
+        let iniBuffer = 0, declarado = 0, bufferHoy = 0, iniZona = 0, zonaHoy = 0, fueraHoy = 0;
+        let lineasBuffer = 0, lineasSinAvance = 0;
+        const detalle = [];
+        const pesoUbi = {};                 // ubicación -> pares, para ordenar por importancia
+        const entradas = {};                // ubicación -> pares que ENTRARON ahí (dónde se almacenó)
+        const fueraPlan = {};               // el artículo tenía ubicaciones y se guardó en otra
+        const sinPlan = {};                 // el artículo no tenía ninguna: estrena sitio, no es desvío
+        const setNuevas = new Set(), setFuera = new Set(), setOtraZona = new Set();
+
+        // Se recorre ARTÍCULO por ARTÍCULO: la "zona propia" es de cada artículo, no de la
+        // tarea. Un artículo nuevo que estrena ubicación no puede quedar acusado por dónde
+        // vivan los demás artículos de la misma tarea.
+        (task.items || []).forEach(art => {
+            const items = art.items || [];
+            const buf = items.filter(i => audEsBuffer(i.ubi));
+            const zon = items.filter(i => !audEsBuffer(i.ubi));
+            if (!buf.length) return;   // grupo sin buffer: no formaba parte del trabajo
+
+            const skus = new Set();
+            buf.forEach(i => {
+                const sku = String(i.skuFull || '').trim();
+                const ini = audFotoInicial(i);
+                const dec = audDeclarado(i);
+                const hoy = stock[`${audUbi(i.ubi)}|${sku}`] || 0;
+                iniBuffer += ini; declarado += dec; bufferHoy += hoy;
+                lineasBuffer++;
+                if (!audTieneAvance(i)) lineasSinAvance++;
+                skus.add(sku);
+                detalle.push({
+                    articulo: art.sku7 || '', sku, talla: i.talla || '',
+                    ubiOrigen: audUbi(i.ubi), inicial: ini, declarado: dec,
+                    quedaEnBuffer: hoy, movidoReal: ini - hoy,
+                    avanceRegistrado: audTieneAvance(i) ? 'Sí' : 'No'
+                });
+            });
+            const ubisIni = new Set();
+            const fotoZona = {};                // 'UBI|SKU' -> pares que ya había ahí
+            zon.forEach(z => {
+                const sku = String(z.skuFull || '').trim();
+                const clave = audUbi(z.ubi) + '|' + sku;
+                iniZona += audFotoInicial(z);
+                fotoZona[clave] = (fotoZona[clave] || 0) + audFotoInicial(z);
+                ubisIni.add(audUbi(z.ubi));
+                skus.add(sku);
+            });
+            const zonasIni = new Set(Array.from(ubisIni).map(audZonaDe).filter(Boolean));
+
+            // Dónde está hoy este artículo fuera del buffer, y sobre todo CUÁNTO ENTRÓ
+            // en cada ubicación respecto a la foto inicial: eso es dónde se almacenó.
+            const deEsteArt = {};
+            skus.forEach(sku => (porSku[sku] || []).forEach(loc => {
+                if (audEsBuffer(loc.ubi)) return;
+                deEsteArt[loc.ubi] = (deEsteArt[loc.ubi] || 0) + loc.qty;
+                const entro = loc.qty - (fotoZona[loc.ubi + '|' + sku] || 0);
+                if (entro <= 0) return;         // ahí no entró nada (o hasta salió por un picking)
+                entradas[loc.ubi] = (entradas[loc.ubi] || 0) + entro;
+                if (ubisIni.has(loc.ubi)) return;
+                // Si el artículo nunca tuvo ubicación de zona, no hay plan que incumplir
+                if (ubisIni.size) fueraPlan[loc.ubi] = (fueraPlan[loc.ubi] || 0) + entro;
+                else sinPlan[loc.ubi] = (sinPlan[loc.ubi] || 0) + entro;
+            }));
+
+            Object.keys(deEsteArt).forEach(u => {
+                const q = deEsteArt[u];
+                pesoUbi[u] = (pesoUbi[u] || 0) + q;
+                if (!audEsZona(u)) { fueraHoy += q; setFuera.add(u); return; }
+                zonaHoy += q;
+                if (ubisIni.has(u)) return;                       // ya vivía ahí
+                setNuevas.add(u);                                 // ubicación estrenada
+                // ...salvo que sea una zona donde este artículo nunca estuvo
+                if (zonasIni.size && !zonasIni.has(audZonaDe(u))) setOtraZona.add(u);
+            });
+        });
+
+        const porPeso = (a, b) => (pesoUbi[b] || 0) - (pesoUbi[a] || 0);
+        const movidoReal = iniBuffer - bufferHoy;
+        const difZona = zonaHoy - (iniZona + movidoReal);         // pregunta 2
+        const ubisNuevas = Array.from(setNuevas).sort(porPeso);   // pregunta 3
+        const ubisFuera = Array.from(setFuera).sort(porPeso);
+        const enOtraZona = Array.from(setOtraZona).sort(porPeso);
+
+        // DÓNDE SE ALMACENÓ: ubicaciones que ganaron pares, de mayor a menor
+        const destinos = Object.keys(entradas)
+            .sort((a, b) => entradas[b] - entradas[a])
+            .map(u => ({
+                ubi: u, pares: Math.round(entradas[u]), zona: audZonaDe(u),
+                estado: fueraPlan[u] ? 'fuera' : (sinPlan[u] ? 'nuevo' : 'plan')
+            }));
+        const paresFueraPlan = Math.round(Object.values(fueraPlan).reduce((s, v) => s + v, 0));
+
+        // Lo que el WMS todavía ve en el buffer ES lo que quedó sin mover.
+        //    Qty Buffer = Movió real + Faltante por mover
+        const faltantePorMover = bufferHoy;
+        // El operario solo "declara" de verdad cuando escribe un número distinto al del
+        // buffer; si confirma la cantidad precargada, no está declarando nada propio.
+        const declaroParcial = Math.abs(declarado - iniBuffer) >= AUD_TOL;
+
+        const problemas = [];
+        if (faltantePorMover >= AUD_TOL) {
+            problemas.push(declaroParcial
+                ? `Faltan ${Math.round(faltantePorMover)} pares por mover (el operario declaró ${Math.round(declarado)} de ${Math.round(iniBuffer)})`
+                : `Faltan ${Math.round(faltantePorMover)} pares por mover`);
+        }
+        if (bufferHoy > iniBuffer + AUD_TOL) {
+            problemas.push('Hay más stock en el buffer que al crear la tarea: llegó mercadería nueva');
+        }
+        if (Math.abs(difZona) >= AUD_TOL) {
+            problemas.push(difZona < 0
+                ? `${Math.round(-difZona)} pares no llegaron a la zona`
+                : `${Math.round(difZona)} pares de más en la zona`);
+        }
+        if (ubisFuera.length) {
+            problemas.push(`Stock fuera de zona: ${ubisFuera[0]}${ubisFuera.length > 1 ? ` +${ubisFuera.length - 1}` : ''}`);
+        }
+        // Estrenar ubicación dentro de la zona propia del artículo es normal: eso es almacenar.
+        // Lo que no es normal es que el artículo aparezca en una zona donde nunca estuvo.
+        if (enOtraZona.length) {
+            problemas.push(`Almacenado en otra zona: ${enOtraZona.join(', ')}`);
+        }
+
+        return {
+            id: task.id, corto: task.id.includes('_') ? task.id.split('_')[1] : task.id,
+            fecha: task.fecha, u1: task.u1 || '---', u2: task.u2 || '---',
+            iniBuffer, declarado, bufferHoy, movidoReal, faltantePorMover, declaroParcial,
+            iniZona, zonaHoy, esperadoZona: iniZona + movidoReal, difZona,
+            destinos, paresFueraPlan,
+            ubisNuevas: ubisNuevas.slice(0, 5), ubisFuera: ubisFuera.slice(0, 5),
+            lineasBuffer, lineasSinAvance,
+            ok: problemas.length === 0, problemas, detalle
+        };
+    };
+
+    // ── 4. Pintar el resultado ──────────────────────────────────────────────
+    const audNumHtml = (v, bueno) => {
+        const color = Math.abs(v) < AUD_TOL ? '#22c55e' : (bueno ? '#eab308' : '#ef4444');
+        const signo = v > 0 ? '+' : '';
+        return `<span style="color:${color}; font-weight:900;">${signo}${Math.round(v)}</span>`;
+    };
+
+    // El faltante nunca es negativo: o quedó algo en el buffer o no quedó nada
+    const audFaltanteHtml = (v) => `<span style="color:${v < AUD_TOL ? '#22c55e' : '#ef4444'}; font-weight:900;">${Math.round(v).toLocaleString()}</span>`;
+
+    // Dónde entró la mercadería. Las ubicaciones que no estaban en el plan van marcadas.
+    const AUD_MAX_DESTINOS = 4;
+    const audDestinosHtml = (r) => {
+        if (!r.destinos.length) {
+            return '<span style="color:#ef4444;">no entró en ninguna ubicación</span>';
+        }
+        const estilo = { plan: ['#d1d5db', ''], nuevo: ['#93c5fd', '★ '], fuera: ['#fbbf24', '⚠ '] };
+        const filas = r.destinos.slice(0, AUD_MAX_DESTINOS).map(d => {
+            const [color, marca] = estilo[d.estado] || estilo.plan;
+            return `<div style="color:${color};">${marca}${d.ubi}
+                <span style="color:#9ca3af;">· ${d.pares.toLocaleString()}</span></div>`;
+        }).join('');
+        const resto = r.destinos.length - AUD_MAX_DESTINOS;
+        return filas + (resto > 0
+            ? `<div style="color:#6b7280;">+${resto} ubicación${resto > 1 ? 'es' : ''} más</div>` : '');
+    };
+
+    const audTablaHtml = (res) => {
+        const solo = window.__audSoloProblemas;
+        const filas = solo ? res.filter(r => !r.ok) : res;
+        if (!filas.length) {
+            return `<div style="padding:2.5rem; text-align:center; color:#22c55e; font-weight:800; font-size:0.9rem;">
+                        Ninguna tarea con diferencias. Todo cuadra.
+                    </div>`;
+        }
+        return `
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.75rem; color:#fff;">
+                <thead style="background:rgba(255,255,255,0.05); position:sticky; top:0; z-index:10;">
+                    <tr>
+                        ${['Tarea', 'Fecha', 'Operario', 'Qty Buffer', 'Movió real', 'Faltante por mover',
+                           'Zona antes', 'Zona hoy', 'Dif. zona', 'Se almacenó en', 'Diagnóstico']
+                            .map(h => `<th style="padding:0.6rem; border-bottom:1px solid rgba(255,255,255,0.1); font-weight:800; color:#94a3b8; white-space:nowrap;">${h}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filas.map(r => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${r.ok ? '' : 'background:rgba(239,68,68,0.08);'}">
+                            <td style="padding:0.5rem; font-weight:800; white-space:nowrap;">${r.corto}</td>
+                            <td style="padding:0.5rem; white-space:nowrap;">${r.fecha}</td>
+                            <td style="padding:0.5rem; white-space:nowrap;">${r.u1}</td>
+                            <td style="padding:0.5rem; text-align:right;">${Math.round(r.iniBuffer).toLocaleString()}</td>
+                            <td style="padding:0.5rem; text-align:right;">${Math.round(r.movidoReal).toLocaleString()}</td>
+                            <td style="padding:0.5rem; text-align:right;">${audFaltanteHtml(r.faltantePorMover)}</td>
+                            <td style="padding:0.5rem; text-align:right; opacity:0.7;">${Math.round(r.iniZona).toLocaleString()}</td>
+                            <td style="padding:0.5rem; text-align:right; opacity:0.7;">${Math.round(r.zonaHoy).toLocaleString()}</td>
+                            <td style="padding:0.5rem; text-align:right;">${audNumHtml(r.difZona, true)}</td>
+                            <td style="padding:0.5rem; font-size:0.7rem; white-space:nowrap; line-height:1.5;">
+                                ${audDestinosHtml(r)}
+                            </td>
+                            <td style="padding:0.5rem; font-size:0.7rem; color:${r.ok ? '#22c55e' : '#fca5a5'};">
+                                ${r.ok ? 'Cuadra' : r.problemas.join(' · ')}
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>`;
+    };
+
+    window.__audToggleFiltro = () => {
+        window.__audSoloProblemas = !window.__audSoloProblemas;
+        const cont = document.getElementById('audTabla');
+        if (cont && audResultado) cont.innerHTML = audTablaHtml(audResultado);
+        const btn = document.getElementById('audBtnFiltro');
+        if (btn) {
+            const on = window.__audSoloProblemas;
+            btn.textContent = on ? 'Ver todas' : 'Ver solo diferencias';
+            btn.style.background = on ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.06)';
+            btn.style.borderColor = on ? '#ef4444' : 'rgba(255,255,255,0.15)';
+        }
+    };
+
+    // ── 5. Procesar el archivo soltado ──────────────────────────────────────
     const handleWmsFile = async (file, modal) => {
-        const selectedIds = Array.from(modal.querySelectorAll('.chk-audit-task:checked')).map(chk => chk.value);
-        if (selectedIds.length === 0) {
-            if(window.showPremiumAlert) window.showPremiumAlert("ATENCIÓN", "Debes seleccionar al menos 1 tarea para auditar.", "warning");
-            else alert("Debes seleccionar al menos 1 tarea para auditar.");
+        const seleccionadas = Array.from(modal.querySelectorAll('.chk-audit-task:checked')).map(c => c.value);
+        if (!seleccionadas.length) {
+            if (window.showPremiumAlert) window.showPremiumAlert("ATENCIÓN", "Debes seleccionar al menos 1 tarea para auditar.", "warning");
             return;
         }
 
         const contentDiv = modal.querySelector('#auditModalContent');
+        const htmlPrevio = contentDiv.innerHTML;
         contentDiv.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem;">
                 <div class="spinner" style="width:50px; height:50px; border:4px solid rgba(6,182,212,0.1); border-left-color:#06b6d4; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:2rem;"></div>
-                <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.5rem 0;">Procesando Auditoría...</h2>
-                <p style="color:#9ca3af; font-size:0.9rem; margin:0; text-align:center;">Cruzando Foto Inicial vs Foto Actual del WMS</p>
+                <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.5rem 0;">Procesando auditoría...</h2>
+                <p style="color:#9ca3af; font-size:0.9rem; margin:0;">Cruzando la tarea contra la foto actual del WMS</p>
             </div>
-            <style>@keyframes spin { 100% { transform:rotate(360deg); } }</style>
-        `;
+            <style>@keyframes spin { 100% { transform:rotate(360deg); } }</style>`;
 
+        const volverAtras = (titulo, mensaje, detalle) => {
+            contentDiv.innerHTML = htmlPrevio;
+            audEnlazarZonaArchivo(modal);
+            if (window.showPremiumAlert) window.showPremiumAlert(titulo, detalle ? `${mensaje}\n\n${detalle}` : mensaje, "error");
+        };
+
+        let filas;
         try {
-            let wmsData = [];
-            if (file.name.toLowerCase().endsWith('.csv')) {
-                const text = await file.text();
-                const lines = text.split(/\r?\n/);
-                if (lines.length > 0) {
-                    const delim = lines[0].includes(';') ? ';' : ',';
-                    const headers = lines[0].split(delim).map(h => h.replace(/^"|"$/g, '').trim());
-                    for (let i = 1; i < lines.length; i++) {
-                        if (!lines[i].trim()) continue;
-                        let cleanLine = lines[i];
-                        // Limpiar comas del final que añade Excel a veces al CSV
-                        if (cleanLine.match(/,+$/)) {
-                            cleanLine = cleanLine.replace(/,+$/, '');
-                        }
-                        // Limpiar comillas que envuelven toda la fila
-                        if (cleanLine.startsWith('"') && cleanLine.endsWith('"')) {
-                            cleanLine = cleanLine.slice(1, -1);
-                        }
-                        const cols = cleanLine.split(delim);
-                        const rowObj = {};
-                        headers.forEach((h, idx) => {
-                            let val = cols[idx] || '';
-                            // Si el valor empieza por ="" y termina en "", limpiarlo (ej: =""5566880103"")
-                            if (val.startsWith('=""') && val.endsWith('""')) {
-                                val = val.slice(3, -2);
-                            }
-                            rowObj[h] = val.replace(/^"|"$/g, '').trim();
-                        });
-                        wmsData.push(rowObj);
-                    }
-                }
-            } else {
-                const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data);
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                wmsData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-            }
-
-            const wmsStockMap = {}; 
-            const wmsArticleLocations = {}; 
-
-            wmsData.forEach(row => {
-                const keys = Object.keys(row);
-                // Buscar columnas independientemente de si los acentos están corruptos
-                const ubiKey = keys.find(k => k.toLowerCase().includes('ubicaci'));
-                const artKey = keys.find(k => (k.toLowerCase().includes('art') && k.toLowerCase().includes('culo')) || k.toLowerCase() === 'sku');
-                const qtyKey = keys.find(k => k.toLowerCase().includes('cantidad actual')) || keys.find(k => k.toLowerCase().includes('cantidad'));
-
-                const ubi = ubiKey ? String(row[ubiKey]).trim().toUpperCase() : '';
-                const art = artKey ? String(row[artKey]).trim() : '';
-                const qty = qtyKey ? parseFloat(row[qtyKey] || 0) : 0;
-
-                if (!ubi || !art) return;
-                
-                const key = `${ubi}|${art}`;
-                wmsStockMap[key] = (wmsStockMap[key] || 0) + qty;
-                
-            });
-
-            Object.keys(wmsStockMap).forEach(key => {
-                const [ubi, art] = key.split('|');
-                if (!wmsArticleLocations[art]) wmsArticleLocations[art] = [];
-                wmsArticleLocations[art].push({ ubi, qty: wmsStockMap[key] });
-            });
-
-            const auditResults = [];
-            let tasksAuditedCount = 0;
-
-            selectedIds.forEach(id => {
-                const task = almacenajeTasksCache.find(t => t.id === id);
-                if (!task) return;
-
-                task.status = 'Finalizado';
-                task.audited = true;
-                tasksAuditedCount++;
-
-                (task.items || []).forEach(artGrp => {
-                    (artGrp.items || []).forEach(i => {
-                        const ubiOrigen = String(i.ubi || '').trim().toUpperCase();
-                        if (!ubiOrigen.startsWith('CDBUFFER')) return; 
-                        
-                        const sku = String(i.skuFull || '').trim();
-                        const qtyEsperada = parseFloat(i.qty || 0);
-                        
-                        const wmsCurrentBufferQty = wmsStockMap[`${ubiOrigen}|${sku}`] || 0;
-                        
-                        let qtyRealMovida = qtyEsperada;
-                        if (wmsCurrentBufferQty > 0) {
-                            qtyRealMovida = Math.max(0, qtyEsperada - wmsCurrentBufferQty);
-                        }
-
-                        const possibleDestinations = (wmsArticleLocations[sku] || []).filter(loc => loc.ubi !== ubiOrigen && loc.qty > 0);
-                        
-                        let stockInicial = i.qtyInitial !== undefined ? parseFloat(i.qtyInitial) : 'N/A';
-                        let stockTotalWms = possibleDestinations.reduce((acc, loc) => acc + loc.qty, 0);
-
-                        let cuadreStr = '⚠️ SIN FOTO INICIAL';
-                        if (stockInicial !== 'N/A') {
-                            const expectedTotal = stockInicial + qtyRealMovida;
-                            if (expectedTotal === stockTotalWms) {
-                                cuadreStr = '✅ CUADRA OK';
-                            } else {
-                                const diff = stockTotalWms - expectedTotal;
-                                cuadreStr = diff > 0 ? `❌ DESCUADRE (Sobran ${diff})` : `❌ DESCUADRE (Faltan ${Math.abs(diff)})`;
-                            }
-                        }
-
-                        let statusAudit = 'CORRECTO';
-                        if (qtyRealMovida < qtyEsperada) statusAudit = 'FALTANTE';
-                        if (possibleDestinations.length === 0) statusAudit = 'NO ALMACENADO';
-
-                        const baseRow = {
-                            'Id Tarea': task.id.includes('_') ? task.id.split('_')[1] : task.id,
-                            'Fecha': task.fecha,
-                            'Operario 1': task.u1 || '---',
-                            'Operario 2': task.u2 || '---',
-                            'Artículo': sku,
-                            'Ubi Origen (Buffer)': ubiOrigen,
-                            'Stock Inicial': stockInicial !== 'N/A' ? stockInicial : '-',
-                            'Qty Esperada': qtyEsperada,
-                            'Qty Real (WMS)': qtyRealMovida,
-                            'Stock Actual (WMS)': stockTotalWms
-                        };
-
-                        if (possibleDestinations.length > 0) {
-                            possibleDestinations.sort((a,b) => b.qty - a.qty);
-                            possibleDestinations.forEach(dest => {
-                                auditResults.push({
-                                    ...baseRow,
-                                    'Ubi Real Destino (WMS)': dest.ubi,
-                                    'Qty en Destino': dest.qty,
-                                    'Estado Auditoría': statusAudit,
-                                    'Cuadre WMS': cuadreStr
-                                });
-                            });
-                        } else {
-                            auditResults.push({
-                                ...baseRow,
-                                'Ubi Real Destino (WMS)': 'No Encontrado',
-                                'Qty en Destino': 0,
-                                'Estado Auditoría': statusAudit,
-                                'Cuadre WMS': cuadreStr
-                            });
-                        }
-                    });
-                });
-            });
-
-            saveAlmacenajeTasks();
-            if (window.renderAlmacenajeTareas && window.__almacenajeContainer) {
-                window.renderAlmacenajeTareas(window.__almacenajeContainer);
-            }
-
-            let tableHTML = `
-                <div style="width:100%; flex:1; overflow:auto; margin-bottom:1.5rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:rgba(0,0,0,0.2); max-height:45vh;">
-                    <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.75rem; color:#fff;">
-                        <thead style="background:rgba(255,255,255,0.05); position:sticky; top:0; z-index:10;">
-                            <tr>
-                                ${Object.keys(auditResults[0] || {}).map(k => `<th style="padding:0.6rem; border-bottom:1px solid rgba(255,255,255,0.1); font-weight:800; color:#94a3b8; white-space:nowrap;">${k}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${auditResults.map(row => {
-                                const cuadreStr = row['Cuadre WMS'] || '';
-                                let bgStyle = 'border-bottom:1px solid rgba(255,255,255,0.05);';
-                                if (cuadreStr.includes('❌ DESCUADRE')) bgStyle += ' background:rgba(239,68,68,0.15);';
-                                else if (cuadreStr.includes('⚠️ SIN FOTO INICIAL')) bgStyle += ' background:rgba(234,179,8,0.15);';
-                                
-                                return `<tr style="${bgStyle}">
-                                    ${Object.values(row).map(v => `<td style="padding:0.5rem; white-space:nowrap;">${v}</td>`).join('')}
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            contentDiv.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; text-align:center; height:100%;">
-                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:1rem;">
-                        <div style="width:40px; height:40px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">✅</div>
-                        <div style="text-align:left;">
-                            <h2 style="color:#fff; font-size:1.2rem; margin:0 0 0.2rem 0;">Auditoría Completada</h2>
-                            <p style="color:#9ca3af; font-size:0.85rem; margin:0;">${tasksAuditedCount} tareas procesadas.</p>
-                        </div>
-                    </div>
-                    
-                    ${tableHTML}
-                    
-                    <button id="btnDownloadAudit" class="btn" style="background:var(--primary); color:#fff; font-weight:800; border:none; padding:12px 24px; font-size:1rem; border-radius:8px; box-shadow:0 10px 20px rgba(79,70,229,0.3); cursor:pointer;">
-                        ⬇️ DESCARGAR EXCEL
-                    </button>
-                </div>
-
-            `;
-            contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', async () => {
-                const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('Auditoria');
-                
-                if (auditResults.length > 0) {
-                    const headers = Object.keys(auditResults[0]);
-                    worksheet.addRow(headers);
-                    
-                    const headerRow = worksheet.getRow(1);
-                    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                    headerRow.eachCell(cell => {
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-                    });
-
-                    auditResults.forEach(row => {
-                        const r = worksheet.addRow(Object.values(row));
-                        const cuadreStr = row['Cuadre WMS'] || '';
-                        
-                        if (cuadreStr.includes('❌ DESCUADRE')) {
-                            r.eachCell(cell => {
-                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } };
-                            });
-                        } else if (cuadreStr.includes('⚠️ SIN FOTO INICIAL')) {
-                            r.eachCell(cell => {
-                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } };
-                            });
-                        }
-                    });
-                }
-                
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `Auditoria_WMS_${new Date().getTime()}.xlsx`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-
+            filas = await audLeerArchivo(file);
         } catch (e) {
-            console.error("Error processing WMS file:", e);
-            if (window.showPremiumAlert) window.showPremiumAlert("ERROR AL LEER EXCEL", "Ocurrió un error leyendo el WMS. Verifica el formato.", "error");
-            else alert("Ocurrió un error leyendo el WMS.");
-            modal.remove();
+            console.error("[AUDIT] Error leyendo el archivo WMS:", e);
+            volverAtras("NO SE PUDO LEER EL ARCHIVO", "Revisa que sea el Excel o CSV que exporta el WMS.", e.message);
+            return;
         }
+
+        // Nada se marca ni se guarda hasta saber que el archivo sirve
+        const mapa = audMapearStock(filas);
+        if (mapa.error) {
+            volverAtras("ARCHIVO WMS NO VÁLIDO", mapa.error, mapa.detalle);
+            return;
+        }
+
+        const resultados = [];
+        seleccionadas.forEach(id => {
+            const task = almacenajeTasksCache.find(t => t.id === id);
+            if (!task) return;
+            resultados.push(audAuditarTarea(task, mapa.stock, mapa.porSku));
+        });
+
+        if (!resultados.length) {
+            volverAtras("SIN TAREAS", "No se pudo leer ninguna de las tareas seleccionadas.", null);
+            return;
+        }
+
+        // Recién ahora se marca la tarea como auditada, con el resultado adentro
+        const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+        const sello = new Date().toISOString();
+        resultados.forEach(r => {
+            const task = almacenajeTasksCache.find(t => t.id === r.id);
+            if (!task) return;
+            task.audited = true;
+            task.auditoria = {
+                fecha: sello, usuario: session.username || '---',
+                qtyBuffer: Math.round(r.iniBuffer), movidoReal: Math.round(r.movidoReal),
+                faltantePorMover: Math.round(r.faltantePorMover),
+                declarado: Math.round(r.declarado), declaroParcial: r.declaroParcial,
+                esperadoZona: Math.round(r.esperadoZona), zonaHoy: Math.round(r.zonaHoy),
+                difZona: Math.round(r.difZona),
+                destinos: r.destinos.slice(0, 10), paresFueraPlan: r.paresFueraPlan,
+                ubisNuevas: r.ubisNuevas, ubisFuera: r.ubisFuera,
+                ok: r.ok, problemas: r.problemas
+            };
+            task._dirty = true;
+        });
+        saveAlmacenajeTasks();
+        if (window.renderAlmacenajeTareas && window.__almacenajeContainer) {
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+        }
+
+        audResultado = resultados;
+        window.__audSoloProblemas = false;
+
+        const okCount = resultados.filter(r => r.ok).length;
+        const exactitud = Math.round((okCount / resultados.length) * 100);
+        const conDif = resultados.filter(r => r.faltantePorMover >= AUD_TOL).length;
+        const noLlego = resultados.filter(r => r.difZona <= -AUD_TOL).length;
+        const paresFuera = resultados.reduce((s, r) => s + r.paresFueraPlan, 0);
+        const tareasFuera = resultados.filter(r => r.paresFueraPlan > 0).length;
+        const sinAvance = resultados.reduce((s, r) => s + r.lineasSinAvance, 0);
+        const totalLineas = resultados.reduce((s, r) => s + r.lineasBuffer, 0);
+
+        const tarjeta = (valor, etiqueta, color) => `
+            <div style="flex:1; min-width:120px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:0.8rem 1rem;">
+                <div style="font-size:1.5rem; font-weight:900; color:${color}; line-height:1.1;">${valor}</div>
+                <div style="font-size:0.65rem; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px;">${etiqueta}</div>
+            </div>`;
+
+        contentDiv.innerHTML = `
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                ${tarjeta(`${exactitud}%`, 'Exactitud', exactitud >= 95 ? '#22c55e' : exactitud >= 80 ? '#eab308' : '#ef4444')}
+                ${tarjeta(resultados.length, 'Tareas auditadas', '#fff')}
+                ${tarjeta(okCount, 'Cuadran', '#22c55e')}
+                ${tarjeta(conDif, 'Con faltante por mover', conDif ? '#ef4444' : '#22c55e')}
+                ${tarjeta(noLlego, 'No llegó a zona', noLlego ? '#ef4444' : '#22c55e')}
+                ${tarjeta(paresFuera.toLocaleString(), 'Pares fuera del plan', paresFuera ? '#fbbf24' : '#22c55e')}
+            </div>
+            ${paresFuera ? `
+            <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.25); border-radius:10px; padding:0.7rem 1rem; font-size:0.75rem; color:#fde68a;">
+                ${paresFuera.toLocaleString()} pares entraron en ubicaciones que no estaban en el plan de la tarea,
+                repartidos en ${tareasFuera} tarea${tareasFuera > 1 ? 's' : ''}. Van marcados con ⚠ en la columna
+                "Se almacenó en". No se cuentan como error: puede que la ubicación del plan estuviera llena.
+            </div>` : ''}
+
+            ${sinAvance ? `
+            <div style="background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.25); border-radius:10px; padding:0.7rem 1rem; font-size:0.75rem; color:#fde68a;">
+                ${sinAvance} de ${totalLineas} líneas no tienen avance registrado. En esas, la pregunta 1 no puede
+                comprobar nada: el sistema asume que el operario movió todo lo pedido.
+            </div>` : ''}
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button id="audBtnFiltro" onclick="window.__audToggleFiltro()" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">Ver solo diferencias</button>
+                <div style="display:flex; gap:10px;">
+                    <button id="audBtnVolver" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">Auditar con otro archivo</button>
+                    <button id="btnDownloadAudit" style="background:var(--primary); color:#fff; font-weight:800; border:none; padding:6px 18px; font-size:0.7rem; border-radius:8px; cursor:pointer;">Descargar Excel</button>
+                </div>
+            </div>
+
+            <div id="audTabla" style="width:100%; flex:1; overflow:auto; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:rgba(0,0,0,0.2); max-height:45vh;">
+                ${audTablaHtml(resultados)}
+            </div>`;
+
+        contentDiv.querySelector('#audBtnVolver').addEventListener('click', () => {
+            contentDiv.innerHTML = htmlPrevio;
+            audEnlazarZonaArchivo(modal);
+        });
+        contentDiv.querySelector('#btnDownloadAudit').addEventListener('click', () => audDescargarExcel(resultados));
     };
 
+    // ── 6. Excel: una hoja de resumen y otra de detalle por línea ───────────
+    const audDescargarExcel = async (resultados) => {
+        const wb = new ExcelJS.Workbook();
+
+        const hoja = wb.addWorksheet('Resumen');
+        hoja.addRow(['Tarea', 'Fecha', 'Operario 1', 'Operario 2', 'Qty Buffer', 'Movido real',
+                     'Faltante por mover', 'Declarado por operario', 'Zona antes',
+                     'Zona esperada', 'Zona hoy', 'Dif. zona', 'Se almacenó en',
+                     'Pares fuera del plan', 'Fuera de zona', 'Resultado', 'Diagnóstico']);
+        // El desglose completo va en la hoja "Dónde se almacenó"; aquí un resumen legible
+        const resumirDestinos = (d) => {
+            if (!d.length) return 'no entró en ninguna ubicación';
+            const marca = { plan: '', nuevo: ' (sin plan previo)', fuera: ' ⚠ FUERA DEL PLAN' };
+            const txt = d.slice(0, 6).map(x => `${x.ubi}: ${x.pares}${marca[x.estado] || ''}`).join('  ·  ');
+            return d.length > 6 ? `${txt}  ·  +${d.length - 6} más` : txt;
+        };
+        resultados.forEach(r => {
+            const fila = hoja.addRow([r.corto, r.fecha, r.u1, r.u2, Math.round(r.iniBuffer),
+                Math.round(r.movidoReal), Math.round(r.faltantePorMover),
+                r.declaroParcial ? Math.round(r.declarado) : 'confirmó el total',
+                Math.round(r.iniZona), Math.round(r.esperadoZona),
+                Math.round(r.zonaHoy), Math.round(r.difZona), resumirDestinos(r.destinos),
+                r.paresFueraPlan, r.ubisFuera.join(' / '),
+                r.ok ? 'CUADRA' : 'REVISAR', r.problemas.join(' · ')]);
+            if (!r.ok) fila.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } }; });
+        });
+
+        const dest = wb.addWorksheet('Dónde se almacenó');
+        dest.addRow(['Tarea', 'Fecha', 'Operario', 'Ubicación destino', 'Zona',
+                     'Pares almacenados', '¿Estaba en el plan?']);
+        resultados.forEach(r => r.destinos.forEach(d => {
+            const texto = { plan: 'Sí', nuevo: 'El artículo no tenía ubicación previa', fuera: 'NO' };
+            const fila = dest.addRow([r.corto, r.fecha, r.u1, d.ubi, d.zona || 'FUERA DE ZONA',
+                                      d.pares, texto[d.estado] || 'Sí']);
+            if (d.estado === 'fuera') fila.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; });
+        }));
+
+        const det = wb.addWorksheet('Detalle');
+        det.addRow(['Tarea', 'Artículo', 'SKU', 'Talla', 'Ubicación origen', 'Qty Buffer',
+                    'Declarado', 'Faltante por mover', 'Movido real', 'Avance registrado']);
+        resultados.forEach(r => r.detalle.forEach(d => det.addRow([r.corto, d.articulo, d.sku,
+            d.talla, d.ubiOrigen, d.inicial, d.declarado, d.quedaEnBuffer, d.movidoReal, d.avanceRegistrado])));
+
+        [hoja, dest, det].forEach(h => {
+            const cab = h.getRow(1);
+            cab.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cab.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; });
+            h.views = [{ state: 'frozen', ySplit: 1 }];
+            // Ancho según el contenido más largo de cada columna, con tope para que no se desborde
+            h.columns.forEach(col => {
+                let ancho = 10;
+                col.eachCell({ includeEmpty: false }, c => {
+                    ancho = Math.max(ancho, String(c.value === null || c.value === undefined ? '' : c.value).length + 2);
+                });
+                col.width = Math.min(ancho, 60);
+            });
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Auditoria_WMS_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    };
+
+    // ── 7. La zona donde se suelta el archivo (se re-enlaza al volver atrás) ─
+    const audEnlazarZonaArchivo = (modal) => {
+        const dropZone = modal.querySelector('#wmsDropZone');
+        const fileInput = modal.querySelector('#wmsFileInput');
+        if (!dropZone || !fileInput) return;
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(6,182,212,0.1)'; });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(6,182,212,0.02)'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'rgba(6,182,212,0.02)';
+            if (e.dataTransfer.files && e.dataTransfer.files.length) handleWmsFile(e.dataTransfer.files[0], modal);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length) handleWmsFile(e.target.files[0], modal);
+        });
+    };
+
+    // ── 8. Abrir el modal ───────────────────────────────────────────────────
     window.openAuditModal = () => {
-        const targetTasks = almacenajeTasksCache.filter(t => 
-            t.fecha >= window.__almacenajeStartDate && 
+        const targetTasks = almacenajeTasksCache.filter(t =>
+            t.fecha >= window.__almacenajeStartDate &&
             t.fecha <= window.__almacenajeEndDate &&
             t.status === 'Finalizado'
         );
 
-        if (targetTasks.length === 0) {
-            if (window.showPremiumAlert) window.showPremiumAlert("SIN TAREAS", "No hay tareas FINALIZADAS o AUDITADAS en este rango de fechas para auditar.", "info");
-            else alert("No hay tareas FINALIZADAS o AUDITADAS en este rango de fechas para auditar.");
+        if (!targetTasks.length) {
+            if (window.showPremiumAlert) window.showPremiumAlert("SIN TAREAS", "No hay tareas finalizadas en este rango de fechas para auditar.", "info");
             return;
         }
 
@@ -20021,7 +20317,7 @@ window.showCellModal = function(htmlContent) {
         modal.id = 'wmsAuditModal';
         modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.3s;";
         modal.innerHTML = `
-            <div id="auditModalWindow" style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:95%; max-width:1200px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; transition:max-width 0.3s;">
+            <div id="auditModalWindow" style="background:#1e293b; border:1px solid rgba(6,182,212,0.3); box-shadow:0 0 30px rgba(6,182,212,0.15); border-radius:16px; width:95%; max-width:1200px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
                 <div style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0; font-size:1.2rem; color:#fff; display:flex; align-items:center; gap:10px;">
                         <span style="background:rgba(6,182,212,0.1); padding:8px; border-radius:10px;">🎯</span> Auditoría de Almacenaje vía WMS
@@ -20029,7 +20325,7 @@ window.showCellModal = function(htmlContent) {
                     <button onclick="document.getElementById('wmsAuditModal').remove()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem;">&times;</button>
                 </div>
                 <div id="auditModalContent" style="padding:1.5rem; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1.5rem;">
-                    
+
                     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1rem;">
                         <h3 style="margin:0 0 1rem 0; font-size:0.9rem; color:#9ca3af;">1. Selecciona las tareas a auditar:</h3>
                         <div style="max-height:200px; overflow-y:auto; border:1px solid rgba(255,255,255,0.05); border-radius:8px; background:#0f172a;">
@@ -20041,18 +20337,25 @@ window.showCellModal = function(htmlContent) {
                                         <th style="padding:0.5rem; text-align:left;">Fecha</th>
                                         <th style="padding:0.5rem; text-align:left;">Operario</th>
                                         <th style="padding:0.5rem; text-align:center;">Qty Esperada</th>
+                                        <th style="padding:0.5rem; text-align:left;">Auditada antes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${targetTasks.map(t => `
+                                    ${targetTasks.map(t => {
+                                        const a = t.auditoria;
+                                        const previa = a
+                                            ? `<span style="color:${a.ok ? '#22c55e' : '#ef4444'}; font-weight:800;">${a.ok ? 'Cuadró' : 'Con diferencias'}</span> <span style="opacity:0.5;">· ${String(a.fecha).slice(0, 10)}</span>`
+                                            : (t.audited ? '<span style="opacity:0.6;">Sí (sin detalle)</span>' : '<span style="opacity:0.35;">No</span>');
+                                        return `
                                         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
                                             <td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="chk-audit-task" value="${t.id}" checked></td>
                                             <td style="padding:0.5rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
                                             <td style="padding:0.5rem;">${t.fecha}</td>
                                             <td style="padding:0.5rem;">${t.u1 || '---'}</td>
                                             <td style="padding:0.5rem; text-align:center; color:#fbbf24; font-weight:700;">${t.qty}</td>
-                                        </tr>
-                                    `).join('')}
+                                            <td style="padding:0.5rem; font-size:0.7rem;">${previa}</td>
+                                        </tr>`;
+                                    }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -20063,34 +20366,16 @@ window.showCellModal = function(htmlContent) {
                         <label id="wmsDropZone" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 1rem; border:2px dashed rgba(6,182,212,0.3); border-radius:12px; background:rgba(6,182,212,0.02); cursor:pointer; transition:all 0.2s;">
                             <span style="font-size:2.5rem; margin-bottom:1rem;">📁</span>
                             <span style="color:#fff; font-weight:600; margin-bottom:0.5rem;">Arrastra y suelta aquí el Excel del WMS</span>
-                            <span style="color:#6b7280; font-size:0.75rem;">o haz clic para buscar en tus archivos</span>
+                            <span style="color:#6b7280; font-size:0.75rem;">necesita las columnas Ubicación, Artículo y Cantidad actual</span>
                             <input type="file" id="wmsFileInput" accept=".xlsx, .xls, .csv" style="display:none;">
                         </label>
                     </div>
 
                 </div>
-            </div>
-        `;
+            </div>`;
         document.body.appendChild(modal);
         setTimeout(() => modal.style.opacity = '1', 10);
-
-        const fileInput = modal.querySelector('#wmsFileInput');
-        const dropZone = modal.querySelector('#wmsDropZone');
-
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(6,182,212,0.1)'; });
-        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(6,182,212,0.02)'; });
-        dropZone.addEventListener('drop', (e) => { 
-            e.preventDefault(); 
-            dropZone.style.background = 'rgba(6,182,212,0.02)'; 
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                handleWmsFile(e.dataTransfer.files[0], modal);
-            }
-        });
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files.length > 0) {
-                handleWmsFile(e.target.files[0], modal);
-            }
-        });
+        audEnlazarZonaArchivo(modal);
     };
     // --- FIN LÓGICA DE AUDITORÍA WMS ---
     window.resetTask = async (id) => {
@@ -20105,6 +20390,9 @@ window.showCellModal = function(htmlContent) {
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
             task.u1 = null; task.u2 = null; task.inicio = null; task.termino = null; task.status = 'Creada';
+            // La auditoría vieja ya no aplica: la tarea se va a volver a hacer
+            task.audited = false;
+            delete task.auditoria;
             task._dirty = true;
             await saveAlmacenajeTasks(task);
             renderAlmacenajeTareas(container);
