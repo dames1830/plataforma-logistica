@@ -386,6 +386,24 @@ const getTaskTotalAvance = (t) => {
     return sum;
 };
 
+/** Rótulo del SYNC_ID: una sola fecha si el rango es de un día, o 'desde - hasta'. */
+const rotuloRangoReporte = (start, end) => {
+    const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const d = start.split('-').reverse().join('/');
+    const h = end.split('-').reverse().join('/');
+    return `<span style="color:#94a3b8;">${d === h ? d : `${d} - ${h}`} ${hora}</span>`;
+};
+
+/** Selector compacto de rango de fechas para la cabecera de un reporte. */
+const rangoFechasReporte = (start, end, setter, color) => `
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        ${[['DE', start, `${setter}(this.value, null)`], ['A', end, `${setter}(null, this.value)`]].map(([eti, val, ev]) => `
+            <div style="display:flex; align-items:center; background:rgba(0,0,0,0.45); border:1px solid ${color}59; border-radius:8px; padding:3px 8px; gap:6px;">
+                <span style="font-size:0.6rem; color:${color}; font-weight:800; letter-spacing:0.5px;">${eti}</span>
+                <input type="date" value="${val}" onchange="${ev}" style="background:transparent; border:none; color:#fff; font-size:0.68rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;">
+            </div>`).join('')}
+    </div>`;
+
 /** Deja una categoría en formato legible: '08 ACCESORIES' → 'Accesories'. */
 const etiquetaCategoria = (v) => {
     const s = String(v || '').trim().replace(/^\d{1,2}[\s.-]+/, '');
@@ -884,13 +902,38 @@ const getLogicalDate = () => {
     return `${y}-${m}-${d}`;
 };
 
+/**
+ * Semana laboral (lunes a sábado) a la que pertenece la fecha lógica. El domingo no se
+ * trabaja, así que se considera parte de la semana que acaba de cerrar: si abres la web
+ * un domingo, ves el lunes-sábado anterior, no una semana vacía que recién empieza.
+ */
+const getSemanaLaboral = () => {
+    // Mediodía: evita que el cambio de horario mueva el día al restar fechas
+    const base = new Date(getLogicalDate() + 'T12:00:00');
+    const diasDesdeLunes = (base.getDay() + 6) % 7;   // getDay(): 0=domingo, 1=lunes...
+    const lunes = new Date(base);
+    lunes.setDate(base.getDate() - diasDesdeLunes);
+    const sabado = new Date(lunes);
+    sabado.setDate(lunes.getDate() + 5);
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { desde: fmt(lunes), hasta: fmt(sabado) };
+};
+
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 if (!window.__almacenajeStartDate) window.__almacenajeStartDate = getLogicalDate();
 if (!window.__almacenajeEndDate) window.__almacenajeEndDate = getLogicalDate();
-if (!window.__kpiStartDate) window.__kpiStartDate = getLogicalDate();
-if (!window.__kpiEndDate) window.__kpiEndDate = getLogicalDate();
+// El panel de KPI abre con la semana laboral completa (lunes a sábado), no con un solo día
+const _semanaKpi = getSemanaLaboral();
+if (!window.__kpiStartDate) window.__kpiStartDate = _semanaKpi.desde;
+if (!window.__kpiEndDate) window.__kpiEndDate = _semanaKpi.hasta;
+// Los dos reportes de abajo (Marcas y Gender RIMS) llevan su propio rango, aparte del
+// panel de KPI. Como viven en window, al abrir la web arrancan siempre en el día actual.
+if (!window.__repMarcasStart) window.__repMarcasStart = getLogicalDate();
+if (!window.__repMarcasEnd) window.__repMarcasEnd = getLogicalDate();
+if (!window.__repGenderStart) window.__repGenderStart = getLogicalDate();
+if (!window.__repGenderEnd) window.__repGenderEnd = getLogicalDate();
 let expandedWeeks = []; // Semanas expandidas en el historial
 let almacenajeTasksCache = [];
 try {
@@ -17457,6 +17500,28 @@ window.showCellModal = function(htmlContent) {
         }
     };
 
+    // Rango propio del reporte de Marcas, independiente del panel de KPI
+    window.setRepMarcasRange = (start, end) => {
+        if (start !== null) window.__repMarcasStart = start;
+        if (end !== null) window.__repMarcasEnd = end;
+        if (window.__almacenajeContainer) {
+            const _sy = window.scrollY;
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+            requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
+        }
+    };
+
+    // Rango propio del reporte de Gender RIMS
+    window.setRepGenderRange = (start, end) => {
+        if (start !== null) window.__repGenderStart = start;
+        if (end !== null) window.__repGenderEnd = end;
+        if (window.__almacenajeContainer) {
+            const _sy = window.scrollY;
+            window.renderAlmacenajeTareas(window.__almacenajeContainer);
+            requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
+        }
+    };
+
     const renderAlmacenajeTareas = window.renderAlmacenajeTareas; // Local alias for internal calls
     const isDetail = almacenajeTaskMode === 'detalle';
     const isKpi = almacenajeTaskMode === 'kpi';
@@ -18342,6 +18407,12 @@ window.showCellModal = function(htmlContent) {
     }
     
     const resumenItems = isDetail ? [] : tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+
+    // Totales del pie: siguen el filtro de fechas y suman la MISMA Qty que muestra la tabla
+    // (en las finalizadas eso es el avance real, no la cantidad pedida).
+    const tareasEnRango = tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+    const paresEnRango = tareasEnRango.reduce((s, t) =>
+        s + (t.status === 'Finalizado' ? getTaskTotalAvance(t) : (t.qty || 0)), 0);
     const targetItems = isDetail ? detailedItems : resumenItems;
     
     const totalPages = Math.ceil(targetItems.length / 25) || 1;
@@ -18435,7 +18506,6 @@ window.showCellModal = function(htmlContent) {
                     <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'">
                         🔄
                     </button>
-                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Módulo de Analítica Avanzada</div>
                 </div>
             </div>
             `}
@@ -18878,18 +18948,15 @@ window.showCellModal = function(htmlContent) {
                                 REPORTE ALMACENAJE - MARCAS
                             </h3>
                             <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                                SYNC_ID: ${(() => {
-                                    const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                    const startStr = window.__kpiStartDate.split('-').reverse().join('/');
-                                    const endStr = window.__kpiEndDate.split('-').reverse().join('/');
-                                    const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
-                                    return `${syncDateStr} ${syncTimeStr}`;
-                                })()}
+                                SYNC_ID: ${rotuloRangoReporte(window.__repMarcasStart, window.__repMarcasEnd)}
                             </div>
                         </div>
-                        <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            ${rangoFechasReporte(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', '#00E5FF')}
+                            <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); flex-shrink:0;" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
                             🔄
                         </button>
+                        </div>
                     </div>
                     
                     <div style="overflow-x:auto;">
@@ -18923,7 +18990,7 @@ window.showCellModal = function(htmlContent) {
                                     };
 
                                     const brandGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
+                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__repMarcasStart && t.fecha <= window.__repMarcasEnd);
 
                                     filteredTasks.forEach(t => {
                                         const shift1 = getWorkerShift(t.u1);
@@ -19031,18 +19098,15 @@ window.showCellModal = function(htmlContent) {
                                 REPORTE ALMACENAJE - GENDER RIMS
                             </h3>
                             <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                                SYNC_ID: ${(() => {
-                                    const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                    const startStr = window.__kpiStartDate.split('-').reverse().join('/');
-                                    const endStr = window.__kpiEndDate.split('-').reverse().join('/');
-                                    const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
-                                    return `${syncDateStr} ${syncTimeStr}`;
-                                })()}
+                                SYNC_ID: ${rotuloRangoReporte(window.__repGenderStart, window.__repGenderEnd)}
                             </div>
                         </div>
-                        <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            ${rangoFechasReporte(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', '#00E5FF')}
+                            <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); flex-shrink:0;" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
                             🔄
                         </button>
+                        </div>
                     </div>
                     
                     <div style="overflow-x:auto;">
@@ -19115,7 +19179,7 @@ window.showCellModal = function(htmlContent) {
                                     }
 
                                     const genderGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
+                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__repGenderStart && t.fecha <= window.__repGenderEnd);
 
                                     filteredTasks.forEach(t => {
                                         (t.items || []).forEach(art => {
@@ -19683,9 +19747,10 @@ window.showCellModal = function(htmlContent) {
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(15, 23, 42, 0.4); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:0.75rem; align-items:center;">
-                        <span style="color:var(--text-muted);">Tareas: <b style="color:#fff;">${tasks.length}</b></span>
                         <span style="color:var(--text-muted);">${isDetail ? 'Registros Detalle:' : 'Tareas en Rango:'} <b style="color:#fff;">${targetItems.length}</b></span>
-                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${tasks.reduce((s,t) => s+t.qty, 0).toLocaleString()}</b></span>
+                        ${isDetail ? `<span style="color:var(--text-muted);">Tareas en Rango: <b style="color:#fff;">${tareasEnRango.length}</b></span>` : ''}
+                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:#fff;">${paresEnRango.toLocaleString()}</b></span>
+                        <span style="color:var(--text-muted); opacity:0.5;">de ${tasks.length.toLocaleString()} tareas en total</span>
                     </div>
                     
                     <!-- Paginación Glassmorphic -->
