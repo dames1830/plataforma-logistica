@@ -2,33 +2,48 @@
 """
 bump.py  -  Subir / unificar la version de la plataforma logistica.
 
-Que hace distinto al viejo:
-  - El viejo cambiaba UN numero exacto a la vez, asi que los archivos que
-    estaban en otra version se quedaban atras y todo se desincronizaba.
-  - Este busca CUALQUIER version 26.5.NNN en todos los archivos y los pone
-    TODOS en el mismo numero. Imposible que queden distintos.
+  - La version viaja en ~34 sitios: los `?v=` de cada import, el `const VERSION`
+    y los textos "SYSTEM BUILD". Si quedan desincronizados, el navegador sirve
+    unos archivos viejos y otros nuevos, y la web se rompe de formas raras.
+  - Este script los pone TODOS en el mismo numero de una sola pasada.
 
-Uso (abre una terminal en la carpeta logistics-web-app):
+  Desde v27 (31-jul-2026) la version es un ENTERO: 27, 28, 29...  Un numero por
+  lanzamiento a produccion, no uno por cada ajuste suelto. Antes era 26.5.NNN y
+  subia decenas de veces entre dos lanzamientos reales.
 
-  python bump.py            -> sube la version +1 (toma la mas alta y le suma 1)
-  python bump.py 26.5.510   -> pone TODO exactamente en 26.5.510
-  python bump.py check      -> solo revisa, NO cambia nada (dice si estan iguales)
+  Uso:
+    python bump.py            -> sube la version +1
+    python bump.py 30         -> fija la version 30
+    python bump.py check      -> solo revisa si estan todas iguales
 
-Nota: NO toca los comentarios historicos del CSS (v26.5.58, v26.5.60) porque
-esos son de 2 digitos; las versiones reales son de 3 o mas (501, 502, ...).
+  Los comentarios que citan una version ("[SEGURIDAD v26.5.572] ...") NO se tocan:
+  son notas historicas de cuando algo cambio. Reescribirlas en cada bump las volvia
+  mentira, porque siempre acababan diciendo la version del dia.
 """
-
 import os
 import io
 import re
 import sys
 
 # ---- Configuracion ----
-PREFIX = "26.5."                       # familia de version actual (si algun dia pasas a 26.6, cambia esto)
-VER_RE = re.compile(r"26\.5\.(\d{3,})")  # versiones reales: 3+ digitos (ignora los comentarios 58 / 60)
 EXTS = (".js", ".html", ".css")
-EXCLUDE_DIR = ("beta_backup", "__pycache__", "brain", ".git", "Punto_Restaur", "Documentacion")
+# Los respaldos quedan congelados en la version con la que se guardaron: son la foto de
+# como estaba la app ese dia. Antes se salvaban de casualidad, porque el patron viejo solo
+# reconocia 26.5.NNN y ellos estaban en 12.4 / 17.x. Con el patron nuevo hay que excluirlos
+# a proposito o se reescriben enteros.
+EXCLUDE_DIR = ("beta_backup", "backup", "backups", "__pycache__", "brain", ".git",
+               "Punto_Restaur", "Documentacion", "node_modules", "restauracion")
 EXCLUDE_FILE = ("diff.txt", "diff2.txt")
+
+# La version SOLO se reconoce en los sitios donde de verdad cumple una funcion.
+# Asi un numero suelto del codigo nunca se confunde con una version.
+PATRONES = [
+    re.compile(r"(\?v=)(\d+(?:\.\d+)*)"),                       # ...js?v=27
+    re.compile(r"(const VERSION\s*=\s*['\"])(\d+(?:\.\d+)*)"),  # const VERSION = '27'
+    re.compile(r"(SYSTEM BUILD:\s*v)(\d+(?:\.\d+)*)"),          # SYSTEM BUILD: v27
+    re.compile(r"(SISTEMA\s+v)(\d+(?:\.\d+)*)"),                # SISTEMA v27 ONLINE
+    re.compile(r"(weight:500;\">v)(\d+(?:\.\d+)*)"),            # el numerito de la cabecera
+]
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -52,34 +67,38 @@ def leer(fp):
 
 
 def escanear():
-    """Devuelve {version: cantidad} de todo lo encontrado."""
+    """Devuelve {version: cantidad} de todo lo encontrado en sitios funcionales."""
     conteo = {}
     for fp in iter_files():
         c = leer(fp)
         if c is None:
             continue
-        for m in VER_RE.findall(c):
-            conteo[m] = conteo.get(m, 0) + 1
+        for rx in PATRONES:
+            for _pre, ver in rx.findall(c):
+                conteo[ver] = conteo.get(ver, 0) + 1
     return conteo
 
 
-def version_mas_alta(conteo):
-    if not conteo:
-        return None
-    return max(int(v) for v in conteo.keys())
+def como_numero(v):
+    """'27' -> 27 ; '26.5.572' -> 26 (para poder comparar entre esquemas)."""
+    try:
+        return int(str(v).split(".")[0])
+    except ValueError:
+        return 0
 
 
 def aplicar(destino):
-    """Pone TODOS los archivos en PREFIX+destino. Devuelve lista de cambios."""
-    nueva = PREFIX + str(destino)
-    cambios = []
-    saltados = []
+    """Pone TODOS los archivos en la version destino. Devuelve lista de cambios."""
+    nueva = str(destino)
+    cambios, saltados = [], []
     for fp in iter_files():
         c = leer(fp)
         if c is None:
             saltados.append(os.path.relpath(fp, ROOT))
             continue
-        nuevo = VER_RE.sub(nueva, c)
+        nuevo = c
+        for rx in PATRONES:
+            nuevo = rx.sub(lambda m: m.group(1) + nueva, nuevo)
         if nuevo != c:
             with io.open(fp, "w", encoding="utf-8") as f:
                 f.write(nuevo)
@@ -90,16 +109,16 @@ def aplicar(destino):
 def modo_check():
     conteo = escanear()
     if not conteo:
-        print("No se encontro ninguna version 26.5.NNN.")
+        print("No se encontro ninguna version.")
         return
     print("=== Versiones encontradas ===")
-    for v in sorted(conteo, key=lambda x: int(x)):
-        print(f"  26.5.{v}  ->  {conteo[v]} veces")
+    for v in sorted(conteo, key=como_numero):
+        print(f"  v{v}  ->  {conteo[v]} veces")
     if len(conteo) == 1:
         print("\nOK: todas las paginas estan en la MISMA version. :)")
     else:
         print(f"\nATENCION: hay {len(conteo)} versiones distintas (desincronizadas).")
-        print("Corre 'python bump.py' para subir +1, o 'python bump.py 26.5.NNN' para igualarlas.")
+        print("Corre 'python bump.py' para subir +1, o 'python bump.py 30' para igualarlas.")
 
 
 def main():
@@ -110,36 +129,35 @@ def main():
         return
 
     conteo = escanear()
-    alta = version_mas_alta(conteo)
+    alta = max((como_numero(v) for v in conteo), default=None)
 
-    if arg:  # version explicita, ej: 26.5.510  o  510
-        destino = arg.replace(PREFIX, "").strip()
+    if arg:
+        destino = arg.lstrip("vV").strip()
         if not destino.isdigit():
-            print(f"Version invalida: '{arg}'. Ejemplo valido: python bump.py 26.5.510")
+            print(f"Version invalida: '{arg}'. Ejemplo valido: python bump.py 30")
             return
         destino = int(destino)
-    else:  # auto +1
+    else:
         if alta is None:
             print("No se encontro ninguna version para subir.")
             return
         destino = alta + 1
 
     if alta is not None:
-        print(f"Version mas alta actual: 26.5.{alta}")
-    print(f"Poniendo TODO en: {PREFIX}{destino}\n")
+        print(f"Version mas alta actual: v{alta}")
+    print(f"Poniendo TODO en: v{destino}\n")
 
     nueva, cambios, saltados = aplicar(destino)
 
-    print(f"=== {len(cambios)} archivos actualizados a {nueva} ===")
+    print(f"=== {len(cambios)} archivos actualizados a v{nueva} ===")
     for c in cambios:
         print(f"  {c}")
     if saltados:
         print(f"\n(Se ignoraron {len(saltados)} archivos con codificacion rara, no son parte de la app: {', '.join(saltados)})")
 
-    # Verificacion final
     conteo2 = escanear()
-    if len(conteo2) == 1 and str(destino) in conteo2:
-        print(f"\nOK: TODAS las paginas quedaron en {nueva}. :)")
+    if len(conteo2) == 1 and nueva in conteo2:
+        print(f"\nOK: TODAS las paginas quedaron en v{nueva}. :)")
     else:
         print(f"\nATENCION: quedaron versiones mezcladas: {sorted(conteo2)}")
 
