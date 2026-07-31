@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.569';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.570';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.569';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.569';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.569';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.569';
-import * as metasService from '../services_v245/metasService.js?v=26.5.569';
+import * as adminService from '../services_v245/adminService.js?v=26.5.570';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.570';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.570';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.570';
+import * as metasService from '../services_v245/metasService.js?v=26.5.570';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.569';
+const VERSION = '26.5.570';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1929,6 +1929,12 @@ export const renderDashboard = async (container, user, onLogout) => {
     const CELDA = 'padding:var(--tp,0.27rem) 0.45rem; text-align:center;';
     const ETIQUETA = 'padding:var(--tp,0.27rem) 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
 
+    // La tabla de marcas lleva muchas más filas que la de días, así que respira
+    // con menos espacio entre ellas. Se mantiene atada a --tp para que siga
+    // creciendo con el resto cuando la pantalla da para más.
+    const CELDA_M = 'padding:calc(var(--tp,0.27rem) * 0.6) 0.45rem; text-align:center;';
+    const ETIQUETA_M = 'padding:calc(var(--tp,0.27rem) * 0.6) 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+
     // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
     // los suyos según su contenido y el LUNES de una categoría no queda encima
     // del LUNES de la otra.
@@ -2141,14 +2147,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             const flecha = base === null ? '' : flechaKpi(v, base, s.esActual);
             const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
             const titulo = flecha ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
-            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
+            return `<td${titulo} style="${CELDA_M} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
         }).join('');
 
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="${ETIQUETA} color:#fff; font-weight:700;">${m}</td>
+                <td style="${ETIQUETA_M} color:#fff; font-weight:700;">${m}</td>
                 ${celdas}
-                <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${celdaValor(fmt(totalFila))}</td>
+                <td style="${CELDA_M} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${celdaValor(fmt(totalFila))}</td>
             </tr>`;
     }).join('');
 
@@ -2159,7 +2165,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                    : SEMANAS[i].esActual ? tramoPasadoTotal
                    : totalesSemana[i - 1];
         const flecha = base === null ? '' : flechaKpi(v, base, SEMANAS[i].esActual);
-        return `<td style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap;">${celdaValor(fmt(v), flecha)}</td>`;
+        return `<td style="${CELDA_M} font-weight:900; color:#fbbf24; white-space:nowrap;">${celdaValor(fmt(v), flecha)}</td>`;
     }).join('');
 
     const panelDias = `
@@ -2180,19 +2186,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <table style="width:100%; border-collapse:collapse; min-width:340px; font-size:var(--tf,0.79rem);">
                     <thead>
                         <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
-                            <th style="${ETIQUETA}">MARCA</th>
+                            <th style="${ETIQUETA_M}">MARCA</th>
                             ${SEMANAS.map(s => s.esActual
-                                ? `<th title="Semana en curso: el número es lo que va hasta hoy; la flecha compara los mismos días de la semana anterior" style="${CELDA} border-bottom:2px solid rgba(165,180,252,0.5);">SEM ${s.num}</th>`
-                                : `<th style="${CELDA}">SEM ${s.num}</th>`).join('')}
-                            <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
+                                ? `<th title="Semana en curso: el número es lo que va hasta hoy; la flecha compara los mismos días de la semana anterior" style="${CELDA_M} border-bottom:2px solid rgba(165,180,252,0.5);">SEM ${s.num}</th>`
+                                : `<th style="${CELDA_M}">SEM ${s.num}</th>`).join('')}
+                            <th style="${CELDA_M} ${CELDA_TOTAL}">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${filasMarcas || `<tr><td colspan="${SEMANAS.length + 2}" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin marcas registradas.</td></tr>`}
                         <tr style="border-top:2px solid rgba(79,70,229,0.5);">
-                            <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+                            <td style="${ETIQUETA_M} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
                             ${celdasTotalMarcas}
-                            <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${celdaValor(fmt(totalGeneralMarcas))}</td>
+                            <td style="${CELDA_M} font-weight:900; color:#fff; ${CELDA_TOTAL}">${celdaValor(fmt(totalGeneralMarcas))}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -2202,7 +2208,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Se acomodan solos: lado a lado en pantalla ancha, uno debajo del otro
     // cuando no caben. `stretch` los deja de la misma altura; el alto real lo
     // fija ajustarAltoPaneles() según lo que quede libre en la pantalla.
-    const grafico = `<div id="homePaneles" style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:stretch;">${panelDias}${panelMarcas}</div>`;
+    const grafico = `<div id="homePaneles" style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">${panelDias}${panelMarcas}</div>`;
 
     contentArea.innerHTML = cabecera + `
         <div class="kpi-grid" style="margin-bottom:0.8rem;">${tarjetas}</div>
@@ -2217,42 +2223,36 @@ export const renderDashboard = async (container, user, onLogout) => {
      * enorme en otra: lo que sobra depende del alto de la ventana, así que se
      * calcula después de dibujar y se vuelve a calcular si se redimensiona.
      */
+    /**
+     * Agranda las tablas hasta que el contenido llega al borde inferior de la
+     * pantalla.
+     *
+     * Los paneles NO se estiran: cada uno cierra en su última fila. Lo que
+     * crece es la letra y el alto de las filas, así que el hueco de abajo se
+     * llena con datos legibles en vez de con caja vacía. Un tamaño fijo se ve
+     * apretado en una pantalla y deja medio hueco en otra, por eso se calcula
+     * después de dibujar y se recalcula al redimensionar.
+     */
     const ajustarAltoPaneles = () => {
         const cont = document.getElementById('homePaneles');
         if (!cont) { window.removeEventListener('resize', ajustarAltoPaneles); return; }
 
-        // 1) Estirar los paneles hasta el borde inferior de la pantalla.
-        cont.style.minHeight = '';
         cont.style.setProperty('--tf', '0.79rem');
         cont.style.setProperty('--tp', '0.27rem');
-        const libre = window.innerHeight - cont.getBoundingClientRect().top - 18;
-        // Si no hay sitio (pantallas muy bajas) se deja el alto natural y que la
-        // página se desplace: forzarlo solo lograría recortar contenido.
-        if (libre > cont.getBoundingClientRect().height) cont.style.minHeight = libre + 'px';
 
-        // 2) Agrandar las tablas hasta llenar ese alto. Un tamaño fijo se ve
-        //    apretado en una pantalla y deja medio panel vacío en otra, así que
-        //    se sube de a poco y se para justo antes de desbordar.
-        const paneles = [...cont.children];
-        // Ojo: NO sirve `clientHeight - scrollHeight`. scrollHeight nunca baja de
-        // la altura del propio elemento, así que un panel medio vacío tambien da
-        // cero y el bucle no crecería nunca. Hay que mirar dónde termina de
-        // verdad el último hijo.
-        const holgura = () => Math.min(...paneles.map(p => {
-            const ultimo = p.lastElementChild;
-            if (!ultimo) return 0;
-            return p.getBoundingClientRect().bottom - ultimo.getBoundingClientRect().bottom - 14;
-        }));
+        // Espacio que queda entre el final del panel más alto y el borde de abajo.
+        const libre = () => window.innerHeight - cont.getBoundingClientRect().bottom - 16;
+
         let f = 0.79, p = 0.27;
-        for (let i = 0; i < 16 && holgura() > 14; i++) {
-            f = Math.min(1.05, f + 0.02);
-            p = Math.min(0.7, p + 0.03);
+        for (let i = 0; i < 24 && libre() > 12; i++) {
+            f = Math.min(1.15, f + 0.02);
+            p = Math.min(0.95, p + 0.035);
             cont.style.setProperty('--tf', f.toFixed(3) + 'rem');
             cont.style.setProperty('--tp', p.toFixed(3) + 'rem');
         }
-        if (holgura() < 0) {          // se pasó por un pelo: un paso atrás
+        if (libre() < 0) {            // se pasó por un pelo: un paso atrás
             cont.style.setProperty('--tf', (f - 0.02).toFixed(3) + 'rem');
-            cont.style.setProperty('--tp', (p - 0.03).toFixed(3) + 'rem');
+            cont.style.setProperty('--tp', (p - 0.035).toFixed(3) + 'rem');
         }
     };
     ajustarAltoPaneles();
@@ -2809,7 +2809,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.569');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.570');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3144,7 +3144,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.569] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.570] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7837,7 +7837,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.569 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.570 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12339,7 +12339,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.569 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.570 | MOBILE PORTAL
                             </div>
                     </div>
 
