@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.564';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.565';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.564';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.564';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.564';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.564';
-import * as metasService from '../services_v245/metasService.js?v=26.5.564';
+import * as adminService from '../services_v245/adminService.js?v=26.5.565';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.565';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.565';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.565';
+import * as metasService from '../services_v245/metasService.js?v=26.5.565';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.564';
+const VERSION = '26.5.565';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1825,20 +1825,79 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>`;
 
+    /**
+     * Números del DÍA (no de la semana): las tarjetas responden a "¿cómo va hoy?".
+     *
+     *   buffer     = unidades que hay que bajar del buffer (art.bufferQty)
+     *   almacenado = las que ya se bajaron de verdad (mismo criterio CDBUFFER
+     *                que usa el resto del sistema)
+     *
+     * El porcentaje es almacenado sobre buffer: cuánto del trabajo del día está
+     * hecho. Así va de 0 a 100 y se lee solo.
+     */
+    const statsDia = (fecha, soloGender = null) => {
+        let buffer = 0, almacenado = 0;
+        const personas = new Set();
+        tasks.forEach(t => {
+            if (!t || t.fecha !== fecha) return;
+            (t.items || []).forEach(art => {
+                if (!art) return;
+                if (soloGender && String(art.gender || '').trim().toUpperCase() !== soloGender) return;
+                buffer += parseFloat(art.bufferQty) || 0;
+                (art.items || []).forEach(i => {
+                    const ubi = String((i && i.ubi) || '').toUpperCase().trim();
+                    if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+                    if (i.avance !== undefined && i.avance !== null) almacenado += parseFloat(i.avance) || 0;
+                    else if (t.status === 'Finalizado') almacenado += parseFloat(i.qty) || 0;
+                });
+            });
+            [t.u1, t.u2].forEach(u => { if (u && u !== '---') personas.add(u); });
+        });
+        return {
+            buffer, almacenado,
+            personas: personas.size,
+            pct: buffer > 0 ? (almacenado / buffer) * 100 : 0
+        };
+    };
+
+    // Día a analizar: hoy. Si hoy todavía no tiene tareas (de madrugada, o un día
+    // no laborable) se muestra el último día que sí tuvo, y las tarjetas dicen
+    // cuál es: mejor un número real fechado que cuatro ceros sin explicación.
+    const diasConTareas = [...new Set(tasks.filter(t => t && t.fecha).map(t => t.fecha))].sort();
+    const diaAnalizado = diasConTareas.includes(r.estaHasta)
+        ? r.estaHasta
+        : (diasConTareas[diasConTareas.length - 1] || r.estaHasta);
+    const esHoy = diaAnalizado === r.estaHasta;
+    const etiquetaDia = esHoy ? '' : fmtFecha(new Date(diaAnalizado + 'T00:00:00'));
+
+    const hoyFW = statsDia(diaAnalizado, 'FOOTWEAR');
+    const hoyTodo = statsDia(diaAnalizado);
+
+    /** Semáforo del avance del día. */
+    const colorAvance = (p) => p >= 85 ? '#22c55e' : (p >= 60 ? '#fbbf24' : '#ef4444');
+
+    const tarjetaDia = (titulo, sub, valor, sufijo, color, ayuda) => `
+        <div class="kpi-card" title="${ayuda}" style="display:flex; flex-direction:column; justify-content:center; gap:0.15rem; padding:0.85rem 1rem;">
+            <h4 style="color:var(--text-muted); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">
+                ${titulo}${sub ? ` <span style="color:rgba(255,255,255,0.28);">· ${sub}</span>` : ''}
+            </h4>
+            <h2 style="font-size:2.1rem; font-weight:900; color:${color}; margin:0; line-height:1.1;">${valor}<span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+        </div>`;
+
+    // Si el día no es hoy, la fecha va delante para que no haya dudas de qué se
+    // está mirando.
+    const sub = (alcance) => etiquetaDia ? `${etiquetaDia} · ${alcance}` : alcance;
+    const cuando = esHoy ? 'hoy' : `el ${etiquetaDia}`;
+
     const tarjetas = [
-        tarjeta('Cumplimiento de meta', esta.cumplimiento.toFixed(0), '%', pasada.cumplimiento.toFixed(0), '%',
-                variacion(esta.cumplimiento, pasada.cumplimiento),
-                'unidades hechas contra lo que pedía la meta'),
-        tarjeta('Unidades procesadas', fmt(esta.qty), '', fmt(pasada.qty), '',
-                variacion(esta.qty, pasada.qty),
-                `${fmt(esta.porDiaActivo)} por día activo`),
-        tarjeta('Ritmo', fmt(esta.uph), ' u/h', fmt(pasada.uph), ' u/h',
-                variacion(esta.uph, pasada.uph),
-                `${esta.tareas} tareas · ${esta.horas.toFixed(0)} h trabajadas`),
-        tarjeta(filtroUsuario ? 'Tus tareas' : 'Personas en piso', filtroUsuario ? fmt(esta.tareas) : fmt(esta.personas), '',
-                filtroUsuario ? fmt(pasada.tareas) : fmt(pasada.personas), '',
-                variacion(filtroUsuario ? esta.tareas : esta.personas, filtroUsuario ? pasada.tareas : pasada.personas),
-                `${esta.dias} de ${r.diasCorridos + 1} días con actividad`)
+        tarjetaDia('Unid. almacenadas', sub('footwear'), fmt(hoyFW.almacenado), '', '#fff',
+                   `Footwear bajado del buffer ${cuando}. Pedido al buffer: ${fmt(hoyFW.buffer)}`),
+        tarjetaDia('Personal en turno', sub('todos'), fmt(hoyTodo.personas), '', '#fff',
+                   `Personas asignadas a tareas de almacenaje ${cuando}`),
+        tarjetaDia('Buffer almacenado', sub('footwear'), hoyFW.pct.toFixed(0), '%', colorAvance(hoyFW.pct),
+                   `${fmt(hoyFW.almacenado)} almacenadas de ${fmt(hoyFW.buffer)} pedidas al buffer ${cuando}`),
+        tarjetaDia('Buffer almacenado', sub('todos'), hoyTodo.pct.toFixed(0), '%', colorAvance(hoyTodo.pct),
+                   `${fmt(hoyTodo.almacenado)} almacenadas de ${fmt(hoyTodo.buffer)} pedidas al buffer ${cuando}`)
     ].join('');
 
     // Categorías presentes en cualquiera de las dos semanas, de mayor a menor.
@@ -2749,7 +2808,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.564');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.565');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3084,7 +3143,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.564] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.565] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7777,7 +7836,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.564 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.565 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12279,7 +12338,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.564 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.565 | MOBILE PORTAL
                             </div>
                     </div>
 
