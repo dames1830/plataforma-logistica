@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.557';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.558';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.557';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.557';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.557';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.557';
-import * as metasService from '../services_v245/metasService.js?v=26.5.557';
+import * as adminService from '../services_v245/adminService.js?v=26.5.558';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.558';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.558';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.558';
+import * as metasService from '../services_v245/metasService.js?v=26.5.558';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.557';
+const VERSION = '26.5.558';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1896,55 +1896,59 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     /** Fila de totales por columna: suma de las dos semanas en cada día. */
-    const filaTotalColumnas = (porDia) => {
+    const filaTotalColumnas = (porDia, ultima) => {
         let granTotal = 0;
         const celdas = DIAS_COL.map((_, i) => {
             const v = (porDia.get(aISO(diasPasada[i])) || 0) + (porDia.get(aISO(diasEsta[i])) || 0);
             granTotal += v;
             return `<td style="${CELDA} font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${v ? fmt(v) : '—'}</td>`;
         }).join('');
+        // La línea gruesa de abajo es lo que separa un grupo del siguiente.
         return `
-            <tr style="border-top:2px solid rgba(79,70,229,0.5);">
-                <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+            <tr style="border-bottom:${ultima ? 'none' : '2px solid rgba(255,255,255,0.12)'};">
                 <td style="${ETIQUETA}"></td>
+                <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.68rem;">TOTAL</td>
                 ${celdas}
                 <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(granTotal)}</td>
             </tr>`;
     };
 
-    const tablaDias = (titulo, porDia, destacado) => `
-        <table style="width:100%; table-layout:fixed; border-collapse:collapse; font-size:0.72rem; margin-bottom:1rem; ${destacado ? 'border:1px solid rgba(251,191,36,0.35);' : ''}">
-            ${COLUMNAS}
-            <thead>
-                <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
-                    <th style="${ETIQUETA}">SEM</th>
-                    <th style="${ETIQUETA}">GENDER</th>
-                    ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
-                    <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${filaSemana(`SEM ${semPasada}`, titulo, diasPasada, porDia, false)}
-                ${filaSemana(`SEM ${semEsta}`, titulo, diasEsta, porDia, true)}
-                ${filaTotalColumnas(porDia)}
-            </tbody>
-        </table>`;
+    /** Las tres filas de una categoría: semana pasada, semana en curso y total. */
+    const grupoCategoria = (titulo, porDia, ultima) =>
+        filaSemana(`SEM ${semPasada}`, titulo, diasPasada, porDia, false)
+        + filaSemana(`SEM ${semEsta}`, titulo, diasEsta, porDia, true)
+        + filaTotalColumnas(porDia, ultima);
 
-    // Suma de TODAS las categorías, día por día: el bloque de cierre.
+    // Suma de TODAS las categorías, día por día: el grupo de cierre.
     const porDiaGeneral = new Map();
     detallePorDia.forEach(porDia => {
         porDia.forEach((u, fecha) => porDiaGeneral.set(fecha, (porDiaGeneral.get(fecha) || 0) + u));
     });
 
-    // Un solo contenedor con desplazamiento para TODAS las tablas: si cada una
-    // tuviera el suyo, al desplazar una las demás se quedarían y se perdería
-    // la alineación entre bloques.
+    const hayGeneral = categorias.length > 1;
+    const grupos =
+        categorias.map((g, i) => grupoCategoria(
+            etiquetaCategoria(g) || g,
+            detallePorDia.get(g) || new Map(),
+            !hayGeneral && i === categorias.length - 1)).join('')
+        + (hayGeneral ? grupoCategoria('TODAS', porDiaGeneral, true) : '');
+
+    // UNA sola tabla con la cabecera arriba, no una por categoría: así todas las
+    // columnas comparten geometría por construcción y no queda nada que alinear.
     const bloquesPorDia = `
         <div style="overflow-x:auto;">
-            <div style="min-width:560px;">
-                ${categorias.map(g => tablaDias(etiquetaCategoria(g) || g, detallePorDia.get(g) || new Map(), false)).join('')}
-                ${categorias.length > 1 ? tablaDias('TODAS', porDiaGeneral, true) : ''}
-            </div>
+            <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:0.72rem;">
+                ${COLUMNAS}
+                <thead>
+                    <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
+                        <th style="${ETIQUETA}"></th>
+                        <th style="${ETIQUETA}">GENDER</th>
+                        ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
+                        <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>${grupos}</tbody>
+            </table>
         </div>`;
 
     // --- Marcas almacenadas por semana ---------------------------------------
@@ -2564,7 +2568,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.557');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.558');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2899,7 +2903,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.557] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.558] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7592,7 +7596,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.557 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.558 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12094,7 +12098,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.557 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.558 | MOBILE PORTAL
                             </div>
                     </div>
 
