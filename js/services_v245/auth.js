@@ -17,7 +17,7 @@ const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
 const VERSION = '24.8.0';
 
 /**
- * [SEGURIDAD v26.5.553] La validación la hace EL SERVIDOR.
+ * [SEGURIDAD v26.5.554] La validación la hace EL SERVIDOR.
  *
  * Antes este archivo se descargaba la lista completa de usuarios CON sus
  * contraseñas y las comparaba aquí — cualquiera podía leerlas abriendo el
