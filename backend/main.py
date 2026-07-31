@@ -6,6 +6,10 @@ import sqlite3
 import json
 import os
 import shutil
+import hashlib
+import hmac
+import secrets
+import time
 from contextvars import ContextVar
 from datetime import datetime
 from typing import Optional
@@ -82,6 +86,104 @@ async def detectar_entorno(request: Request, call_next):
     return respuesta
 
 
+# =============================================================================
+# CONTRASEÑAS
+# -----------------------------------------------------------------------------
+# Nunca se guardan ni se devuelven en texto plano. Se guarda una huella
+# irreversible (PBKDF2-SHA256, con sal única por usuario y 200.000 vueltas):
+#
+#     pbkdf2$200000$<sal>$<huella>
+#
+# De la huella no se puede volver a la contraseña. Ni yo, ni el servidor, ni
+# quien se robe la base de datos puede leerlas: solo se puede comprobar si una
+# contraseña que alguien escribe coincide.
+#
+# Las contraseñas viejas en texto plano se siguen aceptando al iniciar sesión
+# (para no dejar a nadie afuera) y se convierten solas al arrancar el servidor.
+# =============================================================================
+
+PBKDF2_VUELTAS = 200_000
+
+
+def hashear_password(plano: str) -> str:
+    sal = secrets.token_bytes(16)
+    huella = hashlib.pbkdf2_hmac("sha256", str(plano).encode("utf-8"), sal, PBKDF2_VUELTAS)
+    return f"pbkdf2${PBKDF2_VUELTAS}${sal.hex()}${huella.hex()}"
+
+
+def es_hash(valor) -> bool:
+    return isinstance(valor, str) and valor.startswith("pbkdf2$")
+
+
+def verificar_password(plano, guardado) -> bool:
+    """Compara sin filtrar información por el tiempo de respuesta."""
+    if not guardado or plano is None:
+        return False
+    if not es_hash(guardado):
+        # Contraseña antigua en texto plano: se acepta, pero está en la lista para migrar.
+        return hmac.compare_digest(str(plano), str(guardado))
+    try:
+        _, vueltas, sal_hex, huella_hex = guardado.split("$")
+        huella = hashlib.pbkdf2_hmac("sha256", str(plano).encode("utf-8"),
+                                     bytes.fromhex(sal_hex), int(vueltas))
+        return hmac.compare_digest(huella.hex(), huella_hex)
+    except Exception:
+        return False
+
+
+def migrar_passwords(ruta: str) -> int:
+    """Convierte a huella las contraseñas que todavía estén en texto plano."""
+    convertidas = 0
+    try:
+        conn = sqlite3.connect(ruta)
+        cur = conn.cursor()
+        for usuario, clave in cur.execute("SELECT username, password FROM users").fetchall():
+            if clave and not es_hash(clave):
+                cur.execute("UPDATE users SET password = ? WHERE username = ?",
+                            (hashear_password(clave), usuario))
+                convertidas += 1
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[SEGURIDAD] No se pudieron migrar las contraseñas de {ruta}: {e}")
+    return convertidas
+
+
+def limpiar_passwords_del_snapshot(ruta: str) -> bool:
+    """
+    El snapshot 'users' guardaba también las contraseñas en texto plano.
+    Aquí se las quitamos: las claves solo viven (con huella) en la tabla users.
+    """
+    try:
+        conn = sqlite3.connect(ruta)
+        cur = conn.cursor()
+        fila = cur.execute(
+            "SELECT data_json FROM logistics_snapshots WHERE area_id='users' AND snapshot_date='MASTER'"
+        ).fetchone()
+        if not fila:
+            conn.close()
+            return False
+
+        usuarios = json.loads(fila[0])
+        if not isinstance(usuarios, list):
+            conn.close()
+            return False
+
+        habia = any(isinstance(u, dict) and u.get("password") for u in usuarios)
+        if habia:
+            limpios = [{k: v for k, v in u.items() if k != "password"}
+                       for u in usuarios if isinstance(u, dict)]
+            cur.execute(
+                "UPDATE logistics_snapshots SET data_json=? WHERE area_id='users' AND snapshot_date='MASTER'",
+                (json.dumps(limpios),))
+            conn.commit()
+        conn.close()
+        return habia
+    except Exception as e:
+        print(f"[SEGURIDAD] No se pudo limpiar el snapshot de usuarios de {ruta}: {e}")
+        return False
+
+
 def hard_reset_if_full():
     """
     Si el disco está totalmente bloqueado (0MB libres), liberamos espacio.
@@ -139,20 +241,18 @@ def init_db(ruta: Optional[str] = None):
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_history (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, paletas_solicitadas INTEGER NOT NULL, paletas_bajadas INTEGER NOT NULL, diferencias INTEGER NOT NULL, fill_rate TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_kpi_results (fecha TEXT PRIMARY KEY, results_json TEXT NOT NULL, row_count INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     
-    # Sembrar Usuarios Base (Recuperados de Captura)
+    # Base recién creada: se siembra UN administrador para poder entrar.
+    # La contraseña NO está escrita en el código: sale de la variable de entorno
+    # ADMIN_INITIAL_PASSWORD y, si no existe, se inventa una al azar y se anota
+    # en el log del servidor. Así este archivo no revela ninguna credencial.
     if cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
-        cursor.execute("INSERT INTO users (username, password, name, role) VALUES ('dames', 'Bata1830', 'Daniel Ames', 'admin')")
-        # Sembrar otros usuarios detectados
-        users = [
-            ('eleon', 'Bata1830', 'E. Leon', 'supervisor'),
-            ('jgarcia', 'Bata1830', 'J. Garcia', 'supervisor'),
-            ('jcuevas', 'Bata1830', 'J. Cuevas', 'supervisor'),
-            ('emayuri', 'Bata1830', 'E. Mayuri', 'supervisor'),
-            ('jpelaez', 'Bata1830', 'J. Pelaez', 'supervisor')
-        ]
-        for u in users:
-            try: cursor.execute("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", u)
-            except: pass
+        clave_inicial = os.environ.get("ADMIN_INITIAL_PASSWORD") or secrets.token_urlsafe(12)
+        cursor.execute(
+            "INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)",
+            ("dames", hashear_password(clave_inicial), "Daniel Ames", "admin"))
+        origen_clave = "ADMIN_INITIAL_PASSWORD" if os.environ.get("ADMIN_INITIAL_PASSWORD") else "generada al azar"
+        print(f"[SEGURIDAD] Base nueva en {ruta}. Admin 'dames' creado. "
+              f"Contraseña ({origen_clave}): {clave_inicial}")
 
     conn.commit()
     conn.close()
@@ -207,6 +307,16 @@ try:
     print(f"[PULSE] Entorno de PRUEBAS listo en: {DB_PATH_BETA}")
 except Exception as beta_db_err:
     print(f"[PULSE] Aviso: no se pudo preparar la base de pruebas: {beta_db_err}")
+
+# Seguridad: ninguna contraseña puede quedar en texto plano, en ninguna de las
+# dos bases. Se ejecuta en cada arranque; si ya está todo migrado no hace nada.
+for _ruta_db in (DB_PATH, DB_PATH_BETA):
+    if os.path.exists(_ruta_db):
+        _n = migrar_passwords(_ruta_db)
+        _limpio = limpiar_passwords_del_snapshot(_ruta_db)
+        if _n or _limpio:
+            print(f"[SEGURIDAD] {_ruta_db}: {_n} contraseña(s) cifrada(s)"
+                  + (", snapshot de usuarios limpiado" if _limpio else ""))
 
 
 @app.get("/api/health")
@@ -452,7 +562,9 @@ def get_area_data(area: str, date: Optional[str] = None):
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         if area == 'users':
-            # Auto-saneamiento/sincronización en el GET si la tabla 'users' no coincide con el snapshot guardado
+            # Auto-saneamiento: si el snapshot y la tabla 'users' no coinciden, manda
+            # el snapshot para ALTAS/BAJAS y datos, pero NUNCA toca las contraseñas
+            # (el snapshot ya no las guarda; viven solo aquí, cifradas).
             cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = 'users' AND snapshot_date = 'MASTER'")
             snap_row = cursor.fetchone()
             if snap_row:
@@ -460,34 +572,46 @@ def get_area_data(area: str, date: Optional[str] = None):
                 cursor.execute("SELECT username FROM users")
                 db_usernames = {r[0] for r in cursor.fetchall()}
                 snap_usernames = {u.get('username') for u in snap_users if u.get('username')}
-                
+
                 if db_usernames != snap_usernames:
                     if snap_usernames:
                         cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(snap_usernames))), list(snap_usernames))
                     else:
                         cursor.execute("DELETE FROM users")
-                    
+
                     for u in snap_users:
                         username = u.get('username')
-                        password = u.get('password')
                         name = u.get('name')
                         role = u.get('role')
                         active = 1 if u.get('active', True) else 0
-                        if username and password and name and role:
+                        if not (username and name and role):
+                            continue
+
+                        if username in db_usernames:
+                            # Ya existía: se actualizan sus datos, su contraseña queda como está.
+                            cursor.execute(
+                                "UPDATE users SET name=?, role=?, active=? WHERE username=?",
+                                (name, role, active, username))
+                        else:
+                            # Usuario nuevo que solo aparece en el snapshot: se crea con una
+                            # contraseña imposible de adivinar. Hay que asignarle una desde
+                            # el panel para que pueda entrar.
                             cursor.execute("""
                                 INSERT INTO users (username, password, name, role, active)
                                 VALUES (?, ?, ?, ?, ?)
-                                ON CONFLICT(username) DO UPDATE SET 
-                                    password=excluded.password,
+                                ON CONFLICT(username) DO UPDATE SET
                                     name=excluded.name,
                                     role=excluded.role,
                                     active=excluded.active
-                            """, (username, password, name, role, active))
+                            """, (username, hashear_password(secrets.token_urlsafe(24)), name, role, active))
                     conn.commit()
-            
-            cursor.execute("SELECT username, password, name, role, active FROM users")
+
+            # IMPORTANTE: la contraseña NO se devuelve nunca. Solo se informa si el
+            # usuario tiene una asignada, para que el panel pueda mostrarlo.
+            cursor.execute("SELECT username, name, role, active, password FROM users")
             rows = cursor.fetchall()
-            data = [{"username": r[0], "password": r[1], "name": r[2], "role": r[3], "active": bool(r[4])} for r in rows]
+            data = [{"username": r[0], "name": r[1], "role": r[2],
+                     "active": bool(r[3]), "tiene_password": bool(r[4])} for r in rows]
             conn.close()
             return {"area": "users", "data": data}
             
@@ -539,8 +663,24 @@ def get_area_data(area: str, date: Optional[str] = None):
 async def save_area_data(area: str, request: Request, date: Optional[str] = None):
     try:
         payload_data = await request.json()
+
+        # Las contraseñas que lleguen se procesan aparte y JAMÁS se escriben en el
+        # snapshot: ahí solo van los datos públicos del usuario.
+        passwords_recibidas = {}
+        if area == 'users' and isinstance(payload_data, list):
+            limpio = []
+            for u in payload_data:
+                if not isinstance(u, dict):
+                    continue
+                usuario = u.get('username')
+                clave = u.get('password')
+                if usuario and clave:
+                    passwords_recibidas[usuario] = clave
+                limpio.append({k: v for k, v in u.items() if k != 'password'})
+            payload_data = limpio
+
         json_string = json.dumps(payload_data)
-        
+
         # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
         SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
@@ -576,31 +716,58 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
             conn.commit(); conn.close()
 
         # [MOD v25.1.28] Sincronización explícita con la tabla 'users' para mantener el login operativo
+        # [SEGURIDAD] Si un usuario llega SIN contraseña, se conserva la que ya tenía.
+        # Antes esto borraba la clave de todos, porque la web ya no las descarga.
         if area == 'users' and isinstance(payload_data, list):
             conn = sqlite3.connect(db_path()); cursor = conn.cursor()
+
+            existentes = {r[0] for r in cursor.execute("SELECT username FROM users").fetchall()}
+
             sent_usernames = [u.get('username') for u in payload_data if u.get('username')]
             if sent_usernames:
                 cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(sent_usernames))), sent_usernames)
             else:
                 cursor.execute("DELETE FROM users")
-            
+
             for u in payload_data:
                 username = u.get('username')
-                password = u.get('password')
                 name = u.get('name')
                 role = u.get('role')
                 active = 1 if u.get('active', True) else 0
-                
-                if username and password and name and role:
+                if not (username and name and role):
+                    continue
+
+                clave_nueva = passwords_recibidas.get(username)
+
+                if clave_nueva:
+                    # Llegó contraseña: se guarda su huella (nunca el texto).
+                    guardada = clave_nueva if es_hash(clave_nueva) else hashear_password(clave_nueva)
                     cursor.execute("""
                         INSERT INTO users (username, password, name, role, active)
                         VALUES (?, ?, ?, ?, ?)
-                        ON CONFLICT(username) DO UPDATE SET 
+                        ON CONFLICT(username) DO UPDATE SET
                             password=excluded.password,
                             name=excluded.name,
                             role=excluded.role,
                             active=excluded.active
-                    """, (username, password, name, role, active))
+                    """, (username, guardada, name, role, active))
+                elif username in existentes:
+                    # Sin contraseña y ya existía: se respeta la que tiene.
+                    cursor.execute(
+                        "UPDATE users SET name=?, role=?, active=? WHERE username=?",
+                        (name, role, active, username))
+                else:
+                    # Usuario nuevo sin contraseña: se crea bloqueado hasta que se le
+                    # asigne una desde el panel (no puede entrar con clave vacía).
+                    cursor.execute("""
+                        INSERT INTO users (username, password, name, role, active)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(username) DO UPDATE SET
+                            name=excluded.name,
+                            role=excluded.role,
+                            active=excluded.active
+                    """, (username, hashear_password(secrets.token_urlsafe(24)), name, role, active))
+
             conn.commit(); conn.close()
         
         # Podar snapshots antiguos si el área guardada no es singleton para liberar espacio
@@ -628,7 +795,10 @@ async def restore_users(request: Request):
         data = await request.json()
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         for u in data:
-            cursor.execute("INSERT INTO users (username, password, name, role, active) VALUES (?, ?, ?, ?, ?) ON CONFLICT(username) DO UPDATE SET password=excluded.password, name=excluded.name, role=excluded.role, active=excluded.active", (u['username'], u['password'], u['name'], u['role'], u.get('active', 1)))
+            # La contraseña se guarda siempre como huella, nunca en texto plano.
+            clave = u.get('password')
+            guardada = clave if es_hash(clave) else hashear_password(clave or secrets.token_urlsafe(24))
+            cursor.execute("INSERT INTO users (username, password, name, role, active) VALUES (?, ?, ?, ?, ?) ON CONFLICT(username) DO UPDATE SET password=excluded.password, name=excluded.name, role=excluded.role, active=excluded.active", (u['username'], guardada, u['name'], u['role'], u.get('active', 1)))
         conn.commit(); conn.close()
         return {"status": "success", "message": f"{len(data)} usuarios restaurados"}
     except Exception as e: return {"status": "error", "message": str(e)}
@@ -750,16 +920,50 @@ async def save_buffer_config(request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+# Intentos fallidos recientes por usuario, para frenar el probar-claves-a-lo-loco.
+_intentos_fallidos = {}
+
+
 @app.post("/api/auth/login")
 async def api_login(request: Request):
+    """
+    Verifica usuario y contraseña EN EL SERVIDOR contra la huella guardada.
+    La contraseña nunca sale de aquí ni se devuelve en ninguna respuesta.
+    """
     try:
         body = await request.json()
+        usuario = str(body.get("username") or "").strip()
+        clave = body.get("password")
+
+        if not usuario or not clave:
+            return {"success": False, "message": "Faltan usuario o contraseña"}
+
+        # Freno progresivo: cada fallo reciente añade espera, hasta 2 segundos.
+        fallos = _intentos_fallidos.get(usuario.lower(), 0)
+        if fallos:
+            time.sleep(min(0.25 * fallos, 2.0))
+
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
-        cursor.execute("SELECT id, username, name, role FROM users WHERE username = ? AND password = ? AND active = 1", (body.get("username"), body.get("password")))
-        row = cursor.fetchone(); conn.close()
-        if row: return {"success": True, "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
-        return {"success": False, "message": "Credenciales inválidas"}
-    except Exception as e: return {"status": "error", "message": str(e)}
+        cursor.execute(
+            "SELECT id, username, name, role, password, active FROM users WHERE LOWER(username) = LOWER(?)",
+            (usuario,))
+        row = cursor.fetchone()
+        conn.close()
+
+        # Mensaje único para usuario inexistente y contraseña mala: no le decimos
+        # a nadie cuáles usuarios existen.
+        if not row or not verificar_password(clave, row[4]):
+            _intentos_fallidos[usuario.lower()] = min(fallos + 1, 20)
+            return {"success": False, "message": "Usuario o contraseña incorrectos"}
+
+        if not row[5]:
+            return {"success": False, "message": "Usuario inactivo o desactivado"}
+
+        _intentos_fallidos.pop(usuario.lower(), None)
+        return {"success": True,
+                "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
+    except Exception as e:
+        return {"success": False, "message": "No se pudo validar el acceso", "detalle": str(e)}
 
 @app.post("/api/admin/db_cleanup")
 def force_db_cleanup():

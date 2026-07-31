@@ -16,75 +16,67 @@ const getApiBase = (defaultUrl) => {
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
 const VERSION = '24.8.0';
 
-// Fallback local en caso de que el servidor esté caído
+/**
+ * [SEGURIDAD v26.5.547] La validación la hace EL SERVIDOR.
+ *
+ * Antes este archivo se descargaba la lista completa de usuarios CON sus
+ * contraseñas y las comparaba aquí — cualquiera podía leerlas abriendo el
+ * archivo o llamando a la API. Además tenía una clave maestra escrita a mano.
+ *
+ * Ahora solo se mandan usuario y contraseña al servidor, que responde sí o no.
+ * Las contraseñas nunca llegan al navegador.
+ */
 export const login = async (username, password) => {
-  const targetUsername = (username || '').toLowerCase();
-  console.log(`[ULTRA] Intento de login: ${targetUsername}`);
+  const targetUsername = (username || '').trim().toLowerCase();
+  console.log(`[AUTH] Intento de login: ${targetUsername}`);
 
-  // 1. PRIORIDAD MAESTRO (Siempre entra, no depende de nada)
-  if (targetUsername === 'dames' && password === 'Bata1830') {
-      const sessionData = { id: 1, username: 'dames', role: 'admin', name: 'Daniel Ames' };
-      localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-      return { success: true, user: sessionData };
+  if (!targetUsername || !password) {
+      return { success: false, message: 'Escribe tu usuario y tu contraseña' };
   }
 
-  let dynamicUsers = [];
-  let isCloudSuccess = false;
-
+  let respuesta;
   try {
-      // 2. SINCRONIZACIÓN FORZADA (Intentar siempre traer base de datos fresca del servidor)
-      console.log("[ULTRA] Consultando base de datos del servidor para validación...");
-      const cloudRes = await fetch(`${AUTH_API}/logistics/users?z=${Date.now()}`, { 
+      const res = await fetch(`${AUTH_API}/auth/login`, {
+          method: 'POST',
           cache: 'no-store',
-          headers: { 
-            'Cache-Control': 'no-cache',
-            'X-Environment': 'production'
-          }
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+          body: JSON.stringify({ username: targetUsername, password })
       });
-      
-      if (cloudRes.ok) {
-          const result = await cloudRes.json();
-          let serverList = [];
-          if (Array.isArray(result)) {
-              serverList = result;
-          } else if (result && result.data) {
-              serverList = Array.isArray(result.data) ? result.data : (result.data.data || []);
-          } else if (result) {
-              serverList = result;
-          }
-
-          if (Array.isArray(serverList)) {
-              dynamicUsers = serverList;
-              localStorage.setItem('logistics_admin_v11_users', JSON.stringify(dynamicUsers));
-              isCloudSuccess = true;
-              console.log("[ULTRA] Base de usuarios actualizada desde el servidor.");
-          }
-      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      respuesta = await res.json();
   } catch (err) {
-      console.warn("[ULTRA] Error de conexión al servidor durante el login:", err);
-  }
-
-  // Si falló la red, rechazar el login inmediatamente (Plan B Eliminado)
-  if (!isCloudSuccess) {
+      console.warn('[AUTH] Error de conexión durante el login:', err);
       return { success: false, message: 'Error de conexión. Se requiere internet para iniciar sesión.' };
   }
 
-  // 4. VALIDACIÓN DE CREDENCIALES
-  const u = dynamicUsers.find(x => x && (x.username || '').toLowerCase() === targetUsername);
-  if (u) {
-      if (u.active === false) {
-          console.warn(`🚨 Acceso denegado: El usuario ${targetUsername} está desactivado.`);
-          return { success: false, message: 'Usuario inactivo o desactivado' };
-      }
-      if (String(u.password) === String(password)) {
-          console.log(`[ULTRA] Acceso concedido para ${targetUsername} (NUBE).`);
-          const sessionData = { id: Date.now(), username: u.username, role: u.role, name: u.name };
-          localStorage.setItem('logistics_session', JSON.stringify(sessionData));
-          return { success: true, user: sessionData };
-      }
+  if (!respuesta || !respuesta.success) {
+      return { success: false, message: (respuesta && respuesta.message) || 'Usuario o contraseña incorrectos' };
   }
 
-  return { success: false, message: 'Usuario no reconocido o contraseña incorrecta' };
+  const u = respuesta.user || {};
+  const sessionData = { id: u.id, username: u.username, role: u.role, name: u.name };
+  localStorage.setItem('logistics_session', JSON.stringify(sessionData));
+  console.log(`[AUTH] Acceso concedido para ${sessionData.username}.`);
+
+  // La lista de usuarios (ya SIN contraseñas) se guarda solo para poder revocar
+  // sesiones de usuarios desactivados. Si falla, el login igual es válido.
+  try {
+      const lista = await fetch(`${AUTH_API}/logistics/users?z=${Date.now()}`, {
+          cache: 'no-store', headers: { 'Cache-Control': 'no-cache' }
+      });
+      if (lista.ok) {
+          const result = await lista.json();
+          const serverList = Array.isArray(result) ? result
+                           : (result && Array.isArray(result.data)) ? result.data : [];
+          if (serverList.length) {
+              localStorage.setItem('logistics_admin_v11_users', JSON.stringify(serverList));
+          }
+      }
+  } catch (err) {
+      console.warn('[AUTH] No se pudo refrescar la lista de usuarios:', err);
+  }
+
+  return { success: true, user: sessionData };
 };
 
 export const logout = () => {

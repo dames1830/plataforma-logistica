@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.545';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.547';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.545';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.545';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.545';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.545';
-import * as metasService from '../services_v245/metasService.js?v=26.5.545';
+import * as adminService from '../services_v245/adminService.js?v=26.5.547';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.547';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.547';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.547';
+import * as metasService from '../services_v245/metasService.js?v=26.5.547';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.545';
+const VERSION = '26.5.547';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2116,7 +2116,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.545');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.547');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2370,11 +2370,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     </td>
                                     <td style="padding:0.8rem; font-weight:600;">${u.name}</td>
                                     <td style="padding:0.8rem; color:var(--text-muted);">${u.username}</td>
-                                    <td style="padding:0.8rem; font-family:monospace;">
-                                        <div style="display:flex; align-items:center; gap:10px;">
-                                            <span id="pass_${u.username}" data-p="${u.password}" style="color:#fcd34d;">••••••••</span>
-                                            <button class="btn-toggle-pass" data-target="pass_${u.username}" style="background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0;">👁️</button>
-                                        </div>
+                                    <td style="padding:0.8rem;">
+                                        <span title="Las contraseñas se guardan cifradas: ni el sistema puede leerlas. Para cambiarla, edita el usuario." style="display:inline-flex; align-items:center; gap:6px; color:#86efac; font-size:0.72rem; font-weight:700;">
+                                            🔒 ${u.tiene_password === false ? 'SIN ASIGNAR' : 'PROTEGIDA'}
+                                        </span>
                                     </td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(79,70,229,0.2); color:#a5b4fc; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
                                     <td style="padding:0.8rem; text-align:center;">
@@ -2452,21 +2451,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // LÓGICA DE MOSTRAR/OCULTAR CONTRASEÑA
-    container.querySelectorAll('.btn-toggle-pass').forEach(btn => {
-        btn.onclick = (e) => {
-            const targetId = e.currentTarget.dataset.target;
-            const span = document.getElementById(targetId);
-            const realPass = span.dataset.p;
-            if (span.textContent === '••••••••') {
-                span.textContent = realPass;
-                e.currentTarget.textContent = '🙈';
-            } else {
-                span.textContent = '••••••••';
-                e.currentTarget.textContent = '👁️';
-            }
-        };
-    });
+    // [SEGURIDAD v26.5.547] Ya no existe el botón de "ver contraseña": las
+    // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
         e.preventDefault();
@@ -2475,10 +2461,20 @@ export const renderDashboard = async (container, user, onLogout) => {
             const newUser = {
                 name: uName.value,
                 username: uUser.value,
-                password: uPass.value,
                 role: uRole.value
             };
-            
+
+            // Solo se manda la contraseña si el campo trae algo. Si va vacío al
+            // editar, el servidor conserva la que el usuario ya tenía.
+            const claveEscrita = (uPass.value || '').trim();
+            if (claveEscrita) newUser.password = claveEscrita;
+
+            if (!isEditing && !claveEscrita) {
+                alert('⚠️ Un usuario nuevo necesita una contraseña.');
+                btnSubmit.disabled = false;
+                return;
+            }
+
             // Deshabilitar botón durante el proceso
             btnSubmit.disabled = true;
             btnSubmit.textContent = "⏳ GUARDANDO...";
@@ -2491,6 +2487,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 if (isEditing) {
                     uUser.readOnly = false;
                     uUser.style.opacity = '1';
+                    // Volver al modo "usuario nuevo": ahí la contraseña sí es obligatoria.
+                    uPass.required = true;
+                    uPass.placeholder = '••••••••';
                     uTitle.textContent = "Nuevo Usuario";
                     btnSubmit.textContent = "GUARDAR USUARIO";
                     btnCancel.style.display = 'none';
@@ -2517,9 +2516,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         uUser.value = u.username;
         uUser.readOnly = true; // No permitir cambiar el login
         uUser.style.opacity = '0.5';
-        uPass.value = u.password;
+        // La contraseña actual no se puede recuperar (está cifrada). En blanco se
+        // conserva la que tiene; escribiendo algo se reemplaza.
+        uPass.value = '';
+        uPass.required = false;
+        uPass.placeholder = 'Dejar en blanco para no cambiarla';
         uRole.value = u.role;
-        
+
         uTitle.textContent = "Editar Usuario";
         btnSubmit.textContent = "ACTUALIZAR DATOS";
         btnCancel.style.display = 'block';
@@ -2530,6 +2533,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         form.reset();
         uUser.readOnly = false;
         uUser.style.opacity = '1';
+        uPass.required = true;
+        uPass.placeholder = '••••••••';
         uTitle.textContent = "Nuevo Usuario";
         btnSubmit.textContent = "GUARDAR USUARIO";
         btnCancel.style.display = 'none';
@@ -11626,7 +11631,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.545 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.547 | MOBILE PORTAL
                             </div>
                     </div>
 
