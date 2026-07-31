@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.566';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.567';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.566';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.566';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.566';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.566';
-import * as metasService from '../services_v245/metasService.js?v=26.5.566';
+import * as adminService from '../services_v245/adminService.js?v=26.5.567';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.567';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.567';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.567';
+import * as metasService from '../services_v245/metasService.js?v=26.5.567';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.566';
+const VERSION = '26.5.567';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1765,8 +1765,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     // pantalla, y el saludo no puede comerse el espacio de los datos.
     const cabecera = `
         <div class="animate-fade-in" style="display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:0.7rem;">
-            <h1 style="margin:0; font-size:1.15rem; font-weight:900; letter-spacing:-0.3px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
-            <div id="homeClock" style="color:var(--text-muted); font-weight:700; font-size:0.72rem;">
+            <h1 style="margin:0; font-size:1.55rem; font-weight:900; letter-spacing:-0.4px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+            <div id="homeClock" style="color:var(--text-muted); font-weight:700; font-size:0.8rem;">
                 ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
             </div>
         </div>`;
@@ -2158,13 +2158,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         return `<td style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap;">${celdaValor(fmt(v), flecha)}</td>`;
     }).join('');
 
-    const LEYENDA = `<span style="font-size:0.62rem; color:var(--text-muted); font-weight:600;">contra la semana anterior: <b style="color:#22c55e;">▲</b> sube <b style="color:#fbbf24;">=</b> igual <b style="color:#ef4444;">▼</b> baja</span>`;
-
     const panelDias = `
         <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 520px; min-width:0;">
-            <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:0.5rem;">
+            <div style="margin-bottom:0.5rem;">
                 <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
-                ${LEYENDA}
             </div>
             ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
         </div>`;
@@ -2808,7 +2805,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.566');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.567');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3143,7 +3140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.566] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.567] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7836,7 +7833,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.566 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.567 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12338,7 +12335,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.566 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.567 | MOBILE PORTAL
                             </div>
                     </div>
 
