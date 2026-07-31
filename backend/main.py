@@ -237,30 +237,138 @@ def _mb(ruta: str) -> float:
 
 
 @app.get("/api/admin/entornos")
-def estado_entornos():
-    """Radiografía de los dos entornos: qué tan grandes son y cuánto disco queda."""
+def estado_entornos(detalle: bool = False):
+    """
+    Radiografía de los dos entornos: qué tan grandes son y cuánto disco queda.
+
+    Con ?detalle=true agrega el desglose de qué áreas están ocupando el espacio
+    en producción (útil para saber qué conviene limpiar).
+    """
     try:
         _, _, libre = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
-        return {
+        respuesta = {
             "status": "ok",
             "atendiendo_como": entorno_actual(),
             "produccion": {"archivo": DB_PATH, "existe": os.path.exists(DB_PATH), "tamano_mb": _mb(DB_PATH)},
             "pruebas": {"archivo": DB_PATH_BETA, "existe": os.path.exists(DB_PATH_BETA), "tamano_mb": _mb(DB_PATH_BETA)},
             "disco_libre_mb": round(libre / (1024*1024), 2),
         }
+
+        if detalle and os.path.exists(DB_PATH):
+            conn = sqlite3.connect(DB_PATH)
+            try:
+                filas = conn.execute("""
+                    SELECT area_id,
+                           COUNT(*)               AS copias,
+                           SUM(LENGTH(data_json)) AS bytes
+                    FROM logistics_snapshots
+                    GROUP BY area_id
+                    ORDER BY bytes DESC
+                    LIMIT 25
+                """).fetchall()
+            finally:
+                conn.close()
+            respuesta["areas_mas_pesadas"] = [
+                {"area": f[0], "copias_guardadas": f[1], "peso_mb": round((f[2] or 0) / (1024*1024), 2)}
+                for f in filas
+            ]
+
+        return respuesta
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/api/admin/clonar-a-beta")
-def clonar_produccion_a_beta(confirmar: str = ""):
+# Tablas chicas (usuarios, permisos, configuración...): se copian enteras.
+TABLAS_LIGERAS = ['users', 'role_permissions', 'buffer_config', 'shared_data',
+                  'buffer_history', 'buffer_kpi_results']
+
+# En la copia ligera, un snapshot más pesado que esto se deja fuera (suelen ser
+# cachés de fotos: no aportan nada a una prueba y se llevan casi todo el disco).
+LIMITE_SNAPSHOT_MB = 8.0
+
+
+def _clonar_ligera(limite_mb: float) -> dict:
     """
-    Copia la base de PRODUCCIÓN encima de la de PRUEBAS.
+    Arma la base de PRUEBAS desde cero copiando de producción solo lo útil:
+      - las tablas chicas completas (usuarios, permisos, configuración, ...)
+      - de cada área, únicamente su versión más reciente
+      - saltando las áreas cuyo contenido pese más que el límite
+
+    Nunca escribe en producción: la abre solo para leer.
+    """
+    resumen = {"tablas_copiadas": {}, "areas_copiadas": 0, "areas_omitidas": []}
+
+    if os.path.exists(DB_PATH_BETA):
+        os.remove(DB_PATH_BETA)
+    init_db(DB_PATH_BETA)                      # crea la estructura vacía
+
+    origen = sqlite3.connect(DB_PATH)
+    destino = sqlite3.connect(DB_PATH_BETA)
+    try:
+        cur_o, cur_d = origen.cursor(), destino.cursor()
+
+        # 1) Tablas chicas, completas
+        for tabla in TABLAS_LIGERAS:
+            try:
+                filas = cur_o.execute(f"SELECT * FROM {tabla}").fetchall()
+            except sqlite3.Error:
+                continue                        # esa tabla no existe en el origen
+            cur_d.execute(f"DELETE FROM {tabla}")
+            if filas:
+                marcadores = ",".join(["?"] * len(filas[0]))
+                cur_d.executemany(f"INSERT INTO {tabla} VALUES ({marcadores})", filas)
+            resumen["tablas_copiadas"][tabla] = len(filas)
+
+        # 2) Áreas: solo la versión más reciente de cada una, y solo si no pesa demasiado
+        cur_d.execute("DELETE FROM logistics_snapshots")
+        limite_bytes = int(limite_mb * 1024 * 1024)
+        areas = [r[0] for r in cur_o.execute("SELECT DISTINCT area_id FROM logistics_snapshots")]
+
+        for area in areas:
+            fila = cur_o.execute("""
+                SELECT area_id, snapshot_date, data_json, updated_at, LENGTH(data_json)
+                FROM logistics_snapshots
+                WHERE area_id = ?
+                ORDER BY snapshot_date DESC
+                LIMIT 1
+            """, (area,)).fetchone()
+            if not fila:
+                continue
+
+            peso = fila[4] or 0
+            if peso > limite_bytes:
+                resumen["areas_omitidas"].append(
+                    {"area": area, "peso_mb": round(peso / (1024*1024), 2)})
+                continue
+
+            cur_d.execute("""
+                INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
+                VALUES (?, ?, ?, ?)
+            """, fila[:4])
+            resumen["areas_copiadas"] += 1
+
+        destino.commit()
+    finally:
+        destino.close()
+        origen.close()
+
+    return resumen
+
+
+@app.post("/api/admin/clonar-a-beta")
+def clonar_produccion_a_beta(confirmar: str = "", modo: str = "ligera",
+                             limite_mb: float = LIMITE_SNAPSHOT_MB):
+    """
+    Copia datos de PRODUCCIÓN al entorno de PRUEBAS.
 
     La dirección es SIEMPRE producción -> pruebas. Nunca al revés: este endpoint
-    no tiene forma de escribir en producción, solo la lee.
+    abre producción en modo lectura y jamás le escribe.
 
-    Hay que confirmar a propósito:  POST /api/admin/clonar-a-beta?confirmar=COPIAR-A-BETA
+      modo=ligera   (por defecto) solo lo útil para probar; ocupa poco disco
+      modo=completa  copia byte por byte; necesita tanto espacio como la base real
+
+    Hay que confirmar a propósito:
+      POST /api/admin/clonar-a-beta?confirmar=COPIAR-A-BETA
     """
     if confirmar != "COPIAR-A-BETA":
         return {"status": "error",
@@ -268,6 +376,10 @@ def clonar_produccion_a_beta(confirmar: str = ""):
 
     if not os.path.exists(DB_PATH):
         return {"status": "error", "message": "No existe la base de producción; no hay nada que copiar."}
+
+    modo = (modo or "ligera").strip().lower()
+    if modo not in ("ligera", "completa"):
+        return {"status": "error", "message": "El modo debe ser 'ligera' o 'completa'."}
 
     try:
         carpeta = os.path.dirname(DB_PATH) or "."
@@ -279,26 +391,42 @@ def clonar_produccion_a_beta(confirmar: str = ""):
             os.remove(DB_PATH_BETA)
 
         _, _, libre = shutil.disk_usage(carpeta)
-        necesario = tamano_origen * 1.15 + (20 * 1024 * 1024)   # 15% de holgura + 20MB
+
+        if modo == "completa":
+            necesario = tamano_origen * 1.15 + (20 * 1024 * 1024)   # 15% de holgura + 20MB
+        else:
+            necesario = 50 * 1024 * 1024                            # a la ligera le sobra con esto
+
         if libre < necesario:
             return {"status": "error",
-                    "message": (f"Espacio insuficiente. La copia necesita ~{necesario/(1024*1024):.0f}MB "
+                    "message": (f"Espacio insuficiente. La copia '{modo}' necesita ~{necesario/(1024*1024):.0f}MB "
                                 f"y solo hay {libre/(1024*1024):.0f}MB libres. No se copió nada.")}
 
-        # backup() de SQLite: copia consistente aunque el servidor esté atendiendo.
-        origen = sqlite3.connect(DB_PATH)
-        destino = sqlite3.connect(DB_PATH_BETA)
-        try:
-            origen.backup(destino)
-        finally:
-            destino.close()
-            origen.close()
+        if modo == "completa":
+            # backup() de SQLite: copia consistente aunque el servidor esté atendiendo.
+            origen = sqlite3.connect(DB_PATH)
+            destino = sqlite3.connect(DB_PATH_BETA)
+            try:
+                origen.backup(destino)
+            finally:
+                destino.close()
+                origen.close()
+            detalle = {"modo": "completa"}
+        else:
+            detalle = _clonar_ligera(limite_mb)
+            detalle["modo"] = "ligera"
+            detalle["limite_por_area_mb"] = limite_mb
+
+        _, _, libre_despues = shutil.disk_usage(carpeta)
 
         return {
             "status": "ok",
-            "message": "Datos de producción copiados al entorno de pruebas.",
+            "message": f"Datos de producción copiados al entorno de pruebas (copia {modo}).",
             "copiado_mb": _mb(DB_PATH_BETA),
+            "produccion_mb": _mb(DB_PATH),
+            "disco_libre_mb": round(libre_despues / (1024*1024), 2),
             "produccion_intacta": True,
+            "detalle": detalle,
             "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
