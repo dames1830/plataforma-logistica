@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.560';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.561';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.560';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.560';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.560';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.560';
-import * as metasService from '../services_v245/metasService.js?v=26.5.560';
+import * as adminService from '../services_v245/adminService.js?v=26.5.561';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.561';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.561';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.561';
+import * as metasService from '../services_v245/metasService.js?v=26.5.561';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.560';
+const VERSION = '26.5.561';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1814,13 +1814,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // --- Tarjetas grandes -----------------------------------------------------
     const tarjeta = (titulo, valor, sufijo, valorPrev, sufijoPrev, v, pie) => `
-        <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.15rem; padding:0.7rem 0.9rem;">
-            <h4 style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">${titulo}</h4>
+        <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.15rem; padding:0.85rem 1rem;">
+            <h4 style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">${titulo}</h4>
             <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-                <h2 style="font-size:1.5rem; font-weight:900; color:#fff; margin:0; line-height:1.15;">${valor}<span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+                <h2 style="font-size:1.75rem; font-weight:900; color:#fff; margin:0; line-height:1.15;">${valor}<span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
                 ${chipVar(v, false)}
             </div>
-            <div style="font-size:0.63rem; color:var(--text-muted);">antes: <b style="color:rgba(255,255,255,0.6);">${valorPrev}${sufijoPrev}</b>${pie ? ` · ${pie}` : ''}</div>
+            <div style="font-size:0.69rem; color:var(--text-muted);">antes: <b style="color:rgba(255,255,255,0.6);">${valorPrev}${sufijoPrev}</b>${pie ? ` · ${pie}` : ''}</div>
         </div>`;
 
     const tarjetas = [
@@ -1865,8 +1865,8 @@ export const renderDashboard = async (container, user, onLogout) => {
     // vale más que la otra. El total se distingue por la línea y el peso de la
     // tipografía, sin fondos que ensucien la lectura.
     const CELDA_TOTAL = 'border-left:1px solid rgba(79,70,229,0.45);';
-    const CELDA = 'padding:0.18rem 0.4rem; text-align:center;';
-    const ETIQUETA = 'padding:0.18rem 0.45rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+    const CELDA = 'padding:0.27rem 0.45rem; text-align:center;';
+    const ETIQUETA = 'padding:0.27rem 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
 
     // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
     // los suyos según su contenido y el LUNES de una categoría no queda encima
@@ -2001,7 +2001,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     ${flechaKpi(vAct, vPrev)}
                 </summary>
                 <div style="overflow-x:auto; padding-top:0.25rem;">
-                    <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:0.7rem;">
+                    <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:0.79rem;">
                         ${COLUMNAS}
                         <thead>
                             <tr style="color:var(--text-muted); font-size:0.55rem; letter-spacing:0.4px;">
@@ -2088,7 +2088,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const panelDias = `
         <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 520px; min-width:0;">
             <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:0.5rem;">
-                <h3 style="margin:0; color:#fff; font-size:0.85rem; font-weight:800;">Detalle por día</h3>
+                <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
                 ${LEYENDA}
             </div>
             ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
@@ -2097,11 +2097,11 @@ export const renderDashboard = async (container, user, onLogout) => {
     const panelMarcas = `
         <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 320px; min-width:0;">
             <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:0.5rem;">
-                <h3 style="margin:0; color:#fff; font-size:0.85rem; font-weight:800;">Marcas · Footwear</h3>
+                <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Marcas · Footwear</h3>
                 <span style="font-size:0.62rem; color:var(--text-muted); font-weight:600;">últimas 4 semanas</span>
             </div>
             <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; min-width:340px; font-size:0.72rem;">
+                <table style="width:100%; border-collapse:collapse; min-width:340px; font-size:0.79rem;">
                     <thead>
                         <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
                             <th style="${ETIQUETA}">MARCA</th>
@@ -2125,8 +2125,9 @@ export const renderDashboard = async (container, user, onLogout) => {
         </div>`;
 
     // Se acomodan solos: lado a lado en pantalla ancha, uno debajo del otro
-    // cuando no caben. Sin necesidad de media queries.
-    const grafico = `<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">${panelDias}${panelMarcas}</div>`;
+    // cuando no caben. `stretch` los deja de la misma altura; el alto real lo
+    // fija ajustarAltoPaneles() según lo que quede libre en la pantalla.
+    const grafico = `<div id="homePaneles" style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:stretch;">${panelDias}${panelMarcas}</div>`;
 
     contentArea.innerHTML = cabecera + `
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:0.6rem;">
@@ -2144,6 +2145,27 @@ export const renderDashboard = async (container, user, onLogout) => {
         ${grafico}`;
 
     arrancarReloj();
+
+    /**
+     * Estira los dos paneles hasta el borde inferior de la pantalla.
+     *
+     * Con medidas fijas la página se ve bien en una resolución y deja un hueco
+     * enorme en otra: lo que sobra depende del alto de la ventana, así que se
+     * calcula después de dibujar y se vuelve a calcular si se redimensiona.
+     */
+    const ajustarAltoPaneles = () => {
+        const cont = document.getElementById('homePaneles');
+        if (!cont) { window.removeEventListener('resize', ajustarAltoPaneles); return; }
+        cont.style.minHeight = '';
+        const libre = window.innerHeight - cont.getBoundingClientRect().top - 18;
+        // Si no hay sitio (pantallas muy bajas) se deja el alto natural y que la
+        // página se desplace: forzarlo solo lograría recortar contenido.
+        if (libre > cont.getBoundingClientRect().height) cont.style.minHeight = libre + 'px';
+    };
+    ajustarAltoPaneles();
+    if (window.__homeResizeHandler) window.removeEventListener('resize', window.__homeResizeHandler);
+    window.__homeResizeHandler = ajustarAltoPaneles;
+    window.addEventListener('resize', ajustarAltoPaneles);
 
     // Recordar qué categorías quedan abiertas: Inicio se redibuja solo cada 20
     // segundos y sin esto se cerraría en la cara del usuario. La flecha del
@@ -2694,7 +2716,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.560');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.561');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3029,7 +3051,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.560] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.561] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7722,7 +7744,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.560 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.561 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12224,7 +12246,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.560 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.561 | MOBILE PORTAL
                             </div>
                     </div>
 
