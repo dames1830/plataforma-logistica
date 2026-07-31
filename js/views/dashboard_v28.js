@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.552';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.553';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.552';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.552';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.552';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.552';
-import * as metasService from '../services_v245/metasService.js?v=26.5.552';
+import * as adminService from '../services_v245/adminService.js?v=26.5.553';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.553';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.553';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.553';
+import * as metasService from '../services_v245/metasService.js?v=26.5.553';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.552';
+const VERSION = '26.5.553';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -659,6 +659,48 @@ const resumenSemana = (tasks, desde, hasta, filtroUsuario = null) => {
         personas: new Set(filas.flatMap(r => r.usuarios)).size,
         porDiaActivo: diasActivos.size > 0 ? qty / diasActivos.size : 0
     };
+};
+
+/**
+ * Número de semana ISO (las que empiezan en lunes). Es el "SEM 31" del tablero.
+ * Se calcula sobre el jueves de esa semana, que es lo que define a qué año
+ * pertenece cuando la semana cae a caballo entre diciembre y enero.
+ */
+const semanaISO = (fecha) => {
+    const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const inicioAno = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - inicioAno) / 86400000) + 1) / 7);
+};
+
+/** Los 7 días (lunes a domingo) de la semana que empieza en `lunes`. */
+const diasDeSemana = (lunes) => {
+    const out = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(lunes);
+        d.setDate(d.getDate() + i);
+        out.push(d);
+    }
+    return out;
+};
+
+/**
+ * {G. Gender → {fecha → unidades}} de las tareas finalizadas en el rango.
+ * Es la materia prima de la tabla de días: una fila por semana y una columna
+ * por día, para cada categoría.
+ */
+const unidadesPorGenderYDia = (tasks, desde, hasta) => {
+    const mapa = new Map();
+    (tasks || []).forEach(t => {
+        if (!t || t.status !== 'Finalizado' || !t.fecha) return;
+        if (t.fecha < desde || t.fecha > hasta) return;
+        unidadesPorGender(t).forEach((u, g) => {
+            if (!mapa.has(g)) mapa.set(g, new Map());
+            const porDia = mapa.get(g);
+            porDia.set(t.fecha, (porDia.get(t.fecha) || 0) + u);
+        });
+    });
+    return mapa;
 };
 
 /** Variación porcentual de a respecto de b, tolerando el cero. */
@@ -1862,25 +1904,71 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>`;
 
-    // --- Gráfico día a día ----------------------------------------------------
-    const serie = (resumen, desde) => {
-        const out = new Array(r.diasCorridos + 1).fill(0);
-        resumen.porDia.forEach((u, fecha) => {
-            const d = new Date(fecha + 'T00:00:00');
-            const i = Math.round((d - desde) / 86400000);
-            if (i >= 0 && i < out.length) out[i] += u;
-        });
-        return out;
+    // --- Detalle por día: una tabla por categoría, dos semanas enfrentadas -----
+    const DIAS_COL = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+    const diasEsta = diasDeSemana(r.desdeEsta);
+    const diasPasada = diasDeSemana(r.desdePasada);
+    const semEsta = semanaISO(r.desdeEsta);
+    const semPasada = semanaISO(r.desdePasada);
+
+    // Aquí sí se toma la semana pasada COMPLETA (lunes a domingo), no solo el
+    // tramo comparable: la tabla es para mirar el detalle, y ver los días que
+    // ya pasaron es justamente lo útil.
+    const detallePorDia = unidadesPorGenderYDia(tasks, aISO(r.desdePasada), aISO(diasEsta[6]));
+
+    const filaSemana = (etiqueta, dias, porDia, esActual) => {
+        let total = 0;
+        const celdas = dias.map(d => {
+            if (esActual && d > r.hastaEsta) {
+                return `<td style="padding:0.5rem 0.6rem; text-align:right; color:rgba(255,255,255,0.15);">·</td>`;
+            }
+            const v = porDia.get(aISO(d)) || 0;
+            total += v;
+            const col = v ? (esActual ? '#fbbf24' : 'rgba(255,255,255,0.55)') : 'rgba(255,255,255,0.2)';
+            return `<td style="padding:0.5rem 0.6rem; text-align:right; color:${col}; font-weight:${v ? '800' : '400'};">${v ? fmt(v) : '—'}</td>`;
+        }).join('');
+        return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${esActual ? 'background:rgba(79,70,229,0.08);' : ''}">
+                <td style="padding:0.5rem 0.8rem; font-weight:900; color:${esActual ? '#a5b4fc' : 'var(--text-muted)'}; font-size:0.72rem; white-space:nowrap;">${etiqueta}</td>
+                ${celdas}
+                <td style="padding:0.5rem 0.8rem; text-align:right; font-weight:900; color:#fff; border-left:1px solid rgba(255,255,255,0.08);">${fmt(total)}</td>
+            </tr>`;
     };
-    const serieEsta = serie(esta, r.desdeEsta);
-    const seriePasada = serie(pasada, r.desdePasada);
-    const etiquetas = NOMBRE_DIA.slice(0, r.diasCorridos + 1);
+
+    const bloquesPorDia = categorias.map(g => {
+        const porDia = detallePorDia.get(g) || new Map();
+        return `
+            <div style="margin-bottom:1.3rem;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.4rem;">
+                    <span style="width:8px; height:8px; border-radius:2px; background:var(--primary);"></span>
+                    <h4 style="margin:0; color:#fff; font-size:0.82rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${etiquetaCategoria(g) || g}</h4>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; min-width:680px; font-size:0.78rem;">
+                        <thead>
+                            <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.63rem; letter-spacing:0.5px;">
+                                <th style="padding:0.5rem 0.8rem; text-align:left;">SEMANA</th>
+                                ${DIAS_COL.map(d => `<th style="padding:0.5rem 0.6rem; text-align:right;">${d}</th>`).join('')}
+                                <th style="padding:0.5rem 0.8rem; text-align:right; border-left:1px solid rgba(255,255,255,0.08);">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filaSemana(`SEM ${semPasada}`, diasPasada, porDia, false)}
+                            ${filaSemana(`SEM ${semEsta}`, diasEsta, porDia, true)}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+    }).join('');
 
     const grafico = `
         <div class="glass-panel" style="padding:1.2rem;">
-            <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Unidades día a día</h3>
-            <p style="margin:0 0 0.8rem 0; font-size:0.74rem; color:var(--text-muted);">Mismo día de la semana, una barra contra la otra.</p>
-            <div style="height:230px;"><canvas id="chartSemanas"></canvas></div>
+            <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
+            <p style="margin:0 0 1rem 0; font-size:0.74rem; color:var(--text-muted);">
+                Cada categoría con sus dos semanas enfrentadas, día por día.
+                La semana pasada va completa; los días de esta semana que aún no llegan se marcan con <b>·</b>.
+            </p>
+            ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
         </div>`;
 
     contentArea.innerHTML = cabecera + `
@@ -1902,34 +1990,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     arrancarReloj();
 
-    // El gráfico se dibuja después de que el HTML esté en pantalla.
-    setTimeout(() => {
-        const cv = document.getElementById('chartSemanas');
-        if (!cv || typeof Chart === 'undefined') return;
-        if (window.homeChart instanceof Chart) window.homeChart.destroy();
-        window.homeChart = new Chart(cv.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: etiquetas,
-                datasets: [
-                    { label: 'Esta semana', data: serieEsta, backgroundColor: '#4f46e5', borderRadius: 5 },
-                    { label: 'Semana pasada', data: seriePasada, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 5 }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, animation: false,
-                scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' },
-                         ticks: { color: '#94a3b8', callback: (v) => Number(v).toLocaleString('es-PE') } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { weight: 'bold' } } }
-                },
-                plugins: {
-                    legend: { display: true, labels: { color: '#cbd5e1', boxWidth: 12, font: { size: 11 } } },
-                    tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${Number(c.parsed.y).toLocaleString('es-PE')} u` } }
-                }
-            }
-        });
-    }, 50);
+    // Ya no hay gráfico en Inicio: si quedó uno de una versión anterior, se
+    // libera para no dejar el objeto de Chart.js colgando en memoria.
+    if (typeof Chart !== 'undefined' && window.homeChart instanceof Chart) {
+        window.homeChart.destroy();
+        window.homeChart = null;
+    }
   };
 
   const renderStockTab = async () => {
@@ -2460,7 +2526,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.552');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.553');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2795,7 +2861,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.552] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.553] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7488,7 +7554,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.552 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.553 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -11990,7 +12056,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.552 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.553 | MOBILE PORTAL
                             </div>
                     </div>
 
