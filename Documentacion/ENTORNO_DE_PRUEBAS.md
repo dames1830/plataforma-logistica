@@ -61,11 +61,25 @@ Desde ese momento, **cada vez que yo suba un cambio a la rama `beta`, ese sitio 
 
 ## 3. Llenar las pruebas con datos reales
 
-Cuando quieras que el entorno de pruebas tenga una copia fresca de la información de verdad, pídemelo y lo ejecuto. Copia los datos reales **encima** de los de prueba.
+Cuando quieras que el entorno de pruebas tenga una copia fresca de la información de verdad, pídemelo y lo ejecuto: **"cópiame los datos a beta"**.
 
 - La copia va en **una sola dirección**: real → pruebas. **Nunca al revés.**
 - Lo que tengas en pruebas se pierde (es la idea: empezar de una foto limpia).
-- Antes de copiar se revisa que haya espacio en el disco del servidor; si no hay, no copia nada.
+- Antes de copiar se revisa que haya espacio en el disco; si no hay, no copia nada.
+
+### Por qué la copia es "ligera"
+
+El disco del servidor es de **1 GB** y tu base real ya pesa cerca de **390 MB**. Copiarla entera dejaría el disco casi lleno, y entonces la herramienta que compacta y limpia tu base real dejaría de poder trabajar (necesita espacio libre equivalente a la base completa).
+
+Por eso la copia normal se lleva **solo lo útil para probar**:
+
+| Sí se copia | No se copia |
+|---|---|
+| Usuarios y permisos | Cachés de fotos y bultos pesados (más de 8 MB por área) |
+| Configuración y metas | El histórico viejo (solo va la versión más reciente de cada área) |
+| Tareas, layouts, buffer, KPI | |
+
+El resultado es un beta chiquito pero completamente usable. Si algún día necesitas la copia idéntica byte por byte, existe el modo completo — pero deja el disco al 82%, así que solo se usa a propósito y por poco tiempo.
 
 ---
 
