@@ -19576,34 +19576,34 @@ window.showCellModal = function(htmlContent) {
                                         const metaTarea = getTaskMeta(t).metaUph;
                                         if (unitsPerHour >= metaTarea) {
                                             objetivo = 'CUMPLIÓ';
-                                            objStyle = 'color:#22c55e; font-weight:900; background:rgba(34,197,94,0.1); padding:4px 10px; border-radius:10px;';
+                                            objStyle = 'color:#22c55e; font-weight:900;';
                                         } else {
                                             objetivo = 'NO CUMPLIÓ';
-                                            objStyle = 'color:#ef4444; font-weight:900; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:10px;';
+                                            objStyle = 'color:#ef4444; font-weight:900;';
                                         }
                                     }
                                 }
                                 return `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
-                                    <td style="padding:0.8rem 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
-                                    <td style="padding:0.8rem 1rem;">${t.marca}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
-                                    <td style="padding:0.8rem 1rem; text-align:center;">
-                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:900; font-size:0.7rem; border:1px solid ${t.status === 'Finalizado' ? 'rgba(34,197,94,0.3)' : 'transparent'}">
+                                    <td style="padding:10.8px 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
+                                    <td style="padding:10.8px 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
+                                    <td style="padding:10.8px 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
+                                    <td style="padding:10.8px 1rem;">${t.marca}</td>
+                                    <td style="padding:10.8px 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
+                                    <td style="padding:10.8px 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
+                                    <td style="padding:10.8px 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                    <td style="padding:10.8px 1rem; font-size:0.75rem; opacity:0.6;">${t.termino ? new Date(t.termino).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
+                                    <td style="padding:10.8px 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
+                                    <td style="padding:10.8px 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
+                                    <td style="padding:10.8px 1rem; text-align:center;">
+                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; font-size:1.2rem;">
+                                    <td style="padding:10.8px 1rem; text-align:center; font-size:1.2rem;">
                                         ${t.audited ? '📝✅' : '-'} 
                                     </td>
-                                    <td style="padding:0.8rem 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
+                                    <td style="padding:10.8px 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
                                         <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
                                         <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
                                         ${(t.status !== 'Finalizado' || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
@@ -19661,7 +19661,7 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fAsignado}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fFinalizado}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">
-                                        <span style="background:${t.status === 'Finalizado' ? 'rgba(34,197,94,0.1)' : t.status === 'Asignado' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)'}; color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.7rem;">
+                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
