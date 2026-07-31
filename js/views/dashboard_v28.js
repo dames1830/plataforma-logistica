@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.556';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.557';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.556';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.556';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.556';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.556';
-import * as metasService from '../services_v245/metasService.js?v=26.5.556';
+import * as adminService from '../services_v245/adminService.js?v=26.5.557';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.557';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.557';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.557';
+import * as metasService from '../services_v245/metasService.js?v=26.5.557';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.556';
+const VERSION = '26.5.557';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1862,10 +1862,20 @@ export const renderDashboard = async (container, user, onLogout) => {
     // vale más que la otra. El total se distingue por la línea y el peso de la
     // tipografía, sin fondos que ensucien la lectura.
     const CELDA_TOTAL = 'border-left:1px solid rgba(79,70,229,0.45);';
-
     const CELDA = 'padding:0.38rem 0.45rem; text-align:center;';
+    const ETIQUETA = 'padding:0.38rem 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
 
-    const filaSemana = (etiqueta, dias, porDia, esActual) => {
+    // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
+    // los suyos según su contenido y el LUNES de una categoría no queda encima
+    // del LUNES de la otra.
+    const COLUMNAS = `
+        <colgroup>
+            <col style="width:10%"><col style="width:18%">
+            ${DIAS_COL.map(() => '<col style="width:8.5%">').join('')}
+            <col style="width:12.5%">
+        </colgroup>`;
+
+    const filaSemana = (etiqueta, categoria, dias, porDia, esActual) => {
         let total = 0;
         const celdas = dias.map(d => {
             if (esActual && d > r.hastaEsta) {
@@ -1878,7 +1888,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         }).join('');
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="${CELDA} font-weight:900; color:var(--text-muted); font-size:0.66rem; white-space:nowrap;">${etiqueta}</td>
+                <td style="${ETIQUETA} font-weight:900; color:var(--text-muted); font-size:0.66rem;">${etiqueta}</td>
+                <td style="${ETIQUETA} color:#fff; font-weight:700;">${categoria}</td>
                 ${celdas}
                 <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(total)}</td>
             </tr>`;
@@ -1894,35 +1905,30 @@ export const renderDashboard = async (container, user, onLogout) => {
         }).join('');
         return `
             <tr style="border-top:2px solid rgba(79,70,229,0.5);">
-                <td style="${CELDA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+                <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+                <td style="${ETIQUETA}"></td>
                 ${celdas}
                 <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(granTotal)}</td>
             </tr>`;
     };
 
     const tablaDias = (titulo, porDia, destacado) => `
-        <div style="margin-bottom:1.1rem;">
-            <div style="display:flex; align-items:center; gap:7px; margin-bottom:0.35rem;">
-                <span style="width:7px; height:7px; border-radius:2px; background:${destacado ? '#fbbf24' : 'var(--primary)'};"></span>
-                <h4 style="margin:0; color:${destacado ? '#fbbf24' : '#fff'}; font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${titulo}</h4>
-            </div>
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; min-width:430px; font-size:0.72rem; ${destacado ? 'border:1px solid rgba(251,191,36,0.35); border-radius:6px;' : ''}">
-                    <thead>
-                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
-                            <th style="${CELDA}">SEM</th>
-                            ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
-                            <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filaSemana(`SEM ${semPasada}`, diasPasada, porDia, false)}
-                        ${filaSemana(`SEM ${semEsta}`, diasEsta, porDia, true)}
-                        ${filaTotalColumnas(porDia)}
-                    </tbody>
-                </table>
-            </div>
-        </div>`;
+        <table style="width:100%; table-layout:fixed; border-collapse:collapse; font-size:0.72rem; margin-bottom:1rem; ${destacado ? 'border:1px solid rgba(251,191,36,0.35);' : ''}">
+            ${COLUMNAS}
+            <thead>
+                <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
+                    <th style="${ETIQUETA}">SEM</th>
+                    <th style="${ETIQUETA}">GENDER</th>
+                    ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
+                    <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filaSemana(`SEM ${semPasada}`, titulo, diasPasada, porDia, false)}
+                ${filaSemana(`SEM ${semEsta}`, titulo, diasEsta, porDia, true)}
+                ${filaTotalColumnas(porDia)}
+            </tbody>
+        </table>`;
 
     // Suma de TODAS las categorías, día por día: el bloque de cierre.
     const porDiaGeneral = new Map();
@@ -1930,9 +1936,16 @@ export const renderDashboard = async (container, user, onLogout) => {
         porDia.forEach((u, fecha) => porDiaGeneral.set(fecha, (porDiaGeneral.get(fecha) || 0) + u));
     });
 
-    const bloquesPorDia =
-        categorias.map(g => tablaDias(etiquetaCategoria(g) || g, detallePorDia.get(g) || new Map(), false)).join('')
-        + (categorias.length > 1 ? tablaDias('Todas las categorías', porDiaGeneral, true) : '');
+    // Un solo contenedor con desplazamiento para TODAS las tablas: si cada una
+    // tuviera el suyo, al desplazar una las demás se quedarían y se perdería
+    // la alineación entre bloques.
+    const bloquesPorDia = `
+        <div style="overflow-x:auto;">
+            <div style="min-width:560px;">
+                ${categorias.map(g => tablaDias(etiquetaCategoria(g) || g, detallePorDia.get(g) || new Map(), false)).join('')}
+                ${categorias.length > 1 ? tablaDias('TODAS', porDiaGeneral, true) : ''}
+            </div>
+        </div>`;
 
     // --- Marcas almacenadas por semana ---------------------------------------
     const marcasPasada = unidadesPorMarca(tasks, aISO(r.desdePasada), aISO(diasPasada[6]));
@@ -1948,7 +1961,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         totMarcaPasada += a; totMarcaEsta += b;
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="${CELDA} color:#fff; font-weight:700; font-size:0.72rem;">${m}</td>
+                <td style="${ETIQUETA} color:#fff; font-weight:700; font-size:0.72rem;">${m}</td>
                 <td style="${CELDA} color:${a ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'};">${a ? fmt(a) : '—'}</td>
                 <td style="${CELDA} color:${b ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'};">${b ? fmt(b) : '—'}</td>
                 <td style="${CELDA} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${fmt(a + b)}</td>
@@ -1975,7 +1988,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <table style="width:100%; border-collapse:collapse; min-width:280px; font-size:0.72rem;">
                     <thead>
                         <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
-                            <th style="${CELDA}">MARCA</th>
+                            <th style="${ETIQUETA}">MARCA</th>
                             <th style="${CELDA}">SEM ${semPasada}</th>
                             <th style="${CELDA}">SEM ${semEsta}</th>
                             <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
@@ -1984,7 +1997,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <tbody>
                         ${filasMarcas || '<tr><td colspan="4" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin marcas registradas.</td></tr>'}
                         <tr style="border-top:2px solid rgba(79,70,229,0.5);">
-                            <td style="${CELDA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+                            <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
                             <td style="${CELDA} font-weight:900; color:#fbbf24;">${fmt(totMarcaPasada)}</td>
                             <td style="${CELDA} font-weight:900; color:#fbbf24;">${fmt(totMarcaEsta)}</td>
                             <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(totMarcaPasada + totMarcaEsta)}</td>
@@ -2551,7 +2564,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.556');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.557');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2886,7 +2899,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.556] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.557] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7579,7 +7592,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.556 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.557 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12081,7 +12094,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.556 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.557 | MOBILE PORTAL
                             </div>
                     </div>
 
