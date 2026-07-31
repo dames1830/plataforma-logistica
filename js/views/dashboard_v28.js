@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.567';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.568';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.567';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.567';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.567';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.567';
-import * as metasService from '../services_v245/metasService.js?v=26.5.567';
+import * as adminService from '../services_v245/adminService.js?v=26.5.568';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.568';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.568';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.568';
+import * as metasService from '../services_v245/metasService.js?v=26.5.568';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.567';
+const VERSION = '26.5.568';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1890,7 +1890,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const cuando = esHoy ? 'hoy' : `el ${etiquetaDia}`;
 
     const tarjetas = [
-        tarjetaDia('Unid. almacenadas', sub('footwear'), fmt(hoyFW.almacenado), '', '#fff',
+        tarjetaDia('Qty almacenadas', sub('footwear'), fmt(hoyFW.almacenado), '', '#fff',
                    `Footwear bajado del buffer ${cuando}. Pedido al buffer: ${fmt(hoyFW.buffer)}`),
         tarjetaDia('Personal en turno', sub('todos'), fmt(hoyTodo.personas), '', '#fff',
                    `Personas asignadas a tareas de almacenaje ${cuando}`),
@@ -1959,11 +1959,15 @@ export const renderDashboard = async (container, user, onLogout) => {
      * al lado aparece la flecha de color. Teñir el número hace que el dato y el
      * juicio sobre el dato se confundan.
      */
-    const flechaKpi = (actual, anterior) => {
+    const flechaKpi = (actual, anterior, enCurso = false) => {
         const c = colorKpi(actual, anterior);
         if (!c) return '';
         const simbolo = actual > anterior ? '▲' : (actual === anterior ? '=' : '▼');
-        return `<span style="color:${c}; font-weight:900; font-size:0.85em;">${simbolo}</span>`;
+        // La semana en curso NUNCA va en rojo: todavía le quedan días, así que
+        // ir por debajo no es un mal resultado sino un trabajo sin terminar.
+        // Se queda en ámbar y solo pasa a verde cuando de verdad supera.
+        const color = (enCurso && c === '#ef4444') ? '#fbbf24' : c;
+        return `<span style="color:${color}; font-weight:900; font-size:0.85em;">${simbolo}</span>`;
     };
 
     /**
@@ -1997,14 +2001,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             if (diasPrevios) {
                 const anterior = porDia.get(aISO(diasPrevios[i])) || 0;
                 totalPrevio += anterior;
-                flecha = flechaKpi(v, anterior);
+                flecha = flechaKpi(v, anterior, esActual);
                 if (flecha) titulo = ` title="${fmt(v)} contra ${fmt(anterior)} el mismo día de la semana anterior"`;
             }
             const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
             return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
         }).join('');
 
-        const flechaTotal = diasPrevios ? flechaKpi(total, totalPrevio) : '';
+        const flechaTotal = diasPrevios ? flechaKpi(total, totalPrevio, esActual) : '';
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                 <td ${esActual ? 'title="Semana en curso: va hasta hoy"' : ''} style="${ETIQUETA} font-weight:900; color:${esActual ? '#a5b4fc' : 'var(--text-muted)'}; font-size:0.62rem;">SEM ${num}</td>
@@ -2073,7 +2077,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <span style="color:#fff; font-weight:800; font-size:0.72rem; flex:1; text-transform:uppercase; letter-spacing:0.4px;">${titulo}</span>
                     <span style="color:var(--text-muted); font-size:0.62rem;">4 sem:</span>
                     <span style="color:#fbbf24; font-weight:900; font-size:0.72rem;">${fmt(totalGrupo)}</span>
-                    ${flechaKpi(vAct, vPrev)}
+                    ${flechaKpi(vAct, vPrev, true)}
                 </summary>
                 <div style="overflow-x:auto; padding-top:0.25rem;">
                     <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:var(--tf,0.79rem);">
@@ -2134,7 +2138,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const base = i === 0 ? null
                        : s.esActual ? (marcasTramoPasado.get(m) || 0)
                        : (SEMANAS[i - 1].datos.get(m) || 0);
-            const flecha = base === null ? '' : flechaKpi(v, base);
+            const flecha = base === null ? '' : flechaKpi(v, base, s.esActual);
             const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
             const titulo = flecha ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
             return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
@@ -2154,7 +2158,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const base = i === 0 ? null
                    : SEMANAS[i].esActual ? tramoPasadoTotal
                    : totalesSemana[i - 1];
-        const flecha = base === null ? '' : flechaKpi(v, base);
+        const flecha = base === null ? '' : flechaKpi(v, base, SEMANAS[i].esActual);
         return `<td style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap;">${celdaValor(fmt(v), flecha)}</td>`;
     }).join('');
 
@@ -2805,7 +2809,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.567');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.568');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3140,7 +3144,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.567] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.568] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7833,7 +7837,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.567 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.568 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12335,7 +12339,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.567 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.568 | MOBILE PORTAL
                             </div>
                     </div>
 
