@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.563';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.564';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.563';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.563';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.563';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.563';
-import * as metasService from '../services_v245/metasService.js?v=26.5.563';
+import * as adminService from '../services_v245/adminService.js?v=26.5.564';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.564';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.564';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.564';
+import * as metasService from '../services_v245/metasService.js?v=26.5.564';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.563';
+const VERSION = '26.5.564';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1813,14 +1813,16 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     // --- Tarjetas grandes -----------------------------------------------------
+    // Una tarjeta = un número. El dato de la semana pasada y el detalle largo se
+    // van al globo de ayuda: cuatro tarjetas con tres líneas cada una no se leen
+    // de un vistazo, que es justamente para lo que sirven.
     const tarjeta = (titulo, valor, sufijo, valorPrev, sufijoPrev, v, pie) => `
-        <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.15rem; padding:0.85rem 1rem;">
+        <div class="kpi-card" title="Semana pasada: ${valorPrev}${sufijoPrev}${pie ? ` · ${pie}` : ''}" style="display:flex; flex-direction:column; justify-content:center; gap:0.2rem; padding:0.85rem 1rem;">
             <h4 style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">${titulo}</h4>
-            <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-                <h2 style="font-size:1.75rem; font-weight:900; color:#fff; margin:0; line-height:1.15;">${valor}<span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+            <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+                <h2 style="font-size:2rem; font-weight:900; color:#fff; margin:0; line-height:1.1;">${valor}<span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
                 ${chipVar(v, false)}
             </div>
-            <div style="font-size:0.69rem; color:var(--text-muted);">antes: <b style="color:rgba(255,255,255,0.6);">${valorPrev}${sufijoPrev}</b>${pie ? ` · ${pie}` : ''}</div>
         </div>`;
 
     const tarjetas = [
@@ -1946,7 +1948,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const flechaTotal = diasPrevios ? flechaKpi(total, totalPrevio) : '';
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="${ETIQUETA} font-weight:900; color:var(--text-muted); font-size:0.62rem;">SEM ${num}${esActual ? '*' : ''}</td>
+                <td ${esActual ? 'title="Semana en curso: va hasta hoy"' : ''} style="${ETIQUETA} font-weight:900; color:${esActual ? '#a5b4fc' : 'var(--text-muted)'}; font-size:0.62rem;">SEM ${num}</td>
                 <td style="${ETIQUETA} color:#fff; font-weight:700;">${categoria}</td>
                 ${celdas}
                 <td ${flechaTotal ? `title="${fmt(total)} contra ${fmt(totalPrevio)} en los mismos días de la semana anterior"` : ''} style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap; ${CELDA_TOTAL}">${celdaValor(fmt(total), flechaTotal)}</td>
@@ -2119,7 +2121,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <thead>
                         <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
                             <th style="${ETIQUETA}">MARCA</th>
-                            ${SEMANAS.map(s => `<th style="${CELDA}">SEM ${s.num}${s.esActual ? '*' : ''}</th>`).join('')}
+                            ${SEMANAS.map(s => s.esActual
+                                ? `<th title="Semana en curso: el número es lo que va hasta hoy; la flecha compara los mismos días de la semana anterior" style="${CELDA} border-bottom:2px solid rgba(165,180,252,0.5);">SEM ${s.num}</th>`
+                                : `<th style="${CELDA}">SEM ${s.num}</th>`).join('')}
                             <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
                         </tr>
                     </thead>
@@ -2132,9 +2136,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </tr>
                     </tbody>
                 </table>
-                <p style="margin:0.45rem 0 0 0; font-size:0.6rem; color:rgba(255,255,255,0.3); line-height:1.4;">
-                    * Semana en curso: el número es lo que va; la flecha compara los <b>mismos días</b> de la semana anterior.
-                </p>
             </div>
         </div>`;
 
@@ -2144,17 +2145,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     const grafico = `<div id="homePaneles" style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:stretch;">${panelDias}${panelMarcas}</div>`;
 
     contentArea.innerHTML = cabecera + `
-        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:0.6rem;">
-            <h2 style="margin:0; color:#fff; font-size:0.95rem; font-weight:900; letter-spacing:-0.2px;">
-                ${filtroUsuario ? 'Tu semana' : 'Esta semana'} contra la anterior
-            </h2>
-            <span style="font-size:0.68rem; color:var(--text-muted);">
-                <b style="color:#a5b4fc;">${fmtFecha(r.desdeEsta)} al ${fmtFecha(r.hastaEsta)}</b>
-                contra
-                <b style="color:rgba(255,255,255,0.55);">${fmtFecha(r.desdePasada)} al ${fmtFecha(r.hastaPasada)}</b>
-                · mismos días, para que sea justa
-            </span>
-        </div>
         <div class="kpi-grid" style="margin-bottom:0.8rem;">${tarjetas}</div>
         ${grafico}`;
 
@@ -2759,7 +2749,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.563');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.564');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -3094,7 +3084,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.563] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.564] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7787,7 +7777,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.563 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.564 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12289,7 +12279,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.563 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.564 | MOBILE PORTAL
                             </div>
                     </div>
 

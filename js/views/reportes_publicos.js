@@ -3,7 +3,7 @@
  * Acceso via token en URL: reportes.html?token=XXXX
  * Solo lectura — sin login requerido
  * Dinámico vía Backend / LocalStorage (Configurable desde Módulo Configuración)
- * v26.5.563
+ * v26.5.564
  */
 
 import {
@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=26.5.563';
+} from '../services_v245/csvHub_v6.js?v=26.5.564';
 
-import * as adminService from '../services_v245/adminService.js?v=26.5.563';
-import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.563';
+import * as adminService from '../services_v245/adminService.js?v=26.5.564';
+import { renderLayoutActivo } from './public_layout_activo.js?v=26.5.564';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -260,7 +260,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v26.5.563</span>
+      <span style="color:var(--text-muted); font-weight:500;">v26.5.564</span>
     </div>`;
 
   buildTabNav();
