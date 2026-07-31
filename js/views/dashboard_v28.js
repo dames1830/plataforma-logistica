@@ -1037,6 +1037,37 @@ const getLogicalDate = () => {
     return `${y}-${m}-${d}`;
 };
 
+/* ── BLOQUEO DE DÍAS CERRADOS ─────────────────────────────────────────────
+   Antes se podía entrar en julio y editar una tarea de abril, y con eso se movían
+   números ya presentados en comité. Ahora la jornada se cierra sola.
+*/
+
+/** El único que puede tocar una tarea de un día ya cerrado. */
+const SUPERUSUARIO = 'dames';
+
+const usuarioActual = () => {
+    try { return String(JSON.parse(localStorage.getItem('logistics_session') || '{}').username || '').trim().toLowerCase(); }
+    catch (e) { return ''; }
+};
+
+const esSuperusuario = () => usuarioActual() === SUPERUSUARIO;
+
+/**
+ * Una tarea queda cerrada cuando terminó su jornada, o sea a las 06:00 del día siguiente:
+ * es cuando cambia la fecha lógica, porque el turno noche (00:00 a 06:00) todavía cuenta
+ * como el día anterior. Desde ahí no se puede editar, reiniciar, borrar ni reasignar.
+ * El superusuario no tiene este límite.
+ */
+const tareaCerrada = (t) => !!t && !!t.fecha && t.fecha < getLogicalDate() && !esSuperusuario();
+
+/** El mismo aviso para todos los intentos, así la regla se explica una sola vez. */
+const avisarCerrada = (t) => {
+    const dia = String((t && t.fecha) || '').split('-').reverse().join('/');
+    showPremiumAlert('JORNADA CERRADA',
+        `La tarea del ${dia} ya no se puede modificar.\n\nLas tareas quedan abiertas hasta las 06:00 del día siguiente, contando el turno noche. Después solo ${SUPERUSUARIO.toUpperCase()} puede tocarlas.\n\nEs lo que evita que los números de días pasados cambien después de haberlos presentado.`,
+        'warning');
+};
+
 /**
  * Semana laboral (lunes a sábado) a la que pertenece la fecha lógica. El domingo no se
  * trabaja, así que se considera parte de la semana que acaba de cerrar: si abres la web
@@ -19908,12 +19939,16 @@ window.showCellModal = function(htmlContent) {
                                         })()}
                                     </td>
                                     <td style="padding:10.8px 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
-                                        <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
-                                        <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
-                                        ${(t.status !== 'Finalizado' || JSON.parse(localStorage.getItem('logistics_session') || '{}').username === 'dames') ? `
-                                            <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
+                                        ${tareaCerrada(t) ? `
+                                            <span title="Jornada cerrada: las tareas se pueden editar hasta las 06:00 del día siguiente. Después solo ${SUPERUSUARIO.toUpperCase()}." style="font-size:1.1rem; opacity:0.45; cursor:help;">🔒</span>
                                         ` : `
-                                            <button disabled title="Eliminar Tarea (Solo Admin)" style="background:none; border:none; cursor:not-allowed; font-size:1.1rem; color:#ef4444; opacity:0.3;">🗑️</button>
+                                            <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
+                                            <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>
+                                            ${(t.status !== 'Finalizado' || esSuperusuario()) ? `
+                                                <button onclick="window.deleteTask('${t.id}')" title="Eliminar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#ef4444;">🗑️</button>
+                                            ` : `
+                                                <button disabled title="Eliminar Tarea (Solo Admin)" style="background:none; border:none; cursor:not-allowed; font-size:1.1rem; color:#ef4444; opacity:0.3;">🗑️</button>
+                                            `}
                                         `}
                                     </td>
                                 </tr>`;
@@ -20682,6 +20717,7 @@ window.showCellModal = function(htmlContent) {
     window.resetTask = async (id) => {
         const task = almacenajeTasksCache.find(x => x.id === id);
         if (!task) return;
+        if (tareaCerrada(task)) { avisarCerrada(task); return; }
         
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
@@ -20702,6 +20738,7 @@ window.showCellModal = function(htmlContent) {
     window.deleteTask = async (id) => {
         const task = almacenajeTasksCache.find(x => x.id === id);
         if (!task) return;
+        if (tareaCerrada(task)) { avisarCerrada(task); return; }
         
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
@@ -20872,6 +20909,7 @@ window.showCellModal = function(htmlContent) {
         if (existingModal) document.body.removeChild(existingModal);
 
         const t = almacenajeTasksCache.find(x => x.id === id);
+        if (tareaCerrada(t)) { avisarCerrada(t); return; }
         if (t && t.status === 'Finalizado') {
             showPremiumAlert("TAREA BLOQUEADA", "Esta tarea ya está finalizada y bloqueada. Para realizar cualquier cambio, utiliza el botón de edición (✏️).", "warning");
             return;
@@ -21051,6 +21089,7 @@ window.showCellModal = function(htmlContent) {
     window.editTaskTimes = async (taskId) => {
         const task = almacenajeTasksCache.find(t => t.id === taskId);
         if (!task) return;
+        if (tareaCerrada(task)) { avisarCerrada(task); return; }
 
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
@@ -21185,13 +21224,21 @@ window.showCellModal = function(htmlContent) {
             `¿Borrar TODAS las tareas con status "CREADA" del rango seleccionado (${startDisplay} al ${endDisplay})?\n\n(No se borrarán tareas asignadas o finalizadas, ni tareas fuera de estas fechas)`, 
             "danger"
         )) {
+            // Las tareas de días ya cerrados se respetan aunque caigan dentro del rango
+            let protegidas = 0;
             almacenajeTasksCache = almacenajeTasksCache.filter(t => {
                 if (t.status !== 'Creada') return true;
                 if (t.fecha < window.__almacenajeStartDate || t.fecha > window.__almacenajeEndDate) return true;
+                if (tareaCerrada(t)) { protegidas++; return true; }
                 return false;
             });
             saveAlmacenajeTasks();
             renderAlmacenajeTareas(container);
+            if (protegidas > 0) {
+                showPremiumAlert('QUEDARON TAREAS SIN BORRAR',
+                    `${protegidas} tarea${protegidas !== 1 ? 's' : ''} del rango no se borr${protegidas !== 1 ? 'aron' : 'ó'}: son de días cuya jornada ya cerró.`,
+                    'warning');
+            }
         }
     };
 
