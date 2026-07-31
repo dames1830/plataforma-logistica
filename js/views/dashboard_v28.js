@@ -528,7 +528,14 @@ const buildKpiDataset = (tasks, desde, hasta) => {
         const cat = getTaskCategoria(t);
         const meta = getTaskMeta(t);
         const uph = mins > 0 ? (qty / mins) * 60 : 0;
-        const esperado = mins > 0 ? meta.metaUph * (mins / 60) : 0;
+        // Tiempo que la tarea tenía permitido: el recorrido fijo (ir al buffer, ubicar el
+        // artículo, volver) más lo que toma mover la cantidad al ritmo de la meta. Sin ese
+        // recorrido, una tarea de 20 pares tendría 4 minutos y saldría reprobada siempre.
+        const tiempoBase = meta.tiempoBase || 0;
+        const minutosEsperados = tiempoBase + (meta.metaUph > 0 ? (qty / meta.metaUph) * 60 : 0);
+        // Y al revés: de los minutos gastados, los que quedaron para mover mercadería
+        const minutosUtiles = Math.max(0, mins - tiempoBase);
+        const esperado = meta.metaUph * (minutosUtiles / 60);
         const usuarios = [t.u1, t.u2].filter(u => u && u !== '---');
 
         filas.push({
@@ -541,16 +548,19 @@ const buildKpiDataset = (tasks, desde, hasta) => {
             mins,
             uph,
             metaUph: meta.metaUph,
+            tiempoBase,
+            minutosEsperados,
             esperado,
             desviacion: qty - esperado,
-            pct: meta.metaUph > 0 ? (uph / meta.metaUph) * 100 : 0,
+            // 100% = terminó justo en el tiempo permitido; más de 100% = le sobró tiempo
+            pct: mins > 0 ? (minutosEsperados / mins) * 100 : 0,
             categoria: cat.etiqueta,
             familia: cat.familia,
             detalle: cat.detalle,
             etiquetaCorta: cat.etiquetaCorta,
             origenMeta: meta.origen,
             mixta: cat.mixta,
-            ok: mins > 0 && uph >= meta.metaUph,
+            ok: mins > 0 && mins <= minutosEsperados,
             inicio: t.inicio,
             termino: t.termino
         });
@@ -820,11 +830,14 @@ const buildJornadas = (tasksAll, desde, hasta, familia) => {
         fin.forEach(t => {
             const m = getTaskMinutos(t);
             const a = getTaskTotalAvance(t);
-            const metaUph = getTaskMeta(t).metaUph;
+            const metaTarea = getTaskMeta(t);
+            const metaUph = metaTarea.metaUph;
+            const tBase = metaTarea.tiempoBase || 0;
             qty += a; mins += m;
             if (m > 0) {
-                meta += metaUph * (m / 60);
-                if ((a / m) * 60 >= metaUph) ok++;
+                // Mismo criterio que el KPI: se descuenta el recorrido antes de exigir la meta
+                meta += metaUph * (Math.max(0, m - tBase) / 60);
+                if (m <= tBase + (metaUph > 0 ? (a / metaUph) * 60 : 0)) ok++;
             } else {
                 sinHora++; // finalizada sin inicio o término marcado: no se puede medir
             }
@@ -17222,13 +17235,14 @@ window.showCellModal = function(htmlContent) {
                                 <th style="padding:0.8rem 1rem; text-align:left;">Categoría</th>
                                 <th style="padding:0.8rem 0.6rem; text-align:right;">Meta U/H</th>
                                 <th style="padding:0.8rem 0.6rem; text-align:right;">Tamaño Tarea</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;" title="Minutos fijos por tarea: el recorrido al buffer y de vuelta">T. Base</th>
                                 <th style="padding:0.8rem 1rem; text-align:left;">Vigencia</th>
                                 <th style="padding:0.8rem 0.8rem; text-align:center;">Estado</th>
                                 <th style="padding:0.8rem 0.8rem; text-align:center;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${ordenadas.length === 0 ? `<tr><td colspan="6" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
+                            ${ordenadas.length === 0 ? `<tr><td colspan="7" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
                                 const vigente = metasService.reglaVigenteEn(r, hoyStr);
                                 const badge = vigente
                                     ? '<span style="background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:3px 9px; border-radius:8px; font-size:0.62rem; font-weight:900;">VIGENTE</span>'
@@ -17248,6 +17262,7 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:0.75rem 1rem;"><b style="color:#fff;">${esc(r.categoria)}</b>${nivelBadge}${r.base ? ' <span style="font-size:0.55rem; color:#818cf8; border:1px solid rgba(129,140,248,0.4); padding:1px 5px; border-radius:5px; vertical-align:middle;">BASE</span>' : ''}${nota}${fueraMaestro}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:#a5b4fc; font-weight:900; font-size:0.95rem;">${Number(r.metaUph).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(255,255,255,0.65); font-weight:700;">${Number(r.tamanoTarea).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(255,255,255,0.45); font-weight:700; font-size:0.78rem;">${metasService.tiempoBaseDe(r)} min</td>
                                     <td style="padding:0.75rem 1rem; color:rgba(255,255,255,0.6); font-size:0.75rem;">${vig}</td>
                                     <td style="padding:0.75rem 0.8rem; text-align:center;">${badge}</td>
                                     <td style="padding:0.75rem 0.8rem; text-align:center; white-space:nowrap;">
@@ -17353,6 +17368,10 @@ window.showCellModal = function(htmlContent) {
                     <input type="checkbox" id="cfg_link" checked style="accent-color:#6366f1; width:15px; height:15px; cursor:pointer;"> 🔗 Mover el tamaño de tarea junto con la meta
                 </label>
 
+                <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Tiempo base <span style="text-transform:none; font-weight:600;">(minutos por tarea)</span></label>
+                <input type="number" id="cfg_tbase" min="0" max="120" value="${metasService.tiempoBaseDe(r)}" style="width:100%; padding:9px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.9rem; font-weight:800; margin-bottom:0.4rem;">
+                <div style="font-size:0.63rem; color:rgba(255,255,255,0.3); margin-bottom:1rem;">Minutos que toma la tarea sin importar la cantidad: ir a la zona buffer, ubicar el artículo y volver. Se suman al tiempo que exige la meta, para que una tarea de pocos pares no salga reprobada solo por el recorrido.</div>
+
                 <div style="display:flex; gap:12px; margin-bottom:1rem;">
                     <div style="flex:1;">
                         <label style="display:block; font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Vigente desde</label>
@@ -17386,11 +17405,13 @@ window.showCellModal = function(htmlContent) {
             const btnGuardar = ev.currentTarget;
             const meta = parseInt(inMeta.value, 10);
             const tam = parseInt(inTam.value, 10);
+            const tbase = parseInt(modal.querySelector('#cfg_tbase').value, 10);
             const desde = modal.querySelector('#cfg_desde').value;
             const hasta = modal.querySelector('#cfg_hasta').value;
 
             if (!meta || meta <= 0) { showPremiumAlert('DATO INVÁLIDO', 'La meta U/H debe ser un número mayor a cero.', 'error'); return; }
             if (!tam || tam <= 0) { showPremiumAlert('DATO INVÁLIDO', 'El tamaño de tarea debe ser un número mayor a cero.', 'error'); return; }
+            if (!Number.isFinite(tbase) || tbase < 0 || tbase > 120) { showPremiumAlert('DATO INVÁLIDO', 'El tiempo base debe ser un número entre 0 y 120 minutos.', 'error'); return; }
             if (!desde) { showPremiumAlert('DATO INVÁLIDO', 'La fecha de inicio de vigencia es obligatoria.', 'error'); return; }
             if (hasta && hasta < desde) { showPremiumAlert('FECHAS INVERTIDAS', 'La fecha final no puede ser anterior a la de inicio.', 'error'); return; }
 
@@ -17402,6 +17423,7 @@ window.showCellModal = function(htmlContent) {
                     : (metasService.pareceDetalle(categoria) ? metasService.NIVEL.DETALLE : metasService.NIVEL.FAMILIA),
                 metaUph: meta,
                 tamanoTarea: tam,
+                tiempoBase: tbase,
                 desde,
                 hasta,
                 nota: modal.querySelector('#cfg_nota').value.trim()
@@ -19636,9 +19658,11 @@ window.showCellModal = function(htmlContent) {
 
                                     if (totalMinutes > 0) {
                                         const totalAvance = getTaskTotalAvance(t);
-                                        const unitsPerHour = (totalAvance / totalMinutes) * 60;
-                                        const metaTarea = getTaskMeta(t).metaUph;
-                                        if (unitsPerHour >= metaTarea) {
+                                        const metaTarea = getTaskMeta(t);
+                                        // Recorrido fijo + lo que toma mover la cantidad a la meta
+                                        const minutosEsperados = (metaTarea.tiempoBase || 0)
+                                            + (metaTarea.metaUph > 0 ? (totalAvance / metaTarea.metaUph) * 60 : 0);
+                                        if (totalMinutes <= minutosEsperados) {
                                             objetivo = 'CUMPLIÓ';
                                             objStyle = 'color:#22c55e; font-weight:900;';
                                         } else {

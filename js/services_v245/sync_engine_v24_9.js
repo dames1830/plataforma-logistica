@@ -162,9 +162,12 @@ export async function pullGlobal(requestedAreas = null, force = false) {
                     data = data.map(t => {
                         if (t._comp && Array.isArray(t.items)) {
                             const restoredItems = t.items.map(artArr => {
-                                const [sku7, marca, gender, coleccion, bQty, zQty, cItems] = artArr;
+                                // genderRims va al final: las tareas guardadas antes de que existiera
+                                // traen 7 campos y ahí llega undefined, que es justo lo que corresponde.
+                                const [sku7, marca, gender, coleccion, bQty, zQty, cItems, genderRims] = artArr;
                                 return {
                                     sku7, marca, gender, coleccion, bufferQty: bQty, zonaQty: zQty,
+                                    ...(genderRims ? { genderRims } : {}),
                                     items: cItems.map(i => { const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] }; if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; } if (i[5] !== undefined && i[5] !== null) { itemObj.qtyInitial = i[5]; } return itemObj; })
                                 };
                             });
@@ -224,7 +227,9 @@ export async function pushChange(area, data, date = null) {
             payload = data.map(t => {
                 const compactItems = (t.items || []).map(art => {
                     const cArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA', i.avance !== undefined ? i.avance : null, i.qtyInitial !== undefined ? i.qtyInitial : null]);
-                    return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, cArtItems];
+                    // El Gender RIMS se agrega al final para no mover los índices ya guardados.
+                    // Sin él, las metas por detalle (01 MEN, 08 ACCESORIES...) no pueden aplicarse.
+                    return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, cArtItems, art.genderRims || ''];
                 });
                 return { ...t, items: compactItems, _comp: true };
             });

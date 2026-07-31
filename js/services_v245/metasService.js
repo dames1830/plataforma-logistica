@@ -15,9 +15,25 @@ const CACHE_KEY = 'config_metas_almacenaje_v2';
 
 export const META_FALLBACK = 300;
 export const TAMANO_FALLBACK = 300;
+/**
+ * Minutos que toma una tarea al margen de la cantidad: ir a la zona buffer, ubicar el
+ * artículo, llevarlo a su sitio y volver. Sin esto una tarea de 1 par jamás cumple, porque
+ * a 300 u/h se le exigirían 12 segundos y solo el recorrido ya toma varios minutos.
+ */
+export const TIEMPO_BASE_FALLBACK = 10;
 
 /** Nivel al que aplica una regla. */
 export const NIVEL = { DETALLE: 'detalle', FAMILIA: 'familia', GLOBAL: 'global' };
+
+/** Tiempo base de una regla, con respaldo para las reglas guardadas antes de que existiera. */
+export const tiempoBaseDe = (r) => {
+    const bruto = r && r.tiempoBase;
+    // Ojo: Number(null) y Number('') dan 0, no NaN. Sin este corte, una regla guardada
+    // sin el campo se quedaría con 0 minutos de recorrido en vez de con el respaldo.
+    if (bruto === undefined || bruto === null || bruto === '') return TIEMPO_BASE_FALLBACK;
+    const v = Number(bruto);
+    return Number.isFinite(v) && v >= 0 ? v : TIEMPO_BASE_FALLBACK;
+};
 
 let reglas = null;
 
@@ -39,12 +55,17 @@ export const esCategoriaVacia = (valor) => {
 };
 
 const reglasPorDefecto = () => ([
-    { id: nuevoId(), categoria: 'FOOTWEAR', nivel: NIVEL.FAMILIA, metaUph: 300, tamanoTarea: 300, desde: '2026-01-01', hasta: '', nota: 'Regla base calzado', base: true },
-    { id: nuevoId(), categoria: 'GLOBAL', nivel: NIVEL.GLOBAL, metaUph: 300, tamanoTarea: 300, desde: '2026-01-01', hasta: '', nota: 'Regla de respaldo para cualquier categoría sin regla propia', base: true }
+    { id: nuevoId(), categoria: 'FOOTWEAR', nivel: NIVEL.FAMILIA, metaUph: 300, tamanoTarea: 300, tiempoBase: TIEMPO_BASE_FALLBACK, desde: '2026-01-01', hasta: '', nota: 'Regla base calzado', base: true },
+    { id: nuevoId(), categoria: 'GLOBAL', nivel: NIVEL.GLOBAL, metaUph: 300, tamanoTarea: 300, tiempoBase: TIEMPO_BASE_FALLBACK, desde: '2026-01-01', hasta: '', nota: 'Regla de respaldo para cualquier categoría sin regla propia', base: true }
 ]);
 
 /** Migra reglas de la versión anterior, que usaba el pseudo-nivel NO_FOOTWEAR. */
-const migrar = (lista) => (lista || []).map(r => {
+const conTiempoBase = (r) => {
+    const v = tiempoBaseDe(r);
+    return r.tiempoBase === v ? r : { ...r, tiempoBase: v };
+};
+
+const migrar = (lista) => (lista || []).map(conTiempoBase).map(r => {
     if (r.nivel) return r;
     const cat = norm(r.categoria);
     if (cat === 'NO_FOOTWEAR') return { ...r, categoria: 'NON FOOTWEAR', nivel: NIVEL.FAMILIA };
@@ -84,10 +105,12 @@ export const cargarReglas = async (forzar = false) => {
     return reglas;
 };
 
-export const getReglas = () => reglas || [];
+// Se normaliza al leer, no solo al migrar: una regla guardada por una pestaña con código
+// viejo puede volver sin el campo, y no debe pintar "NaN" ni romper el cálculo.
+export const getReglas = () => (reglas || []).map(conTiempoBase);
 
 export const guardarReglas = async (nuevasReglas) => {
-    reglas = nuevasReglas;
+    reglas = (nuevasReglas || []).map(conTiempoBase);
     localStorage.setItem(CACHE_KEY, JSON.stringify(reglas));
     try {
         const res = await fetch(API_URL, {
@@ -148,19 +171,19 @@ export const resolverMeta = (detalle, familia, fecha) => {
     const d = norm(detalle);
     if (d && !esCategoriaVacia(d)) {
         const porDetalle = masReciente(vigentes.filter(r => norm(r.categoria) === d));
-        if (porDetalle) return { metaUph: porDetalle.metaUph, tamanoTarea: porDetalle.tamanoTarea, regla: porDetalle, origen: NIVEL.DETALLE };
+        if (porDetalle) return { metaUph: porDetalle.metaUph, tamanoTarea: porDetalle.tamanoTarea, tiempoBase: tiempoBaseDe(porDetalle), regla: porDetalle, origen: NIVEL.DETALLE };
     }
 
     const f = norm(familia);
     if (f && !esCategoriaVacia(f)) {
         const porFamilia = masReciente(vigentes.filter(r => norm(r.categoria) === f));
-        if (porFamilia) return { metaUph: porFamilia.metaUph, tamanoTarea: porFamilia.tamanoTarea, regla: porFamilia, origen: NIVEL.FAMILIA };
+        if (porFamilia) return { metaUph: porFamilia.metaUph, tamanoTarea: porFamilia.tamanoTarea, tiempoBase: tiempoBaseDe(porFamilia), regla: porFamilia, origen: NIVEL.FAMILIA };
     }
 
     const global = masReciente(vigentes.filter(r => norm(r.categoria) === 'GLOBAL'));
-    if (global) return { metaUph: global.metaUph, tamanoTarea: global.tamanoTarea, regla: global, origen: NIVEL.GLOBAL };
+    if (global) return { metaUph: global.metaUph, tamanoTarea: global.tamanoTarea, tiempoBase: tiempoBaseDe(global), regla: global, origen: NIVEL.GLOBAL };
 
-    return { metaUph: META_FALLBACK, tamanoTarea: TAMANO_FALLBACK, regla: null, origen: 'respaldo' };
+    return { metaUph: META_FALLBACK, tamanoTarea: TAMANO_FALLBACK, tiempoBase: TIEMPO_BASE_FALLBACK, regla: null, origen: 'respaldo' };
 };
 
 /** Meta de hoy, para el generador de tareas. */
