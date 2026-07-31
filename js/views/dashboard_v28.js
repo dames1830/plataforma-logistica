@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.559';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.560';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.559';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.559';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.559';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.559';
-import * as metasService from '../services_v245/metasService.js?v=26.5.559';
+import * as adminService from '../services_v245/adminService.js?v=26.5.560';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.560';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.560';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.560';
+import * as metasService from '../services_v245/metasService.js?v=26.5.560';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.559';
+const VERSION = '26.5.560';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -708,13 +708,16 @@ const unidadesPorGenderYDia = (tasks, desde, hasta) => {
  * La marca vive en la tarea, no en el artículo, así que se toma el total de la
  * tarea con la regla de siempre (getTaskTotalAvance).
  */
-const unidadesPorMarca = (tasks, desde, hasta) => {
+const unidadesPorMarca = (tasks, desde, hasta, soloGender = null) => {
     const mapa = new Map();
     (tasks || []).forEach(t => {
         if (!t || t.status !== 'Finalizado' || !t.fecha) return;
         if (t.fecha < desde || t.fecha > hasta) return;
         const m = String(t.marca || '').trim() || 'Sin marca';
-        const u = getTaskTotalAvance(t);
+        // Con `soloGender` se cuenta únicamente esa categoría de la tarea, no su
+        // total: una tarea puede mezclar artículos de varios G. Gender.
+        const u = soloGender ? (unidadesPorGender(t).get(soloGender) || 0)
+                             : getTaskTotalAvance(t);
         if (u) mapa.set(m, (mapa.get(m) || 0) + u);
     });
     return mapa;
@@ -1758,16 +1761,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         return `<span style="color:${col}; font-weight:900; font-size:${tam}; white-space:nowrap;">${fl} ${Math.abs(v).toFixed(0)}%</span>`;
     };
 
+    // Cabecera de una sola línea: todo Inicio tiene que entrar sin desplazar la
+    // pantalla, y el saludo no puede comerse el espacio de los datos.
     const cabecera = `
-        <div class="animate-fade-in" style="margin-bottom:1.5rem;">
-            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:1.6rem 2rem; border-radius:18px; border:1px solid rgba(79, 70, 229, 0.3); position:relative; overflow:hidden;">
-                <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary); filter:blur(100px); opacity:0.2;"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:15px; flex-wrap:wrap;">
-                    <h1 style="margin:0; font-size:1.9rem; font-weight:900; letter-spacing:-0.5px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
-                    <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.85rem;">
-                        ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
-                    </div>
-                </div>
+        <div class="animate-fade-in" style="display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:0.7rem;">
+            <h1 style="margin:0; font-size:1.15rem; font-weight:900; letter-spacing:-0.3px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+            <div id="homeClock" style="color:var(--text-muted); font-weight:700; font-size:0.72rem;">
+                ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
             </div>
         </div>`;
 
@@ -1814,14 +1814,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     // --- Tarjetas grandes -----------------------------------------------------
     const tarjeta = (titulo, valor, sufijo, valorPrev, sufijoPrev, v, pie) => `
-        <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.35rem;">
-            <h4 style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; margin:0;">${titulo}</h4>
-            <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
-                <h2 style="font-size:2rem; font-weight:900; color:#fff; margin:0; line-height:1.1;">${valor}<span style="font-size:0.9rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
-                ${chipVar(v, true)}
+        <div class="kpi-card" style="display:flex; flex-direction:column; gap:0.15rem; padding:0.7rem 0.9rem;">
+            <h4 style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">${titulo}</h4>
+            <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+                <h2 style="font-size:1.5rem; font-weight:900; color:#fff; margin:0; line-height:1.15;">${valor}<span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+                ${chipVar(v, false)}
             </div>
-            <div style="font-size:0.72rem; color:var(--text-muted);">semana pasada: <b style="color:rgba(255,255,255,0.65);">${valorPrev}${sufijoPrev}</b></div>
-            ${pie ? `<div style="font-size:0.7rem; color:rgba(255,255,255,0.35); margin-top:0.15rem;">${pie}</div>` : ''}
+            <div style="font-size:0.63rem; color:var(--text-muted);">antes: <b style="color:rgba(255,255,255,0.6);">${valorPrev}${sufijoPrev}</b>${pie ? ` · ${pie}` : ''}</div>
         </div>`;
 
     const tarjetas = [
@@ -1849,21 +1848,25 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Nombres cortos: la tabla ocupa media pantalla para dejar sitio a la de marcas.
     const DIAS_COL = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
     const diasEsta = diasDeSemana(r.desdeEsta);
-    const diasPasada = diasDeSemana(r.desdePasada);
-    const semEsta = semanaISO(r.desdeEsta);
-    const semPasada = semanaISO(r.desdePasada);
 
-    // Aquí sí se toma la semana pasada COMPLETA (lunes a domingo), no solo el
-    // tramo comparable: la tabla es para mirar el detalle, y ver los días que
-    // ya pasaron es justamente lo útil.
-    const detallePorDia = unidadesPorGenderYDia(tasks, aISO(r.desdePasada), aISO(diasEsta[6]));
+    // Las cuatro semanas del detalle, de la más vieja a la actual.
+    const SEMANAS_DIAS = [3, 2, 1, 0].map(atras => {
+        const lunes = new Date(r.desdeEsta);
+        lunes.setDate(lunes.getDate() - atras * 7);
+        return { num: semanaISO(lunes), dias: diasDeSemana(lunes), esActual: atras === 0 };
+    });
+
+    // Las semanas cerradas van COMPLETAS (lunes a domingo): la tabla es para
+    // mirar el detalle, y ver los días que ya pasaron es justamente lo útil.
+    const detallePorDia = unidadesPorGenderYDia(
+        tasks, aISO(SEMANAS_DIAS[0].dias[0]), aISO(diasEsta[6]));
 
     // Las dos semanas se pintan IGUAL: son dos datos del mismo rango, ninguna
     // vale más que la otra. El total se distingue por la línea y el peso de la
     // tipografía, sin fondos que ensucien la lectura.
     const CELDA_TOTAL = 'border-left:1px solid rgba(79,70,229,0.45);';
-    const CELDA = 'padding:0.38rem 0.45rem; text-align:center;';
-    const ETIQUETA = 'padding:0.38rem 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+    const CELDA = 'padding:0.18rem 0.4rem; text-align:center;';
+    const ETIQUETA = 'padding:0.18rem 0.45rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
 
     // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
     // los suyos según su contenido y el LUNES de una categoría no queda encima
@@ -1888,9 +1891,26 @@ export const renderDashboard = async (container, user, onLogout) => {
         return '#ef4444';
     };
 
-    const filaSemana = (etiqueta, categoria, dias, porDia, esActual) => {
+    /**
+     * El indicador va SEPARADO del número: la cifra se lee en su color normal y
+     * al lado aparece la flecha de color. Teñir el número hace que el dato y el
+     * juicio sobre el dato se confundan.
+     */
+    const flechaKpi = (actual, anterior) => {
+        const c = colorKpi(actual, anterior);
+        if (!c) return '';
+        const simbolo = actual > anterior ? '▲' : (actual === anterior ? '=' : '▼');
+        return ` <span style="color:${c}; font-weight:900; font-size:0.85em;">${simbolo}</span>`;
+    };
+
+    /**
+     * Una fila de semana. `diasPrevios` son los mismos días de la semana de
+     * arriba: de ahí sale la flecha. La primera semana del bloque no los tiene y
+     * queda sin flecha, porque no hay contra qué compararla.
+     */
+    const filaSemana = (num, categoria, dias, diasPrevios, porDia, esActual) => {
         let total = 0;
-        let totalComparable = 0;   // mismos días de la semana pasada, para el semáforo del total
+        let totalPrevio = 0;
         const celdas = dias.map((d, i) => {
             if (esActual && d > r.hastaEsta) {
                 return `<td style="${CELDA} color:rgba(255,255,255,0.15);">·</td>`;
@@ -1898,35 +1918,32 @@ export const renderDashboard = async (container, user, onLogout) => {
             const v = porDia.get(aISO(d)) || 0;
             total += v;
 
-            if (!esActual) {
-                const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
-                return `<td style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'};">${v ? fmt(v) : '—'}</td>`;
+            let flecha = '', titulo = '';
+            if (diasPrevios) {
+                const anterior = porDia.get(aISO(diasPrevios[i])) || 0;
+                totalPrevio += anterior;
+                flecha = flechaKpi(v, anterior);
+                if (flecha) titulo = ` title="${fmt(v)} contra ${fmt(anterior)} el mismo día de la semana anterior"`;
             }
-
-            // Semana en curso: cada día se compara con el mismo día de la anterior.
-            const anterior = porDia.get(aISO(diasPasada[i])) || 0;
-            totalComparable += anterior;
-            const kpi = colorKpi(v, anterior);
-            const col = kpi || (v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)');
-            const titulo = kpi ? ` title="${fmt(v)} contra ${fmt(anterior)} el mismo día de la semana pasada"` : '';
-            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v || kpi ? '800' : '400'};">${v ? fmt(v) : '—'}</td>`;
+            const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${v ? fmt(v) : '—'}${flecha}</td>`;
         }).join('');
 
-        const kpiTotal = esActual ? colorKpi(total, totalComparable) : null;
+        const flechaTotal = diasPrevios ? flechaKpi(total, totalPrevio) : '';
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="${ETIQUETA} font-weight:900; color:var(--text-muted); font-size:0.66rem;">${etiqueta}</td>
+                <td style="${ETIQUETA} font-weight:900; color:var(--text-muted); font-size:0.62rem;">SEM ${num}${esActual ? '*' : ''}</td>
                 <td style="${ETIQUETA} color:#fff; font-weight:700;">${categoria}</td>
                 ${celdas}
-                <td ${kpiTotal ? `title="${fmt(total)} contra ${fmt(totalComparable)} en los mismos días de la semana pasada"` : ''} style="${CELDA} font-weight:900; color:${kpiTotal || '#fbbf24'}; ${CELDA_TOTAL}">${fmt(total)}</td>
+                <td ${flechaTotal ? `title="${fmt(total)} contra ${fmt(totalPrevio)} en los mismos días de la semana anterior"` : ''} style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap; ${CELDA_TOTAL}">${fmt(total)}${flechaTotal}</td>
             </tr>`;
     };
 
-    /** Fila de totales por columna: suma de las dos semanas en cada día. */
+    /** Fila de totales por columna: suma de las cuatro semanas en cada día. */
     const filaTotalColumnas = (porDia, ultima) => {
         let granTotal = 0;
         const celdas = DIAS_COL.map((_, i) => {
-            const v = (porDia.get(aISO(diasPasada[i])) || 0) + (porDia.get(aISO(diasEsta[i])) || 0);
+            const v = SEMANAS_DIAS.reduce((t, s) => t + (porDia.get(aISO(s.dias[i])) || 0), 0);
             granTotal += v;
             return `<td style="${CELDA} font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${v ? fmt(v) : '—'}</td>`;
         }).join('');
@@ -1934,16 +1951,18 @@ export const renderDashboard = async (container, user, onLogout) => {
         return `
             <tr style="border-bottom:${ultima ? 'none' : '2px solid rgba(255,255,255,0.12)'};">
                 <td style="${ETIQUETA}"></td>
-                <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.68rem;">TOTAL</td>
+                <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.64rem;">TOTAL</td>
                 ${celdas}
                 <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${fmt(granTotal)}</td>
             </tr>`;
     };
 
-    /** Las tres filas de una categoría: semana pasada, semana en curso y total. */
+    /** Las cinco filas de una categoría: cuatro semanas y su total. */
     const grupoCategoria = (titulo, porDia, ultima) =>
-        filaSemana(`SEM ${semPasada}`, titulo, diasPasada, porDia, false)
-        + filaSemana(`SEM ${semEsta}`, titulo, diasEsta, porDia, true)
+        SEMANAS_DIAS.map((s, i) => filaSemana(
+            s.num, titulo, s.dias,
+            i === 0 ? null : SEMANAS_DIAS[i - 1].dias,   // la primera no tiene con qué compararse
+            porDia, s.esActual)).join('')
         + filaTotalColumnas(porDia, ultima);
 
     // Suma de TODAS las categorías, día por día: el grupo de cierre.
@@ -1952,31 +1971,58 @@ export const renderDashboard = async (container, user, onLogout) => {
         porDia.forEach((u, fecha) => porDiaGeneral.set(fecha, (porDiaGeneral.get(fecha) || 0) + u));
     });
 
-    const hayGeneral = categorias.length > 1;
-    const grupos =
-        categorias.map((g, i) => grupoCategoria(
-            etiquetaCategoria(g) || g,
-            detallePorDia.get(g) || new Map(),
-            !hayGeneral && i === categorias.length - 1)).join('')
-        + (hayGeneral ? grupoCategoria('TODAS', porDiaGeneral, true) : '');
+    // Desplegable por categoría: cuatro semanas por cada una no caben todas a la
+    // vez en pantalla, así que colapsadas entra todo y se abre lo que interese.
+    // Lo que esté abierto se recuerda, porque esta pantalla se redibuja sola.
+    // Footwear abierto de arranque: es lo que Daniel mide. El resto colapsado,
+    // y a partir de ahí manda lo que el usuario abra o cierre.
+    if (!window.__homeCatAbiertas) window.__homeCatAbiertas = new Set(['FOOTWEAR']);
 
-    // UNA sola tabla con la cabecera arriba, no una por categoría: así todas las
-    // columnas comparten geometría por construcción y no queda nada que alinear.
-    const bloquesPorDia = `
-        <div style="overflow-x:auto;">
-            <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:0.72rem;">
-                ${COLUMNAS}
-                <thead>
-                    <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
-                        <th style="${ETIQUETA}"></th>
-                        <th style="${ETIQUETA}">GENDER</th>
-                        ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
-                        <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
-                    </tr>
-                </thead>
-                <tbody>${grupos}</tbody>
-            </table>
-        </div>`;
+    const bloqueDesplegable = (clave, titulo, porDia) => {
+        const totalGrupo = [...porDia.values()].reduce((a, b) => a + b, 0);
+
+        // Semana en curso contra la anterior, para que el resumen ya diga algo
+        // sin necesidad de abrir.
+        const sumaSemana = (s) => s.dias.reduce((t, d) => t + (porDia.get(aISO(d)) || 0), 0);
+        const actual = SEMANAS_DIAS[SEMANAS_DIAS.length - 1];
+        const previa = SEMANAS_DIAS[SEMANAS_DIAS.length - 2];
+        const vAct = sumaSemana(actual);
+        const vPrev = previa ? previa.dias.slice(0, r.diasCorridos + 1)
+                        .reduce((t, d) => t + (porDia.get(aISO(d)) || 0), 0) : 0;
+
+        const abierta = window.__homeCatAbiertas.has(clave);
+        return `
+            <details data-cat="${clave}" ${abierta ? 'open' : ''} style="margin-bottom:0.35rem;">
+                <summary style="cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; padding:0.3rem 0.45rem; background:rgba(255,255,255,0.03); border-radius:5px; user-select:none;">
+                    <span style="color:var(--primary); font-size:0.7rem; transition:transform 0.15s;">▸</span>
+                    <span style="color:#fff; font-weight:800; font-size:0.72rem; flex:1; text-transform:uppercase; letter-spacing:0.4px;">${titulo}</span>
+                    <span style="color:var(--text-muted); font-size:0.62rem;">4 sem:</span>
+                    <span style="color:#fbbf24; font-weight:900; font-size:0.72rem;">${fmt(totalGrupo)}</span>
+                    ${flechaKpi(vAct, vPrev)}
+                </summary>
+                <div style="overflow-x:auto; padding-top:0.25rem;">
+                    <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:0.7rem;">
+                        ${COLUMNAS}
+                        <thead>
+                            <tr style="color:var(--text-muted); font-size:0.55rem; letter-spacing:0.4px;">
+                                <th style="${ETIQUETA}"></th>
+                                <th style="${ETIQUETA}">GENDER</th>
+                                ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
+                                <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>${grupoCategoria(titulo, porDia, true)}</tbody>
+                    </table>
+                </div>
+            </details>`;
+    };
+
+    // Las categorías primero (Footwear encabeza por volumen) y el consolidado al
+    // final: lo que está abierto queda arriba, a la vista.
+    const bloquesPorDia =
+        categorias.map(g => bloqueDesplegable(g, etiquetaCategoria(g) || g,
+                                              detallePorDia.get(g) || new Map())).join('')
+        + (categorias.length > 1 ? bloqueDesplegable('TODAS', 'Todas las categorías', porDiaGeneral) : '');
 
     // --- Marcas almacenadas: cuatro semanas ----------------------------------
     // La semana en curso lleva menos días que las cerradas, así que su color NO
@@ -1991,11 +2037,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         return {
             num: semanaISO(lunes),
             esActual,
-            datos: unidadesPorMarca(tasks, aISO(lunes), esActual ? r.estaHasta : aISO(domingo))
+            datos: unidadesPorMarca(tasks, aISO(lunes), esActual ? r.estaHasta : aISO(domingo), 'FOOTWEAR')
         };
     });
     // Mismo tramo de la semana pasada (lunes → hoy), solo para el semáforo.
-    const marcasTramoPasado = unidadesPorMarca(tasks, r.pasadaDesde, r.pasadaHasta);
+    const marcasTramoPasado = unidadesPorMarca(tasks, r.pasadaDesde, r.pasadaHasta, 'FOOTWEAR');
 
     const marcas = [...new Set(SEMANAS.flatMap(s => [...s.datos.keys()]))]
         .sort((a, b) => SEMANAS.reduce((t, s) => t + (s.datos.get(b) || 0), 0)
@@ -2013,10 +2059,10 @@ export const renderDashboard = async (container, user, onLogout) => {
             const base = i === 0 ? null
                        : s.esActual ? (marcasTramoPasado.get(m) || 0)
                        : (SEMANAS[i - 1].datos.get(m) || 0);
-            const kpi = base === null ? null : colorKpi(v, base);
-            const col = kpi || (v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)');
-            const titulo = kpi ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
-            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v || kpi ? '800' : '400'};">${v ? fmt(v) : '—'}</td>`;
+            const flecha = base === null ? '' : flechaKpi(v, base);
+            const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
+            const titulo = flecha ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${v ? fmt(v) : '—'}${flecha}</td>`;
         }).join('');
 
         return `
@@ -2033,29 +2079,27 @@ export const renderDashboard = async (container, user, onLogout) => {
         const base = i === 0 ? null
                    : SEMANAS[i].esActual ? tramoPasadoTotal
                    : totalesSemana[i - 1];
-        const kpi = base === null ? null : colorKpi(v, base);
-        return `<td style="${CELDA} font-weight:900; color:${kpi || '#fbbf24'};">${fmt(v)}</td>`;
+        const flecha = base === null ? '' : flechaKpi(v, base);
+        return `<td style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap;">${fmt(v)}${flecha}</td>`;
     }).join('');
 
+    const LEYENDA = `<span style="font-size:0.62rem; color:var(--text-muted); font-weight:600;">contra la semana anterior: <b style="color:#22c55e;">▲</b> sube <b style="color:#fbbf24;">=</b> igual <b style="color:#ef4444;">▼</b> baja</span>`;
+
     const panelDias = `
-        <div class="glass-panel" style="padding:1.1rem; flex:1 1 520px; min-width:0;">
-            <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
-            <p style="margin:0 0 1rem 0; font-size:0.72rem; color:var(--text-muted);">
-                La fila de la semana en curso lleva semáforo contra el mismo día de la anterior:
-                <b style="color:#22c55e;">verde</b> si supera, <b style="color:#fbbf24;">amarillo</b> si empata,
-                <b style="color:#ef4444;">rojo</b> si queda por debajo. Los días que aún no llegan van con <b>·</b>.
-            </p>
+        <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 520px; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:0.5rem;">
+                <h3 style="margin:0; color:#fff; font-size:0.85rem; font-weight:800;">Detalle por día</h3>
+                ${LEYENDA}
+            </div>
             ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
         </div>`;
 
     const panelMarcas = `
-        <div class="glass-panel" style="padding:1.1rem; flex:1 1 320px; min-width:0;">
-            <h3 style="margin:0 0 0.2rem 0; color:#fff; font-size:0.95rem; font-weight:800;">Marcas almacenadas</h3>
-            <p style="margin:0 0 1rem 0; font-size:0.72rem; color:var(--text-muted);">
-                Últimas cuatro semanas. El color compara cada semana con la anterior:
-                <b style="color:#22c55e;">verde</b> si sube, <b style="color:#fbbf24;">amarillo</b> si empata,
-                <b style="color:#ef4444;">rojo</b> si baja.
-            </p>
+        <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 320px; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:0.5rem;">
+                <h3 style="margin:0; color:#fff; font-size:0.85rem; font-weight:800;">Marcas · Footwear</h3>
+                <span style="font-size:0.62rem; color:var(--text-muted); font-weight:600;">últimas 4 semanas</span>
+            </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; min-width:340px; font-size:0.72rem;">
                     <thead>
@@ -2074,9 +2118,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                         </tr>
                     </tbody>
                 </table>
-                <p style="margin:0.6rem 0 0 0; font-size:0.65rem; color:rgba(255,255,255,0.35); line-height:1.5;">
-                    * Semana en curso: lleva menos días que las cerradas, así que el número es lo que va,
-                    pero su color se compara contra los <b>mismos días</b> de la semana anterior.
+                <p style="margin:0.45rem 0 0 0; font-size:0.6rem; color:rgba(255,255,255,0.3); line-height:1.4;">
+                    * Semana en curso: el número es lo que va; la flecha compara los <b>mismos días</b> de la semana anterior.
                 </p>
             </div>
         </div>`;
@@ -2086,21 +2129,34 @@ export const renderDashboard = async (container, user, onLogout) => {
     const grafico = `<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">${panelDias}${panelMarcas}</div>`;
 
     contentArea.innerHTML = cabecera + `
-        <div style="margin-bottom:1rem;">
-            <h2 style="margin:0; color:#fff; font-size:1.15rem; font-weight:900; letter-spacing:-0.3px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:0.6rem;">
+            <h2 style="margin:0; color:#fff; font-size:0.95rem; font-weight:900; letter-spacing:-0.2px;">
                 ${filtroUsuario ? 'Tu semana' : 'Esta semana'} contra la anterior
             </h2>
-            <p style="margin:0.3rem 0 0 0; font-size:0.78rem; color:var(--text-muted);">
+            <span style="font-size:0.68rem; color:var(--text-muted);">
                 <b style="color:#a5b4fc;">${fmtFecha(r.desdeEsta)} al ${fmtFecha(r.hastaEsta)}</b>
-                &nbsp;contra&nbsp;
+                contra
                 <b style="color:rgba(255,255,255,0.55);">${fmtFecha(r.desdePasada)} al ${fmtFecha(r.hastaPasada)}</b>
-                &nbsp;·&nbsp;mismos días de la semana, para que la comparación sea justa
-            </p>
+                · mismos días, para que sea justa
+            </span>
         </div>
-        <div class="kpi-grid" style="margin-bottom:1.5rem;">${tarjetas}</div>
+        <div class="kpi-grid" style="margin-bottom:0.8rem;">${tarjetas}</div>
         ${grafico}`;
 
     arrancarReloj();
+
+    // Recordar qué categorías quedan abiertas: Inicio se redibuja solo cada 20
+    // segundos y sin esto se cerraría en la cara del usuario. La flecha del
+    // resumen gira para que se note que es desplegable.
+    contentArea.querySelectorAll('details[data-cat]').forEach(det => {
+        const flecha = det.querySelector('summary span');
+        if (flecha) flecha.style.transform = det.open ? 'rotate(90deg)' : 'rotate(0deg)';
+        det.addEventListener('toggle', () => {
+            if (det.open) window.__homeCatAbiertas.add(det.dataset.cat);
+            else window.__homeCatAbiertas.delete(det.dataset.cat);
+            if (flecha) flecha.style.transform = det.open ? 'rotate(90deg)' : 'rotate(0deg)';
+        });
+    });
 
     // Ya no hay gráfico en Inicio: si quedó uno de una versión anterior, se
     // libera para no dejar el objeto de Chart.js colgando en memoria.
@@ -2638,7 +2694,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.559');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.560');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2973,7 +3029,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.559] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.560] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7666,7 +7722,7 @@ const renderRFSection = (container) => {
               await adminService.initializeAdminData();
               // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
               // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
-              // que desde v26.5.559 ya no aparece en esa pantalla: ahora se muestra la
+              // que desde v26.5.560 ya no aparece en esa pantalla: ahora se muestra la
               // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
@@ -12168,7 +12224,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.559 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.560 | MOBILE PORTAL
                             </div>
                     </div>
 
