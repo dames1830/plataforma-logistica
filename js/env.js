@@ -1,5 +1,5 @@
 /* ============================================================================
-   ENTORNO (produccion vs pruebas)  -  v26.5.547
+   ENTORNO (produccion vs pruebas)  -  v26.5.572
    ----------------------------------------------------------------------------
    Este archivo se carga ANTES que cualquier otro. Hace tres cosas:
 
@@ -143,12 +143,28 @@
   var TEXTO   = PELIGRO ? '⚠️ CUIDADO: DATOS REALES'
                         : '🧪 MODO PRUEBAS · los datos NO son los reales';
 
-  function pintarAviso() {
-    if (!document.body || document.getElementById('pulse-env-aviso')) return;
+  var PREFIJO = PELIGRO ? '⚠️ REAL · ' : '🧪 BETA · ';
 
+  /**
+   * Marca la pestaña. Es idempotente y se puede llamar tantas veces como haga
+   * falta: no hace nada si el <title> todavía no existe (el script corre antes
+   * de que se parsee) ni si ya está marcado, y lo repone si la app lo cambia.
+   */
+  function marcarTitulo() {
     try {
-      document.title = (PELIGRO ? '⚠️ REAL · ' : '🧪 BETA · ') + document.title;
+      var t = document.title || '';
+      if (!t || t.indexOf(PREFIJO) === 0) return;
+      document.title = PREFIJO + t;
     } catch (e) { /* ignorar */ }
+  }
+
+  function pintarAviso() {
+    marcarTitulo();
+    if (document.getElementById('pulse-env-aviso')) return;
+    // Se cuelga de <html>, NO de <body>: la app reemplaza el body entero al
+    // arrancar y al cambiar de vista, y ahí se llevaba el aviso por delante.
+    var raiz = document.documentElement;
+    if (!raiz) return;
 
     var capa = document.createElement('div');
     capa.id = 'pulse-env-aviso';
@@ -158,31 +174,46 @@
       'border:4px solid ' + COLOR
     ].join(';');
 
+    // Abajo al centro: arriba tapaba el logo de la app, y el indicador de
+    // sincronización ocupa la esquina inferior derecha. Este hueco está libre
+    // en todas las vistas.
     var cartel = document.createElement('div');
     cartel.textContent = TEXTO;
     cartel.style.cssText = [
-      'position:absolute', 'top:0', 'left:50%', 'transform:translateX(-50%)',
+      'position:absolute', 'bottom:0', 'left:50%', 'transform:translateX(-50%)',
       'background:' + COLOR, 'color:#fff',
       'font:800 11px/1 Inter,system-ui,sans-serif', 'letter-spacing:.5px',
-      'padding:6px 16px', 'border-radius:0 0 10px 10px',
+      'padding:6px 16px', 'border-radius:10px 10px 0 0',
       'box-shadow:0 4px 14px rgba(0,0,0,.35)', 'white-space:nowrap',
       'text-transform:uppercase', 'max-width:96vw', 'overflow:hidden',
       'text-overflow:ellipsis'
     ].join(';');
 
     capa.appendChild(cartel);
-    document.body.appendChild(capa);
+    raiz.appendChild(capa);
   }
 
+  // Se pinta de inmediato, sin esperar al DOM: durante los segundos que tarda
+  // en cargar la app tiene que verse igual que después.
+  pintarAviso();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', pintarAviso);
-  } else {
-    pintarAviso();
   }
 
-  // Si alguna vista reemplaza el body entero, el aviso se vuelve a poner.
+  // Vigilante: si alguna vista lo borra, vuelve en el mismo instante, no dentro
+  // de unos segundos. Un rato sin aviso es un rato en el que te puedes confundir
+  // de entorno, que es justo lo que esto existe para evitar.
+  try {
+    new MutationObserver(function () {
+      if (!document.getElementById('pulse-env-aviso')) pintarAviso();
+    }).observe(document.documentElement, { childList: true, subtree: false });
+  } catch (e) { /* navegador sin MutationObserver: queda el respaldo de abajo */ }
+
+  // Respaldo por si el vigilante no alcanza (p. ej. document.write), y de paso
+  // repone el título si alguna vista lo reescribe.
   setInterval(function () {
-    if (document.body && !document.getElementById('pulse-env-aviso')) pintarAviso();
-  }, 3000);
+    if (!document.getElementById('pulse-env-aviso')) pintarAviso();
+    else marcarTitulo();
+  }, 1000);
 
 })();

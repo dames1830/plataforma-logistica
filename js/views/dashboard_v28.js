@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.547';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=26.5.572';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=26.5.547';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.547';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.547';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.547';
-import * as metasService from '../services_v245/metasService.js?v=26.5.547';
+import * as adminService from '../services_v245/adminService.js?v=26.5.572';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=26.5.572';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=26.5.572';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=26.5.572';
+import * as metasService from '../services_v245/metasService.js?v=26.5.572';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '26.5.547';
+const VERSION = '26.5.572';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -557,6 +557,177 @@ const mediana = (arr) => {
 const percentilDe = (valor, todos) => {
     if (!todos || todos.length < 2) return 100;
     return Math.round((todos.filter(v => v < valor).length / (todos.length - 1)) * 100);
+};
+
+/* ============================================================================
+   INICIO: comparativa de la semana en curso contra la anterior
+   ============================================================================ */
+
+/** Fecha a YYYY-MM-DD en hora LOCAL (toISOString daría el día anterior de noche). */
+const aISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Lunes de la semana a la que pertenece una fecha. */
+const lunesDe = (fecha) => {
+    const d = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // getDay(): 0 = domingo
+    return d;
+};
+
+/**
+ * Semana en curso y el MISMO tramo de la semana anterior.
+ *
+ * Comparar un lunes-a-jueves contra una semana completa inventaría una caída del
+ * 40% que no existe, así que la semana pasada se corta en el mismo día.
+ */
+const rangoSemanas = (hoy = new Date()) => {
+    const desdeEsta = lunesDe(hoy);
+    const hoySinHora = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    const diasCorridos = Math.round((hoySinHora - desdeEsta) / 86400000);
+
+    const desdePasada = new Date(desdeEsta);
+    desdePasada.setDate(desdePasada.getDate() - 7);
+    const hastaPasada = new Date(desdePasada);
+    hastaPasada.setDate(hastaPasada.getDate() + diasCorridos);
+
+    return {
+        desdeEsta, hastaEsta: hoySinHora, desdePasada, hastaPasada, diasCorridos,
+        estaDesde: aISO(desdeEsta), estaHasta: aISO(hoySinHora),
+        pasadaDesde: aISO(desdePasada), pasadaHasta: aISO(hastaPasada)
+    };
+};
+
+/**
+ * Unidades de UNA tarea repartidas por G. Gender (columna C del Maestro).
+ *
+ * Usa exactamente la misma regla que getTaskTotalAvance —solo ubicaciones
+ * CDBUFFER que no sean CDBUFFER-C, y 'avance' cuando existe— para que la suma
+ * de las categorías cuadre con el total que muestra el resto del sistema.
+ */
+const unidadesPorGender = (t) => {
+    const out = new Map();
+    if (!t) return out;
+
+    (t.items || []).forEach(art => {
+        if (!art) return;
+        const g = String(art.gender || '').trim().toUpperCase() || 'SIN CATEGORÍA';
+        let sum = 0;
+        (art.items || []).forEach(i => {
+            const ubi = String((i && i.ubi) || '').toUpperCase().trim();
+            if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+            if (i.avance !== undefined && i.avance !== null) sum += parseFloat(i.avance) || 0;
+            else if (t.status === 'Finalizado') sum += parseFloat(i.qty) || 0;
+        });
+        if (sum) out.set(g, (out.get(g) || 0) + sum);
+    });
+    return out;
+};
+
+/**
+ * Todo lo que necesita la pantalla de Inicio para un rango de fechas.
+ * `filas` son las de buildKpiDataset (ya traen meta, minutos y esperado).
+ */
+const resumenSemana = (tasks, desde, hasta, filtroUsuario = null) => {
+    let filas = buildKpiDataset(tasks, desde, hasta);
+    if (filtroUsuario) filas = filas.filter(r => r.usuarios.includes(filtroUsuario));
+
+    const idsValidos = new Set(filas.map(r => r.id));
+    const porGender = new Map();
+    const porDia = new Map();
+
+    (tasks || []).forEach(t => {
+        if (!t || !idsValidos.has(t.id)) return;
+        unidadesPorGender(t).forEach((u, g) => {
+            porGender.set(g, (porGender.get(g) || 0) + u);
+            porDia.set(t.fecha, (porDia.get(t.fecha) || 0) + u);
+        });
+    });
+
+    const qty = filas.reduce((a, r) => a + r.qty, 0);
+    const mins = filas.reduce((a, r) => a + r.mins, 0);
+    const esperado = filas.reduce((a, r) => a + r.esperado, 0);
+    const diasActivos = new Set(filas.map(r => r.fecha));
+
+    return {
+        filas, porGender, porDia,
+        tareas: filas.length,
+        qty, mins,
+        horas: mins / 60,
+        uph: mins > 0 ? (qty / mins) * 60 : 0,
+        cumplimiento: esperado > 0 ? (qty / esperado) * 100 : 0,
+        diasActivos,
+        dias: diasActivos.size,
+        personas: new Set(filas.flatMap(r => r.usuarios)).size,
+        porDiaActivo: diasActivos.size > 0 ? qty / diasActivos.size : 0
+    };
+};
+
+/**
+ * Número de semana ISO (las que empiezan en lunes). Es el "SEM 31" del tablero.
+ * Se calcula sobre el jueves de esa semana, que es lo que define a qué año
+ * pertenece cuando la semana cae a caballo entre diciembre y enero.
+ */
+const semanaISO = (fecha) => {
+    const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const inicioAno = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - inicioAno) / 86400000) + 1) / 7);
+};
+
+/** Los 7 días (lunes a domingo) de la semana que empieza en `lunes`. */
+const diasDeSemana = (lunes) => {
+    const out = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(lunes);
+        d.setDate(d.getDate() + i);
+        out.push(d);
+    }
+    return out;
+};
+
+/**
+ * {G. Gender → {fecha → unidades}} de las tareas finalizadas en el rango.
+ * Es la materia prima de la tabla de días: una fila por semana y una columna
+ * por día, para cada categoría.
+ */
+const unidadesPorGenderYDia = (tasks, desde, hasta) => {
+    const mapa = new Map();
+    (tasks || []).forEach(t => {
+        if (!t || t.status !== 'Finalizado' || !t.fecha) return;
+        if (t.fecha < desde || t.fecha > hasta) return;
+        unidadesPorGender(t).forEach((u, g) => {
+            if (!mapa.has(g)) mapa.set(g, new Map());
+            const porDia = mapa.get(g);
+            porDia.set(t.fecha, (porDia.get(t.fecha) || 0) + u);
+        });
+    });
+    return mapa;
+};
+
+/**
+ * {marca → unidades} de las tareas finalizadas en un rango.
+ * La marca vive en la tarea, no en el artículo, así que se toma el total de la
+ * tarea con la regla de siempre (getTaskTotalAvance).
+ */
+const unidadesPorMarca = (tasks, desde, hasta, soloGender = null) => {
+    const mapa = new Map();
+    (tasks || []).forEach(t => {
+        if (!t || t.status !== 'Finalizado' || !t.fecha) return;
+        if (t.fecha < desde || t.fecha > hasta) return;
+        const m = String(t.marca || '').trim() || 'Sin marca';
+        // Con `soloGender` se cuenta únicamente esa categoría de la tarea, no su
+        // total: una tarea puede mezclar artículos de varios G. Gender.
+        const u = soloGender ? (unidadesPorGender(t).get(soloGender) || 0)
+                             : getTaskTotalAvance(t);
+        if (u) mapa.set(m, (mapa.get(m) || 0) + u);
+    });
+    return mapa;
+};
+
+/** Variación porcentual de a respecto de b, tolerando el cero. */
+const variacion = (a, b) => {
+    if (b > 0) return ((a - b) / b) * 100;
+    if (a > 0) return null;    // null = "nuevo", no hay contra qué comparar
+    return 0;
 };
 
 /**
@@ -1539,53 +1710,584 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  /**
+   * INICIO — comparativa de la semana en curso contra la anterior.
+   *
+   * Antes esta pantalla mostraba cuántas filas tenía cada archivo cargado, que no
+   * dice nada de cómo va la operación. Ahora responde a una sola pregunta:
+   * ¿vamos mejor o peor que la semana pasada?
+   *
+   * Tres decisiones que evitan que los números mientan:
+   *   1. Se compara contra el MISMO tramo de la semana pasada (si hoy es jueves,
+   *      lunes-a-jueves contra lunes-a-jueves).
+   *   2. Las unidades van desglosadas por G. Gender. Un total puede subir porque
+   *      entró carga liviana mientras el footwear se desploma.
+   *   3. Si esta semana tiene menos días trabajados, se avisa y se muestra el
+   *      promedio por día activo, que es lo comparable.
+   */
   const renderHomeTab = async () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const now = new Date();
-    
+
     contentTitle.style.display = 'none'; // Ocultar título estándar para el Home
     contentSubtitle.style.display = 'none';
 
-    contentArea.innerHTML = `
-        <div class="animate-fade-in" style="margin-bottom:2.5rem;">
-            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(30, 41, 59, 0.2) 100%); padding:2.5rem; border-radius:20px; border:1px solid rgba(79, 70, 229, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); position:relative; overflow:hidden;">
-                <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:var(--primary); filter:blur(100px); opacity:0.2;"></div>
-                <h1 style="margin:0; font-size:2.8rem; font-weight:900; letter-spacing:-1px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
-                <div style="margin-top:0.8rem; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-                    <p style="margin:0; color:#cbd5e1; font-size:1.1rem; font-weight:500;">Bienvenido al centro de control operativo.</p>
-                    <div id="homeClock" style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); color:var(--primary); font-weight:800; font-size:0.9rem; letter-spacing:0.5px;">
-                        ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
-                    </div>
-                </div>
+    const ROLES_GESTION = ['admin', 'jefe', 'supervisor', 'encargado'];
+    const esGestion = ROLES_GESTION.includes(user.role);
+
+    // Las tareas archivadas pueden seguir apareciendo en la lista viva. Si se cuela
+    // una repetida, sus unidades se contarían dos veces: se deja una sola por id.
+    const porId = new Map();
+    [
+        ...(adminService.getAlmacenajeTasks() || []),
+        ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
+            ? (adminService.getAlmacenajeTasksHistory() || []) : [])
+    ].forEach(t => { if (t && t.id && !porId.has(t.id)) porId.set(t.id, t); });
+    const tasks = [...porId.values()];
+
+    // Quien no gestiona pero sí ejecuta tareas ve SU comparativa, no la del almacén.
+    const esOperario = tasks.some(t => t && (t.u1 === user.username || t.u2 === user.username));
+    const filtroUsuario = (!esGestion && esOperario) ? user.username : null;
+
+    const NOMBRE_DIA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const fmt = (n) => Math.round(n || 0).toLocaleString('es-PE');
+    const fmtFecha = (d) => `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]}`;
+
+    const chipVar = (v, grande = false) => {
+        const tam = grande ? '0.95rem' : '0.78rem';
+        if (v === null) return `<span style="color:#38bdf8; font-weight:900; font-size:${tam};">NUEVO</span>`;
+        const col = Math.abs(v) < 1 ? '#94a3b8' : (v > 0 ? '#22c55e' : '#ef4444');
+        const fl = Math.abs(v) < 1 ? '=' : (v > 0 ? '▲' : '▼');
+        return `<span style="color:${col}; font-weight:900; font-size:${tam}; white-space:nowrap;">${fl} ${Math.abs(v).toFixed(0)}%</span>`;
+    };
+
+    // Cabecera de una sola línea: todo Inicio tiene que entrar sin desplazar la
+    // pantalla, y el saludo no puede comerse el espacio de los datos.
+    const cabecera = `
+        <div class="animate-fade-in" style="display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:0.7rem;">
+            <h1 style="margin:0; font-size:1.55rem; font-weight:900; letter-spacing:-0.4px; color:#fff;">¡Hola, <span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+            <div id="homeClock" style="color:var(--text-muted); font-weight:700; font-size:0.8rem;">
+                ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
             </div>
-        </div>
-        <div class="kpi-grid" id="homeKpiGrid"></div>
-    `;
+        </div>`;
 
-    // Reloj dinámico
-    if (window.homeClockInterval) clearInterval(window.homeClockInterval);
-    window.homeClockInterval = setInterval(() => {
-        const clockEl = document.getElementById('homeClock');
-        if (clockEl) {
+    const arrancarReloj = () => {
+        if (window.homeClockInterval) clearInterval(window.homeClockInterval);
+        window.homeClockInterval = setInterval(() => {
+            const el = document.getElementById('homeClock');
+            if (!el) { clearInterval(window.homeClockInterval); return; }
             const d = new Date();
-            clockEl.textContent = `${d.toLocaleDateString('es-ES', options)} | ${d.toLocaleTimeString()}`;
-        } else {
-            clearInterval(window.homeClockInterval);
-        }
-    }, 1000);
+            el.textContent = `${d.toLocaleDateString('es-ES', options)} | ${d.toLocaleTimeString()}`;
+        }, 1000);
+    };
 
-    ['stockActivo', 'stockReserva', 'buffer', 'picking'].forEach(a => {
-        getAreaLength(a).then(count => {
-            const grid = document.getElementById('homeKpiGrid');
-            if(!grid) return;
-            grid.innerHTML += `
-                <div class="kpi-card" style="transition:transform 0.3s ease; cursor:pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <h4 style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">${a.replace('stock', 'STOCK ')}</h4>
-                    <h2 style="font-size:2.2rem; font-weight:800; color:#fff; margin:0;">${count.toLocaleString()}</h2>
-                    <div style="height:4px; width:40px; background:var(--primary); margin-top:1rem; border-radius:2px;"></div>
-                </div>`;
+    // Roles sin datos de almacenaje: mejor decirlo que mostrar ceros que parecen un problema.
+    if (!esGestion && !esOperario) {
+        contentArea.innerHTML = cabecera + `
+            <div class="glass-panel" style="padding:3rem; text-align:center;">
+                <div style="font-size:2.5rem; margin-bottom:0.8rem;">📭</div>
+                <h3 style="color:#fff; margin:0 0 0.6rem 0;">Todavía no hay indicadores para tu perfil</h3>
+                <p style="color:var(--text-muted); max-width:460px; margin:0 auto; line-height:1.6;">
+                    Esta pantalla resume las tareas de almacenaje. Tu usuario (<b>${user.role}</b>) no
+                    figura en ellas, así que no hay nada que comparar. En cuanto tengas actividad
+                    registrada, aparecerá aquí.
+                </p>
+            </div>`;
+        arrancarReloj();
+        return;
+    }
+
+    const r = rangoSemanas(now);
+    const esta = resumenSemana(tasks, r.estaDesde, r.estaHasta, filtroUsuario);
+    const pasada = resumenSemana(tasks, r.pasadaDesde, r.pasadaHasta, filtroUsuario);
+
+    if (esta.tareas === 0 && pasada.tareas === 0) {
+        contentArea.innerHTML = cabecera + `
+            <div class="glass-panel" style="padding:3rem; text-align:center;">
+                <div style="font-size:2.5rem; margin-bottom:0.8rem;">🗓️</div>
+                <h3 style="color:#fff; margin:0 0 0.6rem 0;">Sin tareas finalizadas en las últimas dos semanas</h3>
+                <p style="color:var(--text-muted);">La comparativa aparecerá en cuanto se cierren tareas.</p>
+            </div>`;
+        arrancarReloj();
+        return;
+    }
+
+    // --- Tarjetas grandes -----------------------------------------------------
+    // Una tarjeta = un número. El dato de la semana pasada y el detalle largo se
+    // van al globo de ayuda: cuatro tarjetas con tres líneas cada una no se leen
+    // de un vistazo, que es justamente para lo que sirven.
+    const tarjeta = (titulo, valor, sufijo, valorPrev, sufijoPrev, v, pie) => `
+        <div class="kpi-card" title="Semana pasada: ${valorPrev}${sufijoPrev}${pie ? ` · ${pie}` : ''}" style="display:flex; flex-direction:column; justify-content:center; gap:0.2rem; padding:0.85rem 1rem;">
+            <h4 style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">${titulo}</h4>
+            <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+                <h2 style="font-size:2rem; font-weight:900; color:#fff; margin:0; line-height:1.1;">${valor}<span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+                ${chipVar(v, false)}
+            </div>
+        </div>`;
+
+    /**
+     * Números del DÍA (no de la semana): las tarjetas responden a "¿cómo va hoy?".
+     *
+     *   buffer     = unidades que hay que bajar del buffer (art.bufferQty)
+     *   almacenado = las que ya se bajaron de verdad (mismo criterio CDBUFFER
+     *                que usa el resto del sistema)
+     *
+     * El porcentaje es almacenado sobre buffer: cuánto del trabajo del día está
+     * hecho. Así va de 0 a 100 y se lee solo.
+     */
+    const statsDia = (fecha, soloGender = null) => {
+        let buffer = 0, almacenado = 0;
+        const personas = new Set();
+        tasks.forEach(t => {
+            if (!t || t.fecha !== fecha) return;
+            (t.items || []).forEach(art => {
+                if (!art) return;
+                if (soloGender && String(art.gender || '').trim().toUpperCase() !== soloGender) return;
+                buffer += parseFloat(art.bufferQty) || 0;
+                (art.items || []).forEach(i => {
+                    const ubi = String((i && i.ubi) || '').toUpperCase().trim();
+                    if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+                    if (i.avance !== undefined && i.avance !== null) almacenado += parseFloat(i.avance) || 0;
+                    else if (t.status === 'Finalizado') almacenado += parseFloat(i.qty) || 0;
+                });
+            });
+            [t.u1, t.u2].forEach(u => { if (u && u !== '---') personas.add(u); });
+        });
+        return {
+            buffer, almacenado,
+            personas: personas.size,
+            pct: buffer > 0 ? (almacenado / buffer) * 100 : 0
+        };
+    };
+
+    // Día a analizar: hoy. Si hoy todavía no tiene tareas (de madrugada, o un día
+    // no laborable) se muestra el último día que sí tuvo, y las tarjetas dicen
+    // cuál es: mejor un número real fechado que cuatro ceros sin explicación.
+    const diasConTareas = [...new Set(tasks.filter(t => t && t.fecha).map(t => t.fecha))].sort();
+    const diaAnalizado = diasConTareas.includes(r.estaHasta)
+        ? r.estaHasta
+        : (diasConTareas[diasConTareas.length - 1] || r.estaHasta);
+    const esHoy = diaAnalizado === r.estaHasta;
+    const etiquetaDia = esHoy ? '' : fmtFecha(new Date(diaAnalizado + 'T00:00:00'));
+
+    const hoyFW = statsDia(diaAnalizado, 'FOOTWEAR');
+    const hoyTodo = statsDia(diaAnalizado);
+
+    /** Semáforo del avance del día. */
+    const colorAvance = (p) => p >= 85 ? '#22c55e' : (p >= 60 ? '#fbbf24' : '#ef4444');
+
+    const tarjetaDia = (titulo, sub, valor, sufijo, color, ayuda) => `
+        <div class="kpi-card" title="${ayuda}" style="display:flex; flex-direction:column; justify-content:center; gap:0.15rem; padding:0.85rem 1rem;">
+            <h4 style="color:var(--text-muted); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.8px; margin:0;">
+                ${titulo}${sub ? ` <span style="color:rgba(255,255,255,0.28);">· ${sub}</span>` : ''}
+            </h4>
+            <h2 style="font-size:2.1rem; font-weight:900; color:${color}; margin:0; line-height:1.1;">${valor}<span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${sufijo}</span></h2>
+        </div>`;
+
+    // Si el día no es hoy, la fecha va delante para que no haya dudas de qué se
+    // está mirando.
+    const sub = (alcance) => [etiquetaDia, alcance].filter(Boolean).join(' · ');
+    const cuando = esHoy ? 'hoy' : `el ${etiquetaDia}`;
+
+    const tarjetas = [
+        tarjetaDia('Qty almacenadas', sub('footwear'), fmt(hoyFW.almacenado), '', '#fff',
+                   `Footwear bajado del buffer ${cuando}. Pedido al buffer: ${fmt(hoyFW.buffer)}`),
+        tarjetaDia('Personal en turno', sub('todos'), fmt(hoyTodo.personas), '', '#fff',
+                   `Personas asignadas a tareas de almacenaje ${cuando}`),
+        tarjetaDia('% Almacenada Footwear', sub(''), hoyFW.pct.toFixed(0), '%', colorAvance(hoyFW.pct),
+                   `${fmt(hoyFW.almacenado)} almacenadas de ${fmt(hoyFW.buffer)} pedidas al buffer ${cuando}`),
+        tarjetaDia('% Almacenada General', sub(''), hoyTodo.pct.toFixed(0), '%', colorAvance(hoyTodo.pct),
+                   `${fmt(hoyTodo.almacenado)} almacenadas de ${fmt(hoyTodo.buffer)} pedidas al buffer ${cuando}`)
+    ].join('');
+
+    // Categorías presentes en cualquiera de las dos semanas, de mayor a menor.
+    const categorias = [...new Set([...esta.porGender.keys(), ...pasada.porGender.keys()])]
+        .sort((a, b) => ((esta.porGender.get(b) || 0) + (pasada.porGender.get(b) || 0))
+                      - ((esta.porGender.get(a) || 0) + (pasada.porGender.get(a) || 0)));
+
+    // --- Detalle por día: una tabla por categoría, dos semanas enfrentadas -----
+    // Nombres cortos: la tabla ocupa media pantalla para dejar sitio a la de marcas.
+    const DIAS_COL = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+    const diasEsta = diasDeSemana(r.desdeEsta);
+
+    // Las cuatro semanas del detalle, de la más vieja a la actual.
+    const SEMANAS_DIAS = [3, 2, 1, 0].map(atras => {
+        const lunes = new Date(r.desdeEsta);
+        lunes.setDate(lunes.getDate() - atras * 7);
+        return { num: semanaISO(lunes), dias: diasDeSemana(lunes), esActual: atras === 0 };
+    });
+
+    // Las semanas cerradas van COMPLETAS (lunes a domingo): la tabla es para
+    // mirar el detalle, y ver los días que ya pasaron es justamente lo útil.
+    const detallePorDia = unidadesPorGenderYDia(
+        tasks, aISO(SEMANAS_DIAS[0].dias[0]), aISO(diasEsta[6]));
+
+    // Las dos semanas se pintan IGUAL: son dos datos del mismo rango, ninguna
+    // vale más que la otra. El total se distingue por la línea y el peso de la
+    // tipografía, sin fondos que ensucien la lectura.
+    const CELDA_TOTAL = 'border-left:1px solid rgba(79,70,229,0.45);';
+    const CELDA = 'padding:var(--tp,0.27rem) 0.45rem; text-align:center;';
+    const ETIQUETA = 'padding:var(--tp,0.27rem) 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+
+    // La tabla de marcas lleva muchas más filas que la de días, así que respira
+    // con menos espacio entre ellas. Se mantiene atada a --tp para que siga
+    // creciendo con el resto cuando la pantalla da para más.
+    const CELDA_M = 'padding:calc(var(--tp,0.27rem) * 0.56) 0.45rem; text-align:center;';
+    const ETIQUETA_M = 'padding:calc(var(--tp,0.27rem) * 0.56) 0.5rem; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+
+    // Anchos fijos e idénticos en todas las tablas. Sin esto cada bloque calcula
+    // los suyos según su contenido y el LUNES de una categoría no queda encima
+    // del LUNES de la otra.
+    // Los días se llevan el ancho que se les quita a SEM, GENDER y TOTAL: con
+    // columnas estrechas las cifras quedan pegadas y se leen mal.
+    // GENDER necesita sitio: "Non commercial" es la etiqueta más larga y con la
+    // columna estrecha se cortaba a "Non comm...".
+    const COLUMNAS = `
+        <colgroup>
+            <col style="width:9%"><col style="width:20%">
+            ${DIAS_COL.map(() => '<col style="width:8.6%">').join('')}
+            <col style="width:10.8%">
+        </colgroup>`;
+
+    /**
+     * Semáforo: verde si supera a la semana anterior, amarillo si empata, rojo
+     * si queda por debajo. Devuelve null cuando no hay nada que comparar (los
+     * dos en cero), porque pintar de amarillo un día en que nadie trabajó
+     * ninguna de las dos semanas seria ruido, no informacion.
+     */
+    const colorKpi = (actual, anterior) => {
+        if (!actual && !anterior) return null;
+        if (actual > anterior) return '#22c55e';
+        if (actual === anterior) return '#fbbf24';
+        return '#ef4444';
+    };
+
+    /**
+     * El indicador va SEPARADO del número: la cifra se lee en su color normal y
+     * al lado aparece la flecha de color. Teñir el número hace que el dato y el
+     * juicio sobre el dato se confundan.
+     */
+    const flechaKpi = (actual, anterior, enCurso = false) => {
+        const c = colorKpi(actual, anterior);
+        if (!c) return '';
+        const simbolo = actual > anterior ? '▲' : (actual === anterior ? '=' : '▼');
+        // La semana en curso NUNCA va en rojo: todavía le quedan días, así que
+        // ir por debajo no es un mal resultado sino un trabajo sin terminar.
+        // Se queda en ámbar y solo pasa a verde cuando de verdad supera.
+        const color = (enCurso && c === '#ef4444') ? '#fbbf24' : c;
+        return `<span style="color:${color}; font-weight:900; font-size:0.85em;">${simbolo}</span>`;
+    };
+
+    /**
+     * Contenido de una celda: la flecha SIEMPRE ocupa el mismo hueco a la
+     * izquierda y el número va después. Si se dejan seguidas, la flecha se
+     * corre según el ancho del número y en una columna de cifras eso se ve como
+     * un zigzag. El hueco se reserva aunque no haya flecha.
+     */
+    const celdaValor = (texto, flecha = '') => `
+        <span style="display:grid; grid-template-columns:0.95em 1fr; gap:0.28em; align-items:center; width:100%;">
+            <span style="line-height:1;">${flecha}</span>
+            <span style="text-align:center;">${texto}</span>
+        </span>`;
+
+    /**
+     * Una fila de semana. `diasPrevios` son los mismos días de la semana de
+     * arriba: de ahí sale la flecha. La primera semana del bloque no los tiene y
+     * queda sin flecha, porque no hay contra qué compararla.
+     */
+    const filaSemana = (num, categoria, dias, diasPrevios, porDia, esActual) => {
+        let total = 0;
+        let totalPrevio = 0;
+        const celdas = dias.map((d, i) => {
+            if (esActual && d > r.hastaEsta) {
+                return `<td style="${CELDA} color:rgba(255,255,255,0.15);">·</td>`;
+            }
+            const v = porDia.get(aISO(d)) || 0;
+            total += v;
+
+            let flecha = '', titulo = '';
+            if (diasPrevios) {
+                const anterior = porDia.get(aISO(diasPrevios[i])) || 0;
+                totalPrevio += anterior;
+                flecha = flechaKpi(v, anterior, esActual);
+                if (flecha) titulo = ` title="${fmt(v)} contra ${fmt(anterior)} el mismo día de la semana anterior"`;
+            }
+            const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
+            return `<td${titulo} style="${CELDA} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
+        }).join('');
+
+        const flechaTotal = diasPrevios ? flechaKpi(total, totalPrevio, esActual) : '';
+        return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                <td ${esActual ? 'title="Semana en curso: va hasta hoy"' : ''} style="${ETIQUETA} font-weight:900; color:${esActual ? '#a5b4fc' : 'var(--text-muted)'}; font-size:0.62rem;">SEM ${num}</td>
+                <td style="${ETIQUETA} color:#fff; font-weight:700;">${categoria}</td>
+                ${celdas}
+                <td ${flechaTotal ? `title="${fmt(total)} contra ${fmt(totalPrevio)} en los mismos días de la semana anterior"` : ''} style="${CELDA} font-weight:900; color:#fbbf24; white-space:nowrap; ${CELDA_TOTAL}">${celdaValor(fmt(total), flechaTotal)}</td>
+            </tr>`;
+    };
+
+    /** Fila de totales por columna: suma de las cuatro semanas en cada día. */
+    const filaTotalColumnas = (porDia, ultima) => {
+        let granTotal = 0;
+        const celdas = DIAS_COL.map((_, i) => {
+            const v = SEMANAS_DIAS.reduce((t, s) => t + (porDia.get(aISO(s.dias[i])) || 0), 0);
+            granTotal += v;
+            return `<td style="${CELDA} font-weight:900; color:${v ? '#fbbf24' : 'rgba(255,255,255,0.2)'};">${celdaValor(v ? fmt(v) : '—')}</td>`;
+        }).join('');
+        // La línea gruesa de abajo es lo que separa un grupo del siguiente.
+        return `
+            <tr style="border-bottom:${ultima ? 'none' : '2px solid rgba(255,255,255,0.12)'};">
+                <td style="${ETIQUETA}"></td>
+                <td style="${ETIQUETA} font-weight:900; color:#a5b4fc; font-size:0.64rem;">TOTAL</td>
+                ${celdas}
+                <td style="${CELDA} font-weight:900; color:#fff; ${CELDA_TOTAL}">${celdaValor(fmt(granTotal))}</td>
+            </tr>`;
+    };
+
+    /** Las cinco filas de una categoría: cuatro semanas y su total. */
+    const grupoCategoria = (titulo, porDia, ultima) =>
+        SEMANAS_DIAS.map((s, i) => filaSemana(
+            s.num, titulo, s.dias,
+            i === 0 ? null : SEMANAS_DIAS[i - 1].dias,   // la primera no tiene con qué compararse
+            porDia, s.esActual)).join('')
+        + filaTotalColumnas(porDia, ultima);
+
+    // Suma de TODAS las categorías, día por día: el grupo de cierre.
+    const porDiaGeneral = new Map();
+    detallePorDia.forEach(porDia => {
+        porDia.forEach((u, fecha) => porDiaGeneral.set(fecha, (porDiaGeneral.get(fecha) || 0) + u));
+    });
+
+    // Desplegable por categoría: cuatro semanas por cada una no caben todas a la
+    // vez en pantalla, así que colapsadas entra todo y se abre lo que interese.
+    // Lo que esté abierto se recuerda, porque esta pantalla se redibuja sola.
+    // Footwear abierto de arranque: es lo que Daniel mide. El resto colapsado,
+    // y a partir de ahí manda lo que el usuario abra o cierre.
+    if (!window.__homeCatAbiertas) window.__homeCatAbiertas = new Set(['FOOTWEAR']);
+
+    const bloqueDesplegable = (clave, titulo, porDia) => {
+        const totalGrupo = [...porDia.values()].reduce((a, b) => a + b, 0);
+
+        // Semana en curso contra la anterior, para que el resumen ya diga algo
+        // sin necesidad de abrir.
+        const sumaSemana = (s) => s.dias.reduce((t, d) => t + (porDia.get(aISO(d)) || 0), 0);
+        const actual = SEMANAS_DIAS[SEMANAS_DIAS.length - 1];
+        const previa = SEMANAS_DIAS[SEMANAS_DIAS.length - 2];
+        const vAct = sumaSemana(actual);
+        const vPrev = previa ? previa.dias.slice(0, r.diasCorridos + 1)
+                        .reduce((t, d) => t + (porDia.get(aISO(d)) || 0), 0) : 0;
+
+        const abierta = window.__homeCatAbiertas.has(clave);
+        return `
+            <details data-cat="${clave}" ${abierta ? 'open' : ''} style="margin-bottom:0.35rem;">
+                <summary style="cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; padding:0.3rem 0.45rem; background:rgba(255,255,255,0.03); border-radius:5px; user-select:none;">
+                    <span style="color:var(--primary); font-size:0.7rem; transition:transform 0.15s;">▸</span>
+                    <span style="color:#fff; font-weight:800; font-size:0.72rem; flex:1; text-transform:uppercase; letter-spacing:0.4px;">${titulo}</span>
+                    <span style="color:var(--text-muted); font-size:0.62rem;">4 sem:</span>
+                    <span style="color:#fbbf24; font-weight:900; font-size:0.72rem;">${fmt(totalGrupo)}</span>
+                    ${flechaKpi(vAct, vPrev, true)}
+                </summary>
+                <div style="overflow-x:auto; padding-top:0.25rem;">
+                    <table style="width:100%; min-width:560px; table-layout:fixed; border-collapse:collapse; font-size:var(--tf,0.79rem);">
+                        ${COLUMNAS}
+                        <thead>
+                            <tr style="color:var(--text-muted); font-size:0.55rem; letter-spacing:0.4px;">
+                                <th style="${ETIQUETA}"></th>
+                                <th style="${ETIQUETA}">GENDER</th>
+                                ${DIAS_COL.map(d => `<th style="${CELDA}">${d}</th>`).join('')}
+                                <th style="${CELDA} ${CELDA_TOTAL}">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>${grupoCategoria(titulo, porDia, true)}</tbody>
+                    </table>
+                </div>
+            </details>`;
+    };
+
+    // Las categorías primero (Footwear encabeza por volumen) y el consolidado al
+    // final: lo que está abierto queda arriba, a la vista.
+    const bloquesPorDia =
+        categorias.map(g => bloqueDesplegable(g, etiquetaCategoria(g) || g,
+                                              detallePorDia.get(g) || new Map())).join('')
+        + (categorias.length > 1 ? bloqueDesplegable('TODAS', 'Todas las categorías', porDiaGeneral) : '');
+
+    // --- Marcas almacenadas: cuatro semanas ----------------------------------
+    // La semana en curso lleva menos días que las cerradas, así que su color NO
+    // se calcula contra el total de la anterior (siempre saldría rojo) sino
+    // contra el mismo tramo de días. El número que se muestra sí es lo que va.
+    const SEMANAS = [3, 2, 1, 0].map(atras => {
+        const lunes = new Date(r.desdeEsta);
+        lunes.setDate(lunes.getDate() - atras * 7);
+        const domingo = new Date(lunes);
+        domingo.setDate(domingo.getDate() + 6);
+        const esActual = atras === 0;
+        return {
+            num: semanaISO(lunes),
+            esActual,
+            datos: unidadesPorMarca(tasks, aISO(lunes), esActual ? r.estaHasta : aISO(domingo), 'FOOTWEAR')
+        };
+    });
+    // Mismo tramo de la semana pasada (lunes → hoy), solo para el semáforo.
+    const marcasTramoPasado = unidadesPorMarca(tasks, r.pasadaDesde, r.pasadaHasta, 'FOOTWEAR');
+
+    const marcas = [...new Set(SEMANAS.flatMap(s => [...s.datos.keys()]))]
+        .sort((a, b) => SEMANAS.reduce((t, s) => t + (s.datos.get(b) || 0), 0)
+                      - SEMANAS.reduce((t, s) => t + (s.datos.get(a) || 0), 0));
+
+    const totalesSemana = SEMANAS.map(() => 0);
+    const filasMarcas = marcas.map(m => {
+        let totalFila = 0;
+        const celdas = SEMANAS.map((s, i) => {
+            const v = s.datos.get(m) || 0;
+            totalesSemana[i] += v;
+            totalFila += v;
+
+            // La primera columna no tiene contra qué compararse.
+            const base = i === 0 ? null
+                       : s.esActual ? (marcasTramoPasado.get(m) || 0)
+                       : (SEMANAS[i - 1].datos.get(m) || 0);
+            const flecha = base === null ? '' : flechaKpi(v, base, s.esActual);
+            const col = v ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)';
+            const titulo = flecha ? ` title="${fmt(v)} contra ${fmt(base)}${s.esActual ? ' en los mismos días' : ''} de la semana anterior"` : '';
+            return `<td${titulo} style="${CELDA_M} color:${col}; font-weight:${v ? '700' : '400'}; white-space:nowrap;">${celdaValor(v ? fmt(v) : '—', flecha)}</td>`;
+        }).join('');
+
+        return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                <td style="${ETIQUETA_M} color:#fff; font-weight:700;">${m}</td>
+                ${celdas}
+                <td style="${CELDA_M} font-weight:900; color:#fbbf24; ${CELDA_TOTAL}">${celdaValor(fmt(totalFila))}</td>
+            </tr>`;
+    }).join('');
+
+    const totalGeneralMarcas = totalesSemana.reduce((a, b) => a + b, 0);
+    const tramoPasadoTotal = [...marcasTramoPasado.values()].reduce((a, b) => a + b, 0);
+    const celdasTotalMarcas = totalesSemana.map((v, i) => {
+        const base = i === 0 ? null
+                   : SEMANAS[i].esActual ? tramoPasadoTotal
+                   : totalesSemana[i - 1];
+        const flecha = base === null ? '' : flechaKpi(v, base, SEMANAS[i].esActual);
+        return `<td style="${CELDA_M} font-weight:900; color:#fbbf24; white-space:nowrap;">${celdaValor(fmt(v), flecha)}</td>`;
+    }).join('');
+
+    const panelDias = `
+        <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 520px; min-width:0;">
+            <div style="margin-bottom:0.5rem;">
+                <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Detalle por día</h3>
+            </div>
+            ${bloquesPorDia || '<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin unidades registradas en las dos semanas.</div>'}
+        </div>`;
+
+    const panelMarcas = `
+        <div class="glass-panel" style="padding:0.8rem 0.9rem; flex:1 1 320px; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:0.5rem;">
+                <h3 style="margin:0; color:#fff; font-size:0.95rem; font-weight:800;">Marcas · Footwear</h3>
+                <span style="font-size:0.62rem; color:var(--text-muted); font-weight:600;">últimas 4 semanas</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; min-width:340px; font-size:var(--tf,0.79rem);">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:0.58rem; letter-spacing:0.4px;">
+                            <th style="${ETIQUETA_M}">MARCA</th>
+                            ${SEMANAS.map(s => s.esActual
+                                ? `<th title="Semana en curso: el número es lo que va hasta hoy; la flecha compara los mismos días de la semana anterior" style="${CELDA_M} border-bottom:2px solid rgba(165,180,252,0.5);">SEM ${s.num}</th>`
+                                : `<th style="${CELDA_M}">SEM ${s.num}</th>`).join('')}
+                            <th style="${CELDA_M} ${CELDA_TOTAL}">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasMarcas || `<tr><td colspan="${SEMANAS.length + 2}" style="padding:1.5rem; text-align:center; color:var(--text-muted);">Sin marcas registradas.</td></tr>`}
+                        <tr style="border-top:2px solid rgba(79,70,229,0.5);">
+                            <td style="${ETIQUETA_M} font-weight:900; color:#a5b4fc; font-size:0.66rem;">TOTAL</td>
+                            ${celdasTotalMarcas}
+                            <td style="${CELDA_M} font-weight:900; color:#fff; ${CELDA_TOTAL}">${celdaValor(fmt(totalGeneralMarcas))}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+
+    // Se acomodan solos: lado a lado en pantalla ancha, uno debajo del otro
+    // cuando no caben. `stretch` los deja de la misma altura; el alto real lo
+    // fija ajustarAltoPaneles() según lo que quede libre en la pantalla.
+    const grafico = `<div id="homePaneles" style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;">${panelDias}${panelMarcas}</div>`;
+
+    contentArea.innerHTML = cabecera + `
+        <div class="kpi-grid" style="margin-bottom:0.8rem;">${tarjetas}</div>
+        ${grafico}`;
+
+    arrancarReloj();
+
+    /**
+     * Estira los dos paneles hasta el borde inferior de la pantalla.
+     *
+     * Con medidas fijas la página se ve bien en una resolución y deja un hueco
+     * enorme en otra: lo que sobra depende del alto de la ventana, así que se
+     * calcula después de dibujar y se vuelve a calcular si se redimensiona.
+     */
+    /**
+     * Agranda las tablas hasta que el contenido llega al borde inferior de la
+     * pantalla.
+     *
+     * Los paneles NO se estiran: cada uno cierra en su última fila. Lo que
+     * crece es la letra y el alto de las filas, así que el hueco de abajo se
+     * llena con datos legibles en vez de con caja vacía. Un tamaño fijo se ve
+     * apretado en una pantalla y deja medio hueco en otra, por eso se calcula
+     * después de dibujar y se recalcula al redimensionar.
+     */
+    const ajustarAltoPaneles = () => {
+        const cont = document.getElementById('homePaneles');
+        if (!cont) { window.removeEventListener('resize', ajustarAltoPaneles); return; }
+
+        cont.style.setProperty('--tf', '0.75rem');
+        cont.style.setProperty('--tp', '0.25rem');
+
+        // Espacio que queda entre el final del panel más alto y el borde de abajo.
+        const libre = () => window.innerHeight - cont.getBoundingClientRect().bottom - 16;
+
+        // La letra tiene techo a propósito: por encima de ~16px una tabla de
+        // cifras se lee peor, no mejor. Lo que sigue creciendo es el aire entre
+        // filas, que es lo que llena la pantalla sin agrandar los números.
+        // Ambos topes son a propósito. Por encima de ~14px una tabla de cifras no
+        // se lee mejor, y filas muy altas separan tanto los números que cuesta
+        // seguir una columna. Si con esos topes sobra pantalla, se deja sobrar:
+        // es preferible a estirar los datos hasta deformarlos.
+        let f = 0.75, p = 0.25;
+        for (let i = 0; i < 24 && libre() > 12; i++) {
+            f = Math.min(0.88, f + 0.015);
+            p = Math.min(0.46, p + 0.025);
+            cont.style.setProperty('--tf', f.toFixed(3) + 'rem');
+            cont.style.setProperty('--tp', p.toFixed(3) + 'rem');
+        }
+        if (libre() < 0) {            // se pasó por un pelo: un paso atrás
+            cont.style.setProperty('--tf', (f - 0.02).toFixed(3) + 'rem');
+            cont.style.setProperty('--tp', (p - 0.035).toFixed(3) + 'rem');
+        }
+    };
+    ajustarAltoPaneles();
+    if (window.__homeResizeHandler) window.removeEventListener('resize', window.__homeResizeHandler);
+    window.__homeResizeHandler = ajustarAltoPaneles;
+    window.addEventListener('resize', ajustarAltoPaneles);
+
+    // Recordar qué categorías quedan abiertas: Inicio se redibuja solo cada 20
+    // segundos y sin esto se cerraría en la cara del usuario. La flecha del
+    // resumen gira para que se note que es desplegable.
+    contentArea.querySelectorAll('details[data-cat]').forEach(det => {
+        const flecha = det.querySelector('summary span');
+        if (flecha) flecha.style.transform = det.open ? 'rotate(90deg)' : 'rotate(0deg)';
+        det.addEventListener('toggle', () => {
+            if (det.open) window.__homeCatAbiertas.add(det.dataset.cat);
+            else window.__homeCatAbiertas.delete(det.dataset.cat);
+            if (flecha) flecha.style.transform = det.open ? 'rotate(90deg)' : 'rotate(0deg)';
         });
     });
+
+    // Ya no hay gráfico en Inicio: si quedó uno de una versión anterior, se
+    // libera para no dejar el objeto de Chart.js colgando en memoria.
+    if (typeof Chart !== 'undefined' && window.homeChart instanceof Chart) {
+        window.homeChart.destroy();
+        window.homeChart = null;
+    }
   };
 
   const renderStockTab = async () => {
@@ -2116,7 +2818,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.547');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=26.5.572');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -2451,7 +3153,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
     });
 
-    // [SEGURIDAD v26.5.547] Ya no existe el botón de "ver contraseña": las
+    // [SEGURIDAD v26.5.572] Ya no existe el botón de "ver contraseña": las
     // contraseñas se guardan cifradas y ni el servidor puede recuperarlas.
 
     form.onsubmit = async (e) => {
@@ -7142,18 +7844,33 @@ const renderRFSection = (container) => {
 
               console.log("🔄 [PULSE] Sincronización automática de datos...");
               await adminService.initializeAdminData();
-              // [FIX PARPADEO] Redibujar Inicio SOLO si los conteos KPI cambiaron (antes lo hacía siempre cada 20s)
+              // [FIX PARPADEO] Redibujar Inicio SOLO si cambió lo que Inicio muestra.
+              // Antes vigilaba el conteo de archivos cargados (stock, buffer, picking),
+              // que desde v26.5.572 ya no aparece en esa pantalla: ahora se muestra la
+              // comparativa semanal, así que la firma son las tareas cerradas de la semana.
               if (currentTab === 'inicio') {
                   try {
-                      const __counts = await Promise.all(['stockActivo', 'stockReserva', 'buffer', 'picking'].map(a => getAreaLength(a)));
-                      const __sig = __counts.join('|');
-                      if (window.__homeKpiSig === undefined) {
-                          window.__homeKpiSig = __sig; // primera lectura: sembrar sin redibujar
-                      } else if (__sig !== window.__homeKpiSig) {
-                          window.__homeKpiSig = __sig;
+                      const __tareas = [
+                          ...(adminService.getAlmacenajeTasks() || []),
+                          ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
+                              ? (adminService.getAlmacenajeTasksHistory() || []) : [])
+                      ];
+                      const __r = rangoSemanas();
+                      let __n = 0, __q = 0;
+                      __tareas.forEach(t => {
+                          if (!t || t.status !== 'Finalizado') return;
+                          if (!(t.fecha >= __r.estaDesde && t.fecha <= __r.estaHasta)) return;
+                          __n++;
+                          __q += getTaskTotalAvance(t);
+                      });
+                      const __sig = `${__n}|${Math.round(__q)}`;
+                      if (window.__homeSemanaSig === undefined) {
+                          window.__homeSemanaSig = __sig; // primera lectura: sembrar sin redibujar
+                      } else if (__sig !== window.__homeSemanaSig) {
+                          window.__homeSemanaSig = __sig;
                           renderTabContent(true); // hubo cambios reales -> actualizar
                       }
-                  } catch (e) { /* si el conteo falla, no forzar redibujo */ }
+                  } catch (e) { /* si el cálculo falla, no forzar redibujo */ }
               }
           }
       }, 20000); 
@@ -11631,7 +12348,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v26.5.547 | MOBILE PORTAL
+                                SYSTEM BUILD: v26.5.572 | MOBILE PORTAL
                             </div>
                     </div>
 

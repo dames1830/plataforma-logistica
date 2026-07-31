@@ -29,6 +29,22 @@ La pestaña del navegador también lo dice: el título empieza con `🧪 BETA ·
 
 ---
 
+## 0. ¿Está todo listo? Compruébalo tú mismo
+
+Doble clic en **`revisar_pruebas.bat`**. Revisa las 5 piezas del entorno y termina con un veredicto claro:
+
+- **TODO EN ORDEN** → a trabajar.
+- **LISTO PARA TRABAJAR** con avisos → puedes seguir; los avisos son detalles menores.
+- **NO trabajes todavía** → algo está roto. Pásame esa pantalla y lo revisamos.
+
+Lo que revisa: que el servidor distinga los dos entornos, que la base de pruebas esté separada y con datos, que quede espacio en el disco, que estés parado en la rama `beta` (y no en producción), y que el sitio de pruebas responda.
+
+> Si te avisa **"estás en 'main', que es PRODUCCIÓN"**, para y avísame. Esa es la señal de alarma importante.
+
+No modifica nada. Solo mira.
+
+---
+
 ## 1. Probar en tu computadora (lo más rápido)
 
 Doble clic en **`abrir_pruebas.bat`**, dentro de la carpeta del proyecto.
