@@ -11,12 +11,12 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0005';
+} from '../services_v245/csvHub_v6.js?v=29.0006';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0005';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0005';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0005';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0005';
+import * as adminService from '../services_v245/adminService.js?v=29.0006';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0006';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0006';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0006';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -262,7 +262,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0005</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0006</span>
     </div>`;
 
   buildTabNav();

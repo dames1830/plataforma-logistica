@@ -2,7 +2,7 @@
  * Admin Module - Gestión de Personal, Asistencia y Performance
  * Extraído de dashboard_v6.js para optimización de rendimiento.
  */
-import * as adminService from '../services/adminService.js?v=29.0005';
+import * as adminService from '../services/adminService.js?v=29.0006';
 
 let activeAdminSub = 'trabajadores';
 let activePerfSub = 'historial';

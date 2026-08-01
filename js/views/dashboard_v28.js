@@ -1,13 +1,13 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0005';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0006';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0005';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0005';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0005';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0005';
-import * as metasService from '../services_v245/metasService.js?v=29.0005';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0005';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0005';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0005';
+import * as adminService from '../services_v245/adminService.js?v=29.0006';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0006';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0006';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0006';
+import * as metasService from '../services_v245/metasService.js?v=29.0006';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0006';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0006';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0006';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -364,7 +364,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0005';
+const VERSION = '29.0006';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -488,8 +488,22 @@ let _maestroPromesa = null;
 const hayMaestroEnMemoria = () => (dataStore.articulos || []).length > 0
     || (dataStore.analisis_sku_maestro || []).length > 0;
 
+/**
+ * Analisis SKU sube el Maestro por su propia puerta ('analisis_sku_maestro') y
+ * lee de ahi. Es el MISMO archivo con las mismas columnas: indexarMaestro() y el
+ * Layout ya los tratan como equivalentes. Se le presta la copia de la nube para
+ * que tampoco tenga que subirlo, pero solo si esta vacio: si el usuario cargo
+ * uno a mano, manda el suyo.
+ */
+const compartirMaestroConAnalisisSku = () => {
+    const maestro = dataStore.articulos;
+    if (!Array.isArray(maestro) || maestro.length === 0) return;
+    if ((dataStore.analisis_sku_maestro || []).length > 0) return;
+    dataStore.analisis_sku_maestro = maestro;
+};
+
 const rescatarMaestro = async () => {
-    if (hayMaestroEnMemoria()) return true;
+    if (hayMaestroEnMemoria()) { compartirMaestroConAnalisisSku(); return true; }
     if (_maestroPromesa) return _maestroPromesa;
 
     _maestroPromesa = (async () => {
@@ -497,6 +511,7 @@ const rescatarMaestro = async () => {
             const r = await traerMaestroPublicado();
             if (r.filas > 0) {
                 console.log(`[Maestro] ${r.filas.toLocaleString('es-PE')} filas (${r.origen})`);
+                compartirMaestroConAnalisisSku();
                 return true;
             }
         } catch (e) {
@@ -510,6 +525,7 @@ const rescatarMaestro = async () => {
             if (Array.isArray(local) && local.length > 0) {
                 dataStore.articulos = local;
                 console.log(`[Maestro] ${local.length.toLocaleString('es-PE')} filas (solo de esta PC)`);
+                compartirMaestroConAnalisisSku();
                 return true;
             }
         } catch (e) { /* tampoco estaba */ }
@@ -2745,7 +2761,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         if (btnCalc) {
             btnCalc.onclick = async () => {
                 console.log("[PULSE] Click Procesar Análisis");
-                
+
+                // El Maestro se baja del publicado en la nube: acá solo hay que
+                // cargar los dos stocks.
+                await rescatarMaestro();
+
                 // VALIDACIÓN EXPLÍCITA DE ARCHIVOS (Antes de mostrar la barra de progreso)
                 if (!dataStore.buffer_activo) {
                     showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK ACTIVO</b> para poder realizar el análisis.", "error");
@@ -2756,7 +2776,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     return;
                 }
                 if (!dataStore.articulos) {
-                    showPremiumAlert("Archivo Faltante", "Falta cargar el archivo <b>MAESTRO</b> para poder realizar el análisis.", "error");
+                    showPremiumAlert("Falta el Maestro", "No hay ningún <b>Maestro de Artículos</b> publicado en la nube ni cargado en esta PC.<br><br>Publícalo desde <b>Configuración → Archivos Nube</b>.", "error");
                     return;
                 }
 
@@ -3044,7 +3064,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0005');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0006');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -7308,6 +7328,11 @@ const renderRFSection = (container) => {
                 if (!dataStore.analisis_sku_maestro || dataStore.analisis_sku_maestro.length === 0) {
                     await getAreaData('analisis_sku_maestro');
                 }
+                // Si acá tampoco había nada, se usa el Maestro publicado en la nube:
+                // es el mismo archivo, subido por otra puerta.
+                if (!dataStore.analisis_sku_maestro || dataStore.analisis_sku_maestro.length === 0) {
+                    await rescatarMaestro();
+                }
                 const maestroData = dataStore.analisis_sku_maestro || [];
                 const maestroMap = new Map();
                 maestroData.forEach(mRow => {
@@ -9891,12 +9916,15 @@ const renderRFSection = (container) => {
       console.log("[PULSE] renderERIERULayout llamado pero desactivado por v18.5.20");
   };
 
-  const runProcessingAnimation = (container) => {
+  // async: el Maestro se baja del publicado en la nube. Los dos que la llaman son
+  // manejadores de clic que no esperan resultado, así que no cambia nada para ellos.
+  const runProcessingAnimation = async (container) => {
       // 1. Validaciones de archivos
+      await rescatarMaestro();
       if (!dataStore.recepcion_activo || dataStore.recepcion_activo.length === 0 || !dataStore.articulos || dataStore.articulos.length === 0) {
           showPremiumAlert(
               'Faltan Cargar Archivos',
-              'No se puede procesar el reporte porque falta cargar los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.<br><br>Por favor, asegúrate de subir: <br>• <strong>Stock Activo</strong> (CSV)<br>• <strong>Maestro Artículos</strong> (XLSX)',
+              'No se puede procesar el reporte porque falta el <strong>Stock Activo</strong> (CSV) en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.<br><br>El Maestro de Artículos ya no hace falta subirlo: se toma del publicado en <strong>Configuración → Archivos Nube</strong>.',
               'error'
           );
           return;
@@ -9956,7 +9984,10 @@ const renderRFSection = (container) => {
       }, 100);
   };
 
-  const renderRecepcionReportTab = (container) => {
+  const renderRecepcionReportTab = async (container) => {
+    // Sin esto la pantalla dice "faltan archivos" aunque el Maestro esté publicado
+    // en la nube: se fijaba solo en lo que hubiera cargado en esta PC.
+    await rescatarMaestro();
     const hasDataFiles = dataStore.recepcion_activo && dataStore.recepcion_activo.length > 0 && dataStore.articulos && dataStore.articulos.length > 0;
 
     if (!hasDataFiles) {
@@ -9967,10 +9998,8 @@ const renderRFSection = (container) => {
                   FALTAN ARCHIVOS DE RECEPCIÓN
               </h3>
               <p style="color: var(--text-muted); margin-bottom: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
-                  No se puede generar el reporte porque aún no has cargado los archivos requeridos en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.
-                  <br><br>Por favor, asegúrate de subir:
-                  <br>• <strong>Stock Activo</strong> (CSV)
-                  <br>• <strong>Maestro Artículos</strong> (XLSX)
+                  No se puede generar el reporte porque falta cargar el <strong>Stock Activo</strong> (CSV) en la pestaña <strong>ARCHIVO RECEPCIÓN</strong>.
+                  <br><br>El <strong>Maestro de Artículos</strong> ya no hace falta subirlo acá: se toma del publicado en <strong>Configuración → Archivos Nube</strong>.
               </p>
           </div>
         `;
@@ -12888,7 +12917,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0005 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0006 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16581,6 +16610,11 @@ window.showCellModal = function(htmlContent) {
         getAreaData('analisis_sku_reserva'),
         getAreaData('analisis_sku_maestro'),
     ]);
+
+    // Si no había Maestro cargado en esta PC, se toma el publicado en la nube.
+    // Va después del Promise.all a propósito: primero se respeta el que el
+    // usuario haya subido acá, y solo si no hay ninguno se recurre al de la nube.
+    await rescatarMaestro();
     
     const tabDef = TABS.find(t => t.id === 'analisis_sku');
     const perms = adminService.getPermissions(user.role) || {};
@@ -17033,9 +17067,13 @@ window.showCellModal = function(htmlContent) {
     let progressModal;
     try {
         const stock = await getAreaData('almacenaje_activo');
+        // El Maestro sale del publicado en la nube. Antes solo miraba esta PC, así
+        // que había que volver a subirlo en cada computadora; y funcionaba o no
+        // según si antes habías pasado por Productividad, que sí lo bajaba.
+        await rescatarMaestro();
         const maestro = dataStore.articulos;
         if (!stock || !stock.length) { alert("⚠️ Primero debes cargar el 'Stock Activo' en la pestaña Archivo."); return; }
-        if (!maestro || !maestro.length) { alert("⚠️ Falta cargar el Maestro de Artículos."); return; }
+        if (!maestro || !maestro.length) { alert("⚠️ Falta el Maestro de Artículos: no hay ninguno publicado en la nube ni cargado en esta PC."); return; }
 
         // --- BARRA DE PROGRESO DE PROCESAMIENTO ---
         progressModal = document.createElement('div');
