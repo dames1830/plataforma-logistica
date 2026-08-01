@@ -1,10 +1,11 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0002';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0003';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0002';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0002';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0002';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0002';
-import * as metasService from '../services_v245/metasService.js?v=29.0002';
+import * as adminService from '../services_v245/adminService.js?v=29.0003';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0003';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0003';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0003';
+import * as metasService from '../services_v245/metasService.js?v=29.0003';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0003';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +362,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0002';
+const VERSION = '29.0003';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -385,24 +386,6 @@ const getTaskTotalAvance = (t) => {
     });
     return sum;
 };
-
-/** Rótulo del SYNC_ID: una sola fecha si el rango es de un día, o 'desde - hasta'. */
-const rotuloRangoReporte = (start, end) => {
-    const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const d = start.split('-').reverse().join('/');
-    const h = end.split('-').reverse().join('/');
-    return `<span style="color:#94a3b8;">${d === h ? d : `${d} - ${h}`} ${hora}</span>`;
-};
-
-/** Selector compacto de rango de fechas para la cabecera de un reporte. */
-const rangoFechasReporte = (start, end, setter, color) => `
-    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-        ${[['DE', start, `${setter}(this.value, null)`], ['A', end, `${setter}(null, this.value)`]].map(([eti, val, ev]) => `
-            <div style="display:flex; align-items:center; background:rgba(0,0,0,0.45); border:1px solid ${color}59; border-radius:8px; padding:3px 8px; gap:6px;">
-                <span style="font-size:0.6rem; color:${color}; font-weight:800; letter-spacing:0.5px;">${eti}</span>
-                <input type="date" value="${val}" onchange="${ev}" style="background:transparent; border:none; color:#fff; font-size:0.68rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;">
-            </div>`).join('')}
-    </div>`;
 
 /** Deja una categoría en formato legible: '08 ACCESORIES' → 'Accesories'. */
 const etiquetaCategoria = (v) => {
@@ -629,60 +612,6 @@ const getPadreDe = (detalle) => {
     const d = String(detalle || '').trim().toUpperCase();
     if (!d) return '';
     return indexarMaestro().padres[d] || leerPadresRecordados()[d] || '';
-};
-
-/* ── MARCAS QUE SON LA MISMA ─────────────────────────────────────────────
-   Cuando una marca cambia de nombre en el Maestro, las tareas ya guardadas se
-   quedan con el nombre de entonces. En los reportes esa marca sale partida en
-   dos filas, como si fueran dos marcas distintas, y los totales no cuadran con
-   lo que uno tiene en la cabeza.
-*/
-
-/** Deja el nombre en su esqueleto: sin puntos, sin espacios y en mayúsculas. */
-const claveMarca = (m) => String(m == null ? '' : m).toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-/**
- * Nombre viejo → nombre que vale hoy (el que trae el Maestro).
- * Se compara por el esqueleto, así que una sola entrada cubre todas las formas de
- * escribirlo: 'B.G Licenses', 'BG Licenses', 'BG. Licenses', 'B.G. LICENSES'...
- */
-const MARCAS_EQUIVALENTES = {
-    // Abreviatura que se usó un tiempo. Hoy el Maestro dice el nombre completo, pero
-    // quedaron tareas guardadas con la forma corta.
-    BGLICENSES: 'Bubblegummers Licenses'
-};
-
-/**
- * Nombre único de una marca. Todo lo que agrupe o muestre marcas pasa por acá, así
- * el histórico se junta solo sin tener que reescribir las tareas ya guardadas.
- */
-const marcaNormalizada = (m) => {
-    const limpio = String(m == null ? '' : m).trim();
-    if (!limpio) return '';
-    return MARCAS_EQUIVALENTES[claveMarca(limpio)] || limpio;
-};
-
-/**
- * Nombre corto para las tablas angostas.
- *
- * Son DOS cosas distintas y conviene no mezclarlas:
- *   marcaNormalizada  con qué nombre se AGRUPA  (el oficial, el del Maestro)
- *   marcaCorta        con qué nombre se MUESTRA (el que entra en la columna)
- *
- * 'Bubblegummers Licenses' no entra en una línea y parte la fila en dos, lo que
- * descuadra el reporte entero. Se acorta solo para pintarlo: los totales se siguen
- * sumando bajo el nombre completo, así que nada cambia de sitio.
- *
- * No se arregla renombrando en el Maestro: ahí va el nombre oficial, y habría que
- * volver a editarlo a mano cada vez que se publica uno nuevo.
- */
-const MARCAS_CORTAS = {
-    'BUBBLEGUMMERS LICENSES': 'B.G Licenses'
-};
-
-const marcaCorta = (m) => {
-    const nombre = marcaNormalizada(m);
-    return MARCAS_CORTAS[nombre.toUpperCase()] || nombre;
 };
 
 /** Minutos trabajados en una tarea, descontando el break de 23:00 a 23:50. */
@@ -3110,7 +3039,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0002');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0003');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12828,7 +12757,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0002 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0003 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19876,11 +19805,11 @@ window.showCellModal = function(htmlContent) {
                                 REPORTE ALMACENAJE - MARCAS
                             </h3>
                             <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                                SYNC_ID: ${rotuloRangoReporte(window.__repMarcasStart, window.__repMarcasEnd)}
+                                SYNC_ID: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd)}
                             </div>
                         </div>
                         <div style="display:flex; align-items:center; gap:10px;">
-                            ${rangoFechasReporte(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', '#00E5FF')}
+                            ${selectorRango(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange')}
                             <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); flex-shrink:0;" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
                             🔄
                         </button>
@@ -20026,11 +19955,11 @@ window.showCellModal = function(htmlContent) {
                                 REPORTE ALMACENAJE - GENDER RIMS
                             </h3>
                             <div style="font-size:0.68rem; color:rgba(0, 229, 255, 0.6); font-weight:700; letter-spacing:0.5px;">
-                                SYNC_ID: ${rotuloRangoReporte(window.__repGenderStart, window.__repGenderEnd)}
+                                SYNC_ID: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd)}
                             </div>
                         </div>
                         <div style="display:flex; align-items:center; gap:10px;">
-                            ${rangoFechasReporte(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', '#00E5FF')}
+                            ${selectorRango(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange')}
                             <button onclick="document.getElementById('btn_refresh_almacenaje').click()" title="Actualizar Reporte" style="background:rgba(0, 229, 255, 0.1); border:1px solid #00E5FF; color:#00E5FF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); flex-shrink:0;" onmouseover="this.style.background='rgba(0, 229, 255, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 229, 255, 0.4)'" onmouseout="this.style.background='rgba(0, 229, 255, 0.1)'; this.style.boxShadow='0 0 10px rgba(0, 229, 255, 0.2)'">
                             🔄
                         </button>

@@ -11,10 +11,11 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0002';
+} from '../services_v245/csvHub_v6.js?v=29.0003';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0002';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0002';
+import * as adminService from '../services_v245/adminService.js?v=29.0003';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0003';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0003';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -260,7 +261,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0002</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0003</span>
     </div>`;
 
   buildTabNav();
@@ -414,6 +415,25 @@ async function renderAreaModule(areaKey, title) {
 window.__almacenajeDateChange = function(field, value) {
   if (field === 'start') { filterStart = value; localStorage.setItem('rpt_filterStart', value); }
   if (field === 'end')   { filterEnd   = value; localStorage.setItem('rpt_filterEnd',   value); }
+  // El filtro de arriba vuelve a alinear a los dos reportes: es el que manda cuando
+  // alguien quiere ver todo el mismo período.
+  window.__repMarcasStart = filterStart; window.__repMarcasEnd = filterEnd;
+  window.__repGenderStart = filterStart; window.__repGenderEnd = filterEnd;
+  renderContent();
+};
+
+/* Cada reporte lleva ADEMÁS su propio rango, igual que en el dashboard desde v27:
+   sirve para comparar Marcas de una semana contra Gender RIMS de otra sin tener
+   que mover el filtro general y perder lo que se estaba mirando. */
+window.setRepMarcasRange = function(desde, hasta) {
+  if (desde !== null) window.__repMarcasStart = desde;
+  if (hasta !== null) window.__repMarcasEnd = hasta;
+  renderContent();
+};
+
+window.setRepGenderRange = function(desde, hasta) {
+  if (desde !== null) window.__repGenderStart = desde;
+  if (hasta !== null) window.__repGenderEnd = hasta;
   renderContent();
 };
 
@@ -509,6 +529,12 @@ function renderMarcasReport() {
   const tasks = getFilteredTasks();
   window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
   window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  // La primera vez cada reporte arranca con el rango del filtro de arriba; a partir
+  // de ahí cada uno se mueve por su cuenta hasta que se toque el filtro general.
+  if (!window.__repMarcasStart) window.__repMarcasStart = window.__kpiStartDate;
+  if (!window.__repMarcasEnd) window.__repMarcasEnd = window.__kpiEndDate;
+  if (!window.__repGenderStart) window.__repGenderStart = window.__kpiStartDate;
+  if (!window.__repGenderEnd) window.__repGenderEnd = window.__kpiEndDate;
   area.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;"><div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
@@ -516,15 +542,10 @@ function renderMarcasReport() {
                                 REPORTE ALMACENAJE - MARCAS
                             </h3>
                             <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
-                                SYNC_ID: ${(() => {
-                                    const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                    const startStr = window.__kpiStartDate.split('-').reverse().join('/');
-                                    const endStr = window.__kpiEndDate.split('-').reverse().join('/');
-                                    const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
-                                    return `${syncDateStr} ${syncTimeStr}`;
-                                })()}
+Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590')}
                             </div>
                         </div>
+                        ${selectorRango(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', { color:'#B45309', fondo:'#F4F1EC', texto:'#1C2B3A', esquema:'light' })}
                         <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:transparent; border:1px solid #DDD8CF; color:#9C9590; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'; this.style.borderColor='#B45309'; this.style.color='#B45309'" onmouseout="this.style.background='transparent'; this.style.borderColor='#DDD8CF'; this.style.color='#9C9590'">
                             🔄
                         </button>
@@ -561,7 +582,7 @@ function renderMarcasReport() {
                                     };
 
                                     const brandGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
+                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__repMarcasStart && t.fecha <= window.__repMarcasEnd);
 
                                     filteredTasks.forEach(t => {
                                         const shift1 = getWorkerShift(t.u1);
@@ -569,7 +590,7 @@ function renderMarcasReport() {
                                         const taskShift = shift1 || shift2 || 'DIA';
 
                                         (t.items || []).forEach(art => {
-                                            const brand = String(art.marca || 'S/M').trim();
+                                            const brand = marcaNormalizada(art.marca) || 'S/M';
                                             const bufferItems = art.items || [];
                                             bufferItems.forEach(i => {
                                                 const ubi = String(i.ubi || '').toUpperCase().trim();
@@ -614,7 +635,7 @@ function renderMarcasReport() {
                                             brandTableRows += `
                                                 <tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
                                                     <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:5px 6px;"><b style="color:#1C2B3A; font-weight:700; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
+                                                    <td style="padding:5px 6px;"><b title="${brand}" style="color:#1C2B3A; font-weight:700; font-size:0.8rem; font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(brand)}</b></td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#4A4540; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
@@ -669,15 +690,10 @@ function renderMarcasReport() {
                                 REPORTE ALMACENAJE - GENDER RIMS
                             </h3>
                             <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
-                                SYNC_ID: ${(() => {
-                                    const syncTimeStr = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                                    const startStr = window.__kpiStartDate.split('-').reverse().join('/');
-                                    const endStr = window.__kpiEndDate.split('-').reverse().join('/');
-                                    const syncDateStr = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
-                                    return `${syncDateStr} ${syncTimeStr}`;
-                                })()}
+Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590')}
                             </div>
                         </div>
+                        ${selectorRango(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', { color:'#B45309', fondo:'#F4F1EC', texto:'#1C2B3A', esquema:'light' })}
                         <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:transparent; border:1px solid #DDD8CF; color:#9C9590; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'; this.style.borderColor='#B45309'; this.style.color='#B45309'" onmouseout="this.style.background='transparent'; this.style.borderColor='#DDD8CF'; this.style.color='#9C9590'">
                             🔄
                         </button>
@@ -731,7 +747,7 @@ function renderMarcasReport() {
                                         }
                                     }
                                     const genderGroups = {};
-                                    const filteredTasksGR = tasks.filter(t => t.fecha >= window.__kpiStartDate && t.fecha <= window.__kpiEndDate);
+                                    const filteredTasksGR = tasks.filter(t => t.fecha >= window.__repGenderStart && t.fecha <= window.__repGenderEnd);
                                     filteredTasksGR.forEach(t => {
                                         (t.items || []).forEach(art => {
                                             const sku7 = String(art.sku7 || '').trim().substring(0, 7);
@@ -1213,7 +1229,7 @@ const renderWeeklyStorageReport = (tasksList) => {
             const weekStr = getWeekStr(t.fecha);
             if (weekStr === '---') return;
             
-            let brand = String(t.marca || 'S/M').trim();
+            let brand = marcaCorta(t.marca) || 'S/M';
             if (brand === 'Bubblegummers Licenses') brand = 'BG. Licenses';
             if (brand === 'Bubblegummers') brand = 'BG';
             
