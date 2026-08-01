@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0008';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0009';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -249,6 +249,18 @@ let almacenajeDebouncePromise = null;
 let almacenajeDebounceResolve = null;
 
 export const saveAlmacenajeTasks = (data) => {
+    // Una tarea suelta viaja sola y sin demora: el motor la manda por PATCH y el servidor la
+    // reemplaza por id sin tocar las demás. Es lo que permite que dos PC trabajen el mismo día
+    // sin pisarse.
+    //
+    // Tampoco entra al debounce, y eso es a propósito: el debounce CANCELA el envío anterior,
+    // así que finalizar dos tareas en menos de segundo y medio dejaba la primera sin mandar
+    // nunca. Con el array completo no se notaba -el array llevaba las dos-, pero mandando
+    // tareas sueltas ese cambio se perdía. save() ya las encola y respeta el orden.
+    if (data && !Array.isArray(data) && typeof data === 'object' && data.id) {
+        return save('almacenaje_tasks', data);
+    }
+
     if (!almacenajeDebouncePromise) {
         almacenajeDebouncePromise = new Promise(resolve => {
             almacenajeDebounceResolve = resolve;

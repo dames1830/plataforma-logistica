@@ -1,13 +1,14 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0008';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0009';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0008';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0008';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0008';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0008';
-import * as metasService from '../services_v245/metasService.js?v=29.0008';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0008';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0008';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0008';
+import * as adminService from '../services_v245/adminService.js?v=29.0009';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0009';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0009';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0009';
+import * as metasService from '../services_v245/metasService.js?v=29.0009';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0009';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0009';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0009';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0009';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -364,7 +365,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0008';
+const VERSION = '29.0009';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1043,20 +1044,15 @@ const filaSubtotal = (fecha, tot) => {
     </tr>`;
 };
 
-const getLogicalDate = () => {
-    const now = new Date();
-    const hrs = now.getHours();
-    let target = now;
-    // Si son entre las 00:00 y las 06:00 AM, la fecha lógica es el día anterior
-    if (hrs >= 0 && hrs < 6) {
-        target = new Date(now);
-        target.setDate(now.getDate() - 1);
-    }
-    const y = target.getFullYear();
-    const m = String(target.getMonth() + 1).padStart(2, '0');
-    const d = String(target.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-};
+/**
+ * A qué día operativo pertenece este momento.
+ *
+ * La hora de corte era fija: las 06:00. Con un turno que sale 06:30 la última hora de la
+ * jornada se registraba en el día siguiente, y había que pedir dos fechas para ver un solo
+ * turno. Ahora sale de la hora de salida del turno noche, que se edita en
+ * Configuración > Jornada de Trabajo y vale igual para todas las PC.
+ */
+const getLogicalDate = () => jornadaService.fechaLogicaDe();
 
 /* ── BLOQUEO DE DÍAS CERRADOS ─────────────────────────────────────────────
    Antes se podía entrar en julio y editar una tarea de abril, y con eso se movían
@@ -1074,18 +1070,19 @@ const usuarioActual = () => {
 const esSuperusuario = () => usuarioActual() === SUPERUSUARIO;
 
 /**
- * Una tarea queda cerrada cuando terminó su jornada, o sea a las 06:00 del día siguiente:
- * es cuando cambia la fecha lógica, porque el turno noche (00:00 a 06:00) todavía cuenta
- * como el día anterior. Desde ahí no se puede editar, reiniciar, borrar ni reasignar.
+ * Una tarea queda cerrada cuando terminó su jornada y venció el margen de gracia. Antes se
+ * trababa en el instante en que cambiaba la fecha lógica, así que una corrección de último
+ * momento ya no entraba. Ahora el cierre y el margen se editan en Configuración > Jornada
+ * de Trabajo. Desde ahí no se puede editar, reiniciar, borrar ni reasignar.
  * El superusuario no tiene este límite.
  */
-const tareaCerrada = (t) => !!t && !!t.fecha && t.fecha < getLogicalDate() && !esSuperusuario();
+const tareaCerrada = (t) => !!t && !!t.fecha && jornadaService.jornadaVencida(t.fecha) && !esSuperusuario();
 
 /** El mismo aviso para todos los intentos, así la regla se explica una sola vez. */
 const avisarCerrada = (t) => {
     const dia = String((t && t.fecha) || '').split('-').reverse().join('/');
     showPremiumAlert('JORNADA CERRADA',
-        `La tarea del ${dia} ya no se puede modificar.\n\nLas tareas quedan abiertas hasta las 06:00 del día siguiente, contando el turno noche. Después solo ${SUPERUSUARIO.toUpperCase()} puede tocarlas.\n\nEs lo que evita que los números de días pasados cambien después de haberlos presentado.`,
+        `La tarea del ${dia} ya no se puede modificar.\n\nLas tareas quedan abiertas ${jornadaService.textoCierre()}. Después solo ${SUPERUSUARIO.toUpperCase()} puede tocarlas.\n\nEs lo que evita que los números de días pasados cambien después de haberlos presentado.`,
         'warning');
 };
 
@@ -1190,10 +1187,17 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
           window._pulseSyncState.lastPushTimes['almacenaje_tasks'] = Date.now();
       }
 
-        // BUGFIX: Always send the full array to ensure backend compaction and data integrity
-        const dataToSave = almacenajeTasksCache;
-        console.log(`📡 [PULSE] Sincronización: Enviando ${almacenajeTasksCache.length} tareas (COMPLETO) a la nube.`);
-        
+        // Cuando cambia UNA tarea se manda solo esa: el servidor la reemplaza por id y deja
+        // el resto como está. Antes se subía siempre el array entero, así que la última PC en
+        // guardar pisaba a todas las demás: finalizabas una tarea, el asistente asignaba otra
+        // desde su PC, y su copia -que todavía tenía la tuya en Asignado- revertía tu cambio.
+        // El array completo se sigue mandando cuando de verdad cambia el conjunto: al procesar
+        // tareas nuevas, al borrarlas o al limpiar la jornada.
+        const dataToSave = partialTask || almacenajeTasksCache;
+        console.log(partialTask
+            ? `📡 [PULSE] Sincronización: enviando SOLO la tarea ${partialTask.id}.`
+            : `📡 [PULSE] Sincronización: Enviando ${almacenajeTasksCache.length} tareas (COMPLETO) a la nube.`);
+
         const success = await adminService.saveAlmacenajeTasks(dataToSave);
         
         if (success) {
@@ -1802,9 +1806,22 @@ export const renderDashboard = async (container, user, onLogout) => {
   await Promise.all([
       getAreaData('tabla_tallas'),
       getAreaData('tallas'),
-      getAreaData('articulos')
+      getAreaData('articulos'),
+      // La jornada define a qué día pertenece cada cosa, así que tiene que estar antes de
+      // que se pinte nada. Los rangos por defecto de los reportes se calcularon al importar
+      // el módulo con lo que había guardado en esta PC; si la publicada dice otra cosa, se
+      // reponen abajo.
+      jornadaService.cargarJornada()
   ]);
-  
+
+  // Los rangos arrancan en "hoy". Si la jornada publicada corre el corte, ese "hoy" cambia
+  // y hay que reponerlos, o el usuario abriría el reporte mirando el día equivocado.
+  const _hoyReal = getLogicalDate();
+  ['__almacenajeStartDate', '__almacenajeEndDate', '__repMarcasStart', '__repMarcasEnd',
+   '__repGenderStart', '__repGenderEnd'].forEach(k => {
+      if (window[k] && window[k] !== _hoyReal) window[k] = _hoyReal;
+  });
+
   await loadAlmacenajeTasks();
   
   // Heartbeat de Sincronización Global (Desactivado a petición del usuario v17.4.2)
@@ -3137,7 +3154,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0008');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0009');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6861,6 +6878,376 @@ const renderRFSection = (container) => {
       };
   };
 
+  /**
+   * Configuración > Jornada de Trabajo.
+   *
+   * Dos niveles: el horario base día por día, y las reglas con vigencia que lo pisan
+   * mientras duran. De todo lo que se edita acá, el campo que de verdad manda es la SALIDA
+   * DEL TURNO NOCHE: es la hora a la que cambia el día operativo, y de ahí cuelgan las
+   * fechas de los reportes, el cierre de semana y el bloqueo de tareas.
+   *
+   * Se trabaja sobre un borrador y recién se publica al apretar Guardar: mover un horario
+   * cambia a qué día va el trabajo de todo el almacén, y eso no puede pasar de casualidad
+   * mientras alguien tantea horarios.
+   */
+  let _jornadaBorrador = null;
+  let _reglaEditando = null;
+
+  const renderJornadaTrabajo = (container) => {
+    if (!container) return;
+    if (!_jornadaBorrador) _jornadaBorrador = JSON.parse(JSON.stringify(jornadaService.jornadaActual()));
+    const j = _jornadaBorrador;
+
+    const hoy = jornadaService.fechaLogicaDe();
+    const estadoRegla = (r) => {
+      const h = new Date().toISOString().slice(0, 10);
+      if (r.hasta && h > r.hasta) return { txt: 'Vencida', color: '#6b7280', fondo: 'rgba(107,114,128,0.12)' };
+      if (r.desde && h < r.desde) return { txt: 'Programada', color: '#facc15', fondo: 'rgba(250,204,21,0.12)' };
+      return { txt: 'Vigente', color: '#22c55e', fondo: 'rgba(34,197,94,0.12)' };
+    };
+    const rotuloDias = (dias) => {
+      if (dias.length === 7) return 'todos los días';
+      if (dias.length === 6 && !dias.includes('dom')) return 'lun a sáb';
+      if (dias.length === 5 && !dias.includes('dom') && !dias.includes('sab')) return 'lun a vie';
+      return dias.map(d => jornadaService.NOMBRE_DIA[d].slice(0, 3)).join(', ');
+    };
+    const rotuloTurno = (t) => t === 'dia' ? 'Turno día' : (t === 'noche' ? 'Turno noche' : 'Los dos turnos');
+
+    const inputHora = (id, valor, resaltado) => `
+      <input type="time" id="${id}" value="${valor}" style="width:100%; background:${resaltado ? 'rgba(129,140,248,0.08)' : 'rgba(255,255,255,0.04)'}; border:1px solid ${resaltado ? 'rgba(129,140,248,0.35)' : 'rgba(255,255,255,0.08)'}; color:#fff; padding:7px 8px; border-radius:7px; font-size:0.85rem; font-weight:700; outline:none; color-scheme:dark;">`;
+
+    const filaDia = (d) => {
+      const h = j.base[d];
+      const esFinde = (d === 'sab' || d === 'dom');
+      return `
+        <tr style="${esFinde ? 'background:rgba(255,255,255,0.02);' : ''}">
+          <td style="padding:6px 10px; font-size:0.82rem; font-weight:${esFinde ? '800' : '600'}; color:${esFinde ? '#fff' : 'var(--text-muted)'}; white-space:nowrap;">${jornadaService.NOMBRE_DIA[d]}</td>
+          <td style="padding:5px 5px;">${inputHora('jb_' + d + '_diaEntrada', h.diaEntrada)}</td>
+          <td style="padding:5px 5px;">${inputHora('jb_' + d + '_diaSalida', h.diaSalida)}</td>
+          <td style="padding:5px 5px; border-left:1px solid rgba(255,255,255,0.06);">${inputHora('jb_' + d + '_nocheEntrada', h.nocheEntrada)}</td>
+          <td style="padding:5px 5px;">${inputHora('jb_' + d + '_nocheSalida', h.nocheSalida, true)}</td>
+        </tr>`;
+    };
+
+    const filaRegla = (r) => {
+      const e = estadoRegla(r);
+      const rango = `${(r.desde || '').split('-').reverse().slice(0, 2).join('/') || '—'} → ${(r.hasta || '').split('-').reverse().slice(0, 2).join('/') || 'sin fin'}`;
+      const horas = r.turno === 'dia' ? `${r.diaEntrada} – ${r.diaSalida}`
+                  : r.turno === 'noche' ? `${r.nocheEntrada} – ${r.nocheSalida}`
+                  : `día ${r.diaEntrada}–${r.diaSalida} · noche ${r.nocheEntrada}–${r.nocheSalida}`;
+      return `
+        <div style="border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:11px 13px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; ${e.txt === 'Vencida' ? 'opacity:0.55;' : ''}">
+          <span style="background:${e.fondo}; color:${e.color}; padding:2px 9px; border-radius:6px; font-size:0.62rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">${e.txt}</span>
+          <span style="color:#fff; font-size:0.82rem; font-weight:700;">${r.nombre}</span>
+          <span style="color:var(--text-muted); font-size:0.76rem;">${rango}</span>
+          <span style="color:var(--text-muted); font-size:0.76rem;">${rotuloTurno(r.turno)} · ${rotuloDias(r.dias)}</span>
+          <span style="color:#818cf8; font-size:0.8rem; font-weight:700; margin-left:auto;">${horas}</span>
+          <span style="display:flex; gap:6px;">
+            <button onclick="window.jrEditar('${r.id}')" title="Editar" style="background:none; border:none; cursor:pointer; font-size:0.95rem;">✏️</button>
+            <button onclick="window.jrBorrar('${r.id}')" title="Quitar" style="background:none; border:none; cursor:pointer; font-size:0.95rem; color:#ef4444;">🗑️</button>
+          </span>
+        </div>`;
+    };
+
+    container.innerHTML = `
+      <div class="glass-panel" style="max-width:900px; padding:1.8rem;">
+        <h4 style="color:#fff; font-size:1rem; margin:0 0 0.4rem 0;">🕐 Jornada de Trabajo</h4>
+        <p style="color:var(--text-muted); font-size:0.82rem; margin:0 0 1.5rem 0; line-height:1.5;">
+          Define el horario de cada turno, día por día. Con esto el sistema sabe a qué jornada pertenece
+          cada tarea, hasta cuándo se puede corregir y cuándo cierra la semana.
+          Se guarda en el servidor: vale igual para todas las computadoras.
+        </p>
+
+        <div style="font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#00E5FF; margin-bottom:2px;">Horario base</div>
+        <div style="color:var(--text-muted); font-size:0.76rem; margin-bottom:12px;">Rige siempre, salvo que una regla lo pise.</div>
+
+        <div style="overflow-x:auto; margin-bottom:1.8rem;">
+          <table style="width:100%; min-width:600px; border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:6px 10px; font-size:0.66rem; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.08);">Día</th>
+                <th colspan="2" style="text-align:center; padding:6px 10px; font-size:0.66rem; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#facc15; border-bottom:1px solid rgba(255,255,255,0.08);">Turno día</th>
+                <th colspan="2" style="text-align:center; padding:6px 10px; font-size:0.66rem; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#818cf8; border-bottom:1px solid rgba(255,255,255,0.08);">Turno noche</th>
+              </tr>
+              <tr>
+                <th></th>
+                <th style="padding:3px; font-size:0.6rem; color:var(--text-muted); font-weight:600;">entrada</th>
+                <th style="padding:3px; font-size:0.6rem; color:var(--text-muted); font-weight:600;">salida</th>
+                <th style="padding:3px; font-size:0.6rem; color:var(--text-muted); font-weight:600; border-left:1px solid rgba(255,255,255,0.06);">entrada</th>
+                <th style="padding:3px; font-size:0.6rem; color:#818cf8; font-weight:800;">salida (día sig.)</th>
+              </tr>
+            </thead>
+            <tbody>${jornadaService.DIAS_ORDEN.map(filaDia).join('')}</tbody>
+          </table>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:2px;">
+          <div>
+            <div style="font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#00E5FF;">Reglas temporales</div>
+            <div style="color:var(--text-muted); font-size:0.76rem;">Mandan mientras están vigentes; al vencer vuelve el horario base.</div>
+          </div>
+          <button id="jr_agregar" style="background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.3); color:#00E5FF; padding:7px 15px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800;">+ AGREGAR REGLA</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin:12px 0 1.8rem 0;">
+          ${(j.reglas && j.reglas.length) ? j.reglas.map(filaRegla).join('')
+            : `<div style="border:1px dashed rgba(255,255,255,0.1); border-radius:10px; padding:18px; text-align:center; color:var(--text-muted); font-size:0.78rem;">Sin reglas. El horario base rige todos los días.</div>`}
+        </div>
+
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-top:14px; border-top:1px solid rgba(255,255,255,0.06); margin-bottom:1.5rem;">
+          <span style="color:#fff; font-size:0.82rem; font-weight:700;">Horas para corregir una tarea después del cierre</span>
+          <input type="number" id="j_horasBloqueo" value="${j.horasBloqueo}" min="0" max="168" step="1" style="width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#fff; padding:7px 9px; border-radius:7px; font-size:0.9rem; font-weight:700; outline:none;">
+          <span style="color:var(--text-muted); font-size:0.74rem;">En 0 se traba apenas cierra la jornada.</span>
+        </div>
+
+        <div id="j_preview" style="background:rgba(0,229,255,0.04); border:1px solid rgba(0,229,255,0.18); border-radius:10px; padding:14px 16px; margin-bottom:1.5rem; font-size:0.8rem; line-height:1.7; color:#cbd5e1;"></div>
+
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <button id="j_guardar" class="btn" style="width:auto; padding:0.85rem 1.8rem; font-weight:800; font-size:0.8rem; background:linear-gradient(135deg, #22c55e, #10b981); border:none; border-radius:10px; color:#fff; cursor:pointer;">GUARDAR</button>
+          <button id="j_reset" style="background:none; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); padding:0.85rem 1.4rem; border-radius:10px; cursor:pointer; font-size:0.78rem; font-weight:700;">Valores por defecto</button>
+          <button id="j_descartar" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.76rem; text-decoration:underline;">Descartar cambios</button>
+          <span id="j_estado" style="font-size:0.78rem; font-weight:700;"></span>
+        </div>
+      </div>`;
+
+    const recogerBase = () => {
+      jornadaService.DIAS_ORDEN.forEach(d => {
+        ['diaEntrada', 'diaSalida', 'nocheEntrada', 'nocheSalida'].forEach(k => {
+          const el = document.getElementById('jb_' + d + '_' + k);
+          if (el && el.value) j.base[d][k] = el.value;
+        });
+      });
+      const hb = document.getElementById('j_horasBloqueo');
+      if (hb) j.horasBloqueo = Number(hb.value) || 0;
+    };
+
+    // La previa se calcula con el borrador, no con lo publicado: la gracia es ver el efecto
+    // ANTES de que rija para todas las PC.
+    const pintarPreview = () => {
+      recogerBase();
+      const ahora = new Date();
+      const aMin = (s) => { const p = String(s || '').split(':'); return (Number(p[0]) * 60) + Number(p[1]); };
+
+      const horarioBorradorDe = (fechaStr) => {
+        const clave = jornadaService.claveDiaDe(fechaStr);
+        let h = { ...j.base[clave] };
+        (j.reglas || []).forEach(r => {
+          if (r.desde && fechaStr < r.desde) return;
+          if (r.hasta && fechaStr > r.hasta) return;
+          if (!r.dias.includes(clave)) return;
+          if (r.turno === 'dia' || r.turno === 'ambos') { h.diaEntrada = r.diaEntrada; h.diaSalida = r.diaSalida; }
+          if (r.turno === 'noche' || r.turno === 'ambos') { h.nocheEntrada = r.nocheEntrada; h.nocheSalida = r.nocheSalida; }
+        });
+        return h;
+      };
+      const txt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      const ayer = new Date(ahora); ayer.setDate(ahora.getDate() - 1);
+      const corte = aMin(horarioBorradorDe(txt(ayer)).nocheSalida);
+      const min = (ahora.getHours() * 60) + ahora.getMinutes();
+      const jornada = (min < corte) ? ayer : ahora;
+      const jTxt = txt(jornada);
+
+      const cierre = new Date(jornada);
+      cierre.setDate(cierre.getDate() + 1);
+      const cp = String(horarioBorradorDe(jTxt).nocheSalida).split(':');
+      cierre.setHours(Number(cp[0]), Number(cp[1]), 0, 0);
+      const limite = new Date(cierre.getTime() + ((Number(j.horasBloqueo) || 0) * 3600000));
+      const dm = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const hm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+      const aplican = (j.reglas || []).filter(r => {
+        const clave = jornadaService.claveDiaDe(jTxt);
+        if (r.desde && jTxt < r.desde) return false;
+        if (r.hasta && jTxt > r.hasta) return false;
+        return r.dias.includes(clave);
+      });
+
+      document.getElementById('j_preview').innerHTML = `
+        <div style="color:#00E5FF; font-weight:800; font-size:0.68rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Con estos horarios</div>
+        Es <b style="color:#fff;">${jornadaService.NOMBRE_DIA[jornadaService.DIAS[ahora.getDay()]].toLowerCase()} ${hm(ahora)}</b>, así que el sistema está trabajando sobre la jornada del <b style="color:#fff;">${dm(jornada)}</b>.<br>
+        Esa jornada cierra el <b style="color:#818cf8;">${dm(cierre)} a las ${hm(cierre)}</b> y sus tareas se pueden corregir hasta el <b style="color:#fff;">${dm(limite)} a las ${hm(limite)}</b>.
+        ${aplican.length ? `<br><span style="color:#facc15;">Hoy manda la regla «${aplican[aplican.length - 1].nombre}».</span>` : ''}`;
+    };
+
+    jornadaService.DIAS_ORDEN.forEach(d => {
+      ['diaEntrada', 'diaSalida', 'nocheEntrada', 'nocheSalida'].forEach(k => {
+        const el = document.getElementById('jb_' + d + '_' + k);
+        if (el) el.addEventListener('input', pintarPreview);
+      });
+    });
+    document.getElementById('j_horasBloqueo').addEventListener('input', pintarPreview);
+    pintarPreview();
+
+    window.jrEditar = (id) => { _reglaEditando = (j.reglas || []).find(r => r.id === id) || null; abrirModalRegla(container); };
+    window.jrBorrar = (id) => {
+      const r = (j.reglas || []).find(x => x.id === id);
+      if (!r) return;
+      if (!confirm(`¿Quitar la regla "${r.nombre}"?\n\nEl horario base vuelve a regir esos días.`)) return;
+      recogerBase();
+      j.reglas = j.reglas.filter(x => x.id !== id);
+      renderJornadaTrabajo(container);
+    };
+    document.getElementById('jr_agregar').onclick = () => { recogerBase(); _reglaEditando = null; abrirModalRegla(container); };
+
+    document.getElementById('j_reset').onclick = () => {
+      if (!confirm('¿Volver al horario habitual en los siete días?\n\nLas reglas que hayas cargado no se tocan.')) return;
+      const def = jornadaService.jornadaPorDefecto();
+      _jornadaBorrador = { base: def.base, reglas: j.reglas || [], horasBloqueo: def.horasBloqueo };
+      renderJornadaTrabajo(container);
+      document.getElementById('j_estado').innerHTML = '<span style="color:#facc15;">Sin guardar todavía</span>';
+    };
+
+    document.getElementById('j_descartar').onclick = () => {
+      _jornadaBorrador = null;
+      renderJornadaTrabajo(container);
+    };
+
+    document.getElementById('j_guardar').onclick = async () => {
+      recogerBase();
+      const btn = document.getElementById('j_guardar');
+      const estado = document.getElementById('j_estado');
+      btn.disabled = true;
+      estado.innerHTML = '<span style="color:var(--text-muted);">Publicando…</span>';
+      try {
+        await jornadaService.guardarJornada(j);
+        _jornadaBorrador = null;
+        renderJornadaTrabajo(container);
+        const e2 = document.getElementById('j_estado');
+        if (e2) e2.innerHTML = '<span style="color:#22c55e;">Guardado. Ya rige para todas las PC.</span>';
+      } catch (e) {
+        estado.innerHTML = '<span style="color:#ef4444;">No se pudo publicar: ' + (e && e.message) + '</span>';
+        btn.disabled = false;
+      }
+    };
+  };
+
+  /** Alta y edición de una regla. Se trabaja sobre el borrador; publica el botón Guardar. */
+  const abrirModalRegla = (container) => {
+    const j = _jornadaBorrador;
+    const r = _reglaEditando || {
+      id: jornadaService.nuevoIdRegla(), nombre: '', desde: '', hasta: '',
+      dias: [...jornadaService.DIAS_ORDEN], turno: 'noche',
+      diaEntrada: '08:00', diaSalida: '17:30', nocheEntrada: '19:00', nocheSalida: '05:30'
+    };
+    const esNueva = !_reglaEditando;
+
+    const modal = document.createElement('div');
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11,15,25,0.88); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); overflow-y:auto; padding:2rem 0;';
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:560px; max-width:94vw; padding:1.8rem; border:1px solid rgba(0,229,255,0.25); border-radius:16px; background:rgba(15,23,42,0.97);">
+        <h3 style="color:#fff; margin:0 0 1.4rem 0; font-size:1.05rem;">${esNueva ? 'Nueva regla' : 'Editar regla'}</h3>
+
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <label style="display:flex; flex-direction:column; gap:5px;">
+            <span style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Nombre</span>
+            <input type="text" id="jr_nombre" value="${r.nombre}" placeholder="Campaña Navidad, feriado, inventario…" maxlength="60" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:600; outline:none;">
+          </label>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <label style="display:flex; flex-direction:column; gap:5px;">
+              <span style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Desde</span>
+              <input type="date" id="jr_desde" value="${r.desde}" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:700; outline:none; color-scheme:dark;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:5px;">
+              <span style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Hasta (vacío = sin fin)</span>
+              <input type="date" id="jr_hasta" value="${r.hasta}" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:700; outline:none; color-scheme:dark;">
+            </label>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Días que alcanza</span>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${jornadaService.DIAS_ORDEN.map(d => `
+                <label style="display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:6px 10px; border-radius:7px; cursor:pointer; font-size:0.76rem; color:#fff;">
+                  <input type="checkbox" class="jr_dia" value="${d}" ${r.dias.includes(d) ? 'checked' : ''} style="cursor:pointer;">
+                  ${jornadaService.NOMBRE_DIA[d].slice(0, 3)}
+                </label>`).join('')}
+            </div>
+          </div>
+
+          <label style="display:flex; flex-direction:column; gap:5px;">
+            <span style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Turno que cambia</span>
+            <select id="jr_turno" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:700; outline:none;">
+              <option value="noche" ${r.turno === 'noche' ? 'selected' : ''}>Turno noche</option>
+              <option value="dia" ${r.turno === 'dia' ? 'selected' : ''}>Turno día</option>
+              <option value="ambos" ${r.turno === 'ambos' ? 'selected' : ''}>Los dos turnos</option>
+            </select>
+          </label>
+
+          <div id="jr_horasDia" style="display:${r.turno === 'noche' ? 'none' : 'grid'}; grid-template-columns:1fr 1fr; gap:12px;">
+            <label style="display:flex; flex-direction:column; gap:5px;">
+              <span style="color:#facc15; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Día · entrada</span>
+              <input type="time" id="jr_diaEntrada" value="${r.diaEntrada}" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:700; outline:none; color-scheme:dark;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:5px;">
+              <span style="color:#facc15; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Día · salida</span>
+              <input type="time" id="jr_diaSalida" value="${r.diaSalida}" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:700; outline:none; color-scheme:dark;">
+            </label>
+          </div>
+
+          <div id="jr_horasNoche" style="display:${r.turno === 'dia' ? 'none' : 'grid'}; grid-template-columns:1fr 1fr; gap:12px;">
+            <label style="display:flex; flex-direction:column; gap:5px;">
+              <span style="color:#818cf8; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Noche · entrada</span>
+              <input type="time" id="jr_nocheEntrada" value="${r.nocheEntrada}" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:700; outline:none; color-scheme:dark;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:5px;">
+              <span style="color:#818cf8; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px;">Noche · salida (día sig.)</span>
+              <input type="time" id="jr_nocheSalida" value="${r.nocheSalida}" style="background:rgba(129,140,248,0.08); border:1px solid rgba(129,140,248,0.35); color:#fff; padding:9px; border-radius:8px; font-size:0.88rem; font-weight:800; outline:none; color-scheme:dark;">
+            </label>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:1.6rem;">
+          <button id="jr_ok" class="btn" style="flex:1; padding:0.85rem; font-weight:800; font-size:0.78rem; background:linear-gradient(135deg,#22c55e,#10b981); border:none; border-radius:10px; color:#fff; cursor:pointer;">${esNueva ? 'AGREGAR' : 'GUARDAR CAMBIOS'}</button>
+          <button id="jr_cancelar" style="background:none; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); padding:0.85rem 1.4rem; border-radius:10px; cursor:pointer; font-size:0.78rem; font-weight:700;">Cancelar</button>
+        </div>
+        <div id="jr_error" style="color:#ef4444; font-size:0.76rem; margin-top:10px; font-weight:700;"></div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const cerrar = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); };
+
+    document.getElementById('jr_turno').onchange = (e) => {
+      const v = e.target.value;
+      document.getElementById('jr_horasDia').style.display = (v === 'noche') ? 'none' : 'grid';
+      document.getElementById('jr_horasNoche').style.display = (v === 'dia') ? 'none' : 'grid';
+    };
+
+    document.getElementById('jr_cancelar').onclick = cerrar;
+
+    document.getElementById('jr_ok').onclick = () => {
+      const err = document.getElementById('jr_error');
+      const nombre = document.getElementById('jr_nombre').value.trim();
+      const desde = document.getElementById('jr_desde').value;
+      const hasta = document.getElementById('jr_hasta').value;
+      const dias = Array.from(document.querySelectorAll('.jr_dia')).filter(c => c.checked).map(c => c.value);
+
+      if (!nombre) { err.textContent = 'Ponele un nombre para reconocerla después.'; return; }
+      if (!desde) { err.textContent = 'Falta la fecha de inicio.'; return; }
+      if (hasta && hasta < desde) { err.textContent = 'La fecha de fin no puede ser anterior a la de inicio.'; return; }
+      if (!dias.length) { err.textContent = 'Elegí al menos un día.'; return; }
+
+      const nueva = {
+        id: r.id, nombre, desde, hasta, dias,
+        turno: document.getElementById('jr_turno').value,
+        diaEntrada: document.getElementById('jr_diaEntrada').value,
+        diaSalida: document.getElementById('jr_diaSalida').value,
+        nocheEntrada: document.getElementById('jr_nocheEntrada').value,
+        nocheSalida: document.getElementById('jr_nocheSalida').value
+      };
+
+      if (!Array.isArray(j.reglas)) j.reglas = [];
+      const i = j.reglas.findIndex(x => x.id === r.id);
+      if (i >= 0) j.reglas[i] = nueva; else j.reglas.push(nueva);
+
+      cerrar();
+      renderJornadaTrabajo(container);
+      const est = document.getElementById('j_estado');
+      if (est) est.innerHTML = '<span style="color:#facc15;">Sin guardar todavía</span>';
+    };
+  };
+
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
     if (!activeConfigSub || activeConfigSub === 'parametros') activeConfigSub = 'reportes';
@@ -6871,6 +7258,7 @@ const renderRFSection = (container) => {
           <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🌐 CONEXIÓN</a>
           <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🛠️ MANTENIMIENTO</a>
           ${puedeArchivosNube() ? `<a class="sub-nav-item ${activeConfigSub==='archivos_nube'?'active':''}" data-s="archivos_nube" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">☁️ ARCHIVOS NUBE</a>` : ''}
+          <a class="sub-nav-item ${activeConfigSub==='jornada'?'active':''}" data-s="jornada" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🕐 JORNADA DE TRABAJO</a>
         </nav><div id="configContent"></div>`;
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeConfigSub = e.target.dataset.s; renderConfigTab(); }));
     
@@ -7162,6 +7550,8 @@ const renderRFSection = (container) => {
         } else {
             await renderArchivosNube(document.getElementById('configContent'));
         }
+    } else if (activeConfigSub === 'jornada') {
+        renderJornadaTrabajo(document.getElementById('configContent'));
     } else if (activeConfigSub === 'parametros') {
         document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">Configuración de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
     } else if (activeConfigSub === 'mantenimiento') {
@@ -12990,7 +13380,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0008 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0009 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -20733,7 +21123,7 @@ window.showCellModal = function(htmlContent) {
                                     </td>
                                     <td style="padding:10.8px 1rem; text-align:center; display:flex; gap:8px; justify-content:center;" onclick="event.stopPropagation()">
                                         ${tareaCerrada(t) ? `
-                                            <span title="Jornada cerrada: las tareas se pueden editar hasta las 06:00 del día siguiente. Después solo ${SUPERUSUARIO.toUpperCase()}." style="font-size:1.1rem; opacity:0.45; cursor:help;">🔒</span>
+                                            <span title="Jornada cerrada: las tareas se pueden editar ${jornadaService.textoCierre()}. Después solo ${SUPERUSUARIO.toUpperCase()}." style="font-size:1.1rem; opacity:0.45; cursor:help;">🔒</span>
                                         ` : `
                                             <button onclick="window.editTaskTimes('${t.id}')" title="Editar Horas" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#facc15;">✏️</button>
                                             <button onclick="window.resetTask('${t.id}')" title="Reiniciar Tarea" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:#60a5fa;">🔄</button>

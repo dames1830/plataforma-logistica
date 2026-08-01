@@ -223,8 +223,8 @@ export async function pushChange(area, data, date = null) {
     pendingPushes++;
     try {
         let payload = data;
-        if ((area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') && Array.isArray(data)) {
-            payload = data.map(t => {
+        if (area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') {
+            const comprimir = (t) => {
                 const compactItems = (t.items || []).map(art => {
                     const cArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA', i.avance !== undefined ? i.avance : null, i.qtyInitial !== undefined ? i.qtyInitial : null]);
                     // El Gender RIMS se agrega al final para no mover los índices ya guardados.
@@ -232,7 +232,12 @@ export async function pushChange(area, data, date = null) {
                     return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, cArtItems, art.genderRims || ''];
                 });
                 return { ...t, items: compactItems, _comp: true };
-            });
+            };
+            // Una tarea suelta se comprime igual que si viajara dentro del array. Si no, la
+            // fila que escribe el PATCH quedaría con los items expandidos mientras el resto
+            // del día está comprimido: pesa de más y deja la base con dos formatos mezclados.
+            if (Array.isArray(data)) payload = data.map(comprimir);
+            else if (data && typeof data === 'object' && data.id) payload = comprimir(data);
         }
 
         const url = date ? `${API_BASE}/${area}?date=${date}` : `${API_BASE}/${area}`;
