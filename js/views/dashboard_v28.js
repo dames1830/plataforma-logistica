@@ -1,13 +1,13 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0007';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0008';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0007';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0007';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0007';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0007';
-import * as metasService from '../services_v245/metasService.js?v=29.0007';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0007';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0007';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0007';
+import * as adminService from '../services_v245/adminService.js?v=29.0008';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0008';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0008';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0008';
+import * as metasService from '../services_v245/metasService.js?v=29.0008';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0008';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0008';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0008';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -364,7 +364,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0007';
+const VERSION = '29.0008';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3137,7 +3137,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0007');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0008');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12990,7 +12990,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0007 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0008 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17221,6 +17221,48 @@ window.showCellModal = function(htmlContent) {
             else groups[sku7].zonaQty += qty;
         });
 
+        // Segunda corrida del mismo turno: el Activo es una foto completa del buffer, así que
+        // vuelve a traer lo que ya tiene tarea abierta y todavía nadie movió. Sin descontarlo se
+        // generaría otra tarea por el mismo stock y el buffer quedaría contado dos veces. Lo
+        // finalizado no se descuenta: ese stock ya salió del buffer y no vuelve en la foto.
+        const yaComprometido = {};
+        almacenajeTasksCache.forEach(t => {
+            if (!t || t.fecha !== logicalDate || t.status === 'Finalizado') return;
+            (t.items || []).forEach(art => {
+                if (!art || !art.sku7) return;
+                yaComprometido[art.sku7] = (yaComprometido[art.sku7] || 0) + (parseFloat(art.bufferQty) || 0);
+            });
+        });
+
+        const esLineaBuffer = (it) => String(it.area || '').toUpperCase().includes('CDBUFFER')
+            || String(it.ubi || '').trim().toUpperCase().startsWith('CDBUFFER');
+
+        let paresDescontados = 0;
+        let articulosDescontados = 0;
+        Object.values(groups).forEach(g => {
+            const abierto = yaComprometido[g.sku7];
+            if (!abierto) return;
+            // Si el buffer bajó por debajo de lo comprometido, se descuenta solo lo que hay:
+            // nunca queda negativo ni genera tarea al revés.
+            const descuento = Math.min(abierto, g.bufferQty);
+            if (descuento <= 0) return;
+            paresDescontados += descuento;
+            articulosDescontados++;
+            g.bufferQty -= descuento;
+            // Se recortan las líneas de buffer en el orden en que se leyeron hasta cubrir el
+            // descuento; la tarea nueva se queda con lo que sobra. Las líneas de zona no se tocan.
+            let resto = descuento;
+            const lineas = [];
+            g.items.forEach(it => {
+                if (resto <= 0 || !esLineaBuffer(it)) { lineas.push(it); return; }
+                const q = parseFloat(it.qty) || 0;
+                if (q <= resto) { resto -= q; return; }
+                lineas.push({ ...it, qty: q - resto });
+                resto = 0;
+            });
+            g.items = lineas;
+        });
+
         const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
         const byMarca = {};
         eligibleArticulos.forEach(art => {
@@ -17320,6 +17362,10 @@ window.showCellModal = function(htmlContent) {
         });
 
         const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
+        // No salió ninguna tarea pero sí hubo descuento: el buffer entero ya estaba cubierto.
+        // Conviene decirlo con todas las letras y no con un "0 tareas creadas" en verde, que
+        // se lee como si el proceso hubiera fallado.
+        const sinStockNuevo = tasksWithDate.length === 0 && paresDescontados > 0;
         almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
         await saveAlmacenajeTasks(); 
 
@@ -17356,10 +17402,15 @@ window.showCellModal = function(htmlContent) {
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                             </div>
-                            <h3 style="color:#fff; margin:0 0 0.5rem 0; font-size:1.4rem; font-weight:800; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">Proceso Finalizado</h3>
+                            <h3 style="color:#fff; margin:0 0 0.5rem 0; font-size:1.4rem; font-weight:800; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">${sinStockNuevo ? 'No hay stock nuevo' : 'Proceso Finalizado'}</h3>
                             <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:1.5rem; line-height:1.5; letter-spacing:0.3px; font-family:'Inter', sans-serif;">
-                                Se ha finalizado el proceso de las tareas correctamente.<br>
-                                <b style="color:#22c55e; font-size:1rem; display:block; margin-top:8px;">${tasksWithDate.length} tareas creadas</b>
+                                ${sinStockNuevo
+                                    ? `Todo lo que hay en el buffer ya tiene tarea creada, así que no hizo falta generar ninguna más.<br>
+                                       <b style="color:#facc15; font-size:1rem; display:block; margin-top:8px;">${paresDescontados.toLocaleString('es-PE')} pares ya estaban en tareas abiertas</b>`
+                                    : `Se ha finalizado el proceso de las tareas correctamente.<br>
+                                       <b style="color:#22c55e; font-size:1rem; display:block; margin-top:8px;">${tasksWithDate.length} tareas creadas</b>
+                                       ${paresDescontados > 0 ? `<span style="color:#facc15; font-size:0.78rem; display:block; margin-top:12px; line-height:1.45;">No se volvieron a contar ${paresDescontados.toLocaleString('es-PE')} pares de ${articulosDescontados} artículo${articulosDescontados !== 1 ? 's' : ''}: ya tenían tarea abierta sin almacenar.</span>` : ''}`
+                                }
                             </p>
                             <button id="btn_success_ok" class="btn" style="width:100%; padding:1rem; font-weight:800; background:linear-gradient(135deg, #22c55e, #10b981); border:none; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); border-radius:12px; color:#fff; cursor:pointer; font-size:0.95rem; letter-spacing:0.5px; transition: all 0.2s; font-family:'Inter', sans-serif;">
                                 ENTENDIDO
@@ -18525,11 +18576,28 @@ window.showCellModal = function(htmlContent) {
     // [FIX SCROLL] El reporte scrollea dentro de #almacenajeScrollArea (un div interno con
     // overflow-y:auto y altura fija que se RECREA en cada redibujo, por eso su scroll volvía a 0).
     // Guardamos su posición antes de redibujar y la restauramos en el nuevo div.
+    // Se guarda también el scroll de la ventana: asignar, finalizar, eliminar o auditar una
+    // tarea redibuja la vista entera, y sin esto el operario volvía al tope de la lista cada
+    // vez que tocaba una tarea del final.
+    // La lista de tareas no scrollea en el div de arriba sino en el suyo propio
+    // (#almacenajeTablaScroll): es el que hay que devolver a su sitio al asignar o finalizar.
     const __oldScrollArea = document.getElementById('almacenajeScrollArea');
     const __savedScrollTop = __oldScrollArea ? __oldScrollArea.scrollTop : 0;
-    if (__savedScrollTop > 0) {
-        const __restoreScroll = () => { const el = document.getElementById('almacenajeScrollArea'); if (el) el.scrollTop = __savedScrollTop; };
+    const __oldTabla = document.getElementById('almacenajeTablaScroll');
+    const __savedTablaTop = __oldTabla ? __oldTabla.scrollTop : 0;
+    const __savedWindowY = window.scrollY;
+    if (__savedScrollTop > 0 || __savedTablaTop > 0 || __savedWindowY > 0) {
+        const __restoreScroll = () => {
+            const el = document.getElementById('almacenajeScrollArea');
+            if (el && __savedScrollTop > 0) el.scrollTop = __savedScrollTop;
+            const tb = document.getElementById('almacenajeTablaScroll');
+            if (tb && __savedTablaTop > 0) tb.scrollTop = __savedTablaTop;
+            if (__savedWindowY > 0) window.scrollTo({ top: __savedWindowY, behavior: 'instant' });
+        };
         requestAnimationFrame(() => { __restoreScroll(); requestAnimationFrame(__restoreScroll); });
+        // Red de seguridad: si en esos dos frames la tabla todavía no tenía su altura final,
+        // el scrollTop se recorta a 0 y el salto vuelve igual.
+        setTimeout(__restoreScroll, 80);
     }
 
     // Global helper for toggling chart weeks
@@ -18709,6 +18777,18 @@ window.showCellModal = function(htmlContent) {
     const historicalTasks = typeof adminService.getAlmacenajeTasksHistory === 'function' ? adminService.getAlmacenajeTasksHistory() : [];
       const tasks = Array.isArray(almacenajeTasksCache) ? [...almacenajeTasksCache, ...historicalTasks] : [...historicalTasks];
     
+    // El id viene como "2026-08-01_Tarea23", así que hay que sacarle el prefijo de fecha antes
+    // de leer el número. Sin eso parseInt se quedaba con el año y devolvía 2026 para todas: la
+    // resta daba cero, el orden no se aplicaba y la lista quedaba como se fue insertando. Por
+    // eso, al borrar las creadas y volver a procesar, las que sobrevivían asignadas o
+    // finalizadas aparecían arriba y el bloque nuevo empezaba de nuevo en Tarea1.
+    const numeroDeTarea = (id) => {
+        const s = String(id || '');
+        const corto = s.includes('_') ? s.split('_')[1] : s;
+        const n = parseInt(String(corto).replace(/[^0-9]/g, ''), 10);
+        return Number.isNaN(n) ? 0 : n;
+    };
+
     // [ORDENAMIENTO JERÁRQUICO] 1. Fecha Descendente (Más reciente arriba), 2. Tarea Ascendente (1, 2, 3...)
     tasks.sort((a, b) => {
         if (!a || !b) return 0;
@@ -18718,9 +18798,7 @@ window.showCellModal = function(htmlContent) {
         if (dateA !== dateB) return dateB.localeCompare(dateA); // Más reciente primero
 
         // Si la fecha es igual, comparar número de tarea
-        const numA = parseInt(String(a.id || '').replace('Tarea', '')) || 0;
-        const numB = parseInt(String(b.id || '').replace('Tarea', '')) || 0;
-        return numA - numB;
+        return numeroDeTarea(a.id) - numeroDeTarea(b.id);
     });
 
     // Lógica de Agrupación para Historial
@@ -20546,7 +20624,7 @@ window.showCellModal = function(htmlContent) {
             ` : `
 
 
-                <div class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
+                <div id="almacenajeTablaScroll" class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
                         <thead style="position:sticky; top:0; background:#1e293b; z-index:10; border-bottom:1px solid rgba(255,255,255,0.1);">
                             ${!isDetail ? `
