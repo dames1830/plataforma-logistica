@@ -7,13 +7,22 @@ bump.py  -  Subir / unificar la version de la plataforma logistica.
     unos archivos viejos y otros nuevos, y la web se rompe de formas raras.
   - Este script los pone TODOS en el mismo numero de una sola pasada.
 
-  Desde v27 (31-jul-2026) la version es un ENTERO: 27, 28, 29...  Un numero por
-  lanzamiento a produccion, no uno por cada ajuste suelto. Antes era 26.5.NNN y
-  subia decenas de veces entre dos lanzamientos reales.
+  Desde v29.0001 (01-ago-2026) la version tiene dos partes: MAYOR.MENOR
+
+      29.0001
+      ^^ ^^^^
+      |  |
+      |  correlativo de 4 digitos: sube en cada entrega
+      numero de la version grande
+
+  El MAYOR cambia cuando se lanza una version grande; el MENOR sube en cada
+  entrega dentro de esa version. Antes era un entero suelto (v27, v28) y no
+  quedaba forma de distinguir un arreglo puntual de un lanzamiento de verdad.
 
   Uso:
-    python bump.py            -> sube la version +1
-    python bump.py 30         -> fija la version 30
+    python bump.py            -> sube el correlativo   (29.0001 -> 29.0002)
+    python bump.py 29.0004    -> fija esa version exacta
+    python bump.py 30         -> arranca una version grande nueva (-> 30.0001)
     python bump.py check      -> solo revisa si estan todas iguales
 
   Los comentarios que citan una version ("[SEGURIDAD v26.5.572] ...") NO se tocan:
@@ -84,12 +93,31 @@ def escanear():
     return conteo
 
 
-def como_numero(v):
-    """'27' -> 27 ; '26.5.572' -> 26 (para poder comparar entre esquemas)."""
+def partes(v):
+    """'29.0001' -> (29, 1) ; '27' -> (27, 0) ; '26.5.572' -> (26, 5).
+
+    Se usa para ordenar y comparar aunque convivan los tres esquemas que hubo.
+    """
+    trozos = str(v).lstrip("vV").split(".")
     try:
-        return int(str(v).split(".")[0])
+        mayor = int(trozos[0])
+    except (ValueError, IndexError):
+        return (0, 0)
+    try:
+        menor = int(trozos[1]) if len(trozos) > 1 else 0
     except ValueError:
-        return 0
+        menor = 0
+    return (mayor, menor)
+
+
+def formatear(mayor, menor):
+    """(29, 1) -> '29.0001'. El correlativo va siempre con 4 digitos."""
+    return "{}.{:04d}".format(mayor, menor)
+
+
+def como_numero(v):
+    """Orden del listado del modo check."""
+    return partes(v)
 
 
 def aplicar(destino):
@@ -123,7 +151,7 @@ def modo_check():
         print("\nOK: todas las paginas estan en la MISMA version. :)")
     else:
         print(f"\nATENCION: hay {len(conteo)} versiones distintas (desincronizadas).")
-        print("Corre 'python bump.py' para subir +1, o 'python bump.py 30' para igualarlas.")
+        print("Corre 'python bump.py' para subir el correlativo, o 'python bump.py 29.0002' para igualarlas.")
 
 
 def main():
@@ -134,22 +162,29 @@ def main():
         return
 
     conteo = escanear()
-    alta = max((como_numero(v) for v in conteo), default=None)
+    alta = max((partes(v) for v in conteo), default=None)
 
     if arg:
-        destino = arg.lstrip("vV").strip()
-        if not destino.isdigit():
-            print(f"Version invalida: '{arg}'. Ejemplo valido: python bump.py 30")
+        pedido = arg.lstrip("vV").strip()
+        trozos = pedido.split(".")
+        if not trozos[0] or len(trozos) > 2 or not all(t.isdigit() for t in trozos):
+            print(f"Version invalida: '{arg}'.")
+            print("Ejemplos validos:  python bump.py 29.0002   |   python bump.py 30")
             return
-        destino = int(destino)
+        if len(trozos) == 2:
+            destino = formatear(int(trozos[0]), int(trozos[1]))
+        else:
+            # Solo el mayor: arranca una version grande nueva desde el correlativo 1
+            destino = formatear(int(trozos[0]), 1)
     else:
         if alta is None:
             print("No se encontro ninguna version para subir.")
             return
-        destino = alta + 1
+        # Sin argumento sube el correlativo, sin cambiar la version grande
+        destino = formatear(alta[0], alta[1] + 1)
 
     if alta is not None:
-        print(f"Version mas alta actual: v{alta}")
+        print(f"Version mas alta actual: v{formatear(*alta)}")
     print(f"Poniendo TODO en: v{destino}\n")
 
     nueva, cambios, saltados = aplicar(destino)

@@ -267,6 +267,36 @@ def init_db(ruta: Optional[str] = None):
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_history (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, paletas_solicitadas INTEGER NOT NULL, paletas_bajadas INTEGER NOT NULL, diferencias INTEGER NOT NULL, fill_rate TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_kpi_results (fecha TEXT PRIMARY KEY, results_json TEXT NOT NULL, row_count INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     
+    # ── Áreas que pasaron a ser singleton después de haberse usado ──────────────
+    # Un área normal guarda su dato bajo la fecha del día; una singleton lo guarda
+    # bajo 'MASTER'. Cuando un área cambia de categoría, lo que ya estaba guardado
+    # queda bajo una fecha y las lecturas nuevas buscan en 'MASTER': el dato sigue
+    # ahí pero deja de encontrarse, y el área aparece vacía de un día para el otro.
+    #
+    # Esto le pasó al Maestro de Artículos, guardado bajo 2026-06-02.
+    #
+    # Se MUEVE la copia más reciente a 'MASTER' (no se copia: no tiene sentido tener
+    # dos veces el mismo archivo de varios MB). Solo actúa si 'MASTER' todavía no
+    # existe, así que correrlo mil veces da el mismo resultado que correrlo una.
+    for area in SINGLETON_AREAS:
+        try:
+            ya_esta = cursor.execute(
+                "SELECT 1 FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = 'MASTER'",
+                (area,)).fetchone()
+            if ya_esta:
+                continue
+            fila = cursor.execute(
+                "SELECT snapshot_date FROM logistics_snapshots WHERE area_id = ? "
+                "ORDER BY snapshot_date DESC LIMIT 1", (area,)).fetchone()
+            if not fila:
+                continue
+            cursor.execute(
+                "UPDATE logistics_snapshots SET snapshot_date = 'MASTER' "
+                "WHERE area_id = ? AND snapshot_date = ?", (area, fila[0]))
+            print(f"[PULSE] '{area}': la copia del {fila[0]} se movió a MASTER (ahora es un área singleton).")
+        except Exception as e:
+            print(f"[PULSE] No se pudo mover '{area}' a MASTER: {e}")
+
     # Base recién creada: se siembra UN administrador para poder entrar.
     # La contraseña NO está escrita en el código: sale de la variable de entorno
     # ADMIN_INITIAL_PASSWORD y, si no existe, se inventa una al azar y se anota
