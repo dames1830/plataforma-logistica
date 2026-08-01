@@ -11,11 +11,12 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0003';
+} from '../services_v245/csvHub_v6.js?v=29.0004';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0003';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0003';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0003';
+import * as adminService from '../services_v245/adminService.js?v=29.0004';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0004';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0004';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0004';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -261,7 +262,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0003</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0004</span>
     </div>`;
 
   buildTabNav();
@@ -554,129 +555,10 @@ Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
-                                <tr style="background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;">
-                                    <th style="padding:6px 8px; text-align:left; width: 100px;">AREA</th>
-                                    <th style="padding:6px 8px; text-align:left; max-width:130px; width:130px;">MARCAS</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 85px;">BUFFER</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px;">DÍA</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px;">NOCHE</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px;">TOTAL</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 70px;">%</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 90px;">PENDIENTE</th>
-                                </tr>
+                                ${cabeceraMarcas(TEMA_CLARO)}
                             </thead>
                             <tbody>
-                                ${(() => {
-                                    // Build worker shift lookup once
-                                    const marcasWorkers = adminService.getWorkers() || [];
-                                    const getWorkerShift = (username) => {
-                                        if (!username || username === '---' || username === '') return null;
-                                        const clean = String(username).trim().toLowerCase();
-                                        const w = marcasWorkers.find(w => {
-                                            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
-                                            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
-                                            return nom ? (`${nom[0]}${ape}` === clean) : false;
-                                        });
-                                        if (!w) return null;
-                                        return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DIA';
-                                    };
-
-                                    const brandGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__repMarcasStart && t.fecha <= window.__repMarcasEnd);
-
-                                    filteredTasks.forEach(t => {
-                                        const shift1 = getWorkerShift(t.u1);
-                                        const shift2 = t.u2 ? getWorkerShift(t.u2) : null;
-                                        const taskShift = shift1 || shift2 || 'DIA';
-
-                                        (t.items || []).forEach(art => {
-                                            const brand = marcaNormalizada(art.marca) || 'S/M';
-                                            const bufferItems = art.items || [];
-                                            bufferItems.forEach(i => {
-                                                const ubi = String(i.ubi || '').toUpperCase().trim();
-                                                if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
-                                                    let area = 'CDBUFFER-A';
-                                                    if (ubi.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
-                                                    else if (ubi.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
-                                                    else { const parts = ubi.split('-'); area = parts.length > 1 ? `${parts[0]}-${parts[1]}` : parts[0]; }
-                                                    const qty = parseFloat(i.qty) || 0;
-                                                    if (!brandGroups[area]) brandGroups[area] = {};
-                                                    if (!brandGroups[area][brand]) brandGroups[area][brand] = { buffer: 0, dia: 0, noche: 0 };
-                                                    brandGroups[area][brand].buffer += qty;
-                                                    if (t.status === 'Finalizado') {
-                                                        const avanceVal = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
-                                                        if (taskShift === 'NOCHE') brandGroups[area][brand].noche += avanceVal;
-                                                        else brandGroups[area][brand].dia += avanceVal;
-                                                    }
-                                                }
-                                            });
-                                        });
-                                    });
-
-                                    const areas = Object.keys(brandGroups).sort((a, b) => b.localeCompare(a));
-                                    let brandTableRows = '';
-                                    let grandBuffer = 0, grandDia = 0, grandNoche = 0;
-
-                                    if (areas.length === 0) {
-                                        return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
-                                    }
-
-                                    areas.forEach(area => {
-                                        const brands = Object.keys(brandGroups[area]).sort((a, b) => a.localeCompare(b));
-                                        let areaBuffer = 0, areaDia = 0, areaNoche = 0;
-
-                                        brands.forEach(brand => {
-                                            const data = brandGroups[area][brand];
-                                            const total = data.dia + data.noche;
-                                            const pendiente = data.buffer - total;
-                                            areaBuffer += data.buffer; areaDia += data.dia; areaNoche += data.noche;
-                                            grandBuffer += data.buffer; grandDia += data.dia; grandNoche += data.noche;
-
-                                            brandTableRows += `
-                                                <tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
-                                                    <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:5px 6px;"><b title="${brand}" style="color:#1C2B3A; font-weight:700; font-size:0.8rem; font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(brand)}</b></td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#4A4540; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${total.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem; white-space:nowrap;">${(() => { const _p = data.buffer > 0 ? Math.round((total/data.buffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (total < data.buffer ? '#fbbf24' : '#22c55e'); const _ic = _p === 0 ? '●' : '▲'; return `<span style="color:${_col}; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${_ic}</span><span>${_p}%</span></span>`; })()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
-                                                </tr>
-                                            `;
-                                        });
-
-                                        const areaTotal = areaDia + areaNoche;
-                                        const areaPendiente = areaBuffer - areaTotal;
-                                        brandTableRows += `
-                                            <tr style="background:#F4F1EC; border-top:1px solid #DDD8CF; border-bottom:1px solid #DDD8CF; font-weight:700;">
-                                                <td colspan="2" style="padding:7px 8px; color:#1C2B3A; font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 3px solid #B45309;">Total ${area}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaBuffer.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaDia.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#4A4540; font-size:0.78rem; font-weight:700;">${areaNoche.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaTotal.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; font-size:0.78rem; font-weight:700; white-space:nowrap;">${(() => { const _p = areaBuffer > 0 ? Math.round((areaTotal/areaBuffer)*100) : 0; const _col = _p === 0 ? '#991B1B' : (areaTotal < areaBuffer ? '#B45309' : '#1A6336'); return `<span style="color:${_col}; font-weight:700; font-size:0.78rem;">${_p}%</span>`; })()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaPendiente.toLocaleString()}</td>
-                                            </tr>
-                                        `;
-                                    });
-
-                                    const grandTotal = grandDia + grandNoche;
-                                    const grandPendiente = grandBuffer - grandTotal;
-                                    brandTableRows += `
-                                        <tr style="background:#1C2B3A; font-weight:700;">
-                                            <td colspan="2" style="padding:9px 8px; color:#fff; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; font-family:'Outfit', sans-serif; font-weight:700; border-left: 4px solid #B45309;">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandDia.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#A8B8C8; font-size:0.8rem; font-weight:700;">${grandNoche.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandTotal.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; font-size:0.8rem; font-weight:700; white-space:nowrap;">${(() => { const _p = grandBuffer > 0 ? Math.round((grandTotal/grandBuffer)*100) : 0; const _col = _p === 0 ? '#FCA5A5' : (grandTotal < grandBuffer ? '#FCD34D' : '#6EE7B7'); return `<span style="color:${_col}; font-weight:700; font-size:0.8rem;">${_p}%</span>`; })()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandPendiente.toLocaleString()}</td>
-                                        </tr>
-                                    `;
-
-                                    return brandTableRows;
-                                })()}
+                                ${filasMarcas(datosMarcas(tasks, window.__repMarcasStart, window.__repMarcasEnd, armarTurnoDe(adminService.getWorkers())), TEMA_CLARO)}
                             </tbody>
                         </table>
                     </div>

@@ -1,11 +1,12 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0003';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0004';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0003';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0003';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0003';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0003';
-import * as metasService from '../services_v245/metasService.js?v=29.0003';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0003';
+import * as adminService from '../services_v245/adminService.js?v=29.0004';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0004';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0004';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0004';
+import * as metasService from '../services_v245/metasService.js?v=29.0004';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0004';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0004';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -362,7 +363,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0003';
+const VERSION = '29.0004';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3039,7 +3040,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0003');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0004');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12757,7 +12758,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0003 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0004 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19819,129 +19820,10 @@ window.showCellModal = function(htmlContent) {
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
                             <thead>
-                                <tr style="color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;">
-                                    <th style="padding:6px 8px; text-align:left; width: 100px;">AREA</th>
-                                    <th style="padding:6px 8px; text-align:left; max-width:130px; width:130px;">MARCAS</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 85px;">BUFFER</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px; color:#facc15;">DÍA</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px; color:#818cf8;">NOCHE</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 75px;">TOTAL</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 70px;">%</th>
-                                    <th style="padding:6px 8px; text-align:center; width: 90px;">PENDIENTE</th>
-                                </tr>
+                                ${cabeceraMarcas(TEMA_OSCURO)}
                             </thead>
                             <tbody>
-                                ${(() => {
-                                    // Build worker shift lookup once
-                                    const marcasWorkers = adminService.getWorkers() || [];
-                                    const getWorkerShift = (username) => {
-                                        if (!username || username === '---' || username === '') return null;
-                                        const clean = String(username).trim().toLowerCase();
-                                        const w = marcasWorkers.find(w => {
-                                            const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
-                                            const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
-                                            return nom ? (`${nom[0]}${ape}` === clean) : false;
-                                        });
-                                        if (!w) return null;
-                                        return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DIA';
-                                    };
-
-                                    const brandGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__repMarcasStart && t.fecha <= window.__repMarcasEnd);
-
-                                    filteredTasks.forEach(t => {
-                                        const shift1 = getWorkerShift(t.u1);
-                                        const shift2 = t.u2 ? getWorkerShift(t.u2) : null;
-                                        const taskShift = shift1 || shift2 || 'DIA';
-
-                                        (t.items || []).forEach(art => {
-                                            const brand = marcaNormalizada(art.marca) || 'S/M';
-                                            const bufferItems = art.items || [];
-                                            bufferItems.forEach(i => {
-                                                const ubi = String(i.ubi || '').toUpperCase().trim();
-                                                if (ubi.startsWith('CDBUFFER') && !ubi.startsWith('CDBUFFER-C')) {
-                                                    let area = 'CDBUFFER-A';
-                                                    if (ubi.startsWith('CDBUFFER-B')) area = 'CDBUFFER-B';
-                                                    else if (ubi.startsWith('CDBUFFER-A')) area = 'CDBUFFER-A';
-                                                    else { const parts = ubi.split('-'); area = parts.length > 1 ? `${parts[0]}-${parts[1]}` : parts[0]; }
-                                                    const qty = parseFloat(i.qty) || 0;
-                                                    if (!brandGroups[area]) brandGroups[area] = {};
-                                                    if (!brandGroups[area][brand]) brandGroups[area][brand] = { buffer: 0, dia: 0, noche: 0 };
-                                                    brandGroups[area][brand].buffer += qty;
-                                                    if (t.status === 'Finalizado') {
-                                                        const avanceVal = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
-                                                        if (taskShift === 'NOCHE') brandGroups[area][brand].noche += avanceVal;
-                                                        else brandGroups[area][brand].dia += avanceVal;
-                                                    }
-                                                }
-                                            });
-                                        });
-                                    });
-
-                                    const areas = Object.keys(brandGroups).sort((a, b) => b.localeCompare(a));
-                                    let brandTableRows = '';
-                                    let grandBuffer = 0, grandDia = 0, grandNoche = 0;
-
-                                    if (areas.length === 0) {
-                                        return `<tr><td colspan="8" style="padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
-                                    }
-
-                                    areas.forEach(area => {
-                                        const brands = Object.keys(brandGroups[area]).sort((a, b) => a.localeCompare(b));
-                                        let areaBuffer = 0, areaDia = 0, areaNoche = 0;
-
-                                        brands.forEach(brand => {
-                                            const data = brandGroups[area][brand];
-                                            const total = data.dia + data.noche;
-                                            const pendiente = data.buffer - total;
-                                            areaBuffer += data.buffer; areaDia += data.dia; areaNoche += data.noche;
-                                            grandBuffer += data.buffer; grandDia += data.dia; grandNoche += data.noche;
-
-                                            brandTableRows += `
-                                                <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
-                                                    <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:5px 6px;"><b title="${brand}" style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(brand)}</b></td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#facc15; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${total.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem; white-space:nowrap;">${(() => { const _p = data.buffer > 0 ? Math.round((total/data.buffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (total < data.buffer ? '#fbbf24' : '#22c55e'); const _ic = _p === 0 ? '●' : '▲'; return `<span style="color:${_col}; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${_ic}</span><span>${_p}%</span></span>`; })()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:#00E5FF; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
-                                                </tr>
-                                            `;
-                                        });
-
-                                        const areaTotal = areaDia + areaNoche;
-                                        const areaPendiente = areaBuffer - areaTotal;
-                                        brandTableRows += `
-                                            <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(15, 23, 42, 0.5) 100%); border-top: 1.5px solid rgba(0, 229, 255, 0.6); border-bottom: 1.5px solid rgba(0, 229, 255, 0.6); font-weight: 900;">
-                                                <td colspan="2" style="padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid #00E5FF;">Total ${area}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaBuffer.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#facc15; font-size:0.82rem; font-weight:800;">${areaDia.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#818cf8; font-size:0.82rem; font-weight:800;">${areaNoche.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#ffffff; font-size:0.82rem; font-weight:800;">${areaTotal.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; font-size:0.82rem; font-weight:800; white-space:nowrap;">${(() => { const _p = areaBuffer > 0 ? Math.round((areaTotal/areaBuffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (areaTotal < areaBuffer ? '#fbbf24' : '#22c55e'); return `<span style="color:${_col}; font-weight:800; font-size:0.82rem;">${_p}%</span>`; })()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:#00E5FF; font-size:0.82rem; font-weight:900;">${areaPendiente.toLocaleString()}</td>
-                                            </tr>
-                                        `;
-                                    });
-
-                                    const grandTotal = grandDia + grandNoche;
-                                    const grandPendiente = grandBuffer - grandTotal;
-                                    brandTableRows += `
-                                        <tr style="background: linear-gradient(90deg, rgba(0, 229, 255, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #00E5FF; border-bottom: 2px solid #00E5FF; font-weight: 900;">
-                                            <td colspan="2" style="padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid #00E5FF;">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#facc15; font-size:0.85rem; font-weight:900;">${grandDia.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#818cf8; font-size:0.85rem; font-weight:900;">${grandNoche.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900;">${grandTotal.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; font-size:0.85rem; font-weight:900; white-space:nowrap;">${(() => { const _p = grandBuffer > 0 ? Math.round((grandTotal/grandBuffer)*100) : 0; const _col = _p === 0 ? '#ef4444' : (grandTotal < grandBuffer ? '#fbbf24' : '#22c55e'); return `<span style="color:${_col}; font-weight:900; font-size:0.85rem;">${_p}%</span>`; })()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:#00E5FF; font-size:0.85rem; font-weight:900; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);">${grandPendiente.toLocaleString()}</td>
-                                        </tr>
-                                    `;
-
-                                    return brandTableRows;
-                                })()}
+                                ${filasMarcas(datosMarcas(tasks, window.__repMarcasStart, window.__repMarcasEnd, armarTurnoDe(adminService.getWorkers())), TEMA_OSCURO)}
                             </tbody>
                         </table>
                     </div>
