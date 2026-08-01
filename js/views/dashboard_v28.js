@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0001';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0002';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0001';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0001';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0001';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0001';
-import * as metasService from '../services_v245/metasService.js?v=29.0001';
+import * as adminService from '../services_v245/adminService.js?v=29.0002';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0002';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0002';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0002';
+import * as metasService from '../services_v245/metasService.js?v=29.0002';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0001';
+const VERSION = '29.0002';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -660,6 +660,29 @@ const marcaNormalizada = (m) => {
     const limpio = String(m == null ? '' : m).trim();
     if (!limpio) return '';
     return MARCAS_EQUIVALENTES[claveMarca(limpio)] || limpio;
+};
+
+/**
+ * Nombre corto para las tablas angostas.
+ *
+ * Son DOS cosas distintas y conviene no mezclarlas:
+ *   marcaNormalizada  con qué nombre se AGRUPA  (el oficial, el del Maestro)
+ *   marcaCorta        con qué nombre se MUESTRA (el que entra en la columna)
+ *
+ * 'Bubblegummers Licenses' no entra en una línea y parte la fila en dos, lo que
+ * descuadra el reporte entero. Se acorta solo para pintarlo: los totales se siguen
+ * sumando bajo el nombre completo, así que nada cambia de sitio.
+ *
+ * No se arregla renombrando en el Maestro: ahí va el nombre oficial, y habría que
+ * volver a editarlo a mano cada vez que se publica uno nuevo.
+ */
+const MARCAS_CORTAS = {
+    'BUBBLEGUMMERS LICENSES': 'B.G Licenses'
+};
+
+const marcaCorta = (m) => {
+    const nombre = marcaNormalizada(m);
+    return MARCAS_CORTAS[nombre.toUpperCase()] || nombre;
 };
 
 /** Minutos trabajados en una tarea, descontando el break de 23:00 a 23:50. */
@@ -2886,9 +2909,9 @@ export const renderDashboard = async (container, user, onLogout) => {
     const hasData = matrix && matrix.rows && matrix.rows.length > 0;
     
     const brandAlias = (nombre) => {
-        // Primero se junta la marca, después se acorta para que entre en la celda
-        const name = marcaNormalizada(nombre) || nombre;
-        if (name === 'Bubblegummers Licenses') return 'BG. Licenses';
+        // Esta matriz es mucho más angosta que las demás -son muchas columnas de
+        // golpe- así que además del nombre corto general recorta un par más.
+        const name = marcaCorta(nombre) || nombre;
         if (name === 'Bubblegummers') return 'BG';
         if (name === 'Bata Industrials') return 'Industrials';
         return name;
@@ -3087,7 +3110,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0001');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0002');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12805,7 +12828,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0001 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0002 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18676,8 +18699,7 @@ window.showCellModal = function(htmlContent) {
             
             // Primero se juntan las que son la misma marca, y recién después se acorta
             // el nombre para que entre en la columna
-            let brand = marcaNormalizada(t.marca) || 'S/M';
-            if (brand === 'Bubblegummers Licenses') brand = 'BG. Licenses';
+            let brand = marcaCorta(t.marca) || 'S/M';
             if (brand === 'Bubblegummers') brand = 'BG';
             
             allBrandsSet.add(brand);
@@ -19949,7 +19971,7 @@ window.showCellModal = function(htmlContent) {
                                             brandTableRows += `
                                                 <tr style="border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;">
                                                     <td style="padding:5px 6px; color:#a1a1aa; font-size:0.78rem; font-weight:600;">${area}</td>
-                                                    <td style="padding:5px 6px;"><b style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif;">${brand}</b></td>
+                                                    <td style="padding:5px 6px;"><b title="${brand}" style="color:#ffffff; font-weight:800; font-size:0.8rem; font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(brand)}</b></td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#ffffff; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#facc15; font-size:0.8rem;">${data.dia.toLocaleString()}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:#818cf8; font-size:0.8rem;">${data.noche.toLocaleString()}</td>
@@ -20560,7 +20582,7 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:10.8px 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
                                     <td style="padding:10.8px 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
-                                    <td style="padding:10.8px 1rem;">${marcaNormalizada(t.marca)}</td>
+                                    <td style="padding:10.8px 1rem; white-space:nowrap;" title="${marcaNormalizada(t.marca)}">${marcaCorta(t.marca)}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
                                     <td style="padding:10.8px 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>

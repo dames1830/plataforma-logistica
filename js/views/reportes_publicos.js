@@ -11,10 +11,10 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0001';
+} from '../services_v245/csvHub_v6.js?v=29.0002';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0001';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0001';
+import * as adminService from '../services_v245/adminService.js?v=29.0002';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0002';
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -260,7 +260,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0001</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0002</span>
     </div>`;
 
   buildTabNav();

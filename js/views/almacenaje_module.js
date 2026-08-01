@@ -1,5 +1,5 @@
-import * as adminService from '../services_v245/adminService.js?v=29.0001';
-import { getAreaData, dataStore } from '../services_v245/csvHub_v6.js?v=29.0001';
+import * as adminService from '../services_v245/adminService.js?v=29.0002';
+import { getAreaData, dataStore } from '../services_v245/csvHub_v6.js?v=29.0002';
 
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null;
