@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=27';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=28';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=27';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=27';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=27';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=27';
-import * as metasService from '../services_v245/metasService.js?v=27';
+import * as adminService from '../services_v245/adminService.js?v=28';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=28';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=28';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=28';
+import * as metasService from '../services_v245/metasService.js?v=28';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '27';
+const VERSION = '28';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -622,6 +622,37 @@ const getPadreDe = (detalle) => {
     return indexarMaestro().padres[d] || leerPadresRecordados()[d] || '';
 };
 
+/* ── MARCAS QUE SON LA MISMA ─────────────────────────────────────────────
+   Cuando una marca cambia de nombre en el Maestro, las tareas ya guardadas se
+   quedan con el nombre de entonces. En los reportes esa marca sale partida en
+   dos filas, como si fueran dos marcas distintas, y los totales no cuadran con
+   lo que uno tiene en la cabeza.
+*/
+
+/** Deja el nombre en su esqueleto: sin puntos, sin espacios y en mayúsculas. */
+const claveMarca = (m) => String(m == null ? '' : m).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+/**
+ * Nombre viejo → nombre que vale hoy (el que trae el Maestro).
+ * Se compara por el esqueleto, así que una sola entrada cubre todas las formas de
+ * escribirlo: 'B.G Licenses', 'BG Licenses', 'BG. Licenses', 'B.G. LICENSES'...
+ */
+const MARCAS_EQUIVALENTES = {
+    // Abreviatura que se usó un tiempo. Hoy el Maestro dice el nombre completo, pero
+    // quedaron tareas guardadas con la forma corta.
+    BGLICENSES: 'Bubblegummers Licenses'
+};
+
+/**
+ * Nombre único de una marca. Todo lo que agrupe o muestre marcas pasa por acá, así
+ * el histórico se junta solo sin tener que reescribir las tareas ya guardadas.
+ */
+const marcaNormalizada = (m) => {
+    const limpio = String(m == null ? '' : m).trim();
+    if (!limpio) return '';
+    return MARCAS_EQUIVALENTES[claveMarca(limpio)] || limpio;
+};
+
 /** Minutos trabajados en una tarea, descontando el break de 23:00 a 23:50. */
 const getTaskMinutos = (t) => {
     if (!t || !t.inicio || !t.termino) return 0;
@@ -663,7 +694,7 @@ const buildKpiDataset = (tasks, desde, hasta) => {
         filas.push({
             id: t.id,
             fecha: t.fecha,
-            marca: t.marca || 'S/M',
+            marca: marcaNormalizada(t.marca) || 'S/M',
             usuarios,
             grupo: usuarios.join(' + ') || '---',
             qty,
@@ -863,7 +894,7 @@ const unidadesPorMarca = (tasks, desde, hasta, soloGender = null) => {
     (tasks || []).forEach(t => {
         if (!t || t.status !== 'Finalizado' || !t.fecha) return;
         if (t.fecha < desde || t.fecha > hasta) return;
-        const m = String(t.marca || '').trim() || 'Sin marca';
+        const m = marcaNormalizada(t.marca) || 'Sin marca';
         // Con `soloGender` se cuenta únicamente esa categoría de la tarea, no su
         // total: una tarea puede mezclar artículos de varios G. Gender.
         const u = soloGender ? (unidadesPorGender(t).get(soloGender) || 0)
@@ -2828,7 +2859,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   const createMatrixHTML = (matrix, title, timestamp = '') => {
     const hasData = matrix && matrix.rows && matrix.rows.length > 0;
     
-    const brandAlias = (name) => {
+    const brandAlias = (nombre) => {
+        // Primero se junta la marca, después se acorta para que entre en la celda
+        const name = marcaNormalizada(nombre) || nombre;
         if (name === 'Bubblegummers Licenses') return 'BG. Licenses';
         if (name === 'Bubblegummers') return 'BG';
         if (name === 'Bata Industrials') return 'Industrials';
@@ -3028,7 +3061,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=27');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=28');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12561,7 +12594,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v27 | MOBILE PORTAL
+                                SYSTEM BUILD: v28 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16786,8 +16819,11 @@ window.showCellModal = function(htmlContent) {
         const eligibleArticulos = Object.values(groups).filter(g => g.bufferQty > 0);
         const byMarca = {};
         eligibleArticulos.forEach(art => {
-            if (!byMarca[art.marca]) byMarca[art.marca] = [];
-            byMarca[art.marca].push(art);
+            // Se agrupa por el nombre único: si el Maestro trae las dos formas, las tareas
+            // salen juntas y no se vuelve a partir el histórico
+            const marcaArt = marcaNormalizada(art.marca);
+            if (!byMarca[marcaArt]) byMarca[marcaArt] = [];
+            byMarca[marcaArt].push(art);
         });
 
         const finalTasks = [];
@@ -17082,7 +17118,7 @@ window.showCellModal = function(htmlContent) {
                 bufferRows.forEach(i => {
                     const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
                     dataRows.push([
-                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, grValue, art.coleccion, 
+                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), marcaNormalizada(art.marca), grValue, art.coleccion, 
                         i.qty, "", task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
@@ -17090,13 +17126,13 @@ window.showCellModal = function(htmlContent) {
                 zonaRows.forEach(i => {
                     const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
                     dataRows.push([
-                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), art.marca, grValue, art.coleccion, 
+                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), marcaNormalizada(art.marca), grValue, art.coleccion, 
                         "", i.qty, task.id.includes('_') ? task.id.split('_')[1] : task.id
                     ]);
                 });
                 // Subtotal
                 dataRows.push([
-                    `Total ${art.sku7}`, "", "", "", art.marca, "", "", art.bufferQty, art.zonaQty, 
+                    `Total ${art.sku7}`, "", "", "", marcaNormalizada(art.marca), "", "", art.bufferQty, art.zonaQty, 
                     task.id.includes('_') ? task.id.split('_')[1] : task.id
                 ]);
             });
@@ -18406,7 +18442,9 @@ window.showCellModal = function(htmlContent) {
             const weekStr = getWeekStr(t.fecha);
             if (weekStr === '---') return;
             
-            let brand = String(t.marca || 'S/M').trim();
+            // Primero se juntan las que son la misma marca, y recién después se acorta
+            // el nombre para que entre en la columna
+            let brand = marcaNormalizada(t.marca) || 'S/M';
             if (brand === 'Bubblegummers Licenses') brand = 'BG. Licenses';
             if (brand === 'Bubblegummers') brand = 'BG';
             
@@ -19634,7 +19672,7 @@ window.showCellModal = function(htmlContent) {
                                         const taskShift = shift1 || shift2 || 'DIA';
 
                                         (t.items || []).forEach(art => {
-                                            const brand = String(art.marca || 'S/M').trim();
+                                            const brand = marcaNormalizada(art.marca) || 'S/M';
                                             const bufferItems = art.items || [];
                                             bufferItems.forEach(i => {
                                                 const ubi = String(i.ubi || '').toUpperCase().trim();
@@ -20290,7 +20328,7 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:10.8px 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
                                     <td style="padding:10.8px 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
-                                    <td style="padding:10.8px 1rem;">${t.marca}</td>
+                                    <td style="padding:10.8px 1rem;">${marcaNormalizada(t.marca)}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
                                     <td style="padding:10.8px 1rem; font-size:0.75rem; opacity:0.6;">${t.inicio ? new Date(t.inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</td>
