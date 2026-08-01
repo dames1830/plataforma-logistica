@@ -1,10 +1,12 @@
 # LOGISTICS BACKEND v26.5.208 - buffer_history + buffer_kpi_results + range endpoint + layout global
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, Response
 from starlette.middleware.gzip import GZipMiddleware
 import sqlite3
 import json
 import os
+import re
 import shutil
 import hashlib
 import hmac
@@ -13,6 +15,7 @@ import time
 from contextvars import ContextVar
 from datetime import datetime
 from typing import Optional
+from urllib.parse import quote
 
 app = FastAPI()
 
@@ -266,7 +269,12 @@ def init_db(ruta: Optional[str] = None):
     cursor.execute('CREATE TABLE IF NOT EXISTS shared_data (key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_history (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, paletas_solicitadas INTEGER NOT NULL, paletas_bajadas INTEGER NOT NULL, diferencias INTEGER NOT NULL, fill_rate TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_kpi_results (fecha TEXT PRIMARY KEY, results_json TEXT NOT NULL, row_count INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    
+
+    # Archivos Nube: el archivo entero, tal cual lo dejó el robot. Ver la sección
+    # ARCHIVOS NUBE más abajo para por qué se guarda el archivo y no sus filas.
+    cursor.execute('CREATE TABLE IF NOT EXISTS archivos_nube (id INTEGER PRIMARY KEY AUTOINCREMENT, modulo TEXT NOT NULL, nombre TEXT NOT NULL, fecha TEXT NOT NULL, tamano INTEGER NOT NULL, contenido BLOB NOT NULL, subido_por TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube ON archivos_nube (modulo, fecha DESC)')
+
     # ── Áreas que pasaron a ser singleton después de haberse usado ──────────────
     # Un área normal guarda su dato bajo la fecha del día; una singleton lo guarda
     # bajo 'MASTER'. Cuando un área cambia de categoría, lo que ya estaba guardado
@@ -1181,6 +1189,152 @@ def get_no_retail_photo(client_id: str, photo_type: str):
             photo_data = client_data.get(photo_type)
             return {"status": "success", "photo": photo_data}
         return {"status": "error", "message": "Cache not found"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ARCHIVOS NUBE — el robot deja archivos y la web los descarga
+#
+# A diferencia de todo el resto de la aplicación, acá NO se guardan datos: se
+# guarda el archivo tal cual. El Slotting es un .xlsx con tabla dinámica, y la
+# dinámica es de Excel: si se guardaran las filas sueltas, el asistente se
+# bajaría una tabla plana, que es justo lo que no sirve.
+#
+# De cada módulo se conservan los ARCHIVOS_POR_MODULO más recientes y el resto
+# se borra solo. Sin esa rotación, 3,5 MB por día llenan el disco del servidor
+# en unos meses, y cuando el disco se llena hay una rutina de emergencia
+# (hard_reset_if_full) que borra la base de PRODUCCIÓN para recuperar espacio.
+#
+# El archivo se sube como cuerpo binario crudo, no como formulario: los
+# formularios de FastAPI necesitan el paquete python-multipart, que no está
+# instalado en el servidor. Así no hace falta agregar ninguna dependencia.
+#
+# Esta tabla NO se copia a pruebas al clonar (no está en TABLAS_LIGERAS): son
+# varios MB por archivo y en pruebas no hacen falta. La tabla igual se crea
+# vacía, porque init_db() corre también sobre la base de pruebas.
+# ─────────────────────────────────────────────────────────────────────────────
+
+ARCHIVOS_POR_MODULO = 6      # una semana de trabajo: el robot corre de lunes a sábado
+ARCHIVO_MAX_MB = 25
+
+
+def _limpiar_nombre(nombre: str) -> str:
+    """El nombre viaja por la URL y termina en una cabecera de descarga: se deja
+    solo el nombre del archivo, sin ruta y sin caracteres que rompan la cabecera."""
+    nombre = os.path.basename((nombre or "").replace("\\", "/").strip())
+    nombre = re.sub(r'[\r\n"]+', "", nombre)
+    return nombre[:120] or "archivo.xlsx"
+
+
+@app.post("/api/archivos/{modulo}")
+async def subir_archivo(modulo: str, request: Request, nombre: str = "",
+                        fecha: str = "", usuario: str = "robot"):
+    """Recibe el archivo en el cuerpo de la petición y lo guarda."""
+    try:
+        contenido = await request.body()
+        if not contenido:
+            return {"status": "error", "message": "No llegó ningún archivo"}
+
+        if len(contenido) > ARCHIVO_MAX_MB * 1024 * 1024:
+            return {"status": "error",
+                    "message": "El archivo pesa %.1f MB y el máximo es %d MB"
+                               % (len(contenido) / 1024.0 / 1024.0, ARCHIVO_MAX_MB)}
+
+        nombre = _limpiar_nombre(nombre)
+        fecha = (fecha or datetime.now().strftime("%Y-%m-%d")).strip()[:20]
+
+        conn = sqlite3.connect(db_path())
+        cursor = conn.cursor()
+
+        # Si el robot corre dos veces el mismo día, la segunda reemplaza a la
+        # primera en vez de ocupar dos de los seis lugares.
+        cursor.execute("DELETE FROM archivos_nube WHERE modulo = ? AND fecha = ?", (modulo, fecha))
+        cursor.execute("""
+            INSERT INTO archivos_nube (modulo, nombre, fecha, tamano, contenido, subido_por, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (modulo, nombre, fecha, len(contenido), sqlite3.Binary(contenido),
+              (usuario or "robot")[:60], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+        # Rotación: se queda con los más nuevos y borra el resto.
+        cursor.execute("""
+            DELETE FROM archivos_nube
+             WHERE modulo = ?
+               AND id NOT IN (SELECT id FROM archivos_nube
+                               WHERE modulo = ?
+                            ORDER BY fecha DESC, id DESC
+                               LIMIT ?)
+        """, (modulo, modulo, ARCHIVOS_POR_MODULO))
+        borrados = max(cursor.rowcount, 0)
+        conn.commit()
+
+        quedan = cursor.execute("SELECT COUNT(*) FROM archivos_nube WHERE modulo = ?",
+                                (modulo,)).fetchone()[0]
+        conn.close()
+
+        return {"status": "success", "nombre": nombre, "fecha": fecha,
+                "mb": round(len(contenido) / 1024.0 / 1024.0, 2),
+                "guardados": quedan, "borrados": borrados,
+                "entorno": entorno_actual()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/archivos/{modulo}")
+def listar_archivos(modulo: str):
+    """La ficha de cada archivo, sin el contenido: es lo que pinta la pantalla."""
+    try:
+        conn = sqlite3.connect(db_path())
+        filas = conn.execute("""
+            SELECT id, nombre, fecha, tamano, subido_por, created_at
+              FROM archivos_nube WHERE modulo = ?
+          ORDER BY fecha DESC, id DESC
+        """, (modulo,)).fetchall()
+        conn.close()
+        return {"status": "success", "modulo": modulo, "maximo": ARCHIVOS_POR_MODULO,
+                "archivos": [{"id": f[0], "nombre": f[1], "fecha": f[2],
+                              "tamano": f[3], "mb": round((f[3] or 0) / 1024.0 / 1024.0, 2),
+                              "subido_por": f[4], "subido_el": f[5]} for f in filas]}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "archivos": []}
+
+
+@app.get("/api/archivos/{modulo}/{archivo_id}")
+def descargar_archivo(modulo: str, archivo_id: int):
+    """Devuelve el archivo tal cual se subió, para que el navegador lo baje."""
+    try:
+        conn = sqlite3.connect(db_path())
+        fila = conn.execute("SELECT nombre, contenido FROM archivos_nube WHERE id = ? AND modulo = ?",
+                            (archivo_id, modulo)).fetchone()
+        conn.close()
+        if not fila:
+            return JSONResponse({"status": "error", "message": "Ese archivo ya no está"},
+                                status_code=404)
+
+        nombre = _limpiar_nombre(fila[0])
+        # filename* además de filename: sin eso, un nombre con acentos llega roto.
+        disposicion = "attachment; filename=\"%s\"; filename*=UTF-8''%s" % (
+            nombre.encode("ascii", "replace").decode("ascii"), quote(nombre))
+        return Response(
+            content=bytes(fila[1]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": disposicion},
+        )
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.delete("/api/archivos/{modulo}/{archivo_id}")
+def borrar_archivo(modulo: str, archivo_id: int):
+    try:
+        conn = sqlite3.connect(db_path())
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM archivos_nube WHERE id = ? AND modulo = ?", (archivo_id, modulo))
+        conn.commit()
+        borrado = cursor.rowcount
+        conn.close()
+        return {"status": "success" if borrado else "error",
+                "message": "Archivo borrado" if borrado else "Ese archivo ya no está"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

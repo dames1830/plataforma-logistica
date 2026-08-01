@@ -1,12 +1,13 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0004';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0005';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0004';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0004';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0004';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0004';
-import * as metasService from '../services_v245/metasService.js?v=29.0004';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0004';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0004';
+import * as adminService from '../services_v245/adminService.js?v=29.0005';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0005';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0005';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0005';
+import * as metasService from '../services_v245/metasService.js?v=29.0005';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0005';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0005';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0005';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -363,7 +364,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0004';
+const VERSION = '29.0005';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1326,7 +1327,10 @@ const TABS = [
         { id: 'general', label: 'General', icon: '📝' },
         { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
         { id: 'reportes', label: 'Reportes', icon: '📊' }
-    ] }
+    ] },
+    // Va al final, a la derecha de todo. Acá se BAJAN los archivos que deja el
+    // robot; no confundir con Configuración > Archivos Nube, que es para SUBIR.
+    { id: 'descargas_inventario', label: 'Descargas', icon: '📥' }
   ]},
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
@@ -3040,7 +3044,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0004');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0005');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6808,7 +6812,8 @@ const renderRFSection = (container) => {
             { id: 'archivo_inventario', label: 'Archivo Inventario' },
             { id: 'kpi_inventarios', label: 'KPI Inventarios' },
             { id: 'analisis_inventarios', label: 'Análisis Inventarios' },
-            { id: 'modulo_inventarios', label: 'Módulo Inventarios' }
+            { id: 'modulo_inventarios', label: 'Módulo Inventarios' },
+            { id: 'descargas_inventario', label: 'Descargas' }
         ];
 
         const availableSubAnalisis = [
@@ -8343,7 +8348,132 @@ const renderRFSection = (container) => {
        l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">🔍 Análisis Inventario en desarrollo.</div>`;
     } else if (activeInventarioSub === 'modulo_inventarios') {
        renderModuloInventarios(l2Container);
+    } else if (activeInventarioSub === 'descargas_inventario') {
+       renderDescargasInventario(l2Container);
     }
+  };
+
+  /* --------------------------------------------------------------------------
+     INVENTARIO > DESCARGAS
+     Los archivos que el robot deja cada noche. Se bajan tal cual: el Slotting
+     es un .xlsx con tabla dinámica adentro y acá no se reprocesa nada, así que
+     el asistente lo abre en Excel con su dinámica ya armada.
+     -------------------------------------------------------------------------- */
+
+  // Las fechas viajan como AAAA-MM-DD (así ordenan bien); se muestran en criollo.
+  const fechaBonita = (fecha) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha || '');
+    if (!m) return fecha || '—';
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    if (isNaN(d)) return fecha;
+    const txt = d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+  };
+
+  const renderDescargasInventario = async (container) => {
+    const esAdmin = ['admin', 'jefe'].includes((user?.role || '').toLowerCase());
+
+    container.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:1rem;">
+        <div style="width:30px; height:30px; border:2px solid rgba(129,140,248,0.1); border-top:2px solid #818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="color:var(--text-muted); font-size:0.85rem;">Buscando archivos...</span>
+      </div>`;
+
+    let datos;
+    try {
+      datos = await listarArchivos('inventario');
+    } catch (e) {
+      if (!container.isConnected) return;
+      container.innerHTML = `<div class="glass-panel" style="padding:2.5rem; text-align:center;">
+          <div style="font-size:2rem; margin-bottom:0.75rem;">📡</div>
+          <div style="color:#f87171; font-weight:800; margin-bottom:0.4rem;">No se pudo conectar con el servidor</div>
+          <div style="color:var(--text-muted); font-size:0.8rem;">${e.message}</div>
+          <button id="reintentarDescargas" style="margin-top:1.2rem; background:rgba(129,140,248,0.15); color:#818cf8; border:1px solid rgba(129,140,248,0.3); padding:0.5rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.8rem;">Reintentar</button>
+        </div>`;
+      document.getElementById('reintentarDescargas')?.addEventListener('click', () => renderDescargasInventario(container));
+      return;
+    }
+    if (!container.isConnected) return;
+
+    const { archivos, maximo } = datos;
+
+    const filas = archivos.map(a => `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:0.85rem 0.6rem; white-space:nowrap;">
+          <span style="font-size:1.1rem; margin-right:0.5rem;">📗</span>
+          <span style="font-weight:700; color:#e2e8f0;">${a.nombre}</span>
+        </td>
+        <td style="padding:0.85rem 0.6rem; color:var(--text-muted); white-space:nowrap;">${fechaBonita(a.fecha)}</td>
+        <td style="padding:0.85rem 0.6rem; color:var(--text-muted); white-space:nowrap;">${a.mb} MB</td>
+        <td style="padding:0.85rem 0.6rem; color:var(--text-muted); font-size:0.75rem; white-space:nowrap;">${a.subido_por || '—'} · ${(a.subido_el || '').slice(11, 16) || ''}</td>
+        <td style="padding:0.85rem 0.6rem; text-align:right; white-space:nowrap;">
+          <button class="btnBajarArchivo" data-id="${a.id}" data-nombre="${a.nombre}"
+                  style="background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:0.45rem 1rem; border-radius:8px; cursor:pointer; font-weight:800; font-size:0.75rem;">
+            ⬇️ DESCARGAR
+          </button>
+          ${esAdmin ? `<button class="btnBorrarArchivo" data-id="${a.id}" data-nombre="${a.nombre}" title="Borrar"
+                  style="background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.25); padding:0.45rem 0.7rem; border-radius:8px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:0.4rem;">✕</button>` : ''}
+        </td>
+      </tr>`).join('');
+
+    container.innerHTML = `
+      <div class="glass-panel" style="padding:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+          <div>
+            <h3 style="margin:0 0 0.3rem 0; color:#fff; font-size:1rem; font-weight:900;">📥 ARCHIVOS DE INVENTARIO</h3>
+            <p style="margin:0; color:var(--text-muted); font-size:0.78rem;">
+              El robot los deja todas las noches a las 19:00. Se guardan los últimos ${maximo} días: cuando entra uno nuevo, el más viejo se borra solo.
+            </p>
+          </div>
+          <button id="refrescarDescargas" style="background:rgba(129,140,248,0.15); color:#818cf8; border:1px solid rgba(129,140,248,0.3); padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.75rem; white-space:nowrap;">↻ ACTUALIZAR</button>
+        </div>
+
+        ${archivos.length === 0 ? `
+          <div style="padding:3rem 1rem; text-align:center;">
+            <div style="font-size:2.5rem; margin-bottom:0.75rem; opacity:0.5;">🗃️</div>
+            <div style="color:var(--text-muted); font-style:italic;">Todavía no hay archivos.</div>
+            <div style="color:var(--text-muted); font-size:0.75rem; margin-top:0.4rem;">El primero aparece después de la próxima corrida del robot.</div>
+          </div>` : `
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.82rem; min-width:640px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">ARCHIVO</th>
+                  <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">FECHA</th>
+                  <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">PESO</th>
+                  <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">SUBIDO POR</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>${filas}</tbody>
+            </table>
+          </div>`}
+      </div>`;
+
+    document.getElementById('refrescarDescargas')?.addEventListener('click', () => renderDescargasInventario(container));
+
+    container.querySelectorAll('.btnBajarArchivo').forEach(btn => {
+      btn.addEventListener('click', () => withLoading(btn, '⏳ BAJANDO...', async () => {
+        try {
+          await descargarArchivo('inventario', { id: +btn.dataset.id, nombre: btn.dataset.nombre });
+        } catch (e) {
+          showPremiumAlert('No se pudo descargar', e.message);
+        }
+      }));
+    });
+
+    container.querySelectorAll('.btnBorrarArchivo').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const ok = await showPremiumConfirm?.('¿Borrar este archivo?',
+          `Se va a borrar "${btn.dataset.nombre}" del servidor. No se puede deshacer.`);
+        if (ok === false) return;
+        try {
+          await borrarArchivo('inventario', +btn.dataset.id);
+          renderDescargasInventario(container);
+        } catch (e) {
+          showPremiumAlert('No se pudo borrar', e.message);
+        }
+      });
+    });
   };
 
   const renderModuloInventarios = async (container) => {
@@ -12758,7 +12888,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0004 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0005 | MOBILE PORTAL
                             </div>
                     </div>
 
