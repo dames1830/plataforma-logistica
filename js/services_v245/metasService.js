@@ -48,10 +48,19 @@ const norm = (v) => String(v || '').trim().toUpperCase();
  */
 export const pareceDetalle = (valor) => /^\d{1,2}[\s.-]/.test(String(valor || '').trim());
 
-/** Valores que no aportan categoría. */
+/**
+ * Valores que no aportan categoría.
+ *
+ * Ojo con '(en blanco)': el Maestro sale de una tabla dinámica de Excel, y Excel escribe
+ * ese texto literal donde la celda está vacía. Llegan 53 filas así. Si no se corta acá,
+ * '(EN BLANCO)' se comporta como una categoría más: aparece en el desplegable de metas y
+ * dibuja su propio gráfico en Productividad, como si fuera una línea de producto.
+ */
 export const esCategoriaVacia = (valor) => {
     const v = norm(valor);
-    return !v || v === '-' || v === 'S/G' || v === 'S/GR' || v === 'N/A';
+    if (!v || v === '-' || v === 'S/G' || v === 'S/GR' || v === 'N/A') return true;
+    // '(en blanco)', '(EN BLANCO)', '(blank)', '(vacio)'... todas quieren decir lo mismo
+    return /^\((EN\s*)?(BLANCO|BLANK|VACIO|VACÍO)\)$/.test(v);
 };
 
 const reglasPorDefecto = () => ([

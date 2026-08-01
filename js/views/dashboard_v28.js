@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=28';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=29';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=28';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=28';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=28';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=28';
-import * as metasService from '../services_v245/metasService.js?v=28';
+import * as adminService from '../services_v245/adminService.js?v=29';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29';
+import * as metasService from '../services_v245/metasService.js?v=29';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '28';
+const VERSION = '29';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1277,6 +1277,15 @@ const loadAlmacenajeTasks = async () => {
   }
 };
 
+/**
+ * Sub-pestañas de Almacenaje que dibuja renderAlmacenajeTareas. Productividad y
+ * Config. Tareas comparten el MISMO contenedor, así que un repintado automático que no
+ * mire esto les pinta encima: la pestaña quedaba marcada en Productividad y abajo se veía
+ * el KPI, sin que el usuario hubiera tocado nada.
+ */
+const SUBTABS_DE_TAREAS = ['tareas_dia', 'kpi_tareas'];
+const tareasEsLaVistaActiva = () => SUBTABS_DE_TAREAS.includes(localStorage.getItem('activeSub_almacenaje'));
+
 // Radar de sincronización automática (cada 60s)
 setInterval(async () => {
     if (document.visibilityState === 'visible') {
@@ -1307,8 +1316,11 @@ setInterval(async () => {
                     console.log("📡 [RADAR] Nube sin datos. Manteniendo PC local como fuente de verdad.");
                 }
 
+                // Solo se repinta si el usuario está viendo Tareas Día o KPI. En
+                // Productividad o Config. Tareas, los datos igual quedaron actualizados en
+                // memoria: se verán cuando vuelva, sin arrebatarle la pantalla.
                 const areaContent = document.getElementById('areaContent');
-                if (areaContent) {
+                if (areaContent && tareasEsLaVistaActiva()) {
                     const _sy = window.scrollY;
                     renderAlmacenajeTareas(areaContent);
                     requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
@@ -3061,7 +3073,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=28');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12594,7 +12606,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v28 | MOBILE PORTAL
+                                SYSTEM BUILD: v29 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16934,9 +16946,11 @@ window.showCellModal = function(htmlContent) {
                         document.body.removeChild(progressModal);
                     }
                     
-                    // Renderizar las tareas en la tabla del fondo
+                    // Renderizar las tareas en la tabla del fondo. Va con la misma guarda:
+                    // el modal tarda unos segundos y el usuario puede haberse ido a otra
+                    // sub-pestaña mientras tanto.
                     const container = document.getElementById('areaContent') || document.querySelector('.main-content') || document.body;
-                    renderAlmacenajeTareas(container);
+                    if (tareasEsLaVistaActiva()) renderAlmacenajeTareas(container);
                     
                     // Mostrar modal de éxito
                     const successModal = document.createElement('div');
@@ -17642,6 +17656,11 @@ window.showCellModal = function(htmlContent) {
     } catch (e) { console.warn('[PROD] No se pudo traer el historial:', e); }
     if (!container.isConnected || container.dataset.vista !== 'productividad') return;
 
+    // Sin el Maestro no se sabe de qué Gender cuelga cada categoría, y entonces no se
+    // pueden dejar fuera las que ya están sumadas dentro del gráfico de Footwear.
+    await rescatarMaestro();
+    if (!container.isConnected || container.dataset.vista !== 'productividad') return;
+
     const historial = typeof adminService.getAlmacenajeTasksHistory === 'function'
       ? (adminService.getAlmacenajeTasksHistory() || []) : [];
     const porId = new Map();
@@ -17657,8 +17676,17 @@ window.showCellModal = function(htmlContent) {
     const fw = resumenSerie(serieSemanal(deFamilia('FOOTWEAR')), claveCurso);
     const ot = resumenSerie(serieSemanal(deCategoria('06 OTHERS')), claveCurso);
 
-    // El resto: cada categoría con datos, salvo la que ya tiene panel propio
-    const otras = [...new Set(fin.map(t => getTaskCategoria(t).detalle).filter(c => c && c !== '06 OTHERS'))]
+    /* El resto de categorías, para los minigráficos de la derecha.
+       Se dejan fuera:
+         - las que cuelgan de FOOTWEAR (01 MEN, 02 WOMEN, 03 KIDS, 04 SPORT, 05 SCHOOL,
+           07 INDUSTRIAL): ya están sumadas DENTRO del gráfico grande, repetirlas al costado
+           hace parecer que hay más producción de la que hay;
+         - 06 OTHERS, que también es FOOTWEAR pero tiene su propio panel;
+         - lo que no es una categoría de verdad ('(en blanco)' del Maestro). */
+    const yaEstaEnFootwear = (c) => c === '06 OTHERS' || getPadreDe(c) === 'FOOTWEAR';
+
+    const otras = [...new Set(fin.map(t => getTaskCategoria(t).detalle))]
+      .filter(c => c && !metasService.esCategoriaVacia(c) && !yaEstaEnFootwear(c))
       .map(nom => ({ nom, r: resumenSerie(serieSemanal(deCategoria(nom)), claveCurso) }))
       .filter(x => !x.r.vacio)
       .sort((a, b) => b.r.cerradas.length - a.r.cerradas.length);
@@ -17710,8 +17738,13 @@ window.showCellModal = function(htmlContent) {
           </div>
 
           <div class="prod-lado" style="min-width:0;">
-            <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); font-weight:800; letter-spacing:0.5px; text-transform:uppercase; padding-left:2px;">
-              Resto de categorías
+            <div style="padding-left:2px;">
+              <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">
+                Fuera de Footwear
+              </div>
+              <div style="font-size:0.6rem; color:rgba(255,255,255,0.25); margin-top:2px;">
+                Las categorías de Footwear ya están dentro del gráfico grande
+              </div>
             </div>
             ${otras.length === 0
               ? '<div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:11px; padding:1.2rem; font-size:0.72rem; color:rgba(255,255,255,0.25);">Sin otras categorías con datos.</div>'
