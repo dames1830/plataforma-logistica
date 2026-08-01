@@ -1,14 +1,14 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0009';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0010';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0009';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0009';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0009';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0009';
-import * as metasService from '../services_v245/metasService.js?v=29.0009';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0009';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0009';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0009';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0009';
+import * as adminService from '../services_v245/adminService.js?v=29.0010';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0010';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0010';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0010';
+import * as metasService from '../services_v245/metasService.js?v=29.0010';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0010';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0010';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0010';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0010';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -365,7 +365,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0009';
+const VERSION = '29.0010';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1053,6 +1053,28 @@ const filaSubtotal = (fecha, tot) => {
  * Configuración > Jornada de Trabajo y vale igual para todas las PC.
  */
 const getLogicalDate = () => jornadaService.fechaLogicaDe();
+
+/**
+ * Los trabajadores indexados por DNI, para buscarlos dentro de un bucle sin pagar el precio
+ * de getWorkers().
+ *
+ * getWorkers() COPIA el arreglo entero y lo REORDENA con localeCompare en cada llamada. Eso
+ * está bien una vez para pintar una lista, pero llamarlo dentro de un forEach -o peor, dentro
+ * del comparador de un sort, donde corre en cada comparación- multiplica ese costo por cada
+ * fila. Medido con 60 trabajadores y 300 registros: 551 ms por fecha, contra 1 ms usando este
+ * índice. Con un mes de historial eran 16 segundos de pantalla congelada.
+ *
+ * Se arma en el momento y no se guarda en ninguna variable de módulo: si se cacheara, un alta
+ * o una baja de personal no se vería hasta recargar.
+ */
+const indiceWorkersPorDni = () => {
+    const idx = new Map();
+    (adminService.getWorkers() || []).forEach(w => {
+        const dni = String(w.dni || w.Dni || '').trim();
+        if (dni && !idx.has(dni)) idx.set(dni, w);
+    });
+    return idx;
+};
 
 /* ── BLOQUEO DE DÍAS CERRADOS ─────────────────────────────────────────────
    Antes se podía entrar en julio y editar una tarea de abril, y con eso se movían
@@ -3154,7 +3176,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0009');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0010');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -4007,12 +4029,13 @@ export const renderDashboard = async (container, user, onLogout) => {
 
 
     const globalWorkerMap = {};
+    const idxWorkers = indiceWorkersPorDni();
     rawLog.forEach(entry => {
         if (entry.date < kpiStart || entry.date > kpiEnd) return;
 
         const key = (entry.dni || '').toString().trim();
         if (!globalWorkerMap[key]) {
-            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === key);
+            const worker = idxWorkers.get(key);
             const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
             globalWorkerMap[key] = { name: currentName, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0, faltas: 0, faltasJustificadas: 0 };
         }
@@ -4267,10 +4290,11 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const filtered = rawLog.filter(e => e.date >= kpiStart && e.date <= kpiEnd);
     const workerMap = {};
+    const idxWorkersCons = indiceWorkersPorDni();
     filtered.forEach(entry => {
         const key = (entry.dni || '').toString().trim();
         if (!workerMap[key]) {
-            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === key);
+            const worker = idxWorkersCons.get(key);
             const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
             workerMap[key] = { name: currentName, sum: 0, count: 0, diasTrabajados: 0, justificaciones: 0, faltas: 0, tardanzas: 0 };
         }
@@ -4398,11 +4422,12 @@ export const renderDashboard = async (container, user, onLogout) => {
   const renderPerformanceHistory = (container) => {
     let log = adminService.getPerformanceLog();
     if (!Array.isArray(log)) log = [];
-    
+    const idxWorkersHist = indiceWorkersPorDni();
+
     window.exportPerformanceToExcel = () => {
         if (!log.length) return alert('No hay datos para exportar.');
         const dataToExport = log.map(p => {
-            const worker = adminService.getWorkers().find(w => (w.dni || w.Dni) === p.dni);
+            const worker = idxWorkersHist.get(String(p.dni || '').trim());
             const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos}, ${p.nombre}`;
             return {
                 'Fecha': p.date,
@@ -4460,17 +4485,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; background:rgba(79,70,229,0.1); color:var(--primary); font-weight:900;"><span id="avg-${date}">${avgRend}%</span></td>
                         </tr>
                         ${entries.sort((a, b) => {
-                            const workerA = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === (a.dni || '').toString().trim());
-                            const workerB = adminService.getWorkers().find(w => (w.dni || w.Dni || '').toString().trim() === (b.dni || '').toString().trim());
+                            // El índice se arma una vez arriba: acá adentro corre en CADA
+                            // comparación del sort, y getWorkers() reordenaba todo el personal
+                            // en cada una.
+                            const workerA = idxWorkersHist.get((a.dni || '').toString().trim());
+                            const workerB = idxWorkersHist.get((b.dni || '').toString().trim());
                             const nameA = workerA ? `${workerA.apellidos || workerA.Apellidos || ''}, ${workerA.nombre || workerA.Nombre || ''}` : `${a.apellidos || ''}, ${a.nombre || ''}`;
                             const nameB = workerB ? `${workerB.apellidos || workerB.Apellidos || ''}, ${workerB.nombre || workerB.Nombre || ''}` : `${b.apellidos || ''}, ${b.nombre || ''}`;
                             return nameA.localeCompare(nameB);
                         }).map((p, idx) => {
                             const pDni = (p.dni || '').toString().trim();
-                            const worker = adminService.getWorkers().find(w => {
-                                const wDni = (w.dni || w.Dni || '').toString().trim();
-                                return wDni === pDni && wDni !== '';
-                            });
+                            const worker = idxWorkersHist.get(pDni);
                             const displayName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${p.apellidos || ''}, ${p.nombre || ''}`;
                             return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(255,255,255,0.02);">
@@ -13380,7 +13405,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0009 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0010 | MOBILE PORTAL
                             </div>
                     </div>
 
