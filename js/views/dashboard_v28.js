@@ -1,10 +1,10 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory } from '../services_v245/csvHub_v6.js?v=29';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=30';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29';
-import * as metasService from '../services_v245/metasService.js?v=29';
+import * as adminService from '../services_v245/adminService.js?v=30';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=30';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=30';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=30';
+import * as metasService from '../services_v245/metasService.js?v=30';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -361,7 +361,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29';
+const VERSION = '30';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -488,10 +488,13 @@ const getTaskMeta = (t) => {
 };
 
 /* ── EL MAESTRO DE ARTÍCULOS ──────────────────────────────────────────────
-   El Maestro no se descarga solo al abrir la web: csvHub lo trata como archivo
-   local, así que si nadie lo subió en esta sesión, dataStore.articulos viene
-   vacío y todas las categorías salen como "Sin categoría". Lo de abajo lo trae
-   bajo demanda y lo deja SOLO EN MEMORIA: no guarda ni sube nada.
+   El Maestro se publica UNA vez desde Configuración → Archivos Nube y todas las
+   PC lo bajan de ahí. Antes cada PC tenía que subirlo por su cuenta: la que no lo
+   hacía se quedaba sin categorías, y por eso 98 tareas quedaron sin clasificar.
+
+   La bajada es barata: primero se consulta una ficha de unos pocos bytes con la
+   fecha y la cantidad de artículos publicados. Si coincide con la copia que este
+   navegador ya tiene guardada, no se baja nada más.
 */
 
 /** Un solo viaje aunque lo pidan dos pantallas a la vez. */
@@ -505,21 +508,27 @@ const rescatarMaestro = async () => {
     if (_maestroPromesa) return _maestroPromesa;
 
     _maestroPromesa = (async () => {
-        // Primero lo barato: puede estar guardado en el navegador de una carga anterior
+        try {
+            const r = await traerMaestroPublicado();
+            if (r.filas > 0) {
+                console.log(`[Maestro] ${r.filas.toLocaleString('es-PE')} filas (${r.origen})`);
+                return true;
+            }
+        } catch (e) {
+            console.warn('[Maestro] no se pudo traer el publicado:', e && e.message);
+        }
+
+        // Todavía no hay nada publicado, o el servidor no responde: se usa lo que
+        // haya quedado guardado en esta PC de una carga anterior.
         try {
             const local = await getAreaData('articulos');
-            if (Array.isArray(local) && local.length > 0) { dataStore.articulos = local; return true; }
-        } catch (e) { /* no estaba: se intenta con el servidor */ }
+            if (Array.isArray(local) && local.length > 0) {
+                dataStore.articulos = local;
+                console.log(`[Maestro] ${local.length.toLocaleString('es-PE')} filas (solo de esta PC)`);
+                return true;
+            }
+        } catch (e) { /* tampoco estaba */ }
 
-        try {
-            // env.js le pone el sello del entorno a este fetch
-            const res = await fetch(`${API_BASE}/logistics/articulos?t=${Date.now()}`);
-            const j = await res.json();
-            const filas = (j && j.data) || [];
-            if (filas.length > 0) { dataStore.articulos = filas; return true; }
-        } catch (e) {
-            console.warn('[Maestro] no se pudo traer del servidor:', e && e.message);
-        }
         return false;
     })();
 
@@ -1421,7 +1430,12 @@ const TABS = [
     ]},
     { id: 'rfs', label: 'RF´s', icon: '🔋' }
   ] },
-  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'] }
+  // Configuración pinta su propia barra interna (renderConfigTab), no la genérica.
+  // Estas sub-pestañas están acá para que la matriz de Permisos genere su clave
+  // ('config_archivos_nube') y se pueda dar o quitar el acceso por rol.
+  { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'], subTabs: [
+    { id: 'archivos_nube', label: 'Archivos Nube', icon: '☁️' }
+  ] }
 ];
 
 const API_BASE = 'https://logistics-backend-wv0x.onrender.com/api';
@@ -3073,7 +3087,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=30');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6626,6 +6640,177 @@ const renderRFSection = (container) => {
   };
 
 
+  /**
+   * ¿Este usuario puede publicar archivos para toda la empresa?
+   * Manda la matriz de permisos. Mientras nadie la haya tocado, solo el admin, para
+   * que dar de alta a un jefe no le regale de arranque la potestad de publicar.
+   */
+  const puedeArchivosNube = () => {
+      const perms = adminService.getPermissions(user.role) || {};
+      const valor = perms['config_archivos_nube'];
+      return valor === undefined ? user.role === 'admin' : valor === 1;
+  };
+
+  /* ── CONFIGURACIÓN → ARCHIVOS NUBE ──────────────────────────────────────
+     El Maestro de Artículos se sube UNA vez acá y todas las PC lo bajan solas.
+     Antes cada PC tenía que subirlo por su cuenta, y la que no lo hacía se quedaba
+     sin categorías: 98 tareas quedaron sin clasificar por eso.
+  */
+  const renderArchivosNube = async (caja) => {
+      if (!caja) return;
+      caja.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px; padding:3rem; color:var(--text-muted);">
+          <div style="width:24px; height:24px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <span style="font-size:0.85rem;">Consultando la copia publicada...</span>
+        </div>`;
+
+      const ficha = await infoMaestroPublicado();
+      if (!caja.isConnected) return;
+
+      const enLaPc = (dataStore.articulos || []).length;
+      const fmtFecha = (f) => {
+          if (!f) return '—';
+          const t = String(f).replace(' ', 'T');
+          const d = new Date(t.endsWith('Z') || t.includes('+') ? t : t + 'Z');
+          return isNaN(d) ? String(f) : d.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
+      };
+      const diasDesde = (f) => {
+          if (!f) return null;
+          const d = new Date(String(f).replace(' ', 'T') + 'Z');
+          return isNaN(d) ? null : Math.floor((Date.now() - d.getTime()) / 86400000);
+      };
+      const dias = ficha ? diasDesde(ficha.fecha) : null;
+      // El Maestro cambia cada 10 días más o menos: a los 15 ya conviene revisarlo
+      const colorAntiguedad = dias === null ? '#94a3b8' : dias <= 12 ? '#22c55e' : dias <= 20 ? '#f59e0b' : '#ef4444';
+
+      caja.innerHTML = `
+        <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; max-width:820px;">
+
+          <div class="glass-panel" style="background:rgba(15,23,42,0.9); border:2px solid #6366f1; border-radius:14px; overflow:hidden;">
+            <div style="padding:1rem 1.2rem; background:rgba(99,102,241,0.1); border-bottom:1px solid rgba(99,102,241,0.3);">
+              <h3 style="color:#fff; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px;">☁️ MAESTRO DE ARTÍCULOS</h3>
+              <div style="font-size:0.68rem; color:rgba(165,180,252,0.75); font-weight:600;">Se publica una vez y todas las PC lo bajan solas. De acá salen las categorías, las marcas y el gender de cada SKU.</div>
+            </div>
+
+            <div style="padding:1.2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px;">
+              <div>
+                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Artículos publicados</div>
+                <div style="font-size:1.6rem; font-weight:900; color:#fff; line-height:1.3;">${ficha ? ficha.filas.toLocaleString('es-PE') : '—'}</div>
+              </div>
+              <div>
+                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Publicado</div>
+                <div style="font-size:0.9rem; font-weight:800; color:${colorAntiguedad}; line-height:1.6;">${ficha ? fmtFecha(ficha.fecha) : 'Nunca'}</div>
+                <div style="font-size:0.65rem; color:${colorAntiguedad};">${dias === null ? '' : dias === 0 ? 'hoy' : `hace ${dias} día${dias === 1 ? '' : 's'}`}</div>
+              </div>
+              <div>
+                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Lo subió</div>
+                <div style="font-size:0.9rem; font-weight:800; color:#e2e8f0; line-height:1.6;">${ficha ? String(ficha.usuario) : '—'}</div>
+              </div>
+              <div>
+                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">En esta PC</div>
+                <div style="font-size:0.9rem; font-weight:800; color:${enLaPc ? '#22c55e' : '#94a3b8'}; line-height:1.6;">${enLaPc ? enLaPc.toLocaleString('es-PE') + ' filas' : 'sin cargar'}</div>
+              </div>
+            </div>
+
+            ${dias !== null && dias > 20 ? `
+            <div style="padding:0.8rem 1.2rem; background:rgba(239,68,68,0.08); border-top:1px solid rgba(239,68,68,0.25); font-size:0.74rem; color:#fca5a5; line-height:1.6;">
+              ⚠️ La copia publicada tiene ${dias} días. Los SKU creados después no existen para el sistema: sus tareas salen sin categoría en los reportes.
+            </div>` : ''}
+
+            ${!ficha ? `
+            <div style="padding:0.8rem 1.2rem; background:rgba(245,158,11,0.08); border-top:1px solid rgba(245,158,11,0.25); font-size:0.74rem; color:#fbbf24; line-height:1.6;">
+              Todavía no hay ninguna copia publicada. Hasta que la haya, cada PC depende del archivo que haya subido por su cuenta.
+            </div>` : ''}
+
+            <div style="padding:1.1rem 1.2rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <input type="file" id="nube_archivo" accept=".xlsx" style="display:none;">
+              <button id="nube_elegir" class="btn" style="width:auto; padding:9px 18px; font-size:0.78rem; background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; border:none; font-weight:900; cursor:pointer;">📤 PUBLICAR MAESTRO (.xlsx)</button>
+              <span id="nube_nombre" style="font-size:0.75rem; color:var(--text-muted);"></span>
+            </div>
+          </div>
+
+          <div style="font-size:0.68rem; color:rgba(255,255,255,0.32); line-height:1.8;">
+            El archivo se revisa antes de publicar: tiene que traer las columnas <b style="color:rgba(255,255,255,0.5);">CodArticulo</b>, <b style="color:rgba(255,255,255,0.5);">G. Gender</b> y <b style="color:rgba(255,255,255,0.5);">Gender RIMS</b>, y venir completo. Si algo no cuadra, no se publica.<br>
+            Cada PC lo baja una sola vez y lo guarda; solo lo vuelve a bajar cuando se publica uno nuevo.<br>
+            Lo que se publique en pruebas no toca producción.
+          </div>
+        </div>`;
+
+      const inputArchivo = caja.querySelector('#nube_archivo');
+      const etiqueta = caja.querySelector('#nube_nombre');
+      caja.querySelector('#nube_elegir').onclick = () => inputArchivo.click();
+
+      inputArchivo.onchange = async (ev) => {
+          const archivo = ev.target.files && ev.target.files[0];
+          if (!archivo) return;
+          etiqueta.textContent = `Leyendo ${archivo.name}...`;
+
+          let filas;
+          try {
+              filas = await new Promise((resolve, reject) => {
+                  const lector = new FileReader();
+                  lector.onload = (e) => {
+                      try {
+                          const libro = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                          resolve(XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { header: 1, defval: '' }));
+                      } catch (err) { reject(err); }
+                  };
+                  lector.onerror = () => reject(new Error('No se pudo leer el archivo.'));
+                  lector.readAsArrayBuffer(archivo);
+              });
+          } catch (err) {
+              etiqueta.textContent = '';
+              inputArchivo.value = '';
+              showPremiumAlert('NO SE PUDO LEER', String(err && err.message || err), 'error');
+              return;
+          }
+
+          const revision = revisarMaestro(filas);
+          if (!revision.ok) {
+              etiqueta.textContent = '';
+              inputArchivo.value = '';
+              showPremiumAlert('ARCHIVO RECHAZADO', revision.motivo, 'error');
+              return;
+          }
+
+          // Se dice en números qué va a cambiar ANTES de tocar nada
+          const antes = ficha ? ficha.filas : 0;
+          const diferencia = revision.articulos - antes;
+          const detalle = !ficha
+              ? `Se van a publicar ${revision.articulos.toLocaleString('es-PE')} artículos. Es la primera publicación.`
+              : `Publicado hoy:  ${antes.toLocaleString('es-PE')} artículos\nArchivo nuevo:  ${revision.articulos.toLocaleString('es-PE')} artículos\nDiferencia:     ${diferencia >= 0 ? '+' : ''}${diferencia.toLocaleString('es-PE')}`;
+
+          const aviso = (ficha && antes > 0 && revision.articulos < antes * 0.8)
+              ? '\n\n⚠️ El archivo nuevo tiene bastante menos artículos que el publicado. Revisá que no esté cortado.'
+              : '';
+
+          if (!await showPremiumConfirm('PUBLICAR PARA TODA LA EMPRESA',
+                `${detalle}${aviso}\n\nA partir de ahora todas las PC van a usar este archivo.`,
+                aviso ? 'danger' : 'warning')) {
+              etiqueta.textContent = '';
+              inputArchivo.value = '';
+              return;
+          }
+
+          const boton = caja.querySelector('#nube_elegir');
+          try {
+              await withLoading(boton, '⌛ PUBLICANDO...', async () => {
+                  await publicarMaestro(filas, user.username || 'sistema');
+              });
+              showPremiumAlert('PUBLICADO',
+                  `${revision.articulos.toLocaleString('es-PE')} artículos quedaron publicados.\n\nCada PC lo va a bajar la próxima vez que abra la web.`,
+                  'success');
+              renderArchivosNube(caja);
+          } catch (err) {
+              showPremiumAlert('NO SE PUDO PUBLICAR',
+                  `${String(err && err.message || err)}\n\nLa copia anterior sigue publicada: no se perdió nada.`, 'error');
+          } finally {
+              inputArchivo.value = '';
+              etiqueta.textContent = '';
+          }
+      };
+  };
+
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
     if (!activeConfigSub || activeConfigSub === 'parametros') activeConfigSub = 'reportes';
@@ -6635,6 +6820,7 @@ const renderRFSection = (container) => {
           <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">⚙️ PARÁMETROS</a>
           <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🌐 CONEXIÓN</a>
           <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🛠️ MANTENIMIENTO</a>
+          ${puedeArchivosNube() ? `<a class="sub-nav-item ${activeConfigSub==='archivos_nube'?'active':''}" data-s="archivos_nube" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">☁️ ARCHIVOS NUBE</a>` : ''}
         </nav><div id="configContent"></div>`;
     document.querySelectorAll('.sub-nav-item').forEach(b => b.addEventListener('click', (e) => { activeConfigSub = e.target.dataset.s; renderConfigTab(); }));
     
@@ -6912,6 +7098,19 @@ const renderRFSection = (container) => {
         };
 
         bindTableEvents();
+    } else if (activeConfigSub === 'archivos_nube') {
+        // Se vuelve a revisar acá y no solo al pintar la barra: si alguien llega con la
+        // sección guardada de antes y ya no tiene el permiso, no debe poder publicar.
+        if (!puedeArchivosNube()) {
+            document.getElementById('configContent').innerHTML = `
+                <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                    <div style="font-size:2rem; margin-bottom:0.8rem;">🔒</div>
+                    <div style="font-weight:700; color:#fff; margin-bottom:0.4rem;">Sin acceso a Archivos Nube</div>
+                    <div style="font-size:0.82rem;">Publicar el Maestro cambia los datos de toda la empresa. El acceso se da desde Administración → Permisos.</div>
+                </div>`;
+        } else {
+            await renderArchivosNube(document.getElementById('configContent'));
+        }
     } else if (activeConfigSub === 'parametros') {
         document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">Configuración de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
     } else if (activeConfigSub === 'mantenimiento') {
@@ -12606,7 +12805,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29 | MOBILE PORTAL
+                                SYSTEM BUILD: v30 | MOBILE PORTAL
                             </div>
                     </div>
 

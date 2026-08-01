@@ -27,6 +27,32 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # =============================================================================
+# ÁREAS SINGLETON
+# -----------------------------------------------------------------------------
+# Un área normal guarda una foto por fecha: sirve para el stock de cada día. Un área
+# singleton guarda UNA sola fila, siempre bajo la fecha 'MASTER', y cada envío pisa
+# al anterior. Es lo que corresponde cuando el dato no es "cómo estaba tal día" sino
+# "cómo es ahora": los usuarios, los permisos, el Maestro de Artículos.
+#
+# La lista estaba copiada en 5 funciones distintas. Agregar un área y olvidarse de
+# una copia da un comportamiento partido -se guarda de una forma y se lee de otra-
+# muy difícil de encontrar. Va una sola vez.
+# =============================================================================
+SINGLETON_AREAS = [
+    'attendance', 'workers', 'users', 'permissions', 'config', 'performance_log',
+    'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers',
+    'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva',
+    # El Maestro de Artículos: se publica desde Configuración > Archivos Nube y todas
+    # las PC lo bajan de acá. Sin esto, cada publicación dejaría otra copia de ~4 MB
+    # en el disco del servidor en vez de reemplazar la anterior.
+    'articulos',
+    # Ficha chica del Maestro (filas, fecha, quién lo subió). Se consulta para saber
+    # si hay que bajar el archivo grande o alcanza con el que ya está en el navegador.
+    'articulos_meta',
+]
+
+
+# =============================================================================
 # ENTORNOS: PRODUCCIÓN y PRUEBAS (beta)
 # -----------------------------------------------------------------------------
 # El mismo servidor atiende los dos entornos, pero cada uno escribe en SU PROPIO
@@ -266,7 +292,6 @@ def prune_old_snapshots(ruta: Optional[str] = None):
     try:
         conn = sqlite3.connect(ruta or db_path())
         cursor = conn.cursor()
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
         areas = [r[0] for r in cursor.fetchall()]
@@ -584,7 +609,6 @@ def get_area_data(area: str, date: Optional[str] = None):
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         
         # ÁREAS SINGLETON (Siempre un solo registro maestro)
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         if area == 'users':
             # Auto-saneamiento: si el snapshot y la tabla 'users' no coinciden, manda
@@ -707,7 +731,6 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
         json_string = json.dumps(payload_data)
 
         # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
@@ -857,7 +880,6 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
     try:
         partial_data = await request.json()
         
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
         
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
@@ -1054,7 +1076,6 @@ def force_db_cleanup():
         except Exception as se: print(f"Copy shared_data err: {se}")
             
         # Copy snapshots (pruned)
-        SINGLETON_AREAS = ['attendance', 'workers', 'users', 'permissions', 'config', 'performance_log', 'almacenaje_tasks', 'rfs', 'rf_assignments', 'rfs_batteries', 'rfs_chargers', 'no_retail_cache', 'buffer_history', 'layout_activo', 'layout_reserva']
         
         src_cursor.execute("SELECT DISTINCT area_id FROM logistics_snapshots")
         areas = [row[0] for row in src_cursor.fetchall()]

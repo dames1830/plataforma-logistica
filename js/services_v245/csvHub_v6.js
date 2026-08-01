@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29';
+import * as syncEngine from './sync_engine_v24_9.js?v=30';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29';
+const VERSION = '30';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -461,6 +461,160 @@ export const logSystemAction = async (username, action, details) => {
             body: JSON.stringify({ username, action, details })
         });
     } catch (e) { console.error("Error al loguear acción:", e); }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL MAESTRO DE ARTÍCULOS EN LA NUBE
+
+   El Maestro es el único archivo que TODAS las pantallas necesitan: de ahí salen
+   las categorías (Gender RIMS), las marcas y el gender de cada SKU. Hasta ahora
+   era "solo local": cada PC tenía que subirlo por su cuenta, y la que no lo tenía
+   se quedaba sin categorías.
+
+   Ahora se publica UNA vez desde Configuración → Archivos Nube y todas las PC lo
+   bajan de ahí. Para no bajar el archivo entero cada vez que alguien abre la web,
+   se publican DOS cosas:
+
+     articulos       las filas (pesa unos 5 MB, pero viaja comprimido a ~200 KB)
+     articulos_meta  una ficha de unos pocos bytes: cuántas filas, cuándo y quién
+
+   La ficha se consulta primero. Si coincide con lo que ya está guardado en el
+   navegador, no se baja nada.
+
+   Estas funciones son aparte a propósito: el resto del sistema sigue tratando
+   'articulos' como archivo local, así que subirlo desde Archivo Almacenaje sigue
+   afectando solo a esa PC. Publicar es un acto explícito y con permiso.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const MAESTRO_AREA = 'articulos';
+const MAESTRO_FICHA = 'articulos_meta';
+/** Lo último que este navegador bajó, para saber si hace falta bajar de nuevo. */
+const MAESTRO_CACHE_KEY = 'maestro_nube_ficha_v1';
+
+/** Columnas que el Maestro tiene que traer sí o sí para servir de algo. */
+const MAESTRO_COLUMNAS = ['CodArticulo', 'G. Gender', 'Gender RIMS'];
+
+/**
+ * Revisa que el archivo sea realmente el Maestro antes de publicarlo.
+ * Publicar el archivo equivocado deja sin categorías a toda la empresa, así que
+ * conviene que falle acá y no después.
+ */
+export const revisarMaestro = (filas) => {
+    if (!Array.isArray(filas) || filas.length === 0) {
+        return { ok: false, motivo: 'El archivo está vacío.' };
+    }
+    const primera = filas[0];
+    const titulos = (Array.isArray(primera) ? primera : Object.keys(primera))
+        .map(h => String(h || '').trim().toUpperCase());
+
+    const faltan = MAESTRO_COLUMNAS.filter(c => !titulos.includes(c.toUpperCase()));
+    if (faltan.length) {
+        return {
+            ok: false,
+            motivo: `No parece el Maestro de Artículos: le faltan las columnas ${faltan.join(', ')}.`,
+            titulos
+        };
+    }
+    // La fila de títulos no cuenta como artículo
+    const articulos = Array.isArray(primera) ? filas.length - 1 : filas.length;
+    if (articulos < 1000) {
+        return {
+            ok: false,
+            motivo: `Solo tiene ${articulos.toLocaleString('es-PE')} artículos. El Maestro completo tiene decenas de miles: parece un archivo cortado.`,
+            articulos
+        };
+    }
+    return { ok: true, articulos, titulos };
+};
+
+/** Ficha de la copia publicada. Pesa unos pocos bytes, se puede pedir siempre. */
+export const infoMaestroPublicado = async () => {
+    try {
+        const res = await fetch(`${API_URL}/${MAESTRO_FICHA}?t=${Date.now()}`);
+        if (!res.ok) return null;
+        const j = await res.json();
+        const f = j && j.data;
+        // Un área sin datos devuelve {} o []: eso significa "nunca se publicó"
+        if (!f || Array.isArray(f) || !f.filas) return null;
+        return { filas: f.filas, usuario: f.usuario || '—', fecha: f.fecha || j.updated_at || '' };
+    } catch (e) {
+        console.warn('[MAESTRO] No se pudo consultar la ficha:', e && e.message);
+        return null;
+    }
+};
+
+/**
+ * Publica el Maestro para toda la empresa. Devuelve la ficha que quedó publicada.
+ * Sube primero las filas y la ficha DESPUÉS: si el envío grande falla, la ficha
+ * sigue describiendo la copia anterior y nadie baja un archivo a medias.
+ */
+export const publicarMaestro = async (filas, username = 'sistema') => {
+    const revision = revisarMaestro(filas);
+    if (!revision.ok) throw new Error(revision.motivo);
+
+    const enviar = async (area, cuerpo) => {
+        const res = await fetch(`${API_URL}/${area}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cuerpo)
+        });
+        if (!res.ok) throw new Error(`El servidor rechazó ${area} (${res.status}).`);
+        return res;
+    };
+
+    await enviar(MAESTRO_AREA, filas);
+
+    const ficha = {
+        filas: revision.articulos,
+        usuario: username,
+        fecha: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    };
+    await enviar(MAESTRO_FICHA, ficha);
+
+    // Queda también en esta PC, para no tener que volver a bajarlo enseguida
+    dataStore[MAESTRO_AREA] = filas;
+    await saveToDB(MAESTRO_AREA, filas);
+    localStorage.setItem(MAESTRO_CACHE_KEY, JSON.stringify(ficha));
+
+    logSystemAction(username, 'PUBLICAR_MAESTRO',
+        `Maestro de Artículos publicado: ${revision.articulos} artículos.`);
+    return ficha;
+};
+
+/**
+ * Deja el Maestro publicado disponible en dataStore.articulos.
+ * Solo baja el archivo grande si la copia guardada en el navegador no coincide
+ * con la ficha publicada. Devuelve de dónde salió, para poder avisarlo.
+ */
+export const traerMaestroPublicado = async () => {
+    const ficha = await infoMaestroPublicado();
+    if (!ficha) return { origen: 'no publicado', filas: 0, ficha: null };
+
+    let guardada = null;
+    try { guardada = JSON.parse(localStorage.getItem(MAESTRO_CACHE_KEY) || 'null'); } catch (e) { /* sin cache */ }
+
+    const mismaCopia = guardada && guardada.fecha === ficha.fecha && guardada.filas === ficha.filas;
+    if (mismaCopia) {
+        // Ya se bajó antes: alcanza con lo que está en el navegador
+        const local = dataStore[MAESTRO_AREA] || await loadFromDB(MAESTRO_AREA);
+        if (Array.isArray(local) && local.length > 0) {
+            dataStore[MAESTRO_AREA] = local;
+            return { origen: 'navegador', filas: local.length, ficha };
+        }
+    }
+
+    const res = await fetch(`${API_URL}/${MAESTRO_AREA}?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`No se pudo bajar el Maestro (${res.status}).`);
+    const j = await res.json();
+    const filas = (j && j.data) || [];
+    if (!Array.isArray(filas) || filas.length === 0) {
+        return { origen: 'no publicado', filas: 0, ficha };
+    }
+
+    dataStore[MAESTRO_AREA] = filas;
+    await saveToDB(MAESTRO_AREA, filas);
+    localStorage.setItem(MAESTRO_CACHE_KEY, JSON.stringify(ficha));
+    return { origen: 'servidor', filas: filas.length, ficha };
 };
 
 export const parseFile = (file, area) => {

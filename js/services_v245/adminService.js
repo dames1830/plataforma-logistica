@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=29';
+import * as syncEngine from './sync_engine_v24_9.js?v=30';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -285,6 +285,16 @@ export const FORCED_ASISTENTE = [
     'performance_historial', 'performance_graficos', 'performance_reporte'
 ];
 
+/**
+ * Sub-pestañas que arrancan APAGADAS para todo el mundo menos admin, aunque el rol
+ * tenga acceso al módulo que las contiene.
+ *
+ * Hace falta porque el valor por defecto de más abajo le da acceso a 'jefe' a todo
+ * lo que exista. Estas secciones cambian datos para TODA la empresa, así que quién
+ * las usa se decide a mano en la matriz de permisos, no por un valor por defecto.
+ */
+export const SOLO_ADMIN_POR_DEFECTO = ['config_archivos_nube'];
+
 export const initPermissions = (tabs) => {
     const roles = ['admin', 'jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'transporte', 'transportista', 'chofer'];
     roles.forEach(role => {
@@ -297,6 +307,10 @@ export const initPermissions = (tabs) => {
                 t.subTabs.forEach(s => {
                     const subKey = `${t.id}_${s.id}`;
                     if (role === 'asistente' && FORCED_ASISTENTE.includes(subKey)) p[subKey] = 1;
+                    if (SOLO_ADMIN_POR_DEFECTO.includes(subKey)) {
+                        if (p[subKey] === undefined) p[subKey] = (role === 'admin') ? 1 : 0;
+                        return;   // no se le aplica el valor por defecto general
+                    }
                     if (p[subKey] === undefined) p[subKey] = (role === 'admin' || role === 'jefe' || (t.roles && t.roles.includes(role))) ? 1 : 0;
                     if (s.subTabs) {
                         s.subTabs.forEach(ss => {
