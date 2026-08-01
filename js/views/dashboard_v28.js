@@ -1,13 +1,13 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0006';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0007';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0006';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0006';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0006';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0006';
-import * as metasService from '../services_v245/metasService.js?v=29.0006';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0006';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0006';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0006';
+import * as adminService from '../services_v245/adminService.js?v=29.0007';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0007';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0007';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0007';
+import * as metasService from '../services_v245/metasService.js?v=29.0007';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0007';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0007';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0007';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -364,7 +364,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0006';
+const VERSION = '29.0007';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -484,6 +484,8 @@ const getTaskMeta = (t) => {
 
 /** Un solo viaje aunque lo pidan dos pantallas a la vez. */
 let _maestroPromesa = null;
+/** ¿Ya se contrastó contra la nube en esta sesión? */
+let _maestroVerificado = false;
 
 const hayMaestroEnMemoria = () => (dataStore.articulos || []).length > 0
     || (dataStore.analisis_sku_maestro || []).length > 0;
@@ -495,23 +497,31 @@ const hayMaestroEnMemoria = () => (dataStore.articulos || []).length > 0
  * que tampoco tenga que subirlo, pero solo si esta vacio: si el usuario cargo
  * uno a mano, manda el suyo.
  */
-const compartirMaestroConAnalisisSku = () => {
+const compartirMaestroConAnalisisSku = (pisar = false) => {
     const maestro = dataStore.articulos;
     if (!Array.isArray(maestro) || maestro.length === 0) return;
-    if ((dataStore.analisis_sku_maestro || []).length > 0) return;
+    // Cuando la copia viene de la nube se pisa lo que hubiera: si no, un
+    // 'analisis_sku_maestro' viejo guardado en esta PC seguiría usándose.
+    if (!pisar && (dataStore.analisis_sku_maestro || []).length > 0) return;
     dataStore.analisis_sku_maestro = maestro;
 };
 
 const rescatarMaestro = async () => {
-    if (hayMaestroEnMemoria()) { compartirMaestroConAnalisisSku(); return true; }
+    // Se contrasta contra la nube UNA vez por sesión, aunque ya haya algo en
+    // memoria. Si se saliera de entrada al ver que hay algo cargado, un Maestro
+    // viejo que quedó guardado en esta PC le ganaría al publicado para siempre.
+    // Contrastar es barato: traerMaestroPublicado() pide primero una ficha de
+    // unos pocos bytes y solo baja el archivo grande si de verdad cambió.
+    if (_maestroVerificado && hayMaestroEnMemoria()) { compartirMaestroConAnalisisSku(); return true; }
     if (_maestroPromesa) return _maestroPromesa;
 
     _maestroPromesa = (async () => {
         try {
             const r = await traerMaestroPublicado();
             if (r.filas > 0) {
+                _maestroVerificado = true;
                 console.log(`[Maestro] ${r.filas.toLocaleString('es-PE')} filas (${r.origen})`);
-                compartirMaestroConAnalisisSku();
+                compartirMaestroConAnalisisSku(true);
                 return true;
             }
         } catch (e) {
@@ -521,7 +531,8 @@ const rescatarMaestro = async () => {
         // Todavía no hay nada publicado, o el servidor no responde: se usa lo que
         // haya quedado guardado en esta PC de una carga anterior.
         try {
-            const local = await getAreaData('articulos');
+            const local = dataStore.articulos && dataStore.articulos.length
+                ? dataStore.articulos : await getAreaData('articulos');
             if (Array.isArray(local) && local.length > 0) {
                 dataStore.articulos = local;
                 console.log(`[Maestro] ${local.length.toLocaleString('es-PE')} filas (solo de esta PC)`);
@@ -2546,6 +2557,68 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
   };
 
+  /**
+   * Ficha de SOLO LECTURA del Maestro publicado. Va en el lugar donde antes
+   * estaba el cuadro para subirlo.
+   *
+   * El cuadro se quitó a propósito, no por limpieza: rescatarMaestro() usa lo
+   * que encuentre en memoria ANTES de consultar el servidor. Un asistente que
+   * subiera por error un Maestro viejo le ganaba al publicado, y encima quedaba
+   * guardado en esa PC ganando todos los días hasta que alguien lo borrara.
+   * Dejando una sola puerta -Configuración > Archivos Nube- eso no puede pasar.
+   */
+  const renderMaestroNube = (container) => {
+    const div = document.createElement('div');
+    div.style.width = '100%';
+    container.appendChild(div);
+
+    const pintar = (estado, detalle, color) => {
+      div.innerHTML = `
+      <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-left:4px solid ${color};">
+          <div style="display:flex; align-items:center; gap:1.2rem;">
+              <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${color}; border:1px solid rgba(255,255,255,0.05);">☁️</div>
+              <div style="display:flex; flex-direction:column;">
+                  <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">MAESTRO DE ARTÍCULOS</span>
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+                      <span style="color:${color}; font-weight:700; font-size:0.85rem;">${estado}</span>
+                      ${detalle ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                   <span style="color:var(--text-muted); font-size:0.75rem;">${detalle}</span>` : ''}
+                  </div>
+              </div>
+          </div>
+          <div style="text-align:right; font-size:0.7rem; color:var(--text-muted); line-height:1.5;">
+              Ya no se sube acá.<br>Se actualiza en <b>Configuración → Archivos Nube</b>
+          </div>
+      </div>`;
+    };
+
+    pintar('CONSULTANDO...', '', '#64748b');
+
+    (async () => {
+      try {
+        const ficha = await infoMaestroPublicado();
+        if (!ficha) {
+          pintar('SIN PUBLICAR', 'todavía no lo publicó nadie', '#f59e0b');
+          return;
+        }
+        // La fecha viaja como "AAAA-MM-DD HH:MM:SS"
+        const f = String(ficha.fecha || '');
+        const bonita = /^\d{4}-\d{2}-\d{2}/.test(f)
+            ? `${f.slice(8, 10)}/${f.slice(5, 7)}/${f.slice(0, 4)} ${f.slice(11, 16)}`.trim()
+            : f;
+        pintar('EN LA NUBE',
+               `${Number(ficha.filas || 0).toLocaleString('es-PE')} artículos · publicado por ${ficha.usuario}${bonita ? ' el ' + bonita : ''}`,
+               '#22c55e');
+      } catch (e) {
+        // Que no se pueda consultar la ficha no impide trabajar: los procesos
+        // tienen su propio respaldo con la copia que haya quedado en esta PC.
+        pintar('NO SE PUDO CONSULTAR', 'se usará la última copia de esta PC', '#f87171');
+      }
+    })();
+
+    return div;
+  };
+
   const renderUploadArea = (container, area, hasData = null, ext = '.csv', customLabel = null) => {
     const meta = getUploadMeta(area);
     const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'NUNCA';
@@ -2725,7 +2798,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'buffer_reserva', dataStore.buffer_reserva, '.xlsx', 'STOCK RESERVA');
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
-        renderUploadArea(wrap, 'articulos', dataStore.articulos, '.xlsx', 'MAESTRO');
+        renderMaestroNube(wrap);
         renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
         renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
         renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
@@ -3064,7 +3137,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0006');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0007');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -8365,7 +8438,7 @@ const renderRFSection = (container) => {
        renderUploadArea(wrap, 'matriz_ubicaciones', matriz, '.xlsx', 'MATRIZ UBICACIONES (Col A)');
        renderUploadArea(wrap, 'stockReserva', reserva, '.xlsx', 'STOCK RESERVA (Col E, Col I)');
        renderUploadArea(wrap, 'inventario', stock, '.csv', 'STOCK ACTIVO');
-       renderUploadArea(wrap, 'articulos', articulos, '.xlsx', 'MAESTRO ARTÍCULOS');
+       renderMaestroNube(wrap);
 
     } else if (activeInventarioSub === 'kpi_inventarios') {
        l2Container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted); font-style:italic;">📊 KPI Inventarios en desarrollo.</div>`;
@@ -10987,7 +11060,7 @@ const renderRFSection = (container) => {
         renderUploadArea(wrap, actKey, activoData, '.csv', 'STOCK ACTIVO');
         renderUploadArea(wrap, resKey, reservaData, '.xlsx', 'STOCK RESERVA');
         if (tabId === 'almacenaje' || tabId === 'recepcion') {
-            renderUploadArea(wrap, 'articulos', articulosData, '.xlsx', 'MAESTRO ARTÍCULOS');
+            renderMaestroNube(wrap);
         }
         if (tabId === 'inventario') {
             renderUploadArea(wrap, 'matriz_ubicaciones', matrizData, '.xlsx', 'MATRIZ UBICACIONES ALTO');
@@ -12917,7 +12990,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0006 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0007 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16649,7 +16722,7 @@ window.showCellModal = function(htmlContent) {
         const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '0.5rem'; skuBuf.appendChild(wrap);
         renderUploadArea(wrap, 'analisis_sku_activo',  dataStore.analisis_sku_activo,  '.csv',  'STOCK ACTIVO');
         renderUploadArea(wrap, 'analisis_sku_reserva', dataStore.analisis_sku_reserva, '.xlsx', 'STOCK RESERVA');
-        renderUploadArea(wrap, 'analisis_sku_maestro', dataStore.analisis_sku_maestro, '.xlsx', 'MAESTRO ARTÍCULOS');
+        renderMaestroNube(wrap);
         return;
     }
 
