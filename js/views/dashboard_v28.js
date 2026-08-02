@@ -1,14 +1,14 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0011';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0012';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0011';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0011';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0011';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0011';
-import * as metasService from '../services_v245/metasService.js?v=29.0011';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0011';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0011';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0011';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0011';
+import * as adminService from '../services_v245/adminService.js?v=29.0012';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0012';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0012';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0012';
+import * as metasService from '../services_v245/metasService.js?v=29.0012';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0012';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0012';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0012';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0012';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -365,7 +365,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0011';
+const VERSION = '29.0012';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1143,11 +1143,25 @@ const getSemanaLaboral = () => {
     return { desde: fmt(lunes), hasta: fmt(sabado) };
 };
 
+/**
+ * La fecha lógica corrida N días hacia atrás. Se ancla al mediodía para que un cambio de
+ * horario no mueva el día al restar.
+ */
+const fechaLogicaMenos = (dias) => {
+    const d = new Date(getLogicalDate() + 'T12:00:00');
+    d.setDate(d.getDate() - dias);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 // --- PERSISTENCIA TAREAS ALMACENAJE ---
 let almacenajeTaskMode = localStorage.getItem('almacenajeTaskMode') || 'resumen';
 let selectedTaskDate = null; // Filtro de fecha seleccionado
 if (!window.__almacenajeStartDate) window.__almacenajeStartDate = getLogicalDate();
 if (!window.__almacenajeEndDate) window.__almacenajeEndDate = getLogicalDate();
+// Corregir datos vive en Config. Tareas y lleva su propio rango: se corrige un tramo del
+// histórico, que no tiene por qué ser el que se esté mirando en Tareas Día.
+if (!window.__correccionDesde) window.__correccionDesde = getLogicalDate();
+if (!window.__correccionHasta) window.__correccionHasta = getLogicalDate();
 // El panel de KPI abre con la semana laboral completa (lunes a sábado), no con un solo día
 const _semanaKpi = getSemanaLaboral();
 if (!window.__kpiStartDate) window.__kpiStartDate = _semanaKpi.desde;
@@ -1837,7 +1851,7 @@ window.downloadExcelDetail = async () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Detalle_Buffer_Completo_${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.download = `Detalle_Buffer_Completo_${getLogicalDate()}.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
 };
@@ -3149,7 +3163,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   let rfSearchQuery = '';
   let rfStatusFilter = 'todos';
   let scannedRfs = [];
-  let revisionDate = new Date().toISOString().split('T')[0];
+  let revisionDate = getLogicalDate();
   let revisionTurn = 'NOCHE';
 
   const playBeep = (type) => {
@@ -3220,7 +3234,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0011');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0012');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -4017,8 +4031,8 @@ export const renderDashboard = async (container, user, onLogout) => {
       return Math.round(score) + '%';
   };
 
-  let kpiStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  let kpiEnd = new Date().toISOString().split('T')[0];
+  let kpiStart = fechaLogicaMenos(7);
+  let kpiEnd = getLogicalDate();
   let kpiSearch = '';
 
   const renderKPIGraphsSection = (container) => {
@@ -4051,8 +4065,8 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
     
-    const kpiStart = localStorage.getItem('kpi_analitica_date_from') || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const kpiEnd = localStorage.getItem('kpi_analitica_date_to') || new Date().toISOString().split('T')[0];
+    const kpiStart = localStorage.getItem('kpi_analitica_date_from') || fechaLogicaMenos(7);
+    const kpiEnd = localStorage.getItem('kpi_analitica_date_to') || getLogicalDate();
     
     const formatDateEs = (dStr) => {
         if (!dStr) return '';
@@ -4488,7 +4502,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Performance");
-        XLSX.writeFile(wb, `Performance_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(wb, `Performance_${getLogicalDate()}.xlsx`);
     };
 
     const grouped = log.reduce((acc, p) => {
@@ -6969,7 +6983,7 @@ const renderRFSection = (container) => {
 
     const hoy = jornadaService.fechaLogicaDe();
     const estadoRegla = (r) => {
-      const h = new Date().toISOString().slice(0, 10);
+      const h = hoy;   // la misma fecha logica que usa el resto de la pantalla
       if (r.hasta && h > r.hasta) return { txt: 'Vencida', color: '#6b7280', fondo: 'rgba(107,114,128,0.12)' };
       if (r.desde && h < r.desde) return { txt: 'Programada', color: '#facc15', fondo: 'rgba(250,204,21,0.12)' };
       return { txt: 'Vigente', color: '#22c55e', fondo: 'rgba(34,197,94,0.12)' };
@@ -7694,8 +7708,8 @@ const renderRFSection = (container) => {
 
     if (!container.isConnected) return;
 
-    const savedFrom = sessionStorage.getItem('buffer_hist_date_from') || new Date().toISOString().slice(0,10);
-    const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || new Date().toISOString().slice(0,10);
+    const savedFrom = sessionStorage.getItem('buffer_hist_date_from') || getLogicalDate();
+    const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || getLogicalDate();
 
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:1.5rem; width:100%;">
@@ -8053,7 +8067,7 @@ const renderRFSection = (container) => {
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Conciliacion Paletas');
-        XLSX.writeFile(wb, `Historial_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, `Historial_Conciliacion_${getLogicalDate()}.xlsx`);
     };
 
     // ── Exportar Temporadas ───────────────────────────────────────────────────
@@ -8065,7 +8079,7 @@ const renderRFSection = (container) => {
         const ws = XLSX.utils.aoa_to_sheet(formatted);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Buffer Temporada');
-        XLSX.writeFile(wb, `Reporte_Buffer_Temporada_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, `Reporte_Buffer_Temporada_${getLogicalDate()}.xlsx`);
     };
 
     // ── Filtros de fecha ──────────────────────────────────────────────────────
@@ -8114,7 +8128,7 @@ const renderRFSection = (container) => {
 
     // ── Intentar cargar del servidor primero (más reciente), luego localStorage ──
     container.innerHTML = `<div style="text-align:center;padding:2rem;"><div class="spinner"></div><p style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">Cargando datos desde el servidor...</p></div>`;
-    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayISO = getLogicalDate();
     const serverResult = await loadKPIResults(todayISO);
     if (serverResult && serverResult.data && serverResult.data.length > 0) {
         await runProcessBufferKPI(container, null, null, null, null, hasValActivo, hasValReserva, hasValLPN, serverResult.data);
@@ -8216,7 +8230,7 @@ const renderRFSection = (container) => {
 
   // ── Modal de selección de fecha de proceso ──────────────────────────────
   const pickKPIDate = () => new Promise(resolve => {
-    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayISO = getLogicalDate();
     const overlay = document.createElement('div');
     overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);animation:fadeIn 0.2s ease;`;
     overlay.innerHTML = `
@@ -8254,8 +8268,10 @@ const renderRFSection = (container) => {
     `;
     document.body.appendChild(overlay);
     const inp = overlay.querySelector('#kpi_pick_date');
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    overlay.querySelector('#kpi_pick_yesterday').onclick = () => { inp.value = yesterday.toISOString().slice(0,10); };
+    // "Ayer" es la jornada anterior a la de hoy, no el día anterior del calendario: dentro
+    // del turno noche las dos cosas no coinciden.
+    const yesterday = fechaLogicaMenos(1);
+    overlay.querySelector('#kpi_pick_yesterday').onclick = () => { inp.value = yesterday; };
     overlay.querySelector('#kpi_pick_today').onclick    = () => { inp.value = todayISO; };
     overlay.querySelector('#kpi_pick_cancel').onclick   = () => { overlay.remove(); resolve(null); };
     overlay.querySelector('#kpi_pick_confirm').onclick  = () => { const v = inp.value; overlay.remove(); resolve(v || todayISO); };
@@ -8532,7 +8548,7 @@ const renderRFSection = (container) => {
     if (!preCalculatedResults) {
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
 
-        const todayKPI = fechaProceso || new Date().toISOString().slice(0, 10);
+        const todayKPI = fechaProceso || getLogicalDate();
         saveKPIResults(todayKPI, results).then(ok => {
             console.log(ok
                 ? `[KPI] ✅ Resultados del ${todayKPI} sincronizados con el servidor (${results.length} filas).`
@@ -8548,7 +8564,7 @@ const renderRFSection = (container) => {
                 ? (completedCount + partialCount) 
                 : results.filter(r => r.generalState === 'COMPLETADO' || r.generalState === 'INCOMPLETO').length;
             if (effectiveRequested > 0) {
-                const todayISO = fechaProceso || new Date().toISOString().slice(0, 10);
+                const todayISO = fechaProceso || getLogicalDate();
                 const record = {
                     fecha:               todayISO,
                     paletasSolicitadas:  effectiveRequested,
@@ -8573,7 +8589,7 @@ const renderRFSection = (container) => {
 
     if (!container.isConnected) return;
 
-    const todayStr = fechaProceso || new Date().toISOString().slice(0, 10);
+    const todayStr = fechaProceso || getLogicalDate();
 
     container.innerHTML = `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
@@ -11108,7 +11124,7 @@ const renderRFSection = (container) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Reporte_UCA_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = `Reporte_UCA_${getLogicalDate()}.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -13042,7 +13058,7 @@ const renderRFSection = (container) => {
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.setAttribute("href", url);
-          link.setAttribute("download", `Tracking_NoRetail_${new Date().toISOString().slice(0,10)}.csv`);
+          link.setAttribute("download", `Tracking_NoRetail_${getLogicalDate()}.csv`);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -13449,7 +13465,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0011 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0012 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14836,7 +14852,7 @@ const renderRFSection = (container) => {
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rowsSku), 'Objetivos_Por_SKU');
 
-      XLSX.writeFile(wb, `plantilla_configuracion_tallas_${new Date().toISOString().slice(0,10)}.xlsx`);
+      XLSX.writeFile(wb, `plantilla_configuracion_tallas_${getLogicalDate()}.xlsx`);
     });
 
     // --- Subir Excel Configuración ---
@@ -15165,7 +15181,7 @@ const renderRFSection = (container) => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mainData), 'Replenishment');
       if (tallasData.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tallasData), 'Tallas');
-      XLSX.writeFile(wb, `replenishment_${new Date().toISOString().slice(0,10)}.xlsx`);
+      XLSX.writeFile(wb, `replenishment_${getLogicalDate()}.xlsx`);
     });
   }; // fin _replRenderWithItems
 
@@ -18095,7 +18111,7 @@ window.showCellModal = function(htmlContent) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Plan_Almacenaje_v13.0.2_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = `Plan_Almacenaje_v13.0.2_${getLogicalDate()}.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
         
@@ -18710,6 +18726,180 @@ window.showCellModal = function(htmlContent) {
       return `<span title="La categoría ${String(categoria)} pertenece al Gender ${g}" style="font-size:0.55rem; color:${c}; background:${c}1a; border:1px solid ${c}59; padding:1px 6px; border-radius:5px; vertical-align:middle; margin-left:6px; font-weight:800; letter-spacing:0.3px;">${g}</span>`;
   };
 
+  /**
+   * Corregir marca, temporada o categoría de tareas ya generadas.
+   *
+   * Los datos del artículo quedan estampados en la tarea a propósito: un reporte de julio
+   * tiene que seguir diciendo lo que decía en julio. Pero el Maestro lo arma Comercial, y a
+   * veces llega con un dato mal —un artículo marcado como temporada antigua cuando era
+   * actual—. Sin esto, ese error quedaba grabado para siempre en las tareas de ese día.
+   *
+   * La corrección es EXPLÍCITA: el pasado no se mueve solo, se mueve porque alguien mira
+   * las diferencias y decide aplicarlas. Queda registrado quién y cuándo.
+   */
+  // El rango llega por parámetro desde Config. Tareas, que tiene sus propias fechas. Si no
+  // viene ninguno, se usa el de Tareas Día como antes.
+  window.openRefrescarMaestroModal = async (desdeArg, hastaArg) => {
+      const desde = desdeArg || window.__almacenajeStartDate, hasta = hastaArg || window.__almacenajeEndDate;
+      const enRango = almacenajeTasksCache.filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+      if (!enRango.length) {
+          showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango de fechas seleccionado.', 'info');
+          return;
+      }
+
+      // Se vuelve a traer el catálogo: la gracia es comparar contra el corregido, no contra
+      // el que esta PC tenga cargado desde hace horas.
+      try { await rescatarMaestro(true); } catch (e) { /* sigue con lo que haya */ }
+      const m = maestroEnUso();
+      if (m.origen === 'ninguno') {
+          showPremiumAlert('SIN CATÁLOGO', 'No hay Maestro de Artículos para comparar. Publicalo desde Configuración → Archivos Nube.', 'error');
+          return;
+      }
+
+      const idx = new Map();
+      (dataStore.articulos || []).forEach(row => {
+          const raw = Array.isArray(row) ? row : Object.values(row);
+          const sku7 = String(raw[1] || '').trim().substring(0, 7);
+          if (sku7 && !idx.has(sku7)) idx.set(sku7, {
+              marca: String(raw[13] || '').trim(),
+              gender: String(raw[2] || '').trim().toUpperCase(),
+              genderRims: String(raw[3] || '').trim().toUpperCase(),
+              coleccion: String(raw[9] || '').trim()
+          });
+      });
+
+      const CAMPOS = [
+          { k: 'marca', rotulo: 'Marca' },
+          { k: 'coleccion', rotulo: 'Temporada' },
+          { k: 'gender', rotulo: 'Familia' },
+          { k: 'genderRims', rotulo: 'Categoría' }
+      ];
+      // Un campo vacío en el Maestro no es una corrección: es un dato que falta. Si se
+      // aplicara, se borraría lo que la tarea sí tenía.
+      const difs = [];
+      enRango.forEach(t => (t.items || []).forEach(art => {
+          const nuevo = idx.get(art.sku7);
+          if (!nuevo) return;
+          CAMPOS.forEach(c => {
+              const actual = String(art[c.k] || '').trim();
+              const propuesto = String(nuevo[c.k] || '').trim();
+              if (!propuesto || propuesto === actual) return;
+              difs.push({ tareaId: t.id, fecha: t.fecha, sku7: art.sku7, campo: c.k, rotulo: c.rotulo, actual: actual || '(vacío)', propuesto });
+          });
+      }));
+
+      if (!difs.length) {
+          showPremiumAlert('TODO AL DÍA',
+              `Las ${enRango.length} tareas del rango coinciden con el catálogo publicado (${m.filas.toLocaleString('es-PE')} artículos). No hay nada que corregir.`,
+              'success');
+          return;
+      }
+
+      const corto = (id) => String(id).includes('_') ? String(id).split('_')[1] : id;
+      const modal = document.createElement('div');
+      modal.id = 'refrescarMaestroModal';
+      modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; padding:2rem 0; overflow-y:auto;';
+      modal.innerHTML = `
+          <div class="glass-panel" style="width:95%; max-width:900px; max-height:88vh; display:flex; flex-direction:column; border:1px solid rgba(250,204,21,0.3); border-radius:16px; background:#1e293b; overflow:hidden;">
+              <div style="padding:1.4rem 1.6rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <h2 style="margin:0; font-size:1.1rem; color:#fff; display:flex; align-items:center; gap:10px;">
+                      <span style="background:rgba(250,204,21,0.12); padding:7px 9px; border-radius:9px;">🏷️</span> Corregir datos desde el Maestro
+                  </h2>
+                  <p style="color:var(--text-muted); font-size:0.8rem; margin:10px 0 0 0; line-height:1.5;">
+                      Se comparó lo que quedó guardado en las <b style="color:#fff;">${enRango.length}</b> tareas del rango
+                      contra el catálogo publicado (<b style="color:#fff;">${m.filas.toLocaleString('es-PE')}</b> artículos${m.fecha ? `, ${formatDateTime(m.fecha)}` : ''}).
+                      Solo se listan las diferencias. Lo que no marques queda como está.
+                  </p>
+              </div>
+
+              <div style="flex:1; overflow-y:auto; padding:1.2rem 1.6rem;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
+                      <thead style="position:sticky; top:0; background:#1e293b;">
+                          <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                              <th style="padding:8px 6px; text-align:center; width:36px;"><input type="checkbox" id="rmAll" checked></th>
+                              <th style="padding:8px 6px; text-align:left;">Tarea</th>
+                              <th style="padding:8px 6px; text-align:left;">Artículo</th>
+                              <th style="padding:8px 6px; text-align:left;">Dato</th>
+                              <th style="padding:8px 6px; text-align:left;">Dice la tarea</th>
+                              <th style="padding:8px 6px; text-align:left;">Dice el Maestro</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          ${difs.map((d, i) => `
+                              <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                                  <td style="padding:7px 6px; text-align:center;"><input type="checkbox" class="rmChk" data-i="${i}" checked></td>
+                                  <td style="padding:7px 6px; color:#fff; font-weight:700;">${corto(d.tareaId)}<div style="color:var(--text-muted); font-weight:400; font-size:0.72rem;">${String(d.fecha).split('-').reverse().join('/')}</div></td>
+                                  <td style="padding:7px 6px;">${d.sku7}</td>
+                                  <td style="padding:7px 6px; color:var(--text-muted);">${d.rotulo}</td>
+                                  <td style="padding:7px 6px; color:#ef4444;">${d.actual}</td>
+                                  <td style="padding:7px 6px; color:#22c55e; font-weight:700;">${d.propuesto}</td>
+                              </tr>`).join('')}
+                      </tbody>
+                  </table>
+              </div>
+
+              <div style="padding:1.2rem 1.6rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:12px; align-items:center;">
+                  <button id="rmAplicar" class="btn" style="width:auto; padding:0.8rem 1.6rem; font-weight:800; font-size:0.78rem; background:linear-gradient(135deg,#facc15,#f59e0b); border:none; border-radius:10px; color:#1e293b; cursor:pointer;">APLICAR A LO MARCADO</button>
+                  <button id="rmCancelar" style="background:none; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); padding:0.8rem 1.3rem; border-radius:10px; cursor:pointer; font-size:0.78rem; font-weight:700;">Cancelar</button>
+                  <span style="color:var(--text-muted); font-size:0.76rem; margin-left:auto;">${difs.length} diferencia${difs.length !== 1 ? 's' : ''} encontrada${difs.length !== 1 ? 's' : ''}</span>
+              </div>
+          </div>`;
+      document.body.appendChild(modal);
+
+      const cerrar = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); };
+      document.getElementById('rmCancelar').onclick = cerrar;
+      document.getElementById('rmAll').onchange = (e) => {
+          document.querySelectorAll('.rmChk').forEach(c => { c.checked = e.target.checked; });
+      };
+
+      document.getElementById('rmAplicar').onclick = async () => {
+          const elegidas = Array.from(document.querySelectorAll('.rmChk')).filter(c => c.checked).map(c => difs[Number(c.dataset.i)]);
+          if (!elegidas.length) { showPremiumAlert('SIN SELECCIÓN', 'Marcá al menos una diferencia para aplicar.', 'warning'); return; }
+
+          const btn = document.getElementById('rmAplicar');
+          btn.disabled = true; btn.textContent = 'APLICANDO…';
+
+          // Se agrupa por tarea+artículo para tocar cada uno una sola vez
+          const porTarea = new Map();
+          elegidas.forEach(d => {
+              if (!porTarea.has(d.tareaId)) porTarea.set(d.tareaId, []);
+              porTarea.get(d.tareaId).push(d);
+          });
+
+          const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+          const sello = new Date().toISOString();
+
+          await guardarBloqueFusionado(base => base.map(t => {
+              const cambios = porTarea.get(t.id);
+              if (!cambios) return t;
+              const items = (t.items || []).map(art => {
+                  const mios = cambios.filter(c => c.sku7 === art.sku7);
+                  if (!mios.length) return art;
+                  const copia = { ...art };
+                  mios.forEach(c => { copia[c.campo] = c.propuesto; });
+                  return copia;
+              });
+              // Queda el rastro de la corrección: qué se cambió, quién y cuándo.
+              const previas = Array.isArray(t.correcciones) ? t.correcciones : [];
+              return { ...t, items, correcciones: [...previas, {
+                  fecha: sello, usuario: session.username || '---',
+                  cambios: cambios.map(c => ({ sku7: c.sku7, campo: c.campo, de: c.actual, a: c.propuesto }))
+              }] };
+          }));
+
+          cerrar();
+          // Solo se repinta si la pantalla de Tareas Día es la que está a la vista: desde
+          // Config. Tareas comparten contenedor y repintar la sacaría de su pestaña.
+          if (window.renderAlmacenajeTareas && window.__almacenajeContainer
+              && window.__almacenajeContainer.dataset.vista === 'almacenaje') {
+              window.renderAlmacenajeTareas(window.__almacenajeContainer);
+          }
+          showPremiumAlert('DATOS CORREGIDOS',
+              `Se aplicaron ${elegidas.length} corrección${elegidas.length !== 1 ? 'es' : ''} en ${porTarea.size} tarea${porTarea.size !== 1 ? 's' : ''}.\n\nQuedó registrado quién y cuándo.`,
+              'success');
+      };
+  };
+
   const renderConfigTareas = async (container) => {
     if (!container) return;
     // Esta pantalla y la de KPI comparten el mismo contenedor. Si el usuario cambia de
@@ -18847,9 +19037,47 @@ window.showCellModal = function(htmlContent) {
                     La meta se elige por la <b style="color:rgba(255,255,255,0.55);">fecha de la tarea</b>, no por la de hoy: un reporte de mayo sigue midiendo con la meta que estaba vigente en mayo. Para dejar de usar una regla usá 🕘 (cerrar vigencia), no el borrado.
                 </div>
             </div>
+
+            <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(250,204,21,0.3); border-radius:14px; overflow:hidden;">
+                <div style="padding:1rem 1.2rem; background:rgba(250,204,21,0.07); border-bottom:1px solid rgba(250,204,21,0.2);">
+                    <h3 style="color:#facc15; font-weight:900; margin:0 0 2px 0; font-size:0.92rem; letter-spacing:1px; text-transform:uppercase;">🏷️ CORREGIR DATOS DEL ARTÍCULO</h3>
+                    <div style="font-size:0.68rem; color:rgba(250,204,21,0.6); font-weight:600;">Cuando el Maestro venía con un dato mal — marca, temporada, familia o categoría</div>
+                </div>
+                <div style="padding:1.1rem 1.2rem; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                        <span style="font-size:0.85rem; color:#facc15;">📅</span>
+                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
+                        <input type="date" id="cfg_corr_desde" value="${window.__correccionDesde}" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;">
+                    </div>
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                        <span style="font-size:0.85rem; color:#facc15;">📅</span>
+                        <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
+                        <input type="date" id="cfg_corr_hasta" value="${window.__correccionHasta}" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:dark;">
+                    </div>
+                    <button id="cfg_corregir" class="btn" style="width:auto; padding:7px 16px; font-size:0.72rem; background:rgba(250,204,21,0.12); color:#facc15; border:1px solid rgba(250,204,21,0.35); font-weight:800;">🏷️ CORREGIR DATOS</button>
+                </div>
+                <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(250,204,21,0.12); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.7;">
+                    Trae el catálogo publicado, lo compara con lo que quedó guardado en las tareas del rango y <b style="color:rgba(255,255,255,0.55);">muestra solo las diferencias</b>: aplicás las que marques y lo demás queda como está. Un campo vacío en el Maestro no cuenta como corrección.<br>
+                    Cambiar datos <b style="color:rgba(255,255,255,0.55);">mueve números ya presentados</b>, porque las metas se aplican por categoría. Queda registrado qué se cambió, quién y cuándo.
+                </div>
+            </div>
         </div>`;
 
         container.querySelector('#cfg_nueva').onclick = () => abrirModal(null);
+
+        // El rango se guarda en window para que sobreviva a los repintados de esta pantalla
+        const inDesde = container.querySelector('#cfg_corr_desde');
+        const inHasta = container.querySelector('#cfg_corr_hasta');
+        inDesde.onchange = () => { window.__correccionDesde = inDesde.value; };
+        inHasta.onchange = () => { window.__correccionHasta = inHasta.value; };
+        const btnCorregir = container.querySelector('#cfg_corregir');
+        btnCorregir.onclick = async () => {
+            const d = inDesde.value, h = inHasta.value;
+            if (!d || !h) { showPremiumAlert('FALTA EL RANGO', 'Elegí la fecha DE y la fecha HASTA.', 'warning'); return; }
+            if (d > h) { showPremiumAlert('RANGO AL REVÉS', 'La fecha DE tiene que ser anterior a la fecha HASTA.', 'warning'); return; }
+            window.__correccionDesde = d; window.__correccionHasta = h;
+            await withLoading(btnCorregir, '⌛ COMPARANDO...', () => window.openRefrescarMaestroModal(d, h));
+        };
         container.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
             abrirModal(metasService.getReglas().find(r => r.id === b.dataset.edit));
         });
@@ -20087,9 +20315,8 @@ window.showCellModal = function(htmlContent) {
                 <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 AUDITAR WMS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.openRefrescarMaestroModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:rgba(250,204,21,0.12); color:#facc15; border:1px solid rgba(250,204,21,0.35); font-weight:800; margin-left:5px;" title="Corregir marca, temporada o categoría cuando el Maestro venía con un dato mal">🏷️ CORREGIR DATOS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--primary); color:#fff; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" title="Auditar WMS: cruza lo que dice la tarea contra lo que dice el WMS" style="width:auto; padding:6px 12px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 WMS</button>` : ''}
                 </div>
 
                 ${isDetail ? `
@@ -21343,7 +21570,8 @@ window.showCellModal = function(htmlContent) {
     };
     window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
     // Recibe el botón para que muestre que está trabajando: armar el Excel con muchas tareas tarda
-    window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛ GENERANDO...', () => exportAlmacenajeExcel());
+    // El botón es solo el icono: el rótulo de espera va sin texto para que no se estire
+    window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛', () => exportAlmacenajeExcel());
 
     // --- LÓGICA DE AUDITORÍA WMS ---
     // ========================================================================
@@ -21880,7 +22108,7 @@ window.showCellModal = function(htmlContent) {
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `Auditoria_WMS_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        link.download = `Auditoria_WMS_${getLogicalDate()}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -21905,172 +22133,6 @@ window.showCellModal = function(htmlContent) {
     };
 
     // ── 8. Abrir el modal ───────────────────────────────────────────────────
-    /**
-     * Corregir marca, temporada o categoría de tareas ya generadas.
-     *
-     * Los datos del artículo quedan estampados en la tarea a propósito: un reporte de julio
-     * tiene que seguir diciendo lo que decía en julio. Pero el Maestro lo arma Comercial, y a
-     * veces llega con un dato mal —un artículo marcado como temporada antigua cuando era
-     * actual—. Sin esto, ese error quedaba grabado para siempre en las tareas de ese día.
-     *
-     * La corrección es EXPLÍCITA: el pasado no se mueve solo, se mueve porque alguien mira
-     * las diferencias y decide aplicarlas. Queda registrado quién y cuándo.
-     */
-    window.openRefrescarMaestroModal = async () => {
-        const desde = window.__almacenajeStartDate, hasta = window.__almacenajeEndDate;
-        const enRango = almacenajeTasksCache.filter(t => t && t.fecha >= desde && t.fecha <= hasta);
-        if (!enRango.length) {
-            showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango de fechas seleccionado.', 'info');
-            return;
-        }
-
-        // Se vuelve a traer el catálogo: la gracia es comparar contra el corregido, no contra
-        // el que esta PC tenga cargado desde hace horas.
-        try { await rescatarMaestro(true); } catch (e) { /* sigue con lo que haya */ }
-        const m = maestroEnUso();
-        if (m.origen === 'ninguno') {
-            showPremiumAlert('SIN CATÁLOGO', 'No hay Maestro de Artículos para comparar. Publicalo desde Configuración → Archivos Nube.', 'error');
-            return;
-        }
-
-        const idx = new Map();
-        (dataStore.articulos || []).forEach(row => {
-            const raw = Array.isArray(row) ? row : Object.values(row);
-            const sku7 = String(raw[1] || '').trim().substring(0, 7);
-            if (sku7 && !idx.has(sku7)) idx.set(sku7, {
-                marca: String(raw[13] || '').trim(),
-                gender: String(raw[2] || '').trim().toUpperCase(),
-                genderRims: String(raw[3] || '').trim().toUpperCase(),
-                coleccion: String(raw[9] || '').trim()
-            });
-        });
-
-        const CAMPOS = [
-            { k: 'marca', rotulo: 'Marca' },
-            { k: 'coleccion', rotulo: 'Temporada' },
-            { k: 'gender', rotulo: 'Familia' },
-            { k: 'genderRims', rotulo: 'Categoría' }
-        ];
-        // Un campo vacío en el Maestro no es una corrección: es un dato que falta. Si se
-        // aplicara, se borraría lo que la tarea sí tenía.
-        const difs = [];
-        enRango.forEach(t => (t.items || []).forEach(art => {
-            const nuevo = idx.get(art.sku7);
-            if (!nuevo) return;
-            CAMPOS.forEach(c => {
-                const actual = String(art[c.k] || '').trim();
-                const propuesto = String(nuevo[c.k] || '').trim();
-                if (!propuesto || propuesto === actual) return;
-                difs.push({ tareaId: t.id, fecha: t.fecha, sku7: art.sku7, campo: c.k, rotulo: c.rotulo, actual: actual || '(vacío)', propuesto });
-            });
-        }));
-
-        if (!difs.length) {
-            showPremiumAlert('TODO AL DÍA',
-                `Las ${enRango.length} tareas del rango coinciden con el catálogo publicado (${m.filas.toLocaleString('es-PE')} artículos). No hay nada que corregir.`,
-                'success');
-            return;
-        }
-
-        const corto = (id) => String(id).includes('_') ? String(id).split('_')[1] : id;
-        const modal = document.createElement('div');
-        modal.id = 'refrescarMaestroModal';
-        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; padding:2rem 0; overflow-y:auto;';
-        modal.innerHTML = `
-            <div class="glass-panel" style="width:95%; max-width:900px; max-height:88vh; display:flex; flex-direction:column; border:1px solid rgba(250,204,21,0.3); border-radius:16px; background:#1e293b; overflow:hidden;">
-                <div style="padding:1.4rem 1.6rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-                    <h2 style="margin:0; font-size:1.1rem; color:#fff; display:flex; align-items:center; gap:10px;">
-                        <span style="background:rgba(250,204,21,0.12); padding:7px 9px; border-radius:9px;">🏷️</span> Corregir datos desde el Maestro
-                    </h2>
-                    <p style="color:var(--text-muted); font-size:0.8rem; margin:10px 0 0 0; line-height:1.5;">
-                        Se comparó lo que quedó guardado en las <b style="color:#fff;">${enRango.length}</b> tareas del rango
-                        contra el catálogo publicado (<b style="color:#fff;">${m.filas.toLocaleString('es-PE')}</b> artículos${m.fecha ? `, ${formatDateTime(m.fecha)}` : ''}).
-                        Solo se listan las diferencias. Lo que no marques queda como está.
-                    </p>
-                </div>
-
-                <div style="flex:1; overflow-y:auto; padding:1.2rem 1.6rem;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
-                        <thead style="position:sticky; top:0; background:#1e293b;">
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
-                                <th style="padding:8px 6px; text-align:center; width:36px;"><input type="checkbox" id="rmAll" checked></th>
-                                <th style="padding:8px 6px; text-align:left;">Tarea</th>
-                                <th style="padding:8px 6px; text-align:left;">Artículo</th>
-                                <th style="padding:8px 6px; text-align:left;">Dato</th>
-                                <th style="padding:8px 6px; text-align:left;">Dice la tarea</th>
-                                <th style="padding:8px 6px; text-align:left;">Dice el Maestro</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${difs.map((d, i) => `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                                    <td style="padding:7px 6px; text-align:center;"><input type="checkbox" class="rmChk" data-i="${i}" checked></td>
-                                    <td style="padding:7px 6px; color:#fff; font-weight:700;">${corto(d.tareaId)}<div style="color:var(--text-muted); font-weight:400; font-size:0.72rem;">${String(d.fecha).split('-').reverse().join('/')}</div></td>
-                                    <td style="padding:7px 6px;">${d.sku7}</td>
-                                    <td style="padding:7px 6px; color:var(--text-muted);">${d.rotulo}</td>
-                                    <td style="padding:7px 6px; color:#ef4444;">${d.actual}</td>
-                                    <td style="padding:7px 6px; color:#22c55e; font-weight:700;">${d.propuesto}</td>
-                                </tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="padding:1.2rem 1.6rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:12px; align-items:center;">
-                    <button id="rmAplicar" class="btn" style="width:auto; padding:0.8rem 1.6rem; font-weight:800; font-size:0.78rem; background:linear-gradient(135deg,#facc15,#f59e0b); border:none; border-radius:10px; color:#1e293b; cursor:pointer;">APLICAR A LO MARCADO</button>
-                    <button id="rmCancelar" style="background:none; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); padding:0.8rem 1.3rem; border-radius:10px; cursor:pointer; font-size:0.78rem; font-weight:700;">Cancelar</button>
-                    <span style="color:var(--text-muted); font-size:0.76rem; margin-left:auto;">${difs.length} diferencia${difs.length !== 1 ? 's' : ''} encontrada${difs.length !== 1 ? 's' : ''}</span>
-                </div>
-            </div>`;
-        document.body.appendChild(modal);
-
-        const cerrar = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); };
-        document.getElementById('rmCancelar').onclick = cerrar;
-        document.getElementById('rmAll').onchange = (e) => {
-            document.querySelectorAll('.rmChk').forEach(c => { c.checked = e.target.checked; });
-        };
-
-        document.getElementById('rmAplicar').onclick = async () => {
-            const elegidas = Array.from(document.querySelectorAll('.rmChk')).filter(c => c.checked).map(c => difs[Number(c.dataset.i)]);
-            if (!elegidas.length) { showPremiumAlert('SIN SELECCIÓN', 'Marcá al menos una diferencia para aplicar.', 'warning'); return; }
-
-            const btn = document.getElementById('rmAplicar');
-            btn.disabled = true; btn.textContent = 'APLICANDO…';
-
-            // Se agrupa por tarea+artículo para tocar cada uno una sola vez
-            const porTarea = new Map();
-            elegidas.forEach(d => {
-                if (!porTarea.has(d.tareaId)) porTarea.set(d.tareaId, []);
-                porTarea.get(d.tareaId).push(d);
-            });
-
-            const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
-            const sello = new Date().toISOString();
-
-            await guardarBloqueFusionado(base => base.map(t => {
-                const cambios = porTarea.get(t.id);
-                if (!cambios) return t;
-                const items = (t.items || []).map(art => {
-                    const mios = cambios.filter(c => c.sku7 === art.sku7);
-                    if (!mios.length) return art;
-                    const copia = { ...art };
-                    mios.forEach(c => { copia[c.campo] = c.propuesto; });
-                    return copia;
-                });
-                // Queda el rastro de la corrección: qué se cambió, quién y cuándo.
-                const previas = Array.isArray(t.correcciones) ? t.correcciones : [];
-                return { ...t, items, correcciones: [...previas, {
-                    fecha: sello, usuario: session.username || '---',
-                    cambios: cambios.map(c => ({ sku7: c.sku7, campo: c.campo, de: c.actual, a: c.propuesto }))
-                }] };
-            }));
-
-            cerrar();
-            if (window.renderAlmacenajeTareas && window.__almacenajeContainer) window.renderAlmacenajeTareas(window.__almacenajeContainer);
-            showPremiumAlert('DATOS CORREGIDOS',
-                `Se aplicaron ${elegidas.length} corrección${elegidas.length !== 1 ? 'es' : ''} en ${porTarea.size} tarea${porTarea.size !== 1 ? 's' : ''}.\n\nQuedó registrado quién y cuándo.`,
-                'success');
-        };
-    };
 
     window.openAuditModal = () => {
         const targetTasks = almacenajeTasksCache.filter(t =>
@@ -22650,7 +22712,7 @@ window.showCellModal = function(htmlContent) {
             }
 
             // Re-construir ISO conservando la fecha original de la tarea
-            const baseDate = task.fecha || new Date().toISOString().split('T')[0];
+            const baseDate = task.fecha || getLogicalDate();
             
             task.u1 = u1;
             task.u2 = u2 || '';

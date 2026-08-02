@@ -11,12 +11,23 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0011';
+} from '../services_v245/csvHub_v6.js?v=29.0012';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0011';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0011';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0011';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0011';
+import * as adminService from '../services_v245/adminService.js?v=29.0012';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0012';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0012';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0012';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0012';
+
+/**
+ * El día operativo, no el del calendario.
+ *
+ * Antes se usaba new Date().toISOString(), que devuelve UTC: desde las 19:00 de Perú —justo
+ * cuando entra el turno noche— UTC ya está en el día siguiente, así que el reporte abría en
+ * mañana y los archivos bajaban con la fecha corrida. Va por la misma jornada que la web
+ * principal, para que los dos digan lo mismo.
+ */
+const getLogicalDate = () => jornadaService.fechaLogicaDe();
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -144,6 +155,14 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('token') || '';
 
+  // La jornada publicada, para que el corte del día sea el mismo que en la web principal.
+  // Si no responde se sigue igual: el servicio cae a lo último guardado o a los valores base.
+  try {
+    await jornadaService.cargarJornada();
+  } catch(e) {
+    console.warn('[Reportes] no se pudo traer la jornada, se usa la de esta PC:', e);
+  }
+
   // Cargar datos persistentes
   try {
     await initPersistentData();
@@ -203,7 +222,7 @@ async function init() {
   }
 
   // 4. Establecer fechas de filtro (persistir desde localStorage, o hoy por defecto)
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLogicalDate();
   filterStart = localStorage.getItem('rpt_filterStart') || today;
   filterEnd   = localStorage.getItem('rpt_filterEnd')   || today;
 
@@ -262,7 +281,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0011</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0012</span>
     </div>`;
 
   buildTabNav();
@@ -528,8 +547,8 @@ window.__refreshMarcasReport = () => renderMarcasReport();
 function renderMarcasReport() {
   const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasks = getFilteredTasks();
-  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
-  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  window.__kpiStartDate = filterStart || getLogicalDate();
+  window.__kpiEndDate = filterEnd || getLogicalDate();
   // La primera vez cada reporte arranca con el rango del filtro de arriba; a partir
   // de ahí cada uno se mueve por su cuenta hasta que se toque el filtro general.
   if (!window.__repMarcasStart) window.__repMarcasStart = window.__kpiStartDate;
@@ -705,8 +724,8 @@ function renderRendimientoOperarios() {
   const tasks = getFilteredTasks();
   const filteredTasks = tasks.filter(t => t.fecha >= filterStart && t.fecha <= filterEnd);
   const weeklyDailyTasks = tasks;
-  window.__kpiStartDate = filterStart || new Date().toISOString().split('T')[0];
-  window.__kpiEndDate = filterEnd || new Date().toISOString().split('T')[0];
+  window.__kpiStartDate = filterStart || getLogicalDate();
+  window.__kpiEndDate = filterEnd || getLogicalDate();
   area.innerHTML = `<div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:0.8rem 1.2rem; font-family:var(--font-sans, 'Inter', sans-serif); color:#1C2B3A; display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="border-left: 3px solid #B45309; padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
@@ -1778,8 +1797,8 @@ async function renderHistorialBuffer() {
 
 
 
-    const savedFrom = sessionStorage.getItem('buffer_hist_date_from') || new Date().toISOString().slice(0,10);
-    const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || new Date().toISOString().slice(0,10);
+    const savedFrom = sessionStorage.getItem('buffer_hist_date_from') || getLogicalDate();
+    const savedTo   = sessionStorage.getItem('buffer_hist_date_to')   || getLogicalDate();
 
     container.innerHTML = `
         <div class="animate-fade-in" style="padding:0.5rem; display:flex; flex-direction:column; gap:1.5rem; width:100%;">
@@ -2131,7 +2150,7 @@ async function renderHistorialBuffer() {
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Conciliacion Paletas');
-        XLSX.writeFile(wb, `Historial_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, `Historial_Conciliacion_${getLogicalDate()}.xlsx`);
     };
 
     // ── Exportar Temporadas ───────────────────────────────────────────────────
@@ -2143,7 +2162,7 @@ async function renderHistorialBuffer() {
         const ws = XLSX.utils.aoa_to_sheet(formatted);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Buffer Temporada');
-        XLSX.writeFile(wb, `Reporte_Buffer_Temporada_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, `Reporte_Buffer_Temporada_${getLogicalDate()}.xlsx`);
     };
 
     // ── Filtros de fecha ──────────────────────────────────────────────────────
