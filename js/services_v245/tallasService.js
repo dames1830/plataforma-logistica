@@ -176,30 +176,88 @@ export const sumaDe = (cat) => {
     return Math.round(Object.values(c.porcentajes).reduce((a, b) => a + Number(b || 0), 0) * 100) / 100;
 };
 
+/** El factor de empaque por defecto. Las ojotas en bolsa vienen en 20 o 40. */
+export const FACTOR_POR_DEFECTO = 10;
+
 /**
  * Reparte los pares que van al piso entre las tallas de esa categoría.
  *
- * Se reparte por parte entera y los pares que sobran del redondeo se le dan a las tallas con
- * mayor porcentaje: si a la 37 le toca el 25% no puede terminar con un par menos que la 35
- * por un tema de decimales.
+ * CADA TALLA SE REDONDEA AL FACTOR, no solo el total. A ninguna talla se le puede dar 66
+ * pares: van 70, que son seis cajas. Ni al piso ni a reserva se mandan unidades sueltas.
+ *
+ * Eso hace que el total se corra un poco del objetivo —con 800 pares de 02 WOMEN salen 810,
+ * un 1,25% de más— y está bien: Daniel lo dio por bueno hasta un 1,5%. Lo que no se puede es
+ * dejar 53 abajo y mandar 47 arriba.
+ *
+ * Los porcentajes efectivos dejan de ser los escritos: un 25% puede terminar siendo 24,7%.
+ * Por eso se devuelven los dos, el pedido y el que realmente quedó.
  */
-export const repartirPorTalla = (categoria, pares) => {
-    const c = tallasActual().categorias[String(categoria || '').toUpperCase()];
-    const total = Math.max(0, Math.round(Number(pares) || 0));
-    if (!c || !total) return null;
+export const repartirPorTalla = (categoria, pares, factor) =>
+    repartirCon(tallasActual().categorias[String(categoria || '').toUpperCase()], pares, factor);
+
+/**
+ * El mismo reparto, pero sobre una categoría que se pasa a mano. Lo usa la pantalla de
+ * configuración para mostrar el ejemplo con lo que se está editando, que todavía no se
+ * publicó y por lo tanto no está en tallasActual().
+ */
+export const repartirCon = (c, pares, factor) => {
+    const objetivo = Math.max(0, Math.round(Number(pares) || 0));
+    const f = Math.max(1, Math.round(Number(factor) || FACTOR_POR_DEFECTO));
+    if (!c || !objetivo) return null;
 
     const suma = Object.values(c.porcentajes).reduce((a, b) => a + Number(b || 0), 0);
     if (suma <= 0) return null;
 
     const filas = c.tallas.map(t => {
-        const exacto = total * (Number(c.porcentajes[t]) || 0) / suma;
-        return { talla: t, porcentaje: Number(c.porcentajes[t]) || 0, exacto, pares: Math.floor(exacto),
-                 comercial: c.comerciales.includes(t) };
+        const exacto = objetivo * (Number(c.porcentajes[t]) || 0) / suma;
+        // Al múltiplo más cercano. Nunca a cero si le tocaba algo: la talla igual va, con
+        // una caja, o quedaría sin representación en el piso.
+        let redondeado = Math.round(exacto / f) * f;
+        if (redondeado === 0 && exacto > 0) redondeado = f;
+        return {
+            talla: t,
+            comercial: c.comerciales.includes(t),
+            porcentaje: Number(c.porcentajes[t]) || 0,
+            exacto: Math.round(exacto * 10) / 10,
+            pares: redondeado,
+            cajas: redondeado / f
+        };
     });
 
-    let sobran = total - filas.reduce((a, f) => a + f.pares, 0);
-    [...filas].sort((a, b) => b.porcentaje - a.porcentaje || (b.exacto - b.pares) - (a.exacto - a.pares))
-        .forEach(f => { if (sobran > 0) { f.pares++; sobran--; } });
+    // Redondear cada talla por su cuenta puede irse lejos del objetivo cuando hay muchas
+    // tallas y a cada una le toca cerca de media caja: 19 tallas de KIDS a 42,1 pares
+    // redondean todas a 40 y se pierden 40 pares. Se corrige moviendo CAJAS ENTERAS —nunca
+    // unidades— en las tallas que más se desviaron, hasta que acercarse más no se pueda.
+    const distancia = (t) => Math.abs(t - objetivo);
+    let total = filas.reduce((a, x) => a + x.pares, 0);
+    for (let vuelta = 0; vuelta < 500; vuelta++) {
+        if (total === objetivo) break;
+        let cand = null;
+        if (total > objetivo) {
+            // sacar una caja a la talla que más de más recibió, sin dejarla en cero
+            filas.forEach(x => {
+                if (x.pares <= f) return;
+                if (!cand || (x.pares - x.exacto) > (cand.pares - cand.exacto)) cand = x;
+            });
+            if (!cand || distancia(total - f) >= distancia(total)) break;
+            cand.pares -= f; total -= f;
+        } else {
+            filas.forEach(x => {
+                if (!cand || (x.exacto - x.pares) > (cand.exacto - cand.pares)) cand = x;
+            });
+            if (!cand || distancia(total + f) >= distancia(total)) break;
+            cand.pares += f; total += f;
+        }
+    }
+    filas.forEach(x => {
+        x.cajas = x.pares / f;
+        x.porcentajeReal = total ? Math.round((100 * x.pares / total) * 10) / 10 : 0;
+    });
 
-    return { total, filas, sumaPorcentajes: Math.round(suma * 100) / 100 };
+    return {
+        objetivo, total, factor: f, filas,
+        desvio: total - objetivo,
+        desvioPct: objetivo ? Math.round((100 * (total - objetivo) / objetivo) * 10) / 10 : 0,
+        sumaPorcentajes: Math.round(suma * 100) / 100
+    };
 };

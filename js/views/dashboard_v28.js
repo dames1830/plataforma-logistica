@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0018';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0019';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0018';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0018';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0018';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0018';
-import * as metasService from '../services_v245/metasService.js?v=29.0018';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0018';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0018';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0018';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0018';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0018';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0018';
+import * as adminService from '../services_v245/adminService.js?v=29.0019';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0019';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0019';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0019';
+import * as metasService from '../services_v245/metasService.js?v=29.0019';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0019';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0019';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0019';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0019';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0019';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0019';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0018';
+const VERSION = '29.0019';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0018');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0019');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0018 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0019 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14575,6 +14575,8 @@ const renderRFSection = (container) => {
    */
   let _tallasBorrador = null;
   let _catTallaElegida = '02 WOMEN';
+  let _paresEjemplo = 800;
+  let _factorEjemplo = 10;
 
   const pintarRepartoTallas = async (panel) => {
     if (!panel) return;
@@ -14592,7 +14594,7 @@ const renderRFSection = (container) => {
       const c = cfg.categorias[_catTallaElegida];
       const suma = Math.round(c.tallas.reduce((a, t) => a + (Number(c.porcentajes[t]) || 0), 0) * 100) / 100;
       const ok = Math.abs(suma - 100) < 0.05;
-      const EJEMPLO = 800;
+      const EJEMPLO = _paresEjemplo;
 
       panel.innerHTML = `
       <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(34,197,94,0.3); border-radius:14px; overflow:hidden;">
@@ -14619,9 +14621,12 @@ const renderRFSection = (container) => {
         </div>
 
         <div style="padding:1.2rem; overflow-x:auto;">
-          <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); margin-bottom:12px;">
-            Marcá cuáles son las comerciales y escribí el porcentaje de cada una. La columna de la derecha muestra
-            cómo quedarían <b style="color:rgba(255,255,255,0.6);">${EJEMPLO} pares</b> repartidos con estos números.
+          <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); margin-bottom:12px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+            <span>Marcá cuáles son las comerciales y escribí el porcentaje. Abajo se ve cómo quedarían</span>
+            <input type="number" id="tll_ejemplo" min="0" step="10" value="${EJEMPLO}" style="width:78px; padding:4px 6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-weight:800; text-align:center;">
+            <span>pares repartidos, en cajas de</span>
+            <input type="number" id="tll_factor" min="1" step="1" value="${_factorEjemplo}" style="width:60px; padding:4px 6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-weight:800; text-align:center;">
+            <span id="tll_desvio" style="font-weight:800;"></span>
           </div>
           <div style="display:flex; gap:9px; min-width:min-content; align-items:flex-start;">
             ${c.tallas.map(t => {
@@ -14650,24 +14655,44 @@ const renderRFSection = (container) => {
         </div>
 
         <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.12); font-size:0.67rem; color:rgba(255,255,255,0.33); line-height:1.7;">
-          Esto se aplica <b style="color:rgba(255,255,255,0.55);">después</b> de saber cuántos pares van al piso, y antes de buscarles cuerpo.
-          Los pares que sobran del redondeo se le dan a las tallas de mayor porcentaje, para que la más comercial nunca termine con menos que una de las otras.
+          Esto se aplica <b style="color:rgba(255,255,255,0.55);">después</b> de saber cuántos pares van al piso, y antes de buscarles cuerpo.<br>
+          <b style="color:rgba(255,255,255,0.55);">Cada talla se redondea al factor</b>, no solo el total: a ninguna se le dan 66 pares, van 70, que son 7 cajas.
+          Por eso el total se corre un poco del objetivo y el porcentaje que queda no es exactamente el escrito — al lado de cada talla se ve el que realmente sale.
+          Ni al piso ni a reserva se mandan unidades sueltas.
         </div>
       </div>`;
 
-      // El ejemplo se calcula con lo que hay en pantalla, sin tocar lo publicado
+      // El ejemplo se calcula con lo que hay en pantalla, sin tocar lo publicado, y con el
+      // mismo redondeo al factor que va a usar la tarea de verdad.
       const refrescarEjemplo = () => {
         const cc = cfg.categorias[_catTallaElegida];
-        const s = cc.tallas.reduce((a, t) => a + (Number(cc.porcentajes[t]) || 0), 0);
-        cc.tallas.forEach(t => {
-          const el = panel.querySelector(`[data-ej="${t}"]`);
-          if (el) el.textContent = s > 0 ? Math.round(EJEMPLO * (Number(cc.porcentajes[t]) || 0) / s) + ' pares' : '—';
+        const r = tallasService.repartirCon(cc, EJEMPLO, _factorEjemplo);
+        const dv = panel.querySelector('#tll_desvio');
+        if (!r) {
+          cc.tallas.forEach(t => { const el = panel.querySelector(`[data-ej="${t}"]`); if (el) el.textContent = '—'; });
+          if (dv) dv.textContent = '';
+          return;
+        }
+        r.filas.forEach(f => {
+          const el = panel.querySelector(`[data-ej="${f.talla}"]`);
+          if (el) el.innerHTML = `<b>${f.pares}</b> <span style="color:rgba(255,255,255,0.3); font-weight:400;">(${f.cajas}c · ${f.porcentajeReal}%)</span>`;
         });
+        if (dv) {
+          const col = Math.abs(r.desvioPct) <= 1.5 ? '#22c55e' : '#facc15';
+          dv.innerHTML = `→ salen <b style="color:${col};">${r.total}</b> pares` +
+            (r.desvio ? ` <span style="color:${col};">(${r.desvio > 0 ? '+' : ''}${r.desvio}, ${r.desvioPct > 0 ? '+' : ''}${r.desvioPct}%)</span>` : '');
+        }
       };
       refrescarEjemplo();
 
       const marcar = () => { const e = panel.querySelector('#tll_estado'); if (e) e.textContent = '● sin publicar'; };
 
+      panel.querySelector('#tll_ejemplo').oninput = (e) => {
+        _paresEjemplo = Math.max(0, parseInt(e.target.value, 10) || 0); refrescarEjemplo();
+      };
+      panel.querySelector('#tll_factor').oninput = (e) => {
+        _factorEjemplo = Math.max(1, parseInt(e.target.value, 10) || 1); refrescarEjemplo();
+      };
       panel.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { _catTallaElegida = b.dataset.cat; dibujar(); });
       panel.querySelectorAll('[data-pct]').forEach(i => i.oninput = () => {
         const v = parseFloat(i.value);
