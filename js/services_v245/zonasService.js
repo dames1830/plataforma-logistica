@@ -373,3 +373,129 @@ export const zonasActivas = () => {
     const z = zonasActual().zonas;
     return Object.keys(z).filter(k => z[k].activa);
 };
+
+// ── LA SUGERENCIA ────────────────────────────────────────────────────────────
+
+/**
+ * Los cuerpos libres MÁS SEGUIDOS que se pueda, dentro de las columnas que correspondan.
+ *
+ * Daniel lo hace así: empieza por el primero libre y camina hacia adelante; si el que sigue
+ * está ocupado, salta al próximo. De todas las tandas posibles se elige la que ocupa el
+ * tramo más corto, que es lo mismo pero sin quedarse con la primera que aparece: cinco
+ * cuerpos desparramados por una columna entera es peor que cinco seguidos en otra.
+ *
+ * ocupados: Set con claves 'columna-cuerpo' (números sin ceros, ej. '5-14').
+ */
+export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
+    const z = zonasActual().zonas[zona];
+    if (!z || cuantos < 1) return { cuerpos: [], completo: false, libresEnLaFranja: 0 };
+
+    const libresDe = (col) => {
+        const salida = [];
+        for (let cu = 1; cu <= z.cuerpos; cu++) {
+            if (esPasillo(zona, col, cu)) continue;
+            if (!ocupados.has(`${col}-${cu}`)) salida.push(cu);
+        }
+        return salida;
+    };
+
+    let total = 0, mejor = null;
+    columnas.forEach(col => {
+        const L = libresDe(col);
+        total += L.length;
+        for (let i = 0; i + cuantos <= L.length; i++) {
+            const tramo = L[i + cuantos - 1] - L[i];
+            if (!mejor || tramo < mejor.tramo) {
+                mejor = { tramo, columna: col, cuerpos: L.slice(i, i + cuantos) };
+            }
+        }
+    });
+
+    if (mejor) {
+        return {
+            cuerpos: mejor.cuerpos.map(cu => ({ columna: mejor.columna, cuerpo: cu })),
+            completo: true,
+            seguidos: mejor.tramo === cuantos - 1,
+            libresEnLaFranja: total
+        };
+    }
+
+    // No alcanza para todos: se devuelve lo que hay, para poder decir cuánto falta
+    const sueltos = [];
+    columnas.forEach(col => libresDe(col).forEach(cu => sueltos.push({ columna: col, cuerpo: cu })));
+    return { cuerpos: sueltos.slice(0, cuantos), completo: false, seguidos: false, libresEnLaFranja: total };
+};
+
+/**
+ * Dónde almacenar un artículo que está en el buffer. Los cinco pasos, en orden:
+ *
+ *   0. ¿Es OTHERS? Entonces manda la subcategoría, no la marca.
+ *   1. La zona sale de la marca.
+ *   2. Las columnas salen de la temporada (o de que sea saldo, o escolar).
+ *   3. Cuántos cuerpos: los pares divididos por lo que entra en un cuerpo de esa serie.
+ *   4. Cuáles: los libres más seguidos.
+ *   5. Si no hay, no se improvisa: va a Slotting.
+ *
+ * `yaTiene` son los cuerpos donde el artículo ya vive. Si tiene, es reposición y se
+ * devuelven esos: no se manda a un cuerpo nuevo lo que ya tiene su lugar.
+ */
+export const planificarAlmacenaje = (art, ocupadosPorZona) => {
+    const cfg = zonasActual();
+    const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });
+
+    // REPOSICIÓN antes que todo lo demás: si el artículo ya vive en el almacén, va a sus
+    // mismos cuerpos y no hace falta preguntarle nada a la configuración. Vale incluso en
+    // las zonas que todavía no tienen reglas cargadas —ahí está la mayor parte del volumen—,
+    // porque devolver algo a su lugar no depende de saber qué temporada lleva cada columna.
+    if (art.yaTiene && art.yaTiene.length) {
+        return paso('reposicion', 'El artículo ya está en el almacén: va a sus mismos cuerpos.',
+            { zona: art.yaTiene[0].zona, cuerpos: art.yaTiene, cuantos: art.yaTiene.length });
+    }
+
+    // Paso 0 y 1: la zona
+    let zona = null, porOthers = false;
+    if (esOthers(art.genderRims)) {
+        zona = zonaDeOthers(art.subcategoria);
+        porOthers = true;
+        if (!zona) return paso('sin-regla', `Es ${cfg.categoriaOthers} y su subcategoría "${art.subcategoria || '(vacía)'}" no está configurada.`);
+    } else {
+        zona = zonaDeMarca(art.marca);
+        if (!zona) return paso('sin-regla', `La marca "${art.marca || '(vacía)'}" no tiene zona configurada.`);
+    }
+
+    const z = cfg.zonas[zona];
+    if (!z || !z.activa) return paso('sin-reglas-zona', `${z ? z.etiqueta : zona} todavía no tiene reglas cargadas.`, { zona });
+
+    // Paso 2: la franja
+    const esSaldo = Number(art.pares) < z.saldoMenorA;
+    const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
+    let franja;
+    if (esEscolar && columnasDeFranja(zona, 'escolar').length) franja = 'escolar';
+    else if (esSaldo && columnasDeFranja(zona, 'saldos').length) franja = 'saldos';
+    else franja = art.esTemporadaActual ? 'actual' : 'anterior';
+
+    const columnas = columnasDeFranja(zona, franja);
+    if (!columnas.length) return paso('sin-regla', `En ${z.etiqueta} no hay columnas de "${franja}".`, { zona, franja });
+
+    // Paso 3: cuántos cuerpos
+    const porCuerpo = densidadDe(zona, serieDe(art.sku7));
+    const cuantos = Math.max(1, Math.ceil(Number(art.pares) / porCuerpo));
+
+    // Paso 4 y 5
+    const r = elegirCuerpos(zona, columnas, cuantos, ocupadosPorZona[zona] || new Set());
+    const base = { zona, franja, cuantos, porCuerpo, cuerpos: r.cuerpos, seguidos: r.seguidos,
+                   libresEnLaFranja: r.libresEnLaFranja, porOthers };
+
+    if (!r.completo) {
+        return paso('slotting',
+            r.cuerpos.length
+                ? `Hacen falta ${cuantos} cuerpos y solo hay ${r.cuerpos.length} libres en la franja.`
+                : `No hay ningún cuerpo libre en la franja de "${franja}".`,
+            base);
+    }
+    return paso('ok', null, base);
+};
+
+/** 'SEL-08-15', para mostrar. */
+export const nombreCuerpo = (zona, columna, cuerpo) =>
+    `${zona}-${String(columna).padStart(2, '0')}-${String(cuerpo).padStart(2, '0')}`;

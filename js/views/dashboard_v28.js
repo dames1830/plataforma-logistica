@@ -1,15 +1,15 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0016';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0017';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0016';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0016';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0016';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0016';
-import * as metasService from '../services_v245/metasService.js?v=29.0016';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0016';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0016';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0016';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0016';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0016';
+import * as adminService from '../services_v245/adminService.js?v=29.0017';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0017';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0017';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0017';
+import * as metasService from '../services_v245/metasService.js?v=29.0017';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0017';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0017';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0017';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0017';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0017';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -366,7 +366,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0016';
+const VERSION = '29.0017';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1163,6 +1163,9 @@ if (!window.__almacenajeEndDate) window.__almacenajeEndDate = getLogicalDate();
 // histórico, que no tiene por qué ser el que se esté mirando en Tareas Día.
 if (!window.__correccionDesde) window.__correccionDesde = getLogicalDate();
 if (!window.__correccionHasta) window.__correccionHasta = getLogicalDate();
+// La pantalla de prueba de la sugerencia lleva su propio rango
+if (!window.__sugStart) window.__sugStart = getLogicalDate();
+if (!window.__sugEnd) window.__sugEnd = getLogicalDate();
 // El panel de KPI abre con la semana laboral completa (lunes a sábado), no con un solo día
 const _semanaKpi = getSemanaLaboral();
 if (!window.__kpiStartDate) window.__kpiStartDate = _semanaKpi.desde;
@@ -1470,6 +1473,7 @@ const TABS = [
     { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
     { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' },
     { id: 'productividad', label: 'Productividad', icon: '📈' },
+    { id: 'sugerencia', label: 'Sugerencia (prueba)', icon: '🧭' },
     { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
@@ -3239,7 +3243,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0016');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0017');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11477,7 +11481,7 @@ const renderRFSection = (container) => {
     // Estas sub-pestañas no tienen el bypass del rol admin: lo que diga la matriz de
     // Configuración > Permisos es lo que manda, para todos los roles sin excepción.
     // Mientras nadie las haya configurado todavía, quedan visibles solo para admin.
-    const SUBTABS_SOLO_MATRIZ = ['config_tareas', 'productividad'];
+    const SUBTABS_SOLO_MATRIZ = ['config_tareas', 'productividad', 'sugerencia'];
     const allowedSubTabs = tabDef.subTabs.filter(sub => {
         if (SUBTABS_SOLO_MATRIZ.includes(sub.id)) {
             const valor = perms[`${tabId}_${sub.id}`];
@@ -11590,6 +11594,9 @@ const renderRFSection = (container) => {
     } else if (tabId === 'almacenaje' && activeSub === 'productividad') {
         await new Promise(r => setTimeout(r, 0));
         renderProductividad(container);
+    } else if (tabId === 'almacenaje' && activeSub === 'sugerencia') {
+        await new Promise(r => setTimeout(r, 0));
+        renderSugerenciaAlmacenaje(container);
     } else if (tabId === 'almacenaje' && activeSub === 'config_tareas') {
         await new Promise(r => setTimeout(r, 0));
         renderConfigTareas(container);
@@ -13470,7 +13477,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0016 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0017 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14553,6 +14560,210 @@ const renderRFSection = (container) => {
     } catch(e) {
       console.error('Error al guardar configuracion de analisis SKU:', e);
     }
+  };
+
+  /**
+   * SUGERENCIA DE UBICACIÓN — pantalla de prueba
+   *
+   * Muestra, al lado de cada tarea, dónde diría el sistema que hay que almacenar. NO toca la
+   * tarea ni guarda nada: es para comparar contra lo que hicieron los operarios esa noche y
+   * ver si las reglas aciertan, antes de que nadie dependa de ellas.
+   *
+   * Los cinco pasos viven en zonasService (planificarAlmacenaje); acá solo se juntan los
+   * datos que necesita y se pinta el resultado.
+   */
+  const renderSugerenciaAlmacenaje = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'sugerencia';
+    const sigueSiendoMia = () => container.isConnected && container.dataset.vista === 'sugerencia';
+
+    container.innerHTML = `<div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1rem;">
+        <div style="width:34px; height:34px; border:2px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Leyendo el almacén y calculando...</span>
+    </div>`;
+
+    await zonasService.cargarZonas();
+    await rescatarMaestro();
+    const stock = await getAreaData('almacenaje_activo');
+    if (!sigueSiendoMia()) return;
+
+    // Ficha de cada artículo, del Maestro
+    const ficha = new Map();
+    (dataStore.articulos || []).forEach(row => {
+      const raw = Array.isArray(row) ? row : Object.values(row);
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      if (s7 && !ficha.has(s7)) ficha.set(s7, {
+        genderRims: String(raw[3] || '').trim().toUpperCase(),
+        subcategoria: String(raw[5] || '').trim().toUpperCase(),
+        marca: String(raw[13] || '').trim(),
+        temporada: String(raw[14] || '').trim().toUpperCase()
+      });
+    });
+
+    // Qué cuerpos están ocupados hoy, y dónde vive cada artículo
+    const ocupados = {};              // zona -> Set('col-cuerpo')
+    const casaDe = new Map();         // sku7 -> Set('ZONA|col|cuerpo')
+    (stock || []).forEach(row => {
+      const raw = Array.isArray(row) ? row : Object.values(row);
+      const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
+      if (!ubi) return;
+      const p = ubi.split('-');
+      const zona = p[0];
+      if (!zonasService.zonasActual().zonas[zona] || p.length < 3) return;
+      const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
+      if (!col || !cue) return;
+      (ocupados[zona] = ocupados[zona] || new Set()).add(`${col}-${cue}`);
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      if (s7) {
+        if (!casaDe.has(s7)) casaDe.set(s7, new Set());
+        casaDe.get(s7).add(`${zona}|${col}|${cue}`);
+      }
+    });
+
+    const ACTUALES = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+
+    const pintar = () => {
+      if (!sigueSiendoMia()) return;
+      const desde = window.__sugStart, hasta = window.__sugEnd;
+      const tareas = (almacenajeTasksCache || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+
+      // Un cuerpo sugerido no puede ofrecerse dos veces en la misma corrida
+      const tomados = {};
+      Object.keys(ocupados).forEach(z => { tomados[z] = new Set(ocupados[z]); });
+
+      const filas = [];
+      tareas.forEach(t => (t.items || []).forEach(art => {
+        const s7 = String(art.sku7 || '').trim();
+        if (!s7) return;
+        const f = ficha.get(s7) || {};
+        const pares = Number(art.bufferQty) || 0;
+        if (pares <= 0) return;
+
+        const casa = Array.from(casaDe.get(s7) || []).map(k => {
+          const [z, c, cu] = k.split('|');
+          return { zona: z, columna: +c, cuerpo: +cu };
+        });
+
+        const tempTxt = String(f.temporada || art.coleccion || '').toUpperCase();
+        const plan = zonasService.planificarAlmacenaje({
+          sku7: s7,
+          marca: art.marca || f.marca,
+          genderRims: art.genderRims || f.genderRims,
+          subcategoria: f.subcategoria,
+          pares,
+          esTemporadaActual: ACTUALES.some(a => tempTxt.includes(a)),
+          yaTiene: casa
+        }, tomados);
+
+        // Lo sugerido queda reservado para las tareas que siguen
+        if (plan.estado === 'ok' && plan.cuerpos) {
+          plan.cuerpos.forEach(c => tomados[plan.zona] && tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`));
+        }
+        filas.push({ tarea: t, art, s7, pares, f, plan, casa });
+      }));
+
+      const cuenta = (e) => filas.filter(x => x.plan.estado === e).length;
+      const chip = (txt, n, color) => `
+        <div style="background:${color}14; border:1px solid ${color}55; border-radius:10px; padding:0.7rem 1rem; min-width:140px;">
+          <div style="font-size:1.4rem; font-weight:900; color:${color};">${n}</div>
+          <div style="font-size:0.66rem; color:rgba(255,255,255,0.5); font-weight:700; text-transform:uppercase;">${txt}</div>
+        </div>`;
+
+      const corto = (id) => String(id).includes('_') ? String(id).split('_')[1] : id;
+      const nombre = zonasService.nombreCuerpo;
+
+      container.innerHTML = `
+      <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #6366f1; border-radius:14px; overflow:hidden;">
+          <div style="padding:1rem 1.2rem; background:rgba(99,102,241,0.1); border-bottom:1px solid rgba(99,102,241,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="color:#fff; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">🧭 SUGERENCIA DE UBICACIÓN · PRUEBA</h3>
+              <div style="font-size:0.68rem; color:rgba(165,180,252,0.7); font-weight:600;">Dónde diría el sistema que hay que almacenar · no toca la tarea ni guarda nada</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">DE:</span>
+                <input type="date" id="sug_desde" value="${desde}" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; color-scheme:dark;">
+              </div>
+              <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+                <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">HASTA:</span>
+                <input type="date" id="sug_hasta" value="${hasta}" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; color-scheme:dark;">
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:1rem 1.2rem; display:flex; gap:12px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.05);">
+            ${chip('Artículos', filas.length, '#818cf8')}
+            ${chip('Reposición', cuenta('reposicion'), '#22c55e')}
+            ${chip('Código nuevo', cuenta('ok'), '#3b82f6')}
+            ${chip('Revisar Slotting', cuenta('slotting'), '#ef4444')}
+            ${chip('Sin regla', cuenta('sin-regla') + cuenta('sin-reglas-zona'), '#94a3b8')}
+          </div>
+
+          <div style="overflow-x:auto; max-height:62vh; overflow-y:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#eee;">
+              <thead style="background:rgba(0,0,0,0.6); position:sticky; top:0; z-index:2;">
+                <tr style="color:rgba(165,180,252,0.85); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+                  <th style="padding:0.6rem 0.9rem; text-align:left;">Tarea</th>
+                  <th style="padding:0.6rem; text-align:left;">Artículo</th>
+                  <th style="padding:0.6rem; text-align:left;">Marca</th>
+                  <th style="padding:0.6rem; text-align:center;">Serie</th>
+                  <th style="padding:0.6rem; text-align:right;">Pares</th>
+                  <th style="padding:0.6rem; text-align:center;">Zona</th>
+                  <th style="padding:0.6rem; text-align:center;">Cuerpos</th>
+                  <th style="padding:0.6rem; text-align:left;">Sugerencia</th>
+                  <th style="padding:0.6rem 0.9rem; text-align:left;">Hoy está en</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filas.length === 0 ? `<tr><td colspan="9" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
+                  const p = x.plan;
+                  const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
+                  const c = COLOR[p.estado] || '#94a3b8';
+                  let sug;
+                  if (p.estado === 'reposicion') {
+                    sug = `<span style="color:#22c55e; font-weight:800;">↩️ A su mismo cuerpo</span>`;
+                  } else if (p.estado === 'ok') {
+                    sug = `<b style="color:#93c5fd;">${p.cuerpos.map(k => nombre(p.zona, k.columna, k.cuerpo)).join(' · ')}</b>
+                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.3);">${p.seguidos ? 'seguidos' : 'con huecos'} · franja ${p.franja} · quedan ${p.libresEnLaFranja} libres</div>`;
+                  } else if (p.estado === 'slotting') {
+                    sug = `<span style="color:#ef4444; font-weight:900;">⚠️ REVISAR SLOTTING</span>
+                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">${p.motivo}</div>`;
+                  } else {
+                    sug = `<span style="color:#94a3b8;">— sin regla</span>
+                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.3);">${p.motivo || ''}</div>`;
+                  }
+                  const hoy = x.casa.length
+                    ? x.casa.slice(0, 4).map(k => nombre(k.zona, k.columna, k.cuerpo)).join(' · ') + (x.casa.length > 4 ? ` +${x.casa.length - 4}` : '')
+                    : '<span style="color:rgba(255,255,255,0.25);">— no está en el almacén (código nuevo)</span>';
+                  return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03); border-left:3px solid ${c};">
+                    <td style="padding:0.55rem 0.9rem; color:#fff; font-weight:700;">${corto(x.tarea.id)}<div style="font-size:0.63rem; color:rgba(255,255,255,0.3); font-weight:400;">${String(x.tarea.fecha).split('-').reverse().join('/')}</div></td>
+                    <td style="padding:0.55rem; color:#fff;">${x.s7}</td>
+                    <td style="padding:0.55rem; color:rgba(255,255,255,0.65);">${x.art.marca || x.f.marca || '—'}<div style="font-size:0.62rem; color:rgba(255,255,255,0.3);">${x.f.genderRims || ''}</div></td>
+                    <td style="padding:0.55rem; text-align:center; color:#a5b4fc; font-weight:900;">${x.s7[0]}</td>
+                    <td style="padding:0.55rem; text-align:right; color:#fff; font-weight:800;">${x.pares.toLocaleString('es-PE')}</td>
+                    <td style="padding:0.55rem; text-align:center; color:${c}; font-weight:900;">${p.zona || '—'}</td>
+                    <td style="padding:0.55rem; text-align:center; color:rgba(255,255,255,0.75); font-weight:800;">${p.cuantos || '—'}${p.porCuerpo ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.3); font-weight:400;">${p.porCuerpo}/cuerpo</div>` : ''}</td>
+                    <td style="padding:0.55rem;">${sug}</td>
+                    <td style="padding:0.55rem 0.9rem; font-size:0.72rem; color:rgba(255,255,255,0.55);">${hoy}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.7;">
+            Esta pantalla <b style="color:rgba(255,255,255,0.55);">no modifica ninguna tarea</b>: es para comparar contra lo que hicieron los operarios y ver si las reglas aciertan.<br>
+            Las reglas se editan en <b style="color:rgba(255,255,255,0.55);">Análisis SKU → Zonas de Almacenaje</b>. Un cuerpo sugerido queda reservado para las tareas que siguen, así dos artículos no reciben el mismo.
+          </div>
+        </div>
+      </div>`;
+
+      container.querySelector('#sug_desde').onchange = (e) => { window.__sugStart = e.target.value; pintar(); };
+      container.querySelector('#sug_hasta').onchange = (e) => { window.__sugEnd = e.target.value; pintar(); };
+    };
+
+    pintar();
   };
 
   /**
