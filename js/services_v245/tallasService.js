@@ -332,14 +332,38 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
         const objetivo = regla.modo === 'todo' ? pis + buf : Math.round(objetivoArt * pct);
 
         const falta = Math.max(0, objetivo - pis);
-        let baja = Math.min(buf, Math.round(falta / f) * f);
-        if (baja === 0 && falta > 0 && buf > 0) baja = Math.min(buf, f);   // al menos una caja
-        // Arriba solo cajas cerradas: lo suelto se queda abajo
-        const aReserva = Math.floor((buf - baja) / f) * f;
-        baja = buf - aReserva;
+        let asignado = Math.min(buf, Math.round(falta / f) * f);
+        if (asignado === 0 && falta > 0 && buf > 0) asignado = Math.min(buf, f);  // al menos una caja
 
-        return { talla: t, buffer: buf, piso: pis, objetivo, falta,
-                 baja, aReserva, comercial: !!(cat && cat.comerciales.includes(t)) };
+        return { talla: t, buffer: buf, piso: pis, objetivo, falta, pct, asignado,
+                 comercial: !!(cat && cat.comerciales.includes(t)) };
+    });
+
+    // SEGUNDA PASADA. La parte del objetivo que le tocaba a una talla SIN buffer no la puede
+    // cubrir nadie y se perdía en el aire: el artículo quedaba por debajo de su objetivo y al
+    // mismo tiempo subía mercadería a reserva, teniendo lugar abajo. Pasaba con North Star:
+    // 72 pares en buffer, el cuerpo con lugar de sobra, y 30 se iban arriba igual.
+    //
+    // Si el artículo sigue corto y hay tallas con buffer de sobra, se les da más —de a cajas
+    // enteras, y primero a las de mayor peso, que son las comerciales.
+    let faltaArt = Math.round(objetivoArt) - pisoTotal - filas.reduce((a, x) => a + x.asignado, 0);
+    if (faltaArt >= f) {
+        const conSobra = filas.filter(x => x.buffer > x.asignado)
+                              .sort((a, b) => b.pct - a.pct || b.buffer - a.buffer);
+        let sigue = true;
+        while (faltaArt >= f && sigue) {
+            sigue = false;
+            for (const x of conSobra) {
+                if (faltaArt < f) break;
+                if (x.buffer - x.asignado >= f) { x.asignado += f; faltaArt -= f; sigue = true; }
+            }
+        }
+    }
+
+    // Recién ahora se decide qué sube: a reserva solo cajas cerradas, lo suelto se queda abajo
+    filas.forEach(x => {
+        x.aReserva = Math.floor((x.buffer - x.asignado) / f) * f;
+        x.baja = x.buffer - x.aReserva;
     });
 
     return {
