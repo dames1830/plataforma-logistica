@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0025';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0026';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0025';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0025';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0025';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0025';
-import * as metasService from '../services_v245/metasService.js?v=29.0025';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0025';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0025';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0025';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0025';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0025';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0025';
+import * as adminService from '../services_v245/adminService.js?v=29.0026';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0026';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0026';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0026';
+import * as metasService from '../services_v245/metasService.js?v=29.0026';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0026';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0026';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0026';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0026';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0026';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0026';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0025';
+const VERSION = '29.0026';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0025');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0026');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0025 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0026 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14840,9 +14840,21 @@ const renderRFSection = (container) => {
     await tallasService.cargarTallas();
     await rescatarMaestro();
     const stock = await getAreaData('almacenaje_activo');
-    // La reserva vive en su propio archivo y hace falta para el objetivo del 50%
+    // La reserva vive en su propio archivo y hace falta para el objetivo del 50%.
+    // Se pide DIRECTO al servidor: getAreaData no consulta la nube para las áreas que
+    // empiezan con 'analisis_sku' —devuelve solo lo que esta PC tenga cargado— y entonces
+    // en cualquier computadora que no haya subido el archivo la reserva salía en cero, con
+    // lo que el total quedaba corto y se almacenaba de más.
     let reservaRaw = [];
-    try { reservaRaw = await getAreaData('analisis_sku_reserva') || []; } catch (e) { /* se sigue sin reserva */ }
+    try {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/analisis_sku_reserva?t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (Array.isArray(datos)) reservaRaw = datos;
+      }
+    } catch (e) { console.warn('[Sugerencia] no se pudo traer la reserva:', e && e.message); }
     if (!sigueSiendoMia()) return;
 
     // Ficha de cada artículo, del Maestro
@@ -14971,7 +14983,9 @@ const renderRFSection = (container) => {
         if (plan.estado === 'ok' && plan.cuerpos) {
           plan.cuerpos.forEach(c => tomados[plan.zona] && tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`));
         }
-        filas.push({ tarea: t, art, s7, pares, alPiso, cant, f, plan, casa });
+        filas.push({ tarea: t, art, s7, pares, alPiso, cant, f, plan, casa,
+                     activo: Math.round(cant ? cant.pisoTotal : 0),
+                     reservaHoy: Math.round(reservaDe.get(s7) || 0) });
       }));
 
       const cuenta = (e) => filas.filter(x => x.plan.estado === e).length;
@@ -15021,6 +15035,9 @@ const renderRFSection = (container) => {
                   <th style="padding:0.6rem; text-align:left;">Marca</th>
                   <th style="padding:0.6rem; text-align:center;">Serie</th>
                   <th style="padding:0.6rem; text-align:right;" title="Lo que Recepción dejó en el buffer">Buffer</th>
+                  <th style="padding:0.6rem; text-align:right;" title="Lo que ya está en la zona activa. El andamio no cuenta: es logística inversa">Activo</th>
+                  <th style="padding:0.6rem; text-align:right;" title="Lo que ya está arriba: selectivo columnas 01 a 12, niveles D a H">Reserva</th>
+                  <th style="padding:0.6rem; text-align:right; color:rgba(255,255,255,0.35);" title="Buffer + activo + reserva. El 50% se calcula sobre este total, no sobre el buffer">Total</th>
                   <th style="padding:0.6rem; text-align:right;" title="Lo que baja a la zona activa, según la regla de la marca y las tallas que falten">Al piso</th>
                   <th style="padding:0.6rem; text-align:right;" title="Lo que sube a los niveles altos, en cajas cerradas">A reserva</th>
                   <th style="padding:0.6rem; text-align:center;">Zona</th>
@@ -15030,7 +15047,7 @@ const renderRFSection = (container) => {
                 </tr>
               </thead>
               <tbody>
-                ${filas.length === 0 ? `<tr><td colspan="11" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
+                ${filas.length === 0 ? `<tr><td colspan="14" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
                   const p = x.plan;
                   const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
                   const c = COLOR[p.estado] || '#94a3b8';
@@ -15056,6 +15073,9 @@ const renderRFSection = (container) => {
                     <td style="padding:0.55rem; color:rgba(255,255,255,0.65);">${x.art.marca || x.f.marca || '—'}<div style="font-size:0.62rem; color:rgba(255,255,255,0.3);">${x.f.genderRims || ''}</div></td>
                     <td style="padding:0.55rem; text-align:center; color:#a5b4fc; font-weight:900;">${x.s7[0]}</td>
                     <td style="padding:0.55rem; text-align:right; color:rgba(255,255,255,0.55);">${x.pares.toLocaleString('es-PE')}</td>
+                    <td style="padding:0.55rem; text-align:right; color:${x.activo ? '#a5b4fc' : 'rgba(255,255,255,0.2)'};">${x.activo ? x.activo.toLocaleString('es-PE') : '—'}</td>
+                    <td style="padding:0.55rem; text-align:right; color:${x.reservaHoy ? '#c4b5fd' : 'rgba(255,255,255,0.2)'};">${x.reservaHoy ? x.reservaHoy.toLocaleString('es-PE') : '—'}</td>
+                    <td style="padding:0.55rem; text-align:right; color:rgba(255,255,255,0.35); font-weight:700;">${(x.pares + x.activo + x.reservaHoy).toLocaleString('es-PE')}</td>
                     <td style="padding:0.55rem; text-align:right; color:#4ade80; font-weight:900;">${(x.alPiso || 0).toLocaleString('es-PE')}${x.cant && x.cant.regla ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.28); font-weight:400;">${x.cant.regla.modo === 'todo' ? 'todo' : x.cant.regla.modo === 'cuerpos' ? x.cant.regla.valor + ' cuerpo' : x.cant.regla.valor + '%'}</div>` : ''}</td>
                     <td style="padding:0.55rem; text-align:right; color:#fbbf24; font-weight:700;">${x.cant ? (x.cant.aReserva || 0).toLocaleString('es-PE') : '—'}</td>
                     <td style="padding:0.55rem; text-align:center; color:${c}; font-weight:900;">${p.zona || '—'}</td>
