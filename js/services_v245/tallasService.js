@@ -112,8 +112,37 @@ export const cuantoAlPiso = ({ marca, buffer, piso = 0, reserva = 0, paresPorCue
     return { alPiso: b - aReserva, aReserva, regla, objetivo: Math.round(objetivo), total: b + p + r };
 };
 
+/**
+ * PALETIZAR PARA RESERVA no es lo mismo que almacenar en el piso.
+ *
+ * Bajar al activo es romper la caja, cortar la cinta, sacar par por par y ubicar. Subir a
+ * reserva es armar la paleta, enfilarla y sacarle el LPN. Si los pares de las dos cosas se
+ * cuentan igual, una tarea con mucha reserva sale con una productividad inflada.
+ *
+ * Se mide POR PALETA y no en pares por hora, porque una paleta a medio llenar lleva casi el
+ * mismo tiempo que una llena: igual hay que enfilarla y darle su LPN.
+ *
+ * Los 5 minutos los puso Daniel el 01-ago-2026. Su primera estimación fueron 8 a 10 y
+ * después la bajó a 5; queda editable por si en la práctica sale corta.
+ */
+export const reservaPorDefecto = () => ({ paresPorPaleta: 200, minutosPorPaleta: 5 });
+
+/** Paletas que salen de esos pares. Una a medio llenar cuenta entera. */
+export const paletasDe = (pares) => {
+    const r = tallasActual().reserva || reservaPorDefecto();
+    const p = Math.max(0, Math.round(Number(pares) || 0));
+    return p ? Math.ceil(p / Math.max(1, r.paresPorPaleta)) : 0;
+};
+
+/** Minutos que lleva paletizar esos pares para reserva. */
+export const minutosDeReserva = (pares) => {
+    const r = tallasActual().reserva || reservaPorDefecto();
+    return paletasDe(pares) * Math.max(0, r.minutosPorPaleta);
+};
+
 export const tallasPorDefecto = () => ({
     marcas: marcasPorDefecto(),
+    reserva: reservaPorDefecto(),
     categorias: {
         '02 WOMEN': {
             configurado: true,
@@ -172,6 +201,16 @@ const normalizar = (crudo) => {
         marcas[String(k).trim()] = { modo, valor };
     });
 
+    const rSrc = (c.reserva && typeof c.reserva === 'object') ? c.reserva : def.reserva;
+    const _ent = (v, resp, min, max) => {
+        const n = Math.round(Number(v));
+        return (Number.isFinite(n) && n >= min && n <= max) ? n : resp;
+    };
+    const reserva = {
+        paresPorPaleta: _ent(rSrc.paresPorPaleta, def.reserva.paresPorPaleta, 1, 100000),
+        minutosPorPaleta: _ent(rSrc.minutosPorPaleta, def.reserva.minutosPorPaleta, 0, 600)
+    };
+
     const origen = (c.categorias && typeof c.categorias === 'object') ? c.categorias : def.categorias;
 
     const categorias = {};
@@ -193,6 +232,7 @@ const normalizar = (crudo) => {
     });
     return {
         marcas: Object.keys(marcas).length ? marcas : def.marcas,
+        reserva,
         categorias: Object.keys(categorias).length ? categorias : def.categorias
     };
 };

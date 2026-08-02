@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0026';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0027';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0026';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0026';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0026';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0026';
-import * as metasService from '../services_v245/metasService.js?v=29.0026';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0026';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0026';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0026';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0026';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0026';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0026';
+import * as adminService from '../services_v245/adminService.js?v=29.0027';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0027';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0027';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0027';
+import * as metasService from '../services_v245/metasService.js?v=29.0027';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0027';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0027';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0027';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0027';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0027';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0027';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0026';
+const VERSION = '29.0027';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0026');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0027');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0026 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0027 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14643,9 +14643,26 @@ const renderRFSection = (container) => {
             </tbody>
           </table>
         </div>
+        <div style="padding:1rem 1.1rem; border-top:1px solid rgba(59,130,246,0.15); display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap;">
+          <div style="font-size:0.72rem; color:#93c5fd; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🎽 Paletizar para reserva</div>
+          <div>
+            <label style="display:block; font-size:0.63rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;">Pares por paleta</label>
+            <input type="number" id="tll_paleta_pares" min="1" value="${(cfg.reserva || {}).paresPorPaleta || 200}" style="width:80px; padding:6px 8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800; text-align:center;">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.63rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;">Minutos por paleta</label>
+            <input type="number" id="tll_paleta_min" min="0" value="${(cfg.reserva || {}).minutosPorPaleta || 5}" style="width:80px; padding:6px 8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800; text-align:center;">
+          </div>
+          <div style="font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.6; flex:1; min-width:280px;">
+            Armar la paleta, enfilarla y sacarle el LPN. Se mide <b style="color:rgba(255,255,255,0.55);">por paleta</b> y no en pares por hora,
+            porque una paleta a medio llenar lleva casi el mismo tiempo que una llena.
+          </div>
+        </div>
+
         <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(59,130,246,0.12); font-size:0.66rem; color:rgba(255,255,255,0.33); line-height:1.7;">
           Una marca que no esté en esta lista se trata como <b style="color:rgba(255,255,255,0.5);">un cuerpo</b>, que es lo prudente: de más se llena el selectivo, de menos solo se repone más seguido.<br>
-          Lo que no baja se manda arriba a reserva, y <b style="color:rgba(255,255,255,0.5);">a reserva solo van cajas cerradas</b>: lo que va arriba se recorta al múltiplo del factor y la diferencia se queda abajo.
+          Lo que no baja se manda arriba a reserva, y <b style="color:rgba(255,255,255,0.5);">a reserva solo van cajas cerradas</b>: lo que va arriba se recorta al múltiplo del factor y la diferencia se queda abajo.<br>
+          Bajar al piso y paletizar no cuestan lo mismo, así que el tiempo esperado de una tarea es la suma de los dos tramos: <b style="color:rgba(255,255,255,0.5);">pares al piso ÷ meta u/h</b> más <b style="color:rgba(255,255,255,0.5);">paletas × minutos</b>.
         </div>
       </div>
 
@@ -14738,6 +14755,18 @@ const renderRFSection = (container) => {
       refrescarEjemplo();
 
       const marcar = () => { const e = panel.querySelector('#tll_estado'); if (e) e.textContent = '● sin publicar'; };
+
+      const pal = panel.querySelector('#tll_paleta_pares'), pmin = panel.querySelector('#tll_paleta_min');
+      if (pal) pal.onchange = () => {
+        const v = parseInt(pal.value, 10);
+        if (Number.isFinite(v) && v >= 1) { cfg.reserva = cfg.reserva || {}; cfg.reserva.paresPorPaleta = v; }
+        dibujar(); marcar();
+      };
+      if (pmin) pmin.onchange = () => {
+        const v = parseInt(pmin.value, 10);
+        if (Number.isFinite(v) && v >= 0) { cfg.reserva = cfg.reserva || {}; cfg.reserva.minutosPorPaleta = v; }
+        dibujar(); marcar();
+      };
 
       panel.querySelectorAll('[data-mmodo]').forEach(s => s.onchange = () => {
         const m = s.dataset.mmodo, r = marcasCfg[m];
@@ -14983,7 +15012,20 @@ const renderRFSection = (container) => {
         if (plan.estado === 'ok' && plan.cuerpos) {
           plan.cuerpos.forEach(c => tomados[plan.zona] && tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`));
         }
-        filas.push({ tarea: t, art, s7, pares, alPiso, cant, f, plan, casa,
+        // Tiempo esperado: los dos tramos por separado, porque bajar al piso y paletizar
+        // para reserva no cuestan lo mismo.
+        const aRes = cant ? cant.aReserva : 0;
+        const meta = metasService.resolverMeta(datos.genderRims, f.gender || '', t.fecha);
+        const minPiso = meta.metaUph > 0 ? Math.round((alPiso / meta.metaUph) * 60) : 0;
+        const minReserva = tallasService.minutosDeReserva(aRes);
+        const total = minPiso + minReserva;
+        const tiempo = total ? {
+          minPiso, minReserva, total,
+          txt: total >= 60 ? `${Math.floor(total / 60)}h ${String(total % 60).padStart(2, '0')}m` : `${total}m`
+        } : null;
+
+        filas.push({ tarea: t, art, s7, pares, alPiso, cant, f, plan, casa, tiempo,
+                     paletas: tallasService.paletasDe(aRes),
                      activo: Math.round(cant ? cant.pisoTotal : 0),
                      reservaHoy: Math.round(reservaDe.get(s7) || 0) });
       }));
@@ -15040,6 +15082,7 @@ const renderRFSection = (container) => {
                   <th style="padding:0.6rem; text-align:right; color:rgba(255,255,255,0.35);" title="Buffer + activo + reserva. El 50% se calcula sobre este total, no sobre el buffer">Total</th>
                   <th style="padding:0.6rem; text-align:right;" title="Lo que baja a la zona activa, según la regla de la marca y las tallas que falten">Al piso</th>
                   <th style="padding:0.6rem; text-align:right;" title="Lo que sube a los niveles altos, en cajas cerradas">A reserva</th>
+                  <th style="padding:0.6rem; text-align:right;" title="Pares al piso ÷ meta u/h, más las paletas de reserva por sus minutos">T. esperado</th>
                   <th style="padding:0.6rem; text-align:center;">Zona</th>
                   <th style="padding:0.6rem; text-align:center;">Cuerpos</th>
                   <th style="padding:0.6rem; text-align:left;">Sugerencia</th>
@@ -15047,7 +15090,7 @@ const renderRFSection = (container) => {
                 </tr>
               </thead>
               <tbody>
-                ${filas.length === 0 ? `<tr><td colspan="14" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
+                ${filas.length === 0 ? `<tr><td colspan="15" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
                   const p = x.plan;
                   const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
                   const c = COLOR[p.estado] || '#94a3b8';
@@ -15077,7 +15120,8 @@ const renderRFSection = (container) => {
                     <td style="padding:0.55rem; text-align:right; color:${x.reservaHoy ? '#c4b5fd' : 'rgba(255,255,255,0.2)'};">${x.reservaHoy ? x.reservaHoy.toLocaleString('es-PE') : '—'}</td>
                     <td style="padding:0.55rem; text-align:right; color:rgba(255,255,255,0.35); font-weight:700;">${(x.pares + x.activo + x.reservaHoy).toLocaleString('es-PE')}</td>
                     <td style="padding:0.55rem; text-align:right; color:#4ade80; font-weight:900;">${(x.alPiso || 0).toLocaleString('es-PE')}${x.cant && x.cant.regla ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.28); font-weight:400;">${x.cant.regla.modo === 'todo' ? 'todo' : x.cant.regla.modo === 'cuerpos' ? x.cant.regla.valor + ' cuerpo' : x.cant.regla.valor + '%'}</div>` : ''}</td>
-                    <td style="padding:0.55rem; text-align:right; color:#fbbf24; font-weight:700;">${x.cant ? (x.cant.aReserva || 0).toLocaleString('es-PE') : '—'}</td>
+                    <td style="padding:0.55rem; text-align:right; color:#fbbf24; font-weight:700;">${x.cant ? (x.cant.aReserva || 0).toLocaleString('es-PE') : '—'}${x.paletas ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.28); font-weight:400;">${x.paletas} paleta${x.paletas > 1 ? 's' : ''}</div>` : ''}</td>
+                    <td style="padding:0.55rem; text-align:right; color:rgba(255,255,255,0.6); font-weight:700;">${x.tiempo ? x.tiempo.txt : '—'}${x.tiempo && x.tiempo.minReserva ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.28); font-weight:400;">${x.tiempo.minPiso}′ + ${x.tiempo.minReserva}′</div>` : ''}</td>
                     <td style="padding:0.55rem; text-align:center; color:${c}; font-weight:900;">${p.zona || '—'}</td>
                     <td style="padding:0.55rem; text-align:center; color:rgba(255,255,255,0.75); font-weight:800;">${p.cuantos || '—'}${p.porCuerpo ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.3); font-weight:400;">${p.porCuerpo}/cuerpo</div>` : ''}</td>
                     <td style="padding:0.55rem;">${sug}</td>
