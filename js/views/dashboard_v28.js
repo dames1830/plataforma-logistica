@@ -1,15 +1,15 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0013';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0014';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0013';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0013';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0013';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0013';
-import * as metasService from '../services_v245/metasService.js?v=29.0013';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0013';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0013';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0013';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0013';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0013';
+import * as adminService from '../services_v245/adminService.js?v=29.0014';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0014';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0014';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0014';
+import * as metasService from '../services_v245/metasService.js?v=29.0014';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0014';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0014';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0014';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0014';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0014';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -366,7 +366,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0013';
+const VERSION = '29.0014';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1893,7 +1893,10 @@ export const renderDashboard = async (container, user, onLogout) => {
       // que se pinte nada. Los rangos por defecto de los reportes se calcularon al importar
       // el módulo con lo que había guardado en esta PC; si la publicada dice otra cosa, se
       // reponen abajo.
-      jornadaService.cargarJornada()
+      jornadaService.cargarJornada(),
+      // Las reglas de las zonas: qué temporada va en cada columna, el paso del elevador y el
+      // corte de saldos. Las usa el mapa de Layout Activo apenas se abre.
+      zonasService.cargarZonas()
   ]);
 
   // Los rangos arrancan en "hoy". Si la jornada publicada corre el corte, ese "hoy" cambia
@@ -3236,7 +3239,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0013');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0014');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13467,7 +13470,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0013 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0014 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15933,6 +15936,11 @@ const renderRFSection = (container) => {
             });
           window.DEBUG_SKU_GENDER = skuGender;
 
+          // La grilla, el paso del elevador, el corte de saldos y la temporada de cada columna
+          // salen de Análisis SKU > Zonas de Almacenaje. Antes estaban escritos acá adentro.
+          const zonasCfg = zonasService.zonasActual().zonas[currentLayoutZona]
+              || { columnas: 24, cuerpos: 22, saldoMenorA: 80, franjas: {}, pasillos: [] };
+
           padreStock = {};
           activoRaw.forEach(row => {
               const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
@@ -15957,7 +15965,7 @@ const renderRFSection = (container) => {
               
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
-              const isSaldo = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? totalStockForPadre < 80 : totalStockForPadre < 20;
+              const isSaldo = totalStockForPadre < zonasCfg.saldoMenorA;
 
               let col = 0;
               let rackRow = 0;
@@ -15983,9 +15991,10 @@ const renderRFSection = (container) => {
               
               if (col !== 0 && rackRow !== 0) {
                   
-                  let maxCols = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
-                  if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= 22) {
-                      if (currentLayoutZona === 'SEL' && col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
+                  let maxCols = zonasCfg.columnas;
+                  if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= zonasCfg.cuerpos) {
+                      // Paso del elevador: ahí no hay ubicaciones de almacenaje
+                      if (zonasService.esPasillo(currentLayoutZona, col, rackRow)) return;
 
                       if (!localLayoutData[col]) localLayoutData[col] = {};
                       if (!localLayoutData[col][rackRow]) localLayoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
@@ -16012,29 +16021,22 @@ const renderRFSection = (container) => {
                       localStats[temporadaClean].units += cant;
                       localStats[temporadaClean].padres.add(sku7);
 
-                      let isValid = false;
+                      // Si está bien ubicado sale de Zonas de Almacenaje, no de acá: antes esto
+                      // estaba escrito a mano y mover una columna de temporada era editar código.
+                      // Las columnas de saldos aceptan las dos temporadas, pero solo si el
+                      // artículo es saldo; la de escolar solo mira que sea escolar.
                       const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
                       const isSchool = genderRaw.includes('SCHOOL');
+                      const franjaCol = zonasService.franjaDeColumna(currentLayoutZona, col);
 
-                      if (currentLayoutZona === 'SEL') {
-                          if (col === 14) {
-                              if (isSchool) isValid = true;
-                          } else if (temporadaClean === 'ACTUAL') {
-                              if (col >= 5 && col <= 13) isValid = true;
-                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
-                          } else if (temporadaClean === 'ANTERIOR') {
-                              if (col >= 3 && col <= 4) isValid = true;
-                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
-                          }
-                        } else if (currentLayoutZona === 'MZN01') {
-                            if (temporadaClean === 'ANTERIOR') isValid = (col >= 1 && col <= 3) || (col >= 21 && col <= 23);
-                            else isValid = (col >= 4 && col <= 20) || col === 24;
-                        } else if (currentLayoutZona === 'MZN02') {
-                            if (temporadaClean === 'ANTERIOR') isValid = col >= 1 && col <= 5;
-                            else isValid = col >= 6 && col <= 24;
-                        } else {
-                          isValid = true;
-                      }
+                      let isValid;
+                      if (!zonasCfg.franjas || !Object.keys(zonasCfg.franjas).length) {
+                          isValid = true;                       // zona sin reglas: no se acusa a nadie
+                      } else if (franjaCol === 'escolar')  isValid = isSchool;
+                      else if (franjaCol === 'saldos')     isValid = isSaldo;
+                      else if (franjaCol === 'actual')     isValid = (temporadaClean === 'ACTUAL');
+                      else if (franjaCol === 'anterior')   isValid = (temporadaClean === 'ANTERIOR');
+                      else                                 isValid = false;   // columna sin uso
 
                       if (!isValid) {
                           localStats[temporadaClean].bad_placed += cant;
@@ -16274,8 +16276,13 @@ const renderRFSection = (container) => {
           window.globalLayoutData[currentLayoutZona] = localLayoutData;
             let ACTUAL_TOTAL_CELLS = 14 * 22;
           if (!isReserva && currentLayoutZona === 'SEL') {
-              ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
+              // Sale de Zonas de Almacenaje: columnas x cuerpos, menos el paso del elevador.
+              // Con la configuración de fábrica da los mismos 284 que estaban escritos acá.
+              ACTUAL_TOTAL_CELLS = zonasService.cuerposDe('SEL').length;
           } else if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
+              // Los macizos siguen contando como antes: acá se recorren 20 cuerpos mientras el
+              // mapa dibuja 22, y esa diferencia es anterior a este cambio. Se deja igual para
+              // no mover un número que ya se venía mirando; se revisa aparte.
                 let count = 0;
               for (let c = 1; c <= 24; c++) {
                   for (let r = 1; r <= 20; r++) {
