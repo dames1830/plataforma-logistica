@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0031';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0032';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0031';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0031';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0031';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0031';
-import * as metasService from '../services_v245/metasService.js?v=29.0031';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0031';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0031';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0031';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0031';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0031';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0031';
+import * as adminService from '../services_v245/adminService.js?v=29.0032';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0032';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0032';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0032';
+import * as metasService from '../services_v245/metasService.js?v=29.0032';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0032';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0032';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0032';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0032';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0032';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0032';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0031';
+const VERSION = '29.0032';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1474,7 +1474,11 @@ const TABS = [
     { id: 'tareas_dia', label: 'Tareas Día', icon: '📋' },
     { id: 'kpi_tareas', label: 'KPI Tareas', icon: '📊' },
     { id: 'productividad', label: 'Productividad', icon: '📈' },
-    { id: 'sugerencia', label: 'Sugerencia (prueba)', icon: '🧭' },
+    // Pantalla de diagnóstico de la sugerencia. Queda ESCONDIDA: la sugerencia ya vive en
+    // Tareas Día → Detalle. Sirve el día que un número no cuadre, porque muestra el cálculo
+    // completo —cuánto había en activo, cuánto en reserva, qué regla se aplicó y por qué
+    // salieron esos cuerpos—. Para verla, poner oculta:false acá.
+    { id: 'sugerencia', label: 'Sugerencia (prueba)', icon: '🧭', oculta: true },
     { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
@@ -3244,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0031');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0032');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11484,6 +11488,9 @@ const renderRFSection = (container) => {
     // Mientras nadie las haya configurado todavía, quedan visibles solo para admin.
     const SUBTABS_SOLO_MATRIZ = ['config_tareas', 'productividad', 'sugerencia'];
     const allowedSubTabs = tabDef.subTabs.filter(sub => {
+        // Las marcadas como ocultas no se listan: siguen existiendo y se pueden abrir, pero
+        // no aparecen en la barra.
+        if (sub.oculta) return false;
         if (SUBTABS_SOLO_MATRIZ.includes(sub.id)) {
             const valor = perms[`${tabId}_${sub.id}`];
             return valor === undefined ? user.role === 'admin' : valor === 1;
@@ -13478,7 +13485,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0031 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0032 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15123,6 +15130,56 @@ const renderRFSection = (container) => {
           : `${minPiso + minReserva}m`
       } : null
     };
+  };
+
+  /**
+   * LA SUGERENCIA EN TAREAS DÍA → DETALLE
+   *
+   * El DETALLE va por línea de buffer, igual que el papel que se imprime, así que ahí caben
+   * las tres columnas: cuánto se almacena, cuánto se paletiza y a qué cuerpo va.
+   *
+   * El cálculo necesita bajar el archivo de reserva, y el DETALLE se pinta de forma síncrona.
+   * Así que se calcula una vez, se guarda, y cuando termina se repinta. Mientras tanto las
+   * tres columnas muestran un punto: un cero ahí diría algo que todavía no se sabe.
+   */
+  const _sugPorLinea = new Map();
+  let _sugFirma = null, _sugCalculando = false;
+
+  const asegurarSugerencias = async (tareas, container) => {
+    // La firma evita recalcular en cada repintado, pero recalcula si cambió el rango o si
+    // se procesaron tareas nuevas.
+    const firma = tareas.map(t => t.id + ':' + (t.items || []).length).join(',');
+    if (_sugCalculando || firma === _sugFirma) return;
+    _sugCalculando = true;
+    try {
+      const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
+      const ctx = await cargarContextoSugerencia(abiertas);
+      _sugPorLinea.clear();
+      const tomados = {};
+      Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
+
+      tareas.forEach(t => (t.items || []).forEach(art => {
+        const s = calcularSugerenciaDeItem(art, t.fecha, ctx, tomados);
+        if (!s) return;
+        const trabada = s.plan.estado === 'slotting' || s.plan.estado === 'sin-regla'
+                     || s.plan.estado === 'sin-reglas-zona';
+        filasDelPapel(s, ctx).forEach(l => {
+          _sugPorLinea.set(`${t.id}|${l.ubi}|${l.skuFull}|${l.talla}`, {
+            almacenar: trabada ? 0 : l.alPiso,
+            paletizar: l.aReserva,
+            destino: trabada ? 'Revisar Slotting' : l.destino,
+            trabada
+          });
+        });
+      }));
+      _sugFirma = firma;
+    } catch (e) {
+      console.warn('[Sugerencia] no se pudo calcular para el detalle:', e && e.message);
+    }
+    _sugCalculando = false;
+    if (container && container.isConnected && container.dataset.vista === 'almacenaje') {
+      renderAlmacenajeTareas(container);
+    }
   };
 
   /**
@@ -21616,6 +21673,14 @@ window.showCellModal = function(htmlContent) {
     const paresEnRango = tareasEnRango.reduce((s, t) =>
         s + (t.status === 'Finalizado' ? getTaskTotalAvance(t) : (t.qty || 0)), 0);
     const targetItems = isDetail ? detailedItems : resumenItems;
+
+    // Solo en DETALLE: se dispara el cálculo de la sugerencia y se repinta al terminar.
+    // No se espera acá para que la tabla salga enseguida con lo demás.
+    if (isDetail) {
+      const enRango = (almacenajeTasksCache || []).filter(t =>
+        t && t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+      asegurarSugerencias(enRango, container);
+    }
     
     const totalPages = Math.ceil(targetItems.length / 25) || 1;
     if (window.__detailCurrentPage > totalPages) window.__detailCurrentPage = totalPages;
@@ -22676,6 +22741,9 @@ window.showCellModal = function(htmlContent) {
                                     <th style="padding:1rem; text-align:center;">Tallas</th>
                                     <th style="padding:1rem; text-align:center;">Qty Buffer</th>
                                     <th style="padding:1rem; text-align:center;">Qty Zona</th>
+                                    <th style="padding:1rem; text-align:center; color:#4ade80;" title="Pares que bajan a la zona activa">Almacenar</th>
+                                    <th style="padding:1rem; text-align:center; color:#fbbf24;" title="Pares que se paletizan para subir a reserva">Paletizar</th>
+                                    <th style="padding:1rem; text-align:center; color:#93c5fd;" title="Cuerpo y nivel donde va: el A está abajo y lleva lo más comercial">Destino</th>
                                     <th style="padding:1rem; text-align:center;">Avance</th>
                                     <th style="padding:1rem; text-align:left;">ID Tareas</th>
                                     <th style="padding:1rem; text-align:left;">Usuario Creación</th>
@@ -22796,6 +22864,13 @@ window.showCellModal = function(htmlContent) {
                                      }
                                  }
 
+                                // Qué le toca a esta línea del buffer: cuánto se almacena, cuánto
+                                // se paletiza y a qué cuerpo va. Si todavía no se calculó, sale un
+                                // punto en vez de un número, para que no parezca un cero.
+                                const sug = isBuffer
+                                  ? _sugPorLinea.get(`${t.id}|${i.ubi}|${i.skuFull}|${i.talla}`)
+                                  : null;
+
                                 const userCreacion = t.creador || '---';
                                 const fProcesado = formatDateTime(t.fechaProcesado || (t.fecha + 'T00:00:00'));
                                 const fAsignado = formatDateTime(t.inicio);
@@ -22811,6 +22886,9 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:0.6rem 1rem; text-align:center;">${i.talla || (() => { const tm = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {}); return tm[i.skuFull]; })() || (i.skuFull && i.skuFull.split('-').pop()) || '<span style="color:#ef4444; font-size:0.7rem;">S/TALLA</span>'}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${isBuffer ? '#fff' : 'transparent'};">${isBuffer ? i.qty : ''}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${!isBuffer ? '#fbbf24' : 'rgba(255,255,255,0.05)'};">${!isBuffer ? i.qty : '---'}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; color:${sug && sug.almacenar ? '#4ade80' : 'rgba(255,255,255,0.15)'};">${sug ? (sug.trabada ? '—' : (sug.almacenar || '—')) : (isBuffer ? '·' : '')}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:700; color:${sug && sug.paletizar ? '#fbbf24' : 'rgba(255,255,255,0.15)'};">${sug ? (sug.paletizar || '—') : (isBuffer ? '·' : '')}</td>
+                                    <td style="padding:0.6rem 1rem; text-align:center; font-weight:800; font-size:0.78rem; color:${sug ? (sug.trabada ? '#ef4444' : '#93c5fd') : 'rgba(255,255,255,0.15)'};">${sug ? (sug.destino || '—') : (isBuffer ? '·' : '')}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-weight:${avanceFontWeight}; color:${avanceColor};">${avanceVal}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
                                     <td style="padding:0.6rem 1rem; color:#fff; opacity:0.8;">${userCreacion}</td>
