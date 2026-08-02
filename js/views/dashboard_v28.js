@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0019';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0020';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0019';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0019';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0019';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0019';
-import * as metasService from '../services_v245/metasService.js?v=29.0019';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0019';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0019';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0019';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0019';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0019';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0019';
+import * as adminService from '../services_v245/adminService.js?v=29.0020';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0020';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0020';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0020';
+import * as metasService from '../services_v245/metasService.js?v=29.0020';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0020';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0020';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0020';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0020';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0020';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0020';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0019';
+const VERSION = '29.0020';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0019');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0020');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0019 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0020 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14586,6 +14586,7 @@ const renderRFSection = (container) => {
       _tallasBorrador = JSON.parse(JSON.stringify(tallasService.tallasActual()));
     }
     const cfg = _tallasBorrador;
+    const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     const CATS = Object.keys(cfg.categorias);
     if (!cfg.categorias[_catTallaElegida]) _catTallaElegida = CATS[0];
 
@@ -14596,7 +14597,58 @@ const renderRFSection = (container) => {
       const ok = Math.abs(suma - 100) < 0.05;
       const EJEMPLO = _paresEjemplo;
 
+      const MODOS = tallasService.MODOS;
+      const marcasCfg = cfg.marcas || {};
+
       panel.innerHTML = `
+      <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(59,130,246,0.3); border-radius:14px; overflow:hidden; margin-bottom:1.2rem;">
+        <div style="padding:1rem 1.2rem; background:rgba(59,130,246,0.07); border-bottom:1px solid rgba(59,130,246,0.2);">
+          <h3 style="color:#60a5fa; font-weight:900; margin:0 0 2px 0; font-size:0.92rem; letter-spacing:1px; text-transform:uppercase;">📦 CUÁNTO BAJA AL PISO</h3>
+          <div style="font-size:0.68rem; color:rgba(96,165,250,0.6); font-weight:600;">De lo que Recepción deja en el buffer, cuánto se almacena y cuánto se manda arriba a reserva</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#eee;">
+            <thead style="background:rgba(0,0,0,0.5);">
+              <tr style="color:rgba(147,197,253,0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+                <th style="padding:0.6rem 1.1rem; text-align:left;">Marca</th>
+                <th style="padding:0.6rem; text-align:left;">Regla</th>
+                <th style="padding:0.6rem; text-align:center;">Cuánto</th>
+                <th style="padding:0.6rem 1.1rem; text-align:left;">Qué significa</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.keys(marcasCfg).sort().map(m => {
+                const r = marcasCfg[m];
+                const explica = r.modo === 'todo'
+                    ? 'Se almacena TODO lo que hay en el buffer, sin recorte.'
+                    : r.modo === 'cuerpos'
+                        ? `Se llena${r.valor > 1 ? 'n' : ''} ${r.valor} cuerpo${r.valor > 1 ? 's' : ''} y nada más, por más que llegue de a mil.`
+                        : `La mitad —${r.valor}%— del stock total (buffer + piso + reserva) queda abajo.`;
+                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                  <td style="padding:0.5rem 1.1rem; color:#fff; font-weight:700;">${esc(m)}</td>
+                  <td style="padding:0.4rem;">
+                    <select data-mmodo="${esc(m)}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:0.72rem; padding:4px 6px; cursor:pointer;">
+                      ${Object.keys(MODOS).map(k => `<option value="${k}" ${r.modo === k ? 'selected' : ''}>${MODOS[k]}</option>`).join('')}
+                    </select>
+                  </td>
+                  <td style="padding:0.4rem; text-align:center;">
+                    ${r.modo === 'todo' ? '<span style="color:rgba(255,255,255,0.25);">—</span>' : `
+                    <input type="number" data-mval="${esc(m)}" min="1" max="${r.modo === 'porcentaje' ? 100 : 20}" value="${r.valor}"
+                      style="width:66px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-weight:800; text-align:center;">
+                    <span style="font-size:0.65rem; color:rgba(255,255,255,0.35);">${r.modo === 'porcentaje' ? '%' : 'cuerpos'}</span>`}
+                  </td>
+                  <td style="padding:0.5rem 1.1rem; font-size:0.68rem; color:rgba(255,255,255,0.35);">${explica}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(59,130,246,0.12); font-size:0.66rem; color:rgba(255,255,255,0.33); line-height:1.7;">
+          Una marca que no esté en esta lista se trata como <b style="color:rgba(255,255,255,0.5);">un cuerpo</b>, que es lo prudente: de más se llena el selectivo, de menos solo se repone más seguido.<br>
+          Lo que no baja se manda arriba a reserva, y <b style="color:rgba(255,255,255,0.5);">a reserva solo van cajas cerradas</b>: lo que va arriba se recorta al múltiplo del factor y la diferencia se queda abajo.
+        </div>
+      </div>
+
       <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(34,197,94,0.3); border-radius:14px; overflow:hidden;">
         <div style="padding:1rem 1.2rem; background:rgba(34,197,94,0.06); border-bottom:1px solid rgba(34,197,94,0.2); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
@@ -14686,6 +14738,19 @@ const renderRFSection = (container) => {
       refrescarEjemplo();
 
       const marcar = () => { const e = panel.querySelector('#tll_estado'); if (e) e.textContent = '● sin publicar'; };
+
+      panel.querySelectorAll('[data-mmodo]').forEach(s => s.onchange = () => {
+        const m = s.dataset.mmodo, r = marcasCfg[m];
+        r.modo = s.value;
+        if (r.modo === 'porcentaje' && (r.valor < 1 || r.valor > 100)) r.valor = 50;
+        if (r.modo === 'cuerpos' && r.valor > 20) r.valor = 1;
+        dibujar(); marcar();
+      });
+      panel.querySelectorAll('[data-mval]').forEach(i => i.onchange = () => {
+        const m = i.dataset.mval, v = parseInt(i.value, 10);
+        if (Number.isFinite(v) && v >= 1) marcasCfg[m].valor = v;
+        dibujar(); marcar();
+      });
 
       panel.querySelector('#tll_ejemplo').oninput = (e) => {
         _paresEjemplo = Math.max(0, parseInt(e.target.value, 10) || 0); refrescarEjemplo();

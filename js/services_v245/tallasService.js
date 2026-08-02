@@ -38,7 +38,82 @@ const parejo = repartoParejo;
  * WOMEN y MEN vienen con la regla que dictó Daniel; el resto arranca parejo y marcado como
  * sin configurar, para que se note que hay que revisarlas y no se tomen por buenas.
  */
+/**
+ * CUÁNTO BAJA AL PISO, según la marca. Tres reglas distintas:
+ *
+ *   PORCENTAJE  las marcas grandes —Bata, North Star, Bubblegummers— dejan la mitad del
+ *               stock TOTAL (buffer + piso + reserva) abajo. Tienen cuerpos de sobra.
+ *   CUERPOS     las medianas —Power, Weinbrenner, Puma, Industrials— llenan UN SOLO CUERPO
+ *               y nada más, por más que lleguen mil pares. Si a Power le entran 330 en un
+ *               cuerpo, se almacenan 330. Poner la mitad les comería dos o tres cuerpos y
+ *               no quedaría lugar para el resto de los artículos de esa misma marca.
+ *   TODO        Adidas y Skechers: lo que hay en el buffer se almacena entero, sin recorte.
+ *
+ * Una marca que no esté en la lista se trata como mediana: un cuerpo. Es lo prudente — de
+ * más se llena el selectivo, de menos solo se repone más seguido.
+ */
+export const MODOS = {
+    porcentaje: 'Un % del stock total',
+    cuerpos:    'Llenar N cuerpos',
+    todo:       'Todo lo del buffer'
+};
+
+export const modoPorDefecto = () => ({ modo: 'cuerpos', valor: 1 });
+
+export const marcasPorDefecto = () => ({
+    'Bata':          { modo: 'porcentaje', valor: 50 },
+    'North Star':    { modo: 'porcentaje', valor: 50 },
+    'Bubblegummers': { modo: 'porcentaje', valor: 50 },
+    // Es la misma marca que Bubblegummers, así que va con la misma regla
+    'B.G Licenses':  { modo: 'porcentaje', valor: 50 },
+    'Power':         { modo: 'cuerpos', valor: 1 },
+    'Weinbrenner':   { modo: 'cuerpos', valor: 1 },
+    'Bata Industrials': { modo: 'cuerpos', valor: 1 },
+    'Puma':          { modo: 'cuerpos', valor: 1 },
+    'Marie Claire':  { modo: 'cuerpos', valor: 1 },
+    'Adidas':        { modo: 'todo', valor: 0 },
+    'Skechers':      { modo: 'todo', valor: 0 }
+});
+
+/** La regla de una marca. Si no está configurada, se la trata como mediana. */
+export const modoDeMarca = (marca) => {
+    const m = String(marca || '').trim();
+    const cfg = tallasActual().marcas || marcasPorDefecto();
+    if (cfg[m]) return cfg[m];
+    const buscado = m.toUpperCase().replace(/\s+/g, ' ');
+    const hallado = Object.keys(cfg).find(k => k.toUpperCase().replace(/\s+/g, ' ') === buscado);
+    return hallado ? cfg[hallado] : modoPorDefecto();
+};
+
+/**
+ * Cuántos pares del buffer bajan al piso y cuántos van arriba a reserva.
+ *
+ * A reserva solo se mandan CAJAS CERRADAS, así que lo que va arriba se recorta al múltiplo
+ * del factor y la diferencia se queda abajo. Por eso el resultado puede pasarse un poco del
+ * objetivo: es a propósito.
+ */
+export const cuantoAlPiso = ({ marca, buffer, piso = 0, reserva = 0, paresPorCuerpo = 330, factor = FACTOR_POR_DEFECTO }) => {
+    const b = Math.max(0, Math.round(Number(buffer) || 0));
+    const p = Math.max(0, Number(piso) || 0);
+    const r = Math.max(0, Number(reserva) || 0);
+    const f = Math.max(1, Math.round(Number(factor) || FACTOR_POR_DEFECTO));
+    const regla = modoDeMarca(marca);
+    if (!b) return { alPiso: 0, aReserva: 0, regla, objetivo: 0, total: b + p + r };
+
+    let objetivo;                       // cuánto TENDRÍA que haber en piso al terminar
+    if (regla.modo === 'todo')            objetivo = p + b;
+    else if (regla.modo === 'cuerpos')    objetivo = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
+    else                                  objetivo = (b + p + r) * ((Number(regla.valor) || 50) / 100);
+
+    // Lo que falta para llegar al objetivo, sin pasarse de lo que hay en el buffer
+    const falta = Math.max(0, Math.min(b, objetivo - p));
+    // A reserva van cajas cerradas; el resto se queda abajo
+    const aReserva = Math.floor((b - falta) / f) * f;
+    return { alPiso: b - aReserva, aReserva, regla, objetivo: Math.round(objetivo), total: b + p + r };
+};
+
 export const tallasPorDefecto = () => ({
+    marcas: marcasPorDefecto(),
     categorias: {
         '02 WOMEN': {
             configurado: true,
@@ -84,6 +159,19 @@ export const tallasPorDefecto = () => ({
 const normalizar = (crudo) => {
     const def = tallasPorDefecto();
     const c = (crudo && typeof crudo === 'object') ? crudo : {};
+
+    const marcas = {};
+    const mSrc = (c.marcas && typeof c.marcas === 'object') ? c.marcas : def.marcas;
+    Object.keys(mSrc).forEach(k => {
+        const v = mSrc[k] || {};
+        const modo = MODOS[v.modo] ? v.modo : 'cuerpos';
+        let valor = Number(v.valor);
+        if (!Number.isFinite(valor) || valor < 0) valor = modo === 'porcentaje' ? 50 : 1;
+        if (modo === 'porcentaje') valor = Math.min(100, valor);
+        if (modo === 'cuerpos') valor = Math.max(1, Math.round(valor));
+        marcas[String(k).trim()] = { modo, valor };
+    });
+
     const origen = (c.categorias && typeof c.categorias === 'object') ? c.categorias : def.categorias;
 
     const categorias = {};
@@ -103,7 +191,10 @@ const normalizar = (crudo) => {
             porcentajes
         };
     });
-    return { categorias: Object.keys(categorias).length ? categorias : def.categorias };
+    return {
+        marcas: Object.keys(marcas).length ? marcas : def.marcas,
+        categorias: Object.keys(categorias).length ? categorias : def.categorias
+    };
 };
 
 let _tallas = null;
