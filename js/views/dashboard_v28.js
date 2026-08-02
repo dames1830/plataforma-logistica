@@ -1,14 +1,14 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0010';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0011';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0010';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0010';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0010';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0010';
-import * as metasService from '../services_v245/metasService.js?v=29.0010';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0010';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0010';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0010';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0010';
+import * as adminService from '../services_v245/adminService.js?v=29.0011';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0011';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0011';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0011';
+import * as metasService from '../services_v245/metasService.js?v=29.0011';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0011';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0011';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0011';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0011';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -365,7 +365,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0010';
+const VERSION = '29.0011';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -507,20 +507,36 @@ const compartirMaestroConAnalisisSku = (pisar = false) => {
     dataStore.analisis_sku_maestro = maestro;
 };
 
-const rescatarMaestro = async () => {
-    // Se contrasta contra la nube UNA vez por sesión, aunque ya haya algo en
-    // memoria. Si se saliera de entrada al ver que hay algo cargado, un Maestro
-    // viejo que quedó guardado en esta PC le ganaría al publicado para siempre.
-    // Contrastar es barato: traerMaestroPublicado() pide primero una ficha de
+/**
+ * De dónde salió el Maestro que está cargado y qué copia es. Se muestra antes de generar
+ * tareas: las marcas de cada tarea salen de acá, y hasta ahora nadie tenía forma de saber
+ * con cuál estaba trabajando.
+ *   origen 'nube'    -> el publicado, que es el que usa todo el mundo
+ *   origen 'local'   -> el que quedó guardado en ESTA PC porque la nube no respondió
+ *   origen 'ninguno' -> no hay Maestro; no se pueden generar tareas
+ */
+let _maestroEstado = { origen: 'ninguno', filas: 0, fecha: '', usuario: '' };
+export const maestroEnUso = () => _maestroEstado;
+
+const rescatarMaestro = async (forzar = false) => {
+    // Contrastar contra la nube es barato: traerMaestroPublicado() pide primero una ficha de
     // unos pocos bytes y solo baja el archivo grande si de verdad cambió.
-    if (_maestroVerificado && hayMaestroEnMemoria()) { compartirMaestroConAnalisisSku(); return true; }
-    if (_maestroPromesa) return _maestroPromesa;
+    //
+    // Con `forzar` se vuelve a mirar aunque ya se haya verificado en esta sesión. Sin eso,
+    // una pestaña abierta desde las 19:00 seguía usando el Maestro de esa hora toda la noche:
+    // si a las 00:37 se publicaba otro, esta PC generaba tareas con marcas viejas mientras la
+    // de al lado las generaba con las nuevas, y ninguna de las dos se enteraba.
+    if (!forzar && _maestroVerificado && hayMaestroEnMemoria()) { compartirMaestroConAnalisisSku(); return true; }
+    if (_maestroPromesa && !forzar) return _maestroPromesa;
+    if (forzar) { _maestroPromesa = null; _maestroVerificado = false; }
 
     _maestroPromesa = (async () => {
         try {
             const r = await traerMaestroPublicado();
             if (r.filas > 0) {
                 _maestroVerificado = true;
+                const f = r.ficha || {};
+                _maestroEstado = { origen: 'nube', filas: r.filas, fecha: f.fecha || '', usuario: f.usuario || '—' };
                 console.log(`[Maestro] ${r.filas.toLocaleString('es-PE')} filas (${r.origen})`);
                 compartirMaestroConAnalisisSku(true);
                 return true;
@@ -536,12 +552,14 @@ const rescatarMaestro = async () => {
                 ? dataStore.articulos : await getAreaData('articulos');
             if (Array.isArray(local) && local.length > 0) {
                 dataStore.articulos = local;
+                _maestroEstado = { origen: 'local', filas: local.length, fecha: '', usuario: '' };
                 console.log(`[Maestro] ${local.length.toLocaleString('es-PE')} filas (solo de esta PC)`);
                 compartirMaestroConAnalisisSku();
                 return true;
             }
         } catch (e) { /* tampoco estaba */ }
 
+        _maestroEstado = { origen: 'ninguno', filas: 0, fecha: '', usuario: '' };
         return false;
     })();
 
@@ -1235,10 +1253,36 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
             console.warn("⚠️ [SYNC] Error de sincronización. Los datos permanecen seguros en tu PC.");
             updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
         }
-    } catch (e) { 
+    } catch (e) {
         console.error("[SYNC] Error crítico:", e);
         updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
     }
+};
+
+/**
+ * Reescribe el bloque completo de tareas, pero releyendo primero lo que hay en el servidor.
+ *
+ * Procesar, auditar y borrar son las operaciones que no pueden mandarse de a una tarea:
+ * cambian el conjunto. Si subieran lo que esta PC tiene en memoria, pisarían todo lo que
+ * otra PC hizo desde que se abrió la pantalla — las asignaciones del asistente, por ejemplo.
+ * Releyendo justo antes de escribir, la ventana de riesgo pasa de las horas que lleve la
+ * pantalla abierta a los milisegundos entre la lectura y la escritura.
+ *
+ * Si el servidor no responde se sigue con lo local: es preferible guardar con el riesgo
+ * viejo a perder la operación que el usuario acaba de hacer.
+ *
+ * @param transformar recibe las tareas del servidor y devuelve cómo tienen que quedar.
+ */
+const guardarBloqueFusionado = async (transformar) => {
+    let base = almacenajeTasksCache;
+    try {
+        const frescas = await adminService.traerTareasFrescas();
+        if (Array.isArray(frescas)) base = frescas;
+    } catch (e) {
+        console.warn('[PULSE] No se pudo releer del servidor; se guarda con lo de esta PC:', e && e.message);
+    }
+    almacenajeTasksCache = transformar(base) || [];
+    await saveAlmacenajeTasks();
 };
 
 const loadAlmacenajeTasks = async () => {
@@ -3176,7 +3220,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0010');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0011');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13405,7 +13449,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0010 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0011 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17781,8 +17825,10 @@ window.showCellModal = function(htmlContent) {
         // Conviene decirlo con todas las letras y no con un "0 tareas creadas" en verde, que
         // se lee como si el proceso hubiera fallado.
         const sinStockNuevo = tasksWithDate.length === 0 && paresDescontados > 0;
-        almacenajeTasksCache = [...almacenajeTasksCache, ...tasksWithDate];
-        await saveAlmacenajeTasks(); 
+        // Las nuevas se agregan sobre lo que el servidor tenga en este momento, no sobre la
+        // copia de esta PC: entre que se abrió la pantalla y ahora, el asistente pudo haber
+        // asignado o finalizado desde la suya.
+        await guardarBloqueFusionado(base => [...base, ...tasksWithDate]);
 
         // Animar la barra de progreso de 0% a 100% de manera fluida y mostrar el mensaje final
         let currentPct = 0;
@@ -17989,7 +18035,9 @@ window.showCellModal = function(htmlContent) {
                 // Fechas formateadas
                 // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía, Avance según estado)
                 bufferRows.forEach(i => {
-                    const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
+                    // Manda lo que quedó estampado en la tarea; el Maestro de hoy es el
+                    // respaldo. Al revés, un cambio de catálogo movía reportes ya cerrados.
+                    const grValue = art.genderRims || liveGenderRimsMap.get(art.sku7) || art.gender || "";
                     dataRows.push([
                         art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), marcaNormalizada(art.marca), grValue, art.coleccion, 
                         i.qty, "", task.id.includes('_') ? task.id.split('_')[1] : task.id
@@ -17997,7 +18045,9 @@ window.showCellModal = function(htmlContent) {
                 });
                 // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra, Avance es "---")
                 zonaRows.forEach(i => {
-                    const grValue = liveGenderRimsMap.get(art.sku7) || art.genderRims || art.gender || "";
+                    // Manda lo que quedó estampado en la tarea; el Maestro de hoy es el
+                    // respaldo. Al revés, un cambio de catálogo movía reportes ya cerrados.
+                    const grValue = art.genderRims || liveGenderRimsMap.get(art.sku7) || art.gender || "";
                     dataRows.push([
                         art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), marcaNormalizada(art.marca), grValue, art.coleccion, 
                         "", i.qty, task.id.includes('_') ? task.id.split('_')[1] : task.id
@@ -19382,8 +19432,10 @@ window.showCellModal = function(htmlContent) {
                 allGendersPerWeek[weekStr] = new Set();
             }
             (t.items || []).forEach(art => {
-                const liveGender = liveGenderMap.get(art.sku7);
-                const gender = (liveGender && liveGender !== '') ? liveGender : (String(art.gender || 'S/G').trim().toUpperCase() || 'S/G');
+                // Igual que arriba: primero lo que guardó la tarea, y el Maestro de hoy solo
+                // si esa tarea es vieja y no lo trae.
+                const guardado = String(art.gender || '').trim().toUpperCase();
+                const gender = guardado || String(liveGenderMap.get(art.sku7) || 'S/G').trim().toUpperCase() || 'S/G';
                 allGendersPerWeek[weekStr].add(gender);
                 if (!weeklyBrandGenderData[weekStr][gender]) {
                     weeklyBrandGenderData[weekStr][gender] = {};
@@ -20037,6 +20089,7 @@ window.showCellModal = function(htmlContent) {
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
                     ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥 EXCEL TAREAS</button>` : ''}
                     ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 AUDITAR WMS</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.openRefrescarMaestroModal()" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:rgba(250,204,21,0.12); color:#facc15; border:1px solid rgba(250,204,21,0.35); font-weight:800; margin-left:5px;" title="Corregir marca, temporada o categoría cuando el Maestro venía con un dato mal">🏷️ CORREGIR DATOS</button>` : ''}
                 </div>
 
                 ${isDetail ? `
@@ -20657,7 +20710,7 @@ window.showCellModal = function(htmlContent) {
                                     filteredTasks.forEach(t => {
                                         (t.items || []).forEach(art => {
                                             const sku7 = String(art.sku7 || '').trim().substring(0, 7);
-                                            const genderRims = String(liveGenderRimsMap.get(sku7) || art.genderRims || art.gender || 'S/GR').trim();
+                                            const genderRims = String(art.genderRims || liveGenderRimsMap.get(sku7) || art.gender || 'S/GR').trim();
                                             const bufferItems = art.items || [];
                                             
                                             bufferItems.forEach(i => {
@@ -21677,11 +21730,11 @@ window.showCellModal = function(htmlContent) {
         // Recién ahora se marca la tarea como auditada, con el resultado adentro
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const sello = new Date().toISOString();
+        const auditadas = new Map();
         resultados.forEach(r => {
             const task = almacenajeTasksCache.find(t => t.id === r.id);
             if (!task) return;
-            task.audited = true;
-            task.auditoria = {
+            const auditoria = {
                 fecha: sello, usuario: session.username || '---',
                 qtyBuffer: Math.round(r.iniBuffer), movidoReal: Math.round(r.movidoReal),
                 faltantePorMover: Math.round(r.faltantePorMover),
@@ -21692,9 +21745,16 @@ window.showCellModal = function(htmlContent) {
                 ubisNuevas: r.ubisNuevas, ubisFuera: r.ubisFuera,
                 ok: r.ok, problemas: r.problemas
             };
+            task.audited = true;
+            task.auditoria = auditoria;
             task._dirty = true;
+            auditadas.set(r.id, auditoria);
         });
-        saveAlmacenajeTasks();
+        // El resultado se pega sobre las tareas del servidor: una auditoría marca varias a la
+        // vez y puede tardar, así que subir el bloque de esta PC pisaría lo que otra haya
+        // hecho mientras tanto.
+        await guardarBloqueFusionado(base => base.map(t =>
+            auditadas.has(t.id) ? { ...t, audited: true, auditoria: auditadas.get(t.id) } : t));
         if (window.renderAlmacenajeTareas && window.__almacenajeContainer) {
             window.renderAlmacenajeTareas(window.__almacenajeContainer);
         }
@@ -21845,6 +21905,173 @@ window.showCellModal = function(htmlContent) {
     };
 
     // ── 8. Abrir el modal ───────────────────────────────────────────────────
+    /**
+     * Corregir marca, temporada o categoría de tareas ya generadas.
+     *
+     * Los datos del artículo quedan estampados en la tarea a propósito: un reporte de julio
+     * tiene que seguir diciendo lo que decía en julio. Pero el Maestro lo arma Comercial, y a
+     * veces llega con un dato mal —un artículo marcado como temporada antigua cuando era
+     * actual—. Sin esto, ese error quedaba grabado para siempre en las tareas de ese día.
+     *
+     * La corrección es EXPLÍCITA: el pasado no se mueve solo, se mueve porque alguien mira
+     * las diferencias y decide aplicarlas. Queda registrado quién y cuándo.
+     */
+    window.openRefrescarMaestroModal = async () => {
+        const desde = window.__almacenajeStartDate, hasta = window.__almacenajeEndDate;
+        const enRango = almacenajeTasksCache.filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+        if (!enRango.length) {
+            showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango de fechas seleccionado.', 'info');
+            return;
+        }
+
+        // Se vuelve a traer el catálogo: la gracia es comparar contra el corregido, no contra
+        // el que esta PC tenga cargado desde hace horas.
+        try { await rescatarMaestro(true); } catch (e) { /* sigue con lo que haya */ }
+        const m = maestroEnUso();
+        if (m.origen === 'ninguno') {
+            showPremiumAlert('SIN CATÁLOGO', 'No hay Maestro de Artículos para comparar. Publicalo desde Configuración → Archivos Nube.', 'error');
+            return;
+        }
+
+        const idx = new Map();
+        (dataStore.articulos || []).forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku7 = String(raw[1] || '').trim().substring(0, 7);
+            if (sku7 && !idx.has(sku7)) idx.set(sku7, {
+                marca: String(raw[13] || '').trim(),
+                gender: String(raw[2] || '').trim().toUpperCase(),
+                genderRims: String(raw[3] || '').trim().toUpperCase(),
+                coleccion: String(raw[9] || '').trim()
+            });
+        });
+
+        const CAMPOS = [
+            { k: 'marca', rotulo: 'Marca' },
+            { k: 'coleccion', rotulo: 'Temporada' },
+            { k: 'gender', rotulo: 'Familia' },
+            { k: 'genderRims', rotulo: 'Categoría' }
+        ];
+        // Un campo vacío en el Maestro no es una corrección: es un dato que falta. Si se
+        // aplicara, se borraría lo que la tarea sí tenía.
+        const difs = [];
+        enRango.forEach(t => (t.items || []).forEach(art => {
+            const nuevo = idx.get(art.sku7);
+            if (!nuevo) return;
+            CAMPOS.forEach(c => {
+                const actual = String(art[c.k] || '').trim();
+                const propuesto = String(nuevo[c.k] || '').trim();
+                if (!propuesto || propuesto === actual) return;
+                difs.push({ tareaId: t.id, fecha: t.fecha, sku7: art.sku7, campo: c.k, rotulo: c.rotulo, actual: actual || '(vacío)', propuesto });
+            });
+        }));
+
+        if (!difs.length) {
+            showPremiumAlert('TODO AL DÍA',
+                `Las ${enRango.length} tareas del rango coinciden con el catálogo publicado (${m.filas.toLocaleString('es-PE')} artículos). No hay nada que corregir.`,
+                'success');
+            return;
+        }
+
+        const corto = (id) => String(id).includes('_') ? String(id).split('_')[1] : id;
+        const modal = document.createElement('div');
+        modal.id = 'refrescarMaestroModal';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:99999; display:flex; justify-content:center; align-items:center; padding:2rem 0; overflow-y:auto;';
+        modal.innerHTML = `
+            <div class="glass-panel" style="width:95%; max-width:900px; max-height:88vh; display:flex; flex-direction:column; border:1px solid rgba(250,204,21,0.3); border-radius:16px; background:#1e293b; overflow:hidden;">
+                <div style="padding:1.4rem 1.6rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <h2 style="margin:0; font-size:1.1rem; color:#fff; display:flex; align-items:center; gap:10px;">
+                        <span style="background:rgba(250,204,21,0.12); padding:7px 9px; border-radius:9px;">🏷️</span> Corregir datos desde el Maestro
+                    </h2>
+                    <p style="color:var(--text-muted); font-size:0.8rem; margin:10px 0 0 0; line-height:1.5;">
+                        Se comparó lo que quedó guardado en las <b style="color:#fff;">${enRango.length}</b> tareas del rango
+                        contra el catálogo publicado (<b style="color:#fff;">${m.filas.toLocaleString('es-PE')}</b> artículos${m.fecha ? `, ${formatDateTime(m.fecha)}` : ''}).
+                        Solo se listan las diferencias. Lo que no marques queda como está.
+                    </p>
+                </div>
+
+                <div style="flex:1; overflow-y:auto; padding:1.2rem 1.6rem;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#d1d5db;">
+                        <thead style="position:sticky; top:0; background:#1e293b;">
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                                <th style="padding:8px 6px; text-align:center; width:36px;"><input type="checkbox" id="rmAll" checked></th>
+                                <th style="padding:8px 6px; text-align:left;">Tarea</th>
+                                <th style="padding:8px 6px; text-align:left;">Artículo</th>
+                                <th style="padding:8px 6px; text-align:left;">Dato</th>
+                                <th style="padding:8px 6px; text-align:left;">Dice la tarea</th>
+                                <th style="padding:8px 6px; text-align:left;">Dice el Maestro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${difs.map((d, i) => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                                    <td style="padding:7px 6px; text-align:center;"><input type="checkbox" class="rmChk" data-i="${i}" checked></td>
+                                    <td style="padding:7px 6px; color:#fff; font-weight:700;">${corto(d.tareaId)}<div style="color:var(--text-muted); font-weight:400; font-size:0.72rem;">${String(d.fecha).split('-').reverse().join('/')}</div></td>
+                                    <td style="padding:7px 6px;">${d.sku7}</td>
+                                    <td style="padding:7px 6px; color:var(--text-muted);">${d.rotulo}</td>
+                                    <td style="padding:7px 6px; color:#ef4444;">${d.actual}</td>
+                                    <td style="padding:7px 6px; color:#22c55e; font-weight:700;">${d.propuesto}</td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="padding:1.2rem 1.6rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:12px; align-items:center;">
+                    <button id="rmAplicar" class="btn" style="width:auto; padding:0.8rem 1.6rem; font-weight:800; font-size:0.78rem; background:linear-gradient(135deg,#facc15,#f59e0b); border:none; border-radius:10px; color:#1e293b; cursor:pointer;">APLICAR A LO MARCADO</button>
+                    <button id="rmCancelar" style="background:none; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); padding:0.8rem 1.3rem; border-radius:10px; cursor:pointer; font-size:0.78rem; font-weight:700;">Cancelar</button>
+                    <span style="color:var(--text-muted); font-size:0.76rem; margin-left:auto;">${difs.length} diferencia${difs.length !== 1 ? 's' : ''} encontrada${difs.length !== 1 ? 's' : ''}</span>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        const cerrar = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); };
+        document.getElementById('rmCancelar').onclick = cerrar;
+        document.getElementById('rmAll').onchange = (e) => {
+            document.querySelectorAll('.rmChk').forEach(c => { c.checked = e.target.checked; });
+        };
+
+        document.getElementById('rmAplicar').onclick = async () => {
+            const elegidas = Array.from(document.querySelectorAll('.rmChk')).filter(c => c.checked).map(c => difs[Number(c.dataset.i)]);
+            if (!elegidas.length) { showPremiumAlert('SIN SELECCIÓN', 'Marcá al menos una diferencia para aplicar.', 'warning'); return; }
+
+            const btn = document.getElementById('rmAplicar');
+            btn.disabled = true; btn.textContent = 'APLICANDO…';
+
+            // Se agrupa por tarea+artículo para tocar cada uno una sola vez
+            const porTarea = new Map();
+            elegidas.forEach(d => {
+                if (!porTarea.has(d.tareaId)) porTarea.set(d.tareaId, []);
+                porTarea.get(d.tareaId).push(d);
+            });
+
+            const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+            const sello = new Date().toISOString();
+
+            await guardarBloqueFusionado(base => base.map(t => {
+                const cambios = porTarea.get(t.id);
+                if (!cambios) return t;
+                const items = (t.items || []).map(art => {
+                    const mios = cambios.filter(c => c.sku7 === art.sku7);
+                    if (!mios.length) return art;
+                    const copia = { ...art };
+                    mios.forEach(c => { copia[c.campo] = c.propuesto; });
+                    return copia;
+                });
+                // Queda el rastro de la corrección: qué se cambió, quién y cuándo.
+                const previas = Array.isArray(t.correcciones) ? t.correcciones : [];
+                return { ...t, items, correcciones: [...previas, {
+                    fecha: sello, usuario: session.username || '---',
+                    cambios: cambios.map(c => ({ sku7: c.sku7, campo: c.campo, de: c.actual, a: c.propuesto }))
+                }] };
+            }));
+
+            cerrar();
+            if (window.renderAlmacenajeTareas && window.__almacenajeContainer) window.renderAlmacenajeTareas(window.__almacenajeContainer);
+            showPremiumAlert('DATOS CORREGIDOS',
+                `Se aplicaron ${elegidas.length} corrección${elegidas.length !== 1 ? 'es' : ''} en ${porTarea.size} tarea${porTarea.size !== 1 ? 's' : ''}.\n\nQuedó registrado quién y cuándo.`,
+                'success');
+        };
+    };
+
     window.openAuditModal = () => {
         const targetTasks = almacenajeTasksCache.filter(t =>
             t.fecha >= window.__almacenajeStartDate &&
@@ -21958,8 +22185,9 @@ window.showCellModal = function(htmlContent) {
 
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("ELIMINAR TAREA", `¿ESTÁS SEGURO DE ELIMINAR LA TAREA ${cleanId}?\n\nEsta acción es permanente y se borrará de todos los terminales.`, "danger")) {
-            almacenajeTasksCache = almacenajeTasksCache.filter(x => x.id !== id);
-            saveAlmacenajeTasks();
+            // Se borra sobre la lista del servidor: si se subiera la de esta PC, se irían con
+            // ella los cambios que otra haya hecho desde que se abrió la pantalla.
+            await guardarBloqueFusionado(base => base.filter(x => x.id !== id));
             renderAlmacenajeTareas(container);
         }
     };
@@ -22269,10 +22497,14 @@ window.showCellModal = function(htmlContent) {
                                 style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px; border-radius:10px; font-size:1.1rem; font-weight:700; outline:none; color-scheme:dark;">
                         </div>
 
+                        <div id="fichaMaestro" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 14px; font-size:0.78rem; line-height:1.5; color:var(--text-muted);">
+                            Revisando el catálogo de artículos…
+                        </div>
+
                         <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); margin-top:10px;">
                             PROCESAR TAREAS
                         </button>
-                        
+
                         <button id="optCancel" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; text-decoration:underline;">
                             Cerrar ventana
                         </button>
@@ -22280,6 +22512,37 @@ window.showCellModal = function(htmlContent) {
                 </div>
             `;
             document.body.appendChild(modal);
+
+            // El Maestro se vuelve a contrastar CADA vez que se abre esta ventana, no una vez
+            // por sesión: las marcas de las tareas salen de él, y si alguien publicó uno nuevo
+            // a mitad del turno esta PC seguiría generando con el viejo. La consulta es una
+            // ficha de unos pocos bytes; el archivo grande solo baja si de verdad cambió.
+            (async () => {
+                const caja = modal.querySelector('#fichaMaestro');
+                if (!caja) return;
+                try { await rescatarMaestro(true); } catch (e) { /* el estado queda en 'ninguno' */ }
+                const m = maestroEnUso();
+                const cuando = m.fecha ? formatDateTime(m.fecha) : '';
+                if (m.origen === 'nube') {
+                    caja.style.borderColor = 'rgba(34,197,94,0.3)';
+                    caja.style.background = 'rgba(34,197,94,0.05)';
+                    caja.innerHTML = `<b style="color:#22c55e;">Catálogo publicado</b><br>
+                        <span style="color:#fff;">${m.filas.toLocaleString('es-PE')} artículos</span>
+                        ${cuando ? ` · ${cuando}` : ''}${m.usuario && m.usuario !== '—' ? ` · lo publicó ${m.usuario}` : ''}`;
+                } else if (m.origen === 'local') {
+                    caja.style.borderColor = 'rgba(239,68,68,0.45)';
+                    caja.style.background = 'rgba(239,68,68,0.07)';
+                    caja.innerHTML = `<b style="color:#ef4444;">⚠ No se pudo consultar el catálogo publicado</b><br>
+                        Se va a usar el que quedó guardado en <b>esta computadora</b>
+                        (<span style="color:#fff;">${m.filas.toLocaleString('es-PE')} artículos</span>).
+                        Las marcas pueden salir distintas a las de otra PC.`;
+                } else {
+                    caja.style.borderColor = 'rgba(239,68,68,0.45)';
+                    caja.style.background = 'rgba(239,68,68,0.07)';
+                    caja.innerHTML = `<b style="color:#ef4444;">No hay catálogo de artículos</b><br>
+                        Publicá el Maestro desde Configuración → Archivos Nube antes de generar tareas.`;
+                }
+            })();
 
             modal.querySelector('#optUpdate').onclick = () => {
                 const selectedDate = modal.querySelector('#manual_op_date').value;
@@ -22434,13 +22697,14 @@ window.showCellModal = function(htmlContent) {
         )) {
             // Las tareas de días ya cerrados se respetan aunque caigan dentro del rango
             let protegidas = 0;
-            almacenajeTasksCache = almacenajeTasksCache.filter(t => {
+            // Igual que el borrado suelto: se filtra sobre lo que el servidor tiene ahora, no
+            // sobre la copia de esta PC.
+            await guardarBloqueFusionado(base => base.filter(t => {
                 if (t.status !== 'Creada') return true;
                 if (t.fecha < window.__almacenajeStartDate || t.fecha > window.__almacenajeEndDate) return true;
                 if (tareaCerrada(t)) { protegidas++; return true; }
                 return false;
-            });
-            saveAlmacenajeTasks();
+            }));
             renderAlmacenajeTareas(container);
             if (protegidas > 0) {
                 showPremiumAlert('QUEDARON TAREAS SIN BORRAR',

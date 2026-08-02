@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0010';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0011';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -50,6 +50,12 @@ export const getPerformanceLog = () => adminStore.performance_log;
 export const getAlmacenajeTasks = () => adminStore.almacenaje_tasks || [];
 
 export const getAlmacenajeTasksHistory = () => adminStore.almacenaje_tasks_history || [];
+
+/**
+ * Las tareas tal como están AHORA en el servidor, sin tocar lo que hay en memoria.
+ * Se usa para fusionar antes de reescribir el bloque entero (procesar, auditar, borrar).
+ */
+export const traerTareasFrescas = () => syncEngine.traerAreaFresca('almacenaje_tasks');
 
 export const saveAlmacenajeTasksHistory = async (data) => {
     adminStore.almacenaje_tasks_history = data;

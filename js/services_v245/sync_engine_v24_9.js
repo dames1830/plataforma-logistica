@@ -107,6 +107,46 @@ export async function initSync(force = false) {
 }
 export let pendingPushes = 0;
 
+/** Devuelve las tareas con sus items expandidos. Las que ya vienen sueltas se dejan igual. */
+function descomprimirTareas(data) {
+    if (!Array.isArray(data)) return data;
+    return data.map(t => {
+        if (!t || !t._comp || !Array.isArray(t.items)) return t;
+        const restoredItems = t.items.map(artArr => {
+            // genderRims va al final: las tareas guardadas antes de que existiera traen 7
+            // campos y ahí llega undefined, que es justo lo que corresponde.
+            const [sku7, marca, gender, coleccion, bQty, zQty, cItems, genderRims] = artArr;
+            return {
+                sku7, marca, gender, coleccion, bufferQty: bQty, zonaQty: zQty,
+                ...(genderRims ? { genderRims } : {}),
+                items: (cItems || []).map(i => { const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] }; if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; } if (i[5] !== undefined && i[5] !== null) { itemObj.qtyInitial = i[5]; } return itemObj; })
+            };
+        });
+        return { ...t, items: restoredItems, _comp: false };
+    });
+}
+
+/**
+ * Lee un área del servidor y la devuelve, SIN tocar el syncStore.
+ *
+ * Existe para releer justo antes de reescribir el bloque completo -procesar, auditar,
+ * borrar-, que son las operaciones que siguen mandando todas las tareas juntas. Si se
+ * subiera el bloque que la PC tiene en memoria, se pisaría lo que otra PC haya hecho desde
+ * que se abrió la pantalla: por ejemplo las asignaciones del asistente.
+ *
+ * No pasa por pullGlobal a propósito: ahí hay un guard que omite la descarga si esta PC
+ * empujó algo en los últimos 15 segundos, y para fusionar hace falta el dato fresco sí o sí.
+ */
+export async function traerAreaFresca(area) {
+    const res = await fetch(`${API_BASE}/${area}?z=${Date.now()}`);
+    if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+    const result = await res.json();
+    if (result && result.status === 'error') throw new Error(result.message);
+    const data = (result && result.data !== undefined) ? result.data : result;
+    if (area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') return descomprimirTareas(data);
+    return data;
+}
+
 export async function pullGlobal(requestedAreas = null, force = false) {
     if (pendingPushes > 0 && !force) {
         console.log("🚫 [PULSE] Sincronización omitida por empuje pendiente.");
@@ -158,24 +198,7 @@ export async function pullGlobal(requestedAreas = null, force = false) {
                 if (result.status === 'error') throw new Error(result.message);
                 let data = result.data !== undefined ? result.data : result;
 
-                if ((area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') && Array.isArray(data)) {
-                    data = data.map(t => {
-                        if (t._comp && Array.isArray(t.items)) {
-                            const restoredItems = t.items.map(artArr => {
-                                // genderRims va al final: las tareas guardadas antes de que existiera
-                                // traen 7 campos y ahí llega undefined, que es justo lo que corresponde.
-                                const [sku7, marca, gender, coleccion, bQty, zQty, cItems, genderRims] = artArr;
-                                return {
-                                    sku7, marca, gender, coleccion, bufferQty: bQty, zonaQty: zQty,
-                                    ...(genderRims ? { genderRims } : {}),
-                                    items: cItems.map(i => { const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] }; if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; } if (i[5] !== undefined && i[5] !== null) { itemObj.qtyInitial = i[5]; } return itemObj; })
-                                };
-                            });
-                            return { ...t, items: restoredItems, _comp: false };
-                        }
-                        return t;
-                    });
-                }
+                if (area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') data = descomprimirTareas(data);
                 return { area, data };
             }
             return { area, data: null };

@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0010';
-import * as adminService from './services_v245/adminService.js?v=29.0010';
+import { getSession, logout } from './services_v245/auth.js?v=29.0011';
+import * as adminService from './services_v245/adminService.js?v=29.0011';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0010';
+      this.APP_VERSION = 'v29.0011';
     
     // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
     const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
@@ -385,6 +385,11 @@ class App {
   }
 
   async init() {
+    // Cuanto antes arranque, mejor: si se dejara para cuando aparece el login, recién
+    // empezaría después de toda la sincronización con la nube, y se perdería la mitad del
+    // tiempo que la persona tarda en escribir. Va también cuando hay sesión guardada, porque
+    // en ese caso el dashboard se importa igual apenas termina de sincronizar.
+    this.adelantarDashboard();
     try {
         if (this.root) {
             // [CRÍTICO] Limpiar clases heredadas para evitar bugs de desbordamiento de scroll y franjas horizontales
@@ -418,6 +423,30 @@ class App {
     } catch (err) {
         console.error("[BOOT] Error Crítico:", err);
     }
+  }
+
+  /**
+   * Le pide al navegador que vaya bajando y compilando el dashboard MIENTRAS la persona
+   * escribe su usuario y su contraseña.
+   *
+   * Son ~1,4 MB y unas 22.000 líneas: cerca de medio segundo en bajar y otro medio en
+   * compilar. Esto no acorta ese tiempo, lo corre a un momento en el que nadie está mirando
+   * la pantalla en blanco. Cuando se aprieta ENTRAR, el archivo ya está listo.
+   *
+   * No ejecuta nada: 'modulepreload' descarga y compila, pero el módulo recién corre cuando
+   * lo importa render(). Y la URL se arma con la MISMA constante que usa el import de abajo:
+   * si la versión no coincidiera al carácter, el navegador lo trataría como otro archivo y
+   * lo bajaría dos veces, que es peor que no precargar nada.
+   */
+  adelantarDashboard() {
+    try {
+      const href = `./views/dashboard_v28.js?v=${this.APP_VERSION}`;
+      if (document.head.querySelector(`link[rel="modulepreload"][href="${href}"]`)) return;
+      const link = document.createElement('link');
+      link.rel = 'modulepreload';
+      link.href = href;
+      document.head.appendChild(link);
+    } catch (e) { /* si el navegador no lo soporta, todo sigue igual que antes */ }
   }
 
   async render(user) {
