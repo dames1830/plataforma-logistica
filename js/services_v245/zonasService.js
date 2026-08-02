@@ -137,20 +137,26 @@ export const zonasPorDefecto = () => ({
     ],
 
     /**
-     * Pares por cuerpo. Medido, no inventado: el máximo visto en cuerpos de un solo
-     * artículo. Es un PISO —un cuerpo con 200 pares puede estar a medio llenar—, por eso
-     * se puede subir a mano. Las combinaciones sin medición caen al respaldo de la zona.
+     * Pares por cuerpo. Medido, no inventado: el PERCENTIL 75 de lo que hay en los cuerpos
+     * que tienen un solo artículo.
+     *
+     * Se usa el p75 y no el máximo. El máximo son casos raros —cuerpos con dos artículos
+     * que el filtro no atrapó, o calzado más chico de lo normal— y da el doble de lo que
+     * entra de verdad. Daniel validó dos puntos y los dos caen en el p75: adulto en el
+     * selectivo 300-330 (p75 = 326) y Weinbrenner en el mezzanine 3 210-240 (p75 = 233).
+     * Con el máximo habrían salido 604 y 321, y el sistema mandaría a llenar cuerpos que
+     * no cierran.
      */
     densidad: {
-        SEL:   { 0: 1388, 1: 1012, 5: 640, 6: 530, 7: 181, 8: 604 },
-        MZN01: { 0: 747, 1: 880, 2: 683, 3: 488, 4: 481, 5: 567, 8: 391 },
-        MZN02: { 4: 394, 5: 437, 6: 402, 8: 424 },
-        MZN03: {},
-        MZN04: {}
+        SEL:   { 5: 548, 6: 277, 7: 136, 8: 326 },
+        MZN01: { 0: 642, 1: 426, 2: 386, 3: 332, 4: 284, 5: 372, 8: 347 },
+        MZN02: { 4: 352, 5: 279, 6: 298, 8: 259 },
+        MZN03: { 2: 332, 3: 338, 4: 170, 5: 260, 6: 159, 7: 139, 8: 233 },
+        MZN04: { 5: 289, 6: 190, 8: 347, 9: 192 }
     },
 
-    /** Cuando no hay medición para esa serie en esa zona. */
-    densidadRespaldo: { SEL: 330, MZN01: 500, MZN02: 400, MZN03: 400, MZN04: 400 },
+    /** Cuando no hay medición para esa serie en esa zona. Es el p75 de todo el almacén. */
+    densidadRespaldo: { SEL: 300, MZN01: 300, MZN02: 300, MZN03: 300, MZN04: 300 },
 
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'

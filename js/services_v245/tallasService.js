@@ -260,6 +260,69 @@ export const guardarTallas = async (nueva) => {
     return cfg;
 };
 
+/**
+ * QUÉ BAJA AL PISO, TALLA POR TALLA.
+ *
+ * Se repone la TALLA, no el artículo. Un cuerpo puede estar lleno en total y aun así tener
+ * la talla 40 en dos pares: si se mira solo el total se manda todo a reserva y esa talla se
+ * quiebra. Por eso el reparto por tallas no sirve solo para repartir lo que baja — define
+ * CUÁNTO TIENE QUE HABER de cada talla en el piso, y la reposición llena las que faltan.
+ *
+ * Las tallas que ya llegaron a su objetivo no reciben nada. Las que faltan bajan aunque el
+ * cuerpo esté pasado en total: el cuerpo se queda un tiempo por encima hasta que se venda
+ * lo sobrante, que fue la decisión de Daniel. Lo que sobra del buffer sube a reserva en
+ * cajas cerradas; las unidades sueltas se quedan abajo.
+ *
+ * porTalla: { '38': { buffer, piso }, '39': {...} }  — lo que hay hoy de cada talla.
+ */
+export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo = 300,
+                                     piso = 0, reserva = 0, factor = FACTOR_POR_DEFECTO }) => {
+    const f = Math.max(1, Math.round(Number(factor) || FACTOR_POR_DEFECTO));
+    const tallas = porTalla && typeof porTalla === 'object' ? porTalla : {};
+    const claves = Object.keys(tallas);
+    if (!claves.length) return null;
+
+    const bufferTotal = claves.reduce((a, t) => a + (Number(tallas[t].buffer) || 0), 0);
+    const pisoTotal = piso || claves.reduce((a, t) => a + (Number(tallas[t].piso) || 0), 0);
+
+    // 1. Cuánto TENDRÍA que haber del artículo entero en el piso
+    const regla = modoDeMarca(marca);
+    let objetivoArt;
+    if (regla.modo === 'todo')          objetivoArt = pisoTotal + bufferTotal;
+    else if (regla.modo === 'cuerpos')  objetivoArt = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
+    else                                objetivoArt = (bufferTotal + pisoTotal + (Number(reserva) || 0)) * ((Number(regla.valor) || 50) / 100);
+
+    // 2. Ese objetivo se reparte entre las tallas, con los porcentajes de la categoría
+    const cat = tallasActual().categorias[String(categoria || '').toUpperCase()];
+    const suma = cat ? cat.tallas.reduce((a, t) => a + (Number(cat.porcentajes[t]) || 0), 0) : 0;
+
+    const filas = claves.sort((a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0)).map(t => {
+        const buf = Math.max(0, Math.round(Number(tallas[t].buffer) || 0));
+        const pis = Math.max(0, Math.round(Number(tallas[t].piso) || 0));
+        // Sin perfil de tallas, se reparte parejo entre las que tiene el artículo
+        const pct = (cat && suma > 0) ? (Number(cat.porcentajes[t]) || 0) / suma : 1 / claves.length;
+        const objetivo = regla.modo === 'todo' ? pis + buf : Math.round(objetivoArt * pct);
+
+        const falta = Math.max(0, objetivo - pis);
+        let baja = Math.min(buf, Math.round(falta / f) * f);
+        if (baja === 0 && falta > 0 && buf > 0) baja = Math.min(buf, f);   // al menos una caja
+        // Arriba solo cajas cerradas: lo suelto se queda abajo
+        const aReserva = Math.floor((buf - baja) / f) * f;
+        baja = buf - aReserva;
+
+        return { talla: t, buffer: buf, piso: pis, objetivo, falta,
+                 baja, aReserva, comercial: !!(cat && cat.comerciales.includes(t)) };
+    });
+
+    return {
+        regla, objetivoArticulo: Math.round(objetivoArt), paresPorCuerpo, factor: f,
+        bufferTotal, pisoTotal, filas,
+        alPiso: filas.reduce((a, x) => a + x.baja, 0),
+        aReserva: filas.reduce((a, x) => a + x.aReserva, 0),
+        sinPerfil: !cat
+    };
+};
+
 /** Cuánto suman los porcentajes de una categoría. Tiene que dar 100. */
 export const sumaDe = (cat) => {
     const c = tallasActual().categorias[String(cat).toUpperCase()];
