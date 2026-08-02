@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0023';
+} from '../services_v245/csvHub_v6.js?v=29.0024';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0023';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0023';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0023';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0023';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0023';
+import * as adminService from '../services_v245/adminService.js?v=29.0024';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0024';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0024';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0024';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0024';
 
 /**
  * El día operativo, no el del calendario.
@@ -281,7 +281,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0023</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0024</span>
     </div>`;
 
   buildTabNav();

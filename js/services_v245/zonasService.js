@@ -501,7 +501,12 @@ export const planificarAlmacenaje = (art, ocupadosPorZona) => {
 
     // Paso 3: cuántos cuerpos
     const porCuerpo = densidadDe(zona, serieDe(art.sku7));
-    const cuantos = Math.max(1, Math.ceil(Number(art.pares) / porCuerpo));
+    // Se tolera hasta un 10% de más antes de abrir otro cuerpo. Redondeando siempre para
+    // arriba, 690 pares con cuerpos de 683 abrían un segundo cuerpo para 7 pares — justo
+    // lo que el candado del "cuánto" viene a evitar. Y la capacidad no es un límite físico
+    // exacto: es el percentil 75 de lo que hay guardado, así que un poco más entra.
+    const HOLGURA = 0.10;
+    const cuantos = Math.max(1, Math.ceil((Number(art.pares) - porCuerpo * HOLGURA) / porCuerpo));
 
     // Paso 4 y 5
     const r = elegirCuerpos(zona, columnas, cuantos, ocupadosPorZona[zona] || new Set());
