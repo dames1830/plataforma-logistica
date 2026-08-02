@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0029';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0030';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0029';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0029';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0029';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0029';
-import * as metasService from '../services_v245/metasService.js?v=29.0029';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0029';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0029';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0029';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0029';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0029';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0029';
+import * as adminService from '../services_v245/adminService.js?v=29.0030';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0030';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0030';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0030';
+import * as metasService from '../services_v245/metasService.js?v=29.0030';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0030';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0030';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0030';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0030';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0030';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0030';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0029';
+const VERSION = '29.0030';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0029');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0030');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0029 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0030 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14961,6 +14961,9 @@ const renderRFSection = (container) => {
       const s7 = String(raw[1] || '').trim().substring(0, 7);
       const qty = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
 
+      // CDBUFFER-C es PreePack: queda fuera igual que en el generador de tareas. Si se
+      // contara, el papel mandaría a almacenar mercadería que no entra en este circuito.
+      if (ubi.startsWith('CDBUFFER-C')) return;
       // El ANDAMIO no cuenta como piso: es logística inversa, no stock de la zona activa
       const esBuffer = ubi.startsWith('CDBUFFER');
       const zona = ubi.split('-')[0];
@@ -15042,6 +15045,7 @@ const renderRFSection = (container) => {
       p.reserva -= aReserva;
       return {
         ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
+        marca: sug.ficha.marca || '',
         alPiso, aReserva,
         destino: sug.niveles[l.talla] || ''
       };
@@ -15144,8 +15148,9 @@ const renderRFSection = (container) => {
           margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.4, header: 0.2, footer: 0.2 }
         }
       });
+      // La marca no lleva columna: una tarea es de una sola marca, así que va en la cabecera
       ws.columns = [
-        { width: 24 },  // A Ubicación
+        { width: 25 },  // A Ubicación
         { width: 18 },  // B SKU
         { width: 8 },   // C Talla
         { width: 12 },  // D Qty buffer
@@ -15153,41 +15158,56 @@ const renderRFSection = (container) => {
         { width: 12 },  // F Paletizar
         { width: 18 }   // G Destino
       ];
+      const COLS = 7;
 
       const NEGRO = 'FF2C2C2A', GRIS = 'FFF1EFE8', GRIS_FUERTE = 'FFB4B2A9', LINEA = 'FF888780';
       const borde = { top: { style: 'thin', color: { argb: LINEA } }, left: { style: 'thin', color: { argb: LINEA } },
                       bottom: { style: 'thin', color: { argb: LINEA } }, right: { style: 'thin', color: { argb: LINEA } } };
       const centro = { vertical: 'middle', horizontal: 'center' };
-      const pintar = (fila, argb) => fila.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } }; });
 
-      filas.forEach((x, idx) => {
-        const p = x.plan;
-        const trabada = p.estado === 'slotting' || p.estado === 'sin-regla' || p.estado === 'sin-reglas-zona';
+      // Una tarea puede traer varios artículos, y tienen que salir juntos en la misma hoja
+      const porTarea = new Map();
+      filas.forEach(x => {
+        const k = String(x.tarea.id);
+        if (!porTarea.has(k)) porTarea.set(k, { tarea: x.tarea, arts: [] });
+        porTarea.get(k).arts.push(x);
+      });
+      const tareas = [...porTarea.values()];
 
-        // Cabecera: la tarea y el artículo, centrados sobre las siete columnas
-        // El id ya viene como "Tarea24" (a veces con la fecha delante), así que no se le
-        // antepone la palabra: quedaba "Tarea Tarea24".
-        const idCorto = String(x.tarea.id).includes('_') ? String(x.tarea.id).split('_')[1] : String(x.tarea.id);
-        const rT = ws.addRow([`${/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto} · ${x.sku7}`]);
-        ws.mergeCells(rT.number, 1, rT.number, 7);
+      tareas.forEach((grupo, idx) => {
+        const t = grupo.tarea;
+        const idCorto = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
+        const trabadas = grupo.arts.filter(x => x.plan.estado === 'slotting'
+          || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona');
+
+        // Con varios artículos se muestra el primero y un "+", para que el título no crezca
+        const primerArt = grupo.arts[0] ? grupo.arts[0].sku7 : '';
+        const rT = ws.addRow([(/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto)
+          + ' · ' + primerArt + (grupo.arts.length > 1 ? ' +' : '')]);
+        ws.mergeCells(rT.number, 1, rT.number, COLS);
         rT.getCell(1).font = { size: 18, bold: true, name: 'Calibri' };
         rT.getCell(1).alignment = centro;
         rT.height = 26;
 
-        const rF = ws.addRow([`${String(x.tarea.fecha).split('-').reverse().join('/')}${x.plan.estado === 'reposicion' ? ' · reposición' : ' · código nuevo'}`]);
-        ws.mergeCells(rF.number, 1, rF.number, 7);
+        const marcaTarea = t.marca || (grupo.arts[0] && grupo.arts[0].ficha.marca) || '';
+        const rF = ws.addRow([String(t.fecha).split('-').reverse().join('/')
+          + (marcaTarea ? ' · ' + marcaTarea : '')
+          + ' · ' + grupo.arts.length + ' artículo' + (grupo.arts.length > 1 ? 's' : '')]);
+        ws.mergeCells(rF.number, 1, rF.number, COLS);
         rF.getCell(1).font = { size: 10, name: 'Calibri' };
         rF.getCell(1).alignment = centro;
 
-        if (trabada) {
-          const rA = ws.addRow(['SIN UBICACIÓN · NO ALMACENAR']);
-          ws.mergeCells(rA.number, 1, rA.number, 7);
+        if (trabadas.length) {
+          const rA = ws.addRow([trabadas.length === grupo.arts.length
+            ? 'SIN UBICACIÓN · NO ALMACENAR'
+            : 'SIN UBICACIÓN EN ' + trabadas.length + ' DE ' + grupo.arts.length + ' ARTÍCULOS · VER ABAJO']);
+          ws.mergeCells(rA.number, 1, rA.number, COLS);
           rA.getCell(1).font = { size: 13, bold: true, name: 'Calibri' };
           rA.getCell(1).alignment = centro;
           rA.getCell(1).border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'thin' }, right: { style: 'medium' } };
           rA.height = 20;
-          const rM = ws.addRow([p.motivo || 'Avisar a Slotting antes de mover nada.']);
-          ws.mergeCells(rM.number, 1, rM.number, 7);
+          const rM = ws.addRow([trabadas[0].plan.motivo || 'Avisar a Slotting antes de mover nada.']);
+          ws.mergeCells(rM.number, 1, rM.number, COLS);
           rM.getCell(1).font = { size: 9, name: 'Calibri' };
           rM.getCell(1).alignment = centro;
           rM.getCell(1).border = { left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
@@ -15195,20 +15215,18 @@ const renderRFSection = (container) => {
 
         ws.addRow([]);
 
-        // Nombres · Hora inicio · Hora término
         const rN = ws.addRow(['Nombres', '', '', 'Hora inicio', '', 'Término', '']);
         ws.mergeCells(rN.number, 2, rN.number, 3);
         rN.height = 22;
         rN.eachCell({ includeEmpty: true }, (c, col) => {
           c.border = borde;
-          c.alignment = { vertical: 'middle', horizontal: col === 1 || col === 4 || col === 6 ? 'left' : 'center' };
+          c.alignment = { vertical: 'middle', horizontal: (col === 1 || col === 4 || col === 6) ? 'left' : 'center' };
           c.font = { size: 11, name: 'Calibri' };
           if (col === 1 || col === 4 || col === 6) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS } };
         });
 
         ws.addRow([]);
 
-        // Cabecera de la tabla: fondo negro, letra blanca
         const rH = ws.addRow(['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Al piso', 'Paletizar', 'Destino']);
         rH.height = 20;
         rH.eachCell(c => {
@@ -15218,36 +15236,42 @@ const renderRFSection = (container) => {
           c.border = borde;
         });
 
-        const lineas = filasDelPapel(x, ctx);
-        lineas.forEach(l => {
-          const r = ws.addRow([l.ubi, l.skuFull, l.talla, l.qty,
-                               trabada ? '—' : (l.alPiso || '—'),
-                               l.aReserva || '—',
-                               trabada ? 'Revisar Slotting' : (l.destino || '—')]);
-          r.height = 18;
-          r.eachCell((c, col) => {
-            c.border = borde;
-            c.alignment = centro;
-            c.font = { size: 11, name: 'Calibri', bold: col === 3 || col === 5 || col === 7 };
-            if (col === 5 || col === 7) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS } };
+        let ultimaFila = rH;
+        grupo.arts.forEach(x => {
+          const trabada = x.plan.estado === 'slotting' || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona';
+          filasDelPapel(x, ctx).forEach(l => {
+            const r = ws.addRow([l.ubi, l.skuFull, l.talla, l.qty,
+                                 trabada ? '—' : (l.alPiso || '—'),
+                                 l.aReserva || '—',
+                                 trabada ? 'Revisar Slotting' : (l.destino || '—')]);
+            r.height = 18;
+            r.eachCell((c, col) => {
+              c.border = borde;
+              c.alignment = centro;
+              c.font = { size: 11, name: 'Calibri', bold: col === 3 || col === 5 || col === 7 };
+              if (col === 5 || col === 7) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS } };
+            });
+            ultimaFila = r;
           });
+
+          // Un total por artículo, como en el Excel de siempre
+          const rTot = ws.addRow(['Total ' + x.sku7, '', '', x.pares,
+                                  trabada ? 0 : x.alPiso, x.aReserva,
+                                  x.paletas ? x.paletas + ' paleta' + (x.paletas > 1 ? 's' : '') : '—']);
+          ws.mergeCells(rTot.number, 1, rTot.number, 3);
+          rTot.height = 20;
+          rTot.eachCell({ includeEmpty: true }, c => {
+            c.border = borde; c.alignment = centro;
+            c.font = { size: 11, bold: true, name: 'Calibri' };
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS_FUERTE } };
+          });
+          ultimaFila = rTot;
         });
 
-        const rTot = ws.addRow(['Total', '', '', x.pares, trabada ? 0 : x.alPiso, x.aReserva,
-                                x.paletas ? `${x.paletas} paleta${x.paletas > 1 ? 's' : ''}` : '—']);
-        ws.mergeCells(rTot.number, 1, rTot.number, 3);
-        rTot.height = 20;
-        rTot.eachCell({ includeEmpty: true }, c => {
-          c.border = borde; c.alignment = centro;
-          c.font = { size: 11, bold: true, name: 'Calibri' };
-        });
-        pintar(rTot, GRIS_FUERTE);
-
-        // Salto de página: cada tarea es una hoja. Va sobre la fila del total y no sobre una
-        // vacía agregada después — ExcelJS no conserva las filas sin celdas, y el salto se
-        // perdía con ellas.
-        if (idx < filas.length - 1) {
-          rTot.addPageBreak();
+        // Cada tarea, su hoja. El salto va sobre una fila con celdas: ExcelJS descarta las
+        // vacías y el salto se iría con ellas.
+        if (idx < tareas.length - 1) {
+          ultimaFila.addPageBreak();
           ws.addRow([]);
         }
       });
@@ -15256,7 +15280,7 @@ const renderRFSection = (container) => {
       const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `Tareas_Almacenaje_${getLogicalDate()}.xlsx`;
+      a.download = 'Tareas_Almacenaje_' + getLogicalDate() + '.xlsx';
       a.click();
       URL.revokeObjectURL(a.href);
     });
