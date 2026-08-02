@@ -1,15 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0017';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0018';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0017';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0017';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0017';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0017';
-import * as metasService from '../services_v245/metasService.js?v=29.0017';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0017';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0017';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0017';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0017';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0017';
+import * as adminService from '../services_v245/adminService.js?v=29.0018';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0018';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0018';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0018';
+import * as metasService from '../services_v245/metasService.js?v=29.0018';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0018';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0018';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0018';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0018';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0018';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0018';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -366,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0017';
+const VERSION = '29.0018';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3243,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0017');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0018');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13477,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0017 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0018 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14560,6 +14561,169 @@ const renderRFSection = (container) => {
     } catch(e) {
       console.error('Error al guardar configuracion de analisis SKU:', e);
     }
+  };
+
+  /**
+   * REPARTO POR TALLAS
+   *
+   * De los pares que se decide almacenar, cuántos le tocan a cada talla. No es proporcional
+   * a lo que llega: las comerciales se llevan más porque son las que se venden. Para 02 WOMEN
+   * la regla es 25% a cada una de las tres comerciales y el 25% restante entre las otras tres.
+   *
+   * Se edita acá para poder cambiarlo sin tocar código: mañana puede convenir bajar la 36 y
+   * la 38 a 20% y darle más a la 37.
+   */
+  let _tallasBorrador = null;
+  let _catTallaElegida = '02 WOMEN';
+
+  const pintarRepartoTallas = async (panel) => {
+    if (!panel) return;
+    if (!_tallasBorrador) {
+      await tallasService.cargarTallas();
+      if (!panel.isConnected) return;
+      _tallasBorrador = JSON.parse(JSON.stringify(tallasService.tallasActual()));
+    }
+    const cfg = _tallasBorrador;
+    const CATS = Object.keys(cfg.categorias);
+    if (!cfg.categorias[_catTallaElegida]) _catTallaElegida = CATS[0];
+
+    const dibujar = () => {
+      if (!panel.isConnected) return;
+      const c = cfg.categorias[_catTallaElegida];
+      const suma = Math.round(c.tallas.reduce((a, t) => a + (Number(c.porcentajes[t]) || 0), 0) * 100) / 100;
+      const ok = Math.abs(suma - 100) < 0.05;
+      const EJEMPLO = 800;
+
+      panel.innerHTML = `
+      <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(34,197,94,0.3); border-radius:14px; overflow:hidden;">
+        <div style="padding:1rem 1.2rem; background:rgba(34,197,94,0.06); border-bottom:1px solid rgba(34,197,94,0.2); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h3 style="color:#22c55e; font-weight:900; margin:0 0 2px 0; font-size:0.92rem; letter-spacing:1px; text-transform:uppercase;">📏 REPARTO POR TALLAS</h3>
+            <div style="font-size:0.68rem; color:rgba(34,197,94,0.6); font-weight:600;">De los pares que se almacenan, cuántos le tocan a cada talla · las comerciales se llevan más</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span id="tll_estado" style="font-size:0.7rem; color:#facc15; font-weight:700;"></span>
+            <button id="tll_guardar" class="btn" style="width:auto; padding:7px 16px; font-size:0.72rem; background:rgba(34,197,94,0.14); color:#22c55e; border:1px solid rgba(34,197,94,0.4); font-weight:800;">PUBLICAR REPARTO</button>
+          </div>
+        </div>
+
+        <div style="padding:0.9rem 1.2rem; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.05);">
+          ${CATS.map(k => {
+            const act = k === _catTallaElegida, listo = cfg.categorias[k].configurado;
+            return `<button data-cat="${k}" style="padding:6px 13px; border-radius:8px; font-size:0.72rem; font-weight:800; cursor:pointer;
+              background:${act ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'};
+              border:1px solid ${act ? '#22c55e' : 'rgba(255,255,255,0.1)'};
+              color:${act ? '#4ade80' : (listo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.28)')};">
+              ${k}${listo ? '' : ' · sin configurar'}</button>`;
+          }).join('')}
+        </div>
+
+        <div style="padding:1.2rem; overflow-x:auto;">
+          <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); margin-bottom:12px;">
+            Marcá cuáles son las comerciales y escribí el porcentaje de cada una. La columna de la derecha muestra
+            cómo quedarían <b style="color:rgba(255,255,255,0.6);">${EJEMPLO} pares</b> repartidos con estos números.
+          </div>
+          <div style="display:flex; gap:9px; min-width:min-content; align-items:flex-start;">
+            ${c.tallas.map(t => {
+              const com = c.comerciales.includes(t);
+              const r = tallasService.repartirPorTalla ? null : null;
+              return `
+              <div style="display:flex; flex-direction:column; align-items:center; gap:5px; min-width:74px;">
+                <div style="font-size:0.8rem; font-weight:900; color:${com ? '#4ade80' : 'rgba(255,255,255,0.55)'};">${t}</div>
+                <input type="number" data-pct="${t}" min="0" max="100" step="0.01" value="${c.porcentajes[t]}"
+                  style="width:100%; padding:6px 4px; background:${com ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)'}; border:1px solid ${com ? 'rgba(34,197,94,0.45)' : 'rgba(255,255,255,0.12)'}; border-radius:7px; color:#fff; font-size:0.8rem; font-weight:900; text-align:center;">
+                <label style="display:flex; align-items:center; gap:4px; cursor:pointer; font-size:0.58rem; color:rgba(255,255,255,0.4);">
+                  <input type="checkbox" data-com="${t}" ${com ? 'checked' : ''} style="cursor:pointer;"> comercial
+                </label>
+                <div data-ej="${t}" style="font-size:0.68rem; color:#93c5fd; font-weight:800;"></div>
+              </div>`;
+            }).join('')}
+          </div>
+
+          <div style="margin-top:1rem; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+            <div style="font-size:0.78rem; font-weight:900; color:${ok ? '#22c55e' : '#ef4444'};">
+              Suma: ${suma}%${ok ? ' ✓' : ' — tiene que dar 100'}
+            </div>
+            <button id="tll_repartir" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.14); color:rgba(255,255,255,0.6); padding:5px 12px; border-radius:7px; cursor:pointer; font-size:0.68rem; font-weight:800;">Repartir parejo</button>
+            <button id="tll_regla" style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.35); color:#4ade80; padding:5px 12px; border-radius:7px; cursor:pointer; font-size:0.68rem; font-weight:800;">25% a cada comercial, el resto se reparte</button>
+          </div>
+        </div>
+
+        <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.12); font-size:0.67rem; color:rgba(255,255,255,0.33); line-height:1.7;">
+          Esto se aplica <b style="color:rgba(255,255,255,0.55);">después</b> de saber cuántos pares van al piso, y antes de buscarles cuerpo.
+          Los pares que sobran del redondeo se le dan a las tallas de mayor porcentaje, para que la más comercial nunca termine con menos que una de las otras.
+        </div>
+      </div>`;
+
+      // El ejemplo se calcula con lo que hay en pantalla, sin tocar lo publicado
+      const refrescarEjemplo = () => {
+        const cc = cfg.categorias[_catTallaElegida];
+        const s = cc.tallas.reduce((a, t) => a + (Number(cc.porcentajes[t]) || 0), 0);
+        cc.tallas.forEach(t => {
+          const el = panel.querySelector(`[data-ej="${t}"]`);
+          if (el) el.textContent = s > 0 ? Math.round(EJEMPLO * (Number(cc.porcentajes[t]) || 0) / s) + ' pares' : '—';
+        });
+      };
+      refrescarEjemplo();
+
+      const marcar = () => { const e = panel.querySelector('#tll_estado'); if (e) e.textContent = '● sin publicar'; };
+
+      panel.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { _catTallaElegida = b.dataset.cat; dibujar(); });
+      panel.querySelectorAll('[data-pct]').forEach(i => i.oninput = () => {
+        const v = parseFloat(i.value);
+        c.porcentajes[i.dataset.pct] = Number.isFinite(v) && v >= 0 ? v : 0;
+        refrescarEjemplo(); marcar();
+      });
+      panel.querySelectorAll('[data-pct]').forEach(i => i.onchange = () => { c.configurado = true; dibujar(); marcar(); });
+      panel.querySelectorAll('[data-com]').forEach(i => i.onchange = () => {
+        const t = i.dataset.com;
+        c.comerciales = i.checked ? [...new Set([...c.comerciales, t])] : c.comerciales.filter(x => x !== t);
+        c.configurado = true; dibujar(); marcar();
+      });
+      panel.querySelector('#tll_repartir').onclick = () => {
+        c.porcentajes = tallasService.repartoParejo(c.tallas);
+        c.configurado = true; dibujar(); marcar();
+      };
+      panel.querySelector('#tll_regla').onclick = () => {
+        const com = c.comerciales.length, otras = c.tallas.length - com;
+        if (!com || !otras) {
+          showPremiumAlert('FALTA MARCAR', 'Marcá cuáles son las tallas comerciales antes de usar este reparto.', 'warning');
+          return;
+        }
+        // 25% a cada comercial; lo que quede, parejo entre las demás
+        const parteComercial = Math.min(25, Math.floor((100 / com) * 100) / 100);
+        const resto = Math.round((100 - parteComercial * com) * 100) / 100;
+        const cadaOtra = Math.round((resto / otras) * 100) / 100;
+        c.tallas.forEach(t => { c.porcentajes[t] = c.comerciales.includes(t) ? parteComercial : cadaOtra; });
+        // El sobrante de los decimales se lo lleva la primera comercial, para que dé 100 justo
+        const s = c.tallas.reduce((a, t) => a + c.porcentajes[t], 0);
+        if (Math.abs(s - 100) > 0.001) {
+          c.porcentajes[c.comerciales[0]] = Math.round((c.porcentajes[c.comerciales[0]] + (100 - s)) * 100) / 100;
+        }
+        c.configurado = true; dibujar(); marcar();
+      };
+      panel.querySelector('#tll_guardar').onclick = async (ev) => {
+        const s = c.tallas.reduce((a, t) => a + (Number(c.porcentajes[t]) || 0), 0);
+        if (Math.abs(s - 100) > 0.05) {
+          showPremiumAlert('LOS PORCENTAJES NO CIERRAN',
+            `${_catTallaElegida} suma ${Math.round(s * 100) / 100}% y tiene que dar 100.\n\nCorregilo antes de publicar.`, 'warning');
+          return;
+        }
+        await withLoading(ev.currentTarget, '⌛ PUBLICANDO...', async () => {
+          try {
+            await tallasService.guardarTallas(cfg);
+            _tallasBorrador = JSON.parse(JSON.stringify(tallasService.tallasActual()));
+            dibujar();
+            showPremiumAlert('PUBLICADO', 'El reparto por tallas quedó guardado para todas las PC.', 'success');
+          } catch (e) {
+            showPremiumAlert('NO SE PUDO PUBLICAR',
+              'Quedó guardado en esta computadora, pero el servidor no respondió: ' + e.message, 'error');
+          }
+        });
+      };
+    };
+
+    dibujar();
   };
 
   /**
@@ -19681,6 +19845,8 @@ window.showCellModal = function(htmlContent) {
                     Cambiar datos <b style="color:rgba(255,255,255,0.55);">mueve números ya presentados</b>, porque las metas se aplican por categoría. Queda registrado qué se cambió, quién y cuándo.
                 </div>
             </div>
+
+            <div id="cfg_tallas_panel"></div>
         </div>`;
 
         container.querySelector('#cfg_nueva').onclick = () => abrirModal(null);
@@ -19690,6 +19856,8 @@ window.showCellModal = function(htmlContent) {
         const inHasta = container.querySelector('#cfg_corr_hasta');
         inDesde.onchange = () => { window.__correccionDesde = inDesde.value; };
         inHasta.onchange = () => { window.__correccionHasta = inHasta.value; };
+        pintarRepartoTallas(container.querySelector('#cfg_tallas_panel'));
+
         const btnCorregir = container.querySelector('#cfg_corregir');
         btnCorregir.onclick = async () => {
             const d = inDesde.value, h = inHasta.value;
