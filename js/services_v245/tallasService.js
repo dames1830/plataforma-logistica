@@ -292,6 +292,28 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     else if (regla.modo === 'cuerpos')  objetivoArt = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
     else                                objetivoArt = (bufferTotal + pisoTotal + (Number(reserva) || 0)) * ((Number(regla.valor) || 50) / 100);
 
+    // EL CANDADO. Un cuerpo no se comparte entre dos artículos, así que ocuparlo cuesta lo
+    // mismo con 160 pares que con 500. Dejarlo a medio llenar y mandar el resto arriba no
+    // ahorra un centímetro de espacio: solo obliga a bajarlo de nuevo la semana que viene.
+    //
+    // El objetivo se redondea al CUERPO ENTERO más cercano, con un mínimo de uno, y nunca
+    // por encima de lo que hay. Así:
+    //   350 pares y un cuerpo de 332  ->  entran todos, nada a reserva
+    //   500 pares y un cuerpo de 700  ->  entran todos, nada a reserva
+    //   1.500 pares y un cuerpo de 700 -> 700 abajo (un cuerpo lleno) y 800 arriba
+    //
+    // No se aplica a 'todo' -que ya baja todo- ni a 'cuerpos', que por definición ya es un
+    // número entero de cuerpos.
+    let candado = null;
+    if (regla.modo === 'porcentaje' && paresPorCuerpo > 0) {
+        const cuerpos = Math.max(1, Math.round(objetivoArt / paresPorCuerpo));
+        const conCandado = Math.min(cuerpos * paresPorCuerpo, pisoTotal + bufferTotal);
+        if (Math.round(conCandado) !== Math.round(objetivoArt)) {
+            candado = { antes: Math.round(objetivoArt), cuerpos, capacidad: paresPorCuerpo };
+        }
+        objetivoArt = conCandado;
+    }
+
     // 2. Ese objetivo se reparte entre las tallas, con los porcentajes de la categoría.
     //
     // Los porcentajes se renormalizan sobre LAS TALLAS QUE EL ARTÍCULO TIENE, no sobre
@@ -321,7 +343,7 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     });
 
     return {
-        regla, objetivoArticulo: Math.round(objetivoArt), paresPorCuerpo, factor: f,
+        regla, candado, objetivoArticulo: Math.round(objetivoArt), paresPorCuerpo, factor: f,
         bufferTotal, pisoTotal, filas,
         alPiso: filas.reduce((a, x) => a + x.baja, 0),
         aReserva: filas.reduce((a, x) => a + x.aReserva, 0),
