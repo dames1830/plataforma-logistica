@@ -1,15 +1,15 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0014';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0015';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0014';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0014';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0014';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0014';
-import * as metasService from '../services_v245/metasService.js?v=29.0014';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0014';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0014';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0014';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0014';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0014';
+import * as adminService from '../services_v245/adminService.js?v=29.0015';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0015';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0015';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0015';
+import * as metasService from '../services_v245/metasService.js?v=29.0015';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0015';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0015';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0015';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0015';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0015';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -366,7 +366,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0014';
+const VERSION = '29.0015';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3239,7 +3239,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0014');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0015');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13470,7 +13470,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0014 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0015 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16442,7 +16442,14 @@ const renderRFSection = (container) => {
                           
                           <div>
                               <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
-                              
+
+                              ${(!hasLocalPayload && !isReserva) ? `
+                              <div style="background:rgba(250,204,21,0.09); border-left:3px solid #facc15; padding:9px 11px; margin-bottom:14px; border-radius:4px; font-size:0.72rem; color:#fde68a; line-height:1.6;">
+                                  <b>Estos porcentajes son los del día que se publicó el mapa.</b> Quedaron guardados adentro,
+                                  así que si cambiaste las temporadas en <b>Zonas de Almacenaje</b> no se ven acá todavía:
+                                  cargá el Stock Activo y volvé a procesar para calcularlos con las reglas de ahora.
+                              </div>` : ''}
+
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
                                       <span>T. Actual</span>
