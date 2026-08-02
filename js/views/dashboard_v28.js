@@ -1,14 +1,15 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0012';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0013';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0012';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0012';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0012';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0012';
-import * as metasService from '../services_v245/metasService.js?v=29.0012';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0012';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0012';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0012';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0012';
+import * as adminService from '../services_v245/adminService.js?v=29.0013';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0013';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0013';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0013';
+import * as metasService from '../services_v245/metasService.js?v=29.0013';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0013';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0013';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0013';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0013';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0013';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -365,7 +366,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0012';
+const VERSION = '29.0013';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1484,7 +1485,8 @@ const TABS = [
     { id: 'replenishment', label: 'Replenishment', icon: '🔄' },
     { id: 'analisis_reserva', label: 'Análisis Reserva', icon: '📦' },
       { id: 'layout_activo', label: 'Layout Activo', icon: '🗺️' },
-    { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' }
+    { id: 'configuracion_analisis', label: 'Configuración Análisis', icon: '⚙️' },
+    { id: 'config_zonas', label: 'Zonas de Almacenaje', icon: '🧭' }
   ] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
@@ -3234,7 +3236,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0012');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0013');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13465,7 +13467,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0012 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0013 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14550,9 +14552,381 @@ const renderRFSection = (container) => {
     }
   };
 
+  /**
+   * ZONAS DE ALMACENAJE
+   *
+   * Las reglas de dónde va cada mercadería, para tocarlas sin editar código. Antes la
+   * temporada de cada columna estaba escrita a mano dentro del layout, y a qué zona iba
+   * cada marca no estaba escrito en ningún lado: se sabía y ya.
+   *
+   * Lo que se edita acá lo consulta la sugerencia de ubicación de la tarea de almacenaje.
+   */
+  let _zonasBorrador = null;
+  let _zonaElegida = 'SEL';
+
+  const renderConfigZonas = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'config-zonas';
+    const sigueSiendoMia = () => container.isConnected && container.dataset.vista === 'config-zonas';
+
+    if (!_zonasBorrador) {
+      container.innerHTML = `<div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1rem;">
+          <div style="width:34px; height:34px; border:2px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <span style="font-size:0.85rem;">Cargando las reglas de las zonas...</span>
+      </div>`;
+      await zonasService.cargarZonas();
+      if (!sigueSiendoMia()) return;
+      _zonasBorrador = JSON.parse(JSON.stringify(zonasService.zonasActual()));
+    }
+
+    const cfg = _zonasBorrador;
+    const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const CLAVES = Object.keys(cfg.zonas);
+    const FR = zonasService.FRANJAS;
+
+    const pintar = () => {
+      if (!sigueSiendoMia()) return;
+      const z = cfg.zonas[_zonaElegida];
+
+      // ── Tira de columnas: una por columna, con su temporada ──────────────
+      let tira = '';
+      for (let c = 1; c <= z.columnas; c++) {
+        const f = z.franjas[c] || 'ninguna';
+        const col = FR[f].color;
+        const pasillo = (z.pasillos || []).some(p => c >= +p.desdeCol && c <= +p.hastaCol);
+        tira += `
+          <div style="display:flex; flex-direction:column; align-items:center; gap:5px; min-width:66px;">
+            <div style="font-size:0.72rem; font-weight:900; color:#fff; letter-spacing:0.5px;">${_zonaElegida} ${String(c).padStart(2,'0')}</div>
+            <div style="height:52px; width:100%; border-radius:7px; background:${col}22; border:2px solid ${col}; display:flex; align-items:center; justify-content:center; color:${col}; font-size:0.6rem; font-weight:900; text-align:center; line-height:1.2; padding:2px;">
+              ${FR[f].etiqueta.replace('Temporada ', '')}
+            </div>
+            <select data-col="${c}" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:0.62rem; padding:3px; cursor:pointer;">
+              ${Object.keys(FR).map(k => `<option value="${k}" ${f === k ? 'selected' : ''}>${FR[k].etiqueta}</option>`).join('')}
+            </select>
+            ${pasillo ? `<div title="Esta columna tiene cuerpos que son paso del elevador" style="font-size:0.55rem; color:#94a3b8;">🚧 pasillo</div>` : '<div style="height:9px;"></div>'}
+          </div>`;
+      }
+
+      const pasilloTxt = (z.pasillos || []).map(p =>
+        `columnas ${p.desdeCol} a ${p.hastaCol}, cuerpos ${p.cuerpos.join(' y ')}`).join(' · ') || 'ninguno';
+
+      const totalCuerpos = zonasService.cuerposDe
+        ? (z.columnas * z.cuerpos) - (z.pasillos || []).reduce((n, p) =>
+            n + ((+p.hastaCol - +p.desdeCol + 1) * p.cuerpos.length), 0)
+        : z.columnas * z.cuerpos;
+
+      container.innerHTML = `
+      <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem;">
+
+        <div style="background:rgba(15,23,42,0.9); border:2px solid #6366f1; border-radius:14px; overflow:hidden; box-shadow:0 0 25px rgba(99,102,241,0.15);">
+          <div style="padding:1rem 1.2rem; background:rgba(99,102,241,0.1); border-bottom:1px solid rgba(99,102,241,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="color:#fff; font-weight:900; margin:0 0 2px 0; font-size:1rem; letter-spacing:1px; text-transform:uppercase;">🧭 ZONAS DE ALMACENAJE</h3>
+              <div style="font-size:0.68rem; color:rgba(165,180,252,0.7); font-weight:600;">Dónde va cada mercadería y cuánta entra · lo usa la sugerencia de ubicación de las tareas</div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <span id="zn_estado" style="font-size:0.7rem; color:#facc15; font-weight:700;"></span>
+              <button id="zn_guardar" class="btn" style="width:auto; padding:8px 18px; font-size:0.75rem; background:linear-gradient(135deg,#6366f1,#818cf8); border:none; font-weight:900;">PUBLICAR CAMBIOS</button>
+            </div>
+          </div>
+
+          <div style="padding:1rem 1.2rem; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.05);">
+            ${CLAVES.map(k => {
+              const act = k === _zonaElegida;
+              const viva = cfg.zonas[k].activa;
+              return `<button data-zona="${k}" style="padding:7px 15px; border-radius:9px; font-size:0.74rem; font-weight:800; cursor:pointer;
+                background:${act ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.03)'};
+                border:1px solid ${act ? '#6366f1' : 'rgba(255,255,255,0.1)'};
+                color:${act ? '#a5b4fc' : (viva ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.28)')};">
+                ${esc(cfg.zonas[k].etiqueta)}${viva ? '' : ' · sin reglas'}</button>`;
+            }).join('')}
+          </div>
+
+          <div style="padding:1.1rem 1.2rem; display:flex; gap:22px; align-items:flex-end; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="zn_activa" ${z.activa ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
+              <span style="font-size:0.75rem; color:#fff; font-weight:800;">Esta zona ya tiene reglas y puede sugerir</span>
+            </label>
+            <div>
+              <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;">Columnas</label>
+              <input type="number" id="zn_columnas" min="1" max="99" value="${z.columnas}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;">Cuerpos por columna</label>
+              <input type="number" id="zn_cuerpos" min="1" max="99" value="${z.cuerpos}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Por debajo de esta cantidad de pares, el artículo se trata como saldo">Es saldo con menos de</label>
+              <input type="number" id="zn_saldo" min="0" value="${z.saldoMenorA}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
+            </div>
+            <div style="font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
+              <b style="color:rgba(255,255,255,0.6);">${totalCuerpos}</b> cuerpos de almacenaje<br>
+              🚧 Paso del elevador: ${esc(pasilloTxt)}
+            </div>
+          </div>
+
+          <div style="padding:1.2rem; overflow-x:auto;">
+            <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); margin-bottom:12px;">
+              La temporada de cada columna. Cambiala acá y la sugerencia lo toma sin tocar código.
+            </div>
+            <div style="display:flex; gap:9px; min-width:min-content;">${tira}</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:1.2rem;">
+
+          <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(99,102,241,0.25); border-radius:14px; overflow:hidden;">
+            <div style="padding:0.9rem 1.1rem; background:rgba(99,102,241,0.07); border-bottom:1px solid rgba(99,102,241,0.18); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h4 style="color:#a5b4fc; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">🏷️ A qué zona va cada marca</h4>
+                <div style="font-size:0.64rem; color:rgba(165,180,252,0.55); margin-top:2px;">La primera decisión de todas</div>
+              </div>
+              <button id="zn_add_marca" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:5px 11px; border-radius:7px; cursor:pointer; font-size:0.68rem; font-weight:800;">+ Marca</button>
+            </div>
+            <div style="max-height:330px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:#eee;">
+                ${Object.keys(cfg.marcas).sort().map(m => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.5rem 1.1rem; color:#fff; font-weight:700;">${esc(m)}</td>
+                    <td style="padding:0.5rem 0.5rem; text-align:right;">
+                      <select data-marca="${esc(m)}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:0.72rem; padding:4px 6px; cursor:pointer;">
+                        ${CLAVES.map(k => `<option value="${k}" ${cfg.marcas[m] === k ? 'selected' : ''}>${esc(cfg.zonas[k].etiqueta)}</option>`).join('')}
+                      </select>
+                    </td>
+                    <td style="padding:0.5rem 0.9rem 0.5rem 0; width:30px;">
+                      <button data-del-marca="${esc(m)}" title="Quitar" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:0.9rem;">🗑️</button>
+                    </td>
+                  </tr>`).join('')}
+              </table>
+            </div>
+          </div>
+
+          <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(250,204,21,0.25); border-radius:14px; overflow:hidden;">
+            <div style="padding:0.9rem 1.1rem; background:rgba(250,204,21,0.06); border-bottom:1px solid rgba(250,204,21,0.18); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h4 style="color:#facc15; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">🩴 Ojotas (06 OTHERS)</h4>
+                <div style="font-size:0.64rem; color:rgba(250,204,21,0.55); margin-top:2px;">Le ganan a la marca · manda la subcategoría completa</div>
+              </div>
+              <button id="zn_add_other" style="background:rgba(250,204,21,0.12); border:1px solid rgba(250,204,21,0.4); color:#facc15; padding:5px 11px; border-radius:7px; cursor:pointer; font-size:0.68rem; font-weight:800;">+ Regla</button>
+            </div>
+            <div style="max-height:330px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:#eee;">
+                ${cfg.others.map((o, i) => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.5rem 1.1rem;">
+                      <b style="color:#fff;">${esc(o.subcategoria)}</b>
+                      ${o.nota ? `<div style="font-size:0.63rem; color:rgba(255,255,255,0.32);">${esc(o.nota)}</div>` : ''}
+                    </td>
+                    <td style="padding:0.5rem 0.5rem; text-align:right;">
+                      <select data-other="${i}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:0.72rem; padding:4px 6px; cursor:pointer;">
+                        ${CLAVES.map(k => `<option value="${k}" ${o.zona === k ? 'selected' : ''}>${esc(cfg.zonas[k].etiqueta)}</option>`).join('')}
+                      </select>
+                    </td>
+                    <td style="padding:0.5rem 0.9rem 0.5rem 0; width:30px;">
+                      <button data-del-other="${i}" title="Quitar" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:0.9rem;">🗑️</button>
+                    </td>
+                  </tr>`).join('')}
+              </table>
+            </div>
+            <div style="padding:0.7rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(250,204,21,0.1); font-size:0.64rem; color:rgba(255,255,255,0.32); line-height:1.6;">
+              Gana la regla más específica: <b style="color:rgba(255,255,255,0.5);">F46_75_KIDS WINTER</b> le gana a un <b style="color:rgba(255,255,255,0.5);">F46</b> suelto. Por eso F46 no se puede poner entero: tiene pantuflas en caja y el botín Kate en bolsa.
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(34,197,94,0.25); border-radius:14px; overflow:hidden;">
+          <div style="padding:0.9rem 1.1rem; background:rgba(34,197,94,0.06); border-bottom:1px solid rgba(34,197,94,0.18); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h4 style="color:#22c55e; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">📦 Cuántos pares entran en un cuerpo</h4>
+              <div style="font-size:0.64rem; color:rgba(34,197,94,0.55); margin-top:2px;">Por serie (el primer dígito del código) y por zona · la 0 es la más chica y la que más entra</div>
+            </div>
+            <button id="zn_medir" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.35); font-weight:800;">📏 MEDIR DEL STOCK</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#eee;">
+              <thead style="background:rgba(0,0,0,0.5);">
+                <tr style="color:rgba(134,239,172,0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+                  <th style="padding:0.6rem 1.1rem; text-align:left;">Serie</th>
+                  ${CLAVES.map(k => `<th style="padding:0.6rem; text-align:center;">${esc(cfg.zonas[k].etiqueta)}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${'0123456789'.split('').map(s => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.4rem 1.1rem; color:#fff; font-weight:900;">Serie ${s}</td>
+                    ${CLAVES.map(k => `
+                      <td style="padding:0.3rem; text-align:center;">
+                        <input type="number" data-den="${k}|${s}" min="0" placeholder="—"
+                          value="${cfg.densidad[k] && cfg.densidad[k][s] ? cfg.densidad[k][s] : ''}"
+                          style="width:78px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:0.76rem; font-weight:800; text-align:center;">
+                      </td>`).join('')}
+                  </tr>`).join('')}
+                <tr style="border-top:2px solid rgba(34,197,94,0.2); background:rgba(34,197,94,0.03);">
+                  <td style="padding:0.5rem 1.1rem; color:rgba(255,255,255,0.55); font-weight:800; font-size:0.72rem;" title="Se usa cuando esa serie no tiene medición en esa zona">Si no hay dato</td>
+                  ${CLAVES.map(k => `
+                    <td style="padding:0.3rem; text-align:center;">
+                      <input type="number" data-resp="${k}" min="1" value="${cfg.densidadRespaldo[k] || 330}"
+                        style="width:78px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:rgba(255,255,255,0.6); font-size:0.76rem; font-weight:800; text-align:center;">
+                    </td>`).join('')}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
+            <b style="color:rgba(255,255,255,0.5);">MEDIR DEL STOCK</b> mira los cuerpos que hoy tienen un solo artículo y se queda con el máximo por serie. Es un <b style="color:rgba(255,255,255,0.5);">piso</b>, no la capacidad: un cuerpo con 200 pares puede estar a medio llenar. Si sabés que entran más, escribilo y manda el tuyo.
+          </div>
+        </div>
+      </div>`;
+
+      const marcar = () => {
+        const e = container.querySelector('#zn_estado');
+        if (e) e.textContent = '● sin publicar';
+      };
+
+      container.querySelectorAll('[data-zona]').forEach(b => b.onclick = () => {
+        _zonaElegida = b.dataset.zona; pintar();
+      });
+      container.querySelectorAll('[data-col]').forEach(s => s.onchange = () => {
+        z.franjas[+s.dataset.col] = s.value; pintar(); marcar();
+      });
+      container.querySelector('#zn_activa').onchange = (e) => { z.activa = e.target.checked; pintar(); marcar(); };
+      container.querySelector('#zn_columnas').onchange = (e) => {
+        z.columnas = Math.max(1, Math.min(99, +e.target.value || z.columnas)); pintar(); marcar();
+      };
+      container.querySelector('#zn_cuerpos').onchange = (e) => {
+        z.cuerpos = Math.max(1, Math.min(99, +e.target.value || z.cuerpos)); pintar(); marcar();
+      };
+      container.querySelector('#zn_saldo').onchange = (e) => { z.saldoMenorA = Math.max(0, +e.target.value || 0); marcar(); };
+
+      container.querySelectorAll('[data-marca]').forEach(s => s.onchange = () => {
+        cfg.marcas[s.dataset.marca] = s.value; marcar();
+      });
+      container.querySelectorAll('[data-del-marca]').forEach(b => b.onclick = () => {
+        delete cfg.marcas[b.dataset.delMarca]; pintar(); marcar();
+      });
+      container.querySelector('#zn_add_marca').onclick = () => {
+        const m = prompt('Nombre de la marca, igual que en el Maestro:');
+        if (m && m.trim()) { cfg.marcas[m.trim()] = _zonaElegida; pintar(); marcar(); }
+      };
+
+      container.querySelectorAll('[data-other]').forEach(s => s.onchange = () => {
+        cfg.others[+s.dataset.other].zona = s.value; marcar();
+      });
+      container.querySelectorAll('[data-del-other]').forEach(b => b.onclick = () => {
+        cfg.others.splice(+b.dataset.delOther, 1); pintar(); marcar();
+      });
+      container.querySelector('#zn_add_other').onclick = () => {
+        const s = prompt('Subcategoría (columna F del Maestro). Alcanza el comienzo, por ejemplo F44:');
+        if (s && s.trim()) {
+          cfg.others.push({ subcategoria: s.trim().toUpperCase(), zona: _zonaElegida, nota: '' });
+          pintar(); marcar();
+        }
+      };
+
+      container.querySelectorAll('[data-den]').forEach(i => i.onchange = () => {
+        const [zn, se] = i.dataset.den.split('|');
+        const v = parseInt(i.value, 10);
+        if (!cfg.densidad[zn]) cfg.densidad[zn] = {};
+        if (Number.isFinite(v) && v > 0) cfg.densidad[zn][se] = v; else delete cfg.densidad[zn][se];
+        marcar();
+      });
+      container.querySelectorAll('[data-resp]').forEach(i => i.onchange = () => {
+        const v = parseInt(i.value, 10);
+        if (Number.isFinite(v) && v > 0) cfg.densidadRespaldo[i.dataset.resp] = v;
+        marcar();
+      });
+
+      container.querySelector('#zn_medir').onclick = async (ev) => {
+        await withLoading(ev.currentTarget, '⌛ MIDIENDO...', async () => {
+          const medido = medirDensidadDelStock();
+          if (!medido) {
+            showPremiumAlert('SIN STOCK', 'No hay Stock Activo cargado en esta sesión. Subilo en Análisis SKU → Archivo Análisis SKU y volvé a intentar.', 'warning');
+            return;
+          }
+          let cambios = 0;
+          Object.keys(medido).forEach(zn => Object.keys(medido[zn]).forEach(se => {
+            if (!cfg.densidad[zn]) cfg.densidad[zn] = {};
+            if (cfg.densidad[zn][se] !== medido[zn][se]) { cfg.densidad[zn][se] = medido[zn][se]; cambios++; }
+          }));
+          pintar();
+          if (cambios) container.querySelector('#zn_estado').textContent = '● sin publicar';
+          showPremiumAlert(cambios ? 'MEDIDO' : 'SIN CAMBIOS',
+            cambios ? `Se actualizaron ${cambios} valores con lo que hay hoy en el almacén.\n\nRevisalos y publicá si estás de acuerdo.`
+                    : 'Lo medido coincide con lo que ya estaba configurado.',
+            cambios ? 'success' : 'info');
+        });
+      };
+
+      container.querySelector('#zn_guardar').onclick = async (ev) => {
+        await withLoading(ev.currentTarget, '⌛ PUBLICANDO...', async () => {
+          try {
+            await zonasService.guardarZonas(cfg);
+            _zonasBorrador = JSON.parse(JSON.stringify(zonasService.zonasActual()));
+            pintar();
+            showPremiumAlert('PUBLICADO', 'Las reglas quedaron guardadas para todas las PC.', 'success');
+          } catch (e) {
+            showPremiumAlert('NO SE PUDO PUBLICAR',
+              'Quedó guardado en esta computadora, pero el servidor no respondió: ' + e.message +
+              '\n\nVolvé a intentar cuando tengas conexión para que lo vean los demás.', 'error');
+          }
+        });
+      };
+    };
+
+    pintar();
+  };
+
+  /**
+   * Cuántos pares entran en un cuerpo, mirando el almacén de hoy. Solo se miran los cuerpos
+   * que tienen UN SOLO artículo: si hay dos, no se sabe cuánto era de cada uno. Se toma el
+   * MÁXIMO y no el promedio, porque la mayoría de los cuerpos están a medio llenar y el
+   * promedio subestimaría la capacidad.
+   */
+  const medirDensidadDelStock = () => {
+    const stock = dataStore.analisis_sku_activo || dataStore.stockActivo || [];
+    if (!stock.length) return null;
+
+    const col = (row, ...pistas) => {
+      for (const k in row) {
+        const kl = k.toLowerCase();
+        if (pistas.every(p => kl.includes(p)) && !kl.includes('barras')) return row[k];
+      }
+      return '';
+    };
+
+    const cuerpos = {};   // zona|columna|cuerpo -> { sku7: pares }
+    stock.forEach(row => {
+      const ubi = String(col(row, 'bicac') || '').trim().toUpperCase();
+      if (!ubi) return;
+      const p = ubi.split('-');
+      const zona = p[0];
+      if (!zonasService.zonasActual().zonas[zona] || p.length < 3) return;
+      const clave = `${zona}|${p[1]}|${p[2]}`;
+      const sku7 = String(col(row, 'art') || '').trim().substring(0, 7);
+      if (!sku7) return;
+      const qty = parseFloat(String(col(row, 'cantidad', 'actual') || 0).replace(/,/g, '')) || 0;
+      if (!cuerpos[clave]) cuerpos[clave] = {};
+      cuerpos[clave][sku7] = (cuerpos[clave][sku7] || 0) + qty;
+    });
+
+    const salida = {};
+    Object.keys(cuerpos).forEach(clave => {
+      const arts = Object.keys(cuerpos[clave]);
+      if (arts.length !== 1) return;              // cuerpo compartido: no dice nada
+      const zona = clave.split('|')[0];
+      const serie = zonasService.serieDe(arts[0]);
+      if (serie === null) return;
+      const pares = Math.round(cuerpos[clave][arts[0]]);
+      if (pares <= 0) return;
+      if (!salida[zona]) salida[zona] = {};
+      salida[zona][serie] = Math.max(salida[zona][serie] || 0, pares);
+    });
+    return salida;
+  };
+
   const renderConfiguracionAnalisisSKU = (container) => {
     _loadConfiguracionAnalisis();
-    
+
     // Lista estandar de tallas
     const TALLAS_COLS = ['00', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '37.5', '38', '38.5', '39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46', '47', '48'];
     
@@ -17208,6 +17582,11 @@ window.showCellModal = function(htmlContent) {
 
     if (activeAnalisisSub === 'configuracion_analisis') {
           renderConfiguracionAnalisisSKU(skuBuf);
+          return;
+      }
+
+      if (activeAnalisisSub === 'config_zonas') {
+          renderConfigZonas(skuBuf);
           return;
       }
 
