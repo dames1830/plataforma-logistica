@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0028';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0029';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0028';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0028';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0028';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0028';
-import * as metasService from '../services_v245/metasService.js?v=29.0028';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0028';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0028';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0028';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0028';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0028';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0028';
+import * as adminService from '../services_v245/adminService.js?v=29.0029';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0029';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0029';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0029';
+import * as metasService from '../services_v245/metasService.js?v=29.0029';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0029';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0029';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0029';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0029';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0029';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0029';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0028';
+const VERSION = '29.0029';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0028');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0029');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0028 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0029 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14953,6 +14953,7 @@ const renderRFSection = (container) => {
     const ocupados = {};
     const casaDe = new Map();
     const porTallaDe = new Map();
+    const lineasBufferDe = new Map();
     (stock || []).forEach(row => {
       const raw = Array.isArray(row) ? row : Object.values(row);
       const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
@@ -14971,6 +14972,12 @@ const renderRFSection = (container) => {
         const t = porTallaDe.get(s7);
         if (!t[talla]) t[talla] = { buffer: 0, piso: 0 };
         t[talla][esBuffer ? 'buffer' : 'piso'] += qty;
+
+        // Las líneas del buffer, una por ubicación: son las filas del papel que se imprime
+        if (esBuffer) {
+          if (!lineasBufferDe.has(s7)) lineasBufferDe.set(s7, []);
+          lineasBufferDe.get(s7).push({ ubi, skuFull: String(raw[1] || '').trim(), talla, qty });
+        }
       }
       if (!esPiso) return;
       const p = ubi.split('-');
@@ -15006,7 +15013,39 @@ const renderRFSection = (container) => {
       reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    return { ficha, ocupados, casaDe, porTallaDe, reservaDe };
+    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe };
+  };
+
+  /**
+   * Las filas del papel: una por línea del buffer, con cuántos pares de esa línea bajan al
+   * piso y cuántos se paletizan.
+   *
+   * El cálculo va por TALLA pero el papel va por LÍNEA, y una talla puede estar en dos
+   * ubicaciones del buffer —la 26 con 2 pares en una y 373 en otra—. Así que lo que le toca
+   * a la talla se reparte entre sus líneas, llenando de a una: primero se cubre lo que va al
+   * piso y lo que sobra de cada línea se paletiza.
+   */
+  const filasDelPapel = (sug, ctx) => {
+    const lineas = (ctx.lineasBufferDe.get(sug.sku7) || [])
+      .slice()
+      .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0) || a.ubi.localeCompare(b.ubi));
+    if (!lineas.length || !sug.cant) return [];
+
+    const pendiente = {};
+    sug.cant.filas.forEach(f => { pendiente[f.talla] = { piso: f.baja, reserva: f.aReserva }; });
+
+    return lineas.map(l => {
+      const p = pendiente[l.talla] || { piso: 0, reserva: 0 };
+      const alPiso = Math.min(l.qty, p.piso);
+      p.piso -= alPiso;
+      const aReserva = Math.min(l.qty - alPiso, p.reserva);
+      p.reserva -= aReserva;
+      return {
+        ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
+        alPiso, aReserva,
+        destino: sug.niveles[l.talla] || ''
+      };
+    });
   };
 
   /**
@@ -15082,6 +15121,147 @@ const renderRFSection = (container) => {
     };
   };
 
+  /**
+   * EL PAPEL QUE SE IMPRIME
+   *
+   * Una tarea por página, vertical, todo en blanco y negro: la impresora del almacén es
+   * monocromática, así que los destacados van con fondo gris y negrita, nunca con color.
+   *
+   * Siete columnas. Marca, Gender RIM y Colección salieron a propósito: si el papel dice
+   * MZN01-04-21-A, la temporada y la marca ya están adentro de ese código. Estaban ahí
+   * porque el operario tenía que decidir, y ahora no decide nada.
+   */
+  const exportarSugerenciaExcel = async (filas, ctx, btn) => {
+    if (typeof ExcelJS === 'undefined') { showPremiumAlert('FALTA UNA LIBRERÍA', 'No se pudo cargar ExcelJS.', 'error'); return; }
+    if (!filas.length) { showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango para exportar.', 'info'); return; }
+
+    await withLoading(btn, '⌛', async () => {
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Logística DEAM1830';
+      const ws = wb.addWorksheet('Tareas', {
+        pageSetup: {
+          orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+          margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.4, header: 0.2, footer: 0.2 }
+        }
+      });
+      ws.columns = [
+        { width: 24 },  // A Ubicación
+        { width: 18 },  // B SKU
+        { width: 8 },   // C Talla
+        { width: 12 },  // D Qty buffer
+        { width: 11 },  // E Al piso
+        { width: 12 },  // F Paletizar
+        { width: 18 }   // G Destino
+      ];
+
+      const NEGRO = 'FF2C2C2A', GRIS = 'FFF1EFE8', GRIS_FUERTE = 'FFB4B2A9', LINEA = 'FF888780';
+      const borde = { top: { style: 'thin', color: { argb: LINEA } }, left: { style: 'thin', color: { argb: LINEA } },
+                      bottom: { style: 'thin', color: { argb: LINEA } }, right: { style: 'thin', color: { argb: LINEA } } };
+      const centro = { vertical: 'middle', horizontal: 'center' };
+      const pintar = (fila, argb) => fila.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } }; });
+
+      filas.forEach((x, idx) => {
+        const p = x.plan;
+        const trabada = p.estado === 'slotting' || p.estado === 'sin-regla' || p.estado === 'sin-reglas-zona';
+
+        // Cabecera: la tarea y el artículo, centrados sobre las siete columnas
+        // El id ya viene como "Tarea24" (a veces con la fecha delante), así que no se le
+        // antepone la palabra: quedaba "Tarea Tarea24".
+        const idCorto = String(x.tarea.id).includes('_') ? String(x.tarea.id).split('_')[1] : String(x.tarea.id);
+        const rT = ws.addRow([`${/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto} · ${x.sku7}`]);
+        ws.mergeCells(rT.number, 1, rT.number, 7);
+        rT.getCell(1).font = { size: 18, bold: true, name: 'Calibri' };
+        rT.getCell(1).alignment = centro;
+        rT.height = 26;
+
+        const rF = ws.addRow([`${String(x.tarea.fecha).split('-').reverse().join('/')}${x.plan.estado === 'reposicion' ? ' · reposición' : ' · código nuevo'}`]);
+        ws.mergeCells(rF.number, 1, rF.number, 7);
+        rF.getCell(1).font = { size: 10, name: 'Calibri' };
+        rF.getCell(1).alignment = centro;
+
+        if (trabada) {
+          const rA = ws.addRow(['SIN UBICACIÓN · NO ALMACENAR']);
+          ws.mergeCells(rA.number, 1, rA.number, 7);
+          rA.getCell(1).font = { size: 13, bold: true, name: 'Calibri' };
+          rA.getCell(1).alignment = centro;
+          rA.getCell(1).border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'thin' }, right: { style: 'medium' } };
+          rA.height = 20;
+          const rM = ws.addRow([p.motivo || 'Avisar a Slotting antes de mover nada.']);
+          ws.mergeCells(rM.number, 1, rM.number, 7);
+          rM.getCell(1).font = { size: 9, name: 'Calibri' };
+          rM.getCell(1).alignment = centro;
+          rM.getCell(1).border = { left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+        }
+
+        ws.addRow([]);
+
+        // Nombres · Hora inicio · Hora término
+        const rN = ws.addRow(['Nombres', '', '', 'Hora inicio', '', 'Término', '']);
+        ws.mergeCells(rN.number, 2, rN.number, 3);
+        rN.height = 22;
+        rN.eachCell({ includeEmpty: true }, (c, col) => {
+          c.border = borde;
+          c.alignment = { vertical: 'middle', horizontal: col === 1 || col === 4 || col === 6 ? 'left' : 'center' };
+          c.font = { size: 11, name: 'Calibri' };
+          if (col === 1 || col === 4 || col === 6) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS } };
+        });
+
+        ws.addRow([]);
+
+        // Cabecera de la tabla: fondo negro, letra blanca
+        const rH = ws.addRow(['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Al piso', 'Paletizar', 'Destino']);
+        rH.height = 20;
+        rH.eachCell(c => {
+          c.font = { size: 11, bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
+          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NEGRO } };
+          c.alignment = centro;
+          c.border = borde;
+        });
+
+        const lineas = filasDelPapel(x, ctx);
+        lineas.forEach(l => {
+          const r = ws.addRow([l.ubi, l.skuFull, l.talla, l.qty,
+                               trabada ? '—' : (l.alPiso || '—'),
+                               l.aReserva || '—',
+                               trabada ? 'Revisar Slotting' : (l.destino || '—')]);
+          r.height = 18;
+          r.eachCell((c, col) => {
+            c.border = borde;
+            c.alignment = centro;
+            c.font = { size: 11, name: 'Calibri', bold: col === 3 || col === 5 || col === 7 };
+            if (col === 5 || col === 7) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS } };
+          });
+        });
+
+        const rTot = ws.addRow(['Total', '', '', x.pares, trabada ? 0 : x.alPiso, x.aReserva,
+                                x.paletas ? `${x.paletas} paleta${x.paletas > 1 ? 's' : ''}` : '—']);
+        ws.mergeCells(rTot.number, 1, rTot.number, 3);
+        rTot.height = 20;
+        rTot.eachCell({ includeEmpty: true }, c => {
+          c.border = borde; c.alignment = centro;
+          c.font = { size: 11, bold: true, name: 'Calibri' };
+        });
+        pintar(rTot, GRIS_FUERTE);
+
+        // Salto de página: cada tarea es una hoja. Va sobre la fila del total y no sobre una
+        // vacía agregada después — ExcelJS no conserva las filas sin celdas, y el salto se
+        // perdía con ellas.
+        if (idx < filas.length - 1) {
+          rTot.addPageBreak();
+          ws.addRow([]);
+        }
+      });
+
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Tareas_Almacenaje_${getLogicalDate()}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  };
+
   const renderSugerenciaAlmacenaje = async (container) => {
     if (!container) return;
     container.dataset.vista = 'sugerencia';
@@ -15134,6 +15314,7 @@ const renderRFSection = (container) => {
               <div style="font-size:0.68rem; color:rgba(165,180,252,0.7); font-weight:600;">Dónde diría el sistema que hay que almacenar · no toca la tarea ni guarda nada</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
+              <button id="sug_excel" class="btn" title="Descargar el papel que se imprime: una tarea por página, vertical, en blanco y negro" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:#fff; font-weight:800; border:none; margin-right:6px;">📥 EXCEL DEL PAPEL</button>
               <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
                 <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">DE:</span>
                 <input type="date" id="sug_desde" value="${desde}" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; color-scheme:dark;">
@@ -15236,6 +15417,7 @@ const renderRFSection = (container) => {
         </div>
       </div>`;
 
+      container.querySelector('#sug_excel').onclick = (e) => exportarSugerenciaExcel(filas, ctx, e.currentTarget);
       container.querySelector('#sug_desde').onchange = (e) => { window.__sugStart = e.target.value; pintar(); };
       container.querySelector('#sug_hasta').onchange = (e) => { window.__sugEnd = e.target.value; pintar(); };
     };
