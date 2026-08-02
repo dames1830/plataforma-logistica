@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0027';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0028';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0027';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0027';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0027';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0027';
-import * as metasService from '../services_v245/metasService.js?v=29.0027';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0027';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0027';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0027';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0027';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0027';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0027';
+import * as adminService from '../services_v245/adminService.js?v=29.0028';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0028';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0028';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0028';
+import * as metasService from '../services_v245/metasService.js?v=29.0028';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0028';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0028';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0028';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0028';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0028';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0028';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0027';
+const VERSION = '29.0028';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0027');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0028');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0027 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0028 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14855,25 +14855,75 @@ const renderRFSection = (container) => {
    * Los cinco pasos viven en zonasService (planificarAlmacenaje); acá solo se juntan los
    * datos que necesita y se pinta el resultado.
    */
-  const renderSugerenciaAlmacenaje = async (container) => {
-    if (!container) return;
-    container.dataset.vista = 'sugerencia';
-    const sigueSiendoMia = () => container.isConnected && container.dataset.vista === 'sugerencia';
+  /**
+   * EL CÁLCULO DE LA SUGERENCIA, COMPARTIDO
+   *
+   * Lo usan la pantalla de prueba y el generador de tareas. Está acá afuera a propósito: si
+   * cada uno tuviera el suyo, se separarían con el tiempo y la pantalla mostraría una cosa
+   * mientras el papel dice otra.
+   */
+  const SUG_ACTUALES = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+  const SUG_NIVELES = ['A', 'B', 'C'];
 
-    container.innerHTML = `<div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1rem;">
-        <div style="width:34px; height:34px; border:2px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <span style="font-size:0.85rem;">Leyendo el almacén y calculando...</span>
-    </div>`;
+  /**
+   * Qué nivel del cuerpo le toca a cada talla.
+   *
+   * Los tres niveles no cuestan lo mismo: el A está abajo, a la mano; el C arriba, algo más
+   * difícil. Así que la talla que más se vende va al A y la que menos, al C. Si ninguna está
+   * marcada como comercial —el caso de niños, que traen tres o cuatro tallas y todas se
+   * venden— se reparten en partes iguales por orden de talla.
+   *
+   * Con varios cuerpos se llena uno entero antes de pasar al siguiente, para que el artículo
+   * no quede desparramado.
+   */
+  const asignarNiveles = (filas, cuerpos, zona) => {
+    const conPiso = filas.filter(f => f.baja > 0);
+    if (!conPiso.length || !cuerpos || !cuerpos.length) return {};
 
+    const hayComerciales = conPiso.some(f => f.comercial);
+    const orden = hayComerciales
+      ? [...conPiso].sort((a, b) => (b.comercial - a.comercial) || (b.porcentaje - a.porcentaje)
+                                    || (parseFloat(a.talla) - parseFloat(b.talla)))
+      : [...conPiso].sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
+
+    // Un hueco por nivel de cada cuerpo, en orden de accesibilidad
+    const huecos = [];
+    cuerpos.forEach(c => SUG_NIVELES.forEach(n =>
+      huecos.push(zonasService.nombreCuerpo(zona, c.columna, c.cuerpo) + '-' + n)));
+
+    // Se reparten lo más parejo posible, sin dejar un nivel vacío mientras otro se amontona:
+    // con 4 tallas y 3 niveles salen 2, 1 y 1, y el sobrante va a los primeros, que son los
+    // más accesibles. Si hay más huecos que tallas, los de arriba quedan libres.
+    const usados = Math.min(huecos.length, orden.length);
+    const base = Math.floor(orden.length / usados);
+    const conUnoMas = orden.length % usados;
+
+    const destino = {};
+    let i = 0;
+    for (let h = 0; h < usados; h++) {
+      const cuantas = base + (h < conUnoMas ? 1 : 0);
+      for (let k = 0; k < cuantas && i < orden.length; k++, i++) destino[orden[i].talla] = huecos[h];
+    }
+    return destino;
+  };
+
+  /**
+   * Todo lo que hace falta para calcular: el Maestro, qué cuerpos están ocupados, dónde vive
+   * cada artículo, cuánto hay de cada talla y cuánto hay en reserva.
+   *
+   * `tareasAbiertas` son las que ya tienen un destino grabado: sus cuerpos cuentan como
+   * ocupados aunque todavía no haya mercadería. Así una segunda corrida de la misma noche no
+   * manda otro artículo al mismo lugar. Y si la tarea se borra, desaparece de esta lista sola
+   * — no hay ninguna reserva que limpiar a mano.
+   */
+  const cargarContextoSugerencia = async (tareasAbiertas) => {
     await zonasService.cargarZonas();
     await tallasService.cargarTallas();
     await rescatarMaestro();
     const stock = await getAreaData('almacenaje_activo');
-    // La reserva vive en su propio archivo y hace falta para el objetivo del 50%.
-    // Se pide DIRECTO al servidor: getAreaData no consulta la nube para las áreas que
-    // empiezan con 'analisis_sku' —devuelve solo lo que esta PC tenga cargado— y entonces
-    // en cualquier computadora que no haya subido el archivo la reserva salía en cero, con
-    // lo que el total quedaba corto y se almacenaba de más.
+
+    // La reserva se pide DIRECTO: getAreaData no consulta la nube para las áreas que
+    // empiezan con 'analisis_sku', así que en una PC que no subió el archivo daría cero.
     let reservaRaw = [];
     try {
       const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
@@ -14884,14 +14934,13 @@ const renderRFSection = (container) => {
         if (Array.isArray(datos)) reservaRaw = datos;
       }
     } catch (e) { console.warn('[Sugerencia] no se pudo traer la reserva:', e && e.message); }
-    if (!sigueSiendoMia()) return;
 
-    // Ficha de cada artículo, del Maestro
     const ficha = new Map();
     (dataStore.articulos || []).forEach(row => {
       const raw = Array.isArray(row) ? row : Object.values(row);
       const s7 = String(raw[1] || '').trim().substring(0, 7);
       if (s7 && !ficha.has(s7)) ficha.set(s7, {
+        gender: String(raw[2] || '').trim().toUpperCase(),
         genderRims: String(raw[3] || '').trim().toUpperCase(),
         subcategoria: String(raw[5] || '').trim().toUpperCase(),
         marca: String(raw[13] || '').trim(),
@@ -14899,12 +14948,11 @@ const renderRFSection = (container) => {
       });
     });
 
-    // Qué cuerpos están ocupados, dónde vive cada artículo, y cuánto hay de cada talla
-    // en el buffer y en el piso. La talla sale del final de la descripción: "...BATA-1-38".
+    // La talla sale del final de la descripción: "...BATA-1-38"
     const RE_TALLA = /-\d+-(\d+(?:\.\d+)?)\s*$/;
-    const ocupados = {};              // zona -> Set('col-cuerpo')
-    const casaDe = new Map();         // sku7 -> Set('ZONA|col|cuerpo')
-    const porTallaDe = new Map();     // sku7 -> { talla: {buffer, piso} }
+    const ocupados = {};
+    const casaDe = new Map();
+    const porTallaDe = new Map();
     (stock || []).forEach(row => {
       const raw = Array.isArray(row) ? row : Object.values(row);
       const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
@@ -14912,10 +14960,10 @@ const renderRFSection = (container) => {
       const s7 = String(raw[1] || '').trim().substring(0, 7);
       const qty = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
 
-      // El ANDAMIO no cuenta como piso: es logística inversa, no stock de la zona activa.
-      // Sumarlo haría creer que ya hay suficiente abajo y no se repondría lo que falta.
+      // El ANDAMIO no cuenta como piso: es logística inversa, no stock de la zona activa
       const esBuffer = ubi.startsWith('CDBUFFER');
-      const esPiso = !esBuffer && !!zonasService.zonasActual().zonas[ubi.split('-')[0]];
+      const zona = ubi.split('-')[0];
+      const esPiso = !esBuffer && !!zonasService.zonasActual().zonas[zona];
       if (s7 && qty > 0 && (esBuffer || esPiso)) {
         const m = RE_TALLA.exec(String(raw[2] || '').trim());
         const talla = m ? m[1] : 'S/T';
@@ -14924,10 +14972,8 @@ const renderRFSection = (container) => {
         if (!t[talla]) t[talla] = { buffer: 0, piso: 0 };
         t[talla][esBuffer ? 'buffer' : 'piso'] += qty;
       }
-
+      if (!esPiso) return;
       const p = ubi.split('-');
-      const zona = p[0];
-      if (!zonasService.zonasActual().zonas[zona] || p.length < 3) return;
       const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
       if (!col || !cue) return;
       (ocupados[zona] = ocupados[zona] || new Set()).add(`${col}-${cue}`);
@@ -14937,9 +14983,15 @@ const renderRFSection = (container) => {
       }
     });
 
+    // Los cuerpos ya prometidos a otras tareas abiertas también están ocupados
+    (tareasAbiertas || []).forEach(t => (t.items || []).forEach(art => {
+      const s = art && art.sugerencia;
+      if (!s || !s.zona || !Array.isArray(s.cuerpos)) return;
+      s.cuerpos.forEach(c => (ocupados[s.zona] = ocupados[s.zona] || new Set()).add(`${c.columna}-${c.cuerpo}`));
+    }));
+
     // RESERVA: solo el selectivo, columnas 01 a 12, niveles D a H. Ese archivo trae además
-    // MERMA y DEV, que no son stock vendible y no van al total. Y la columna del artículo
-    // se llama PRODUCTO, distinto de los demás archivos.
+    // MERMA y DEV, que no son stock vendible. Y la columna del artículo se llama PRODUCTO.
     const reservaDe = new Map();
     (reservaRaw || []).forEach(row => {
       const ubi = String(row.UBICACION || '').trim().toUpperCase();
@@ -14951,11 +15003,101 @@ const renderRFSection = (container) => {
       if (p.length !== 5 || p[0] !== 'SEL' || !'DEFGH'.includes(p[3])) return;
       const col = parseInt(p[1], 10);
       if (!(col >= 1 && col <= 12)) return;
-      const s7 = prod.substring(0, 7);
-      reservaDe.set(s7, (reservaDe.get(s7) || 0) + q);
+      reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    const ACTUALES = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+    return { ficha, ocupados, casaDe, porTallaDe, reservaDe };
+  };
+
+  /**
+   * La sugerencia de UN artículo de una tarea. `tomados` se va llenando con lo que se
+   * promete, así dos artículos de la misma corrida nunca reciben el mismo cuerpo.
+   */
+  const calcularSugerenciaDeItem = (art, fecha, ctx, tomados) => {
+    const s7 = String(art.sku7 || '').trim();
+    if (!s7) return null;
+    const f = ctx.ficha.get(s7) || {};
+    const pares = Number(art.bufferQty) || 0;
+    if (pares <= 0) return null;
+
+    const casa = Array.from(ctx.casaDe.get(s7) || []).map(k => {
+      const [z, c, cu] = k.split('|');
+      return { zona: z, columna: +c, cuerpo: +cu };
+    });
+
+    const tempTxt = String(f.temporada || art.coleccion || '').toUpperCase();
+    const datos = {
+      sku7: s7,
+      marca: art.marca || f.marca,
+      genderRims: art.genderRims || f.genderRims,
+      subcategoria: f.subcategoria,
+      esTemporadaActual: SUG_ACTUALES.some(a => tempTxt.includes(a)),
+      yaTiene: casa
+    };
+
+    // PRIMERO CUÁNTO, DESPUÉS DÓNDE. La zona se resuelve antes que nada porque de ella sale
+    // la densidad del cuerpo, y de la densidad sale cuántos pares bajan al piso. Pedir
+    // cuerpos por los pares del buffer sería reservar lugar de más.
+    const zr = zonasService.resolverZona(datos);
+    const porCuerpo = zr.zona ? zonasService.densidadDe(zr.zona, zonasService.serieDe(s7)) : 300;
+    const cant = tallasService.planificarPorTalla({
+      marca: datos.marca,
+      categoria: datos.genderRims,
+      porTalla: ctx.porTallaDe.get(s7) || {},
+      paresPorCuerpo: porCuerpo,
+      reserva: ctx.reservaDe.get(s7) || 0,
+      factor: tallasService.FACTOR_POR_DEFECTO
+    });
+
+    const alPiso = cant ? cant.alPiso : pares;
+    const aReserva = cant ? cant.aReserva : 0;
+    const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados);
+
+    if ((plan.estado === 'ok' || plan.estado === 'reposicion') && plan.cuerpos) {
+      plan.cuerpos.forEach(c => {
+        tomados[plan.zona] = tomados[plan.zona] || new Set();
+        tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`);
+      });
+    }
+
+    const niveles = (plan.estado === 'ok' || plan.estado === 'reposicion') && cant
+      ? asignarNiveles(cant.filas, plan.cuerpos, plan.zona) : {};
+
+    const meta = metasService.resolverMeta(datos.genderRims, f.gender || '', fecha);
+    const minPiso = meta.metaUph > 0 ? Math.round((alPiso / meta.metaUph) * 60) : 0;
+    const minReserva = tallasService.minutosDeReserva(aReserva);
+
+    return {
+      sku7: s7, ficha: f, pares, cant, plan, casa, niveles,
+      alPiso, aReserva,
+      paletas: tallasService.paletasDe(aReserva),
+      activo: Math.round(cant ? cant.pisoTotal : 0),
+      reservaHoy: Math.round(ctx.reservaDe.get(s7) || 0),
+      tiempo: (minPiso + minReserva) ? {
+        minPiso, minReserva, total: minPiso + minReserva,
+        txt: (minPiso + minReserva) >= 60
+          ? `${Math.floor((minPiso + minReserva) / 60)}h ${String((minPiso + minReserva) % 60).padStart(2, '0')}m`
+          : `${minPiso + minReserva}m`
+      } : null
+    };
+  };
+
+  const renderSugerenciaAlmacenaje = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'sugerencia';
+    const sigueSiendoMia = () => container.isConnected && container.dataset.vista === 'sugerencia';
+
+    container.innerHTML = `<div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1rem;">
+        <div style="width:34px; height:34px; border:2px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Leyendo el almacén y calculando...</span>
+    </div>`;
+
+    // Los cuerpos ya prometidos a tareas abiertas cuentan como ocupados: sin eso, una
+    // segunda corrida de la misma noche mandaria otro articulo al mismo lugar.
+    const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
+    const ctx = await cargarContextoSugerencia(abiertas);
+    if (!sigueSiendoMia()) return;
+
 
     const pintar = () => {
       if (!sigueSiendoMia()) return;
@@ -14964,71 +15106,14 @@ const renderRFSection = (container) => {
 
       // Un cuerpo sugerido no puede ofrecerse dos veces en la misma corrida
       const tomados = {};
-      Object.keys(ocupados).forEach(z => { tomados[z] = new Set(ocupados[z]); });
+      Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
 
       const filas = [];
       tareas.forEach(t => (t.items || []).forEach(art => {
-        const s7 = String(art.sku7 || '').trim();
-        if (!s7) return;
-        const f = ficha.get(s7) || {};
-        const pares = Number(art.bufferQty) || 0;
-        if (pares <= 0) return;
-
-        const casa = Array.from(casaDe.get(s7) || []).map(k => {
-          const [z, c, cu] = k.split('|');
-          return { zona: z, columna: +c, cuerpo: +cu };
-        });
-
-        const tempTxt = String(f.temporada || art.coleccion || '').toUpperCase();
-        const datos = {
-          sku7: s7,
-          marca: art.marca || f.marca,
-          genderRims: art.genderRims || f.genderRims,
-          subcategoria: f.subcategoria,
-          esTemporadaActual: ACTUALES.some(a => tempTxt.includes(a)),
-          yaTiene: casa
-        };
-
-        // ── PRIMERO CUÁNTO, DESPUÉS DÓNDE ───────────────────────────────────
-        // La zona hay que resolverla antes que nada, porque de ella sale la densidad del
-        // cuerpo, y de la densidad sale cuántos pares bajan al piso. Recién con ese número
-        // se buscan los cuerpos: pedir 3 cuerpos para 1.590 pares cuando al piso van 800
-        // sería reservar lugar de más.
-        const z = zonasService.resolverZona(datos);
-        const porCuerpo = z.zona ? zonasService.densidadDe(z.zona, zonasService.serieDe(s7)) : 300;
-        const cant = tallasService.planificarPorTalla({
-          marca: datos.marca,
-          categoria: datos.genderRims,
-          porTalla: porTallaDe.get(s7) || {},
-          paresPorCuerpo: porCuerpo,
-          reserva: reservaDe.get(s7) || 0,
-          factor: tallasService.FACTOR_POR_DEFECTO
-        });
-
-        const alPiso = cant ? cant.alPiso : pares;
-        const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados);
-
-        // Lo sugerido queda reservado para las tareas que siguen
-        if (plan.estado === 'ok' && plan.cuerpos) {
-          plan.cuerpos.forEach(c => tomados[plan.zona] && tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`));
-        }
-        // Tiempo esperado: los dos tramos por separado, porque bajar al piso y paletizar
-        // para reserva no cuestan lo mismo.
-        const aRes = cant ? cant.aReserva : 0;
-        const meta = metasService.resolverMeta(datos.genderRims, f.gender || '', t.fecha);
-        const minPiso = meta.metaUph > 0 ? Math.round((alPiso / meta.metaUph) * 60) : 0;
-        const minReserva = tallasService.minutosDeReserva(aRes);
-        const total = minPiso + minReserva;
-        const tiempo = total ? {
-          minPiso, minReserva, total,
-          txt: total >= 60 ? `${Math.floor(total / 60)}h ${String(total % 60).padStart(2, '0')}m` : `${total}m`
-        } : null;
-
-        filas.push({ tarea: t, art, s7, pares, alPiso, cant, f, plan, casa, tiempo,
-                     paletas: tallasService.paletasDe(aRes),
-                     activo: Math.round(cant ? cant.pisoTotal : 0),
-                     reservaHoy: Math.round(reservaDe.get(s7) || 0) });
+        const s = calcularSugerenciaDeItem(art, t.fecha, ctx, tomados);
+        if (s) filas.push({ ...s, s7: s.sku7, tarea: t, art, f: s.ficha });
       }));
+
 
       const cuenta = (e) => filas.filter(x => x.plan.estado === e).length;
       const chip = (txt, n, color) => `
@@ -15094,12 +15179,23 @@ const renderRFSection = (container) => {
                   const p = x.plan;
                   const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
                   const c = COLOR[p.estado] || '#94a3b8';
+                  // Qué talla va a qué nivel del cuerpo: el A está abajo y es lo comercial
+                  const porNivel = Object.keys(x.niveles || {}).length
+                    ? Object.entries(x.niveles).reduce((acc, [talla, dest]) => {
+                        (acc[dest] = acc[dest] || []).push(talla); return acc;
+                      }, {}) : null;
+                  const detalleNiveles = porNivel
+                    ? `<div style="font-size:0.63rem; color:rgba(255,255,255,0.45); margin-top:2px;">${
+                        Object.keys(porNivel).sort().map(d =>
+                          `<b style="color:#93c5fd;">${d}</b> t.${porNivel[d].join('/')}`).join(' &nbsp; ')}</div>`
+                    : '';
+
                   let sug;
                   if (p.estado === 'reposicion') {
-                    sug = `<span style="color:#22c55e; font-weight:800;">↩️ A su mismo cuerpo</span>`;
+                    sug = `<span style="color:#22c55e; font-weight:800;">↩️ A su mismo cuerpo</span>${detalleNiveles}`;
                   } else if (p.estado === 'ok') {
                     sug = `<b style="color:#93c5fd;">${p.cuerpos.map(k => nombre(p.zona, k.columna, k.cuerpo)).join(' · ')}</b>
-                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.3);">${p.seguidos ? 'seguidos' : 'con huecos'} · franja ${p.franja} · quedan ${p.libresEnLaFranja} libres</div>`;
+                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.3);">${p.seguidos ? 'seguidos' : 'con huecos'} · franja ${p.franja} · quedan ${p.libresEnLaFranja} libres</div>${detalleNiveles}`;
                   } else if (p.estado === 'slotting') {
                     sug = `<span style="color:#ef4444; font-weight:900;">⚠️ REVISAR SLOTTING</span>
                            <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">${p.motivo}</div>`;
