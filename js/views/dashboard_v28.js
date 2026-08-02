@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0030';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0031';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0030';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0030';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0030';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0030';
-import * as metasService from '../services_v245/metasService.js?v=29.0030';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0030';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0030';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0030';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0030';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0030';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0030';
+import * as adminService from '../services_v245/adminService.js?v=29.0031';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0031';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0031';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0031';
+import * as metasService from '../services_v245/metasService.js?v=29.0031';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0031';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0031';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0031';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0031';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0031';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0031';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0030';
+const VERSION = '29.0031';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0030');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0031');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0030 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0031 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15180,21 +15180,24 @@ const renderRFSection = (container) => {
         const trabadas = grupo.arts.filter(x => x.plan.estado === 'slotting'
           || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona');
 
-        // Con varios artículos se muestra el primero y un "+", para que el título no crezca
-        const primerArt = grupo.arts[0] ? grupo.arts[0].sku7 : '';
-        const rT = ws.addRow([(/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto)
-          + ' · ' + primerArt + (grupo.arts.length > 1 ? ' +' : '')]);
-        ws.mergeCells(rT.number, 1, rT.number, COLS);
-        rT.getCell(1).font = { size: 18, bold: true, name: 'Calibri' };
-        rT.getCell(1).alignment = centro;
-        rT.height = 26;
-
+        // Arriba y grande va la MARCA, que es lo que el operario mira de lejos para saber a
+        // qué pasillo va. El artículo baja a la segunda línea; con varios se muestra el
+        // primero y un "+", para que el título no crezca.
         const marcaTarea = t.marca || (grupo.arts[0] && grupo.arts[0].ficha.marca) || '';
+        const primerArt = grupo.arts[0] ? grupo.arts[0].sku7 : '';
+
+        const rT = ws.addRow([(/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto)
+          + (marcaTarea ? ' · ' + marcaTarea : '')]);
+        ws.mergeCells(rT.number, 1, rT.number, COLS);
+        rT.getCell(1).font = { size: 20, bold: true, name: 'Calibri' };
+        rT.getCell(1).alignment = centro;
+        rT.height = 28;
+
         const rF = ws.addRow([String(t.fecha).split('-').reverse().join('/')
-          + (marcaTarea ? ' · ' + marcaTarea : '')
+          + ' · ' + primerArt + (grupo.arts.length > 1 ? ' +' : '')
           + ' · ' + grupo.arts.length + ' artículo' + (grupo.arts.length > 1 ? 's' : '')]);
         ws.mergeCells(rF.number, 1, rF.number, COLS);
-        rF.getCell(1).font = { size: 10, name: 'Calibri' };
+        rF.getCell(1).font = { size: 11, name: 'Calibri' };
         rF.getCell(1).alignment = centro;
 
         if (trabadas.length) {
@@ -15227,7 +15230,7 @@ const renderRFSection = (container) => {
 
         ws.addRow([]);
 
-        const rH = ws.addRow(['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Al piso', 'Paletizar', 'Destino']);
+        const rH = ws.addRow(['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino']);
         rH.height = 20;
         rH.eachCell(c => {
           c.font = { size: 11, bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
@@ -15267,6 +15270,26 @@ const renderRFSection = (container) => {
           });
           ultimaFila = rTot;
         });
+
+        // El total de TODA la tarea, para saber de un vistazo cuánto trabajo hay. Va en
+        // negro para que no se confunda con los totales de cada artículo.
+        if (grupo.arts.length > 1) {
+          const sum = (f) => grupo.arts.reduce((a, x) => a + (f(x) || 0), 0);
+          const almacenar = grupo.arts.reduce((a, x) => a + ((x.plan.estado === 'slotting'
+            || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona') ? 0 : x.alPiso), 0);
+          const paletas = sum(x => x.paletas);
+          const rTT = ws.addRow(['TOTAL DE LA TAREA', '', '', sum(x => x.pares), almacenar,
+                                 sum(x => x.aReserva),
+                                 paletas ? paletas + ' paleta' + (paletas > 1 ? 's' : '') : '—']);
+          ws.mergeCells(rTT.number, 1, rTT.number, 3);
+          rTT.height = 24;
+          rTT.eachCell({ includeEmpty: true }, c => {
+            c.border = borde; c.alignment = centro;
+            c.font = { size: 12, bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NEGRO } };
+          });
+          ultimaFila = rTT;
+        }
 
         // Cada tarea, su hoja. El salto va sobre una fila con celdas: ExcelJS descarta las
         // vacías y el salto se iría con ellas.
