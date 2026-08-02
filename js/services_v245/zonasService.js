@@ -445,6 +445,22 @@ export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
  * `yaTiene` son los cuerpos donde el artículo ya vive. Si tiene, es reposición y se
  * devuelven esos: no se manda a un cuerpo nuevo lo que ya tiene su lugar.
  */
+/**
+ * La zona de un artículo, sin calcular nada más. Hace falta antes que el resto, porque de
+ * la zona sale la densidad del cuerpo, y de la densidad sale cuántos pares bajan al piso.
+ * Devuelve { zona, porOthers } o { zona: null, motivo }.
+ */
+export const resolverZona = (art) => {
+    if (esOthers(art.genderRims)) {
+        const z = zonaDeOthers(art.subcategoria);
+        return z ? { zona: z, porOthers: true }
+                 : { zona: null, motivo: `Es ${zonasActual().categoriaOthers} y su subcategoría "${art.subcategoria || '(vacía)'}" no está configurada.` };
+    }
+    const z = zonaDeMarca(art.marca);
+    return z ? { zona: z, porOthers: false }
+             : { zona: null, motivo: `La marca "${art.marca || '(vacía)'}" no tiene zona configurada.` };
+};
+
 export const planificarAlmacenaje = (art, ocupadosPorZona) => {
     const cfg = zonasActual();
     const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });

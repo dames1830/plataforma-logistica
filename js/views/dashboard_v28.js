@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0021';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0022';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0021';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0021';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0021';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0021';
-import * as metasService from '../services_v245/metasService.js?v=29.0021';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0021';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0021';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0021';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0021';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0021';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0021';
+import * as adminService from '../services_v245/adminService.js?v=29.0022';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0022';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0022';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0022';
+import * as metasService from '../services_v245/metasService.js?v=29.0022';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0022';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0022';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0022';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0022';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0022';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0022';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0021';
+const VERSION = '29.0022';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3244,7 +3244,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0021');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0022');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13478,7 +13478,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0021 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0022 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14837,8 +14837,12 @@ const renderRFSection = (container) => {
     </div>`;
 
     await zonasService.cargarZonas();
+    await tallasService.cargarTallas();
     await rescatarMaestro();
     const stock = await getAreaData('almacenaje_activo');
+    // La reserva vive en su propio archivo y hace falta para el objetivo del 50%
+    let reservaRaw = [];
+    try { reservaRaw = await getAreaData('analisis_sku_reserva') || []; } catch (e) { /* se sigue sin reserva */ }
     if (!sigueSiendoMia()) return;
 
     // Ficha de cada artículo, del Maestro
@@ -14854,24 +14858,56 @@ const renderRFSection = (container) => {
       });
     });
 
-    // Qué cuerpos están ocupados hoy, y dónde vive cada artículo
+    // Qué cuerpos están ocupados, dónde vive cada artículo, y cuánto hay de cada talla
+    // en el buffer y en el piso. La talla sale del final de la descripción: "...BATA-1-38".
+    const RE_TALLA = /-\d+-(\d+(?:\.\d+)?)\s*$/;
     const ocupados = {};              // zona -> Set('col-cuerpo')
     const casaDe = new Map();         // sku7 -> Set('ZONA|col|cuerpo')
+    const porTallaDe = new Map();     // sku7 -> { talla: {buffer, piso} }
     (stock || []).forEach(row => {
       const raw = Array.isArray(row) ? row : Object.values(row);
       const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
       if (!ubi) return;
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      const qty = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
+
+      if (s7 && qty > 0) {
+        const m = RE_TALLA.exec(String(raw[2] || '').trim());
+        const talla = m ? m[1] : 'S/T';
+        if (!porTallaDe.has(s7)) porTallaDe.set(s7, {});
+        const t = porTallaDe.get(s7);
+        if (!t[talla]) t[talla] = { buffer: 0, piso: 0 };
+        t[talla][ubi.startsWith('CDBUFFER') ? 'buffer' : 'piso'] += qty;
+      }
+
       const p = ubi.split('-');
       const zona = p[0];
       if (!zonasService.zonasActual().zonas[zona] || p.length < 3) return;
       const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
       if (!col || !cue) return;
       (ocupados[zona] = ocupados[zona] || new Set()).add(`${col}-${cue}`);
-      const s7 = String(raw[1] || '').trim().substring(0, 7);
       if (s7) {
         if (!casaDe.has(s7)) casaDe.set(s7, new Set());
         casaDe.get(s7).add(`${zona}|${col}|${cue}`);
       }
+    });
+
+    // RESERVA: solo el selectivo, columnas 01 a 12, niveles D a H. Ese archivo trae además
+    // MERMA y DEV, que no son stock vendible y no van al total. Y la columna del artículo
+    // se llama PRODUCTO, distinto de los demás archivos.
+    const reservaDe = new Map();
+    (reservaRaw || []).forEach(row => {
+      const ubi = String(row.UBICACION || '').trim().toUpperCase();
+      const prod = String(row.PRODUCTO || '').trim();
+      if (!prod || prod === 'PRODUCTO') return;
+      const q = parseFloat(String(row.CANTIDAD || 0).replace(/,/g, '')) || 0;
+      if (q <= 0) return;
+      const p = ubi.split('-');
+      if (p.length !== 5 || p[0] !== 'SEL' || !'DEFGH'.includes(p[3])) return;
+      const col = parseInt(p[1], 10);
+      if (!(col >= 1 && col <= 12)) return;
+      const s7 = prod.substring(0, 7);
+      reservaDe.set(s7, (reservaDe.get(s7) || 0) + q);
     });
 
     const ACTUALES = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
@@ -14899,21 +14935,39 @@ const renderRFSection = (container) => {
         });
 
         const tempTxt = String(f.temporada || art.coleccion || '').toUpperCase();
-        const plan = zonasService.planificarAlmacenaje({
+        const datos = {
           sku7: s7,
           marca: art.marca || f.marca,
           genderRims: art.genderRims || f.genderRims,
           subcategoria: f.subcategoria,
-          pares,
           esTemporadaActual: ACTUALES.some(a => tempTxt.includes(a)),
           yaTiene: casa
-        }, tomados);
+        };
+
+        // ── PRIMERO CUÁNTO, DESPUÉS DÓNDE ───────────────────────────────────
+        // La zona hay que resolverla antes que nada, porque de ella sale la densidad del
+        // cuerpo, y de la densidad sale cuántos pares bajan al piso. Recién con ese número
+        // se buscan los cuerpos: pedir 3 cuerpos para 1.590 pares cuando al piso van 800
+        // sería reservar lugar de más.
+        const z = zonasService.resolverZona(datos);
+        const porCuerpo = z.zona ? zonasService.densidadDe(z.zona, zonasService.serieDe(s7)) : 300;
+        const cant = tallasService.planificarPorTalla({
+          marca: datos.marca,
+          categoria: datos.genderRims,
+          porTalla: porTallaDe.get(s7) || {},
+          paresPorCuerpo: porCuerpo,
+          reserva: reservaDe.get(s7) || 0,
+          factor: tallasService.FACTOR_POR_DEFECTO
+        });
+
+        const alPiso = cant ? cant.alPiso : pares;
+        const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados);
 
         // Lo sugerido queda reservado para las tareas que siguen
         if (plan.estado === 'ok' && plan.cuerpos) {
           plan.cuerpos.forEach(c => tomados[plan.zona] && tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`));
         }
-        filas.push({ tarea: t, art, s7, pares, f, plan, casa });
+        filas.push({ tarea: t, art, s7, pares, alPiso, cant, f, plan, casa });
       }));
 
       const cuenta = (e) => filas.filter(x => x.plan.estado === e).length;
@@ -14962,7 +15016,9 @@ const renderRFSection = (container) => {
                   <th style="padding:0.6rem; text-align:left;">Artículo</th>
                   <th style="padding:0.6rem; text-align:left;">Marca</th>
                   <th style="padding:0.6rem; text-align:center;">Serie</th>
-                  <th style="padding:0.6rem; text-align:right;">Pares</th>
+                  <th style="padding:0.6rem; text-align:right;" title="Lo que Recepción dejó en el buffer">Buffer</th>
+                  <th style="padding:0.6rem; text-align:right;" title="Lo que baja a la zona activa, según la regla de la marca y las tallas que falten">Al piso</th>
+                  <th style="padding:0.6rem; text-align:right;" title="Lo que sube a los niveles altos, en cajas cerradas">A reserva</th>
                   <th style="padding:0.6rem; text-align:center;">Zona</th>
                   <th style="padding:0.6rem; text-align:center;">Cuerpos</th>
                   <th style="padding:0.6rem; text-align:left;">Sugerencia</th>
@@ -14970,7 +15026,7 @@ const renderRFSection = (container) => {
                 </tr>
               </thead>
               <tbody>
-                ${filas.length === 0 ? `<tr><td colspan="9" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
+                ${filas.length === 0 ? `<tr><td colspan="11" style="padding:3rem; text-align:center; color:rgba(255,255,255,0.25);">No hay tareas en el rango.</td></tr>` : filas.map(x => {
                   const p = x.plan;
                   const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
                   const c = COLOR[p.estado] || '#94a3b8';
@@ -14995,7 +15051,9 @@ const renderRFSection = (container) => {
                     <td style="padding:0.55rem; color:#fff;">${x.s7}</td>
                     <td style="padding:0.55rem; color:rgba(255,255,255,0.65);">${x.art.marca || x.f.marca || '—'}<div style="font-size:0.62rem; color:rgba(255,255,255,0.3);">${x.f.genderRims || ''}</div></td>
                     <td style="padding:0.55rem; text-align:center; color:#a5b4fc; font-weight:900;">${x.s7[0]}</td>
-                    <td style="padding:0.55rem; text-align:right; color:#fff; font-weight:800;">${x.pares.toLocaleString('es-PE')}</td>
+                    <td style="padding:0.55rem; text-align:right; color:rgba(255,255,255,0.55);">${x.pares.toLocaleString('es-PE')}</td>
+                    <td style="padding:0.55rem; text-align:right; color:#4ade80; font-weight:900;">${(x.alPiso || 0).toLocaleString('es-PE')}${x.cant && x.cant.regla ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.28); font-weight:400;">${x.cant.regla.modo === 'todo' ? 'todo' : x.cant.regla.modo === 'cuerpos' ? x.cant.regla.valor + ' cuerpo' : x.cant.regla.valor + '%'}</div>` : ''}</td>
+                    <td style="padding:0.55rem; text-align:right; color:#fbbf24; font-weight:700;">${x.cant ? (x.cant.aReserva || 0).toLocaleString('es-PE') : '—'}</td>
                     <td style="padding:0.55rem; text-align:center; color:${c}; font-weight:900;">${p.zona || '—'}</td>
                     <td style="padding:0.55rem; text-align:center; color:rgba(255,255,255,0.75); font-weight:800;">${p.cuantos || '—'}${p.porCuerpo ? `<div style="font-size:0.6rem; color:rgba(255,255,255,0.3); font-weight:400;">${p.porCuerpo}/cuerpo</div>` : ''}</td>
                     <td style="padding:0.55rem;">${sug}</td>
@@ -15008,7 +15066,8 @@ const renderRFSection = (container) => {
 
           <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.67rem; color:rgba(255,255,255,0.35); line-height:1.7;">
             Esta pantalla <b style="color:rgba(255,255,255,0.55);">no modifica ninguna tarea</b>: es para comparar contra lo que hicieron los operarios y ver si las reglas aciertan.<br>
-            Las reglas se editan en <b style="color:rgba(255,255,255,0.55);">Análisis SKU → Zonas de Almacenaje</b>. Un cuerpo sugerido queda reservado para las tareas que siguen, así dos artículos no reciben el mismo.
+            Primero se calcula <b style="color:rgba(255,255,255,0.55);">cuánto</b> baja —según la regla de la marca y qué tallas faltan reponer— y recién con ese número se buscan los <b style="color:rgba(255,255,255,0.55);">cuerpos</b>. Se repone la talla, no el artículo: una talla puede necesitar reposición aunque el cuerpo esté lleno en total.<br>
+            Se edita en <b style="color:rgba(255,255,255,0.55);">Análisis SKU → Zonas de Almacenaje</b> (dónde) y <b style="color:rgba(255,255,255,0.55);">Almacenaje → Config. Tareas</b> (cuánto). Un cuerpo sugerido queda reservado para las tareas que siguen.
           </div>
         </div>
       </div>`;

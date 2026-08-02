@@ -292,9 +292,15 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     else if (regla.modo === 'cuerpos')  objetivoArt = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
     else                                objetivoArt = (bufferTotal + pisoTotal + (Number(reserva) || 0)) * ((Number(regla.valor) || 50) / 100);
 
-    // 2. Ese objetivo se reparte entre las tallas, con los porcentajes de la categoría
+    // 2. Ese objetivo se reparte entre las tallas, con los porcentajes de la categoría.
+    //
+    // Los porcentajes se renormalizan sobre LAS TALLAS QUE EL ARTÍCULO TIENE, no sobre
+    // todas las de la categoría. Un artículo de KIDS puede venir solo en la 26 a la 29
+    // mientras la categoría tiene 19 tallas: repartiendo sobre las 19, el 80% del objetivo
+    // se le asigna a tallas que ese artículo no existe y se pierde. Con 1.590 pares en
+    // buffer bajaban 170 en vez de 800.
     const cat = tallasActual().categorias[String(categoria || '').toUpperCase()];
-    const suma = cat ? cat.tallas.reduce((a, t) => a + (Number(cat.porcentajes[t]) || 0), 0) : 0;
+    const suma = cat ? claves.reduce((a, t) => a + (Number(cat.porcentajes[t]) || 0), 0) : 0;
 
     const filas = claves.sort((a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0)).map(t => {
         const buf = Math.max(0, Math.round(Number(tallas[t].buffer) || 0));
