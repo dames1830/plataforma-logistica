@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0046';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0047';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0046';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0046';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0046';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0046';
-import * as metasService from '../services_v245/metasService.js?v=29.0046';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0046';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0046';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0046';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0046';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0046';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0046';
+import * as adminService from '../services_v245/adminService.js?v=29.0047';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0047';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0047';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0047';
+import * as metasService from '../services_v245/metasService.js?v=29.0047';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0047';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0047';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0047';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0047';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0047';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0047';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0046';
+const VERSION = '29.0047';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3372,7 +3372,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0046');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0047');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13683,7 +13683,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0046 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0047 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16265,8 +16265,18 @@ const renderRFSection = (container) => {
   // toque hay que hacerle usar esta misma cascada.
   // ══════════════════════════════════════════════════════════════════════════════════
 
-  /** Las áreas del stock activo que cuentan como piso. Las mismas que mira Replenishment. */
-  const AREAS_PISO = ['MZN01','MZN02','MZN03','MZN04','BUFFERCD','CDBUFFER','AND','SEL'];
+  /**
+   * LO QUE HAY ABAJO, para medir contra el objetivo. Todas las zonas de las que se puede
+   * picar: los mezzanines, el selectivo, el andamio, la pared y el buffer.
+   *
+   * El andamio suma aunque no se almacene ahí: si una talla tiene 49 en el selectivo y 1 en
+   * el andamio, abajo hay 50 disponibles para despachar. Donde el andamio NO cuenta es en la
+   * capacidad del cuerpo —no hay dónde poner mercadería—, y eso se mide aparte.
+   *
+   * Es la misma lista que usa el motor de la Zona Buffer: si contaran distinto, el objetivo
+   * que se carga acá no querría decir lo mismo que el que aplica allá.
+   */
+  const AREAS_PISO = ['MZN01','MZN02','MZN03','MZN04','SEL','AND','PARED','BUFFERCD','CDBUFFER'];
 
   /** El cajón 'config' del servidor, compartido con la jornada, las zonas y el reparto por tallas. */
   const _URL_CONFIG = `${API_BASE}/logistics/config`;
@@ -16973,6 +16983,10 @@ const renderRFSection = (container) => {
    * De ahí la fórmula: lo que ya está abajo MÁS lo que se va a bajar. El motor descuenta
    * lo primero del piso y sale a buscar exactamente lo segundo. Sirve igual cuando el
    * llenado del cuerpo hizo bajar de más: la solicitud acompaña ese número y no el factor.
+   *
+   * El stock activo incluye el andamio y la pared, igual que lo cuenta el motor del buffer:
+   * de ahí se puede picar aunque no se almacene. Con 49 en el selectivo y 1 en el andamio,
+   * abajo hay 50, y para un objetivo de 100 se piden 100 para que bajen 50.
    */
   const solicitudDe = (i) => {
     const bajar = aBajarDe(i);
@@ -17413,11 +17427,37 @@ const renderRFSection = (container) => {
       });
 
 
-      const AREAS_ACTIVO = ['MZN01','MZN02','MZN03','MZN04','BUFFERCD','CDBUFFER','AND','SEL'];
+      /**
+       * LO QUE HAY ABAJO. Todas las zonas de las que el picker puede sacar mercadería: los
+       * cuatro mezzanines, el selectivo, el andamio, la pared y el propio buffer.
+       *
+       * El andamio SUMA. Si una talla tiene 49 en el selectivo y 1 en el andamio, abajo hay
+       * 50, y para llegar a un objetivo de 100 hay que bajar 50 y no 51: de esa unidad del
+       * andamio se puede picar igual. Es la misma lista que usa el motor de la Zona Buffer,
+       * y tiene que serlo, o los dos contarían distinto sobre el mismo almacén.
+       *
+       * Lo que el andamio NO da es LUGAR donde almacenar. Eso se mide aparte, más abajo,
+       * contra los cuerpos de las cinco zonas que sí tienen capacidad.
+       */
+      const AREAS_ACTIVO = ['MZN01','MZN02','MZN03','MZN04','SEL','AND','PARED','BUFFERCD','CDBUFFER'];
       const stockActMap  = new Map();
-      // Los cuerpos que ocupa cada artículo en el piso. De acá sale su capacidad, y de la
-      // capacidad sale hasta dónde hay que llenarlo.
+
+      /**
+       * Los cuerpos que ocupa cada artículo, y cuántos pares tiene metidos en ellos.
+       *
+       * SOLO CUENTAN LAS ZONAS QUE TIENEN CUERPOS DE VERDAD — las que están configuradas en
+       * Zonas de Almacenaje: SEL y los mezzanines. El andamio, la pared y el buffer no son
+       * cuerpos con capacidad, y densidadDe() no los conoce: para una zona desconocida
+       * devuelve 330 por defecto.
+       *
+       * Sin este filtro, DOS pares del artículo 8216953 apoyados en el andamio le sumaban un
+       * cuerpo entero de 330 de capacidad que no existe. Con 118 pares en el piso, el sistema
+       * veía un hueco de 538 en vez de 208 y mandaba vaciar las dos paletas de reserva
+       * —400 pares— en lugar de bajar 208.
+       */
+      const ZONAS_CON_CUERPOS = zonasService.zonasActual().zonas || {};
       const cuerposPorArt = new Map();
+      const pisoEnCuerpos = new Map();
       activo.forEach(row => {
         const raw = Array.isArray(row) ? row : Object.values(row);
         const areaRaw = String(getCol(row, ['Área','Area','AREA','Ãrea','rea','area']) || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -17432,9 +17472,14 @@ const renderRFSection = (container) => {
         const ubi = String(getCol(row, ['Ubicación','Ubicacion','UBICACION','UbicaciÃ³n']) || raw[3] || '').trim().toUpperCase();
         const p = ubi.split('-');
         if (p.length < 3) return;
+        if (!ZONAS_CON_CUERPOS[p[0]]) return;    // andamio, pared, buffer: no son cuerpos
         const art7 = sku.length >= 7 ? sku.substring(0, 7) : sku;
         if (!cuerposPorArt.has(art7)) cuerposPorArt.set(art7, new Set());
         cuerposPorArt.get(art7).add(`${p[0]}|${p[1]}|${p[2]}`);
+        // Los pares que hay DENTRO de esos cuerpos. Se cuenta acá y no sobre el total del
+        // artículo para que el hueco se mida contra lo mismo que da la capacidad: los 2
+        // pares del andamio no llenan un cuerpo del selectivo.
+        pisoEnCuerpos.set(art7, (pisoEnCuerpos.get(art7) || 0) + qty);
       });
 
       // ── Stock Reserva (solo NIVEL = ALTO) ──
@@ -17462,18 +17507,6 @@ const renderRFSection = (container) => {
        * prepack lleva cuatro más.
        */
       const esSolidPack = (sku) => String(sku || '').trim().length === 12;
-
-      /**
-       * Los pares que hay en el piso de cada artículo, contando TODO lo que ocupa el cuerpo
-       * —también los prepack—. Se calcula ANTES de filtrar: el prepack no se repone, pero
-       * ocupa lugar igual, y si no se contara el llenado del cuerpo vería un hueco que no
-       * existe y mandaría bajar de más.
-       */
-      const pisoPorArt = new Map();
-      stockActMap.forEach((q, sku) => {
-        const a = sku.length >= 7 ? sku.substring(0, 7) : sku;
-        pisoPorArt.set(a, (pisoPorArt.get(a) || 0) + q);
-      });
 
       // ── Clasificar ──
       const items = [];
@@ -17578,10 +17611,11 @@ const renderRFSection = (container) => {
         cuerpos.forEach(c => { capacidad += zonasService.densidadDe(c.split('|')[0], serie); });
         if (capacidad <= 0) return;
 
-        // Lo que hay en el piso sale de pisoPorArt y no de la lista: la lista ya viene sin
-        // los prepack, que no se reponen pero ocupan el cuerpo igual. Sumando solo la lista
-        // se vería un hueco que no existe y se mandaría bajar de más.
-        const enPiso    = pisoPorArt.get(art7) || lista.reduce((a, i) => a + i.qAct, 0);
+        // Lo que hay DENTRO de esos cuerpos, no el stock total del artículo. Se cuenta
+        // aparte por dos motivos: la lista ya viene sin los prepack —que no se reponen pero
+        // ocupan el cuerpo igual—, y el stock que está fuera de los cuerpos (andamio,
+        // pared) no llena nada de lo que acá se está midiendo.
+        const enPiso    = pisoEnCuerpos.get(art7) || 0;
         const yaAsignado = lista.reduce((a, i) => a + i.aBajar, 0);
         let hueco = capacidad - (enPiso + yaAsignado);
         if (hueco <= 0 || (enPiso + yaAsignado) >= capacidad * LLENADO_MINIMO) return;
