@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0050';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0051';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0050';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0050';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0050';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0050';
-import * as metasService from '../services_v245/metasService.js?v=29.0050';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0050';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0050';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0050';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0050';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0050';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0050';
+import * as adminService from '../services_v245/adminService.js?v=29.0051';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0051';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0051';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0051';
+import * as metasService from '../services_v245/metasService.js?v=29.0051';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0051';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0051';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0051';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0051';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0051';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0051';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0050';
+const VERSION = '29.0051';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0050');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0051');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0050 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0051 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17637,6 +17637,19 @@ const renderRFSection = (container) => {
       porArticulo.forEach((lista, art7) => {
         const cuerpos = cuerposPorArt.get(art7);
         if (!cuerpos || !cuerpos.size) return;          // sin cuerpo asignado: no se toca
+
+        // UN ARTÍCULO SIN NINGÚN OBJETIVO CARGADO NO SE TOCA.
+        //
+        // El llenado existe para no dejar a medias un cuerpo que YA se está reponiendo:
+        // si a la talla comercial no le alcanza el respaldo, el hueco lo tapan sus
+        // hermanas. Pero si el artículo entero no tiene un solo objetivo cargado, nadie
+        // pidió reponerlo, y llenar su cuerpo sería bajar mercadería que nadie mandó a
+        // bajar. Con la tabla de factores a medio cargar eso llenaba el almacén de
+        // tareas inventadas.
+        //
+        // Basta con que UNA de sus tallas tenga objetivo: ahí el artículo entra en juego
+        // y el cuerpo se completa con las tallas que haya, tengan objetivo propio o no.
+        if (!lista.some(i => (Number(i.factor) || 0) > 0)) return;
 
         const serie = zonasService.serieDe(art7);
         let capacidad = 0;
