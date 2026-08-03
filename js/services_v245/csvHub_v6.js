@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0043';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0044';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0043';
+const VERSION = '29.0044';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1294,46 +1294,79 @@ export const calculateBufferPallets = (configOverride = null) => {
     }
 
     // Helper para obtener el buffer extra de un SKU usando la configuracion de analisis SKU (Genero y Talla + Excepciones SKU)
+    // ══════════════════════════════════════════════════════════════════════════════
+    // EL OBJETIVO DE PISO DE UN SKU, igual que lo resuelve Replenishment.
+    //
+    // Antes esto no cruzaba con lo que se cargaba en la pantalla de factores, por dos
+    // motivos, y en los dos casos el resultado era un cero silencioso:
+    //
+    //   LA TALLA. Salía del diccionario 'tabla_tallas' —que se contaminó cuando el
+    //   archivo de Replenishment se usó por error como diccionario y escribió
+    //   cantidades— y si no estaba ahí, del SUFIJO CRUDO del SKU. El sufijo no es la
+    //   talla: 8811610-1-07 es una talla 43 y esto armaba la clave con '07'. Ahora sale
+    //   de la descripción con extractTalla(), la misma que usa todo lo demás.
+    //
+    //   LA MARCA. No existía. Dentro de un mismo Gender RIMS conviven Bata, North Star y
+    //   Power, que no se reponen igual, y desde v29.0042 el objetivo se carga por marca.
+    //
+    // Además se leía el localStorage COMPLETO —dos JSON.parse— en cada SKU, y esto se
+    // llama miles de veces por corrida. Ahora se lee una sola vez, arriba.
+    // ══════════════════════════════════════════════════════════════════════════════
+    let _cfgTallasGenero = {}, _cfgSKUExcepciones = {}, _cfgMarcaGenero = {};
+    try {
+        const g = localStorage.getItem('logistics_v24_prod_configTallasGenero');
+        if (g) _cfgTallasGenero = JSON.parse(g) || {};
+        const s = localStorage.getItem('logistics_v24_prod_configSKUExcepciones');
+        if (s) _cfgSKUExcepciones = JSON.parse(s) || {};
+        const m = localStorage.getItem('logistics_v24_prod_configMarcaGenero');
+        if (m) _cfgMarcaGenero = JSON.parse(m) || {};
+    } catch(e) {
+        console.warn("[PULSE] Error al leer configuraciones de Analisis SKU:", e);
+    }
+
+    /** SKU -> talla real, sacada de la descripción del activo y de la reserva. */
+    const _tallaReal = new Map();
+    activo.forEach(f => {
+        const raw = Array.isArray(f) ? f : Object.values(f);
+        const sku = String(getCol(f, ['Artículo','Articulo','ArtÃculo','Sku','SKU','CODIGO']) || raw[1] || '').trim();
+        if (!sku || _tallaReal.has(sku)) return;
+        const t = extractTalla(getCol(f, ['Descripcion de articulo','Descripción de artículo','Descripcion','Descripción','DESCRIPCION','Description']) || raw[2]);
+        if (t) _tallaReal.set(sku, t);
+    });
+    reserva.forEach(f => {
+        const sku = String(f['PRODUCTO'] || getCol(f, ['PRODUCTO','SKU','CODIGO']) || '').trim();
+        if (!sku || _tallaReal.has(sku)) return;
+        const t = extractTalla(f['DESCRIPCION'] || getCol(f, ['DESCRIPCION','Descripcion','Descripción','Description']));
+        if (t) _tallaReal.set(sku, t);
+    });
+
+    const _claveMGT = (marca, genero, talla) =>
+        `${String(marca || '').trim().toUpperCase()}|${String(genero || '').trim().toUpperCase()}|${String(talla || '').trim()}`;
+
     const getExtraBuffer = (sku) => {
         if (!sku) return 0;
         const trimmedSku = sku.trim();
-        if (trimmedSku.length === 15) {
-            return 0;
-        }
-        
-        let configTallasGenero = {};
-        let configSKUExcepciones = {};
-        try {
-            const g = localStorage.getItem('logistics_v24_prod_configTallasGenero');
-            if (g) configTallasGenero = JSON.parse(g) || {};
-            const s = localStorage.getItem('logistics_v24_prod_configSKUExcepciones');
-            if (s) configSKUExcepciones = JSON.parse(s) || {};
-        } catch(e) {
-            console.warn("[PULSE] Error al leer configuraciones de Analisis SKU:", e);
+        // Un prepack ya viene armado con su curva: no lleva objetivo por talla.
+        if (trimmedSku.length === 15) return 0;
+
+        // 1. La excepción de ese SKU exacto
+        if (_cfgSKUExcepciones[trimmedSku] !== undefined) {
+            return parseInt(_cfgSKUExcepciones[trimmedSku]) || 0;
         }
 
-        if (configSKUExcepciones[trimmedSku] !== undefined) {
-            return parseInt(configSKUExcepciones[trimmedSku]) || 0;
-        }
-
-        const sku7 = trimmedSku.substring(0, 7);
-        const info = articulosMap.get(sku7);
+        const info = articulosMap.get(trimmedSku.substring(0, 7));
         if (!info) return 0;
 
         const g = String(info.gender || 'OTROS').trim().toUpperCase();
-        
-        let talla = '-';
-        const tallasMap = dataStore.tabla_tallas || {};
-        talla = tallasMap[trimmedSku] || '-';
-        if (talla === '-') {
-            const segments = trimmedSku.split('-');
-            if (segments.length >= 3) {
-                talla = segments[segments.length - 1].trim(); // Solo extrae el sufijo sin reglas matemáticas
-            }
-        }
+        const talla = _tallaReal.get(trimmedSku);
+        if (!talla) return 0;   // sin talla no hay objetivo que buscar
 
-        const key = `${g}_${talla}`;
-        return parseInt(configTallasGenero[key]) || 0;
+        // 2. Su marca + género + talla
+        const porMarca = _cfgMarcaGenero[_claveMGT(info.marca, g, talla)];
+        if (porMarca !== undefined) return parseInt(porMarca) || 0;
+
+        // 3. Su género + talla, que es como se cargaba antes de que existieran las marcas
+        return parseInt(_cfgTallasGenero[`${g}_${talla}`]) || 0;
     };
 
     // Colectar todos los SKUs físicamente presentes en activo o reserva
