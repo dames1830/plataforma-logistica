@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0042';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0043';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0042';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0042';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0042';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0042';
-import * as metasService from '../services_v245/metasService.js?v=29.0042';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0042';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0042';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0042';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0042';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0042';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0042';
+import * as adminService from '../services_v245/adminService.js?v=29.0043';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0043';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0043';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0043';
+import * as metasService from '../services_v245/metasService.js?v=29.0043';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0043';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0043';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0043';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0043';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0043';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0043';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0042';
+const VERSION = '29.0043';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3290,7 +3290,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0042');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0043');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13598,7 +13598,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0042 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0043 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17546,6 +17546,127 @@ const renderRFSection = (container) => {
   if (typeof window.__verLayoutAnterior === 'undefined') window.__verLayoutAnterior = false;
 
     // --- LAYOUT ACTIVO ---
+  // ══════════════════════════════════════════════════════════════════════════════════
+  // EL STOCK DE LA HORA — solo para el mapa de calor
+  //
+  // El robot publica el stock a las 19:00 y ESA foto es la del día: sobre ella se calcula
+  // el Replenishment, el Slotting y la Zona Buffer. No se puede mover durante el día o
+  // cada pantalla daría un número distinto según a qué hora la abrieron.
+  //
+  // Pero los chicos de Slotting necesitan ver su avance cada una o dos horas, y el mapa de
+  // calor con la foto de las 19:00 les muestra el almacén de ayer.
+  //
+  // Por eso el stock de la hora va a un cajón APARTE, que lee ÚNICAMENTE el mapa de calor.
+  // No entra en AREA_CANONICA a propósito: si entrara, se repartiría a buffer_activo y a
+  // analisis_sku_activo y volvería a mover todo lo que se quiso dejar quieto.
+  //
+  // Se sube el CSV de Oracle tal cual sale, y acá se recorta a las seis columnas que usa la
+  // aplicación —las mismas que publica el robot y en el mismo orden, porque parte del código
+  // las lee por posición—. De 33 columnas y unos 30 MB queda en unos 6.
+  // ══════════════════════════════════════════════════════════════════════════════════
+  const AREA_STOCK_HORA = 'layout_stock_hora';
+
+  /** Las seis primeras del CSV, tal como las publica el robot. El ORDEN es parte del contrato. */
+  const COLS_STOCK = ['Área', 'Artículo', 'Descripción de artículo',
+                      'Ubicación', 'Cantidad actual', 'Cantidad asignada'];
+
+  /** Cuándo se subió el stock de la hora que se está mirando. */
+  let _stockHoraTs = null;
+
+  const _urlStockHora = () => `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/${AREA_STOCK_HORA}?date=MASTER`;
+
+  /**
+   * Trae el stock de la hora publicado. Devuelve las filas o null si todavía no hay ninguno.
+   * Va con date=MASTER para que cada subida REEMPLACE a la anterior: sin eso el servidor
+   * guardaría una foto por día y se llenaría el disco.
+   */
+  const traerStockDeLaHora = async () => {
+    try {
+      const res = await fetch(`${_urlStockHora()}&t=${Date.now()}`);
+      if (!res.ok) return null;
+      const cuerpo = await res.json();
+      const filas = cuerpo && cuerpo.data;
+      if (!Array.isArray(filas) || !filas.length) return null;
+      _stockHoraTs = cuerpo.updated_at || null;
+      dataStore[AREA_STOCK_HORA] = filas;
+      return filas;
+    } catch (e) {
+      console.warn('[Mapa] no se pudo traer el stock de la hora:', e && e.message);
+      return null;
+    }
+  };
+
+  /** El texto que se muestra en el encabezado del mapa. */
+  const _textoStockHora = () => {
+    if (!_stockHoraTs) return null;
+    let s = String(_stockHoraTs);
+    if (s.includes(' ') && !s.includes('T')) s = s.replace(' ', 'T');
+    if (!s.endsWith('Z')) s += 'Z';
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d.toLocaleString('es-PE');
+  };
+
+  /**
+   * Lee el CSV de Oracle, lo recorta y lo publica para todas las PC.
+   *
+   * Las seis columnas se toman POR POSICIÓN y no por nombre, igual que hace el robot: el
+   * encabezado del reporte cambia de acento y de mayúsculas según de dónde se exporte, y
+   * buscar por nombre lo dejaría vacío sin avisar.
+   */
+  window.subirStockDelMapa = async (input) => {
+    const file = input && input.files && input.files[0];
+    if (!file) return;
+    const etiqueta = document.getElementById('lbl_stock_hora');
+    const decir = (t) => { if (etiqueta) etiqueta.textContent = t; };
+    input.value = '';
+
+    decir('Leyendo...');
+    try {
+      const filas = await new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (r) => resolve(r),
+          error: (e) => reject(e)
+        });
+      }).then(r => {
+        const campos = (r.meta && r.meta.fields) || [];
+        if (campos.length < 6) {
+          throw new Error(`El archivo trae ${campos.length} columna(s). Se esperaban al menos 6: ¿es el CSV de Stock Activo de Oracle?`);
+        }
+        const usar = campos.slice(0, 6);
+        return (r.data || []).map(f => {
+          const o = {};
+          COLS_STOCK.forEach((nombre, i) => { o[nombre] = String(f[usar[i]] == null ? '' : f[usar[i]]).trim(); });
+          return o;
+        }).filter(o => o['Artículo']);
+      });
+
+      if (!filas.length) throw new Error('No se encontró ninguna fila con artículo.');
+
+      decir(`Publicando ${filas.length.toLocaleString('es')} filas...`);
+      const res = await fetch(_urlStockHora(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(filas)
+      });
+      if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+
+      dataStore[AREA_STOCK_HORA] = filas;
+      _stockHoraTs = new Date().toISOString();
+      try { await logSystemAction((getSession() || {}).username || 'sistema', 'STOCK_MAPA', `Stock del mapa actualizado: ${filas.length} filas`); } catch (e) {}
+
+      showPremiumAlert('Stock del mapa actualizado',
+        `Entraron <b>${filas.length.toLocaleString('es')}</b> filas y ya están publicadas para todas las computadoras.<br>` +
+        `El stock del día —el de las 19:00— <b>no se tocó</b>: el Replenishment y la Zona Buffer siguen con el de siempre.`,
+        'success');
+      renderLayoutActivo(window.__layoutContainer);
+    } catch (err) {
+      decir('');
+      showPremiumAlert('No se pudo actualizar', String((err && err.message) || err), 'error');
+    }
+  };
+
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
     // --- LAYOUT ACTIVO ---
@@ -17556,12 +17677,25 @@ const renderRFSection = (container) => {
           <div style="width:48px; height:48px; border:4px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
           <div><h4 style="color:#fff; margin:0;">Cargando mapa de calor...</h4><p style="margin:6px 0 0; font-size:0.85rem;">Obteniendo la última versión del servidor.</p></div>
       </div>`;
+      // EL MAPA MIRA EL STOCK DE LA HORA SI LO HAY, y solo si no, el del día.
+      //
+      // Es el único que lo hace. Para el resto de la aplicación el stock sigue siendo el de
+      // las 19:00, que es sobre el que se calcula el Replenishment y el Slotting.
+      const stockHora = await traerStockDeLaHora();
+
       let activoRaw = [];
-      if (typeof activeAnalisisSub !== 'undefined' && (activeAnalisisSub === 'archivo_analisis' || activeAnalisisSub === 'layout_activo')) {
+      if (stockHora && stockHora.length) {
+          activoRaw = stockHora;
+      } else if (typeof activeAnalisisSub !== 'undefined' && (activeAnalisisSub === 'archivo_analisis' || activeAnalisisSub === 'layout_activo')) {
           activoRaw = dataStore.analisis_sku_activo || dataStore.buffer_activo || [];
       } else {
           activoRaw = dataStore.buffer_activo || dataStore.analisis_sku_activo || [];
       }
+      const usandoStockHora = !!(stockHora && stockHora.length);
+      // buildLayoutHTML arma la barra de botones desde otro lado, igual que con
+      // __verLayoutAnterior y __layoutHeaderTs.
+      window.__usandoStockHora = usandoStockHora;
+      window.__stockHoraTexto = _textoStockHora();
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
       let globalPayload = null;
@@ -18069,6 +18203,24 @@ const renderRFSection = (container) => {
               </button>
           `;
 
+          // El stock que alimenta ESTE mapa. Va acá y no en Archivo Análisis SKU a
+          // propósito: aquella es la pantalla del stock oficial del día, y de ahí se
+          // sacaron los botones de subir justamente para que nadie lo pise.
+          const btnStockHora = (!isReserva) ? `
+              <span style="font-size:0.7rem; color:${window.__usandoStockHora ? '#34d399' : 'rgba(255,255,255,0.35)'}; font-weight:700; white-space:nowrap;"
+                    title="${window.__usandoStockHora ? 'El mapa está usando el stock subido durante el día. El stock de las 19:00 no se toca.' : 'Todavía nadie subió stock hoy: el mapa usa la foto de las 19:00.'}">
+                  ${window.__usandoStockHora ? '● stock de las ' + (window.__stockHoraTexto || '—') : '○ stock del día (19:00)'}
+              </span>
+              <span id="lbl_stock_hora" style="font-size:0.7rem; color:#fbbf24; font-weight:700; white-space:nowrap;"></span>
+              <div style="position:relative; display:inline-flex;">
+                  <button title="Sube el CSV de Stock Activo de Oracle tal como sale. Actualiza SOLO este mapa: el stock del día no se mueve." style="background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.5); color:#fbbf24; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:5px; white-space:nowrap;">
+                      📤 Actualizar stock
+                  </button>
+                  <input type="file" accept=".csv" onchange="window.subirStockDelMapa(this)"
+                         style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+              </div>
+          ` : '';
+
           const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : (currentLayoutZona === 'MZN02' ? 'NORTH STAR' : 'BATA');
           const isMZN = currentLayoutZona.startsWith('MZN');
           
@@ -18086,6 +18238,7 @@ const renderRFSection = (container) => {
                               <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
                                   🕒 ${timestampStr}
                               </div>
+                              ${btnStockHora}
                               ${btnPublicarTodas}
                               ${btnVerVersion}
                           </div>
