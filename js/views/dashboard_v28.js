@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0036';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0037';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0036';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0036';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0036';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0036';
-import * as metasService from '../services_v245/metasService.js?v=29.0036';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0036';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0036';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0036';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0036';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0036';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0036';
+import * as adminService from '../services_v245/adminService.js?v=29.0037';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0037';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0037';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0037';
+import * as metasService from '../services_v245/metasService.js?v=29.0037';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0037';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0037';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0037';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0037';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0037';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0037';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0036';
+const VERSION = '29.0037';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3248,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0036');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0037');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13485,7 +13485,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0036 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0037 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15676,6 +15676,12 @@ const renderRFSection = (container) => {
               <input type="number" id="zn_cuerpos" min="1" max="99" value="${z.cuerpos}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
             </div>
             <div>
+              <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Las columnas que no llegan al tope de arriba. Se escribe columna:cuerpos, por ejemplo 2:17, 3:17. Sugerir un cuerpo que no existe manda al operario a una ubicación vacía.">Columnas más cortas</label>
+              <input type="text" id="zn_cpc" value="${esc(Object.keys(z.cuerposPorColumna || {}).map(Number).sort((a,b)=>a-b).map(c => c + ':' + z.cuerposPorColumna[c]).join(', '))}"
+                     placeholder="todas iguales"
+                     style="width:150px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800; font-size:0.78rem;">
+            </div>
+            <div>
               <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Por debajo de esta cantidad de pares, el artículo se trata como saldo">Es saldo con menos de</label>
               <input type="number" id="zn_saldo" min="0" value="${z.saldoMenorA}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
             </div>
@@ -15832,6 +15838,20 @@ const renderRFSection = (container) => {
       };
       container.querySelector('#zn_cuerpos').onchange = (e) => {
         z.cuerpos = Math.max(1, Math.min(99, +e.target.value || z.cuerpos)); pintar(); marcar();
+      };
+      container.querySelector('#zn_cpc').onchange = (e) => {
+        // "2:17, 3:17" -> { 2:17, 3:17 }. Lo que no se entienda se ignora, y se reescribe lo
+        // que quedó guardado para que se vea qué entró de verdad.
+        const o = {};
+        String(e.target.value || '').split(/[,;]+/).forEach(p => {
+          const m = p.trim().match(/^(\d+)\s*[:=]\s*(\d+)$/);
+          if (!m) return;
+          const col = +m[1], n = +m[2];
+          if (col >= 1 && col <= z.columnas && n >= 1 && n <= 99 && n !== z.cuerpos) o[col] = n;
+        });
+        z.cuerposPorColumna = o;
+        e.target.value = Object.keys(o).map(Number).sort((a, b) => a - b).map(c => c + ':' + o[c]).join(', ');
+        marcar();
       };
       container.querySelector('#zn_saldo').onchange = (e) => { z.saldoMenorA = Math.max(0, +e.target.value || 0); marcar(); };
 

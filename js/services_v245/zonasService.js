@@ -35,8 +35,9 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  * las columnas por marca: andaba en una PC recién estrenada y no en la de Daniel.
  *
  * v2 = las marcas pasaron de 'Bata': 'SEL' a { zona, columnas }.
+ * v3 = MZN01 y MZN02 bajaron de 22 a 20 cuerpos, y apareció cuerposPorColumna.
  */
-const CACHE_KEY = 'config_zonas_v2';
+const CACHE_KEY = 'config_zonas_v3';
 
 /** Las cuatro temporadas que puede tener una columna. */
 export const FRANJAS = {
@@ -77,7 +78,12 @@ export const zonasPorDefecto = () => ({
             etiqueta: 'Mezzanine 1',
             activa: true,
             columnas: 24,
-            cuerpos: 22,
+            // 20, NO 22. Los 22 son del selectivo, y estaban acá de arrastre: por eso la
+            // sugerencia mandaba a MZN01-04-21 y MZN01-04-22, cuerpos que no existen.
+            // Medido sobre el layout publicado el 02-ago: 17 columnas llegan al 20 y
+            // cuatro se quedan en 17.
+            cuerpos: 20,
+            cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
             saldoMenorA: 80,
             pasillos: [],
             franjas: { ...rango(1, 3, 'anterior'), ...rango(4, 20, 'actual'),
@@ -87,7 +93,9 @@ export const zonasPorDefecto = () => ({
             etiqueta: 'Mezzanine 2',
             activa: true,
             columnas: 24,
-            cuerpos: 22,
+            // Igual que MZN01: el tope es 20, con tres columnas que se quedan en 17
+            cuerpos: 20,
+            cuerposPorColumna: { 2: 17, 3: 17, 23: 17 },
             saldoMenorA: 80,
             pasillos: [],
             franjas: { ...rango(1, 5, 'anterior'), ...rango(6, 24, 'actual') }
@@ -217,11 +225,23 @@ const normalizar = (crudo) => {
                 franjas[col] = origen[k];
             }
         });
+
+        // Las columnas que no llegan al tope de la zona. En MZN01 la mayoría tiene 20
+        // cuerpos y cuatro se quedan en 17.
+        const cpc = {};
+        const oCpc = (v.cuerposPorColumna && typeof v.cuerposPorColumna === 'object')
+            ? v.cuerposPorColumna : (d.cuerposPorColumna || {});
+        Object.keys(oCpc).forEach(k => {
+            const col = Number(k), n = _num(oCpc[k], 0, 1, 99);
+            if (Number.isInteger(col) && col >= 1 && col <= 99 && n) cpc[col] = n;
+        });
+
         zonas[z] = {
             etiqueta: String(v.etiqueta || d.etiqueta),
             activa: typeof v.activa === 'boolean' ? v.activa : d.activa,
             columnas: _num(v.columnas, d.columnas, 1, 99),
             cuerpos: _num(v.cuerpos, d.cuerpos, 1, 99),
+            cuerposPorColumna: cpc,
             saldoMenorA: _num(v.saldoMenorA, d.saldoMenorA, 0, 100000),
             pasillos: Array.isArray(v.pasillos) ? v.pasillos.filter(p =>
                 p && Number.isFinite(Number(p.desdeCol)) && Array.isArray(p.cuerpos)) : d.pasillos,
@@ -435,6 +455,17 @@ export const franjaDeColumna = (zona, columna) => {
     return (z && z.franjas[Number(columna)]) || 'ninguna';
 };
 
+/**
+ * Hasta qué cuerpo llega esa columna. No todas terminan igual: en MZN01 la mayoría llega al
+ * 20 y cuatro se quedan en 17. Sin esto la sugerencia ofrece cuerpos que no existen, que fue
+ * lo que pasó el 02-ago con MZN01-04-21 y -22.
+ */
+export const cuerposDeColumna = (zona, columna) => {
+    const z = zonasActual().zonas[zona];
+    if (!z) return 0;
+    return (z.cuerposPorColumna && z.cuerposPorColumna[Number(columna)]) || z.cuerpos;
+};
+
 /** Las columnas de una zona que llevan esa temporada, en orden. */
 export const columnasDeFranja = (zona, franja) => {
     const z = zonasActual().zonas[zona];
@@ -490,7 +521,9 @@ export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
 
     const libresDe = (col) => {
         const salida = [];
-        for (let cu = 1; cu <= z.cuerpos; cu++) {
+        // Cada columna termina donde termina: no todas llegan al tope de la zona
+        const tope = (z.cuerposPorColumna && z.cuerposPorColumna[Number(col)]) || z.cuerpos;
+        for (let cu = 1; cu <= tope; cu++) {
             if (esPasillo(zona, col, cu)) continue;
             if (!ocupados.has(`${col}-${cu}`)) salida.push(cu);
         }
