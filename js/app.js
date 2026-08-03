@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0052';
-import * as adminService from './services_v245/adminService.js?v=29.0052';
+import { getSession, logout } from './services_v245/auth.js?v=29.0053';
+import * as adminService from './services_v245/adminService.js?v=29.0053';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0052';
+      this.APP_VERSION = 'v29.0053';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -433,7 +433,20 @@ class App {
   }
 
   async revisarVersion() {
-      if (document.getElementById('pulse-aviso-version')) return;   // ya hay uno a la vista
+      // UN AVISO QUE NADIE CONTESTA NO PUEDE QUEDAR AHÍ PARA SIEMPRE.
+      //
+      // El caso: alguien estaba trabajando, salta el aviso, y justo se va. El modal queda
+      // abierto sin que nadie apriete nada. Antes eso dejaba la pestaña colgada con la
+      // versión vieja para siempre —el único caso que este detector venía a resolver—,
+      // porque mientras hubiera un modal a la vista la revisión no hacía nada más.
+      //
+      // Dos minutos sin tocar nada, o la pestaña en segundo plano, y se recarga igual. El
+      // tercero no necesita esto: tiene su propia cuenta regresiva.
+      if (document.getElementById('pulse-aviso-version')) {
+          const abandonado = document.hidden || (Date.now() - (this.ultimaActividad || 0)) > 120000;
+          if (abandonado) this.recargarPorVersion();
+          return;
+      }
 
       const publicada = this.versionNueva || await this.versionPublicada();
       if (!publicada || publicada === this.APP_VERSION) return;
