@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0041';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0042';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0041';
+const VERSION = '29.0042';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1014,7 +1014,19 @@ export const getAreaData = async (area, forceRefresh = false) => {
 // =============================================
 // MOTOR DE EXTRACCIÓN DE TALLAS (v12.3.6)
 // =============================================
-const extractTalla = (desc) => {
+//
+// LA TALLA SALE DE ACÁ Y DE NINGÚN OTRO LADO.
+//
+// Había tres maneras distintas de sacar la talla de un SKU conviviendo en la aplicación: esta
+// —el patrón '-N-' de la descripción, que es el bueno—, el diccionario 'tabla_tallas', que se
+// contaminó cuando el archivo de Replenishment se usó por error como diccionario y escribió
+// cantidades en lugar de tallas, y una regla que le sumaba 36 al sufijo del SKU.
+//
+// Esa última inventaba tallas: 4816309-1-12 es una 37 según su descripción y la regla la daba
+// como 48. Con eso la pantalla de factores le armaba a 02 WOMEN una fila de veinte tallas
+// cuando en el almacén tiene seis, y las casillas que el usuario llenaba no cruzaban nunca
+// con las que la reposición iba a buscar. El factor quedaba en cero y todo salía OK.
+export const extractTalla = (desc) => {
     if (!desc) return null;
     const d = String(desc).trim();
     
